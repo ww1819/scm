@@ -1,9 +1,9 @@
-package com.ruoyi.common.exception.user;
+package com.scm.common.exception.user;
 
 /**
  * 验证码错误异常类
  * 
- * @author ruoyi
+ * @author scm
  */
 public class CaptchaException extends UserException
 {

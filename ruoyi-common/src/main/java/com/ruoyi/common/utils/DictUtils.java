@@ -1,14 +1,14 @@
-package com.ruoyi.common.utils;
+package com.scm.common.utils;
 
 import java.util.List;
 import org.springframework.stereotype.Component;
-import com.ruoyi.common.constant.Constants;
-import com.ruoyi.common.core.domain.entity.SysDictData;
+import com.scm.common.constant.Constants;
+import com.scm.common.core.domain.entity.SysDictData;
 
 /**
  * 字典工具类
  * 
- * @author ruoyi
+ * @author scm
  */
 @Component
 public class DictUtils

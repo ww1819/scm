@@ -1,4 +1,4 @@
-package com.ruoyi.common.config;
+package com.scm.common.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -6,10 +6,10 @@ import org.springframework.stereotype.Component;
 /**
  * 全局配置类
  * 
- * @author ruoyi
+ * @author scm
  */
 @Component
-@ConfigurationProperties(prefix = "ruoyi")
+@ConfigurationProperties(prefix = "scm")
 public class RuoYiConfig
 {
     /** 项目名称 */

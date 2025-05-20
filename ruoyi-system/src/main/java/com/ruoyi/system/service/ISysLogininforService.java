@@ -1,12 +1,12 @@
-package com.ruoyi.system.service;
+package com.scm.system.service;
 
 import java.util.List;
-import com.ruoyi.system.domain.SysLogininfor;
+import com.scm.system.domain.SysLogininfor;
 
 /**
  * 系统访问日志情况信息 服务层
  * 
- * @author ruoyi
+ * @author scm
  */
 public interface ISysLogininforService
 {

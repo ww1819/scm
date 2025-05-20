@@ -1,4 +1,4 @@
-package com.ruoyi.common.json;
+package com.scm.common.json;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 /**
  * JSON解析处理
  * 
- * @author ruoyi
+ * @author scm
  */
 public class JSON
 {

@@ -1,4 +1,4 @@
-package com.ruoyi.common.utils.security;
+package com.scm.common.utils.security;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Md5加密方法
  * 
- * @author ruoyi
+ * @author scm
  */
 public class Md5Utils
 {

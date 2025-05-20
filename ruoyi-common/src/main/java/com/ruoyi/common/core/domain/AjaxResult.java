@@ -1,13 +1,13 @@
-package com.ruoyi.common.core.domain;
+package com.scm.common.core.domain;
 
 import java.util.HashMap;
 import java.util.Objects;
-import com.ruoyi.common.utils.StringUtils;
+import com.scm.common.utils.StringUtils;
 
 /**
  * 操作消息提醒
  *
- * @author ruoyi
+ * @author scm
  */
 public class AjaxResult extends HashMap<String, Object>
 {

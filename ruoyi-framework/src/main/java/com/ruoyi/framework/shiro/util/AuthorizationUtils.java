@@ -1,13 +1,13 @@
-package com.ruoyi.framework.shiro.util;
+package com.scm.framework.shiro.util;
 
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.RealmSecurityManager;
-import com.ruoyi.framework.shiro.realm.UserRealm;
+import com.scm.framework.shiro.realm.UserRealm;
 
 /**
  * 用户授权信息
  * 
- * @author ruoyi
+ * @author scm
  */
 public class AuthorizationUtils
 {

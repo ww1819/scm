@@ -1,9 +1,9 @@
-package com.ruoyi.web.core.config;
+package com.scm.web.core.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import com.ruoyi.common.config.RuoYiConfig;
+import com.scm.common.config.RuoYiConfig;
 import io.swagger.annotations.ApiOperation;
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.PathSelectors;
@@ -16,7 +16,7 @@ import springfox.documentation.spring.web.plugins.Docket;
 /**
  * Swagger2的接口配置
  * 
- * @author ruoyi
+ * @author scm
  */
 @Configuration
 public class SwaggerConfig
@@ -41,7 +41,7 @@ public class SwaggerConfig
                 // 扫描所有有注解的api，用这种方式更灵活
                 .apis(RequestHandlerSelectors.withMethodAnnotation(ApiOperation.class))
                 // 扫描指定包中的swagger注解
-                //.apis(RequestHandlerSelectors.basePackage("com.ruoyi.project.tool.swagger"))
+                //.apis(RequestHandlerSelectors.basePackage("com.scm.project.tool.swagger"))
                 // 扫描所有 .apis(RequestHandlerSelectors.any())
                 .paths(PathSelectors.any())
                 .build();

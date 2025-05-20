@@ -1,4 +1,4 @@
-package com.ruoyi.system.service.impl;
+package com.scm.system.service.impl;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -12,22 +12,22 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.ruoyi.common.constant.UserConstants;
-import com.ruoyi.common.core.domain.Ztree;
-import com.ruoyi.common.core.domain.entity.SysMenu;
-import com.ruoyi.common.core.domain.entity.SysRole;
-import com.ruoyi.common.core.domain.entity.SysUser;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.common.exception.ServiceException;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.system.mapper.SysMenuMapper;
-import com.ruoyi.system.mapper.SysRoleMenuMapper;
-import com.ruoyi.system.service.ISysMenuService;
+import com.scm.common.constant.UserConstants;
+import com.scm.common.core.domain.Ztree;
+import com.scm.common.core.domain.entity.SysMenu;
+import com.scm.common.core.domain.entity.SysRole;
+import com.scm.common.core.domain.entity.SysUser;
+import com.scm.common.core.text.Convert;
+import com.scm.common.exception.ServiceException;
+import com.scm.common.utils.StringUtils;
+import com.scm.system.mapper.SysMenuMapper;
+import com.scm.system.mapper.SysRoleMenuMapper;
+import com.scm.system.service.ISysMenuService;
 
 /**
  * 菜单 业务层处理
  * 
- * @author ruoyi
+ * @author scm
  */
 @Service
 public class SysMenuServiceImpl implements ISysMenuService

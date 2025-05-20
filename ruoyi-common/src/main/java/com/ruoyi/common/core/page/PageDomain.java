@@ -1,11 +1,11 @@
-package com.ruoyi.common.core.page;
+package com.scm.common.core.page;
 
-import com.ruoyi.common.utils.StringUtils;
+import com.scm.common.utils.StringUtils;
 
 /**
  * 分页数据
  * 
- * @author ruoyi
+ * @author scm
  */
 public class PageDomain
 {

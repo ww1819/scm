@@ -1,4 +1,4 @@
-package com.ruoyi.framework.shiro.web.filter.kickout;
+package com.scm.framework.shiro.web.filter.kickout;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -17,16 +17,16 @@ import org.apache.shiro.subject.Subject;
 import org.apache.shiro.web.filter.AccessControlFilter;
 import org.apache.shiro.web.util.WebUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ruoyi.common.constant.ShiroConstants;
-import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.common.core.domain.entity.SysUser;
-import com.ruoyi.common.utils.ServletUtils;
-import com.ruoyi.common.utils.ShiroUtils;
+import com.scm.common.constant.ShiroConstants;
+import com.scm.common.core.domain.AjaxResult;
+import com.scm.common.core.domain.entity.SysUser;
+import com.scm.common.utils.ServletUtils;
+import com.scm.common.utils.ShiroUtils;
 
 /**
  * 登录账号控制过滤器
  * 
- * @author ruoyi
+ * @author scm
  */
 public class KickoutSessionFilter extends AccessControlFilter
 {

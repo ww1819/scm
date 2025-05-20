@@ -1,15 +1,15 @@
-package com.ruoyi.web.controller.monitor;
+package com.scm.web.controller.monitor;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import com.ruoyi.common.core.controller.BaseController;
+import com.scm.common.core.controller.BaseController;
 
 /**
  * druid 监控
  * 
- * @author ruoyi
+ * @author scm
  */
 @Controller
 @RequestMapping("/monitor/data")

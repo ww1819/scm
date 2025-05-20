@@ -1,4 +1,4 @@
-package com.ruoyi.common.core.domain.entity;
+package com.scm.common.core.domain.entity;
 
 import java.util.Date;
 import java.util.List;
@@ -6,17 +6,17 @@ import javax.validation.constraints.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.ruoyi.common.annotation.Excel;
-import com.ruoyi.common.annotation.Excel.ColumnType;
-import com.ruoyi.common.annotation.Excel.Type;
-import com.ruoyi.common.annotation.Excels;
-import com.ruoyi.common.core.domain.BaseEntity;
-import com.ruoyi.common.xss.Xss;
+import com.scm.common.annotation.Excel;
+import com.scm.common.annotation.Excel.ColumnType;
+import com.scm.common.annotation.Excel.Type;
+import com.scm.common.annotation.Excels;
+import com.scm.common.core.domain.BaseEntity;
+import com.scm.common.xss.Xss;
 
 /**
  * 用户对象 sys_user
  * 
- * @author ruoyi
+ * @author scm
  */
 public class SysUser extends BaseEntity
 {

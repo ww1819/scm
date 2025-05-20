@@ -1,4 +1,4 @@
-package com.ruoyi.generator.service.impl;
+package com.scm.generator.service.impl;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -23,25 +23,25 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.ruoyi.common.constant.Constants;
-import com.ruoyi.common.constant.GenConstants;
-import com.ruoyi.common.core.text.CharsetKit;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.common.exception.ServiceException;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.generator.domain.GenTable;
-import com.ruoyi.generator.domain.GenTableColumn;
-import com.ruoyi.generator.mapper.GenTableColumnMapper;
-import com.ruoyi.generator.mapper.GenTableMapper;
-import com.ruoyi.generator.service.IGenTableService;
-import com.ruoyi.generator.util.GenUtils;
-import com.ruoyi.generator.util.VelocityInitializer;
-import com.ruoyi.generator.util.VelocityUtils;
+import com.scm.common.constant.Constants;
+import com.scm.common.constant.GenConstants;
+import com.scm.common.core.text.CharsetKit;
+import com.scm.common.core.text.Convert;
+import com.scm.common.exception.ServiceException;
+import com.scm.common.utils.StringUtils;
+import com.scm.generator.domain.GenTable;
+import com.scm.generator.domain.GenTableColumn;
+import com.scm.generator.mapper.GenTableColumnMapper;
+import com.scm.generator.mapper.GenTableMapper;
+import com.scm.generator.service.IGenTableService;
+import com.scm.generator.util.GenUtils;
+import com.scm.generator.util.VelocityInitializer;
+import com.scm.generator.util.VelocityUtils;
 
 /**
  * 业务 服务层实现
  * 
- * @author ruoyi
+ * @author scm
  */
 @Service
 public class GenTableServiceImpl implements IGenTableService

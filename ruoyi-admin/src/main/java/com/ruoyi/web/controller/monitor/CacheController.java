@@ -1,4 +1,4 @@
-package com.ruoyi.web.controller.monitor;
+package com.scm.web.controller.monitor;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,14 +8,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
-import com.ruoyi.common.core.controller.BaseController;
-import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.framework.web.service.CacheService;
+import com.scm.common.core.controller.BaseController;
+import com.scm.common.core.domain.AjaxResult;
+import com.scm.framework.web.service.CacheService;
 
 /**
  * 缓存监控
  * 
- * @author ruoyi
+ * @author scm
  */
 @Controller
 @RequestMapping("/monitor/cache")

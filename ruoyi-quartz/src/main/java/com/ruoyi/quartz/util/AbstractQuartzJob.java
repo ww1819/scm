@@ -1,24 +1,24 @@
-package com.ruoyi.quartz.util;
+package com.scm.quartz.util;
 
 import java.util.Date;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.ruoyi.common.constant.Constants;
-import com.ruoyi.common.constant.ScheduleConstants;
-import com.ruoyi.common.utils.ExceptionUtil;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.bean.BeanUtils;
-import com.ruoyi.common.utils.spring.SpringUtils;
-import com.ruoyi.quartz.domain.SysJob;
-import com.ruoyi.quartz.domain.SysJobLog;
-import com.ruoyi.quartz.service.ISysJobLogService;
+import com.scm.common.constant.Constants;
+import com.scm.common.constant.ScheduleConstants;
+import com.scm.common.utils.ExceptionUtil;
+import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.bean.BeanUtils;
+import com.scm.common.utils.spring.SpringUtils;
+import com.scm.quartz.domain.SysJob;
+import com.scm.quartz.domain.SysJobLog;
+import com.scm.quartz.service.ISysJobLogService;
 
 /**
  * 抽象quartz调用
  *
- * @author ruoyi
+ * @author scm
  */
 public abstract class AbstractQuartzJob implements Job
 {

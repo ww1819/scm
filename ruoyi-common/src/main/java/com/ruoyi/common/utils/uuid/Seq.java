@@ -1,11 +1,11 @@
-package com.ruoyi.common.utils.uuid;
+package com.scm.common.utils.uuid;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import com.ruoyi.common.utils.DateUtils;
-import com.ruoyi.common.utils.StringUtils;
+import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.StringUtils;
 
 /**
- * @author ruoyi 序列生成类
+ * @author scm 序列生成类
  */
 public class Seq
 {

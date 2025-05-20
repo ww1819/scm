@@ -1,11 +1,11 @@
-package com.ruoyi.common.exception.file;
+package com.scm.common.exception.file;
 
-import com.ruoyi.common.exception.base.BaseException;
+import com.scm.common.exception.base.BaseException;
 
 /**
  * 文件信息异常类
  * 
- * @author ruoyi
+ * @author scm
  */
 public class FileException extends BaseException
 {

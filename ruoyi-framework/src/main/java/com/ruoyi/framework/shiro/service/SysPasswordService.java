@@ -1,4 +1,4 @@
-package com.ruoyi.framework.shiro.service;
+package com.scm.framework.shiro.service;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.PostConstruct;
@@ -8,19 +8,19 @@ import org.apache.shiro.crypto.hash.Md5Hash;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import com.ruoyi.common.constant.Constants;
-import com.ruoyi.common.constant.ShiroConstants;
-import com.ruoyi.common.core.domain.entity.SysUser;
-import com.ruoyi.common.exception.user.UserPasswordNotMatchException;
-import com.ruoyi.common.exception.user.UserPasswordRetryLimitExceedException;
-import com.ruoyi.common.utils.MessageUtils;
-import com.ruoyi.framework.manager.AsyncManager;
-import com.ruoyi.framework.manager.factory.AsyncFactory;
+import com.scm.common.constant.Constants;
+import com.scm.common.constant.ShiroConstants;
+import com.scm.common.core.domain.entity.SysUser;
+import com.scm.common.exception.user.UserPasswordNotMatchException;
+import com.scm.common.exception.user.UserPasswordRetryLimitExceedException;
+import com.scm.common.utils.MessageUtils;
+import com.scm.framework.manager.AsyncManager;
+import com.scm.framework.manager.factory.AsyncFactory;
 
 /**
  * 登录密码方法
  * 
- * @author ruoyi
+ * @author scm
  */
 @Component
 public class SysPasswordService

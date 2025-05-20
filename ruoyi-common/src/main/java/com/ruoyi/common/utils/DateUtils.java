@@ -1,4 +1,4 @@
-package com.ruoyi.common.utils;
+package com.scm.common.utils;
 
 import java.lang.management.ManagementFactory;
 import java.text.ParseException;
@@ -14,7 +14,7 @@ import org.apache.commons.lang3.time.DateFormatUtils;
 /**
  * 时间工具类
  * 
- * @author ruoyi
+ * @author scm
  */
 public class DateUtils extends org.apache.commons.lang3.time.DateUtils
 {

@@ -1,9 +1,9 @@
-package com.ruoyi.common.exception.user;
+package com.scm.common.exception.user;
 
 /**
  * 用户密码不正确或不符合规范异常类
  * 
- * @author ruoyi
+ * @author scm
  */
 public class UserPasswordNotMatchException extends UserException
 {

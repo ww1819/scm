@@ -1,4 +1,4 @@
-package com.ruoyi.common.json;
+package com.scm.common.json;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,12 +9,12 @@ import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ruoyi.common.utils.StringUtils;
+import com.scm.common.utils.StringUtils;
 
 /**
  * 通用消息对象，基于Map实现的可嵌套数据结构。 支持JSON数据结构。
  * 
- * @author ruoyi
+ * @author scm
  */
 public class JSONObject extends LinkedHashMap<String, Object>
 {

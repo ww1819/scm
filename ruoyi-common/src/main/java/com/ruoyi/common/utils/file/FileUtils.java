@@ -1,4 +1,4 @@
-package com.ruoyi.common.utils.file;
+package com.scm.common.utils.file;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,15 +14,15 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import com.ruoyi.common.config.RuoYiConfig;
-import com.ruoyi.common.utils.DateUtils;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.uuid.IdUtils;
+import com.scm.common.config.RuoYiConfig;
+import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.uuid.IdUtils;
 
 /**
  * 文件处理工具类
  * 
- * @author ruoyi
+ * @author scm
  */
 public class FileUtils
 {
@@ -255,7 +255,7 @@ public class FileUtils
     }
 
     /**
-     * 获取文件名称 /profile/upload/2022/04/16/ruoyi.png -- ruoyi.png
+     * 获取文件名称 /profile/upload/2022/04/16/scm.png -- scm.png
      * 
      * @param fileName 路径名称
      * @return 没有文件路径的名称
@@ -273,7 +273,7 @@ public class FileUtils
     }
 
     /**
-     * 获取不带后缀文件名称 /profile/upload/2022/04/16/ruoyi.png -- ruoyi
+     * 获取不带后缀文件名称 /profile/upload/2022/04/16/scm.png -- scm
      * 
      * @param fileName 路径名称
      * @return 没有文件路径和后缀的名称

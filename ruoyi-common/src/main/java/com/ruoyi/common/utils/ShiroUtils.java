@@ -1,4 +1,4 @@
-package com.ruoyi.common.utils;
+package com.scm.common.utils;
 
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.crypto.SecureRandomNumberGenerator;
@@ -6,13 +6,13 @@ import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
-import com.ruoyi.common.core.domain.entity.SysUser;
-import com.ruoyi.common.utils.bean.BeanUtils;
+import com.scm.common.core.domain.entity.SysUser;
+import com.scm.common.utils.bean.BeanUtils;
 
 /**
  * shiro 工具类
  * 
- * @author ruoyi
+ * @author scm
  */
 public class ShiroUtils
 {

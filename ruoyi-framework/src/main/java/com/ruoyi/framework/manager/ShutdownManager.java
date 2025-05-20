@@ -1,6 +1,6 @@
-package com.ruoyi.framework.manager;
+package com.scm.framework.manager;
 
-import com.ruoyi.framework.shiro.web.session.SpringSessionValidationScheduler;
+import com.scm.framework.shiro.web.session.SpringSessionValidationScheduler;
 import net.sf.ehcache.CacheManager;
 import org.apache.shiro.cache.ehcache.EhCacheManager;
 import org.slf4j.Logger;

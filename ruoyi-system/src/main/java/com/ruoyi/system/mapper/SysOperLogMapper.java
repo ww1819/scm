@@ -1,12 +1,12 @@
-package com.ruoyi.system.mapper;
+package com.scm.system.mapper;
 
 import java.util.List;
-import com.ruoyi.system.domain.SysOperLog;
+import com.scm.system.domain.SysOperLog;
 
 /**
  * 操作日志 数据层
  * 
- * @author ruoyi
+ * @author scm
  */
 public interface SysOperLogMapper
 {

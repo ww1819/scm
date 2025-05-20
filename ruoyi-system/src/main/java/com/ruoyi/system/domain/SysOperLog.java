@@ -1,16 +1,16 @@
-package com.ruoyi.system.domain;
+package com.scm.system.domain;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import java.util.Date;
-import com.ruoyi.common.annotation.Excel;
-import com.ruoyi.common.annotation.Excel.ColumnType;
-import com.ruoyi.common.core.domain.BaseEntity;
+import com.scm.common.annotation.Excel;
+import com.scm.common.annotation.Excel.ColumnType;
+import com.scm.common.core.domain.BaseEntity;
 
 /**
  * 操作日志记录表 oper_log
  * 
- * @author ruoyi
+ * @author scm
  */
 public class SysOperLog extends BaseEntity
 {

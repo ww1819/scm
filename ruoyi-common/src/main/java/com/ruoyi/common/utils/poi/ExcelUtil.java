@@ -1,4 +1,4 @@
-package com.ruoyi.common.utils.poi;
+package com.scm.common.utils.poi;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -70,26 +70,26 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.openxmlformats.schemas.drawingml.x2006.spreadsheetDrawing.CTMarker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.ruoyi.common.annotation.Excel;
-import com.ruoyi.common.annotation.Excel.ColumnType;
-import com.ruoyi.common.annotation.Excel.Type;
-import com.ruoyi.common.annotation.Excels;
-import com.ruoyi.common.config.RuoYiConfig;
-import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.common.exception.UtilException;
-import com.ruoyi.common.utils.DateUtils;
-import com.ruoyi.common.utils.DictUtils;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.file.FileTypeUtils;
-import com.ruoyi.common.utils.file.FileUtils;
-import com.ruoyi.common.utils.file.ImageUtils;
-import com.ruoyi.common.utils.reflect.ReflectUtils;
+import com.scm.common.annotation.Excel;
+import com.scm.common.annotation.Excel.ColumnType;
+import com.scm.common.annotation.Excel.Type;
+import com.scm.common.annotation.Excels;
+import com.scm.common.config.RuoYiConfig;
+import com.scm.common.core.domain.AjaxResult;
+import com.scm.common.core.text.Convert;
+import com.scm.common.exception.UtilException;
+import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.DictUtils;
+import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.file.FileTypeUtils;
+import com.scm.common.utils.file.FileUtils;
+import com.scm.common.utils.file.ImageUtils;
+import com.scm.common.utils.reflect.ReflectUtils;
 
 /**
  * Excel相关处理
  * 
- * @author ruoyi
+ * @author scm
  */
 public class ExcelUtil<T>
 {

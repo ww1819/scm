@@ -1,9 +1,9 @@
-package com.ruoyi.common.exception.user;
+package com.scm.common.exception.user;
 
 /**
  * 用户账号已被删除
  * 
- * @author ruoyi
+ * @author scm
  */
 public class UserDeleteException extends UserException
 {

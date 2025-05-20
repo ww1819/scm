@@ -1,4 +1,4 @@
-package com.ruoyi.framework.config;
+package com.scm.framework.config;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,13 +8,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.xss.XssFilter;
+import com.scm.common.utils.StringUtils;
+import com.scm.common.xss.XssFilter;
 
 /**
  * Filter配置
  *
- * @author ruoyi
+ * @author scm
  */
 @Configuration
 @ConditionalOnProperty(value = "xss.enabled", havingValue = "true")

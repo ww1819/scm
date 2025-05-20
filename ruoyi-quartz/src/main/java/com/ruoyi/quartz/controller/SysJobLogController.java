@@ -1,4 +1,4 @@
-package com.ruoyi.quartz.controller;
+package com.scm.quartz.controller;
 
 import java.util.List;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -11,22 +11,22 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import com.ruoyi.common.annotation.Log;
-import com.ruoyi.common.core.controller.BaseController;
-import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.common.core.page.TableDataInfo;
-import com.ruoyi.common.enums.BusinessType;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.poi.ExcelUtil;
-import com.ruoyi.quartz.domain.SysJob;
-import com.ruoyi.quartz.domain.SysJobLog;
-import com.ruoyi.quartz.service.ISysJobLogService;
-import com.ruoyi.quartz.service.ISysJobService;
+import com.scm.common.annotation.Log;
+import com.scm.common.core.controller.BaseController;
+import com.scm.common.core.domain.AjaxResult;
+import com.scm.common.core.page.TableDataInfo;
+import com.scm.common.enums.BusinessType;
+import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.poi.ExcelUtil;
+import com.scm.quartz.domain.SysJob;
+import com.scm.quartz.domain.SysJobLog;
+import com.scm.quartz.service.ISysJobLogService;
+import com.scm.quartz.service.ISysJobService;
 
 /**
  * 调度日志操作处理
  * 
- * @author ruoyi
+ * @author scm
  */
 @Controller
 @RequestMapping("/monitor/jobLog")

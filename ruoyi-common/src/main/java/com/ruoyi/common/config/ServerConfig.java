@@ -1,13 +1,13 @@
-package com.ruoyi.common.config;
+package com.scm.common.config;
 
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Component;
-import com.ruoyi.common.utils.ServletUtils;
+import com.scm.common.utils.ServletUtils;
 
 /**
  * 服务相关配置
  * 
- * @author ruoyi
+ * @author scm
  *
  */
 @Component

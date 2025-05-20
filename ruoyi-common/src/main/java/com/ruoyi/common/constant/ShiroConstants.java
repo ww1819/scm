@@ -1,9 +1,9 @@
-package com.ruoyi.common.constant;
+package com.scm.common.constant;
 
 /**
  * Shiro通用常量
  * 
- * @author ruoyi
+ * @author scm
  */
 public class ShiroConstants
 {

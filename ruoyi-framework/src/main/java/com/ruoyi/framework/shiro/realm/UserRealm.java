@@ -1,4 +1,4 @@
-package com.ruoyi.framework.shiro.realm;
+package com.scm.framework.shiro.realm;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -20,22 +20,22 @@ import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import com.ruoyi.common.core.domain.entity.SysUser;
-import com.ruoyi.common.exception.user.CaptchaException;
-import com.ruoyi.common.exception.user.RoleBlockedException;
-import com.ruoyi.common.exception.user.UserBlockedException;
-import com.ruoyi.common.exception.user.UserNotExistsException;
-import com.ruoyi.common.exception.user.UserPasswordNotMatchException;
-import com.ruoyi.common.exception.user.UserPasswordRetryLimitExceedException;
-import com.ruoyi.common.utils.ShiroUtils;
-import com.ruoyi.framework.shiro.service.SysLoginService;
-import com.ruoyi.system.service.ISysMenuService;
-import com.ruoyi.system.service.ISysRoleService;
+import com.scm.common.core.domain.entity.SysUser;
+import com.scm.common.exception.user.CaptchaException;
+import com.scm.common.exception.user.RoleBlockedException;
+import com.scm.common.exception.user.UserBlockedException;
+import com.scm.common.exception.user.UserNotExistsException;
+import com.scm.common.exception.user.UserPasswordNotMatchException;
+import com.scm.common.exception.user.UserPasswordRetryLimitExceedException;
+import com.scm.common.utils.ShiroUtils;
+import com.scm.framework.shiro.service.SysLoginService;
+import com.scm.system.service.ISysMenuService;
+import com.scm.system.service.ISysRoleService;
 
 /**
  * 自定义Realm 处理登录 权限
  * 
- * @author ruoyi
+ * @author scm
  */
 public class UserRealm extends AuthorizingRealm
 {

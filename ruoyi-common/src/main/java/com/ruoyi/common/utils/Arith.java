@@ -1,4 +1,4 @@
-package com.ruoyi.common.utils;
+package com.scm.common.utils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -6,7 +6,7 @@ import java.math.RoundingMode;
 /**
  * 精确的浮点数运算
  * 
- * @author ruoyi
+ * @author scm
  */
 public class Arith
 {

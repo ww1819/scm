@@ -1,12 +1,12 @@
-package com.ruoyi.system.mapper;
+package com.scm.system.mapper;
 
 import java.util.List;
-import com.ruoyi.system.domain.SysRoleDept;
+import com.scm.system.domain.SysRoleDept;
 
 /**
  * 角色与部门关联表 数据层
  * 
- * @author ruoyi
+ * @author scm
  */
 public interface SysRoleDeptMapper
 {

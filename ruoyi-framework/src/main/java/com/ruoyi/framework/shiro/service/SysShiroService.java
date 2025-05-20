@@ -1,18 +1,18 @@
-package com.ruoyi.framework.shiro.service;
+package com.scm.framework.shiro.service;
 
 import java.io.Serializable;
 import org.apache.shiro.session.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.framework.shiro.session.OnlineSession;
-import com.ruoyi.system.domain.SysUserOnline;
-import com.ruoyi.system.service.ISysUserOnlineService;
+import com.scm.common.utils.StringUtils;
+import com.scm.framework.shiro.session.OnlineSession;
+import com.scm.system.domain.SysUserOnline;
+import com.scm.system.service.ISysUserOnlineService;
 
 /**
  * 会话db操作处理
  * 
- * @author ruoyi
+ * @author scm
  */
 @Component
 public class SysShiroService

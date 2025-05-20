@@ -1,11 +1,11 @@
-package com.ruoyi.framework.web.domain.server;
+package com.scm.framework.web.domain.server;
 
-import com.ruoyi.common.utils.Arith;
+import com.scm.common.utils.Arith;
 
 /**
  * 內存相关信息
  * 
- * @author ruoyi
+ * @author scm
  */
 public class Mem
 {

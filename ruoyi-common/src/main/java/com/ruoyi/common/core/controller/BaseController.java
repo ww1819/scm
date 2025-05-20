@@ -1,4 +1,4 @@
-package com.ruoyi.common.core.controller;
+package com.scm.common.core.controller;
 
 import java.beans.PropertyEditorSupport;
 import java.util.Date;
@@ -12,23 +12,23 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.common.core.domain.AjaxResult.Type;
-import com.ruoyi.common.core.domain.entity.SysUser;
-import com.ruoyi.common.core.page.PageDomain;
-import com.ruoyi.common.core.page.TableDataInfo;
-import com.ruoyi.common.core.page.TableSupport;
-import com.ruoyi.common.utils.DateUtils;
-import com.ruoyi.common.utils.PageUtils;
-import com.ruoyi.common.utils.ServletUtils;
-import com.ruoyi.common.utils.ShiroUtils;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.sql.SqlUtil;
+import com.scm.common.core.domain.AjaxResult;
+import com.scm.common.core.domain.AjaxResult.Type;
+import com.scm.common.core.domain.entity.SysUser;
+import com.scm.common.core.page.PageDomain;
+import com.scm.common.core.page.TableDataInfo;
+import com.scm.common.core.page.TableSupport;
+import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.PageUtils;
+import com.scm.common.utils.ServletUtils;
+import com.scm.common.utils.ShiroUtils;
+import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.sql.SqlUtil;
 
 /**
  * web层通用数据处理
  * 
- * @author ruoyi
+ * @author scm
  */
 public class BaseController
 {

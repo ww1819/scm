@@ -1,4 +1,4 @@
-//package com.ruoyi.quartz.config;
+//package com.scm.quartz.config;
 //
 //import org.springframework.context.annotation.Bean;
 //import org.springframework.context.annotation.Configuration;
@@ -9,7 +9,7 @@
 ///**
 // * 定时任务配置（单机部署建议默认走内存，如需集群需要创建qrtz数据库表/打开类注释）
 // * 
-// * @author ruoyi
+// * @author scm
 // */
 //@Configuration
 //public class ScheduleConfig

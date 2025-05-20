@@ -1,4 +1,4 @@
-package com.ruoyi.framework.config;
+package com.scm.framework.config;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -21,30 +21,30 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import com.ruoyi.common.constant.Constants;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.security.CipherUtils;
-import com.ruoyi.common.utils.spring.SpringUtils;
-import com.ruoyi.framework.config.properties.PermitAllUrlProperties;
-import com.ruoyi.framework.shiro.realm.UserRealm;
-import com.ruoyi.framework.shiro.rememberMe.CustomCookieRememberMeManager;
-import com.ruoyi.framework.shiro.session.OnlineSessionDAO;
-import com.ruoyi.framework.shiro.session.OnlineSessionFactory;
-import com.ruoyi.framework.shiro.web.CustomShiroFilterFactoryBean;
-import com.ruoyi.framework.shiro.web.filter.LogoutFilter;
-import com.ruoyi.framework.shiro.web.filter.captcha.CaptchaValidateFilter;
-import com.ruoyi.framework.shiro.web.filter.csrf.CsrfValidateFilter;
-import com.ruoyi.framework.shiro.web.filter.kickout.KickoutSessionFilter;
-import com.ruoyi.framework.shiro.web.filter.online.OnlineSessionFilter;
-import com.ruoyi.framework.shiro.web.filter.sync.SyncOnlineSessionFilter;
-import com.ruoyi.framework.shiro.web.session.OnlineWebSessionManager;
-import com.ruoyi.framework.shiro.web.session.SpringSessionValidationScheduler;
+import com.scm.common.constant.Constants;
+import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.security.CipherUtils;
+import com.scm.common.utils.spring.SpringUtils;
+import com.scm.framework.config.properties.PermitAllUrlProperties;
+import com.scm.framework.shiro.realm.UserRealm;
+import com.scm.framework.shiro.rememberMe.CustomCookieRememberMeManager;
+import com.scm.framework.shiro.session.OnlineSessionDAO;
+import com.scm.framework.shiro.session.OnlineSessionFactory;
+import com.scm.framework.shiro.web.CustomShiroFilterFactoryBean;
+import com.scm.framework.shiro.web.filter.LogoutFilter;
+import com.scm.framework.shiro.web.filter.captcha.CaptchaValidateFilter;
+import com.scm.framework.shiro.web.filter.csrf.CsrfValidateFilter;
+import com.scm.framework.shiro.web.filter.kickout.KickoutSessionFilter;
+import com.scm.framework.shiro.web.filter.online.OnlineSessionFilter;
+import com.scm.framework.shiro.web.filter.sync.SyncOnlineSessionFilter;
+import com.scm.framework.shiro.web.session.OnlineWebSessionManager;
+import com.scm.framework.shiro.web.session.SpringSessionValidationScheduler;
 import at.pollux.thymeleaf.shiro.dialect.ShiroDialect;
 
 /**
  * 权限配置加载
  * 
- * @author ruoyi
+ * @author scm
  */
 @Configuration
 public class ShiroConfig
@@ -151,7 +151,7 @@ public class ShiroConfig
     @Bean
     public EhCacheManager getEhCacheManager()
     {
-        net.sf.ehcache.CacheManager cacheManager = net.sf.ehcache.CacheManager.getCacheManager("ruoyi");
+        net.sf.ehcache.CacheManager cacheManager = net.sf.ehcache.CacheManager.getCacheManager("scm");
         EhCacheManager em = new EhCacheManager();
         if (StringUtils.isNull(cacheManager))
         {
@@ -304,7 +304,7 @@ public class ShiroConfig
         LinkedHashMap<String, String> filterChainDefinitionMap = new LinkedHashMap<>();
         // 对静态资源设置匿名访问
         filterChainDefinitionMap.put("/favicon.ico**", "anon");
-        filterChainDefinitionMap.put("/ruoyi.png**", "anon");
+        filterChainDefinitionMap.put("/scm.png**", "anon");
         filterChainDefinitionMap.put("/html/**", "anon");
         filterChainDefinitionMap.put("/css/**", "anon");
         filterChainDefinitionMap.put("/docs/**", "anon");
@@ -312,7 +312,7 @@ public class ShiroConfig
         filterChainDefinitionMap.put("/img/**", "anon");
         filterChainDefinitionMap.put("/ajax/**", "anon");
         filterChainDefinitionMap.put("/js/**", "anon");
-        filterChainDefinitionMap.put("/ruoyi/**", "anon");
+        filterChainDefinitionMap.put("/scm/**", "anon");
         filterChainDefinitionMap.put("/captcha/captchaImage**", "anon");
         // 匿名访问不鉴权注解列表
         List<String> permitAllUrl = SpringUtils.getBean(PermitAllUrlProperties.class).getUrls();

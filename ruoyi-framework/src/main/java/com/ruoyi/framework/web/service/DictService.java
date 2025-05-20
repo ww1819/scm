@@ -1,16 +1,16 @@
-package com.ruoyi.framework.web.service;
+package com.scm.framework.web.service;
 
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.ruoyi.common.core.domain.entity.SysDictData;
-import com.ruoyi.system.service.ISysDictDataService;
-import com.ruoyi.system.service.ISysDictTypeService;
+import com.scm.common.core.domain.entity.SysDictData;
+import com.scm.system.service.ISysDictDataService;
+import com.scm.system.service.ISysDictTypeService;
 
 /**
  * RuoYi首创 html调用 thymeleaf 实现字典读取
  * 
- * @author ruoyi
+ * @author scm
  */
 @Service("dict")
 public class DictService

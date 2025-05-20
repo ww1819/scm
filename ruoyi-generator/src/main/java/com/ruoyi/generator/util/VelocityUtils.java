@@ -1,16 +1,16 @@
-package com.ruoyi.generator.util;
+package com.scm.generator.util;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import org.apache.velocity.VelocityContext;
 import com.alibaba.fastjson.JSONObject;
-import com.ruoyi.common.constant.GenConstants;
-import com.ruoyi.common.utils.DateUtils;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.generator.config.GenConfig;
-import com.ruoyi.generator.domain.GenTable;
-import com.ruoyi.generator.domain.GenTableColumn;
+import com.scm.common.constant.GenConstants;
+import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.StringUtils;
+import com.scm.generator.config.GenConfig;
+import com.scm.generator.domain.GenTable;
+import com.scm.generator.domain.GenTableColumn;
 
 public class VelocityUtils
 {

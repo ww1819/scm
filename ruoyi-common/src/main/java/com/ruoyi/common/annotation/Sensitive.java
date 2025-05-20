@@ -1,4 +1,4 @@
-package com.ruoyi.common.annotation;
+package com.scm.common.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -6,13 +6,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import com.fasterxml.jackson.annotation.JacksonAnnotationsInside;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import com.ruoyi.common.config.serializer.SensitiveJsonSerializer;
-import com.ruoyi.common.enums.DesensitizedType;
+import com.scm.common.config.serializer.SensitiveJsonSerializer;
+import com.scm.common.enums.DesensitizedType;
 
 /**
  * 数据脱敏注解
  *
- * @author ruoyi
+ * @author scm
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)

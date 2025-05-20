@@ -1,9 +1,9 @@
-package com.ruoyi.common.core.domain;
+package com.scm.common.core.domain;
 
 /**
  * Tree基类
  * 
- * @author ruoyi
+ * @author scm
  */
 public class TreeEntity extends BaseEntity
 {

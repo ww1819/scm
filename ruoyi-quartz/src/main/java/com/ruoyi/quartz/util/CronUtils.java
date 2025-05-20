@@ -1,4 +1,4 @@
-package com.ruoyi.quartz.util;
+package com.scm.quartz.util;
 
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -7,12 +7,12 @@ import java.util.List;
 import org.quartz.CronExpression;
 import org.quartz.TriggerUtils;
 import org.quartz.impl.triggers.CronTriggerImpl;
-import com.ruoyi.common.utils.DateUtils;
+import com.scm.common.utils.DateUtils;
 
 /**
  * cron表达式工具类
  * 
- * @author ruoyi
+ * @author scm
  *
  */
 public class CronUtils

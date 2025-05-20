@@ -1,17 +1,17 @@
-package com.ruoyi.system.service.impl;
+package com.scm.system.service.impl;
 
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.system.domain.SysNotice;
-import com.ruoyi.system.mapper.SysNoticeMapper;
-import com.ruoyi.system.service.ISysNoticeService;
+import com.scm.common.core.text.Convert;
+import com.scm.system.domain.SysNotice;
+import com.scm.system.mapper.SysNoticeMapper;
+import com.scm.system.service.ISysNoticeService;
 
 /**
  * 公告 服务层实现
  * 
- * @author ruoyi
+ * @author scm
  * @date 2018-06-25
  */
 @Service

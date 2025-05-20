@@ -1,4 +1,4 @@
-package com.ruoyi.common.utils.file;
+package com.scm.common.utils.file;
 
 import java.io.File;
 import java.io.IOException;
@@ -6,19 +6,19 @@ import java.nio.file.Paths;
 import java.util.Objects;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.web.multipart.MultipartFile;
-import com.ruoyi.common.config.RuoYiConfig;
-import com.ruoyi.common.constant.Constants;
-import com.ruoyi.common.exception.file.FileNameLengthLimitExceededException;
-import com.ruoyi.common.exception.file.FileSizeLimitExceededException;
-import com.ruoyi.common.exception.file.InvalidExtensionException;
-import com.ruoyi.common.utils.DateUtils;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.uuid.Seq;
+import com.scm.common.config.RuoYiConfig;
+import com.scm.common.constant.Constants;
+import com.scm.common.exception.file.FileNameLengthLimitExceededException;
+import com.scm.common.exception.file.FileSizeLimitExceededException;
+import com.scm.common.exception.file.InvalidExtensionException;
+import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.uuid.Seq;
 
 /**
  * 文件上传工具类
  * 
- * @author ruoyi
+ * @author scm
  */
 public class FileUploadUtils
 {

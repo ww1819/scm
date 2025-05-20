@@ -1,23 +1,23 @@
-package com.ruoyi.system.service.impl;
+package com.scm.system.service.impl;
 
 import java.util.List;
 import javax.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.ruoyi.common.constant.Constants;
-import com.ruoyi.common.constant.UserConstants;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.common.exception.ServiceException;
-import com.ruoyi.common.utils.CacheUtils;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.system.domain.SysConfig;
-import com.ruoyi.system.mapper.SysConfigMapper;
-import com.ruoyi.system.service.ISysConfigService;
+import com.scm.common.constant.Constants;
+import com.scm.common.constant.UserConstants;
+import com.scm.common.core.text.Convert;
+import com.scm.common.exception.ServiceException;
+import com.scm.common.utils.CacheUtils;
+import com.scm.common.utils.StringUtils;
+import com.scm.system.domain.SysConfig;
+import com.scm.system.mapper.SysConfigMapper;
+import com.scm.system.service.ISysConfigService;
 
 /**
  * 参数配置 服务层实现
  * 
- * @author ruoyi
+ * @author scm
  */
 @Service
 public class SysConfigServiceImpl implements ISysConfigService

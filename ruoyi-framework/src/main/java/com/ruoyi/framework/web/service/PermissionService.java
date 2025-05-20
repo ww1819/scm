@@ -1,4 +1,4 @@
-package com.ruoyi.framework.web.service;
+package com.scm.framework.web.service;
 
 import java.beans.BeanInfo;
 import java.beans.Introspector;
@@ -8,12 +8,12 @@ import org.apache.shiro.subject.Subject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import com.ruoyi.common.utils.StringUtils;
+import com.scm.common.utils.StringUtils;
 
 /**
  * RuoYi首创 js调用 thymeleaf 实现按钮权限可见性
  * 
- * @author ruoyi
+ * @author scm
  */
 @Service("permission")
 public class PermissionService

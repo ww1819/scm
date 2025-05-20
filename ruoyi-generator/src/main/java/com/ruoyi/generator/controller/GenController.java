@@ -1,4 +1,4 @@
-package com.ruoyi.generator.controller;
+package com.scm.generator.controller;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,26 +22,26 @@ import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLStatement;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlCreateTableStatement;
 import com.alibaba.fastjson.JSON;
-import com.ruoyi.common.annotation.Log;
-import com.ruoyi.common.core.controller.BaseController;
-import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.common.core.domain.CxSelect;
-import com.ruoyi.common.core.page.TableDataInfo;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.common.enums.BusinessType;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.security.PermissionUtils;
-import com.ruoyi.common.utils.sql.SqlUtil;
-import com.ruoyi.generator.config.GenConfig;
-import com.ruoyi.generator.domain.GenTable;
-import com.ruoyi.generator.domain.GenTableColumn;
-import com.ruoyi.generator.service.IGenTableColumnService;
-import com.ruoyi.generator.service.IGenTableService;
+import com.scm.common.annotation.Log;
+import com.scm.common.core.controller.BaseController;
+import com.scm.common.core.domain.AjaxResult;
+import com.scm.common.core.domain.CxSelect;
+import com.scm.common.core.page.TableDataInfo;
+import com.scm.common.core.text.Convert;
+import com.scm.common.enums.BusinessType;
+import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.security.PermissionUtils;
+import com.scm.common.utils.sql.SqlUtil;
+import com.scm.generator.config.GenConfig;
+import com.scm.generator.domain.GenTable;
+import com.scm.generator.domain.GenTableColumn;
+import com.scm.generator.service.IGenTableColumnService;
+import com.scm.generator.service.IGenTableService;
 
 /**
  * 代码生成 操作处理
  * 
- * @author ruoyi
+ * @author scm
  */
 @Controller
 @RequestMapping("/tool/gen")
@@ -301,7 +301,7 @@ public class GenController extends BaseController
     private void genCode(HttpServletResponse response, byte[] data) throws IOException
     {
         response.reset();
-        response.setHeader("Content-Disposition", "attachment; filename=\"ruoyi.zip\"");
+        response.setHeader("Content-Disposition", "attachment; filename=\"scm.zip\"");
         response.addHeader("Content-Length", "" + data.length);
         response.setContentType("application/octet-stream; charset=UTF-8");
         IOUtils.write(data, response.getOutputStream());

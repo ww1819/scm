@@ -1,13 +1,13 @@
-package com.ruoyi.framework.web.service;
+package com.scm.framework.web.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.ruoyi.system.service.ISysConfigService;
+import com.scm.system.service.ISysConfigService;
 
 /**
  * RuoYi首创 html调用 thymeleaf 实现参数管理
  * 
- * @author ruoyi
+ * @author scm
  */
 @Service("config")
 public class ConfigService

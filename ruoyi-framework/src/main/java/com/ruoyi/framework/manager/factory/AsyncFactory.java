@@ -1,22 +1,22 @@
-package com.ruoyi.framework.manager.factory;
+package com.scm.framework.manager.factory;
 
 import java.util.TimerTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.ruoyi.common.constant.Constants;
-import com.ruoyi.common.utils.AddressUtils;
-import com.ruoyi.common.utils.LogUtils;
-import com.ruoyi.common.utils.ServletUtils;
-import com.ruoyi.common.utils.ShiroUtils;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.spring.SpringUtils;
-import com.ruoyi.framework.shiro.session.OnlineSession;
-import com.ruoyi.system.domain.SysLogininfor;
-import com.ruoyi.system.domain.SysOperLog;
-import com.ruoyi.system.domain.SysUserOnline;
-import com.ruoyi.system.service.ISysOperLogService;
-import com.ruoyi.system.service.ISysUserOnlineService;
-import com.ruoyi.system.service.impl.SysLogininforServiceImpl;
+import com.scm.common.constant.Constants;
+import com.scm.common.utils.AddressUtils;
+import com.scm.common.utils.LogUtils;
+import com.scm.common.utils.ServletUtils;
+import com.scm.common.utils.ShiroUtils;
+import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.spring.SpringUtils;
+import com.scm.framework.shiro.session.OnlineSession;
+import com.scm.system.domain.SysLogininfor;
+import com.scm.system.domain.SysOperLog;
+import com.scm.system.domain.SysUserOnline;
+import com.scm.system.service.ISysOperLogService;
+import com.scm.system.service.ISysUserOnlineService;
+import com.scm.system.service.impl.SysLogininforServiceImpl;
 import eu.bitwalker.useragentutils.UserAgent;
 
 /**

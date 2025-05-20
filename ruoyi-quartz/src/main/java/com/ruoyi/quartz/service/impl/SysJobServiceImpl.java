@@ -1,4 +1,4 @@
-package com.ruoyi.quartz.service.impl;
+package com.scm.quartz.service.impl;
 
 import java.util.List;
 import javax.annotation.PostConstruct;
@@ -9,19 +9,19 @@ import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.ruoyi.common.constant.ScheduleConstants;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.common.exception.job.TaskException;
-import com.ruoyi.quartz.domain.SysJob;
-import com.ruoyi.quartz.mapper.SysJobMapper;
-import com.ruoyi.quartz.service.ISysJobService;
-import com.ruoyi.quartz.util.CronUtils;
-import com.ruoyi.quartz.util.ScheduleUtils;
+import com.scm.common.constant.ScheduleConstants;
+import com.scm.common.core.text.Convert;
+import com.scm.common.exception.job.TaskException;
+import com.scm.quartz.domain.SysJob;
+import com.scm.quartz.mapper.SysJobMapper;
+import com.scm.quartz.service.ISysJobService;
+import com.scm.quartz.util.CronUtils;
+import com.scm.quartz.util.ScheduleUtils;
 
 /**
  * 定时任务调度信息 服务层
  * 
- * @author ruoyi
+ * @author scm
  */
 @Service
 public class SysJobServiceImpl implements ISysJobService

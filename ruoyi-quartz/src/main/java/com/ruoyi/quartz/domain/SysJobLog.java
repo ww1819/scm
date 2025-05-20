@@ -1,15 +1,15 @@
-package com.ruoyi.quartz.domain;
+package com.scm.quartz.domain;
 
 import java.util.Date;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-import com.ruoyi.common.annotation.Excel;
-import com.ruoyi.common.core.domain.BaseEntity;
+import com.scm.common.annotation.Excel;
+import com.scm.common.core.domain.BaseEntity;
 
 /**
  * 定时任务调度日志表 sys_job_log
  * 
- * @author ruoyi
+ * @author scm
  */
 public class SysJobLog extends BaseEntity
 {

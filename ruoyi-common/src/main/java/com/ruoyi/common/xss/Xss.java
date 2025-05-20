@@ -1,4 +1,4 @@
-package com.ruoyi.common.xss;
+package com.scm.common.xss;
 
 import javax.validation.Constraint;
 import javax.validation.Payload;
@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 /**
  * 自定义xss校验注解
  * 
- * @author ruoyi
+ * @author scm
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(value = { ElementType.METHOD, ElementType.FIELD, ElementType.CONSTRUCTOR, ElementType.PARAMETER })

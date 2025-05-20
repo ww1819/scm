@@ -1,16 +1,16 @@
-package com.ruoyi.framework.shiro.web.filter.sync;
+package com.scm.framework.shiro.web.filter.sync;
 
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import org.apache.shiro.web.filter.PathMatchingFilter;
-import com.ruoyi.common.constant.ShiroConstants;
-import com.ruoyi.framework.shiro.session.OnlineSession;
-import com.ruoyi.framework.shiro.session.OnlineSessionDAO;
+import com.scm.common.constant.ShiroConstants;
+import com.scm.framework.shiro.session.OnlineSession;
+import com.scm.framework.shiro.session.OnlineSessionDAO;
 
 /**
  * 同步Session数据到Db
  * 
- * @author ruoyi
+ * @author scm
  */
 public class SyncOnlineSessionFilter extends PathMatchingFilter
 {

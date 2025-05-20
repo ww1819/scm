@@ -1,12 +1,12 @@
-package com.ruoyi.system.mapper;
+package com.scm.system.mapper;
 
 import java.util.List;
-import com.ruoyi.common.core.domain.entity.SysUser;
+import com.scm.common.core.domain.entity.SysUser;
 
 /**
  * 用户表 数据层
  * 
- * @author ruoyi
+ * @author scm
  */
 public interface SysUserMapper
 {

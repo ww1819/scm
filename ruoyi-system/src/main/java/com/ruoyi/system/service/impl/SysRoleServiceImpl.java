@@ -1,4 +1,4 @@
-package com.ruoyi.system.service.impl;
+package com.scm.system.service.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,28 +8,28 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.ruoyi.common.annotation.DataScope;
-import com.ruoyi.common.constant.UserConstants;
-import com.ruoyi.common.core.domain.entity.SysRole;
-import com.ruoyi.common.core.domain.entity.SysUser;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.common.exception.ServiceException;
-import com.ruoyi.common.utils.ShiroUtils;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.spring.SpringUtils;
-import com.ruoyi.system.domain.SysRoleDept;
-import com.ruoyi.system.domain.SysRoleMenu;
-import com.ruoyi.system.domain.SysUserRole;
-import com.ruoyi.system.mapper.SysRoleDeptMapper;
-import com.ruoyi.system.mapper.SysRoleMapper;
-import com.ruoyi.system.mapper.SysRoleMenuMapper;
-import com.ruoyi.system.mapper.SysUserRoleMapper;
-import com.ruoyi.system.service.ISysRoleService;
+import com.scm.common.annotation.DataScope;
+import com.scm.common.constant.UserConstants;
+import com.scm.common.core.domain.entity.SysRole;
+import com.scm.common.core.domain.entity.SysUser;
+import com.scm.common.core.text.Convert;
+import com.scm.common.exception.ServiceException;
+import com.scm.common.utils.ShiroUtils;
+import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.spring.SpringUtils;
+import com.scm.system.domain.SysRoleDept;
+import com.scm.system.domain.SysRoleMenu;
+import com.scm.system.domain.SysUserRole;
+import com.scm.system.mapper.SysRoleDeptMapper;
+import com.scm.system.mapper.SysRoleMapper;
+import com.scm.system.mapper.SysRoleMenuMapper;
+import com.scm.system.mapper.SysUserRoleMapper;
+import com.scm.system.service.ISysRoleService;
 
 /**
  * 角色 业务层处理
  * 
- * @author ruoyi
+ * @author scm
  */
 @Service
 public class SysRoleServiceImpl implements ISysRoleService

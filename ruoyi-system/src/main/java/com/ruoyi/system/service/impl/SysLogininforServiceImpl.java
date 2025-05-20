@@ -1,17 +1,17 @@
-package com.ruoyi.system.service.impl;
+package com.scm.system.service.impl;
 
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.system.domain.SysLogininfor;
-import com.ruoyi.system.mapper.SysLogininforMapper;
-import com.ruoyi.system.service.ISysLogininforService;
+import com.scm.common.core.text.Convert;
+import com.scm.system.domain.SysLogininfor;
+import com.scm.system.mapper.SysLogininforMapper;
+import com.scm.system.service.ISysLogininforService;
 
 /**
  * 系统访问日志情况信息 服务层处理
  * 
- * @author ruoyi
+ * @author scm
  */
 @Service
 public class SysLogininforServiceImpl implements ISysLogininforService

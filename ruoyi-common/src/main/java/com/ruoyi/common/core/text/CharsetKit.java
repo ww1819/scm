@@ -1,13 +1,13 @@
-package com.ruoyi.common.core.text;
+package com.scm.common.core.text;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import com.ruoyi.common.utils.StringUtils;
+import com.scm.common.utils.StringUtils;
 
 /**
  * 字符集工具类
  * 
- * @author ruoyi
+ * @author scm
  */
 public class CharsetKit
 {

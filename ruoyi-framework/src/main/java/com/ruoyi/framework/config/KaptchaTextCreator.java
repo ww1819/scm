@@ -1,4 +1,4 @@
-package com.ruoyi.framework.config;
+package com.scm.framework.config;
 
 import java.security.SecureRandom;
 import java.util.Random;
@@ -7,7 +7,7 @@ import com.google.code.kaptcha.text.impl.DefaultTextCreator;
 /**
  * 验证码文本生成器
  * 
- * @author ruoyi
+ * @author scm
  */
 public class KaptchaTextCreator extends DefaultTextCreator
 {

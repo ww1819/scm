@@ -1,9 +1,9 @@
-package com.ruoyi.common.enums;
+package com.scm.common.enums;
 
 /**
  * 操作状态
  * 
- * @author ruoyi
+ * @author scm
  */
 public enum BusinessStatus
 {

@@ -1,9 +1,9 @@
-package com.ruoyi.common.exception.user;
+package com.scm.common.exception.user;
 
 /**
  * 用户锁定异常类
  * 
- * @author ruoyi
+ * @author scm
  */
 public class UserBlockedException extends UserException
 {

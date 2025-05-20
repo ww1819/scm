@@ -1,9 +1,9 @@
-package com.ruoyi.common.exception.file;
+package com.scm.common.exception.file;
 
 /**
  * 文件名称超长限制异常类
  * 
- * @author ruoyi
+ * @author scm
  */
 public class FileNameLengthLimitExceededException extends FileException
 {

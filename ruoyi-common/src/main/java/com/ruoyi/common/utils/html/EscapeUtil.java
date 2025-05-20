@@ -1,11 +1,11 @@
-package com.ruoyi.common.utils.html;
+package com.scm.common.utils.html;
 
-import com.ruoyi.common.utils.StringUtils;
+import com.scm.common.utils.StringUtils;
 
 /**
  * 转义和反转义工具类
  * 
- * @author ruoyi
+ * @author scm
  */
 public class EscapeUtil
 {

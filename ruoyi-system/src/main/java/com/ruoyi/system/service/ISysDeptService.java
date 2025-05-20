@@ -1,14 +1,14 @@
-package com.ruoyi.system.service;
+package com.scm.system.service;
 
 import java.util.List;
-import com.ruoyi.common.core.domain.Ztree;
-import com.ruoyi.common.core.domain.entity.SysDept;
-import com.ruoyi.common.core.domain.entity.SysRole;
+import com.scm.common.core.domain.Ztree;
+import com.scm.common.core.domain.entity.SysDept;
+import com.scm.common.core.domain.entity.SysRole;
 
 /**
  * 部门管理 服务层
  * 
- * @author ruoyi
+ * @author scm
  */
 public interface ISysDeptService
 {

@@ -1,21 +1,21 @@
-package com.ruoyi.system.service.impl;
+package com.scm.system.service.impl;
 
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.ruoyi.common.constant.UserConstants;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.common.exception.ServiceException;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.system.domain.SysPost;
-import com.ruoyi.system.mapper.SysPostMapper;
-import com.ruoyi.system.mapper.SysUserPostMapper;
-import com.ruoyi.system.service.ISysPostService;
+import com.scm.common.constant.UserConstants;
+import com.scm.common.core.text.Convert;
+import com.scm.common.exception.ServiceException;
+import com.scm.common.utils.StringUtils;
+import com.scm.system.domain.SysPost;
+import com.scm.system.mapper.SysPostMapper;
+import com.scm.system.mapper.SysUserPostMapper;
+import com.scm.system.service.ISysPostService;
 
 /**
  * 岗位信息 服务层处理
  * 
- * @author ruoyi
+ * @author scm
  */
 @Service
 public class SysPostServiceImpl implements ISysPostService

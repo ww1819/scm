@@ -1,12 +1,12 @@
-package com.ruoyi.system.service;
+package com.scm.system.service;
 
 import java.util.List;
-import com.ruoyi.common.core.domain.entity.SysDictData;
+import com.scm.common.core.domain.entity.SysDictData;
 
 /**
  * 字典 业务层
  * 
- * @author ruoyi
+ * @author scm
  */
 public interface ISysDictDataService
 {

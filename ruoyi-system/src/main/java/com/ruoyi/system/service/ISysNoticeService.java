@@ -1,12 +1,12 @@
-package com.ruoyi.system.service;
+package com.scm.system.service;
 
 import java.util.List;
-import com.ruoyi.system.domain.SysNotice;
+import com.scm.system.domain.SysNotice;
 
 /**
  * 公告 服务层
  * 
- * @author ruoyi
+ * @author scm
  */
 public interface ISysNoticeService
 {

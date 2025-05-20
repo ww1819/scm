@@ -1,21 +1,21 @@
-package com.ruoyi.quartz.domain;
+package com.scm.quartz.domain;
 
 import java.io.Serializable;
 import java.util.Date;
 import javax.validation.constraints.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-import com.ruoyi.common.annotation.Excel;
-import com.ruoyi.common.annotation.Excel.ColumnType;
-import com.ruoyi.common.constant.ScheduleConstants;
-import com.ruoyi.common.core.domain.BaseEntity;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.quartz.util.CronUtils;
+import com.scm.common.annotation.Excel;
+import com.scm.common.annotation.Excel.ColumnType;
+import com.scm.common.constant.ScheduleConstants;
+import com.scm.common.core.domain.BaseEntity;
+import com.scm.common.utils.StringUtils;
+import com.scm.quartz.util.CronUtils;
 
 /**
  * 定时任务调度表 sys_job
  * 
- * @author ruoyi
+ * @author scm
  */
 public class SysJob extends BaseEntity implements Serializable
 {

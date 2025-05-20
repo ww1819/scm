@@ -1,4 +1,4 @@
-package com.ruoyi.common.utils;
+package com.scm.common.utils;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * Map通用处理方法
  * 
- * @author ruoyi
+ * @author scm
  */
 public class MapDataUtil
 {

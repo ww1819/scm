@@ -1,9 +1,9 @@
-package com.ruoyi.common.exception;
+package com.scm.common.exception;
 
 /**
  * 工具类异常
  * 
- * @author ruoyi
+ * @author scm
  */
 public class UtilException extends RuntimeException
 {

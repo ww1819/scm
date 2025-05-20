@@ -1,12 +1,12 @@
-package com.ruoyi.common.exception.base;
+package com.scm.common.exception.base;
 
-import com.ruoyi.common.utils.MessageUtils;
-import com.ruoyi.common.utils.StringUtils;
+import com.scm.common.utils.MessageUtils;
+import com.scm.common.utils.StringUtils;
 
 /**
  * 基础异常
  * 
- * @author ruoyi
+ * @author scm
  */
 public class BaseException extends RuntimeException
 {

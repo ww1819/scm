@@ -1,4 +1,4 @@
-package com.ruoyi.web.controller.demo.domain;
+package com.scm.web.controller.demo.domain;
 
 import java.util.Date;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -7,7 +7,7 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 /**
  * 商品测试信息
  * 
- * @author ruoyi
+ * @author scm
  */
 public class GoodsModel
 {

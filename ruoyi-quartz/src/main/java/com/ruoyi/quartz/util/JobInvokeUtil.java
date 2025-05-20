@@ -1,17 +1,17 @@
-package com.ruoyi.quartz.util;
+package com.scm.quartz.util;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.List;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.spring.SpringUtils;
-import com.ruoyi.quartz.domain.SysJob;
+import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.spring.SpringUtils;
+import com.scm.quartz.domain.SysJob;
 
 /**
  * 任务执行工具
  *
- * @author ruoyi
+ * @author scm
  */
 public class JobInvokeUtil
 {

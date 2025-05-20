@@ -1,14 +1,14 @@
-package com.ruoyi.system.service;
+package com.scm.system.service;
 
 import java.util.List;
 import java.util.Set;
-import com.ruoyi.common.core.domain.entity.SysRole;
-import com.ruoyi.system.domain.SysUserRole;
+import com.scm.common.core.domain.entity.SysRole;
+import com.scm.system.domain.SysUserRole;
 
 /**
  * 角色业务层
  * 
- * @author ruoyi
+ * @author scm
  */
 public interface ISysRoleService
 {

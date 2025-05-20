@@ -1,4 +1,4 @@
-package com.ruoyi.framework.shiro.web.filter.csrf;
+package com.scm.framework.shiro.web.filter.csrf;
 
 import java.util.List;
 import javax.servlet.ServletRequest;
@@ -6,16 +6,16 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.web.filter.AccessControlFilter;
-import com.ruoyi.common.constant.ShiroConstants;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.common.utils.ServletUtils;
-import com.ruoyi.common.utils.ShiroUtils;
-import com.ruoyi.common.utils.StringUtils;
+import com.scm.common.constant.ShiroConstants;
+import com.scm.common.core.text.Convert;
+import com.scm.common.utils.ServletUtils;
+import com.scm.common.utils.ShiroUtils;
+import com.scm.common.utils.StringUtils;
 
 /**
  * csrf过滤器
  * 
- * @author ruoyi
+ * @author scm
  */
 public class CsrfValidateFilter extends AccessControlFilter
 {

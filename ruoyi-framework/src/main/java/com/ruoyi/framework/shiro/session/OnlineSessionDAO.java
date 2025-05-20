@@ -1,4 +1,4 @@
-package com.ruoyi.framework.shiro.session;
+package com.scm.framework.shiro.session;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -7,15 +7,15 @@ import org.apache.shiro.session.UnknownSessionException;
 import org.apache.shiro.session.mgt.eis.EnterpriseCacheSessionDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import com.ruoyi.common.enums.OnlineStatus;
-import com.ruoyi.framework.manager.AsyncManager;
-import com.ruoyi.framework.manager.factory.AsyncFactory;
-import com.ruoyi.framework.shiro.service.SysShiroService;
+import com.scm.common.enums.OnlineStatus;
+import com.scm.framework.manager.AsyncManager;
+import com.scm.framework.manager.factory.AsyncFactory;
+import com.scm.framework.shiro.service.SysShiroService;
 
 /**
  * 针对自定义的ShiroSession的db操作
  * 
- * @author ruoyi
+ * @author scm
  */
 public class OnlineSessionDAO extends EnterpriseCacheSessionDAO
 {

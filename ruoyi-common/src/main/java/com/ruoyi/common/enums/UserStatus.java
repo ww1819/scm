@@ -1,9 +1,9 @@
-package com.ruoyi.common.enums;
+package com.scm.common.enums;
 
 /**
  * 用户状态
  * 
- * @author ruoyi
+ * @author scm
  */
 public enum UserStatus
 {

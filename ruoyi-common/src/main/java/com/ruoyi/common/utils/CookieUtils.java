@@ -1,4 +1,4 @@
-package com.ruoyi.common.utils;
+package com.scm.common.utils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * Cookie工具类
  * 
- * @author ruoyi
+ * @author scm
  */
 public class CookieUtils
 {

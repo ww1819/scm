@@ -1,4 +1,4 @@
-package com.ruoyi.web.controller.demo.controller;
+package com.scm.web.controller.demo.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 /**
  * 模态窗口
  * 
- * @author ruoyi
+ * @author scm
  */
 @Controller
 @RequestMapping("/demo/modal")

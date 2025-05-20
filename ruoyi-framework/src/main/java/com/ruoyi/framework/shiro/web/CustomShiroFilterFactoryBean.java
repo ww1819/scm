@@ -1,4 +1,4 @@
-package com.ruoyi.framework.shiro.web;
+package com.scm.framework.shiro.web;
 
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.filter.InvalidRequestFilter;
@@ -16,7 +16,7 @@ import java.util.Map;
 /**
  * 自定义ShiroFilterFactoryBean解决资源中文路径问题
  * 
- * @author ruoyi
+ * @author scm
  */
 public class CustomShiroFilterFactoryBean extends ShiroFilterFactoryBean
 {

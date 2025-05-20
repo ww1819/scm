@@ -1,4 +1,4 @@
-package com.ruoyi.common.utils;
+package com.scm.common.utils;
 
 import java.util.Iterator;
 import java.util.Set;
@@ -7,12 +7,12 @@ import org.apache.shiro.cache.CacheManager;
 import org.apache.shiro.cache.ehcache.EhCacheManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.ruoyi.common.utils.spring.SpringUtils;
+import com.scm.common.utils.spring.SpringUtils;
 
 /**
  * Cache工具类
  * 
- * @author ruoyi
+ * @author scm
  */
 public class CacheUtils
 {

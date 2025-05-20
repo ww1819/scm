@@ -1,16 +1,16 @@
-package com.ruoyi.common.utils;
+package com.scm.common.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.alibaba.fastjson.JSONObject;
-import com.ruoyi.common.config.RuoYiConfig;
-import com.ruoyi.common.constant.Constants;
-import com.ruoyi.common.utils.http.HttpUtils;
+import com.scm.common.config.RuoYiConfig;
+import com.scm.common.constant.Constants;
+import com.scm.common.utils.http.HttpUtils;
 
 /**
  * 获取地址类
  * 
- * @author ruoyi
+ * @author scm
  */
 public class AddressUtils
 {

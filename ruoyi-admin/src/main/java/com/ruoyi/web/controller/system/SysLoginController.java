@@ -1,4 +1,4 @@
-package com.ruoyi.web.controller.system;
+package com.scm.web.controller.system;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -13,17 +13,17 @@ import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
-import com.ruoyi.common.core.controller.BaseController;
-import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.common.utils.ServletUtils;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.framework.web.service.ConfigService;
+import com.scm.common.core.controller.BaseController;
+import com.scm.common.core.domain.AjaxResult;
+import com.scm.common.core.text.Convert;
+import com.scm.common.utils.ServletUtils;
+import com.scm.common.utils.StringUtils;
+import com.scm.framework.web.service.ConfigService;
 
 /**
  * 登录验证
  * 
- * @author ruoyi
+ * @author scm
  */
 @Controller
 public class SysLoginController extends BaseController

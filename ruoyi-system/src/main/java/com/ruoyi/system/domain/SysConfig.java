@@ -1,16 +1,16 @@
-package com.ruoyi.system.domain;
+package com.scm.system.domain;
 
 import javax.validation.constraints.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-import com.ruoyi.common.annotation.Excel;
-import com.ruoyi.common.annotation.Excel.ColumnType;
-import com.ruoyi.common.core.domain.BaseEntity;
+import com.scm.common.annotation.Excel;
+import com.scm.common.annotation.Excel.ColumnType;
+import com.scm.common.core.domain.BaseEntity;
 
 /**
  * 参数配置表 sys_config
  * 
- * @author ruoyi
+ * @author scm
  */
 public class SysConfig extends BaseEntity
 {

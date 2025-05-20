@@ -1,14 +1,14 @@
-package com.ruoyi.framework.shiro.session;
+package com.scm.framework.shiro.session;
 
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.apache.shiro.session.mgt.SimpleSession;
-import com.ruoyi.common.enums.OnlineStatus;
+import com.scm.common.enums.OnlineStatus;
 
 /**
  * 在线用户会话属性
  * 
- * @author ruoyi
+ * @author scm
  */
 public class OnlineSession extends SimpleSession
 {

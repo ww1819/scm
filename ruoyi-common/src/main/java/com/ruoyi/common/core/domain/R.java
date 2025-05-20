@@ -1,11 +1,11 @@
-package com.ruoyi.common.core.domain;
+package com.scm.common.core.domain;
 
 import java.io.Serializable;
 
 /**
  * 响应信息主体
  *
- * @author ruoyi
+ * @author scm
  */
 public class R<T> implements Serializable
 {

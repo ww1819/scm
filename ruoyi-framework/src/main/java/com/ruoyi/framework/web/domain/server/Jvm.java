@@ -1,13 +1,13 @@
-package com.ruoyi.framework.web.domain.server;
+package com.scm.framework.web.domain.server;
 
 import java.lang.management.ManagementFactory;
-import com.ruoyi.common.utils.Arith;
-import com.ruoyi.common.utils.DateUtils;
+import com.scm.common.utils.Arith;
+import com.scm.common.utils.DateUtils;
 
 /**
  * JVM相关信息
  * 
- * @author ruoyi
+ * @author scm
  */
 public class Jvm
 {

@@ -1,37 +1,37 @@
-package com.ruoyi.framework.shiro.service;
+package com.scm.framework.shiro.service;
 
 import java.util.List;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import com.ruoyi.common.constant.Constants;
-import com.ruoyi.common.constant.ShiroConstants;
-import com.ruoyi.common.constant.UserConstants;
-import com.ruoyi.common.core.domain.entity.SysRole;
-import com.ruoyi.common.core.domain.entity.SysUser;
-import com.ruoyi.common.enums.UserStatus;
-import com.ruoyi.common.exception.user.BlackListException;
-import com.ruoyi.common.exception.user.CaptchaException;
-import com.ruoyi.common.exception.user.UserBlockedException;
-import com.ruoyi.common.exception.user.UserDeleteException;
-import com.ruoyi.common.exception.user.UserNotExistsException;
-import com.ruoyi.common.exception.user.UserPasswordNotMatchException;
-import com.ruoyi.common.utils.DateUtils;
-import com.ruoyi.common.utils.IpUtils;
-import com.ruoyi.common.utils.MessageUtils;
-import com.ruoyi.common.utils.ServletUtils;
-import com.ruoyi.common.utils.ShiroUtils;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.framework.manager.AsyncManager;
-import com.ruoyi.framework.manager.factory.AsyncFactory;
-import com.ruoyi.system.service.ISysConfigService;
-import com.ruoyi.system.service.ISysMenuService;
-import com.ruoyi.system.service.ISysUserService;
+import com.scm.common.constant.Constants;
+import com.scm.common.constant.ShiroConstants;
+import com.scm.common.constant.UserConstants;
+import com.scm.common.core.domain.entity.SysRole;
+import com.scm.common.core.domain.entity.SysUser;
+import com.scm.common.enums.UserStatus;
+import com.scm.common.exception.user.BlackListException;
+import com.scm.common.exception.user.CaptchaException;
+import com.scm.common.exception.user.UserBlockedException;
+import com.scm.common.exception.user.UserDeleteException;
+import com.scm.common.exception.user.UserNotExistsException;
+import com.scm.common.exception.user.UserPasswordNotMatchException;
+import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.IpUtils;
+import com.scm.common.utils.MessageUtils;
+import com.scm.common.utils.ServletUtils;
+import com.scm.common.utils.ShiroUtils;
+import com.scm.common.utils.StringUtils;
+import com.scm.framework.manager.AsyncManager;
+import com.scm.framework.manager.factory.AsyncFactory;
+import com.scm.system.service.ISysConfigService;
+import com.scm.system.service.ISysMenuService;
+import com.scm.system.service.ISysUserService;
 
 /**
  * 登录校验方法
  * 
- * @author ruoyi
+ * @author scm
  */
 @Component
 public class SysLoginService

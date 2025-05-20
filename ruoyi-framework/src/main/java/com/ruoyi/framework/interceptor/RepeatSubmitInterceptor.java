@@ -1,4 +1,4 @@
-package com.ruoyi.framework.interceptor;
+package com.scm.framework.interceptor;
 
 import java.lang.reflect.Method;
 import javax.servlet.http.HttpServletRequest;
@@ -6,15 +6,15 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
-import com.ruoyi.common.json.JSON;
-import com.ruoyi.common.annotation.RepeatSubmit;
-import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.common.utils.ServletUtils;
+import com.scm.common.json.JSON;
+import com.scm.common.annotation.RepeatSubmit;
+import com.scm.common.core.domain.AjaxResult;
+import com.scm.common.utils.ServletUtils;
 
 /**
  * 防止重复提交拦截器
  *
- * @author ruoyi
+ * @author scm
  */
 @Component
 public abstract class RepeatSubmitInterceptor implements HandlerInterceptor

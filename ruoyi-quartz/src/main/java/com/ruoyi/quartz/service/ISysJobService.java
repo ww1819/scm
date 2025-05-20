@@ -1,14 +1,14 @@
-package com.ruoyi.quartz.service;
+package com.scm.quartz.service;
 
 import java.util.List;
 import org.quartz.SchedulerException;
-import com.ruoyi.common.exception.job.TaskException;
-import com.ruoyi.quartz.domain.SysJob;
+import com.scm.common.exception.job.TaskException;
+import com.scm.quartz.domain.SysJob;
 
 /**
  * 定时任务调度信息信息 服务层
  * 
- * @author ruoyi
+ * @author scm
  */
 public interface ISysJobService
 {

@@ -1,4 +1,4 @@
-package com.ruoyi.common.core.domain;
+package com.scm.common.core.domain;
 
 import java.io.Serializable;
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * CxSelect树结构实体类
  * 
- * @author ruoyi
+ * @author scm
  */
 public class CxSelect implements Serializable
 {

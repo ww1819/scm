@@ -1,17 +1,17 @@
-package com.ruoyi.system.service;
+package com.scm.system.service;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import com.ruoyi.common.core.domain.Ztree;
-import com.ruoyi.common.core.domain.entity.SysMenu;
-import com.ruoyi.common.core.domain.entity.SysRole;
-import com.ruoyi.common.core.domain.entity.SysUser;
+import com.scm.common.core.domain.Ztree;
+import com.scm.common.core.domain.entity.SysMenu;
+import com.scm.common.core.domain.entity.SysRole;
+import com.scm.common.core.domain.entity.SysUser;
 
 /**
  * 菜单 业务层
  * 
- * @author ruoyi
+ * @author scm
  */
 public interface ISysMenuService
 {

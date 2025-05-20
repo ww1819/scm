@@ -1,12 +1,12 @@
-package com.ruoyi.system.mapper;
+package com.scm.system.mapper;
 
 import java.util.List;
-import com.ruoyi.system.domain.SysUserPost;
+import com.scm.system.domain.SysUserPost;
 
 /**
  * 用户与岗位关联表 数据层
  * 
- * @author ruoyi
+ * @author scm
  */
 public interface SysUserPostMapper
 {

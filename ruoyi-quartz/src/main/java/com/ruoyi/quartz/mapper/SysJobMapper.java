@@ -1,12 +1,12 @@
-package com.ruoyi.quartz.mapper;
+package com.scm.quartz.mapper;
 
-import com.ruoyi.quartz.domain.SysJob;
+import com.scm.quartz.domain.SysJob;
 import java.util.List;
 
 /**
  * 调度任务信息 数据层
  * 
- * @author ruoyi
+ * @author scm
  */
 public interface SysJobMapper
 {

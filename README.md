@@ -19,7 +19,7 @@
 
 * 前端基于 [Hplus(H+)](https://gitee.com/hplus_admin/hplus) 后台主题 UI 框架。
 * 前后端分离版本，请移步[RuoYi-Vue](https://gitee.com/y_project/RuoYi-Vue)，微服务版本，请移步[RuoYi-Cloud](https://gitee.com/y_project/RuoYi-Cloud)
-* 阿里云折扣场：[点我进入](http://aly.ruoyi.vip)，腾讯云秒杀场：[点我进入](http://txy.ruoyi.vip)&nbsp;&nbsp;
+* 阿里云折扣场：[点我进入](http://aly.scm.vip)，腾讯云秒杀场：[点我进入](http://txy.scm.vip)&nbsp;&nbsp;
 
 ## 内置功能
 
@@ -47,8 +47,8 @@
 - admin/admin123  
 - 陆陆续续收到一些打赏，为了更好的体验已用于演示服务器升级。谢谢各位小伙伴。
 
-演示地址：http://ruoyi.vip  
-文档地址：http://doc.ruoyi.vip
+演示地址：http://scm.vip  
+文档地址：http://doc.scm.vip
 
 ## 演示图
 

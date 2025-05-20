@@ -1,13 +1,13 @@
-package com.ruoyi.generator.service;
+package com.scm.generator.service;
 
 import java.util.List;
 import java.util.Map;
-import com.ruoyi.generator.domain.GenTable;
+import com.scm.generator.domain.GenTable;
 
 /**
  * 业务 服务层
  * 
- * @author ruoyi
+ * @author scm
  */
 public interface IGenTableService
 {

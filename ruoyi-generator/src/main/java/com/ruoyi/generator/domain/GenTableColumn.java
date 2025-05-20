@@ -1,13 +1,13 @@
-package com.ruoyi.generator.domain;
+package com.scm.generator.domain;
 
 import javax.validation.constraints.NotBlank;
-import com.ruoyi.common.core.domain.BaseEntity;
-import com.ruoyi.common.utils.StringUtils;
+import com.scm.common.core.domain.BaseEntity;
+import com.scm.common.utils.StringUtils;
 
 /**
  * 代码生成业务字段表 gen_table_column
  * 
- * @author ruoyi
+ * @author scm
  */
 public class GenTableColumn extends BaseEntity
 {

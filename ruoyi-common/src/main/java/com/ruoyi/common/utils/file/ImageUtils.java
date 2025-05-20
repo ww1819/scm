@@ -1,4 +1,4 @@
-package com.ruoyi.common.utils.file;
+package com.scm.common.utils.file;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
@@ -9,14 +9,14 @@ import java.util.Arrays;
 import org.apache.poi.util.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.ruoyi.common.config.RuoYiConfig;
-import com.ruoyi.common.constant.Constants;
-import com.ruoyi.common.utils.StringUtils;
+import com.scm.common.config.RuoYiConfig;
+import com.scm.common.constant.Constants;
+import com.scm.common.utils.StringUtils;
 
 /**
  * 图片处理工具类
  *
- * @author ruoyi
+ * @author scm
  */
 public class ImageUtils
 {

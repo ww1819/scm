@@ -1,4 +1,4 @@
-package com.ruoyi.web.controller.system;
+package com.scm.web.controller.system;
 
 import java.util.List;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -12,21 +12,21 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import com.ruoyi.common.annotation.Log;
-import com.ruoyi.common.core.controller.BaseController;
-import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.common.core.domain.Ztree;
-import com.ruoyi.common.core.domain.entity.SysMenu;
-import com.ruoyi.common.core.domain.entity.SysRole;
-import com.ruoyi.common.enums.BusinessType;
-import com.ruoyi.common.utils.ShiroUtils;
-import com.ruoyi.framework.shiro.util.AuthorizationUtils;
-import com.ruoyi.system.service.ISysMenuService;
+import com.scm.common.annotation.Log;
+import com.scm.common.core.controller.BaseController;
+import com.scm.common.core.domain.AjaxResult;
+import com.scm.common.core.domain.Ztree;
+import com.scm.common.core.domain.entity.SysMenu;
+import com.scm.common.core.domain.entity.SysRole;
+import com.scm.common.enums.BusinessType;
+import com.scm.common.utils.ShiroUtils;
+import com.scm.framework.shiro.util.AuthorizationUtils;
+import com.scm.system.service.ISysMenuService;
 
 /**
  * 菜单信息
  * 
- * @author ruoyi
+ * @author scm
  */
 @Controller
 @RequestMapping("/system/menu")

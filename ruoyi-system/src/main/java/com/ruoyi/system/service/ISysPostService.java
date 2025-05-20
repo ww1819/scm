@@ -1,12 +1,12 @@
-package com.ruoyi.system.service;
+package com.scm.system.service;
 
 import java.util.List;
-import com.ruoyi.system.domain.SysPost;
+import com.scm.system.domain.SysPost;
 
 /**
  * 岗位信息 服务层
  * 
- * @author ruoyi
+ * @author scm
  */
 public interface ISysPostService
 {

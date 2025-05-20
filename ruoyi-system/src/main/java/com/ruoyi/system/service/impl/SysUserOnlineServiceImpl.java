@@ -1,25 +1,25 @@
-package com.ruoyi.system.service.impl;
+package com.scm.system.service.impl;
 
 import java.io.Serializable;
 import java.util.Date;
 import java.util.Deque;
 import java.util.List;
-import com.ruoyi.common.utils.spring.SpringUtils;
+import com.scm.common.utils.spring.SpringUtils;
 import org.apache.shiro.cache.Cache;
 import org.apache.shiro.cache.ehcache.EhCacheManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.ruoyi.common.constant.ShiroConstants;
-import com.ruoyi.common.utils.DateUtils;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.system.domain.SysUserOnline;
-import com.ruoyi.system.mapper.SysUserOnlineMapper;
-import com.ruoyi.system.service.ISysUserOnlineService;
+import com.scm.common.constant.ShiroConstants;
+import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.StringUtils;
+import com.scm.system.domain.SysUserOnline;
+import com.scm.system.mapper.SysUserOnlineMapper;
+import com.scm.system.service.ISysUserOnlineService;
 
 /**
  * 在线用户 服务层处理
  * 
- * @author ruoyi
+ * @author scm
  */
 @Service
 public class SysUserOnlineServiceImpl implements ISysUserOnlineService

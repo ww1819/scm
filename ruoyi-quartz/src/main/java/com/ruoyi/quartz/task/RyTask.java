@@ -1,12 +1,12 @@
-package com.ruoyi.quartz.task;
+package com.scm.quartz.task;
 
 import org.springframework.stereotype.Component;
-import com.ruoyi.common.utils.StringUtils;
+import com.scm.common.utils.StringUtils;
 
 /**
  * 定时任务调度测试
  * 
- * @author ruoyi
+ * @author scm
  */
 @Component("ryTask")
 public class RyTask

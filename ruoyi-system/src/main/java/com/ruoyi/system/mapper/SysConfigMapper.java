@@ -1,12 +1,12 @@
-package com.ruoyi.system.mapper;
+package com.scm.system.mapper;
 
 import java.util.List;
-import com.ruoyi.system.domain.SysConfig;
+import com.scm.system.domain.SysConfig;
 
 /**
  * 参数配置 数据层
  * 
- * @author ruoyi
+ * @author scm
  */
 public interface SysConfigMapper
 {

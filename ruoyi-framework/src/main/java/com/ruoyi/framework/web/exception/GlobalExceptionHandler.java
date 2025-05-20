@@ -1,4 +1,4 @@
-package com.ruoyi.framework.web.exception;
+package com.scm.framework.web.exception;
 
 import javax.servlet.http.HttpServletRequest;
 import org.apache.shiro.authz.AuthorizationException;
@@ -11,19 +11,19 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.ModelAndView;
-import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.common.exception.DemoModeException;
-import com.ruoyi.common.exception.ServiceException;
-import com.ruoyi.common.utils.ServletUtils;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.html.EscapeUtil;
-import com.ruoyi.common.utils.security.PermissionUtils;
+import com.scm.common.core.domain.AjaxResult;
+import com.scm.common.core.text.Convert;
+import com.scm.common.exception.DemoModeException;
+import com.scm.common.exception.ServiceException;
+import com.scm.common.utils.ServletUtils;
+import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.html.EscapeUtil;
+import com.scm.common.utils.security.PermissionUtils;
 
 /**
  * 全局异常处理器
  * 
- * @author ruoyi
+ * @author scm
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler

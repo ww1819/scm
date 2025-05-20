@@ -1,4 +1,4 @@
-package com.ruoyi.framework.aspectj;
+package com.scm.framework.aspectj;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,20 +6,20 @@ import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.stereotype.Component;
-import com.ruoyi.common.annotation.DataScope;
-import com.ruoyi.common.constant.UserConstants;
-import com.ruoyi.common.core.context.PermissionContextHolder;
-import com.ruoyi.common.core.domain.BaseEntity;
-import com.ruoyi.common.core.domain.entity.SysRole;
-import com.ruoyi.common.core.domain.entity.SysUser;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.common.utils.ShiroUtils;
-import com.ruoyi.common.utils.StringUtils;
+import com.scm.common.annotation.DataScope;
+import com.scm.common.constant.UserConstants;
+import com.scm.common.core.context.PermissionContextHolder;
+import com.scm.common.core.domain.BaseEntity;
+import com.scm.common.core.domain.entity.SysRole;
+import com.scm.common.core.domain.entity.SysUser;
+import com.scm.common.core.text.Convert;
+import com.scm.common.utils.ShiroUtils;
+import com.scm.common.utils.StringUtils;
 
 /**
  * 数据过滤处理
  * 
- * @author ruoyi
+ * @author scm
  */
 @Aspect
 @Component

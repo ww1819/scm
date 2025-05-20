@@ -1,10 +1,10 @@
-package com.ruoyi.web.controller.demo.domain;
+package com.scm.web.controller.demo.domain;
 
 import java.util.Date;
-import com.ruoyi.common.annotation.Excel;
-import com.ruoyi.common.annotation.Excel.Type;
-import com.ruoyi.common.core.domain.BaseEntity;
-import com.ruoyi.common.utils.DateUtils;
+import com.scm.common.annotation.Excel;
+import com.scm.common.annotation.Excel.Type;
+import com.scm.common.core.domain.BaseEntity;
+import com.scm.common.utils.DateUtils;
 
 public class UserOperateModel extends BaseEntity
 {

@@ -1,4 +1,4 @@
-package com.ruoyi.web.controller.demo.controller;
+package com.scm.web.controller.demo.controller;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,23 +12,23 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.ruoyi.common.annotation.Excel;
-import com.ruoyi.common.annotation.Excel.ColumnType;
-import com.ruoyi.common.core.controller.BaseController;
-import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.common.core.domain.BaseEntity;
-import com.ruoyi.common.core.page.PageDomain;
-import com.ruoyi.common.core.page.TableDataInfo;
-import com.ruoyi.common.core.page.TableSupport;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.common.utils.DateUtils;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.poi.ExcelUtil;
+import com.scm.common.annotation.Excel;
+import com.scm.common.annotation.Excel.ColumnType;
+import com.scm.common.core.controller.BaseController;
+import com.scm.common.core.domain.AjaxResult;
+import com.scm.common.core.domain.BaseEntity;
+import com.scm.common.core.page.PageDomain;
+import com.scm.common.core.page.TableDataInfo;
+import com.scm.common.core.page.TableSupport;
+import com.scm.common.core.text.Convert;
+import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.poi.ExcelUtil;
 
 /**
  * 表格相关
  * 
- * @author ruoyi
+ * @author scm
  */
 @Controller
 @RequestMapping("/demo/table")

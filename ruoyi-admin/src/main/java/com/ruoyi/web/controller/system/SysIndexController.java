@@ -1,4 +1,4 @@
-package com.ruoyi.web.controller.system;
+package com.scm.web.controller.system;
 
 import java.util.Date;
 import java.util.List;
@@ -12,25 +12,25 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
-import com.ruoyi.common.config.RuoYiConfig;
-import com.ruoyi.common.constant.ShiroConstants;
-import com.ruoyi.common.core.controller.BaseController;
-import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.common.core.domain.entity.SysMenu;
-import com.ruoyi.common.core.domain.entity.SysUser;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.common.utils.CookieUtils;
-import com.ruoyi.common.utils.DateUtils;
-import com.ruoyi.common.utils.ServletUtils;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.framework.shiro.service.SysPasswordService;
-import com.ruoyi.system.service.ISysConfigService;
-import com.ruoyi.system.service.ISysMenuService;
+import com.scm.common.config.RuoYiConfig;
+import com.scm.common.constant.ShiroConstants;
+import com.scm.common.core.controller.BaseController;
+import com.scm.common.core.domain.AjaxResult;
+import com.scm.common.core.domain.entity.SysMenu;
+import com.scm.common.core.domain.entity.SysUser;
+import com.scm.common.core.text.Convert;
+import com.scm.common.utils.CookieUtils;
+import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.ServletUtils;
+import com.scm.common.utils.StringUtils;
+import com.scm.framework.shiro.service.SysPasswordService;
+import com.scm.system.service.ISysConfigService;
+import com.scm.system.service.ISysMenuService;
 
 /**
  * 首页 业务处理
  * 
- * @author ruoyi
+ * @author scm
  */
 @Controller
 public class SysIndexController extends BaseController

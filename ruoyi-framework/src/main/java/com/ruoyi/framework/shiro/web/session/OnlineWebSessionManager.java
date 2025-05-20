@@ -1,4 +1,4 @@
-package com.ruoyi.framework.shiro.web.session;
+package com.scm.framework.shiro.web.session;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,18 +13,18 @@ import org.apache.shiro.session.mgt.SessionKey;
 import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.ruoyi.common.constant.ShiroConstants;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.bean.BeanUtils;
-import com.ruoyi.common.utils.spring.SpringUtils;
-import com.ruoyi.framework.shiro.session.OnlineSession;
-import com.ruoyi.system.domain.SysUserOnline;
-import com.ruoyi.system.service.ISysUserOnlineService;
+import com.scm.common.constant.ShiroConstants;
+import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.bean.BeanUtils;
+import com.scm.common.utils.spring.SpringUtils;
+import com.scm.framework.shiro.session.OnlineSession;
+import com.scm.system.domain.SysUserOnline;
+import com.scm.system.service.ISysUserOnlineService;
 
 /**
  * 主要是在此如果会话的属性修改了 就标识下其修改了 然后方便 OnlineSessionDao同步
  * 
- * @author ruoyi
+ * @author scm
  */
 public class OnlineWebSessionManager extends DefaultWebSessionManager
 {

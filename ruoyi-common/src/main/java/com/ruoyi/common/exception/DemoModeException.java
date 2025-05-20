@@ -1,9 +1,9 @@
-package com.ruoyi.common.exception;
+package com.scm.common.exception;
 
 /**
  * 演示模式异常
  * 
- * @author ruoyi
+ * @author scm
  */
 public class DemoModeException extends RuntimeException
 {

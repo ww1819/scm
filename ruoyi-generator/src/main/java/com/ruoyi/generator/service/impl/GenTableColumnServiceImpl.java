@@ -1,17 +1,17 @@
-package com.ruoyi.generator.service.impl;
+package com.scm.generator.service.impl;
 
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.generator.domain.GenTableColumn;
-import com.ruoyi.generator.mapper.GenTableColumnMapper;
-import com.ruoyi.generator.service.IGenTableColumnService;
+import com.scm.common.core.text.Convert;
+import com.scm.generator.domain.GenTableColumn;
+import com.scm.generator.mapper.GenTableColumnMapper;
+import com.scm.generator.service.IGenTableColumnService;
 
 /**
  * 业务字段 服务层实现
  * 
- * @author ruoyi
+ * @author scm
  */
 @Service
 public class GenTableColumnServiceImpl implements IGenTableColumnService

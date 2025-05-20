@@ -1,4 +1,4 @@
-package com.ruoyi.framework.shiro.rememberMe;
+package com.scm.framework.shiro.rememberMe;
 
 import java.util.HashMap;
 import java.util.List;
@@ -8,15 +8,15 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.subject.SubjectContext;
 import org.apache.shiro.web.mgt.CookieRememberMeManager;
-import com.ruoyi.common.core.domain.entity.SysRole;
-import com.ruoyi.common.core.domain.entity.SysUser;
-import com.ruoyi.common.utils.spring.SpringUtils;
-import com.ruoyi.framework.shiro.service.SysLoginService;
+import com.scm.common.core.domain.entity.SysRole;
+import com.scm.common.core.domain.entity.SysUser;
+import com.scm.common.utils.spring.SpringUtils;
+import com.scm.framework.shiro.service.SysLoginService;
 
 /**
  * 自定义CookieRememberMeManager
  *
- * @author ruoyi
+ * @author scm
  */
 public class CustomCookieRememberMeManager extends CookieRememberMeManager
 {

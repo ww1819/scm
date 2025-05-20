@@ -1,4 +1,4 @@
-package com.ruoyi.quartz.util;
+package com.scm.quartz.util;
 
 import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
@@ -10,18 +10,18 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.TriggerBuilder;
 import org.quartz.TriggerKey;
-import com.ruoyi.common.constant.Constants;
-import com.ruoyi.common.constant.ScheduleConstants;
-import com.ruoyi.common.exception.job.TaskException;
-import com.ruoyi.common.exception.job.TaskException.Code;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.spring.SpringUtils;
-import com.ruoyi.quartz.domain.SysJob;
+import com.scm.common.constant.Constants;
+import com.scm.common.constant.ScheduleConstants;
+import com.scm.common.exception.job.TaskException;
+import com.scm.common.exception.job.TaskException.Code;
+import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.spring.SpringUtils;
+import com.scm.quartz.domain.SysJob;
 
 /**
  * 定时任务工具类
  * 
- * @author ruoyi
+ * @author scm
  *
  */
 public class ScheduleUtils

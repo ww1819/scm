@@ -1,4 +1,4 @@
-package com.ruoyi.common.core.domain.entity;
+package com.scm.common.core.domain.entity;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
@@ -7,12 +7,12 @@ import javax.validation.constraints.Size;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.ruoyi.common.core.domain.BaseEntity;
+import com.scm.common.core.domain.BaseEntity;
 
 /**
  * 部门表 sys_dept
  * 
- * @author ruoyi
+ * @author scm
  */
 public class SysDept extends BaseEntity
 {

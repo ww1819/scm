@@ -1,7 +1,7 @@
-package com.ruoyi.web.controller.monitor;
+package com.scm.web.controller.monitor;
 
 import java.util.List;
-import com.ruoyi.framework.shiro.service.SysPasswordService;
+import com.scm.framework.shiro.service.SysPasswordService;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -9,19 +9,19 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
-import com.ruoyi.common.annotation.Log;
-import com.ruoyi.common.core.controller.BaseController;
-import com.ruoyi.common.core.domain.AjaxResult;
-import com.ruoyi.common.core.page.TableDataInfo;
-import com.ruoyi.common.enums.BusinessType;
-import com.ruoyi.common.utils.poi.ExcelUtil;
-import com.ruoyi.system.domain.SysLogininfor;
-import com.ruoyi.system.service.ISysLogininforService;
+import com.scm.common.annotation.Log;
+import com.scm.common.core.controller.BaseController;
+import com.scm.common.core.domain.AjaxResult;
+import com.scm.common.core.page.TableDataInfo;
+import com.scm.common.enums.BusinessType;
+import com.scm.common.utils.poi.ExcelUtil;
+import com.scm.system.domain.SysLogininfor;
+import com.scm.system.service.ISysLogininforService;
 
 /**
  * 系统访问记录
  * 
- * @author ruoyi
+ * @author scm
  */
 @Controller
 @RequestMapping("/monitor/logininfor")

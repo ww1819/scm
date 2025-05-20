@@ -1,15 +1,15 @@
-package com.ruoyi.system.domain;
+package com.scm.system.domain;
 
 import java.util.Date;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-import com.ruoyi.common.core.domain.BaseEntity;
-import com.ruoyi.common.enums.OnlineStatus;
+import com.scm.common.core.domain.BaseEntity;
+import com.scm.common.enums.OnlineStatus;
 
 /**
  * 当前在线会话 sys_user_online
  * 
- * @author ruoyi
+ * @author scm
  */
 public class SysUserOnline extends BaseEntity
 {

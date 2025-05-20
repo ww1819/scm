@@ -1,12 +1,12 @@
-package com.ruoyi.quartz.util;
+package com.scm.quartz.util;
 
 import org.quartz.JobExecutionContext;
-import com.ruoyi.quartz.domain.SysJob;
+import com.scm.quartz.domain.SysJob;
 
 /**
  * 定时任务处理（允许并发执行）
  * 
- * @author ruoyi
+ * @author scm
  *
  */
 public class QuartzJobExecution extends AbstractQuartzJob

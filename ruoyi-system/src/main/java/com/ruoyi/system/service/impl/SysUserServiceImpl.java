@@ -1,4 +1,4 @@
-package com.ruoyi.system.service.impl;
+package com.scm.system.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,35 +11,35 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
-import com.ruoyi.common.annotation.DataScope;
-import com.ruoyi.common.constant.UserConstants;
-import com.ruoyi.common.core.domain.entity.SysRole;
-import com.ruoyi.common.core.domain.entity.SysUser;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.common.exception.ServiceException;
-import com.ruoyi.common.utils.ExceptionUtil;
-import com.ruoyi.common.utils.ShiroUtils;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.common.utils.bean.BeanValidators;
-import com.ruoyi.common.utils.html.EscapeUtil;
-import com.ruoyi.common.utils.security.Md5Utils;
-import com.ruoyi.common.utils.spring.SpringUtils;
-import com.ruoyi.system.domain.SysPost;
-import com.ruoyi.system.domain.SysUserPost;
-import com.ruoyi.system.domain.SysUserRole;
-import com.ruoyi.system.mapper.SysPostMapper;
-import com.ruoyi.system.mapper.SysRoleMapper;
-import com.ruoyi.system.mapper.SysUserMapper;
-import com.ruoyi.system.mapper.SysUserPostMapper;
-import com.ruoyi.system.mapper.SysUserRoleMapper;
-import com.ruoyi.system.service.ISysConfigService;
-import com.ruoyi.system.service.ISysDeptService;
-import com.ruoyi.system.service.ISysUserService;
+import com.scm.common.annotation.DataScope;
+import com.scm.common.constant.UserConstants;
+import com.scm.common.core.domain.entity.SysRole;
+import com.scm.common.core.domain.entity.SysUser;
+import com.scm.common.core.text.Convert;
+import com.scm.common.exception.ServiceException;
+import com.scm.common.utils.ExceptionUtil;
+import com.scm.common.utils.ShiroUtils;
+import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.bean.BeanValidators;
+import com.scm.common.utils.html.EscapeUtil;
+import com.scm.common.utils.security.Md5Utils;
+import com.scm.common.utils.spring.SpringUtils;
+import com.scm.system.domain.SysPost;
+import com.scm.system.domain.SysUserPost;
+import com.scm.system.domain.SysUserRole;
+import com.scm.system.mapper.SysPostMapper;
+import com.scm.system.mapper.SysRoleMapper;
+import com.scm.system.mapper.SysUserMapper;
+import com.scm.system.mapper.SysUserPostMapper;
+import com.scm.system.mapper.SysUserRoleMapper;
+import com.scm.system.service.ISysConfigService;
+import com.scm.system.service.ISysDeptService;
+import com.scm.system.service.ISysUserService;
 
 /**
  * 用户 业务层处理
  * 
- * @author ruoyi
+ * @author scm
  */
 @Service
 public class SysUserServiceImpl implements ISysUserService

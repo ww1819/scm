@@ -1,11 +1,11 @@
-package com.ruoyi.common.exception.user;
+package com.scm.common.exception.user;
 
-import com.ruoyi.common.exception.base.BaseException;
+import com.scm.common.exception.base.BaseException;
 
 /**
  * 用户信息异常类
  * 
- * @author ruoyi
+ * @author scm
  */
 public class UserException extends BaseException
 {

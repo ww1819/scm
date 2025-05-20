@@ -1,12 +1,12 @@
-package com.ruoyi.common.core.page;
+package com.scm.common.core.page;
 
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.common.utils.ServletUtils;
+import com.scm.common.core.text.Convert;
+import com.scm.common.utils.ServletUtils;
 
 /**
  * 表格数据处理
  * 
- * @author ruoyi
+ * @author scm
  */
 public class TableSupport
 {

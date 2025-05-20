@@ -1,16 +1,16 @@
-package com.ruoyi.framework.web.domain;
+package com.scm.framework.web.domain;
 
 import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
-import com.ruoyi.common.utils.Arith;
-import com.ruoyi.common.utils.IpUtils;
-import com.ruoyi.framework.web.domain.server.Cpu;
-import com.ruoyi.framework.web.domain.server.Jvm;
-import com.ruoyi.framework.web.domain.server.Mem;
-import com.ruoyi.framework.web.domain.server.Sys;
-import com.ruoyi.framework.web.domain.server.SysFile;
+import com.scm.common.utils.Arith;
+import com.scm.common.utils.IpUtils;
+import com.scm.framework.web.domain.server.Cpu;
+import com.scm.framework.web.domain.server.Jvm;
+import com.scm.framework.web.domain.server.Mem;
+import com.scm.framework.web.domain.server.Sys;
+import com.scm.framework.web.domain.server.SysFile;
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.CentralProcessor.TickType;
@@ -24,7 +24,7 @@ import oshi.util.Util;
 /**
  * 服务器相关信息
  * 
- * @author ruoyi
+ * @author scm
  */
 public class Server
 {

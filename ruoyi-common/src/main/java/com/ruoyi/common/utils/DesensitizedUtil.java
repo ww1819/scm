@@ -1,9 +1,9 @@
-package com.ruoyi.common.utils;
+package com.scm.common.utils;
 
 /**
  * 脱敏工具类
  *
- * @author ruoyi
+ * @author scm
  */
 public class DesensitizedUtil
 {

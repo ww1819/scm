@@ -1,4 +1,4 @@
-package com.ruoyi.framework.aspectj;
+package com.scm.framework.aspectj;
 
 import java.util.Collection;
 import java.util.Map;
@@ -18,22 +18,22 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.multipart.MultipartFile;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.support.spring.PropertyPreFilters;
-import com.ruoyi.common.annotation.Log;
-import com.ruoyi.common.core.domain.entity.SysUser;
-import com.ruoyi.common.core.text.Convert;
-import com.ruoyi.common.enums.BusinessStatus;
-import com.ruoyi.common.utils.ExceptionUtil;
-import com.ruoyi.common.utils.ServletUtils;
-import com.ruoyi.common.utils.ShiroUtils;
-import com.ruoyi.common.utils.StringUtils;
-import com.ruoyi.framework.manager.AsyncManager;
-import com.ruoyi.framework.manager.factory.AsyncFactory;
-import com.ruoyi.system.domain.SysOperLog;
+import com.scm.common.annotation.Log;
+import com.scm.common.core.domain.entity.SysUser;
+import com.scm.common.core.text.Convert;
+import com.scm.common.enums.BusinessStatus;
+import com.scm.common.utils.ExceptionUtil;
+import com.scm.common.utils.ServletUtils;
+import com.scm.common.utils.ShiroUtils;
+import com.scm.common.utils.StringUtils;
+import com.scm.framework.manager.AsyncManager;
+import com.scm.framework.manager.factory.AsyncFactory;
+import com.scm.system.domain.SysOperLog;
 
 /**
  * 操作日志记录处理
  * 
- * @author ruoyi
+ * @author scm
  */
 @Aspect
 @Component

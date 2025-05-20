@@ -1,9 +1,9 @@
-package com.ruoyi.common.enums;
+package com.scm.common.enums;
 
 /**
  * 数据源
  * 
- * @author ruoyi
+ * @author scm
  */
 public enum DataSourceType
 {

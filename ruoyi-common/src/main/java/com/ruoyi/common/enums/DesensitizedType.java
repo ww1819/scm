@@ -1,12 +1,12 @@
-package com.ruoyi.common.enums;
+package com.scm.common.enums;
 
 import java.util.function.Function;
-import com.ruoyi.common.utils.DesensitizedUtil;
+import com.scm.common.utils.DesensitizedUtil;
 
 /**
  * 脱敏类型
  *
- * @author ruoyi
+ * @author scm
  */
 public enum DesensitizedType
 {

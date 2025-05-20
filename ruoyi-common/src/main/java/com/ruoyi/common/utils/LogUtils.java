@@ -1,4 +1,4 @@
-package com.ruoyi.common.utils;
+package com.scm.common.utils;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -7,12 +7,12 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.shiro.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.ruoyi.common.json.JSON;
+import com.scm.common.json.JSON;
 
 /**
  * 处理并记录日志文件
  * 
- * @author ruoyi
+ * @author scm
  */
 public class LogUtils
 {

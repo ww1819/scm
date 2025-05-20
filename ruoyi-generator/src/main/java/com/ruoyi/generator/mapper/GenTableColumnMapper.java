@@ -1,12 +1,12 @@
-package com.ruoyi.generator.mapper;
+package com.scm.generator.mapper;
 
 import java.util.List;
-import com.ruoyi.generator.domain.GenTableColumn;
+import com.scm.generator.domain.GenTableColumn;
 
 /**
  * 业务字段 数据层
  * 
- * @author ruoyi
+ * @author scm
  */
 public interface GenTableColumnMapper
 {

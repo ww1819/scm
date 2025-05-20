@@ -1,19 +1,19 @@
-package com.ruoyi.framework.interceptor.impl;
+package com.scm.framework.interceptor.impl;
 
 import java.util.HashMap;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import org.springframework.stereotype.Component;
-import com.ruoyi.common.annotation.RepeatSubmit;
-import com.ruoyi.common.json.JSON;
-import com.ruoyi.framework.interceptor.RepeatSubmitInterceptor;
+import com.scm.common.annotation.RepeatSubmit;
+import com.scm.common.json.JSON;
+import com.scm.framework.interceptor.RepeatSubmitInterceptor;
 
 /**
  * 判断请求url和数据是否和上一次相同， 
  * 如果和上次相同，则是重复提交表单。 有效时间为10秒内。
  * 
- * @author ruoyi
+ * @author scm
  */
 @Component
 public class SameUrlDataInterceptor extends RepeatSubmitInterceptor

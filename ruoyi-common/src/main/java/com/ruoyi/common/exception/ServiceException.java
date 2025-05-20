@@ -1,9 +1,9 @@
-package com.ruoyi.common.exception;
+package com.scm.common.exception;
 
 /**
  * 业务异常
  * 
- * @author ruoyi
+ * @author scm
  */
 public final class ServiceException extends RuntimeException
 {
