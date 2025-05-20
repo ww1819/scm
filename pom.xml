@@ -9,7 +9,7 @@
 
     <name>scm</name>
     <url>http://www.scm.vip</url>
-    <description>若依管理系统</description>
+    <description>耗材供应链管理系统</description>
     
     <properties>
         <scm.version>4.8.0</scm.version>
