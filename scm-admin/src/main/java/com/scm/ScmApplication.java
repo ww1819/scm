@@ -16,15 +16,6 @@ public class ScmApplication
     {
         // System.setProperty("spring.devtools.restart.enabled", "false");
         SpringApplication.run(ScmApplication.class, args);
-        System.out.println("(♥◠‿◠)ﾉﾞ  耗材供应链启动成功   ლ(´ڡ`ლ)ﾞ  \n" +
-                " .-------.       ____     __        \n" +
-                " |  _ _   \\      \\   \\   /  /    \n" +
-                " | ( ' )  |       \\  _. /  '       \n" +
-                " |(_ o _) /        _( )_ .'         \n" +
-                " | (_,_).' __  ___(_ o _)'          \n" +
-                " |  |\\ \\  |  ||   |(_,_)'         \n" +
-                " |  | \\ `'   /|   `-'  /           \n" +
-                " |  |  \\    /  \\      /           \n" +
-                " ''-'   `'-'    `-..-'              ");
+        System.out.println("耗材供应链管理平台启动成功 ");
     }
 }
