@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('修改企业用户')" />
+</head>
+<body>
+    <div class="main-content">
+        <form id="form-supplier-user-edit" class="form-horizontal">
+            <input type="hidden" name="supplierUserId" th:value="${supplierUser.supplierUserId}">
+            <h4 class="form-header h4">基本信息</h4>
+            <div class="row">
+            	<div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label is-required">供应商：</label>
+                        <div class="col-sm-8">
+                            <select name="supplierId" class="form-control" required>
+                                <option value="">请选择供应商</option>
+                                <option th:each="supplier : ${supplierList}" 
+                                        th:value="${supplier.supplierId}" 
+                                        th:selected="${supplier.supplierId == supplierUser.supplierId}"
+                                        th:text="${supplier.companyName}">
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">用户：</label>
+                        <div class="col-sm-8">
+                            <input type="hidden" name="userId" th:value="${supplierUser.userId}">
+                            <input type="text" th:value="${supplierUser.userName}" class="form-control" readonly>
+                            <small class="help-block">用户信息不可修改</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">是否主账号：</label>
+                        <div class="col-sm-8">
+                            <select name="isMain" class="form-control">
+                                <option value="0" th:selected="${supplierUser.isMain == '0'}">否</option>
+                                <option value="1" th:selected="${supplierUser.isMain == '1'}">是</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">状态：</label>
+                        <div class="col-sm-8">
+                            <select name="status" class="form-control">
+                                <option value="0" th:selected="${supplierUser.status == '0'}">正常</option>
+                                <option value="1" th:selected="${supplierUser.status == '1'}">停用</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <th:block th:include="include :: footer" />
+</body>
+</html>
+

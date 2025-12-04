@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.SupplierMapper">
+    
+    <resultMap type="Supplier" id="SupplierResult">
+        <id     property="supplierId"        column="supplier_id"        />
+        <result property="supplierCode"      column="supplier_code"      />
+        <result property="companyName"       column="company_name"       />
+        <result property="companyShortName"  column="company_short_name" />
+        <result property="legalPerson"       column="legal_person"       />
+        <result property="registeredCapital" column="registered_capital" />
+        <result property="province"          column="province"           />
+        <result property="city"             column="city"               />
+        <result property="district"          column="district"           />
+        <result property="address"          column="address"            />
+        <result property="businessScope"    column="business_scope"     />
+        <result property="email"            column="email"              />
+        <result property="website"          column="website"            />
+        <result property="contactPerson"    column="contact_person"     />
+        <result property="contactPhone"    column="contact_phone"      />
+        <result property="taxNumber"        column="tax_number"         />
+        <result property="qualificationExpiryDate" column="qualification_expiry_date" />
+        <result property="status"           column="status"             />
+        <result property="auditStatus"     column="audit_status"       />
+        <result property="auditBy"          column="audit_by"           />
+        <result property="auditTime"        column="audit_time"         />
+        <result property="auditRemark"      column="audit_remark"       />
+        <result property="delFlag"          column="del_flag"           />
+        <result property="createBy"         column="create_by"          />
+        <result property="createTime"       column="create_time"        />
+        <result property="updateBy"         column="update_by"          />
+        <result property="updateTime"       column="update_time"        />
+        <result property="remark"           column="remark"             />
+        <result property="deliveryHospitals" column="delivery_hospitals" />
+    </resultMap>
+    
+    <sql id="selectSupplierVo">
+        select s.supplier_id, s.supplier_code, s.company_name, s.company_short_name, s.legal_person, s.registered_capital,
+               s.province, s.city, s.district, s.address, s.business_scope, s.email, s.website, s.contact_person, s.contact_phone,
+               s.tax_number, s.qualification_expiry_date,
+               s.status, s.audit_status, s.audit_by, s.audit_time, s.audit_remark, s.del_flag, s.create_by, s.create_time, s.update_by, s.update_time, s.remark,
+               (SELECT GROUP_CONCAT(h.hospital_name SEPARATOR '，') 
+                FROM scm_hospital_supplier hs 
+                LEFT JOIN scm_hospital h ON hs.hospital_id = h.hospital_id 
+                WHERE hs.supplier_id = s.supplier_id 
+                AND hs.status = '0' 
+                AND h.del_flag = '0'
+                AND h.status = '0') as delivery_hospitals
+        from scm_supplier s
+    </sql>
+    
+    <select id="selectSupplierList" parameterType="Supplier" resultMap="SupplierResult">
+        <include refid="selectSupplierVo"/>
+        <where>
+            del_flag = '0'
+            <if test="supplierCode != null and supplierCode != ''">
+                AND supplier_code like concat('%', #{supplierCode}, '%')
+            </if>
+            <if test="companyName != null and companyName != ''">
+                AND company_name like concat('%', #{companyName}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+            <if test="auditStatus != null and auditStatus != ''">
+                AND audit_status = #{auditStatus}
+            </if>
+            <if test="province != null and province != ''">
+                AND province = #{province}
+            </if>
+            <if test="city != null and city != ''">
+                AND city = #{city}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+    
+    <select id="selectSupplierById" parameterType="Long" resultMap="SupplierResult">
+        <include refid="selectSupplierVo"/>
+        where supplier_id = #{supplierId} and del_flag = '0'
+    </select>
+    
+    <select id="checkSupplierCodeUnique" parameterType="String" resultMap="SupplierResult">
+        <include refid="selectSupplierVo"/>
+        where supplier_code = #{supplierCode} and del_flag = '0' limit 1
+    </select>
+    
+    <insert id="insertSupplier" parameterType="Supplier" useGeneratedKeys="true" keyProperty="supplierId">
+        insert into scm_supplier(
+            <if test="supplierCode != null and supplierCode != ''">supplier_code,</if>
+            <if test="companyName != null and companyName != ''">company_name,</if>
+            <if test="companyShortName != null and companyShortName != ''">company_short_name,</if>
+            <if test="legalPerson != null and legalPerson != ''">legal_person,</if>
+            <if test="registeredCapital != null">registered_capital,</if>
+            <if test="province != null and province != ''">province,</if>
+            <if test="city != null and city != ''">city,</if>
+            <if test="district != null and district != ''">district,</if>
+            <if test="address != null and address != ''">address,</if>
+            <if test="businessScope != null and businessScope != ''">business_scope,</if>
+            <if test="email != null and email != ''">email,</if>
+            <if test="website != null and website != ''">website,</if>
+            <if test="contactPerson != null and contactPerson != ''">contact_person,</if>
+            <if test="contactPhone != null and contactPhone != ''">contact_phone,</if>
+            <if test="taxNumber != null and taxNumber != ''">tax_number,</if>
+            <if test="qualificationExpiryDate != null">qualification_expiry_date,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="auditStatus != null and auditStatus != ''">audit_status,</if>
+            <if test="auditBy != null and auditBy != ''">audit_by,</if>
+            <if test="auditTime != null">audit_time,</if>
+            <if test="auditRemark != null and auditRemark != ''">audit_remark,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time
+        )values(
+            <if test="supplierCode != null and supplierCode != ''">#{supplierCode},</if>
+            <if test="companyName != null and companyName != ''">#{companyName},</if>
+            <if test="companyShortName != null and companyShortName != ''">#{companyShortName},</if>
+            <if test="legalPerson != null and legalPerson != ''">#{legalPerson},</if>
+            <if test="registeredCapital != null">#{registeredCapital},</if>
+            <if test="province != null and province != ''">#{province},</if>
+            <if test="city != null and city != ''">#{city},</if>
+            <if test="district != null and district != ''">#{district},</if>
+            <if test="address != null and address != ''">#{address},</if>
+            <if test="businessScope != null and businessScope != ''">#{businessScope},</if>
+            <if test="email != null and email != ''">#{email},</if>
+            <if test="website != null and website != ''">#{website},</if>
+            <if test="contactPerson != null and contactPerson != ''">#{contactPerson},</if>
+            <if test="contactPhone != null and contactPhone != ''">#{contactPhone},</if>
+            <if test="taxNumber != null and taxNumber != ''">#{taxNumber},</if>
+            <if test="qualificationExpiryDate != null">#{qualificationExpiryDate},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="auditStatus != null and auditStatus != ''">#{auditStatus},</if>
+            <if test="auditBy != null and auditBy != ''">#{auditBy},</if>
+            <if test="auditTime != null">#{auditTime},</if>
+            <if test="auditRemark != null and auditRemark != ''">#{auditRemark},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate()
+        )
+    </insert>
+    
+    <update id="updateSupplier" parameterType="Supplier">
+        update scm_supplier
+        <set>
+            <if test="supplierCode != null and supplierCode != ''">supplier_code = #{supplierCode},</if>
+            <if test="companyName != null and companyName != ''">company_name = #{companyName},</if>
+            <if test="companyShortName != null and companyShortName != ''">company_short_name = #{companyShortName},</if>
+            <if test="legalPerson != null and legalPerson != ''">legal_person = #{legalPerson},</if>
+            <if test="registeredCapital != null">registered_capital = #{registeredCapital},</if>
+            <if test="province != null and province != ''">province = #{province},</if>
+            <if test="city != null and city != ''">city = #{city},</if>
+            <if test="district != null and district != ''">district = #{district},</if>
+            <if test="address != null and address != ''">address = #{address},</if>
+            <if test="businessScope != null and businessScope != ''">business_scope = #{businessScope},</if>
+            <if test="email != null and email != ''">email = #{email},</if>
+            <if test="website != null and website != ''">website = #{website},</if>
+            <if test="contactPerson != null and contactPerson != ''">contact_person = #{contactPerson},</if>
+            <if test="contactPhone != null and contactPhone != ''">contact_phone = #{contactPhone},</if>
+            <if test="taxNumber != null">tax_number = #{taxNumber},</if>
+            <if test="qualificationExpiryDate != null">qualification_expiry_date = #{qualificationExpiryDate},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="auditStatus != null and auditStatus != ''">audit_status = #{auditStatus},</if>
+            <if test="auditBy != null and auditBy != ''">audit_by = #{auditBy},</if>
+            <if test="auditTime != null">audit_time = #{auditTime},</if>
+            <if test="auditRemark != null and auditRemark != ''">audit_remark = #{auditRemark},</if>
+            <if test="remark != null and remark != ''">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where supplier_id = #{supplierId}
+    </update>
+    
+    <update id="deleteSupplierById" parameterType="Long">
+        update scm_supplier set del_flag = '2' where supplier_id = #{supplierId}
+    </update>
+    
+    <update id="deleteSupplierByIds" parameterType="String">
+        update scm_supplier set del_flag = '2' where supplier_id in
+        <foreach item="supplierId" collection="array" open="(" separator="," close=")">
+            #{supplierId}
+        </foreach>
+    </update>
+</mapper>
+

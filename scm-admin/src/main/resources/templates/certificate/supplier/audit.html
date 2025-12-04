@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('供应商资质审核')" />
+	<th:block th:include="include :: layout-latest-css" />
+</head>
+<body class="gray-bg">
+	<div class="container-div" style="position: relative;">
+		<div class="row">
+			<!-- 左侧：医院列表 -->
+			<div class="col-sm-3" style="border-right: 1px solid #e7eaec; padding-right: 10px; position: fixed; left: 0; top: 0; bottom: 0; width: 25%; overflow: hidden; z-index: 100;">
+				<div class="panel panel-default" style="margin-bottom: 0; display: flex; flex-direction: column; height: 100%;">
+					<div class="panel-heading" style="padding: 5px 10px; flex-shrink: 0;">
+						<h5 class="panel-title" style="margin: 0; font-size: 14px;">
+							<i class="fa fa-hospital-o"></i> 配送公司
+						</h5>
+					</div>
+					<!-- 搜索框 -->
+					<div style="padding: 8px 10px; flex-shrink: 0; border-bottom: 1px solid #e7eaec; background: #f5f5f5;">
+						<div class="input-group" style="width: 100%;">
+							<input type="text" id="hospital-search-input" class="form-control" placeholder="搜索医院名称或编码..." style="height: 30px; font-size: 12px; padding: 5px 10px;">
+							<span class="input-group-btn" style="width: auto;">
+								<button class="btn btn-default" type="button" onclick="searchHospital()" style="height: 30px; padding: 0 10px; font-size: 12px;">
+									<i class="fa fa-search"></i>
+								</button>
+								<button class="btn btn-default" type="button" onclick="clearHospitalSearch()" style="height: 30px; padding: 0 10px; font-size: 12px;">
+									<i class="fa fa-times"></i>
+								</button>
+							</span>
+						</div>
+					</div>
+					<div class="panel-body" style="padding: 5px; flex: 1; overflow: auto; display: flex; flex-direction: column; min-height: 0;">
+						<div class="select-table table-striped" style="flex: 1; overflow: visible; min-height: 0; width: 100%;">
+							<table id="bootstrap-table-hospital" style="width: 100%;"></table>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			<!-- 右侧：供应商证件审核列表 -->
+			<div class="col-sm-9" style="position: fixed; left: 25%; top: 0; bottom: 0; right: 0; width: 75%; overflow: hidden; z-index: 99; display: flex; flex-direction: column; background: #fff;">
+				<div class="col-sm-12 search-collapse" style="flex-shrink: 0;">
+					<form id="supplier-certificate-form">
+						<div class="select-list">
+							<ul>
+								<li>
+									供应商名称：<input type="text" name="supplierName"/>
+								</li>
+								<li>
+									证件类型：<input type="text" name="certificateType"/>
+								</li>
+								<li>
+									<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+									<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+								</li>
+							</ul>
+						</div>
+					</form>
+				</div>
+				
+		        <div class="btn-group-sm" id="toolbar" role="group" style="flex-shrink: 0; padding: 5px 10px;">
+		            <a class="btn btn-info multiple disabled" onclick="batchAudit()" shiro:hasPermission="certificate:supplier:audit">
+		                <i class="fa fa-check"></i> 批量审核
+		            </a>
+		        </div>
+		        
+		        <div class="col-sm-12 select-table table-striped" style="flex: 1; overflow: hidden; min-height: 0; padding: 0 10px 10px 10px;">
+			    <table id="bootstrap-table"></table>
+			</div>
+			</div>
+		</div>
+	</div>
+	
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script th:inline="javascript">
+		var prefix = ctx + "certificate/supplier";
+		var hospitalPrefix = ctx + "hospital/hospital";
+		var selectedHospitalId = null; // 当前选中的医院ID
+		var selectedSupplierIds = []; // 当前选中的供应商ID列表
+
+		$(function() {
+		    // 确保DOM完全加载后再初始化
+		    $(document).ready(function() {
+		        // 先初始化医院表格
+		        console.log("开始初始化医院表格...");
+		        initHospitalTable();
+		        
+		        // 然后初始化供应商证件审核列表（只显示待审核的）
+		        querySupplierCertificateAuditList();
+		        
+		        // 监听窗口大小改变事件
+		        $(window).resize(function() {
+		            adjustSupplierTableHeight();
+		        });
+		        
+		        // 初始化时调整表格高度
+		        setTimeout(function() {
+		            adjustSupplierTableHeight();
+		        }, 300);
+		    });
+		});
+		
+		// 调整供应商证件表格高度
+		function adjustSupplierTableHeight() {
+		    var windowHeight = $(window).height();
+		    var searchHeight = $('.search-collapse').outerHeight() || 60;
+		    var padding = 20;
+		    var tableHeight = windowHeight - searchHeight - padding;
+		    
+		    if (tableHeight > 0) {
+		        $('#bootstrap-table').bootstrapTable('resetView', {
+		            height: tableHeight
+		        });
+		    }
+		}
+
+		function querySupplierCertificateAuditList() {
+		    // 计算表格高度
+		    var calculateTableHeight = function() {
+		        var windowHeight = $(window).height();
+		        var searchHeight = $('.search-collapse').outerHeight() || 60;
+		        var padding = 20;
+		        return Math.max(windowHeight - searchHeight - padding, 300);
+		    };
+		    
+		    var options = {
+		        url: prefix + "/list",
+		        queryParams: function(params) {
+		            // 默认只查询待审核的记录（auditStatus = '0'）
+		            params.auditStatus = '0';
+		            return params;
+		        },
+		        sortName: "createTime",
+		        sortOrder: "desc",
+		        modalName: "供应商证件",
+		        height: calculateTableHeight(),
+		        onCheck: function(row) {
+		            updateToolbarState();
+		            if (row.supplierId) {
+		                loadHospitalsBySupplierId(row.supplierId);
+		                selectedHospitalId = null;
+		                selectedSupplierIds = [];
+		            }
+		        },
+		        onUncheck: function(row) {
+		            updateToolbarState();
+		            if (!selectedHospitalId) {
+		                queryHospitalList();
+		            }
+		        },
+		        onCheckAll: function(rows) {
+		            updateToolbarState();
+		            if (rows && rows.length > 0 && rows[0].supplierId) {
+		                loadHospitalsBySupplierId(rows[0].supplierId);
+		                selectedHospitalId = null;
+		                selectedSupplierIds = [];
+		            }
+		        },
+		        onUncheckAll: function() {
+		            updateToolbarState();
+		            if (!selectedHospitalId) {
+		                queryHospitalList();
+		            }
+		        },
+		        onClickRow: function(row, $element) {
+		            if (row.supplierId) {
+		                loadHospitalsBySupplierId(row.supplierId);
+		                selectedHospitalId = null;
+		                selectedSupplierIds = [];
+		            }
+		        },
+		        columns: [{
+		            checkbox: true
+		        },
+		        {
+		            field: 'serialNumber',
+		            title: '序号',
+		            align: 'center',
+		            formatter: function (value, row, index) {
+		                return $.table.serialNumber(index);
+		            }
+		        },
+		        {
+		            field: 'certificateId',
+		            title: '证件ID',
+		            visible: false
+		        },
+		        {
+		            field: 'supplierId',
+		            title: '供应商ID',
+		            visible: false
+		        },
+		        {
+		            field: 'supplierName',
+		            title: '供应商名称',
+		            formatter: function (value, row, index) {
+		                return value || '-';
+		            }
+		        },
+		        {
+		            field: 'certificateType',
+		            title: '证件类型'
+		        },
+		        {
+		            field: 'certificateNo',
+		            title: '证件编号'
+		        },
+		        {
+		            field: 'issueDate',
+		            title: '发证日期',
+		            sortable: true
+		        },
+		        {
+		            field: 'expireDate',
+		            title: '有效期至',
+		            sortable: true
+		        },
+		        {
+		        	title: '状态',
+		        	align: 'center',
+		        	formatter: function (value, row, index) {
+		        		if (row.status == '0') {
+		        			return '<span class="label label-success">正常</span>';
+		        		} else {
+		        			return '<span class="label label-danger">过期</span>';
+		        		}
+		        	}
+		        },
+		        {
+		            field: 'createTime',
+		            title: '创建时间',
+		            sortable: true
+		        },
+		        {
+		            title: '操作',
+		            align: 'center',
+		            formatter: function(value, row, index) {
+		            	var actions = [];
+		                // 只有待审核状态才显示审核按钮
+		                var auditFlag = [[${@permission.hasPermi('certificate:supplier:audit')}]];
+		                if (row.auditStatus == '0' && auditFlag != 'hidden') {
+		                	actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="$.modal.openTab(\'供应商证件审核\', \'' + prefix + '/audit/' + row.certificateId + '\')"><i class="fa fa-check"></i>审核</a> ');
+		                }
+		                return actions.join('');
+		            }
+		        }]
+		    };
+		    $.table.init(options);
+		}
+		
+		function resetPre() {
+			$("#supplier-certificate-form")[0].reset();
+			$.table.search();
+		}
+		
+		// 计算医院表格高度
+		function calculateHospitalTableHeight() {
+		    var windowHeight = $(window).height();
+		    var panelHeaderHeight = 35;
+		    var searchHeight = 46;
+		    var bodyPadding = 10;
+		    return windowHeight - panelHeaderHeight - searchHeight - bodyPadding - 20;
+		}
+		
+		// 初始化医院表格
+		function initHospitalTable() {
+		    var $table = $('#bootstrap-table-hospital');
+		    console.log("查找医院表格元素，找到:", $table.length, "个");
+		    
+		    if ($table.length === 0) {
+		        console.error("医院表格元素不存在！3秒后重试...");
+		        setTimeout(function() {
+		            initHospitalTable();
+		        }, 3000);
+		        return;
+		    }
+		    
+		    try {
+		        var existingOptions = $table.bootstrapTable('getOptions');
+		        if (existingOptions) {
+		            console.log("表格已初始化，直接加载数据");
+		            queryHospitalList();
+		            return;
+		        }
+		    } catch(e) {
+		        console.log("表格未初始化，开始初始化");
+		    }
+		    
+		    var tableHeight = calculateHospitalTableHeight();
+		    
+		    try {
+		        $table.bootstrapTable({
+		            data: [],
+		            pagination: false,
+		            search: false,
+		            showRefresh: false,
+		            showColumns: false,
+		            showToggle: false,
+		            height: tableHeight,
+		            striped: true,
+		            classes: 'table table-condensed',
+		            locale: 'zh-CN',
+		            showHeader: true,
+		            showEmptyRows: false,
+		            columns: [{
+		                field: 'serialNumber',
+		                title: '序号',
+		                align: 'center',
+		                width: 50,
+		                cellStyle: {fontSize: '12px', padding: '4px'},
+		                formatter: function(value, row, index) {
+		                    return index + 1;
+		                }
+		            },
+		            {
+		                field: 'hospitalCode',
+		                title: '编码',
+		                sortable: true,
+		                width: 80,
+		                cellStyle: {fontSize: '12px', padding: '4px'},
+		                formatter: function(value, row, index) {
+		                    return value || '-';
+		                }
+		            },
+		            {
+		                field: 'hospitalName',
+		                title: '医院名称',
+		                cellStyle: {fontSize: '12px', padding: '4px'},
+		                formatter: function(value, row, index) {
+		                    if (!value) return '-';
+		                    var name = value.length > 15 ? value.substring(0, 15) + '...' : value;
+		                    var supplierCount = row.remark || '0';
+		                    var badgeHtml = '';
+		                    if (supplierCount && supplierCount != '0' && supplierCount != 0) {
+		                        badgeHtml = ' <span class="badge badge-info" title="绑定供应商数量">' + supplierCount + '</span>';
+		                    }
+		                    var hospitalId = row.hospitalId || '';
+		                    return '<a href="javascript:void(0)" onclick="selectHospital(\'' + hospitalId + '\')" title="' + value + '" style="font-size: 12px; cursor: pointer;">' + name + '</a>' + badgeHtml;
+		                }
+		            }],
+		            onClickRow: function(row, $element) {
+		                if (row.hospitalId) {
+		                    selectHospital(row.hospitalId);
+		                }
+		            },
+		            rowStyle: function(row, index) {
+		                if (selectedHospitalId && row.hospitalId == selectedHospitalId) {
+		                    return {classes: 'info'};
+		                }
+		                return {};
+		            }
+		        });
+		        console.log("医院表格初始化完成！");
+		        setTimeout(function() {
+		            queryHospitalList();
+		        }, 300);
+		    } catch(e) {
+		        console.error("初始化医院表格失败:", e);
+		        setTimeout(function() {
+		            initHospitalTable();
+		        }, 1000);
+		    }
+		}
+		
+		// 查询所有医院列表
+		function queryHospitalList() {
+		    console.log("开始查询医院列表，URL:", hospitalPrefix + "/all");
+		    $.ajax({
+		        url: hospitalPrefix + "/all",
+		        type: "GET",
+		        dataType: "json",
+		        cache: false,
+		        success: function(result) {
+		            console.log("医院列表响应:", result);
+		            if (result && result.code == 0) {
+		                var hospitals = result.data || [];
+		                console.log("医院数据数量:", hospitals.length);
+		                updateHospitalTable(hospitals);
+		            } else {
+		                console.error("获取医院列表失败:", result);
+		                updateHospitalTable([]);
+		            }
+		        },
+		        error: function(xhr, status, error) {
+		            console.error("获取医院列表请求失败:", {
+		                status: status,
+		                error: error,
+		                statusText: xhr.statusText,
+		                statusCode: xhr.status
+		            });
+		            updateHospitalTable([]);
+		        }
+		    });
+		}
+		
+		// 更新医院表格数据
+		function updateHospitalTable(hospitals) {
+		    if (!Array.isArray(hospitals)) {
+		        hospitals = [];
+		    }
+		    
+		    var $table = $('#bootstrap-table-hospital');
+		    if ($table.length === 0) {
+		        setTimeout(function() {
+		            updateHospitalTable(hospitals);
+		        }, 200);
+		        return;
+		    }
+		    
+		    var tableHeight = calculateHospitalTableHeight();
+		    
+		    try {
+		        var tableOptions = $table.bootstrapTable('getOptions');
+		        if (tableOptions) {
+		            if (hospitals.length > 0) {
+		                var processedHospitals = hospitals.map(function(h) {
+		                    return {
+		                        hospitalId: h.hospitalId || h.hospital_id,
+		                        hospitalCode: h.hospitalCode || h.hospital_code || '',
+		                        hospitalName: h.hospitalName || h.hospital_name || '',
+		                        remark: h.remark || '0'
+		                    };
+		                });
+		                $table.bootstrapTable('load', processedHospitals);
+		                $table.bootstrapTable('resetView', {height: tableHeight});
+		            } else {
+		                $table.bootstrapTable('load', []);
+		            }
+		        } else {
+		            initHospitalTable();
+		            setTimeout(function() {
+		                var tableOptions = $table.bootstrapTable('getOptions');
+		                if (tableOptions && hospitals.length > 0) {
+		                    var processedHospitals = hospitals.map(function(h) {
+		                        return {
+		                            hospitalId: h.hospitalId || h.hospital_id,
+		                            hospitalCode: h.hospitalCode || h.hospital_code || '',
+		                            hospitalName: h.hospitalName || h.hospital_name || '',
+		                            remark: h.remark || '0'
+		                        };
+		                    });
+		                    $table.bootstrapTable('load', processedHospitals);
+		                }
+		            }, 800);
+		        }
+		    } catch(e) {
+		        console.error("更新医院表格时出错:", e);
+		    }
+		}
+		
+		// 根据供应商ID查询绑定的医院列表
+		function loadHospitalsBySupplierId(supplierId) {
+		    if (!supplierId) {
+		        queryHospitalList();
+		        return;
+		    }
+		    
+		    $.ajax({
+		        url: hospitalPrefix + "/bySupplier/" + supplierId,
+		        type: "GET",
+		        dataType: "json",
+		        success: function(result) {
+		            if (result.code == 0) {
+		                updateHospitalTable(result.data || []);
+		            } else {
+		                $.modal.alertError(result.msg || "获取配送公司列表失败");
+		            }
+		        },
+		        error: function() {
+		            $.modal.alertError("获取配送公司列表失败");
+		        }
+		    });
+		}
+		
+		// 搜索医院
+		function searchHospital() {
+		    var searchText = $('#hospital-search-input').val().trim();
+		    
+		    if (!searchText) {
+		        queryHospitalList();
+		        return;
+		    }
+		    
+		    var $table = $('#bootstrap-table-hospital');
+		    if ($table.length === 0 || !$table.bootstrapTable('getOptions')) {
+		        return;
+		    }
+		    
+		    var allData = $table.bootstrapTable('getData');
+		    var filteredData = allData.filter(function(row) {
+		        var code = (row.hospitalCode || '').toLowerCase();
+		        var name = (row.hospitalName || '').toLowerCase();
+		        var keyword = searchText.toLowerCase();
+		        return code.indexOf(keyword) !== -1 || name.indexOf(keyword) !== -1;
+		    });
+		    
+		    $table.bootstrapTable('load', filteredData);
+		}
+		
+		// 清空搜索
+		function clearHospitalSearch() {
+		    $('#hospital-search-input').val('');
+		    queryHospitalList();
+		}
+		
+		// 搜索框回车事件
+		$(document).on('keypress', '#hospital-search-input', function(e) {
+		    if (e.which === 13) {
+		        searchHospital();
+		    }
+		});
+
+		// 选择医院，加载该医院绑定的供应商证件
+		function selectHospital(hospitalId) {
+		    if (!hospitalId) {
+		        selectedHospitalId = null;
+		        $('#bootstrap-table').bootstrapTable('refresh');
+		        return;
+		    }
+		    
+		    selectedHospitalId = hospitalId;
+		    
+		    $.ajax({
+		        url: hospitalPrefix + "/suppliers/" + hospitalId,
+		        type: "GET",
+		        dataType: "json",
+		        success: function(result) {
+		            if (result.code == 0) {
+		                selectedSupplierIds = result.data || [];
+		                
+		                if (selectedSupplierIds.length === 0) {
+		                    $('#bootstrap-table').bootstrapTable('load', []);
+		                    $.modal.msgWarning("该医院暂无绑定的供应商");
+		                } else {
+		                    filterCertificatesBySupplierIds(selectedSupplierIds);
+		                }
+		                
+		                queryHospitalList();
+		            } else {
+		                $.modal.alertError(result.msg || "获取供应商列表失败");
+		            }
+		        },
+		        error: function() {
+		            $.modal.alertError("获取供应商列表失败");
+		        }
+		    });
+		}
+		
+		// 根据供应商ID列表过滤供应商证件
+		function filterCertificatesBySupplierIds(supplierIds) {
+		    if (!supplierIds || supplierIds.length === 0) {
+		        $('#bootstrap-table').bootstrapTable('refresh');
+		        return;
+		    }
+		    
+		    var allData = $('#bootstrap-table').bootstrapTable('getData');
+		    var filteredData = allData.filter(function(row) {
+		        return supplierIds.indexOf(row.supplierId) !== -1;
+		    });
+		    
+		    $('#bootstrap-table').bootstrapTable('load', filteredData);
+		}
+	</script>
+</body>
+</html>
+

@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.SettlementMapper">
+    
+    <resultMap type="Settlement" id="SettlementResult">
+        <id     property="settlementId"         column="settlement_id"         />
+        <result property="settlementNo"        column="settlement_no"         />
+        <result property="invoiceNo"          column="invoice_no"            />
+        <result property="invoiceDate"         column="invoice_date"          />
+        <result property="customerId"          column="customer_id"          />
+        <result property="supplierId"          column="supplier_id"          />
+        <result property="totalAmount"         column="total_amount"          />
+        <result property="customerSettlementStatus" column="customer_settlement_status" />
+        <result property="auditStatus"        column="audit_status"          />
+        <result property="auditBy"            column="audit_by"              />
+        <result property="auditTime"          column="audit_time"            />
+        <result property="customerAcceptDate" column="customer_accept_date"  />
+        <result property="handler"            column="handler"               />
+        <result property="createBy"           column="create_by"             />
+        <result property="createTime"         column="create_time"            />
+        <result property="updateBy"           column="update_by"              />
+        <result property="updateTime"         column="update_time"            />
+        <result property="remark"             column="remark"                 />
+    </resultMap>
+    
+    <sql id="selectSettlementVo">
+        select s.settlement_id, s.settlement_no, s.invoice_no, s.invoice_date, s.customer_id,
+               s.supplier_id, s.total_amount, s.customer_settlement_status, s.audit_status,
+               s.audit_by, s.audit_time, s.customer_accept_date, s.handler, s.remark,
+               s.create_by, s.create_time, s.update_by, s.update_time,
+               h.hospital_name as customer_name, sup.company_name as supplier_name
+        from scm_settlement s
+        left join scm_hospital h on s.customer_id = h.hospital_id
+        left join scm_supplier sup on s.supplier_id = sup.supplier_id
+    </sql>
+    
+    <select id="selectSettlementList" parameterType="Settlement" resultMap="SettlementResult">
+        <include refid="selectSettlementVo"/>
+        <where>
+            <if test="settlementNo != null and settlementNo != ''">
+                AND s.settlement_no like concat('%', #{settlementNo}, '%')
+            </if>
+            <if test="invoiceNo != null and invoiceNo != ''">
+                AND s.invoice_no like concat('%', #{invoiceNo}, '%')
+            </if>
+            <if test="customerId != null">
+                AND s.customer_id = #{customerId}
+            </if>
+            <if test="supplierId != null">
+                AND s.supplier_id = #{supplierId}
+            </if>
+            <if test="auditStatus != null and auditStatus != ''">
+                AND s.audit_status = #{auditStatus}
+            </if>
+            <if test="customerSettlementStatus != null and customerSettlementStatus != ''">
+                AND s.customer_settlement_status = #{customerSettlementStatus}
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                AND date(s.invoice_date) &gt;= date(#{params.beginTime})
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                AND date(s.invoice_date) &lt;= date(#{params.endTime})
+            </if>
+        </where>
+        order by s.invoice_date desc, s.create_time desc
+    </select>
+    
+    <select id="selectSettlementById" parameterType="Long" resultMap="SettlementResult">
+        <include refid="selectSettlementVo"/>
+        where s.settlement_id = #{settlementId}
+    </select>
+
+    <select id="selectSettlementBySettlementNo" parameterType="String" resultMap="SettlementResult">
+        <include refid="selectSettlementVo"/>
+        where s.settlement_no = #{settlementNo} limit 1
+    </select>
+    
+    <insert id="insertSettlement" parameterType="Settlement" useGeneratedKeys="true" keyProperty="settlementId">
+        insert into scm_settlement(
+            <if test="settlementNo != null and settlementNo != ''">settlement_no,</if>
+            <if test="invoiceNo != null and invoiceNo != ''">invoice_no,</if>
+            <if test="invoiceDate != null">invoice_date,</if>
+            <if test="customerId != null">customer_id,</if>
+            <if test="supplierId != null">supplier_id,</if>
+            <if test="totalAmount != null">total_amount,</if>
+            <if test="customerSettlementStatus != null and customerSettlementStatus != ''">customer_settlement_status,</if>
+            <if test="auditStatus != null and auditStatus != ''">audit_status,</if>
+            <if test="auditBy != null and auditBy != ''">audit_by,</if>
+            <if test="auditTime != null">audit_time,</if>
+            <if test="customerAcceptDate != null">customer_accept_date,</if>
+            <if test="handler != null and handler != ''">handler,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time
+        )values(
+            <if test="settlementNo != null and settlementNo != ''">#{settlementNo},</if>
+            <if test="invoiceNo != null and invoiceNo != ''">#{invoiceNo},</if>
+            <if test="invoiceDate != null">#{invoiceDate},</if>
+            <if test="customerId != null">#{customerId},</if>
+            <if test="supplierId != null">#{supplierId},</if>
+            <if test="totalAmount != null">#{totalAmount},</if>
+            <if test="customerSettlementStatus != null and customerSettlementStatus != ''">#{customerSettlementStatus},</if>
+            <if test="auditStatus != null and auditStatus != ''">#{auditStatus},</if>
+            <if test="auditBy != null and auditBy != ''">#{auditBy},</if>
+            <if test="auditTime != null">#{auditTime},</if>
+            <if test="customerAcceptDate != null">#{customerAcceptDate},</if>
+            <if test="handler != null and handler != ''">#{handler},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate()
+        )
+    </insert>
+    
+    <update id="updateSettlement" parameterType="Settlement">
+        update scm_settlement
+        <set>
+            <if test="settlementNo != null and settlementNo != ''">settlement_no = #{settlementNo},</if>
+            <if test="invoiceNo != null and invoiceNo != ''">invoice_no = #{invoiceNo},</if>
+            <if test="invoiceDate != null">invoice_date = #{invoiceDate},</if>
+            <if test="customerId != null">customer_id = #{customerId},</if>
+            <if test="supplierId != null">supplier_id = #{supplierId},</if>
+            <if test="totalAmount != null">total_amount = #{totalAmount},</if>
+            <if test="customerSettlementStatus != null and customerSettlementStatus != ''">customer_settlement_status = #{customerSettlementStatus},</if>
+            <if test="auditStatus != null and auditStatus != ''">audit_status = #{auditStatus},</if>
+            <if test="auditBy != null and auditBy != ''">audit_by = #{auditBy},</if>
+            <if test="auditTime != null">audit_time = #{auditTime},</if>
+            <if test="customerAcceptDate != null">customer_accept_date = #{customerAcceptDate},</if>
+            <if test="handler != null and handler != ''">handler = #{handler},</if>
+            <if test="remark != null and remark != ''">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where settlement_id = #{settlementId}
+    </update>
+    
+    <delete id="deleteSettlementById" parameterType="Long">
+        delete from scm_settlement where settlement_id = #{settlementId}
+    </delete>
+    
+    <delete id="deleteSettlementByIds" parameterType="String">
+        delete from scm_settlement where settlement_id in
+        <foreach item="settlementId" collection="array" open="(" separator="," close=")">
+            #{settlementId}
+        </foreach>
+    </delete>
+</mapper>
+

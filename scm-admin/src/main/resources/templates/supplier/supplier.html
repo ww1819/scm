@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('供应商列表')" />
+	<th:block th:include="include :: layout-latest-css" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="supplier-form">
+					<div class="select-list">
+						<ul>
+							<li>
+								供应商编码：<input type="text" name="supplierCode"/>
+							</li>
+							<li>
+								公司名称：<input type="text" name="companyName"/>
+							</li>
+							<li>
+								状态：<select name="status">
+									<option value="">所有</option>
+									<option value="0">待审核</option>
+									<option value="1">正常</option>
+									<option value="2">停用</option>
+								</select>
+							</li>
+							<li>
+								审核状态：<select name="auditStatus">
+									<option value="">所有</option>
+									<option value="0">待审核</option>
+									<option value="1">已审核</option>
+									<option value="2">已拒绝</option>
+								</select>
+							</li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+			
+	        <div class="btn-group-sm" id="toolbar" role="group">
+	        	<a class="btn btn-success" onclick="$.operate.addTab()" shiro:hasPermission="supplier:supplier:add">
+	                <i class="fa fa-plus"></i> 新增
+	            </a>
+	             <a class="btn btn-primary single disabled" onclick="$.operate.editTab()" shiro:hasPermission="supplier:supplier:edit">
+		            <i class="fa fa-edit"></i> 修改
+		        </a>
+	            <a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="supplier:supplier:remove">
+	                <i class="fa fa-remove"></i> 删除
+	            </a>
+	            <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="supplier:supplier:export">
+		            <i class="fa fa-download"></i> 导出
+		        </a>
+	        </div>
+	        
+	        <div class="col-sm-12 select-table table-striped">
+			    <table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script th:inline="javascript">
+		var editFlag = [[${@permission.hasPermi('supplier:supplier:edit')}]];
+		var removeFlag = [[${@permission.hasPermi('supplier:supplier:remove')}]];
+		var auditFlag = [[${@permission.hasPermi('supplier:supplier:audit')}]];
+		var prefix = ctx + "supplier/supplier";
+
+		$(function() {
+		    querySupplierList();
+		});
+
+		function querySupplierList() {
+		    var options = {
+		        url: prefix + "/list",
+		        createUrl: prefix + "/add",
+		        updateUrl: prefix + "/edit/{id}",
+		        removeUrl: prefix + "/remove",
+		        exportUrl: prefix + "/export",
+		        sortName: "createTime",
+		        sortOrder: "desc",
+		        modalName: "供应商",
+		        columns: [{
+		            checkbox: true
+		        },
+		        {
+		            title: '序号',
+		            align: 'center',
+		            formatter: function (value, row, index) {
+		                return $.table.serialNumber(index);
+		            }
+		        },
+		        {
+		            field: 'supplierId',
+		            title: '供应商ID',
+		            visible: false
+		        },
+		        {
+		            field: 'supplierCode',
+		            title: '供应商编码',
+		            sortable: true
+		        },
+		        {
+		            field: 'companyName',
+		            title: '公司名称',
+		            formatter: function (value, row, index) {
+		                return '<a href="javascript:void(0)" onclick="$.operate.view(\'' + row.supplierId + '\')">' + value + '</a>';
+		            }
+		        },
+		        {
+		            field: 'deliveryHospitals',
+		            title: '配送公司',
+		            formatter: function (value, row, index) {
+		                if (value && value.length > 0) {
+		                    // 如果医院名称太长，截断并显示省略号
+		                    var displayText = value;
+		                    if (displayText.length > 30) {
+		                        displayText = displayText.substring(0, 30) + '...';
+		                    }
+		                    return '<span title="' + value + '">' + displayText + '</span>';
+		                }
+		                return '-';
+		            }
+		        },
+		        {
+		            field: 'contactPerson',
+		            title: '联系人'
+		        },
+		        {
+		            field: 'contactPhone',
+		            title: '联系电话'
+		        },
+		        {
+		            field: 'province',
+		            title: '省份'
+		        },
+		        {
+		            field: 'city',
+		            title: '城市'
+		        },
+		        {
+		        	title: '状态',
+		        	align: 'center',
+		        	formatter: function (value, row, index) {
+		        		return statusTools(row);
+		        	}
+		        },
+		        {
+		        	title: '审核状态',
+		        	align: 'center',
+		        	formatter: function (value, row, index) {
+		        		if (row.auditStatus == '0') {
+		        			return '<span class="label label-warning">待审核</span>';
+		        		} else if (row.auditStatus == '1') {
+		        			return '<span class="label label-success">已审核</span>';
+		        		} else if (row.auditStatus == '2') {
+		        			return '<span class="label label-danger">已拒绝</span>';
+		        		}
+		        		return '';
+		        	}
+		        },
+		        {
+		            field: 'createTime',
+		            title: '创建时间',
+		            sortable: true
+		        },
+		        {
+		            title: '操作',
+		            align: 'center',
+		            formatter: function(value, row, index) {
+		            	var actions = [];
+		                actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.operate.editTab(\'' + row.supplierId + '\')"><i class="fa fa-edit"></i>编辑</a> ');
+		                actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.supplierId + '\')"><i class="fa fa-remove"></i>删除</a> ');
+		                if (row.auditStatus == '0' && auditFlag != 'hidden') {
+		                	actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="$.operate.editTab(\'' + row.supplierId + '\', \'audit\')"><i class="fa fa-check"></i>审核</a> ');
+		                }
+		                return actions.join('');
+		            }
+		        }]
+		    };
+		    $.table.init(options);
+		}
+		
+		/* 自定义重置 */
+		function resetPre() {
+			$("#supplier-form")[0].reset();
+			$.table.search();
+		}
+
+		/* 供应商状态显示 */
+		function statusTools(row) {
+		    if (row.status == 1) {
+    			return '<i class="fa fa-toggle-on text-info fa-2x" onclick="disableSupplier(\'' + row.supplierId + '\')"></i> ';
+    		} else {
+    			return '<i class="fa fa-toggle-off text-info fa-2x" onclick="enableSupplier(\'' + row.supplierId + '\')"></i> ';
+    		}
+		}
+		
+		/* 供应商管理-停用 */
+		function disableSupplier(supplierId) {
+			$.modal.confirm("确认要停用供应商吗？", function() {
+				$.operate.post(prefix + "/changeStatus", { "supplierId": supplierId, "status": "2" });
+		    })
+		}
+
+		/* 供应商管理-启用 */
+		function enableSupplier(supplierId) {
+			$.modal.confirm("确认要启用供应商吗？", function() {
+				$.operate.post(prefix + "/changeStatus", { "supplierId": supplierId, "status": "1" });
+		    })
+		}
+
+	</script>
+</body>
+</html>
+

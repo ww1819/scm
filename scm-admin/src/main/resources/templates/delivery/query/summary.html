@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('配送汇总表')" />
+	<th:block th:include="include :: layout-latest-css" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="delivery-form">
+					<div class="select-list">
+						<ul>
+							<li>
+								配送单号：<input type="text" name="deliveryNo"/>
+							</li>
+							<li>
+								医院名称：<input type="text" name="hospitalName"/>
+							</li>
+							<li>
+								供应商名称：<input type="text" name="supplierName"/>
+							</li>
+							<li>
+								单据状态：<select name="deliveryStatus">
+									<option value="">所有</option>
+									<option value="0">待配送</option>
+									<option value="1">配送中</option>
+									<option value="2">已完成</option>
+									<option value="3">已取消</option>
+								</select>
+							</li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+			
+	        <div class="btn-group-sm" id="toolbar" role="group">
+	            <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="delivery:delivery:export">
+		            <i class="fa fa-download"></i> 导出
+		        </a>
+	        </div>
+	        
+	        <div class="col-sm-12 select-table table-striped">
+			    <table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script th:inline="javascript">
+		var prefix = ctx + "delivery/delivery/query/summary";
+
+		$(function() {
+		    queryDeliveryList();
+		});
+
+		function queryDeliveryList() {
+		    var options = {
+		        url: prefix + "/list",
+		        exportUrl: prefix + "/export",
+		        sortName: "createTime",
+		        sortOrder: "desc",
+		        modalName: "配送单",
+		        columns: [{
+		            field: 'index',
+		            title: '序号',
+		            align: 'center',
+		            width: 60,
+		            formatter: function(value, row, index) {
+		                return index + 1;
+		            }
+		        },
+		        {
+		            field: 'deliveryNo',
+		            title: '配送单号',
+		            sortable: true
+		        },
+		        {
+		            field: 'hospitalName',
+		            title: '医院名称',
+		            formatter: function(value, row, index) {
+		                return value || '-';
+		            }
+		        },
+		        {
+		            field: 'supplierName',
+		            title: '供应商名称',
+		            formatter: function(value, row, index) {
+		                return value || '-';
+		            }
+		        },
+		        {
+		            field: 'deliveryAmount',
+		            title: '配送金额',
+		            sortable: true,
+		            formatter: function(value, row, index) {
+		                if (value != null) {
+		                    return parseFloat(value).toFixed(2);
+		                }
+		                return '-';
+		            }
+		        },
+		        {
+		            field: 'deliveryStatus',
+		            title: '单据状态',
+		            formatter: function(value, row, index) {
+		            	var statusMap = {'0': '待配送', '1': '配送中', '2': '已完成', '3': '已取消'};
+		            	return statusMap[value] || '';
+		            }
+		        },
+		        {
+		            field: 'createTime',
+		            title: '制单日期',
+		            sortable: true,
+		            formatter: function(value, row, index) {
+		                if (value) {
+		                    return $.common.formatDate(value, "yyyy-MM-dd HH:mm:ss");
+		                }
+		                return '-';
+		            }
+		        },
+		        {
+		            field: 'createBy',
+		            title: '制单人'
+		        },
+		        {
+		            field: 'expectedDeliveryDate',
+		            title: '预计配送日期',
+		            sortable: true,
+		            formatter: function(value, row, index) {
+		                if (value) {
+		                    return $.common.formatDate(value, "yyyy-MM-dd");
+		                }
+		                return '-';
+		            }
+		        },
+		        {
+		            field: 'deliveryAddress',
+		            title: '配送地址'
+		        },
+		        {
+		            field: 'remark',
+		            title: '备注'
+		        }]
+		    };
+		    $.table.init(options);
+		}
+		
+		function resetPre() {
+			$("#delivery-form")[0].reset();
+			$.table.search();
+		}
+		
+	</script>
+</body>
+</html>
+

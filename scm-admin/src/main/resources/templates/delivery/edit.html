@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('修改配送单')" />
+	<style>
+		/* 优化表格列间距 */
+		#detail-table th, #detail-table td {
+			padding: 8px 12px !important;
+			white-space: nowrap;
+		}
+		/* 固定表头 */
+		#detail-table .fixed-table-header {
+			position: sticky !important;
+			top: 0 !important;
+			z-index: 100 !important;
+			background-color: #fff !important;
+			overflow: visible !important;
+			will-change: transform;
+		}
+		#detail-table .fixed-table-header table {
+			margin-bottom: 0 !important;
+		}
+		#detail-table .fixed-table-header thead {
+			position: sticky !important;
+			top: 0 !important;
+			z-index: 100 !important;
+		}
+		#detail-table .fixed-table-header th {
+			background-color: #f5f5f5 !important;
+			border-bottom: 2px solid #ddd !important;
+			position: sticky !important;
+			top: 0 !important;
+			z-index: 100 !important;
+		}
+		/* 固定左侧列 - 表头 */
+		#detail-table .fixed-table-header .fixed-columns-left {
+			position: sticky !important;
+			left: 0 !important;
+			z-index: 101 !important;
+			background-color: #f5f5f5 !important;
+		}
+		#detail-table .fixed-table-header .fixed-columns-left th {
+			background-color: #f5f5f5 !important;
+		}
+		/* 固定左侧列 - 表体 */
+		#detail-table .fixed-table-body .fixed-columns-left {
+			position: sticky !important;
+			left: 0 !important;
+			z-index: 20 !important;
+			background-color: #fff !important;
+			overflow: hidden !important;
+		}
+		#detail-table .fixed-table-body .fixed-columns-left td {
+			background-color: #fff !important;
+		}
+		/* 确保左侧固定列在滚动时保持可见 */
+		#detail-table .fixed-columns-left,
+		.fixed-columns-left {
+			position: sticky !important;
+			left: 0 !important;
+			background-color: #fff !important;
+			overflow: hidden !important;
+		}
+		/* 确保左侧固定列中的表格单元格也固定 */
+		.fixed-columns-left td,
+		.fixed-columns-left th {
+			position: sticky !important;
+			left: 0 !important;
+		}
+		/* 隐藏左侧固定列的滚动条 */
+		.fixed-columns-left::-webkit-scrollbar,
+		#detail-table .fixed-columns-left::-webkit-scrollbar {
+			display: none !important;
+			width: 0 !important;
+			height: 0 !important;
+		}
+		.fixed-columns-left {
+			-ms-overflow-style: none !important; /* IE and Edge */
+			scrollbar-width: none !important; /* Firefox */
+		}
+		/* 固定右侧列 - 表头 */
+		#detail-table .fixed-table-header .fixed-columns-right {
+			position: sticky !important;
+			right: 0 !important;
+			z-index: 101 !important;
+			background-color: #f5f5f5 !important;
+		}
+		#detail-table .fixed-table-header .fixed-columns-right th {
+			background-color: #f5f5f5 !important;
+		}
+		/* 固定右侧列 - 表体 */
+		#detail-table .fixed-table-body .fixed-columns-right {
+			position: sticky !important;
+			right: 0 !important;
+			z-index: 20 !important;
+			background-color: #fff !important;
+		}
+		#detail-table .fixed-table-body .fixed-columns-right td {
+			background-color: #fff !important;
+		}
+		/* 确保固定列在滚动时保持可见 */
+		#detail-table .fixed-columns-right,
+		.fixed-columns-right {
+			position: sticky !important;
+			right: 0 !important;
+			background-color: #fff !important;
+		}
+		/* 确保固定列中的表格单元格也固定 */
+		.fixed-columns-right td,
+		.fixed-columns-right th {
+			position: sticky !important;
+			right: 0 !important;
+		}
+		/* 表格容器滚动 */
+		#detail-table .fixed-table-container {
+			overflow: visible !important;
+			position: relative !important;
+		}
+		/* 表头容器 - 固定不滚动 */
+		#detail-table .fixed-table-header {
+			position: sticky !important;
+			top: 0 !important;
+			z-index: 100 !important;
+			background-color: #fff !important;
+			margin-bottom: 0 !important;
+		}
+		/* 确保表格容器底部显示水平滚动条 */
+		#detail-table .fixed-table-body {
+			overflow-x: auto !important;
+			overflow-y: auto !important;
+			max-height: 450px;
+			position: relative !important;
+		}
+		/* 详细信息列表容器 - 作为滚动容器 */
+		.detail-table-wrapper {
+			overflow-x: auto !important;
+			overflow-y: auto !important;
+			width: 100%;
+			max-height: 500px;
+			position: relative !important;
+		}
+		/* 确保表头在滚动容器内固定 */
+		.detail-table-wrapper .fixed-table-header {
+			position: sticky !important;
+			top: 0 !important;
+			z-index: 100 !important;
+			background-color: #fff !important;
+		}
+		/* 确保表格底部滚动条可见 */
+		.bootstrap-table .fixed-table-container {
+			overflow-x: scroll !important;
+			overflow-y: scroll !important;
+		}
+		.bootstrap-table .fixed-table-body {
+			overflow-x: scroll !important;
+			overflow-y: scroll !important;
+		}
+		/* 固定列插件样式优化 */
+		/* 左侧固定列阴影 */
+		#detail-table .fixed-table-body .fixed-columns-left {
+			box-shadow: 2px 0 5px rgba(0,0,0,0.1) !important;
+		}
+		#detail-table .fixed-table-header .fixed-columns-left {
+			box-shadow: 2px 2px 5px rgba(0,0,0,0.1) !important;
+		}
+		/* 右侧固定列阴影 */
+		#detail-table .fixed-table-body .fixed-columns-right {
+			box-shadow: -2px 0 5px rgba(0,0,0,0.1) !important;
+		}
+		#detail-table .fixed-table-header .fixed-columns-right {
+			box-shadow: -2px 2px 5px rgba(0,0,0,0.1) !important;
+		}
+		/* 确保表格容器可以滚动 */
+		#detail-table .fixed-table-container {
+			position: relative !important;
+		}
+		/* 表体滚动区域 */
+		#detail-table .fixed-table-body {
+			overflow-y: auto !important;
+			overflow-x: auto !important;
+			max-height: 450px;
+		}
+		/* 表格容器在滚动容器内 */
+		.detail-table-wrapper .fixed-table-container {
+			overflow: visible !important;
+		}
+		.detail-table-wrapper .fixed-table-body {
+			overflow-x: auto !important;
+			overflow-y: auto !important;
+			max-height: 450px;
+		}
+		/* 隐藏所有滚动条 */
+		.detail-table-wrapper::-webkit-scrollbar,
+		.detail-table-wrapper .fixed-table-container::-webkit-scrollbar,
+		.detail-table-wrapper .fixed-table-body::-webkit-scrollbar,
+		#detail-table::-webkit-scrollbar,
+		#detail-table .fixed-table-container::-webkit-scrollbar,
+		#detail-table .fixed-table-body::-webkit-scrollbar,
+		.bootstrap-table .fixed-table-container::-webkit-scrollbar,
+		.bootstrap-table .fixed-table-body::-webkit-scrollbar {
+			display: none !important;
+			width: 0 !important;
+			height: 0 !important;
+		}
+		.detail-table-wrapper,
+		.detail-table-wrapper .fixed-table-container,
+		.detail-table-wrapper .fixed-table-body,
+		#detail-table,
+		#detail-table .fixed-table-container,
+		#detail-table .fixed-table-body,
+		.bootstrap-table .fixed-table-container,
+		.bootstrap-table .fixed-table-body {
+			-ms-overflow-style: none !important; /* IE and Edge */
+			scrollbar-width: none !important; /* Firefox */
+		}
+		/* 表格内部的滚动条样式 */
+		#detail-table .fixed-table-container::-webkit-scrollbar {
+			height: 8px;
+			width: 6px;
+		}
+		#detail-table .fixed-table-container::-webkit-scrollbar-track {
+			background: transparent;
+		}
+		#detail-table .fixed-table-container::-webkit-scrollbar-thumb {
+			background: rgba(0, 0, 0, 0.2);
+			border-radius: 3px;
+		}
+		#detail-table .fixed-table-container::-webkit-scrollbar-thumb:hover {
+			background: rgba(0, 0, 0, 0.4);
+		}
+		#detail-table .fixed-table-body::-webkit-scrollbar {
+			height: 8px;
+			width: 6px;
+		}
+		#detail-table .fixed-table-body::-webkit-scrollbar-track {
+			background: transparent;
+		}
+		#detail-table .fixed-table-body::-webkit-scrollbar-thumb {
+			background: rgba(0, 0, 0, 0.2);
+			border-radius: 3px;
+		}
+		#detail-table .fixed-table-body::-webkit-scrollbar-thumb:hover {
+			background: rgba(0, 0, 0, 0.4);
+		}
+		/* 确保操作列内容显示 */
+		#detail-table .fixed-columns-right td,
+		#detail-table .fixed-columns-right th {
+			visibility: visible !important;
+			opacity: 1 !important;
+		}
+		/* 确保操作列的按钮可见 */
+		#detail-table .fixed-columns-right .btn,
+		#detail-table .fixed-columns-right .btn-operation-delete {
+			display: inline-block !important;
+			visibility: visible !important;
+		}
+		/* 优化操作列按钮样式 */
+		.btn-operation-delete {
+			display: inline-flex !important;
+			align-items: center;
+			justify-content: center;
+			padding: 6px 10px;
+			margin: 0 auto;
+			color: #fff !important;
+			background: linear-gradient(135deg, #d9534f 0%, #c9302c 100%) !important;
+			border: none !important;
+			border-radius: 4px;
+			font-size: 13px;
+			line-height: 1;
+			text-align: center;
+			cursor: pointer;
+			transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+			text-decoration: none !important;
+			min-width: 32px;
+			width: 32px;
+			max-width: 32px;
+			height: 28px;
+			box-shadow: 0 2px 4px rgba(217, 83, 79, 0.3);
+			position: relative;
+			overflow: hidden;
+			opacity: 1 !important;
+			visibility: visible !important;
+			white-space: nowrap !important;
+		}
+		.btn-operation-delete::before {
+			content: '';
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			width: 0;
+			height: 0;
+			border-radius: 50%;
+			background: rgba(255, 255, 255, 0.3);
+			transform: translate(-50%, -50%);
+			transition: width 0.4s, height 0.4s;
+		}
+		.btn-operation-delete:hover {
+			color: #fff;
+			background: linear-gradient(135deg, #c9302c 0%, #ac2925 100%);
+			box-shadow: 0 4px 8px rgba(217, 83, 79, 0.4);
+			transform: translateY(-2px) scale(1.05);
+		}
+		.btn-operation-delete:hover::before {
+			width: 300px;
+			height: 300px;
+		}
+		.btn-operation-delete:active {
+			background: linear-gradient(135deg, #ac2925 0%, #8b211e 100%);
+			box-shadow: 0 1px 2px rgba(217, 83, 79, 0.3);
+			transform: translateY(0) scale(1);
+		}
+		.btn-operation-delete i {
+			margin: 0;
+			font-size: 13px;
+			position: relative;
+			z-index: 1;
+		}
+		/* 操作列单元格居中 */
+		#detail-table td[data-field="operation"],
+		#detail-table .fixed-columns-right td {
+			text-align: center !important;
+			vertical-align: middle !important;
+			padding: 8px 4px !important;
+			background-color: #fff !important;
+			width: 90px !important;
+			min-width: 90px !important;
+			max-width: 90px !important;
+			white-space: nowrap !important;
+			overflow: hidden !important;
+		}
+		/* 操作列标题样式 */
+		#detail-table th[data-field="operation"] {
+			text-align: center !important;
+			font-weight: 600;
+			background-color: #f5f5f5 !important;
+			color: #333;
+			width: 90px !important;
+			min-width: 90px !important;
+			max-width: 90px !important;
+			white-space: nowrap !important;
+			overflow: hidden !important;
+		}
+		/* 操作列固定时的样式优化 */
+		#detail-table .fixed-columns-right td[data-field="operation"],
+		#detail-table .fixed-columns-right td:last-child {
+			background-color: #fff !important;
+			text-align: center !important;
+			padding: 8px 4px !important;
+			width: 90px !important;
+			min-width: 90px !important;
+			max-width: 90px !important;
+			white-space: nowrap !important;
+			overflow: hidden !important;
+		}
+		#detail-table .fixed-columns-right th[data-field="operation"],
+		#detail-table .fixed-columns-right th:last-child {
+			background-color: #f5f5f5 !important;
+			text-align: center !important;
+			width: 90px !important;
+			min-width: 90px !important;
+			max-width: 90px !important;
+			white-space: nowrap !important;
+			overflow: hidden !important;
+		}
+		/* 确保操作列按钮在固定列中正确显示 */
+		#detail-table .fixed-columns-right .btn-operation-delete {
+			display: inline-flex !important;
+			visibility: visible !important;
+			opacity: 1 !important;
+		}
+		/* 页面布局优化 */
+		.main-content {
+			padding: 15px 20px;
+			background-color: #f5f5f5;
+		}
+		/* 表单区域卡片样式 */
+		.form-card {
+			background-color: #fff;
+			border-radius: 4px;
+			padding: 20px;
+			margin-bottom: 20px;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+		}
+		.form-header {
+			margin-top: 0;
+			margin-bottom: 20px;
+			padding-bottom: 10px;
+			border-bottom: 2px solid #337ab7;
+			color: #333;
+			font-weight: 600;
+		}
+		/* 表单组间距优化 */
+		.form-horizontal .form-group {
+			margin-bottom: 15px;
+		}
+		/* 表格区域卡片样式 */
+		.table-card {
+			background-color: #fff;
+			border-radius: 4px;
+			padding: 20px;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+		}
+		/* 按钮组样式优化 */
+		.btn-group-custom {
+			display: flex;
+			gap: 10px;
+		}
+		.btn-group-custom .btn {
+			min-width: 100px;
+		}
+		/* 底部按钮栏优化 */
+		.footer-actions {
+			position: fixed;
+			bottom: 0;
+			left: 0;
+			right: 0;
+			background-color: #fff;
+			padding: 15px 20px;
+			border-top: 1px solid #ddd;
+			z-index: 1000;
+			box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+			display: flex;
+			justify-content: center;
+			gap: 15px;
+		}
+		.footer-actions .btn {
+			min-width: 100px;
+			padding: 8px 20px;
+		}
+	</style>
+</head>
+<body style="overflow: hidden;">
+    <div class="main-content" style="overflow: hidden; height: calc(100vh - 80px);">
+        <form id="form-delivery-edit" class="form-horizontal">
+            <input name="deliveryId" type="hidden" th:value="${delivery.deliveryId}"/>
+            <div class="form-card">
+                <h4 class="form-header h4">单据录入</h4>
+            <div class="row">
+            	<div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">配送单号：</label>
+                        <div class="col-sm-7">
+                            <input name="deliveryNo" class="form-control" type="text" readonly th:value="${delivery.deliveryNo}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">医院：</label>
+                        <div class="col-sm-7">
+                            <select name="hospitalId" id="hospitalId" class="form-control">
+                                <option value="">请选择医院（选填）</option>
+                                <option th:each="hospital : ${hospitalList}"
+                                        th:value="${hospital.hospitalId}"
+                                        th:text="${hospital.hospitalName}"
+                                        th:selected="${delivery.hospitalId != null && delivery.hospitalId == hospital.hospitalId}">
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">总金额：</label>
+                        <div class="col-sm-7">
+                            <input name="deliveryAmount" placeholder="请输入总金额" class="form-control" type="number" step="0.01" min="0" th:value="${delivery.deliveryAmount}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">配送商：</label>
+                        <div class="col-sm-7">
+                            <select name="supplierId" id="supplierId" class="form-control">
+                                <option value="">请选择配送商（选填）</option>
+                                <option th:each="supplier : ${supplierList}"
+                                        th:value="${supplier.supplierId}"
+                                        th:text="${supplier.companyName}"
+                                        th:selected="${delivery.supplierId != null && delivery.supplierId == supplier.supplierId}">
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">发票号：</label>
+                        <div class="col-sm-7">
+                            <input name="invoiceNo" placeholder="请输入发票号" class="form-control" type="text" maxlength="100" th:value="${delivery.invoiceNo}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">发票日期：</label>
+                        <div class="col-sm-7">
+                            <input name="invoiceDate" id="invoiceDate" placeholder="年/月/日" class="form-control" type="text" readonly th:value="${delivery.invoiceDate != null ? #dates.format(delivery.invoiceDate, 'yyyy-MM-dd') : ''}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">订单号：</label>
+                        <div class="col-sm-7">
+                            <input name="orderNo" placeholder="请输入订单号" class="form-control" type="text" maxlength="50" th:value="${delivery.orderNo}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">预计配送日期：</label>
+                        <div class="col-sm-7">
+                            <input name="expectedDeliveryDate" id="expectedDeliveryDate" placeholder="年/月/日" class="form-control" type="text" readonly th:value="${delivery.expectedDeliveryDate != null ? #dates.format(delivery.expectedDeliveryDate, 'yyyy-MM-dd') : ''}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">配送员：</label>
+                        <div class="col-sm-7">
+                            <input name="deliveryPerson" placeholder="请输入配送员" class="form-control" type="text" maxlength="50" th:value="${delivery.deliveryPerson}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">配送地址：</label>
+                        <div class="col-sm-7">
+                            <input name="deliveryAddress" placeholder="请输入配送地址" class="form-control" type="text" maxlength="500" th:value="${delivery.deliveryAddress}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">备注：</label>
+                        <div class="col-sm-7">
+                            <input name="remark" maxlength="500" class="form-control" type="text" placeholder="请输入备注" th:value="${delivery.remark}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                </div>
+            </div>
+            </div>
+        </form>
+        
+        <div class="table-card">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                <h4 class="form-header h4" style="margin: 0; border-bottom: 2px solid #5cb85c;">详细信息列表</h4>
+                <div class="btn-group-custom">
+                    <button type="button" class="btn btn-sm btn-info" onclick="printDelivery()" th:if="${delivery.deliveryId != null}"><i class="fa fa-print"></i> 打印配送单</button>
+                    <button type="button" class="btn btn-sm btn-success" onclick="newDocument()"><i class="fa fa-plus"></i> 新增单据</button>
+                    <button type="button" class="btn btn-sm btn-info" onclick="importOrder()"><i class="fa fa-file-text-o"></i> 引入订单</button>
+                    <button type="button" class="btn btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i> 保 存</button>
+                    <button type="button" class="btn btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i> 关 闭</button>
+                </div>
+            </div>
+            <div class="detail-table-wrapper" style="overflow-x: auto; overflow-y: auto; width: 100%; max-height: 500px;">
+                <table id="detail-table"></table>
+            </div>
+        </div>
+    </div>
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
+	<script th:inline="javascript">
+	    var prefix = ctx + "delivery/delivery";
+	    
+	    // 配送明细数据（从后端传递）
+	    var deliveryDetails = /*[[${delivery.deliveryDetails}]]*/ [];
+	    
+	    // 确保操作列正确渲染的函数 - 定义为全局函数，以便在所有地方都能访问
+	    var fillOperationColumn = function() {
+	        console.log('fillOperationColumn called'); // 调试信息
+	        
+	        // 获取表格数据以确定行数
+	        var data = $('#detail-table').bootstrapTable('getData');
+	        console.log('Table data length:', data ? data.length : 0); // 调试信息
+	        
+	        if (!data || data.length === 0) {
+	            console.log('No data in table, skipping fillOperationColumn');
+	            return;
+	        }
+	        
+	        // 方法1: 处理固定列中的操作列 - 使用多种选择器确保找到固定列
+	        var fixedColSelectors = [
+	            '.fixed-columns-right',
+	            '#detail-table .fixed-columns-right',
+	            '.fixed-table-body .fixed-columns-right',
+	            '.bootstrap-table .fixed-columns-right'
+	        ];
+	        
+	        fixedColSelectors.forEach(function(selector) {
+	            var $fixedCols = $(selector);
+	            console.log('Fixed columns found with selector "' + selector + '":', $fixedCols.length);
+	            
+	            $fixedCols.each(function() {
+	                var $fixedCol = $(this);
+	                // 尝试多种方式查找行
+	                var rows = $fixedCol.find('tbody tr');
+	                if (rows.length === 0) {
+	                    rows = $fixedCol.find('tr');
+	                }
+	                console.log('Fixed column rows found:', rows.length);
+	                
+	                rows.each(function() {
+	                    var $tr = $(this);
+	                    // 尝试多种方式获取行索引
+	                    var rowIndex = $tr.data('index');
+	                    if (rowIndex === undefined || rowIndex === null) {
+	                        rowIndex = $tr.attr('data-index');
+	                    }
+	                    if (rowIndex === undefined || rowIndex === null) {
+	                        rowIndex = $tr.index();
+	                    }
+	                    // 如果还是无效，尝试从主表格对应行获取
+	                    if (rowIndex === undefined || rowIndex === null) {
+	                        var mainTableRow = $('#detail-table tbody tr').eq($tr.index());
+	                        if (mainTableRow.length > 0) {
+	                            rowIndex = mainTableRow.data('index') || mainTableRow.index();
+	                        }
+	                    }
+	                    
+	                    // 尝试多种方式查找操作列单元格
+	                    var $operationCell = $tr.find('td').first();
+	                    if ($operationCell.length === 0) {
+	                        $operationCell = $tr.find('td:last-child');
+	                    }
+	                    if ($operationCell.length === 0) {
+	                        $operationCell = $tr.find('td[data-field="operation"]');
+	                    }
+	                    if ($operationCell.length === 0) {
+	                        var allCells = $tr.find('td');
+	                        if (allCells.length > 0) {
+	                            $operationCell = allCells.last();
+	                        }
+	                    }
+	                    
+	                    if ($operationCell.length > 0) {
+	                        // 强制填充，无论是否为空
+	                        var btnHtml = '<a class="btn-operation-delete" href="javascript:void(0)" onclick="deleteDetailRowByIndex(this, ' + rowIndex + ')" title="删除该行明细"><i class="fa fa-trash"></i></a>';
+	                        $operationCell.html(btnHtml);
+	                        // 确保按钮可见
+	                        $operationCell.find('.btn-operation-delete').css({
+	                            'display': 'inline-flex',
+	                            'visibility': 'visible',
+	                            'opacity': '1'
+	                        });
+	                        console.log('Filled fixed column cell for row:', rowIndex, 'Cell:', $operationCell[0], 'Button:', $operationCell.find('.btn-operation-delete')[0]); // 调试信息
+	                    } else {
+	                        console.log('No operation cell found in fixed column for row:', rowIndex, 'TR:', $tr[0]); // 调试信息
+	                    }
+	                });
+	            });
+	        });
+	            
+	        // 方法2: 处理主表格中的操作列（最后一列）
+	        var mainTableRows = $('#detail-table tbody tr');
+	        console.log('Main table rows:', mainTableRows.length); // 调试信息
+	        
+	        mainTableRows.each(function() {
+	            var $tr = $(this);
+	            var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : $tr.index();
+	            // 如果 rowIndex 无效，尝试从 tr 的 data-index 属性获取
+	            if (rowIndex === undefined || rowIndex === null) {
+	                rowIndex = $tr.attr('data-index');
+	                if (rowIndex === undefined) {
+	                    rowIndex = $tr.index();
+	                }
+	            }
+	            // 尝试多种方式找到操作列
+	            var $operationCell = $tr.find('td[data-field="operation"]');
+	            if ($operationCell.length === 0) {
+	                $operationCell = $tr.find('td:last-child');
+	            }
+	            // 如果还是找不到，尝试通过列索引（最后一列应该是操作列）
+	            if ($operationCell.length === 0) {
+	                var $allCells = $tr.find('td');
+	                if ($allCells.length > 0) {
+	                    $operationCell = $allCells.last();
+	                }
+	            }
+	            if ($operationCell.length > 0) {
+	                // 强制填充操作列，确保操作列有内容
+	                if ($operationCell.find('.btn-operation-delete').length === 0) {
+	                    var btnHtml = buttonHtml.replace('javascript:void(0)', 'javascript:void(0)" onclick="deleteDetailRowByIndex(this, ' + rowIndex + ')');
+	                    $operationCell.html(btnHtml);
+	                    console.log('Filled main table cell for row:', rowIndex); // 调试信息
+	                }
+	            } else {
+	                console.log('No operation cell found in main table for row:', rowIndex); // 调试信息
+	            }
+	        });
+	            
+	        // 方法3: 通过列数判断最后一列是否是操作列
+	        $('#detail-table tbody tr').each(function() {
+	            var $tr = $(this);
+	            var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : $tr.index();
+	            // 如果 rowIndex 无效，尝试从 tr 的 data-index 属性获取
+	            if (rowIndex === undefined || rowIndex === null) {
+	                rowIndex = $tr.attr('data-index');
+	                if (rowIndex === undefined) {
+	                    rowIndex = $tr.index();
+	                }
+	            }
+	            var $allCells = $tr.find('td');
+	            // 检查最后一列是否是操作列（通过列数判断，总共15列，最后一列是操作列）
+	            if ($allCells.length >= 15) {
+	                var $lastCell = $allCells.last();
+	                // 强制填充，确保操作列有内容（移除条件检查，始终填充）
+	                var btnHtml = '<a class="btn-operation-delete" href="javascript:void(0)" onclick="deleteDetailRowByIndex(this, ' + rowIndex + ')" title="删除该行明细"><i class="fa fa-trash"></i></a>';
+	                $lastCell.html(btnHtml);
+	                console.log('Filled last cell for row:', rowIndex, 'Cell count:', $allCells.length, 'Cell:', $lastCell[0]); // 调试信息
+	            }
+	        });
+	        
+	        // 方法4: 直接查找所有可能的操作列位置并填充
+	        $('#detail-table, .fixed-columns-right').find('td[data-field="operation"]').each(function() {
+	            var $cell = $(this);
+	            var $tr = $cell.closest('tr');
+	            var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : $tr.index();
+	            // 如果 rowIndex 无效，尝试从 tr 的 data-index 属性获取
+	            if (rowIndex === undefined || rowIndex === null) {
+	                rowIndex = $tr.attr('data-index');
+	                if (rowIndex === undefined) {
+	                    rowIndex = $tr.index();
+	                }
+	            }
+	            // 强制填充，确保操作列有内容
+	            if ($cell.find('.btn-operation-delete').length === 0) {
+	                var btnHtml = buttonHtml.replace('javascript:void(0)', 'javascript:void(0)" onclick="deleteDetailRowByIndex(this, ' + rowIndex + ')');
+	                $cell.html(btnHtml);
+	            }
+	        });
+	        
+	        // 方法5: 直接通过表格的列索引填充（最可靠的方法）
+	        // 获取表格的所有行，通过列数判断最后一列
+	        $('#detail-table').find('tbody tr').each(function() {
+	            var $tr = $(this);
+	            var $cells = $tr.find('td');
+	            // 如果列数 >= 15，最后一列应该是操作列
+	            if ($cells.length >= 15) {
+	                var $lastCell = $cells.last();
+	                var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : $tr.index();
+	                if (rowIndex === undefined || rowIndex === null) {
+	                    rowIndex = $tr.attr('data-index') || $tr.index();
+	                }
+	                // 强制填充，无论是否已有内容
+	                var btnHtml = buttonHtml.replace('javascript:void(0)', 'javascript:void(0)" onclick="deleteDetailRowByIndex(this, ' + rowIndex + ')');
+	                $lastCell.html(btnHtml);
+	                console.log('Filled last cell for row:', rowIndex, 'Cell count:', $cells.length); // 调试信息
+	            }
+	        });
+	        
+	        console.log('fillOperationColumn completed'); // 调试信息
+	    };
+	    
+	    // 初始化日期选择器
+	    var laydate;
+	    layui.use('laydate', function(){
+	        laydate = layui.laydate;
+	        
+	        // 预计配送日期
+	        laydate.render({
+	            elem: '#expectedDeliveryDate',
+	            type: 'date'
+	        });
+	        
+	        // 发票日期
+	        laydate.render({
+	            elem: '#invoiceDate',
+	            type: 'date'
+	        });
+	    });
+	    
+	    // 初始化详细信息列表表格
+	    $(function() {
+	        initDetailTable();
+	    });
+	    
+	    function initDetailTable() {
+	        // 转换配送明细数据格式
+	        var detailData = [];
+	        console.log('initDetailTable called, deliveryDetails:', deliveryDetails); // 调试信息
+	        if (deliveryDetails && deliveryDetails.length > 0) {
+	            console.log('Found', deliveryDetails.length, 'delivery details'); // 调试信息
+	            for (var i = 0; i < deliveryDetails.length; i++) {
+	                var detail = deliveryDetails[i];
+	                var row = {
+	                    materialId: detail.materialId || null,
+	                    materialCode: detail.materialCode || '',
+	                    materialName: detail.materialName || '',
+	                    specification: detail.specification || '',
+	                    model: detail.model || '',
+	                    unit: detail.unit || '',
+	                    remainingQuantity: detail.remainingQuantity || 0,
+	                    deliveryQuantity: detail.deliveryQuantity || 0,
+	                    price: detail.price || 0,
+	                    amount: detail.amount || 0,
+	                    batchNo: detail.batchNo || '',
+	                    productionDate: detail.productionDate || '',
+	                    expireDate: detail.expireDate || '',
+	                    manufacturer: detail.manufacturer || '',
+	                    registerNo: detail.registerNo || ''
+	                };
+	                detailData.push(row);
+	            }
+	        }
+	        
+	        var options = {
+	            url: '', // 暂时为空，后续可以添加数据源
+	            data: detailData, // 加载配送明细数据
+	            pagination: false, // 不分页
+	            search: false, // 不显示搜索框
+	            showRefresh: false, // 不显示刷新按钮
+	            showToggle: false, // 不显示切换视图按钮
+	            showColumns: false, // 不显示列选择按钮
+	            striped: true, // 斑马纹
+	            height: 450, // 设置表格高度，启用垂直滚动
+	            columns: [{
+	                field: 'index',
+	                title: '序号',
+	                align: 'center',
+	                width: 60,
+	                formatter: function(value, row, index) {
+	                    return index + 1;
+	                }
+            }, {
+                field: 'materialCode',
+                title: '产品编码',
+                align: 'center',
+                width: 150
+            }, {
+                field: 'materialName',
+                title: '产品名称',
+                align: 'left',
+                width: 200
+            }, {
+                field: 'specification',
+                title: '规格',
+                align: 'center',
+                width: 120
+            }, {
+	                field: 'unit',
+	                title: '单位',
+	                align: 'center',
+	                width: 80
+	            }, {
+	                field: 'remainingQuantity',
+	                title: '可配数量',
+	                align: 'right',
+	                width: 100,
+	                formatter: function(value, row, index) {
+	                    if (value) {
+	                        return parseFloat(value).toFixed(2);
+	                    }
+	                    return '0.00';
+	                }
+	            }, {
+	                field: 'deliveryQuantity',
+	                title: '数量',
+	                align: 'right',
+	                width: 100,
+	                formatter: function(value, row, index) {
+	                    var val = value ? parseFloat(value).toFixed(2) : '0.00';
+	                    return '<input type="text" class="form-control input-sm" style="text-align:right;width:100%;" value="' + val + '" ' +
+	                           'onblur="updateQuantity(this, ' + index + ')" ' +
+	                           'onkeypress="if(event.keyCode==13){this.blur();return false;}" />';
+	                }
+	            }, {
+	                field: 'price',
+	                title: '单价',
+	                align: 'right',
+	                width: 100,
+	                formatter: function(value, row, index) {
+	                    if (value) {
+	                        return '¥' + parseFloat(value).toFixed(2);
+	                    }
+	                    return '¥0.00';
+	                }
+	            }, {
+	                field: 'amount',
+	                title: '金额',
+	                align: 'right',
+	                width: 120,
+	                formatter: function(value, row, index) {
+	                    if (value) {
+	                        return '¥' + parseFloat(value).toFixed(2);
+	                    }
+	                    // 如果没有金额，计算：数量 * 单价
+	                    var qty = parseFloat(row.deliveryQuantity || 0);
+	                    var price = parseFloat(row.price || 0);
+	                    return '¥' + (qty * price).toFixed(2);
+	                }
+	            }, {
+	                field: 'batchNo',
+	                title: '批号',
+	                align: 'center',
+	                width: 120,
+	                formatter: function(value, row, index) {
+	                    var val = value || '';
+	                    return '<input type="text" class="form-control input-sm" style="width:100%;" value="' + val + '" ' +
+	                           'onblur="updateBatchNo(this, ' + index + ')" ' +
+	                           'onkeypress="if(event.keyCode==13){this.blur();return false;}" ' +
+	                           'maxlength="50" />';
+	                }
+	            }, {
+	                field: 'productionDate',
+	                title: '生产日期',
+	                align: 'center',
+	                width: 120,
+	                formatter: function(value, row, index) {
+	                    var val = '';
+	                    if (value) {
+	                        if (typeof value === 'string') {
+	                            val = value;
+	                        } else {
+	                            // 如果是日期对象，格式化
+	                            var date = new Date(value);
+	                            if (!isNaN(date.getTime())) {
+	                                val = date.getFullYear() + '-' + 
+	                                      String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+	                                      String(date.getDate()).padStart(2, '0');
+	                            }
+	                        }
+	                    }
+	                    return '<input type="text" class="form-control input-sm date-input production-date" style="width:100%;" value="' + val + '" ' +
+	                           'placeholder="年/月/日" ' +
+	                           'onblur="updateProductionDate(this, ' + index + ')" ' +
+	                           'onkeypress="if(event.keyCode==13){this.blur();return false;}" ' +
+	                           'data-field="productionDate" data-index="' + index + '" />';
+	                }
+	            }, {
+	                field: 'expireDate',
+	                title: '有效期',
+	                align: 'center',
+	                width: 120,
+	                formatter: function(value, row, index) {
+	                    var val = '';
+	                    if (value) {
+	                        if (typeof value === 'string') {
+	                            val = value;
+	                        } else {
+	                            // 如果是日期对象，格式化
+	                            var date = new Date(value);
+	                            if (!isNaN(date.getTime())) {
+	                                val = date.getFullYear() + '-' + 
+	                                      String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+	                                      String(date.getDate()).padStart(2, '0');
+	                            }
+	                        }
+	                    }
+	                    return '<input type="text" class="form-control input-sm date-input expire-date" style="width:100%;" value="' + val + '" ' +
+	                           'placeholder="年/月/日" ' +
+	                           'onblur="updateExpireDate(this, ' + index + ')" ' +
+	                           'onkeypress="if(event.keyCode==13){this.blur();return false;}" ' +
+	                           'data-field="expireDate" data-index="' + index + '" />';
+	                }
+	            }, {
+	                field: 'manufacturer',
+	                title: '生产厂家',
+	                align: 'left',
+	                width: 150,
+	                formatter: function(value, row, index) {
+	                    return value || '-';
+	                }
+	            }, {
+	                field: 'model',
+	                title: '型号',
+	                align: 'center',
+	                width: 120
+	            }, {
+	                field: 'registerNo',
+	                title: '注册证号',
+	                align: 'center',
+	                width: 150,
+	                formatter: function(value, row, index) {
+	                    return value || '-';
+	                }
+	            }, {
+	                field: 'operation',
+	                title: '<i class="fa fa-cog"></i> 操作',
+	                align: 'center',
+	                width: 90,
+	                formatter: function(value, row, index) {
+	                    // 返回优化的删除按钮，带更好的提示
+	                    return '<a class="btn-operation-delete" href="javascript:void(0)" onclick="deleteDetailRowByIndex(this, ' + index + ')" title="删除该行明细" data-toggle="tooltip" data-placement="left"><i class="fa fa-trash"></i></a>';
+	                }
+	            }]
+	        };
+        $('#detail-table').bootstrapTable(options);
+        
+        // 表格加载完成后立即填充操作列
+        $('#detail-table').on('post-body.bs.table', function() {
+            console.log('post-body.bs.table event fired');
+            fillOperationColumnImmediate();
+        });
+        
+        $('#detail-table').on('load-success.bs.table', function() {
+            console.log('load-success.bs.table event fired');
+            fillOperationColumnImmediate();
+        });
+        
+        // 立即填充操作列的函数 - 更直接的方法
+        function fillOperationColumnImmediate() {
+            console.log('fillOperationColumnImmediate called');
+            var data = $('#detail-table').bootstrapTable('getData');
+            if (!data || data.length === 0) {
+                console.log('No data, skipping');
+                return;
+            }
+            
+            // 方法1: 直接查找固定列中的所有td并填充
+            $('.fixed-columns-right tbody tr, .fixed-columns-right tr').each(function(index) {
+                var $tr = $(this);
+                var $td = $tr.find('td').first();
+                if ($td.length > 0) {
+                    var rowIndex = $tr.data('index') || $tr.attr('data-index') || index;
+                    var btnHtml = '<a class="btn-operation-delete" href="javascript:void(0)" onclick="deleteDetailRowByIndex(this, ' + rowIndex + ')" title="删除该行明细"><i class="fa fa-trash"></i></a>';
+                    $td.html(btnHtml);
+                    console.log('Filled fixed column row', index, 'with button');
+                }
+            });
+            
+            // 方法2: 查找主表格中所有操作列单元格
+            $('#detail-table tbody tr').each(function(index) {
+                var $tr = $(this);
+                var rowIndex = $tr.data('index') || index;
+                // 查找操作列 - 最后一列或data-field="operation"的列
+                var $opCell = $tr.find('td[data-field="operation"]');
+                if ($opCell.length === 0) {
+                    var $allTds = $tr.find('td');
+                    if ($allTds.length >= 15) {
+                        $opCell = $allTds.last();
+                    }
+                }
+                if ($opCell.length > 0 && $opCell.find('.btn-operation-delete').length === 0) {
+                    var btnHtml = '<a class="btn-operation-delete" href="javascript:void(0)" onclick="deleteDetailRowByIndex(this, ' + rowIndex + ')" title="删除该行明细"><i class="fa fa-trash"></i></a>';
+                    $opCell.html(btnHtml);
+                    console.log('Filled main table row', index, 'with button');
+                }
+            });
+        }
+        
+        // 初始化工具提示
+        setTimeout(function() {
+            $('#detail-table [data-toggle="tooltip"]').tooltip();
+        }, 300);
+        
+        // 同步表头滚动 - 确保表头固定
+        setTimeout(function() {
+            var $table = $('#detail-table');
+            var $header = $table.find('.fixed-table-header');
+            var $body = $table.find('.fixed-table-body');
+            
+            // 监听表体滚动，同步表头水平滚动
+            if ($body.length && $header.length) {
+                $body.on('scroll', function() {
+                    var scrollLeft = $body.scrollLeft();
+                    $header.scrollLeft(scrollLeft);
+                });
+            }
+        }, 500);
+        
+        // 立即执行一次填充（延迟执行，确保表格已初始化）
+        setTimeout(function() {
+            fillOperationColumn();
+        }, 200);
+        
+        // 监听多个事件确保操作列被填充
+        $('#detail-table').on('post-body.bs.table load-success.bs.table loaded.bs.table refresh.bs.table', function() {
+            setTimeout(function() {
+                fillOperationColumn();
+            }, 200);
+        });
+        
+        // 使用MutationObserver监听DOM变化，确保操作列被填充
+        setTimeout(function() {
+            var observer = new MutationObserver(function(mutations) {
+                var hasNewRows = false;
+                mutations.forEach(function(mutation) {
+                    if (mutation.addedNodes.length > 0) {
+                        hasNewRows = true;
+                    }
+                });
+                if (hasNewRows) {
+                    setTimeout(function() {
+                        fillOperationColumn();
+                    }, 100);
+                }
+            });
+            
+            var tableContainer = document.querySelector('#detail-table');
+            if (tableContainer) {
+                observer.observe(tableContainer, {
+                    childList: true,
+                    subtree: true
+                });
+            }
+        }, 500);
+        
+        // 初始填充 - 使用多个延迟确保在固定列插件渲染后执行
+        setTimeout(function() {
+            fillOperationColumn();
+        }, 300);
+        setTimeout(function() {
+            fillOperationColumn();
+        }, 600);
+        setTimeout(function() {
+            fillOperationColumn();
+        }, 1000);
+        setTimeout(function() {
+            fillOperationColumn();
+        }, 1500);
+        setTimeout(function() {
+            fillOperationColumn();
+        }, 2000);
+	        
+	        // 初始化日期选择器（延迟执行，等待表格渲染完成）
+	        function initDatePickers() {
+	            setTimeout(function() {
+	                $('#detail-table').find('.date-input').each(function() {
+	                    var $this = $(this);
+	                    // 如果已经初始化过，跳过
+	                    if ($this.data('laydate-init')) {
+	                        return;
+	                    }
+	                    var field = $this.data('field');
+	                    laydate.render({
+	                        elem: this,
+	                        type: 'date',
+	                        done: function(value, date) {
+	                            $this.val(value);
+	                            $this.blur();
+	                            // 触发更新
+	                            var index = $this.data('index');
+	                            if (index !== undefined && field) {
+	                                if (field === 'productionDate') {
+	                                    updateProductionDate($this[0], index);
+	                                } else if (field === 'expireDate') {
+	                                    updateExpireDate($this[0], index);
+	                                }
+	                            }
+	                        }
+	                    });
+	                    $this.data('laydate-init', true);
+	                });
+	            }, 200);
+	        }
+	        
+	        initDatePickers();
+	        
+	        // 监听表格更新后重新初始化日期选择器
+	        $('#detail-table').on('load-success.bs.table post-body.bs.table', function() {
+	            // 清除之前的初始化标记，重新初始化
+	            $('#detail-table').find('.date-input').data('laydate-init', false);
+	            initDatePickers();
+	        });
+	    }
+	    
+	    // 更新数量
+	    function updateQuantity(input, index) {
+	        var value = $(input).val();
+	        if (value && (isNaN(value) || parseFloat(value) < 0)) {
+	            $.modal.alertWarning('数量必须是大于等于0的数字');
+	            $(input).focus();
+	            return;
+	        }
+	        var $tr = $(input).closest('tr');
+	        var data = $('#detail-table').bootstrapTable('getData');
+	        var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : index;
+	        if (data[rowIndex]) {
+	            data[rowIndex].deliveryQuantity = value ? parseFloat(value) : 0;
+	            // 自动计算金额
+	            var qty = parseFloat(data[rowIndex].deliveryQuantity || 0);
+	            var price = parseFloat(data[rowIndex].price || 0);
+	            data[rowIndex].amount = qty * price;
+	            // 更新金额列的显示
+	            var amountCell = $tr.find('td[data-field="amount"]');
+	            amountCell.text('¥' + (qty * price).toFixed(2));
+	        }
+	    }
+	    
+	    // 更新批号
+	    function updateBatchNo(input, index) {
+	        var value = $(input).val();
+	        if (value && value.length > 50) {
+	            $.modal.alertWarning('批号不能超过50个字符');
+	            $(input).focus();
+	            return;
+	        }
+	        var $tr = $(input).closest('tr');
+	        var data = $('#detail-table').bootstrapTable('getData');
+	        var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : index;
+	        if (data[rowIndex]) {
+	            data[rowIndex].batchNo = value || '';
+	        }
+	    }
+	    
+	    // 更新生产日期
+	    function updateProductionDate(input, index) {
+	        var value = $(input).val();
+	        var $tr = $(input).closest('tr');
+	        var data = $('#detail-table').bootstrapTable('getData');
+	        var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : index;
+	        if (data[rowIndex]) {
+	            data[rowIndex].productionDate = value || '';
+	        }
+	    }
+	    
+	    // 更新有效期
+	    function updateExpireDate(input, index) {
+	        var value = $(input).val();
+	        var $tr = $(input).closest('tr');
+	        var data = $('#detail-table').bootstrapTable('getData');
+	        var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : index;
+	        if (data[rowIndex]) {
+	            data[rowIndex].expireDate = value || '';
+	        }
+	    }
+	    
+	    // 删除明细行 - 定义为全局函数
+	    window.deleteDetailRowByIndex = function(btn, index) {
+	        console.log('deleteDetailRowByIndex called with index:', index, 'btn:', btn);
+	        
+	        // 获取行数据用于提示
+	        var data = $('#detail-table').bootstrapTable('getData');
+	        console.log('Current table data length:', data ? data.length : 0);
+	        
+	        var rowData = null;
+	        if (index !== undefined && index !== null && data && data.length > index) {
+	            rowData = data[index];
+	        }
+	        
+	        // 构建提示信息
+	        var confirmMsg = "确定要删除这条明细吗？";
+	        if (rowData && rowData.materialName) {
+	            confirmMsg = "确定要删除【" + rowData.materialName + "】这条明细吗？";
+	        }
+	        
+	        $.modal.confirm(confirmMsg, function() {
+	            console.log('User confirmed deletion');
+	            
+	            // 获取按钮所在的行
+	            var $tr = $(btn).closest('tr');
+	            var rowIndex = $tr.data('index');
+	            
+	            // 如果传入了index参数，优先使用
+	            if (index !== undefined && index !== null) {
+	                rowIndex = index;
+	            }
+	            
+	            // 如果还是无法获取索引，尝试从行的位置获取
+	            if (rowIndex === undefined || rowIndex === null) {
+	                var allRows = $('#detail-table tbody tr');
+	                rowIndex = allRows.index($tr);
+	                console.log('Got rowIndex from row position:', rowIndex);
+	            }
+	            
+	            console.log('Final rowIndex:', rowIndex);
+	            
+	            // 获取所有数据
+	            var allData = $('#detail-table').bootstrapTable('getData');
+	            console.log('All data length before delete:', allData ? allData.length : 0);
+	            
+	            if (allData && rowIndex !== undefined && rowIndex !== null && rowIndex >= 0 && allData.length > rowIndex) {
+	                // 从数组中移除该行
+	                allData.splice(rowIndex, 1);
+	                console.log('Data after splice, new length:', allData.length);
+	                
+	                // 重新加载数据
+	                $('#detail-table').bootstrapTable('load', allData);
+	                
+	                // 重新填充操作列
+	                setTimeout(function() {
+	                    if (typeof fillOperationColumnImmediate === 'function') {
+	                        fillOperationColumnImmediate();
+	                    }
+	                    if (typeof fillOperationColumn === 'function') {
+	                        fillOperationColumn();
+	                    }
+	                }, 100);
+	                
+	                // 重新计算总金额
+	                var totalAmount = 0;
+	                for (var i = 0; i < allData.length; i++) {
+	                    if (allData[i].amount) {
+	                        totalAmount += parseFloat(allData[i].amount);
+	                    }
+	                }
+	                $("input[name='deliveryAmount']").val(totalAmount.toFixed(2));
+	                
+	                // 重新初始化日期选择器
+	                setTimeout(function() {
+	                    $('#detail-table').find('.date-input').data('laydate-init', false);
+	                    if (typeof initDatePickers === 'function') {
+	                        initDatePickers();
+	                    }
+	                }, 200);
+	                
+	                $.modal.msgSuccess("删除成功");
+	            } else {
+	                console.error('Cannot delete row: rowIndex=', rowIndex, 'data length=', allData ? allData.length : 0);
+	                $.modal.alertError("无法确定要删除的行，请刷新页面后重试");
+	            }
+	        });
+	    };
+
+        $("#form-delivery-edit").validate({
+        	onkeyup: false,
+        	rules:{
+        	},
+            focusCleanup: true
+        });
+        
+        function submitHandler() {
+	        if ($.validate.form()) {
+	            // 获取表格中的所有明细数据
+	            var detailData = $('#detail-table').bootstrapTable('getData');
+	            
+	            // 转换字段名：quantity -> deliveryQuantity
+	            for (var i = 0; i < detailData.length; i++) {
+	                var detail = detailData[i];
+	                // 如果存在quantity字段，转换为deliveryQuantity
+	                if (detail.quantity !== undefined && detail.deliveryQuantity === undefined) {
+	                    detail.deliveryQuantity = detail.quantity;
+	                    delete detail.quantity;
+	                }
+	                // 计算金额
+	                var qty = parseFloat(detail.deliveryQuantity || 0);
+	                var price = parseFloat(detail.price || 0);
+	                detail.amount = qty * price;
+	            }
+	            
+	            // 序列化表单数据
+	            var formData = $("#form-delivery-edit").serializeArray();
+	            
+	            // 处理空字符串：将空字符串转换为 null（不传递该字段）
+	            formData = formData.filter(function(item) {
+	                // 对于 hospitalId 和 supplierId，如果值为空字符串，则不传递
+	                if ((item.name === 'hospitalId' || item.name === 'supplierId') && item.value === '') {
+	                    return false;
+	                }
+	                return true;
+	            });
+	            
+	            // 添加明细数据（作为JSON字符串）
+	            formData.push({
+	                name: 'deliveryDetailsJson',
+	                value: JSON.stringify(detailData)
+	            });
+	            
+	            // 使用自定义保存逻辑，保存成功后不关闭标签页
+	            $.modal.loading("正在处理中，请稍候...");
+	            $.ajax({
+	                url: prefix + "/edit",
+	                type: "post",
+	                dataType: "json",
+	                data: formData,
+	                beforeSend: function (xhr, settings) {
+	                    var csrftoken = $('meta[name=csrf-token]').attr('content');
+	                    if (($.common.equalsIgnoreCase(settings.type, "POST"))) {
+	                        xhr.setRequestHeader("X-CSRF-Token", csrftoken);
+	                    }
+	                },
+	                success: function(result) {
+	                    $.modal.closeLoading();
+	                    if (result.code == web_status.SUCCESS) {
+	                        $.modal.msgSuccess(result.msg);
+	                        // 保存成功后，刷新当前页面数据，但不关闭标签页
+	                        setTimeout(function() {
+	                            // 重新加载页面以获取最新数据
+	                            window.location.reload();
+	                        }, 1000);
+	                    } else if (result.code == web_status.WARNING) {
+	                        $.modal.alertWarning(result.msg);
+	                    } else {
+	                        $.modal.alertError(result.msg);
+	                    }
+	                },
+	                error: function(xhr, status, error) {
+	                    $.modal.closeLoading();
+	                    // 检查是否是登录超时
+	                    if (xhr.status == 401 || xhr.status == 403 || (xhr.responseJSON && xhr.responseJSON.code == 401)) {
+	                        $.modal.alertError("登录已超时，请重新登录", function() {
+	                            top.location.href = ctx + "login";
+	                        });
+	                    } else {
+	                        $.modal.alertError("保存失败：" + (error || "未知错误"));
+	                    }
+	                }
+	            });
+	        }
+	    }
+	    
+	    // 打印配送单 - 直接打开浏览器打印预览
+	    function printDelivery() {
+	        var deliveryId = $("input[name='deliveryId']").val();
+	        if (!deliveryId) {
+	            $.modal.msgWarning("配送单ID不存在，无法打印");
+	            return;
+	        }
+	        var printUrl = ctx + "delivery/delivery/print/" + deliveryId;
+	        console.log('Opening print preview for deliveryId:', deliveryId, 'URL:', printUrl);
+	        // 在新窗口中打开打印页面，页面加载后会自动调用打印
+	        var printWindow = window.open(printUrl, '_blank');
+	        if (!printWindow) {
+	            $.modal.alertError("浏览器阻止了弹窗，请允许弹窗后重试");
+	        }
+	    }
+	    
+	    // 新增单据 - 清空表单
+	    function newDocument() {
+	        $("#form-delivery-edit")[0].reset();
+	        // 保留配送单号和配送单ID
+	        $("input[name='deliveryNo']").val(/*[[${delivery.deliveryNo}]]*/ '');
+	        $("input[name='deliveryId']").val(/*[[${delivery.deliveryId}]]*/ '');
+	        // 清空日期字段
+	        $("#expectedDeliveryDate").val('');
+	        $("#invoiceDate").val('');
+	        // 清空明细表格
+	        $('#detail-table').bootstrapTable('load', []);
+	    }
+	    
+	    // 引入订单 - 打开订单选择对话框
+	    function importOrder() {
+	        var options = {
+	            title: '选择订单',
+	            url: ctx + "order/order/select",
+	            width: "1000",
+	            height: "600",
+	            callBack: function(index, layero) {
+	                var body = $.modal.getChildFrame(index);
+	                var orderId = body.find('#rowIds').val();
+	                if (!orderId || orderId == '') {
+	                    $.modal.alertWarning("请至少选择一条记录");
+	                    return false;
+	                }
+	                
+	                // 获取选中的订单ID（只取第一个）
+	                var ids = orderId.split(',');
+	                var selectedOrderId = ids[0];
+	                
+	                // 通过AJAX获取订单详细信息
+	                $.ajax({
+	                    url: ctx + "order/order/" + selectedOrderId,
+	                    type: "GET",
+	                    dataType: "json",
+	                    success: function(result) {
+	                        if (result.code == 0 && result.data) {
+	                            var order = result.data;
+	                            // 填充表单字段
+	                            if (order.orderNo) {
+	                                $("input[name='orderNo']").val(order.orderNo);
+	                            }
+	                            if (order.hospitalId) {
+	                                $("#hospitalId").val(order.hospitalId);
+	                            }
+	                            if (order.supplierId) {
+	                                $("#supplierId").val(order.supplierId);
+	                            }
+	                            if (order.orderAmount) {
+	                                $("input[name='deliveryAmount']").val(order.orderAmount);
+	                            }
+	                            if (order.orderDate) {
+	                                var orderDate = new Date(order.orderDate);
+	                                var formattedDate = orderDate.getFullYear() + '-' + 
+	                                    String(orderDate.getMonth() + 1).padStart(2, '0') + '-' + 
+	                                    String(orderDate.getDate()).padStart(2, '0');
+	                                $("#expectedDeliveryDate").val(formattedDate);
+	                            }
+	                            if (order.remark) {
+	                                $("input[name='remark']").val(order.remark);
+	                            }
+	                            
+	                            // 填充订单明细到详细信息列表
+	                            if (order.orderDetails && order.orderDetails.length > 0) {
+	                                var detailData = [];
+	                                for (var i = 0; i < order.orderDetails.length; i++) {
+	                                    var detail = order.orderDetails[i];
+	                                    var deliveryDetail = {
+	                                        materialId: detail.materialId || null,
+	                                        materialCode: detail.materialCode || '',
+	                                        materialName: detail.materialName || '',
+	                                        specification: detail.specification || '',
+	                                        model: detail.model || '',
+	                                        unit: detail.unit || '',
+	                                        deliveryQuantity: detail.remainingQuantity || detail.orderQuantity || 0,
+	                                        price: detail.purchasePrice || 0,
+	                                        amount: detail.amount || (detail.purchasePrice * (detail.remainingQuantity || detail.orderQuantity || 0)) || 0,
+	                                        batchNo: '',
+	                                        productionDate: '',
+	                                        expireDate: ''
+	                                    };
+	                                    detailData.push(deliveryDetail);
+	                                }
+	                                // 清空现有数据并加载新数据
+	                                $('#detail-table').bootstrapTable('load', detailData);
+	                            } else {
+	                                // 如果没有明细，清空表格
+	                                $('#detail-table').bootstrapTable('load', []);
+	                            }
+	                            
+	                            $.modal.close(index);
+	                            $.modal.msgSuccess("订单信息已引入");
+	                        } else {
+	                            $.modal.alertError(result.msg || "获取订单信息失败");
+	                        }
+	                    },
+	                    error: function() {
+	                        $.modal.alertError("获取订单信息失败");
+	                    }
+	                });
+	                return false;
+	            }
+	        };
+	        $.modal.openOptions(options);
+	    }
+	    
+	    // 关闭页面，返回上一级
+	    function closeItem() {
+	        // 如果在iframe中，优先使用关闭标签页的方式
+	        if (window.parent && window.parent !== window) {
+	            try {
+	                // 优先使用layer关闭iframe
+	                var index = parent.layer.getFrameIndex(window.name);
+	                if (index) {
+	                    parent.layer.close(index);
+	                    return;
+	                }
+	            } catch(e) {
+	                console.log("layer关闭失败:", e);
+	            }
+	            
+	            try {
+	                // 尝试直接调用全局的closeItem函数
+	                if (typeof window.parent.closeItem === 'function') {
+	                    window.parent.closeItem();
+	                    return;
+	                }
+	            } catch(e) {
+	                console.log("调用父窗口closeItem失败:", e);
+	            }
+	            
+	            try {
+	                // 如果closeItem不可用，尝试直接使用common.js中的逻辑
+	                var topWindow = $(window.parent.document);
+	                
+	                // 点击当前活动标签页的关闭按钮（X图标）
+	                var closeBtn = $('.page-tabs-content .active i', topWindow);
+	                if (closeBtn.length > 0) {
+	                    closeBtn.click();
+	                    return;
+	                }
+	                
+	                // 尝试通过data-id关闭标签页
+	                var panelUrl = window.frameElement ? window.frameElement.getAttribute('data-panel') : null;
+	                if (panelUrl) {
+	                    $('.menuTab[data-id="' + panelUrl + '"]', topWindow).find('i').click();
+	                    return;
+	                }
+	            } catch(e) {
+	                console.log("关闭标签页失败:", e);
+	            }
+	        }
+	        
+	        // 如果不在iframe中，尝试跳转到配送单列表页
+	        try {
+	            window.location.href = ctx + "delivery/delivery";
+	        } catch(e) {
+	            console.log("跳转失败:", e);
+	        }
+	    }
+    </script>
+</body>
+</html>

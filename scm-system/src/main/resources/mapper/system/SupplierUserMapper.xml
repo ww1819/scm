@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.SupplierUserMapper">
+    
+    <resultMap type="SupplierUser" id="SupplierUserResult">
+        <result property="supplierUserId"    column="supplier_user_id"    />
+        <result property="supplierId"    column="supplier_id"    />
+        <result property="userId"    column="user_id"    />
+        <result property="isMain"    column="is_main"    />
+        <result property="status"    column="status"    />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"    column="create_time"    />
+        <result property="updateBy"    column="update_by"    />
+        <result property="updateTime"    column="update_time"    />
+        <result property="supplierName"    column="supplier_name"    />
+        <result property="supplierCode"    column="supplier_code"    />
+        <result property="userName"    column="user_name"    />
+        <result property="loginName"    column="login_name"    />
+        <result property="phonenumber"    column="phonenumber"    />
+        <result property="email"    column="email"    />
+    </resultMap>
+
+    <sql id="selectSupplierUserVo">
+        select su.supplier_user_id, su.supplier_id, su.user_id, su.is_main, su.status, 
+               su.create_by, su.create_time, su.update_by, su.update_time,
+               s.company_name as supplier_name, s.supplier_code,
+               u.user_name, u.login_name, u.phonenumber, u.email
+        from scm_supplier_user su
+        left join scm_supplier s on su.supplier_id = s.supplier_id
+        left join sys_user u on su.user_id = u.user_id
+    </sql>
+
+    <select id="selectSupplierUserList" parameterType="SupplierUser" resultMap="SupplierUserResult">
+        <include refid="selectSupplierUserVo"/>
+        <where>  
+            <if test="supplierId != null">
+                and su.supplier_id = #{supplierId}
+            </if>
+            <if test="userId != null">
+                and su.user_id = #{userId}
+            </if>
+            <if test="isMain != null and isMain != ''">
+                and su.is_main = #{isMain}
+            </if>
+            <if test="status != null and status != ''">
+                and su.status = #{status}
+            </if>
+            <if test="supplierName != null and supplierName != ''">
+                and s.company_name like concat('%', #{supplierName}, '%')
+            </if>
+            <if test="loginName != null and loginName != ''">
+                and u.login_name like concat('%', #{loginName}, '%')
+            </if>
+        </where>
+        order by su.create_time desc
+    </select>
+    
+    <select id="selectSupplierUserById" parameterType="Long" resultMap="SupplierUserResult">
+        <include refid="selectSupplierUserVo"/>
+        where su.supplier_user_id = #{supplierUserId}
+    </select>
+
+    <select id="selectSupplierUserListBySupplierId" parameterType="Long" resultMap="SupplierUserResult">
+        <include refid="selectSupplierUserVo"/>
+        where su.supplier_id = #{supplierId}
+        order by su.is_main desc, su.create_time desc
+    </select>
+
+    <select id="selectSupplierUserByUserId" parameterType="Long" resultMap="SupplierUserResult">
+        <include refid="selectSupplierUserVo"/>
+        where su.user_id = #{userId}
+        limit 1
+    </select>
+        
+    <insert id="insertSupplierUser" parameterType="SupplierUser" useGeneratedKeys="true" keyProperty="supplierUserId">
+        insert into scm_supplier_user
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="supplierId != null">supplier_id,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="isMain != null">is_main,</if>
+            <if test="status != null">status,</if>
+            <if test="createBy != null">create_by,</if>
+            <if test="createTime != null">create_time,</if>
+            <if test="updateBy != null">update_by,</if>
+            <if test="updateTime != null">update_time,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="supplierId != null">#{supplierId},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="isMain != null">#{isMain},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createBy != null">#{createBy},</if>
+            <if test="createTime != null">#{createTime},</if>
+            <if test="updateBy != null">#{updateBy},</if>
+            <if test="updateTime != null">#{updateTime},</if>
+         </trim>
+    </insert>
+
+    <update id="updateSupplierUser" parameterType="SupplierUser">
+        update scm_supplier_user
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="supplierId != null">supplier_id = #{supplierId},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="isMain != null">is_main = #{isMain},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where supplier_user_id = #{supplierUserId}
+    </update>
+
+    <delete id="deleteSupplierUserById" parameterType="Long">
+        delete from scm_supplier_user where supplier_user_id = #{supplierUserId}
+    </delete>
+
+    <delete id="deleteSupplierUserByIds" parameterType="String">
+        delete from scm_supplier_user where supplier_user_id in 
+        <foreach item="supplierUserId" collection="array" open="(" separator="," close=")">
+            #{supplierUserId}
+        </foreach>
+    </delete>
+
+    <delete id="deleteSupplierUserBySupplierId" parameterType="Long">
+        delete from scm_supplier_user where supplier_id = #{supplierId}
+    </delete>
+</mapper>
+

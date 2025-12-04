@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.SupplierCertificateMapper">
+    
+    <resultMap type="SupplierCertificate" id="SupplierCertificateResult">
+        <id     property="certificateId"     column="certificate_id"     />
+        <result property="supplierId"        column="supplier_id"        />
+        <result property="supplierName"      column="supplier_name"      />
+        <result property="certificateType"   column="certificate_type"    />
+        <result property="certificateName"   column="certificate_name"    />
+        <result property="certificateNo"     column="certificate_no"      />
+        <result property="issueDate"         column="issue_date"          />
+        <result property="expireDate"        column="expire_date"         />
+        <result property="certificateFile"   column="certificate_file"    />
+        <result property="auditStatus"      column="audit_status"        />
+        <result property="auditBy"          column="audit_by"            />
+        <result property="auditTime"        column="audit_time"          />
+        <result property="auditRemark"      column="audit_remark"        />
+        <result property="isExpired"        column="is_expired"          />
+        <result property="isWarning"        column="is_warning"          />
+        <result property="status"           column="status"              />
+        <result property="createBy"         column="create_by"           />
+        <result property="createTime"       column="create_time"          />
+        <result property="updateBy"         column="update_by"           />
+        <result property="updateTime"       column="update_time"          />
+        <result property="remark"           column="remark"              />
+    </resultMap>
+    
+    <sql id="selectSupplierCertificateVo">
+        select c.certificate_id, c.supplier_id, c.certificate_type, c.certificate_name, c.certificate_no,
+               c.issue_date, c.expire_date, c.certificate_file, c.audit_status, c.audit_by, c.audit_time,
+               c.audit_remark, c.is_expired, c.is_warning, c.status, c.create_by, c.create_time,
+               c.update_by, c.update_time, c.remark,
+               s.company_name as supplier_name
+        from scm_supplier_certificate c
+        left join scm_supplier s on c.supplier_id = s.supplier_id
+    </sql>
+    
+    <select id="selectSupplierCertificateList" parameterType="SupplierCertificate" resultMap="SupplierCertificateResult">
+        <include refid="selectSupplierCertificateVo"/>
+        <where>
+            c.status != '1'
+            <if test="supplierId != null">
+                AND c.supplier_id = #{supplierId}
+            </if>
+            <if test="certificateType != null and certificateType != ''">
+                AND c.certificate_type like concat('%', #{certificateType}, '%')
+            </if>
+            <if test="supplierName != null and supplierName != ''">
+                AND s.company_name like concat('%', #{supplierName}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND c.is_expired = #{status}
+            </if>
+            <if test="certificateName != null and certificateName != ''">
+                AND c.certificate_name like concat('%', #{certificateName}, '%')
+            </if>
+            <if test="certificateNo != null and certificateNo != ''">
+                AND c.certificate_no like concat('%', #{certificateNo}, '%')
+            </if>
+            <if test="auditStatus != null and auditStatus != ''">
+                AND c.audit_status = #{auditStatus}
+            </if>
+            <if test="isExpired != null and isExpired != ''">
+                AND c.is_expired = #{isExpired}
+            </if>
+            <if test="isWarning != null and isWarning != ''">
+                AND c.is_warning = #{isWarning}
+            </if>
+        </where>
+        order by c.expire_date asc
+    </select>
+    
+    <select id="selectSupplierCertificateListBySupplierIds" resultMap="SupplierCertificateResult">
+        <include refid="selectSupplierCertificateVo"/>
+        <where>
+            c.status != '1'
+            <if test="supplierIds != null and supplierIds.size() > 0">
+                AND c.supplier_id IN
+                <foreach item="supplierId" collection="supplierIds" open="(" separator="," close=")">
+                    #{supplierId}
+                </foreach>
+            </if>
+            <if test="supplierCertificate.certificateType != null and supplierCertificate.certificateType != ''">
+                AND c.certificate_type like concat('%', #{supplierCertificate.certificateType}, '%')
+            </if>
+            <if test="supplierCertificate.supplierName != null and supplierCertificate.supplierName != ''">
+                AND s.company_name like concat('%', #{supplierCertificate.supplierName}, '%')
+            </if>
+            <if test="supplierCertificate.status != null and supplierCertificate.status != ''">
+                AND c.is_expired = #{supplierCertificate.status}
+            </if>
+            <if test="supplierCertificate.certificateName != null and supplierCertificate.certificateName != ''">
+                AND c.certificate_name like concat('%', #{supplierCertificate.certificateName}, '%')
+            </if>
+            <if test="supplierCertificate.certificateNo != null and supplierCertificate.certificateNo != ''">
+                AND c.certificate_no like concat('%', #{supplierCertificate.certificateNo}, '%')
+            </if>
+            <if test="supplierCertificate.auditStatus != null and supplierCertificate.auditStatus != ''">
+                AND c.audit_status = #{supplierCertificate.auditStatus}
+            </if>
+            <if test="supplierCertificate.isExpired != null and supplierCertificate.isExpired != ''">
+                AND c.is_expired = #{supplierCertificate.isExpired}
+            </if>
+            <if test="supplierCertificate.isWarning != null and supplierCertificate.isWarning != ''">
+                AND c.is_warning = #{supplierCertificate.isWarning}
+            </if>
+        </where>
+        order by c.expire_date asc, c.create_time desc
+    </select>
+    
+    <select id="selectExpiringCertificateList" parameterType="SupplierCertificate" resultMap="SupplierCertificateResult">
+        <include refid="selectSupplierCertificateVo"/>
+        <where>
+            c.status != '1'
+            AND c.is_warning = '1'
+            <if test="supplierId != null">
+                AND c.supplier_id = #{supplierId}
+            </if>
+        </where>
+        order by c.expire_date asc
+    </select>
+    
+    <select id="selectSupplierCertificateById" parameterType="Long" resultMap="SupplierCertificateResult">
+        <include refid="selectSupplierCertificateVo"/>
+        where c.certificate_id = #{certificateId}
+    </select>
+    
+    <insert id="insertSupplierCertificate" parameterType="SupplierCertificate" useGeneratedKeys="true" keyProperty="certificateId">
+        insert into scm_supplier_certificate(
+            <if test="supplierId != null">supplier_id,</if>
+            <if test="certificateType != null and certificateType != ''">certificate_type,</if>
+            <if test="certificateName != null and certificateName != ''">certificate_name,</if>
+            <if test="certificateNo != null and certificateNo != ''">certificate_no,</if>
+            <if test="issueDate != null">issue_date,</if>
+            <if test="expireDate != null">expire_date,</if>
+            <if test="certificateFile != null and certificateFile != ''">certificate_file,</if>
+            <if test="auditStatus != null and auditStatus != ''">audit_status,</if>
+            <if test="auditBy != null and auditBy != ''">audit_by,</if>
+            <if test="auditTime != null">audit_time,</if>
+            <if test="auditRemark != null and auditRemark != ''">audit_remark,</if>
+            <if test="isExpired != null and isExpired != ''">is_expired,</if>
+            <if test="isWarning != null and isWarning != ''">is_warning,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time
+        )values(
+            <if test="supplierId != null">#{supplierId},</if>
+            <if test="certificateType != null and certificateType != ''">#{certificateType},</if>
+            <if test="certificateName != null and certificateName != ''">#{certificateName},</if>
+            <if test="certificateNo != null and certificateNo != ''">#{certificateNo},</if>
+            <if test="issueDate != null">#{issueDate},</if>
+            <if test="expireDate != null">#{expireDate},</if>
+            <if test="certificateFile != null and certificateFile != ''">#{certificateFile},</if>
+            <if test="auditStatus != null and auditStatus != ''">#{auditStatus},</if>
+            <if test="auditBy != null and auditBy != ''">#{auditBy},</if>
+            <if test="auditTime != null">#{auditTime},</if>
+            <if test="auditRemark != null and auditRemark != ''">#{auditRemark},</if>
+            <if test="isExpired != null and isExpired != ''">#{isExpired},</if>
+            <if test="isWarning != null and isWarning != ''">#{isWarning},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate()
+        )
+    </insert>
+    
+    <update id="updateSupplierCertificate" parameterType="SupplierCertificate">
+        update scm_supplier_certificate
+        <set>
+            <if test="supplierId != null">supplier_id = #{supplierId},</if>
+            <if test="certificateType != null and certificateType != ''">certificate_type = #{certificateType},</if>
+            <if test="certificateName != null and certificateName != ''">certificate_name = #{certificateName},</if>
+            <if test="certificateNo != null and certificateNo != ''">certificate_no = #{certificateNo},</if>
+            <if test="issueDate != null">issue_date = #{issueDate},</if>
+            <if test="expireDate != null">expire_date = #{expireDate},</if>
+            <if test="certificateFile != null and certificateFile != ''">certificate_file = #{certificateFile},</if>
+            <if test="auditStatus != null and auditStatus != ''">audit_status = #{auditStatus},</if>
+            <if test="auditBy != null and auditBy != ''">audit_by = #{auditBy},</if>
+            <if test="auditTime != null">audit_time = #{auditTime},</if>
+            <if test="auditRemark != null and auditRemark != ''">audit_remark = #{auditRemark},</if>
+            <if test="isExpired != null and isExpired != ''">is_expired = #{isExpired},</if>
+            <if test="isWarning != null and isWarning != ''">is_warning = #{isWarning},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="remark != null and remark != ''">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where certificate_id = #{certificateId}
+    </update>
+    
+    <update id="deleteSupplierCertificateById" parameterType="Long">
+        update scm_supplier_certificate set status = '1' where certificate_id = #{certificateId}
+    </update>
+    
+    <update id="deleteSupplierCertificateByIds" parameterType="String">
+        update scm_supplier_certificate set status = '1' where certificate_id in
+        <foreach item="certificateId" collection="array" open="(" separator="," close=")">
+            #{certificateId}
+        </foreach>
+    </update>
+</mapper>
+

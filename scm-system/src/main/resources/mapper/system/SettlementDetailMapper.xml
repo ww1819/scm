@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.SettlementDetailMapper">
+    
+    <resultMap type="SettlementDetail" id="SettlementDetailResult">
+        <id     property="detailId"          column="detail_id"          />
+        <result property="settlementId"     column="settlement_id"      />
+        <result property="deliveryId"       column="delivery_id"        />
+        <result property="deliveryNo"       column="delivery_no"        />
+        <result property="materialId"       column="material_id"        />
+        <result property="materialCode"     column="material_code"      />
+        <result property="materialName"     column="material_name"      />
+        <result property="specification"    column="specification"        />
+        <result property="model"           column="model"              />
+        <result property="unit"            column="unit"                />
+        <result property="quantity"        column="quantity"            />
+        <result property="price"           column="price"               />
+        <result property="amount"          column="amount"              />
+    </resultMap>
+    
+    <sql id="selectSettlementDetailVo">
+        select d.detail_id, d.settlement_id, d.delivery_id, d.delivery_no, d.material_id,
+               d.material_code, d.material_name, d.specification, d.model, d.unit,
+               d.quantity, d.price, d.amount
+        from scm_settlement_detail d
+    </sql>
+    
+    <select id="selectSettlementDetailList" parameterType="SettlementDetail" resultMap="SettlementDetailResult">
+        <include refid="selectSettlementDetailVo"/>
+        <where>
+            <if test="settlementId != null">
+                AND d.settlement_id = #{settlementId}
+            </if>
+            <if test="deliveryId != null">
+                AND d.delivery_id = #{deliveryId}
+            </if>
+        </where>
+        order by d.detail_id
+    </select>
+    
+    <select id="selectSettlementDetailListBySettlementId" parameterType="Long" resultMap="SettlementDetailResult">
+        <include refid="selectSettlementDetailVo"/>
+        where d.settlement_id = #{settlementId}
+        order by d.detail_id
+    </select>
+    
+    <select id="selectSettlementDetailById" parameterType="Long" resultMap="SettlementDetailResult">
+        <include refid="selectSettlementDetailVo"/>
+        where d.detail_id = #{detailId}
+    </select>
+    
+    <insert id="insertSettlementDetail" parameterType="SettlementDetail" useGeneratedKeys="true" keyProperty="detailId">
+        insert into scm_settlement_detail(
+            <if test="settlementId != null">settlement_id,</if>
+            <if test="deliveryId != null">delivery_id,</if>
+            <if test="deliveryNo != null and deliveryNo != ''">delivery_no,</if>
+            <if test="materialId != null">material_id,</if>
+            <if test="materialCode != null and materialCode != ''">material_code,</if>
+            <if test="materialName != null and materialName != ''">material_name,</if>
+            <if test="specification != null and specification != ''">specification,</if>
+            <if test="model != null and model != ''">model,</if>
+            <if test="unit != null and unit != ''">unit,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="price != null">price,</if>
+            <if test="amount != null">amount,</if>
+            create_time
+        )values(
+            <if test="settlementId != null">#{settlementId},</if>
+            <if test="deliveryId != null">#{deliveryId},</if>
+            <if test="deliveryNo != null and deliveryNo != ''">#{deliveryNo},</if>
+            <if test="materialId != null">#{materialId},</if>
+            <if test="materialCode != null and materialCode != ''">#{materialCode},</if>
+            <if test="materialName != null and materialName != ''">#{materialName},</if>
+            <if test="specification != null and specification != ''">#{specification},</if>
+            <if test="model != null and model != ''">#{model},</if>
+            <if test="unit != null and unit != ''">#{unit},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="price != null">#{price},</if>
+            <if test="amount != null">#{amount},</if>
+            sysdate()
+        )
+    </insert>
+    
+    <insert id="batchInsertSettlementDetail" parameterType="java.util.List">
+        insert into scm_settlement_detail(settlement_id, delivery_id, delivery_no, material_id,
+               material_code, material_name, specification, model, unit, quantity, price, amount, create_time)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.settlementId}, #{item.deliveryId}, #{item.deliveryNo}, #{item.materialId},
+             #{item.materialCode}, #{item.materialName}, #{item.specification}, #{item.model},
+             #{item.unit}, #{item.quantity}, #{item.price}, #{item.amount}, sysdate())
+        </foreach>
+    </insert>
+    
+    <update id="updateSettlementDetail" parameterType="SettlementDetail">
+        update scm_settlement_detail
+        <set>
+            <if test="settlementId != null">settlement_id = #{settlementId},</if>
+            <if test="deliveryId != null">delivery_id = #{deliveryId},</if>
+            <if test="deliveryNo != null and deliveryNo != ''">delivery_no = #{deliveryNo},</if>
+            <if test="materialId != null">material_id = #{materialId},</if>
+            <if test="materialCode != null and materialCode != ''">material_code = #{materialCode},</if>
+            <if test="materialName != null and materialName != ''">material_name = #{materialName},</if>
+            <if test="specification != null and specification != ''">specification = #{specification},</if>
+            <if test="model != null and model != ''">model = #{model},</if>
+            <if test="unit != null and unit != ''">unit = #{unit},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="amount != null">amount = #{amount},</if>
+        </set>
+        where detail_id = #{detailId}
+    </update>
+    
+    <delete id="deleteSettlementDetailById" parameterType="Long">
+        delete from scm_settlement_detail where detail_id = #{detailId}
+    </delete>
+    
+    <delete id="deleteSettlementDetailBySettlementId" parameterType="Long">
+        delete from scm_settlement_detail where settlement_id = #{settlementId}
+    </delete>
+    
+    <delete id="deleteSettlementDetailByIds" parameterType="String">
+        delete from scm_settlement_detail where detail_id in
+        <foreach item="detailId" collection="array" open="(" separator="," close=")">
+            #{detailId}
+        </foreach>
+    </delete>
+</mapper>
+

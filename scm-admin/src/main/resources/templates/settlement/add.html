@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('新增结算单')" />
+</head>
+<body>
+    <div class="main-content">
+        <form id="form-settlement-add" class="form-horizontal">
+            <h4 class="form-header h4">基本信息</h4>
+            <div class="row">
+            	<div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">发票号：</label>
+                        <div class="col-sm-8">
+                            <input name="invoiceNo" placeholder="请输入发票号" class="form-control" type="text" maxlength="50">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">发票日期：</label>
+                        <div class="col-sm-8">
+                            <input name="invoiceDate" placeholder="请输入发票日期" class="form-control" type="date">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">客户ID：</label>
+                        <div class="col-sm-8">
+                            <input name="customerId" placeholder="请输入客户ID" class="form-control" type="text">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">供应商ID：</label>
+                        <div class="col-sm-8">
+                            <input name="supplierId" placeholder="请输入供应商ID" class="form-control" type="text">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4 class="form-header h4">其他信息</h4>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <label class="col-xs-2 control-label">备注：</label>
+                        <div class="col-xs-10">
+                            <textarea name="remark" maxlength="500" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+      
+    <div class="row">
+        <div class="col-sm-offset-5 col-sm-10">
+            <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
+        </div>
+    </div>
+	<th:block th:include="include :: footer" />
+	<script>
+	    var prefix = ctx + "settlement/settlement";
+	
+        $("#form-settlement-add").validate({
+        	onkeyup: false,
+            focusCleanup: true
+        });
+        
+        function submitHandler() {
+	        if ($.validate.form()) {
+	        	$.operate.saveTab(prefix + "/add", $("#form-settlement-add").serializeArray());
+	        }
+	    }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('配送信息查询')" />
+	<th:block th:include="include :: layout-latest-css" />
+	<style>
+		.tab-content {
+			padding-top: 15px;
+			min-height: 0;
+		}
+		.tab-pane {
+			display: none;
+		}
+		.tab-pane.active {
+			display: block;
+		}
+		.container-div {
+			display: flex;
+			flex-direction: column;
+			height: calc(100vh - 100px);
+		}
+		.nav-tabs {
+			flex-shrink: 0;
+		}
+		.tab-content {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+		}
+		.tab-pane {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+		}
+		.tab-pane.active {
+			display: flex;
+		}
+		.tab-pane > .row {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+		}
+		.select-table {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+			min-height: 600px;
+		}
+		#toolbar-detail, #toolbar-summary {
+			display: flex;
+			align-items: center;
+			gap: 10px;
+			min-height: 40px;
+			flex-shrink: 0;
+		}
+		#toolbar-detail .btn, #toolbar-summary .btn {
+			white-space: nowrap;
+			overflow: visible;
+			min-width: 80px;
+			text-overflow: ellipsis;
+		}
+		/* 固定表头 */
+		.bootstrap-table .fixed-table-header {
+			position: sticky !important;
+			top: 0 !important;
+			z-index: 100 !important;
+			background-color: #fff !important;
+		}
+		.bootstrap-table .fixed-table-header thead {
+			position: sticky !important;
+			top: 0 !important;
+			z-index: 100 !important;
+		}
+		.bootstrap-table .fixed-table-header th {
+			background-color: #f5f5f5 !important;
+			border-bottom: 2px solid #ddd !important;
+			position: sticky !important;
+			top: 0 !important;
+			z-index: 100 !important;
+		}
+		/* 表格容器布局 */
+		.select-table .bootstrap-table {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			overflow: hidden;
+		}
+		.select-table .fixed-table-container {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+			min-height: 0;
+		}
+		.select-table .fixed-table-body {
+			flex: 1;
+			overflow-x: auto;
+			overflow-y: auto;
+			min-height: 0;
+		}
+		/* 分页控件固定在底部 */
+		.select-table .fixed-table-pagination {
+			flex-shrink: 0;
+			padding: 10px;
+			border-top: 1px solid #ddd;
+			background-color: #fff;
+			position: sticky;
+			bottom: 0;
+			z-index: 50;
+			margin-top: auto;
+		}
+		/* 确保表格主体内容区域可以滚动 */
+		.select-table .fixed-table-container .fixed-table-body {
+			flex: 1;
+			overflow-x: auto;
+			overflow-y: auto;
+			min-height: 0;
+		}
+		/* 搜索区域不收缩 */
+		.search-collapse {
+			flex-shrink: 0;
+		}
+	</style>
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<!-- 标签页切换 -->
+		<ul class="nav nav-tabs" role="tablist" style="margin-bottom: 0;">
+			<li role="presentation" class="active">
+				<a href="#detail-tab" aria-controls="detail-tab" role="tab" data-toggle="tab" onclick="switchTab('detail')">
+					<i class="fa fa-list"></i> 明细表
+				</a>
+			</li>
+			<li role="presentation">
+				<a href="#summary-tab" aria-controls="summary-tab" role="tab" data-toggle="tab" onclick="switchTab('summary')">
+					<i class="fa fa-table"></i> 汇总表
+				</a>
+			</li>
+		</ul>
+		
+		<!-- 标签页内容 -->
+		<div class="tab-content">
+			<!-- 明细表 -->
+			<div role="tabpanel" class="tab-pane active" id="detail-tab">
+				<div class="row">
+					<div class="col-sm-12 search-collapse">
+						<form id="delivery-detail-form">
+							<div class="select-list">
+								<ul>
+									<li>
+										配送单号：<input type="text" name="deliveryNo"/>
+									</li>
+									<li>
+										产品编码：<input type="text" name="materialCode"/>
+									</li>
+									<li>
+										产品名称：<input type="text" name="materialName"/>
+									</li>
+									<li>
+										<a class="btn btn-primary btn-rounded btn-sm" onclick="searchDetail()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+										<a class="btn btn-warning btn-rounded btn-sm" onclick="resetDetail()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+									</li>
+								</ul>
+							</div>
+						</form>
+					</div>
+					
+			        <div class="btn-group-sm" id="toolbar-detail" role="group" style="flex-shrink: 0; padding: 5px 0; width: 100%;">
+			            <a class="btn btn-warning" onclick="exportDetail()" shiro:hasPermission="delivery:delivery:export" style="min-width: 80px;">
+				            <i class="fa fa-download"></i> 导出
+				        </a>
+			        </div>
+			        
+			        <div class="col-sm-12 select-table table-striped">
+					    <table id="bootstrap-table-detail"></table>
+					</div>
+				</div>
+			</div>
+			
+			<!-- 汇总表 -->
+			<div role="tabpanel" class="tab-pane" id="summary-tab">
+				<div class="row" style="margin: 0; display: flex; flex-direction: column; height: 100%;">
+					<div class="col-sm-12 search-collapse" style="flex-shrink: 0;">
+						<form id="delivery-summary-form">
+							<div class="select-list">
+								<ul>
+									<li>
+										配送单号：<input type="text" name="deliveryNo"/>
+									</li>
+									<li>
+										医院名称：<input type="text" name="hospitalName"/>
+									</li>
+									<li>
+										供应商名称：<input type="text" name="supplierName"/>
+									</li>
+									<li>
+										单据状态：<select name="deliveryStatus">
+											<option value="">所有</option>
+											<option value="0">待配送</option>
+											<option value="1">配送中</option>
+											<option value="2">已完成</option>
+											<option value="3">已取消</option>
+										</select>
+									</li>
+									<li>
+										<a class="btn btn-primary btn-rounded btn-sm" onclick="searchSummary()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+										<a class="btn btn-warning btn-rounded btn-sm" onclick="resetSummary()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+									</li>
+								</ul>
+							</div>
+						</form>
+					</div>
+					
+			        <div class="btn-group-sm" id="toolbar-summary" role="group" style="flex-shrink: 0; padding: 5px 0; width: 100%;">
+			            <a class="btn btn-warning" onclick="exportSummary()" shiro:hasPermission="delivery:delivery:export" style="min-width: 80px;">
+				            <i class="fa fa-download"></i> 导出
+				        </a>
+			        </div>
+			        
+			        <div class="col-sm-12 select-table table-striped" style="flex: 1; overflow: auto;">
+					    <table id="bootstrap-table-summary"></table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script th:inline="javascript">
+		var detailPrefix = ctx + "delivery/delivery/query/detail";
+		var summaryPrefix = ctx + "delivery/delivery/query/summary";
+		var detailTableInitialized = false;
+		var summaryTableInitialized = false;
+		
+		// 日期格式化函数
+		function formatDate(value, format) {
+		    if (!value) return '-';
+		    
+		    // 如果已经是格式化的字符串，直接返回
+		    if (typeof value === 'string') {
+		        if (value.indexOf('-') > -1) {
+		            // 如果已经是日期格式，根据需要的格式返回
+		            if (format === 'yyyy-MM-dd HH:mm:ss') {
+		                // 如果字符串只有日期部分，添加时间部分
+		                if (value.length <= 10) {
+		                    return value + ' 00:00:00';
+		                }
+		                return value;
+		            } else {
+		                // 只返回日期部分
+		                return value.split(' ')[0];
+		            }
+		        }
+		    }
+		    
+		    // 尝试使用若依框架的dateFormat方法
+		    if (typeof $.common !== 'undefined' && typeof $.common.dateFormat === 'function') {
+		        var formatted = $.common.dateFormat(value, format || 'yyyy-MM-dd');
+		        return formatted || '-';
+		    }
+		    
+		    // 备用方案：使用原生JavaScript格式化
+		    try {
+		        var date = new Date(value);
+		        if (isNaN(date.getTime())) return '-';
+		        
+		        var year = date.getFullYear();
+		        var month = String(date.getMonth() + 1).padStart(2, '0');
+		        var day = String(date.getDate()).padStart(2, '0');
+		        
+		        if (format === 'yyyy-MM-dd HH:mm:ss') {
+		            var hours = String(date.getHours()).padStart(2, '0');
+		            var minutes = String(date.getMinutes()).padStart(2, '0');
+		            var seconds = String(date.getSeconds()).padStart(2, '0');
+		            return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+		        } else {
+		            return year + '-' + month + '-' + day;
+		        }
+		    } catch(e) {
+		        return '-';
+		    }
+		}
+
+		$(function() {
+		    // 初始化明细表
+		    initDetailTable();
+		});
+
+		// 切换标签页
+		function switchTab(tabType) {
+		    if (tabType === 'detail') {
+		        if (!detailTableInitialized) {
+		            initDetailTable();
+		        }
+		    } else if (tabType === 'summary') {
+		        if (!summaryTableInitialized) {
+		            initSummaryTable();
+		        }
+		    }
+		}
+
+		// 初始化明细表
+		function initDetailTable() {
+		    if (detailTableInitialized) {
+		        return;
+		    }
+		    
+		    var options = {
+		        id: "bootstrap-table-detail",
+		        url: detailPrefix + "/list",
+		        exportUrl: detailPrefix + "/export",
+		        sortName: "detailId",
+		        sortOrder: "desc",
+		        modalName: "配送明细",
+		        formId: "delivery-detail-form",
+		        columns: [{
+		            field: 'serialNumber',
+		            title: '序号',
+		            align: 'center',
+		            width: 60,
+		            formatter: function (value, row, index) {
+		                var $table = $('#bootstrap-table-detail');
+		                var options = $table.bootstrapTable('getOptions');
+		                if (!options) return index + 1;
+		                var pageSize = options.pageSize || 10;
+		                var pageNumber = options.pageNumber || $table.data('currentPage') || 1;
+		                return (pageNumber - 1) * pageSize + index + 1;
+		            }
+		        },
+		        {
+		            field: 'deliveryNo',
+		            title: '配送单号',
+		            sortable: true
+		        },
+		        {
+		            field: 'materialCode',
+		            title: '产品编码',
+		            sortable: true
+		        },
+		        {
+		            field: 'materialName',
+		            title: '产品名称',
+		            sortable: true
+		        },
+		        {
+		            field: 'specification',
+		            title: '规格'
+		        },
+		        {
+		            field: 'model',
+		            title: '型号'
+		        },
+		        {
+		            field: 'unit',
+		            title: '单位'
+		        },
+		        {
+		            field: 'deliveryQuantity',
+		            title: '配送数量',
+		            sortable: true
+		        },
+		        {
+		            field: 'price',
+		            title: '单价',
+		            sortable: true,
+		            formatter: function(value, row, index) {
+		                if (value != null) {
+		                    return parseFloat(value).toFixed(2);
+		                }
+		                return '-';
+		            }
+		        },
+		        {
+		            field: 'amount',
+		            title: '金额',
+		            sortable: true,
+		            formatter: function(value, row, index) {
+		                if (value != null) {
+		                    return parseFloat(value).toFixed(2);
+		                }
+		                return '-';
+		            }
+		        },
+		        {
+		            field: 'batchNo',
+		            title: '批号'
+		        },
+		        {
+		            field: 'productionDate',
+		            title: '生产日期',
+		            sortable: true,
+		            formatter: function(value, row, index) {
+		                return formatDate(value, "yyyy-MM-dd");
+		            }
+		        },
+		        {
+		            field: 'expireDate',
+		            title: '有效期',
+		            sortable: true,
+		            formatter: function(value, row, index) {
+		                return formatDate(value, "yyyy-MM-dd");
+		            }
+		        },
+		        {
+		            field: 'manufacturer',
+		            title: '生产厂家'
+		        },
+		        {
+		            field: 'registerNo',
+		            title: '注册证号'
+		        }]
+		    };
+		    
+		    // 使用若依框架的表格初始化方法
+		    var $table = $('#bootstrap-table-detail');
+		    if ($table.length > 0) {
+		        // 保存当前页码用于序号计算
+		        options.onPageChange = function(number, size) {
+		            $table.data('currentPage', number);
+		        };
+		        // 添加加载成功回调
+		        options.onLoadSuccess = function(data) {
+		            console.log("明细表加载成功，数据量:", data ? (data.rows ? data.rows.length : (Array.isArray(data) ? data.length : 0)) : 0);
+		            var $table = $('#bootstrap-table-detail');
+		            // 确保加载完成后更新页码
+		            if ($table && $table.bootstrapTable) {
+		                var options = $table.bootstrapTable('getOptions');
+		                if (options) {
+		                    $table.data('currentPage', options.pageNumber || 1);
+		                }
+		            }
+		        };
+		        // 添加加载错误回调
+		        options.onLoadError = function(status, res) {
+		            console.error("明细表加载失败，状态码:", status);
+		            console.error("响应内容:", res);
+		            if (status === 401 || status === 403) {
+		                $.modal.msgError("登录已过期，请重新登录");
+		                setTimeout(function() {
+		                    window.location.href = ctx + "login";
+		                }, 1500);
+		            } else {
+		                $.modal.msgError("数据加载失败，请刷新页面重试");
+		            }
+		        };
+		        $.table.init(options);
+		        $table.data('currentPage', 1);
+		        detailTableInitialized = true;
+		    }
+		}
+
+		// 初始化汇总表
+		function initSummaryTable() {
+		    if (summaryTableInitialized) {
+		        return;
+		    }
+		    
+		    var options = {
+		        id: "bootstrap-table-summary",
+		        url: summaryPrefix + "/list",
+		        exportUrl: summaryPrefix + "/export",
+		        sortName: "createTime",
+		        sortOrder: "desc",
+		        modalName: "配送单",
+		        formId: "delivery-summary-form",
+		        columns: [{
+		            field: 'serialNumber',
+		            title: '序号',
+		            align: 'center',
+		            width: 60,
+		            formatter: function(value, row, index) {
+		                var $table = $('#bootstrap-table-summary');
+		                var options = $table.bootstrapTable('getOptions');
+		                if (!options) return index + 1;
+		                var pageSize = options.pageSize || 10;
+		                var pageNumber = options.pageNumber || $table.data('currentPage') || 1;
+		                return (pageNumber - 1) * pageSize + index + 1;
+		            }
+		        },
+		        {
+		            field: 'deliveryNo',
+		            title: '配送单号',
+		            sortable: true
+		        },
+		        {
+		            field: 'hospitalName',
+		            title: '医院名称',
+		            formatter: function(value, row, index) {
+		                return value || '-';
+		            }
+		        },
+		        {
+		            field: 'supplierName',
+		            title: '供应商名称',
+		            formatter: function(value, row, index) {
+		                return value || '-';
+		            }
+		        },
+		        {
+		            field: 'deliveryAmount',
+		            title: '配送金额',
+		            sortable: true,
+		            formatter: function(value, row, index) {
+		                if (value != null) {
+		                    return parseFloat(value).toFixed(2);
+		                }
+		                return '-';
+		            }
+		        },
+		        {
+		            field: 'deliveryStatus',
+		            title: '单据状态',
+		            formatter: function(value, row, index) {
+		            	var statusMap = {'0': '待配送', '1': '配送中', '2': '已完成', '3': '已取消'};
+		            	return statusMap[value] || '';
+		            }
+		        },
+		        {
+		            field: 'createTime',
+		            title: '制单日期',
+		            sortable: true,
+		            formatter: function(value, row, index) {
+		                return formatDate(value, "yyyy-MM-dd HH:mm:ss");
+		            }
+		        },
+		        {
+		            field: 'createBy',
+		            title: '制单人'
+		        },
+		        {
+		            field: 'expectedDeliveryDate',
+		            title: '预计配送日期',
+		            sortable: true,
+		            formatter: function(value, row, index) {
+		                return formatDate(value, "yyyy-MM-dd");
+		            }
+		        },
+		        {
+		            field: 'deliveryAddress',
+		            title: '配送地址'
+		        },
+		        {
+		            field: 'remark',
+		            title: '备注'
+		        }]
+		    };
+		    
+		        // 使用若依框架的表格初始化方法
+		    var $table = $('#bootstrap-table-summary');
+		    if ($table.length > 0) {
+		        // 保存当前页码用于序号计算
+		        options.onPageChange = function(number, size) {
+		            $table.data('currentPage', number);
+		        };
+		        // 添加加载成功回调
+		        options.onLoadSuccess = function(data) {
+		            console.log("汇总表加载成功，数据量:", data ? (data.rows ? data.rows.length : (Array.isArray(data) ? data.length : 0)) : 0);
+		            var $table = $('#bootstrap-table-summary');
+		            // 确保加载完成后更新页码
+		            if ($table && $table.bootstrapTable) {
+		                var options = $table.bootstrapTable('getOptions');
+		                if (options) {
+		                    $table.data('currentPage', options.pageNumber || 1);
+		                }
+		            }
+		        };
+		        // 添加加载错误回调
+		        options.onLoadError = function(status, res) {
+		            console.error("汇总表加载失败，状态码:", status);
+		            console.error("响应内容:", res);
+		            if (status === 401 || status === 403) {
+		                $.modal.msgError("登录已过期，请重新登录");
+		                setTimeout(function() {
+		                    window.location.href = ctx + "login";
+		                }, 1500);
+		            } else {
+		                $.modal.msgError("数据加载失败，请刷新页面重试");
+		            }
+		        };
+		        $.table.init(options);
+		        $table.data('currentPage', 1);
+		        summaryTableInitialized = true;
+		        
+		        // 延迟刷新一次，确保数据正确加载
+		        setTimeout(function() {
+		            if ($table.bootstrapTable('getOptions')) {
+		                $table.bootstrapTable('refresh');
+		            }
+		        }, 500);
+		    }
+		}
+
+		// 明细表搜索
+		function searchDetail() {
+		    $.table.search("delivery-detail-form", "bootstrap-table-detail");
+		}
+
+		// 明细表重置
+		function resetDetail() {
+		    $("#delivery-detail-form")[0].reset();
+		    $.table.search("delivery-detail-form", "bootstrap-table-detail");
+		}
+
+		// 明细表导出
+		function exportDetail() {
+		    var params = {
+		        deliveryNo: $('input[name="deliveryNo"]', '#delivery-detail-form').val(),
+		        materialCode: $('input[name="materialCode"]', '#delivery-detail-form').val(),
+		        materialName: $('input[name="materialName"]', '#delivery-detail-form').val()
+		    };
+		    var form = $('<form></form>');
+		    form.attr('method', 'post');
+		    form.attr('action', detailPrefix + "/export");
+		    $.each(params, function(key, value) {
+		        if (value) {
+		            var input = $('<input></input>');
+		            input.attr('type', 'hidden');
+		            input.attr('name', key);
+		            input.attr('value', value);
+		            form.append(input);
+		        }
+		    });
+		    form.appendTo('body');
+		    form.submit();
+		    form.remove();
+		}
+
+		// 汇总表搜索
+		function searchSummary() {
+		    $.table.search("delivery-summary-form", "bootstrap-table-summary");
+		}
+
+		// 汇总表重置
+		function resetSummary() {
+		    $("#delivery-summary-form")[0].reset();
+		    $.table.search("delivery-summary-form", "bootstrap-table-summary");
+		}
+
+		// 汇总表导出
+		function exportSummary() {
+		    var params = {
+		        deliveryNo: $('input[name="deliveryNo"]', '#delivery-summary-form').val(),
+		        hospitalName: $('input[name="hospitalName"]', '#delivery-summary-form').val(),
+		        supplierName: $('input[name="supplierName"]', '#delivery-summary-form').val(),
+		        deliveryStatus: $('select[name="deliveryStatus"]', '#delivery-summary-form').val()
+		    };
+		    var form = $('<form></form>');
+		    form.attr('method', 'post');
+		    form.attr('action', summaryPrefix + "/export");
+		    $.each(params, function(key, value) {
+		        if (value) {
+		            var input = $('<input></input>');
+		            input.attr('type', 'hidden');
+		            input.attr('name', key);
+		            input.attr('value', value);
+		            form.append(input);
+		        }
+		    });
+		    form.appendTo('body');
+		    form.submit();
+		    form.remove();
+		}
+	</script>
+</body>
+</html>
+

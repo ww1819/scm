@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('新增医院')" />
+</head>
+<body>
+    <div class="main-content">
+        <form id="form-hospital-add" class="form-horizontal">
+            <h4 class="form-header h4">基本信息</h4>
+            <div class="row">
+            	<div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label is-required">医院名称：</label>
+                        <div class="col-sm-8">
+                            <input name="hospitalName" placeholder="请输入医院名称" class="form-control" type="text" maxlength="200" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">医院简称：</label>
+                        <div class="col-sm-8">
+                            <input name="hospitalShortName" placeholder="请输入医院简称" class="form-control" type="text" maxlength="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">医院等级：</label>
+                        <div class="col-sm-8">
+                            <select name="hospitalLevel" class="form-control">
+                                <option value="">请选择医院等级</option>
+                                <option value="一级">一级</option>
+                                <option value="二级">二级</option>
+                                <option value="三级">三级</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4 class="form-header h4">联系信息</h4>
+            <div class="row" id="address-select">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">省份/直辖市：</label>
+                        <div class="col-sm-8">
+                            <select name="province" class="province form-control" data-first-title="请选择省份">
+                                <option value="">请选择省份</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">城市：</label>
+                        <div class="col-sm-8">
+                            <select name="city" class="city form-control" data-first-title="请选择城市">
+                                <option value="">请选择城市</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">区县：</label>
+                        <div class="col-sm-8">
+                            <select name="district" class="area form-control" data-first-title="请选择区县">
+                                <option value="">请选择区县</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">详细地址：</label>
+                        <div class="col-sm-8">
+                            <input name="address" placeholder="请输入详细地址" class="form-control" type="text" maxlength="500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">联系人：</label>
+                        <div class="col-sm-8">
+                            <input name="contactPerson" placeholder="请输入联系人" class="form-control" type="text" maxlength="50">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">联系电话：</label>
+                        <div class="col-sm-8">
+                            <input name="contactPhone" placeholder="请输入联系电话" class="form-control" type="text" maxlength="20">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">邮箱：</label>
+                        <div class="col-sm-8">
+                            <input name="email" placeholder="请输入邮箱" class="form-control" type="text" maxlength="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4 class="form-header h4">其他信息</h4>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <label class="col-xs-2 control-label">备注：</label>
+                        <div class="col-xs-10">
+                            <textarea name="remark" maxlength="500" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+      
+    <div class="row">
+        <div class="col-sm-offset-5 col-sm-10">
+            <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
+        </div>
+    </div>
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: jquery-cxselect-js" />
+	<script>
+	    var prefix = ctx + "hospital/hospital";
+	    
+	    // 初始化省市区联动
+	    $(function() {
+	        var urlChina = ctx + 'demo/form/cityData';
+	        $.cxSelect.defaults.url = urlChina;
+	        $('#address-select').cxSelect({
+	            selects: ['province', 'city', 'area'],
+	            nodata: 'none'
+	        });
+	    });
+	
+        $("#form-hospital-add").validate({
+        	onkeyup: false,
+        	rules:{
+        		hospitalName:{
+        			required: true,
+        			maxlength: 200
+        		}
+        	},
+            focusCleanup: true
+        });
+        
+        function submitHandler() {
+	        if ($.validate.form()) {
+	        	$.operate.saveTab(prefix + "/add", $("#form-hospital-add").serializeArray());
+	        }
+	    }
+    </script>
+</body>
+</html>
+

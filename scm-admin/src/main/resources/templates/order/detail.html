@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('订单明细')" />
+</head>
+<body>
+    <div class="main-content">
+        <form class="form-horizontal">
+            <h4 class="form-header h4">订单信息</h4>
+            <div class="row">
+            	<div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">订单编号：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${order.orderNo}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">医院：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${order.hospitalName}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">订单金额：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${order.orderAmount}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">供应商：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${order.supplierName}" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">要货仓库：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${order.warehouse}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">订单日期：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${order.orderDate != null ? #dates.format(order.orderDate, 'yyyy-MM-dd') : ''}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">订单状态：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${order.orderStatus == '0' ? '待接收' : (order.orderStatus == '1' ? '已接收' : (order.orderStatus == '2' ? '配送中' : (order.orderStatus == '3' ? '已完成' : (order.orderStatus == '4' ? '已取消' : ''))))}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">申请科室：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${order.department}" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">备注：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${order.remark}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                </div>
+                <div class="col-sm-3">
+                </div>
+                <div class="col-sm-3">
+                </div>
+            </div>
+        </form>
+        
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-sm-12">
+                <h4 class="form-header h4">订单明细</h4>
+                <div class="table-responsive">
+                    <table id="bootstrap-table"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+	
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script th:inline="javascript">
+		var orderId = [[${order.orderId}]];
+		var prefix = ctx + "order/order";
+
+		$(function() {
+		    queryOrderDetailList();
+		});
+
+		function queryOrderDetailList() {
+		    var options = {
+		        url: prefix + "/detailList",
+		        queryParams: { orderId: orderId },
+		        sortName: "detailId",
+		        sortOrder: "asc",
+		        pagination: false,
+		        search: false,
+		        showRefresh: false,
+		        showToggle: false,
+		        showColumns: false,
+		        striped: true,
+		        columns: [{
+		            field: 'index',
+		            title: '序号',
+		            align: 'center',
+		            width: 60,
+		            formatter: function(value, row, index) {
+		                return index + 1;
+		            }
+		        },
+		        {
+		            field: 'materialCode',
+		            title: '产品编码',
+		            align: 'center'
+		        },
+		        {
+		            field: 'materialName',
+		            title: '产品名称',
+		            align: 'left'
+		        },
+		        {
+		            field: 'specification',
+		            title: '规格',
+		            align: 'center'
+		        },
+		        {
+		            field: 'model',
+		            title: '型号',
+		            align: 'center'
+		        },
+		        {
+		            field: 'unit',
+		            title: '单位',
+		            align: 'center',
+		            width: 80
+		        },
+		        {
+		            field: 'orderQuantity',
+		            title: '订货数量',
+		            align: 'right',
+		            width: 100,
+		            formatter: function(value, row, index) {
+		                if (value) {
+		                    return parseFloat(value).toFixed(2);
+		                }
+		                return '0.00';
+		            }
+		        },
+		        {
+		            field: 'purchasePrice',
+		            title: '单价',
+		            align: 'right',
+		            width: 100,
+		            formatter: function(value, row, index) {
+		                if (value) {
+		                    return '¥' + parseFloat(value).toFixed(2);
+		                }
+		                return '¥0.00';
+		            }
+		        },
+		        {
+		            field: 'amount',
+		            title: '金额',
+		            align: 'right',
+		            width: 120,
+		            formatter: function(value, row, index) {
+		                if (value) {
+		                    return '¥' + parseFloat(value).toFixed(2);
+		                }
+		                return '¥0.00';
+		            }
+		        },
+		        {
+		            field: 'remainingQuantity',
+		            title: '剩余待配送数',
+		            align: 'right',
+		            width: 120,
+		            formatter: function(value, row, index) {
+		                if (value) {
+		                    return parseFloat(value).toFixed(2);
+		                }
+		                return '0.00';
+		            }
+		        }]
+		    };
+		    $.table.init(options);
+		}
+	</script>
+</body>
+</html>
+

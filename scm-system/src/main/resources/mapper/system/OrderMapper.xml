@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.OrderMapper">
+    
+    <resultMap type="Order" id="OrderResult">
+        <id     property="orderId"         column="order_id"         />
+        <result property="orderNo"         column="order_no"         />
+        <result property="hospitalId"      column="hospital_id"      />
+        <result property="hospitalName"    column="hospital_name"    />
+        <result property="supplierId"      column="supplier_id"      />
+        <result property="supplierName"    column="supplier_name"    />
+        <result property="orderAmount"     column="order_amount"    />
+        <result property="warehouse"       column="warehouse_name"   />
+        <result property="orderDate"      column="order_date"       />
+        <result property="orderStatus"     column="order_status"     />
+        <result property="department"     column="apply_dept"        />
+        <result property="createBy"       column="create_by"         />
+        <result property="createTime"     column="create_time"        />
+        <result property="updateBy"       column="update_by"         />
+        <result property="updateTime"     column="update_time"        />
+        <result property="remark"         column="remark"            />
+    </resultMap>
+    
+    <sql id="selectOrderVo">
+        select o.order_id, o.order_no, o.hospital_id, o.supplier_id, o.order_amount,
+               o.warehouse_name, o.order_date, o.order_status, o.apply_dept, o.remark,
+               o.create_by, o.create_time, o.update_by, o.update_time,
+               h.hospital_name, s.company_name as supplier_name
+        from scm_order o
+        left join scm_hospital h on o.hospital_id = h.hospital_id
+        left join scm_supplier s on o.supplier_id = s.supplier_id
+    </sql>
+    
+    <select id="selectOrderList" parameterType="Order" resultMap="OrderResult">
+        <include refid="selectOrderVo"/>
+        <where>
+            <if test="orderNo != null and orderNo != ''">
+                AND o.order_no like concat('%', #{orderNo}, '%')
+            </if>
+            <if test="hospitalId != null">
+                AND o.hospital_id = #{hospitalId}
+            </if>
+            <if test="hospitalName != null and hospitalName != ''">
+                AND h.hospital_name like concat('%', #{hospitalName}, '%')
+            </if>
+            <if test="supplierId != null">
+                AND o.supplier_id = #{supplierId}
+            </if>
+            <if test="supplierName != null and supplierName != ''">
+                AND s.company_name like concat('%', #{supplierName}, '%')
+            </if>
+            <if test="orderStatus != null and orderStatus != ''">
+                AND o.order_status = #{orderStatus}
+            </if>
+            <if test="orderDate != null">
+                AND date(o.order_date) = date(#{orderDate})
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                AND date(o.order_date) &gt;= date(#{params.beginTime})
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                AND date(o.order_date) &lt;= date(#{params.endTime})
+            </if>
+        </where>
+        order by o.order_date desc, o.create_time desc
+    </select>
+    
+    <select id="selectOrderById" parameterType="Long" resultMap="OrderResult">
+        <include refid="selectOrderVo"/>
+        where o.order_id = #{orderId}
+    </select>
+    
+    <select id="selectOrderByOrderNo" parameterType="String" resultMap="OrderResult">
+        <include refid="selectOrderVo"/>
+        where o.order_no = #{orderNo}
+    </select>
+    
+    <insert id="insertOrder" parameterType="Order" useGeneratedKeys="true" keyProperty="orderId">
+        insert into scm_order(
+            <if test="orderNo != null and orderNo != ''">order_no,</if>
+            hospital_id,
+            supplier_id,
+            <if test="orderAmount != null">order_amount,</if>
+            <if test="warehouse != null and warehouse != ''">warehouse_name,</if>
+            <if test="orderDate != null">order_date,</if>
+            <if test="orderStatus != null and orderStatus != ''">order_status,</if>
+            <if test="department != null and department != ''">apply_dept,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time
+        )values(
+            <if test="orderNo != null and orderNo != ''">#{orderNo},</if>
+            #{hospitalId},
+            #{supplierId},
+            <if test="orderAmount != null">#{orderAmount},</if>
+            <if test="warehouse != null and warehouse != ''">#{warehouse},</if>
+            <if test="orderDate != null">#{orderDate},</if>
+            <if test="orderStatus != null and orderStatus != ''">#{orderStatus},</if>
+            <if test="department != null and department != ''">#{department},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate()
+        )
+    </insert>
+    
+    <update id="updateOrder" parameterType="Order">
+        update scm_order
+        <set>
+            <if test="orderNo != null and orderNo != ''">order_no = #{orderNo},</if>
+            <if test="hospitalId != null">hospital_id = #{hospitalId},</if>
+            <if test="supplierId != null">supplier_id = #{supplierId},</if>
+            <if test="orderAmount != null">order_amount = #{orderAmount},</if>
+            <if test="warehouse != null and warehouse != ''">warehouse_name = #{warehouse},</if>
+            <if test="orderDate != null">order_date = #{orderDate},</if>
+            <if test="orderStatus != null and orderStatus != ''">order_status = #{orderStatus},</if>
+            <if test="department != null and department != ''">apply_dept = #{department},</if>
+            <if test="remark != null and remark != ''">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where order_id = #{orderId}
+    </update>
+    
+    <delete id="deleteOrderById" parameterType="Long">
+        delete from scm_order where order_id = #{orderId}
+    </delete>
+    
+    <delete id="deleteOrderByIds" parameterType="String">
+        delete from scm_order where order_id in
+        <foreach item="orderId" collection="array" open="(" separator="," close=")">
+            #{orderId}
+        </foreach>
+    </delete>
+</mapper>
+

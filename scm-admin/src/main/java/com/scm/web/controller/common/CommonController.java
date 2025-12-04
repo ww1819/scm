@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import com.scm.common.config.ScmConfig;
@@ -21,6 +22,7 @@ import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.file.FileUploadUtils;
 import com.scm.common.utils.file.FileUtils;
+import com.scm.common.utils.file.MimeTypeUtils;
 
 /**
  * 通用请求处理
@@ -75,25 +77,66 @@ public class CommonController
      */
     @PostMapping("/upload")
     @ResponseBody
-    public AjaxResult uploadFile(MultipartFile file) throws Exception
+    public AjaxResult uploadFile(@RequestParam(value = "file", required = false) MultipartFile file,
+                                 @RequestParam(value = "certificateFile", required = false) MultipartFile certificateFile) throws Exception
     {
         try
         {
+            // 兼容多种参数名：file 或 certificateFile
+            MultipartFile uploadFile = file != null ? file : certificateFile;
+            
+            // 检查文件是否为空
+            if (uploadFile == null || uploadFile.isEmpty())
+            {
+                log.warn("文件上传请求中文件为空，file参数: {}, certificateFile参数: {}", 
+                        file != null ? file.getOriginalFilename() : "null",
+                        certificateFile != null ? certificateFile.getOriginalFilename() : "null");
+                // 文件为空时，返回成功但URL为空，允许不传文件
+                AjaxResult ajax = AjaxResult.success();
+                ajax.put("url", "");
+                ajax.put("fileName", "");
+                ajax.put("newFileName", "");
+                ajax.put("originalFilename", "");
+                return ajax;
+            }
+            
             // 上传文件路径
             String filePath = ScmConfig.getUploadPath();
+            
+            // 检查文件类型，如果是图片类型，使用图片扩展名限制
+            String contentType = uploadFile.getContentType();
+            String[] allowedExtension = null;
+            if (contentType != null && contentType.startsWith("image/"))
+            {
+                // 只允许图片格式
+                allowedExtension = MimeTypeUtils.IMAGE_EXTENSION;
+            }
+            else
+            {
+                // 默认允许所有格式
+                allowedExtension = MimeTypeUtils.DEFAULT_ALLOWED_EXTENSION;
+            }
+            
             // 上传并返回新文件名称
-            String fileName = FileUploadUtils.upload(filePath, file);
+            String fileName = FileUploadUtils.upload(filePath, uploadFile, allowedExtension);
             String url = serverConfig.getUrl() + fileName;
+            log.info("文件上传成功，fileName: {}, url: {}", fileName, url);
             AjaxResult ajax = AjaxResult.success();
             ajax.put("url", url);
             ajax.put("fileName", fileName);
             ajax.put("newFileName", FileUtils.getName(fileName));
-            ajax.put("originalFilename", file.getOriginalFilename());
+            ajax.put("originalFilename", uploadFile.getOriginalFilename());
             return ajax;
         }
         catch (Exception e)
         {
-            return AjaxResult.error(e.getMessage());
+            log.error("文件上传失败", e);
+            String errorMsg = e.getMessage();
+            if (errorMsg == null || errorMsg.isEmpty())
+            {
+                errorMsg = "文件上传失败，请检查文件格式和大小";
+            }
+            return AjaxResult.error(errorMsg);
         }
     }
 

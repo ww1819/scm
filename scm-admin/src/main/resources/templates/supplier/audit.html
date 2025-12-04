@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('供应商审核')" />
+</head>
+<body>
+    <div class="main-content">
+        <form id="form-supplier-audit" class="form-horizontal">
+            <input name="supplierId" type="hidden" th:value="${supplier.supplierId}"/>
+            <h4 class="form-header h4">供应商信息</h4>
+            <div class="row">
+            	<div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">供应商编码：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" th:value="${supplier.supplierCode}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">公司名称：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" th:value="${supplier.companyName}" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4 class="form-header h4">审核信息</h4>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label is-required">审核状态：</label>
+                        <div class="col-sm-8">
+                            <select name="auditStatus" class="form-control" required>
+                                <option value="1" th:selected="${supplier.auditStatus == '1'}">已审核</option>
+                                <option value="2" th:selected="${supplier.auditStatus == '2'}">已拒绝</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <label class="col-xs-2 control-label">审核备注：</label>
+                        <div class="col-xs-10">
+                            <textarea name="auditRemark" maxlength="500" class="form-control" rows="3" placeholder="请输入审核备注" th:text="${supplier.auditRemark}"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+      
+    <div class="row" style="position: fixed; bottom: 0; left: 0; right: 0; background-color: #fff; padding: 15px 20px; border-top: 1px solid #ddd; z-index: 1000; box-shadow: 0 -2px 8px rgba(0,0,0,0.1);">
+        <div class="col-sm-offset-5 col-sm-10">
+            <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
+        </div>
+    </div>
+    <div style="height: 70px;"></div>
+	<th:block th:include="include :: footer" />
+	<script>
+	    var prefix = ctx + "supplier/supplier";
+	
+        $("#form-supplier-audit").validate({
+        	onkeyup: false,
+        	rules:{
+        		auditStatus:{
+        			required: true
+        		}
+        	},
+            focusCleanup: true
+        });
+        
+        function submitHandler() {
+	        if ($.validate.form()) {
+	        	$.operate.saveTab(prefix + "/audit", $("#form-supplier-audit").serializeArray());
+	        }
+	    }
+    </script>
+</body>
+</html>
+

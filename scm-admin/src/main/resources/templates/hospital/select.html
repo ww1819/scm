@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('选择医院')" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="hospital-form">
+					<div class="select-list">
+						<ul>
+							<li>
+								医院名称：<input type="text" name="hospitalName"/>
+							</li>
+							<li>
+								医院编码：<input type="text" name="hospitalCode"/>
+							</li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+							    <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+	        
+	        <div class="col-sm-12 select-table table-striped">
+			    <table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script th:inline="javascript">
+		var prefix = ctx + "hospital/hospital";
+
+	$(function() {
+		var options = {
+	        url: prefix + "/list",
+	        sortName: "createTime",
+	        sortOrder: "desc",
+	        showSearch: false,
+	        showRefresh: false,
+	        showToggle: false,
+	        showColumns: false,
+	        clickToSelect: true,
+	        rememberSelected: true,
+	        pagination: true,
+	        pageSize: 10,
+	        pageList: [10, 25, 50, 100],
+	        onLoadSuccess: function(data) {
+	            console.log("医院列表加载成功，数据量:", data ? (data.rows ? data.rows.length : data.length) : 0);
+	            if (!data || (data.rows && data.rows.length === 0) || (Array.isArray(data) && data.length === 0)) {
+	                console.warn("医院列表为空");
+	            }
+	        },
+	        onLoadError: function(status) {
+	            console.error("医院列表加载失败，状态码:", status);
+	        },
+	        columns: [{
+	        	field: 'state',
+	            checkbox: true
+	        },
+	        {
+	            field: 'hospitalId',
+	            title: '医院ID',
+	            visible: false
+	        },
+	        {
+	            field: 'hospitalCode',
+	            title: '医院编码',
+	            sortable: true
+	        },
+	        {
+	            field: 'hospitalName',
+	            title: '医院名称'
+	        },
+	        {
+	            field: 'hospitalLevel',
+	            title: '医院等级'
+	        },
+	        {
+	            field: 'city',
+	            title: '城市'
+	        },
+	        {
+	        	field: 'status',
+	        	title: '状态',
+	        	align: 'center',
+	        	formatter: function (value, row, index) {
+	        		if (value == '0') {
+	        			return '<span class="label label-success">正常</span>';
+	        		} else {
+	        			return '<span class="label label-danger">停用</span>';
+	        		}
+	        	}
+	        }]
+	    };
+	    $.table.init(options);
+	    
+	    // 确保表格正确初始化，延迟检查
+	    setTimeout(function() {
+	        var $table = $('#bootstrap-table');
+	        if ($table.length > 0) {
+	            var tableData = $table.bootstrapTable('getData');
+	            console.log("表格初始化检查，当前数据量:", tableData ? tableData.length : 0);
+	            if (!tableData || tableData.length === 0) {
+	                console.log("表格数据为空，尝试刷新");
+	                $table.bootstrapTable('refresh');
+	            }
+	        }
+	    }, 1000);
+		    
+		    // 监听选择事件，更新隐藏字段
+		    $("#bootstrap-table").on("check.bs.table check-all.bs.table uncheck.bs.table uncheck-all.bs.table", function (e, rowsAfter, rowsBefore) {
+		        var rows = $.common.equals("uncheck-all", e.type) ? rowsBefore : rowsAfter;
+		        var rowIds = $.table.affectedRowIds(rows);
+		        var rowNames = [];
+		        if ($.isArray(rows)) {
+		            rowNames = $.map(rows, function(row) {
+		                return row.hospitalName;
+		            });
+		        }
+		        $("#rowIds").val(rowIds.join());
+		        $("#rowNames").val(rowNames.join());
+		    });
+		});
+	</script>
+	<input type="hidden" id="rowIds" name="rowIds">
+	<input type="hidden" id="rowNames" name="rowNames">
+</body>
+</html>
+

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('修改医院')" />
+</head>
+<body>
+    <div class="main-content">
+        <form id="form-hospital-edit" class="form-horizontal">
+            <input name="hospitalId" type="hidden" th:value="${hospital.hospitalId}"/>
+            <h4 class="form-header h4">基本信息</h4>
+            <div class="row">
+            	<div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label is-required">医院名称：</label>
+                        <div class="col-sm-8">
+                            <input name="hospitalName" placeholder="请输入医院名称" class="form-control" type="text" maxlength="200" th:value="${hospital.hospitalName}" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">医院简称：</label>
+                        <div class="col-sm-8">
+                            <input name="hospitalShortName" placeholder="请输入医院简称" class="form-control" type="text" maxlength="100" th:value="${hospital.hospitalShortName}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">医院等级：</label>
+                        <div class="col-sm-8">
+                            <select name="hospitalLevel" class="form-control">
+                                <option value="">请选择医院等级</option>
+                                <option value="一级" th:selected="${hospital.hospitalLevel == '一级'}">一级</option>
+                                <option value="二级" th:selected="${hospital.hospitalLevel == '二级'}">二级</option>
+                                <option value="三级" th:selected="${hospital.hospitalLevel == '三级'}">三级</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4 class="form-header h4">联系信息</h4>
+            <div class="row" id="address-select">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">省份/直辖市：</label>
+                        <div class="col-sm-8">
+                            <select name="province" class="province form-control" data-first-title="请选择省份">
+                                <option value="">请选择省份</option>
+                                <option th:if="${hospital.province != null and hospital.province != ''}" 
+                                        th:value="${hospital.province}" 
+                                        th:text="${hospital.province}" 
+                                        selected></option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">城市：</label>
+                        <div class="col-sm-8">
+                            <select name="city" class="city form-control" data-first-title="请选择城市">
+                                <option value="">请选择城市</option>
+                                <option th:if="${hospital.city != null and hospital.city != ''}" 
+                                        th:value="${hospital.city}" 
+                                        th:text="${hospital.city}" 
+                                        selected></option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">区县：</label>
+                        <div class="col-sm-8">
+                            <select name="district" class="area form-control" data-first-title="请选择区县">
+                                <option value="">请选择区县</option>
+                                <option th:if="${hospital.district != null and hospital.district != ''}" 
+                                        th:value="${hospital.district}" 
+                                        th:text="${hospital.district}" 
+                                        selected></option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">详细地址：</label>
+                        <div class="col-sm-8">
+                            <input name="address" placeholder="请输入详细地址" class="form-control" type="text" maxlength="500" th:value="${hospital.address}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">联系人：</label>
+                        <div class="col-sm-8">
+                            <input name="contactPerson" placeholder="请输入联系人" class="form-control" type="text" maxlength="50" th:value="${hospital.contactPerson}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">联系电话：</label>
+                        <div class="col-sm-8">
+                            <input name="contactPhone" placeholder="请输入联系电话" class="form-control" type="text" maxlength="20" th:value="${hospital.contactPhone}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">邮箱：</label>
+                        <div class="col-sm-8">
+                            <input name="email" placeholder="请输入邮箱" class="form-control" type="text" maxlength="100" th:value="${hospital.email}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4 class="form-header h4">其他信息</h4>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <label class="col-xs-2 control-label">备注：</label>
+                        <div class="col-xs-10">
+                            <textarea name="remark" maxlength="500" class="form-control" rows="3" th:text="${hospital.remark}"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+      
+    <div class="row">
+        <div class="col-sm-offset-5 col-sm-10">
+            <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
+        </div>
+    </div>
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: jquery-cxselect-js" />
+	<script th:inline="javascript">
+	    var prefix = ctx + "hospital/hospital";
+	    var currentProvince = /*[[${hospital.province}]]*/ '';
+	    var currentCity = /*[[${hospital.city}]]*/ '';
+	    var currentDistrict = /*[[${hospital.district}]]*/ '';
+	    
+	    // 初始化省市区联动
+	    $(function() {
+	        var urlChina = ctx + 'demo/form/cityData';
+	        $.cxSelect.defaults.url = urlChina;
+	        $('#address-select').cxSelect({
+	            selects: ['province', 'city', 'area'],
+	            nodata: 'none'
+	        });
+	        
+	        // 设置默认值
+	        if (currentProvince) {
+	            $('select.province').val(currentProvince).trigger('change');
+	            // 等待城市数据加载后设置城市值
+	            setTimeout(function() {
+	                if (currentCity) {
+	                    $('select.city').val(currentCity).trigger('change');
+	                    // 等待区县数据加载后设置区县值
+	                    setTimeout(function() {
+	                        if (currentDistrict) {
+	                            $('select.area').val(currentDistrict);
+	                        }
+	                    }, 300);
+	                }
+	            }, 300);
+	        }
+	    });
+	
+        $("#form-hospital-edit").validate({
+        	onkeyup: false,
+        	rules:{
+        		hospitalName:{
+        			required: true,
+        			maxlength: 200
+        		}
+        	},
+            focusCleanup: true
+        });
+        
+        function submitHandler() {
+	        if ($.validate.form()) {
+	        	$.operate.saveTab(prefix + "/edit", $("#form-hospital-edit").serializeArray());
+	        }
+	    }
+    </script>
+</body>
+</html>
+

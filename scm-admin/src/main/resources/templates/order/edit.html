@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('修改订单')" />
+</head>
+<body>
+    <div class="main-content">
+        <form id="form-order-edit" class="form-horizontal">
+            <input name="orderId" type="hidden" th:value="${order.orderId}"/>
+            <h4 class="form-header h4">订单信息</h4>
+            <div class="row">
+            	<div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">订单编号：</label>
+                        <div class="col-sm-7">
+                            <input type="text" class="form-control" th:value="${order.orderNo}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">医院：</label>
+                        <div class="col-sm-7">
+                            <select name="hospitalId" id="hospitalId" class="form-control">
+                                <option value="">请选择医院（选填）</option>
+                                <option th:each="hospital : ${hospitalList}"
+                                        th:value="${hospital.hospitalId}"
+                                        th:text="${hospital.hospitalName}"
+                                        th:selected="${order.hospitalId != null && order.hospitalId == hospital.hospitalId}">
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">订单金额：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${order.orderAmount}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">供应商：</label>
+                        <div class="col-sm-7">
+                            <select name="supplierId" id="supplierId" class="form-control">
+                                <option value="">请选择供应商（选填）</option>
+                                <option th:each="supplier : ${supplierList}"
+                                        th:value="${supplier.supplierId}"
+                                        th:text="${supplier.companyName}"
+                                        th:selected="${order.supplierId != null && order.supplierId == supplier.supplierId}">
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">要货仓库：</label>
+                        <div class="col-sm-7">
+                            <input name="warehouse" placeholder="请输入要货仓库" class="form-control" type="text" maxlength="200" th:value="${order.warehouse}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">订单日期：</label>
+                        <div class="col-sm-7">
+                            <input name="orderDate" id="orderDate" placeholder="年/月/日" class="form-control" type="text" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">订单状态：</label>
+                        <div class="col-sm-7">
+                            <input type="text" class="form-control" th:value="${order.orderStatus == '0' ? '待接收' : (order.orderStatus == '1' ? '已接收' : (order.orderStatus == '2' ? '配送中' : (order.orderStatus == '3' ? '已完成' : (order.orderStatus == '4' ? '已取消' : ''))))}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">申请科室：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${order.department}" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">备注：</label>
+                        <div class="col-sm-7">
+                            <input name="remark" maxlength="500" class="form-control" type="text" placeholder="请输入备注" th:value="${order.remark}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                </div>
+                <div class="col-sm-3">
+                </div>
+                <div class="col-sm-3">
+                </div>
+            </div>
+        </form>
+        
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-sm-12">
+                <div style="margin-bottom: 10px;">
+                    <h4 class="form-header h4" style="display: inline-block; margin-right: 15px;">订单明细</h4>
+                    <button type="button" class="btn btn-sm btn-success" onclick="addDetail()"><i class="fa fa-plus"></i> 新增明细</button>
+                </div>
+                <div class="table-responsive">
+                    <table id="bootstrap-table"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+      
+    <div class="row">
+        <div class="col-sm-offset-5 col-sm-10">
+            <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
+        </div>
+    </div>
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script th:inline="javascript">
+	    var orderId = [[${order.orderId}]];
+	    var prefix = ctx + "order/order";
+	    
+	    // 初始化日期选择器
+	    var laydate;
+	    layui.use('laydate', function(){
+	        laydate = layui.laydate;
+	        
+	        // 订单日期
+	        laydate.render({
+	            elem: '#orderDate',
+	            type: 'date',
+	            value: [[${order.orderDate != null ? #dates.format(order.orderDate, 'yyyy-MM-dd') : ''}]]
+	        });
+	    });
+	    
+	    // 初始化订单明细表格
+	    $(function() {
+	        queryOrderDetailList();
+	    });
+	    
+	    function queryOrderDetailList() {
+	        var options = {
+	            id: "bootstrap-table",
+	            url: prefix + "/detailList",
+	            queryParams: { orderId: orderId },
+	            sortName: "detailId",
+	            sortOrder: "asc",
+	            pagination: false,
+	            search: false,
+	            showSearch: false,
+	            showRefresh: false,
+	            showToggle: false,
+	            showColumns: false,
+	            striped: true,
+	            columns: [{
+	                field: 'index',
+	                title: '序号',
+	                align: 'center',
+	                width: 60,
+	                formatter: function(value, row, index) {
+	                    return index + 1;
+	                }
+	            },
+	            {
+	                field: 'materialCode',
+	                title: '产品编码',
+	                align: 'center'
+	            },
+	            {
+	                field: 'materialName',
+	                title: '产品名称',
+	                align: 'left'
+	            },
+	            {
+	                field: 'specification',
+	                title: '规格',
+	                align: 'center'
+	            },
+	            {
+	                field: 'model',
+	                title: '型号',
+	                align: 'center'
+	            },
+	            {
+	                field: 'unit',
+	                title: '单位',
+	                align: 'center',
+	                width: 80
+	            },
+	            {
+	                field: 'orderQuantity',
+	                title: '订货数量',
+	                align: 'right',
+	                width: 100,
+	                formatter: function(value, row, index) {
+	                    if (value) {
+	                        return parseFloat(value).toFixed(2);
+	                    }
+	                    return '0.00';
+	                }
+	            },
+	            {
+	                field: 'purchasePrice',
+	                title: '单价',
+	                align: 'right',
+	                width: 100,
+	                formatter: function(value, row, index) {
+	                    if (value) {
+	                        return '¥' + parseFloat(value).toFixed(2);
+	                    }
+	                    return '¥0.00';
+	                }
+	            },
+	            {
+	                field: 'amount',
+	                title: '金额',
+	                align: 'right',
+	                width: 120,
+	                formatter: function(value, row, index) {
+	                    if (value) {
+	                        return '¥' + parseFloat(value).toFixed(2);
+	                    }
+	                    return '¥0.00';
+	                }
+	            },
+	            {
+	                field: 'remainingQuantity',
+	                title: '剩余待配送数',
+	                align: 'right',
+	                width: 120,
+	                formatter: function(value, row, index) {
+	                    if (value) {
+	                        return parseFloat(value).toFixed(2);
+	                    }
+	                    return '0.00';
+	                }
+	            }]
+	        };
+	        $.table.init(options);
+	    }
+	
+        $("#form-order-edit").validate({
+        	onkeyup: false,
+            focusCleanup: true
+        });
+        
+        function submitHandler() {
+	        if ($.validate.form()) {
+	            // 获取表格中的所有明细数据
+	            var detailData = $('#bootstrap-table').bootstrapTable('getData');
+	            
+	            // 计算订单总金额
+	            var totalAmount = 0;
+	            for (var i = 0; i < detailData.length; i++) {
+	                var detail = detailData[i];
+	                var quantity = parseFloat(detail.orderQuantity || 0);
+	                var price = parseFloat(detail.purchasePrice || 0);
+	                var amount = quantity * price;
+	                detail.amount = amount;
+	                totalAmount += amount;
+	                // 如果剩余待配送数未设置，默认等于订货数量
+	                if (!detail.remainingQuantity) {
+	                    detail.remainingQuantity = quantity;
+	                }
+	            }
+	            
+	            // 更新订单金额
+	            $('#orderAmount').val(totalAmount.toFixed(2));
+	            
+	            // 序列化表单数据
+	            var formData = $("#form-order-edit").serializeArray();
+	            
+	            // 添加明细数据（作为JSON字符串）
+	            formData.push({
+	                name: 'orderDetailsJson',
+	                value: JSON.stringify(detailData)
+	            });
+	            
+	        	$.operate.saveTab(prefix + "/edit", formData);
+	        }
+	    }
+	    
+	    // 关闭页面
+	    function closeItem() {
+	        var index = parent.layer.getFrameIndex(window.name);
+	        parent.layer.close(index);
+	    }
+	    
+	    // 新增明细 - 打开产品选择对话框
+	    function addDetail() {
+	        var options = {
+	            title: '选择产品',
+	            url: ctx + "material/dict/select",
+	            width: "1000",
+	            height: "600",
+	            callBack: function(index, layero) {
+	                var body = $.modal.getChildFrame(index);
+	                var materialId = body.find('#rowIds').val();
+	                if (!materialId || materialId == '') {
+	                    $.modal.alertWarning("请至少选择一条记录");
+	                    return false;
+	                }
+	                
+	                // 获取选中的产品ID（只取第一个）
+	                var ids = materialId.split(',');
+	                var selectedMaterialId = ids[0];
+	                
+	                // 通过AJAX获取产品详细信息
+	                $.ajax({
+	                    url: ctx + "material/dict/getInfo/" + selectedMaterialId,
+	                    type: "GET",
+	                    dataType: "json",
+	                    success: function(result) {
+	                        // 检查是否登录超时
+	                        if (result && (result.code == 1 || result.code == "1")) {
+	                            var msg = result.msg || "未登录或登录超时。请重新登录";
+	                            $.modal.alertError(msg, function() {
+	                                // 跳转到登录页面
+	                                window.location.href = ctx + "login";
+	                            });
+	                            return;
+	                        }
+	                        
+	                        if (result.code == 0 && result.data) {
+	                            var material = result.data;
+	                            
+	                            // 获取当前表格数据
+	                            var tableData = $('#bootstrap-table').bootstrapTable('getData');
+	                            
+	                            // 检查是否已存在该产品
+	                            var exists = false;
+	                            for (var i = 0; i < tableData.length; i++) {
+	                                if (tableData[i].materialId == material.materialId) {
+	                                    exists = true;
+	                                    break;
+	                                }
+	                            }
+	                            
+	                            if (exists) {
+	                                $.modal.alertWarning("该产品已存在于订单明细中");
+	                                return false;
+	                            }
+	                            
+	                            // 创建新的明细行数据
+	                            var newRow = {
+	                                materialId: material.materialId,
+	                                materialCode: material.materialCode || '',
+	                                materialName: material.materialName || '',
+	                                specification: material.specification || '',
+	                                model: material.model || '',
+	                                unit: material.unit || '',
+	                                orderQuantity: 1, // 默认数量为1
+	                                purchasePrice: material.purchasePrice || 0,
+	                                amount: (material.purchasePrice || 0) * 1, // 默认金额 = 单价 * 数量
+	                                remainingQuantity: 1 // 默认剩余待配送数等于订货数量
+	                            };
+	                            
+	                            // 添加到表格
+	                            $('#bootstrap-table').bootstrapTable('append', [newRow]);
+	                            
+	                            $.modal.close(index);
+	                            $.modal.msgSuccess("产品已添加到订单明细");
+	                        } else {
+	                            $.modal.alertError(result.msg || "获取产品信息失败");
+	                        }
+	                    },
+	                    error: function(xhr, status, error) {
+	                        var errorMsg = "获取产品信息失败";
+	                        // 检查是否是登录超时
+	                        if (xhr.status == 401 || xhr.status == 403) {
+	                            errorMsg = "未登录或登录超时。请重新登录";
+	                            $.modal.alertError(errorMsg, function() {
+	                                window.location.href = ctx + "login";
+	                            });
+	                        } else if (xhr.responseText) {
+	                            // 尝试解析响应文本，检查是否包含登录超时信息
+	                            try {
+	                                var response = JSON.parse(xhr.responseText);
+	                                if (response && (response.code == 1 || response.code == "1")) {
+	                                    errorMsg = response.msg || "未登录或登录超时。请重新登录";
+	                                    $.modal.alertError(errorMsg, function() {
+	                                        window.location.href = ctx + "login";
+	                                    });
+	                                    return;
+	                                }
+	                            } catch (e) {
+	                                // 如果响应不是JSON，检查是否包含登录超时关键字
+	                                if (xhr.responseText.indexOf("登录超时") > -1 || xhr.responseText.indexOf("未登录") > -1) {
+	                                    errorMsg = "未登录或登录超时。请重新登录";
+	                                    $.modal.alertError(errorMsg, function() {
+	                                        window.location.href = ctx + "login";
+	                                    });
+	                                    return;
+	                                }
+	                            }
+	                        }
+	                        if (errorMsg) {
+	                            $.modal.alertError(errorMsg);
+	                        }
+	                    }
+	                });
+	                return false;
+	            }
+	        };
+	        $.modal.openOptions(options);
+	    }
+    </script>
+</body>
+</html>
+
+

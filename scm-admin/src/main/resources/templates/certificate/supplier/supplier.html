@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('供应商证件列表')" />
+	<th:block th:include="include :: layout-latest-css" />
+</head>
+<body class="gray-bg">
+	<div class="container-div" style="position: relative;">
+		<div class="row">
+			<!-- 左侧：供应商列表 -->
+			<div class="col-sm-3" style="border-right: 1px solid #e7eaec; padding-right: 10px; position: fixed; left: 0; top: 0; bottom: 0; width: 25%; overflow: hidden; z-index: 100;">
+				<div class="panel panel-default" style="margin-bottom: 0; display: flex; flex-direction: column; height: 100%;">
+					<div class="panel-heading" style="padding: 5px 10px; flex-shrink: 0;">
+						<h5 class="panel-title" style="margin: 0; font-size: 14px;">
+							<i class="fa fa-building"></i> 供应商筛选
+						</h5>
+					</div>
+					<!-- 搜索框 -->
+					<div style="padding: 8px 10px; flex-shrink: 0; border-bottom: 1px solid #e7eaec; background: #f5f5f5;">
+						<div class="input-group" style="width: 100%;">
+							<input type="text" id="supplier-search-input" class="form-control" placeholder="搜索供应商名称或编码..." style="height: 30px; font-size: 12px; padding: 5px 10px;">
+							<span class="input-group-btn" style="width: auto;">
+								<button class="btn btn-default" type="button" onclick="searchSupplier()" style="height: 30px; padding: 0 10px; font-size: 12px;">
+									<i class="fa fa-search"></i>
+								</button>
+								<button class="btn btn-default" type="button" onclick="clearSupplierSearch()" style="height: 30px; padding: 0 10px; font-size: 12px;">
+									<i class="fa fa-times"></i>
+								</button>
+							</span>
+						</div>
+					</div>
+					<div class="panel-body" style="padding: 5px; flex: 1; overflow: auto; display: flex; flex-direction: column; min-height: 0;">
+						<div class="select-table table-striped" style="flex: 1; overflow: visible; min-height: 0; width: 100%;">
+							<table id="bootstrap-table-supplier" style="width: 100%;"></table>
+						</div>
+					</div>
+				</div>
+			</div>
+			
+			<!-- 右侧：供应商证件列表 -->
+			<div class="col-sm-9" style="position: fixed; left: 25%; top: 0; bottom: 0; right: 0; width: 75%; overflow: hidden; z-index: 99; display: flex; flex-direction: column; background: #fff;">
+				<div class="col-sm-12 search-collapse" style="flex-shrink: 0;">
+					<form id="supplier-certificate-form">
+						<div class="select-list">
+							<ul>
+								<li>
+									证件类型：<input type="text" name="certificateType"/>
+								</li>
+								<li>
+									状态：<select name="status">
+										<option value="">所有</option>
+										<option value="0">正常</option>
+										<option value="1">过期</option>
+									</select>
+								</li>
+								<li>
+									<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+									<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+								</li>
+							</ul>
+						</div>
+					</form>
+				</div>
+				
+		        <div class="btn-group-sm" id="toolbar" role="group" style="flex-shrink: 0; padding: 5px 10px;">
+		        	<a class="btn btn-success" onclick="handleAdd()" shiro:hasPermission="certificate:supplier:add">
+		                <i class="fa fa-plus"></i> 新增
+		            </a>
+		             <a class="btn btn-primary single disabled" onclick="$.operate.editTab()" shiro:hasPermission="certificate:supplier:edit">
+			            <i class="fa fa-edit"></i> 修改
+			        </a>
+		            <a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="certificate:supplier:remove">
+		                <i class="fa fa-remove"></i> 删除
+		            </a>
+		            <a class="btn btn-info" onclick="checkExpired()" shiro:hasPermission="certificate:supplier:edit">
+		                <i class="fa fa-check"></i> 检查过期
+		            </a>
+		            <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="certificate:supplier:export">
+			            <i class="fa fa-download"></i> 导出
+			        </a>
+		        </div>
+		        
+		        <div class="col-sm-12 select-table table-striped" style="flex: 1; overflow: hidden; min-height: 0; padding: 0 10px 10px 10px;">
+				    <table id="bootstrap-table"></table>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script th:inline="javascript">
+		var editFlag = [[${@permission.hasPermi('certificate:supplier:edit')}]];
+		var removeFlag = [[${@permission.hasPermi('certificate:supplier:remove')}]];
+		var prefix = ctx + "certificate/supplier";
+		var supplierPrefix = ctx + "supplier/supplier";
+		var selectedSupplierId = null; // 当前选中的供应商ID
+		
+		// 日期格式化函数
+		function formatDate(value, format) {
+		    if (!value) return '-';
+		    
+		    // 如果已经是格式化的字符串，直接返回
+		    if (typeof value === 'string') {
+		        if (value.indexOf('-') > -1) {
+		            if (format === 'yyyy-MM-dd HH:mm:ss') {
+		                if (value.length <= 10) {
+		                    return value + ' 00:00:00';
+		                }
+		                return value;
+		            } else {
+		                return value.split(' ')[0];
+		            }
+		        }
+		    }
+		    
+		    // 尝试使用若依框架的dateFormat方法
+		    if (typeof $.common !== 'undefined' && typeof $.common.dateFormat === 'function') {
+		        var formatted = $.common.dateFormat(value, format || 'yyyy-MM-dd');
+		        return formatted || '-';
+		    }
+		    
+		    // 备用方案：使用原生JavaScript格式化
+		    try {
+		        var date = new Date(value);
+		        if (isNaN(date.getTime())) return '-';
+		        
+		        var year = date.getFullYear();
+		        var month = String(date.getMonth() + 1).padStart(2, '0');
+		        var day = String(date.getDate()).padStart(2, '0');
+		        
+		        if (format === 'yyyy-MM-dd HH:mm:ss') {
+		            var hours = String(date.getHours()).padStart(2, '0');
+		            var minutes = String(date.getMinutes()).padStart(2, '0');
+		            var seconds = String(date.getSeconds()).padStart(2, '0');
+		            return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+		        } else {
+		            return year + '-' + month + '-' + day;
+		        }
+		    } catch(e) {
+		        return '-';
+		    }
+		}
+
+		$(function() {
+		    // 先初始化供应商列表
+		    initSupplierTable();
+		    
+		    // 然后初始化供应商证件列表
+		    querySupplierCertificateList();
+		    
+		    // 监听窗口大小改变事件，调整表格高度
+		    $(window).resize(function() {
+		        adjustSupplierTableHeight();
+		        adjustCertificateTableHeight();
+		    });
+		    
+		    // 初始化时调整表格高度
+		    setTimeout(function() {
+		        adjustSupplierTableHeight();
+		        adjustCertificateTableHeight();
+		    }, 300);
+		});
+		
+		// 计算供应商表格高度
+		function calculateSupplierTableHeight() {
+		    var windowHeight = $(window).height();
+		    var panelHeaderHeight = 35; // 面板标题高度
+		    var searchHeight = 46; // 搜索框高度
+		    var bodyPadding = 10; // panel-body的padding
+		    return windowHeight - panelHeaderHeight - searchHeight - bodyPadding - 20;
+		}
+		
+		// 调整供应商表格高度
+		function adjustSupplierTableHeight() {
+		    var tableHeight = calculateSupplierTableHeight();
+		    
+		    var $table = $('#bootstrap-table-supplier');
+		    if ($table.length > 0 && $table.bootstrapTable('getOptions')) {
+		        $table.bootstrapTable('resetView', {height: tableHeight});
+		    }
+		}
+		
+		// 调整证件表格高度
+		function adjustCertificateTableHeight() {
+		    var windowHeight = $(window).height();
+		    var searchHeight = $('.search-collapse').outerHeight() || 60;
+		    var toolbarHeight = $('#toolbar').outerHeight() || 40;
+		    var padding = 20;
+		    var tableHeight = windowHeight - searchHeight - toolbarHeight - padding;
+		    
+		    if (tableHeight > 0) {
+		        $('#bootstrap-table').bootstrapTable('resetView', {
+		            height: tableHeight
+		        });
+		    }
+		}
+		
+		// 初始化供应商表格
+		function initSupplierTable() {
+		    var $table = $('#bootstrap-table-supplier');
+		    
+		    if ($table.length === 0) {
+		        setTimeout(function() {
+		            initSupplierTable();
+		        }, 300);
+		        return;
+		    }
+		    
+		    var tableHeight = calculateSupplierTableHeight();
+		    
+		    $table.bootstrapTable({
+		        data: [],
+		        pagination: false,
+		        search: false,
+		        showRefresh: false,
+		        showColumns: false,
+		        showToggle: false,
+		        height: tableHeight,
+		        striped: true,
+		        classes: 'table table-condensed',
+		        locale: 'zh-CN',
+		        showHeader: true,
+		        showEmptyRows: false,
+		        columns: [{
+		            field: 'serialNumber',
+		            title: '序号',
+		            align: 'center',
+		            width: 50,
+		            cellStyle: {fontSize: '12px', padding: '4px'},
+		            formatter: function(value, row, index) {
+		                return index + 1;
+		            }
+		        },
+		        {
+		            field: 'supplierCode',
+		            title: '编码',
+		            sortable: true,
+		            width: 80,
+		            cellStyle: {fontSize: '12px', padding: '4px'},
+		            formatter: function(value, row, index) {
+		                return value || '-';
+		            }
+		        },
+		        {
+		            field: 'companyName',
+		            title: '供应商名称',
+		            cellStyle: {fontSize: '12px', padding: '4px'},
+		            formatter: function(value, row, index) {
+		                if (!value) return '-';
+		                var name = value.length > 15 ? value.substring(0, 15) + '...' : value;
+		                var supplierId = row.supplierId || '';
+		                return '<a href="javascript:void(0)" onclick="selectSupplier(\'' + supplierId + '\')" title="' + value + '" style="font-size: 12px; cursor: pointer;">' + name + '</a>';
+		            }
+		        }],
+		        onClickRow: function(row, $element) {
+		            if (row.supplierId) {
+		                selectSupplier(row.supplierId);
+		            }
+		        },
+		        rowStyle: function(row, index) {
+		            if (selectedSupplierId && row.supplierId == selectedSupplierId) {
+		                return {classes: 'info'};
+		            }
+		            return {};
+		        }
+		    });
+		    
+		    // 初始化完成后加载数据
+		    querySupplierList();
+		}
+		
+		// 查询所有供应商列表
+		function querySupplierList() {
+		    var url = supplierPrefix + "/all";
+		    
+		    $.ajax({
+		        url: url,
+		        type: "GET",
+		        dataType: "json",
+		        cache: false,
+		        success: function(result) {
+		            if (result && result.code == 0) {
+		                var suppliers = result.data || [];
+		                updateSupplierTable(suppliers);
+		            } else {
+		                updateSupplierTable([]);
+		            }
+		        },
+		        error: function(xhr, status, error) {
+		            console.error("获取供应商列表失败:", error);
+		            updateSupplierTable([]);
+		        }
+		    });
+		}
+		
+		// 更新供应商表格数据
+		function updateSupplierTable(suppliers) {
+		    var $table = $('#bootstrap-table-supplier');
+		    
+		    if ($table.length === 0) {
+		        setTimeout(function() {
+		            updateSupplierTable(suppliers);
+		        }, 300);
+		        return;
+		    }
+		    
+		    try {
+		        var tableOptions = $table.bootstrapTable('getOptions');
+		        if (tableOptions) {
+		            $table.bootstrapTable('load', suppliers || []);
+		            // 加载后高亮选中的行
+		            setTimeout(function() {
+		                if (selectedSupplierId) {
+		                    $table.find('tbody tr').each(function() {
+		                        var rowData = $table.bootstrapTable('getData');
+		                        var rowIndex = $(this).index();
+		                        if (rowIndex >= 0 && rowIndex < rowData.length && rowData[rowIndex].supplierId == selectedSupplierId) {
+		                            $(this).addClass('info');
+		                        }
+		                    });
+		                }
+		            }, 100);
+		        } else {
+		            initSupplierTable();
+		            setTimeout(function() {
+		                if ($table.bootstrapTable('getOptions')) {
+		                    $table.bootstrapTable('load', suppliers || []);
+		                }
+		            }, 500);
+		        }
+		    } catch(e) {
+		        console.error("更新供应商表格失败:", e);
+		    }
+		}
+		
+		// 搜索供应商
+		function searchSupplier() {
+		    var searchText = $('#supplier-search-input').val().trim();
+		    
+		    if (!searchText) {
+		        querySupplierList();
+		        return;
+		    }
+		    
+		    var $table = $('#bootstrap-table-supplier');
+		    if ($table.length === 0 || !$table.bootstrapTable('getOptions')) {
+		        return;
+		    }
+		    
+		    var allData = $table.bootstrapTable('getData');
+		    var filteredData = allData.filter(function(row) {
+		        var code = (row.supplierCode || '').toLowerCase();
+		        var name = (row.companyName || '').toLowerCase();
+		        var keyword = searchText.toLowerCase();
+		        return code.indexOf(keyword) !== -1 || name.indexOf(keyword) !== -1;
+		    });
+		    
+		    $table.bootstrapTable('load', filteredData);
+		}
+		
+		// 清空搜索
+		function clearSupplierSearch() {
+		    $('#supplier-search-input').val('');
+		    querySupplierList();
+		}
+		
+		// 搜索框回车事件
+		$(document).on('keypress', '#supplier-search-input', function(e) {
+		    if (e.which === 13) {
+		        searchSupplier();
+		    }
+		});
+		
+		// 选择供应商，加载该供应商的证件
+		function selectSupplier(supplierId) {
+		    if (!supplierId) {
+		        selectedSupplierId = null;
+		        $('#bootstrap-table').bootstrapTable('refresh');
+		        return;
+		    }
+		    
+		    selectedSupplierId = supplierId;
+		    
+		    // 刷新供应商表格以高亮选中的行
+		    querySupplierList();
+		    
+		    // 刷新证件表格，根据供应商ID过滤
+		    $('#bootstrap-table').bootstrapTable('refresh');
+		}
+		
+		// 调整供应商证件表格高度
+		function adjustSupplierTableHeight() {
+		    var windowHeight = $(window).height();
+		    var searchHeight = $('.search-collapse').outerHeight() || 60;
+		    var toolbarHeight = $('#toolbar').outerHeight() || 40;
+		    var padding = 20; // 上下padding
+		    var tableHeight = windowHeight - searchHeight - toolbarHeight - padding;
+		    
+		    if (tableHeight > 0) {
+		        $('#bootstrap-table').bootstrapTable('resetView', {
+		            height: tableHeight
+		        });
+		    }
+		}
+
+		function querySupplierCertificateList() {
+		    // 计算表格高度
+		    var calculateTableHeight = function() {
+		        var windowHeight = $(window).height();
+		        var searchHeight = $('.search-collapse').outerHeight() || 60;
+		        var toolbarHeight = $('#toolbar').outerHeight() || 40;
+		        var padding = 20;
+		        return Math.max(windowHeight - searchHeight - toolbarHeight - padding, 300);
+		    };
+		    
+		    var options = {
+		        url: prefix + "/list",
+		        createUrl: prefix + "/add",
+		        updateUrl: prefix + "/edit/{id}",
+		        removeUrl: prefix + "/remove",
+		        exportUrl: prefix + "/export",
+		        sortName: "expireDate",
+		        sortOrder: "asc",
+		        modalName: "供应商证件",
+		        uniqueId: "certificateId",
+		        height: calculateTableHeight(),
+		        queryParams: function(params) {
+		            // 如果有选中的供应商，添加供应商ID过滤
+		            if (selectedSupplierId) {
+		                params.supplierIds = selectedSupplierId;
+		            }
+		            return params;
+		        },
+		        columns: [{
+		            checkbox: true,
+		            field: 'state'
+		        },
+		        {
+		            field: 'serialNumber',
+		            title: '序号',
+		            align: 'center',
+		            width: 60,
+		            formatter: function (value, row, index) {
+		                return $.table.serialNumber(index);
+		            }
+		        },
+		        {
+		            field: 'certificateId',
+		            title: '证件ID',
+		            visible: false
+		        },
+		        {
+		            field: 'supplierId',
+		            title: '供应商ID',
+		            visible: false
+		        },
+		        {
+		            field: 'certificateType',
+		            title: '证件类型',
+		            align: 'left'
+		        },
+		        {
+		            field: 'certificateNo',
+		            title: '证件编码',
+		            align: 'left'
+		        },
+		        {
+		            field: 'expireDate',
+		            title: '有效期',
+		            align: 'center',
+		            sortable: true,
+		            formatter: function(value, row, index) {
+		                if (!value) {
+		                    return '-';
+		                }
+		                if (typeof value === 'string' && value.indexOf('-') > -1) {
+		                    return value.split(' ')[0];
+		                }
+		                return formatDate(value, 'yyyy-MM-dd');
+		            }
+		        },
+		        {
+		            title: '是否长期',
+		            align: 'center',
+		            width: 80,
+		            formatter: function(value, row, index) {
+		                // 如果expireDate为空或null，则为长期
+		                if (!row.expireDate) {
+		                    return '<span class="label label-info">是</span>';
+		                }
+		                return '<span class="label label-default">否</span>';
+		            }
+		        },
+		        {
+		            field: 'createBy',
+		            title: '创建人',
+		            align: 'center',
+		            formatter: function(value, row, index) {
+		                return value || '-';
+		            }
+		        },
+		        {
+		            title: '是否上传',
+		            align: 'center',
+		            width: 80,
+		            formatter: function(value, row, index) {
+		                if (row.certificateFile && row.certificateFile.trim() !== '') {
+		                    return '<span class="label label-success">是</span>';
+		                }
+		                return '<span class="label label-default">否</span>';
+		            }
+		        },
+		        {
+		            title: '预览证件',
+		            align: 'center',
+		            width: 120,
+		            formatter: function(value, row, index) {
+		                if (row.certificateFile && row.certificateFile.trim() !== '') {
+		                    // 支持多文件：将certificateFile（可能包含逗号分隔的多个URL）传递给预览函数
+		                    var fileUrls = row.certificateFile.trim();
+		                    // 转义单引号，防止JavaScript错误
+		                    var escapedUrls = fileUrls.replace(/'/g, "\\'");
+		                    return '<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="previewCertificateImage(\'' + escapedUrls + '\')" title="预览证件图片"><i class="fa fa-eye"></i> 预览</a>';
+		                } else {
+		                    // 未上传图片，显示提示信息
+		                    return '<span class="text-warning" title="请点击修改按钮上传相关证件"><i class="fa fa-exclamation-triangle"></i> 上传相关证件</span>';
+		                }
+		            }
+		        }]
+		    };
+		    $.table.init(options);
+		}
+		
+		function resetPre() {
+			$("#supplier-certificate-form")[0].reset();
+			// 清除供应商选择
+			selectedSupplierId = null;
+			// 刷新供应商表格以取消高亮
+			querySupplierList();
+			// 刷新证件表格，显示所有证件
+			$.table.search();
+		}
+
+		function checkExpired() {
+			$.modal.confirm("确认要检查证件过期状态吗？", function() {
+				$.operate.post(prefix + "/checkExpired", {});
+		    })
+		}
+		
+		// 处理新增按钮点击
+		function handleAdd() {
+			var addUrl = prefix + "/add";
+			// 如果选中了供应商，传递supplierId参数
+			if (selectedSupplierId) {
+				addUrl += "?supplierId=" + selectedSupplierId;
+			}
+			$.operate.addTab(addUrl, '新增供应商证件');
+		}
+		
+		// 预览证件图片（支持多图片切换）
+		function previewCertificateImage(imageUrls) {
+			// 转义HTML特殊字符，防止XSS攻击
+			function escapeHtml(text) {
+				var map = {
+					'&': '&amp;',
+					'<': '&lt;',
+					'>': '&gt;',
+					'"': '&quot;',
+					"'": '&#039;'
+				};
+				return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+			}
+			
+			// 解析图片URL（支持逗号分隔的多个URL）
+			var urlArray = [];
+			if (imageUrls && imageUrls.trim() !== '') {
+				var urls = imageUrls.split(',');
+				for (var i = 0; i < urls.length; i++) {
+					var url = urls[i].trim();
+					if (url) {
+						// 构建完整的图片URL
+						if (url.indexOf('http://') === 0 || url.indexOf('https://') === 0) {
+							// 已经是绝对路径，直接使用
+							urlArray.push(url);
+						} else if (url.indexOf('/') === 0) {
+							// 相对路径（以/开头），添加上下文路径
+							urlArray.push(ctx + url.substring(1));
+						} else {
+							// 其他情况，添加上下文路径
+							urlArray.push(ctx + url);
+						}
+					}
+				}
+			}
+			
+			if (urlArray.length === 0) {
+				$.modal.alertWarning("没有可预览的图片");
+				return;
+			}
+			
+			// 当前显示的图片索引
+			var currentIndex = 0;
+			
+			// 构建预览内容HTML
+			function buildPreviewContent() {
+				var currentUrl = escapeHtml(urlArray[currentIndex]);
+				var html = '<div style="text-align: center; padding: 20px; overflow: auto; height: 100%; position: relative;">';
+				
+				// 如果有多张图片，显示切换按钮和图片计数
+				if (urlArray.length > 1) {
+					html += '<div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 5px 15px; border-radius: 15px; z-index: 1000; font-size: 14px;">';
+					html += '第 ' + (currentIndex + 1) + ' 张 / 共 ' + urlArray.length + ' 张';
+					html += '</div>';
+					
+					// 上一张按钮
+					if (currentIndex > 0) {
+						html += '<button id="prev-image-btn" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.7); color: white; border: none; padding: 15px 20px; border-radius: 5px; cursor: pointer; font-size: 18px; z-index: 1000;" onmouseover="this.style.background=\'rgba(0,0,0,0.9)\'" onmouseout="this.style.background=\'rgba(0,0,0,0.7)\'">‹</button>';
+					}
+					
+					// 下一张按钮
+					if (currentIndex < urlArray.length - 1) {
+						html += '<button id="next-image-btn" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.7); color: white; border: none; padding: 15px 20px; border-radius: 5px; cursor: pointer; font-size: 18px; z-index: 1000;" onmouseover="this.style.background=\'rgba(0,0,0,0.9)\'" onmouseout="this.style.background=\'rgba(0,0,0,0.7)\'">›</button>';
+					}
+				}
+				
+				// 图片
+				html += '<img id="preview-image" src="' + currentUrl + '" style="max-width: 100%; max-height: calc(100% - 40px); cursor: pointer; margin-top: 30px;" ';
+				html += 'onclick="var img = this; if(img.style.maxWidth === \'none\') { img.style.maxWidth=\'100%\'; img.style.maxHeight=\'calc(100% - 40px)\'; } else { img.style.maxWidth=\'none\'; img.style.maxHeight=\'none\'; }" ';
+				html += 'onerror="this.onerror=null; this.src=\'' + ctx + 'img/error.png\';" />';
+				html += '</div>';
+				
+				return html;
+			}
+			
+			// 使用layer弹窗显示图片
+			if (typeof layer !== 'undefined') {
+				var layerIndex = layer.open({
+					type: 1,
+					title: '证件图片预览' + (urlArray.length > 1 ? '（' + urlArray.length + '张）' : ''),
+					shadeClose: true,
+					shade: 0.8,
+					area: ['90%', '90%'],
+					content: buildPreviewContent(),
+					success: function(layero, index) {
+						// 更新预览内容的函数
+						function updatePreview() {
+							layero.find('.layui-layer-content').html(buildPreviewContent());
+							// 重新绑定按钮事件
+							bindButtonEvents();
+						}
+						
+						// 绑定切换按钮事件
+						function bindButtonEvents() {
+							// 移除旧的事件监听
+							layero.find('#prev-image-btn').off('click');
+							layero.find('#next-image-btn').off('click');
+							
+							// 上一张
+							layero.find('#prev-image-btn').on('click', function() {
+								if (currentIndex > 0) {
+									currentIndex--;
+									updatePreview();
+								}
+							});
+							
+							// 下一张
+							layero.find('#next-image-btn').on('click', function() {
+								if (currentIndex < urlArray.length - 1) {
+									currentIndex++;
+									updatePreview();
+								}
+							});
+						}
+						
+						// 绑定切换按钮事件
+						if (urlArray.length > 1) {
+							bindButtonEvents();
+							
+							// 键盘左右箭头切换
+							$(document).on('keydown.preview', function(e) {
+								if (e.keyCode === 37) { // 左箭头
+									if (currentIndex > 0) {
+										currentIndex--;
+										updatePreview();
+									}
+								} else if (e.keyCode === 39) { // 右箭头
+									if (currentIndex < urlArray.length - 1) {
+										currentIndex++;
+										updatePreview();
+									}
+								}
+							});
+						}
+					},
+					end: function() {
+						// 关闭后移除键盘事件监听
+						$(document).off('keydown.preview');
+					}
+				});
+			} else {
+				// 如果layer不可用，使用新窗口打开第一张图片
+				window.open(urlArray[0], '_blank');
+			}
+		}
+	</script>
+</body>
+</html>

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('修改产品证件')" />
+	<link rel="stylesheet" href="../../../static/layui/css/layui.css">
+</head>
+<body>
+    <div class="main-content" style="padding-bottom: 80px;">
+        <form id="form-product-certificate-edit" class="form-horizontal">
+            <input name="certificateId" type="hidden" th:value="${productCertificate.certificateId}"/>
+            <!-- 隐藏的产品ID字段 -->
+            <input type="hidden" name="materialId" id="materialId" th:value="${productCertificate.materialId}">
+            <h4 class="form-header h4">基本信息</h4>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label is-required">产品名称：</label>
+                        <div class="col-sm-8">
+                            <input name="materialName" id="materialName" placeholder="请输入产品名称" class="form-control" type="text" maxlength="200" th:value="${productCertificate.materialName}" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label is-required">注册证号：</label>
+                        <div class="col-sm-8">
+                            <input name="registerNo" placeholder="请输入注册证号" class="form-control" type="text" maxlength="100" th:value="${productCertificate.registerNo}" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">供应商：</label>
+                        <div class="col-sm-8">
+                            <select name="supplierId" id="supplierId" class="form-control">
+                                <option value="">请选择供应商（选填）</option>
+                                <option th:each="supplier : ${supplierList}"
+                                        th:value="${supplier.supplierId}"
+                                        th:text="${supplier.companyName}"
+                                        th:selected="${productCertificate.supplierId != null && productCertificate.supplierId == supplier.supplierId}">
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">注册证名称：</label>
+                        <div class="col-sm-8">
+                            <input name="registerName" placeholder="请输入注册证名称" class="form-control" type="text" maxlength="200" th:value="${productCertificate.registerName}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">条码号(UDI)：</label>
+                        <div class="col-sm-8">
+                            <input name="udiCode" placeholder="请输入条码号(UDI)" class="form-control" type="text" maxlength="100" th:value="${productCertificate.udiCode}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">拼音简码：</label>
+                        <div class="col-sm-8">
+                            <input name="pinyinCode" placeholder="请输入拼音简码" class="form-control" type="text" maxlength="50" th:value="${productCertificate.pinyinCode}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">注册证发证日期：</label>
+                        <div class="col-sm-8">
+                            <input name="registerIssueDate" id="registerIssueDate" placeholder="年/月/日" class="form-control" type="text" th:value="${productCertificate.registerIssueDate != null ? #dates.format(productCertificate.registerIssueDate, 'yyyy-MM-dd') : ''}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">注册有效期：</label>
+                        <div class="col-sm-8">
+                            <input name="registerValidDate" id="registerValidDate" placeholder="年/月/日" class="form-control" type="text" th:value="${productCertificate.registerValidDate != null ? #dates.format(productCertificate.registerValidDate, 'yyyy-MM-dd') : ''}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">有效期至：</label>
+                        <div class="col-sm-8">
+                            <input name="expireDate" id="expireDate" placeholder="年/月/日" class="form-control" type="text" th:value="${productCertificate.expireDate != null ? #dates.format(productCertificate.expireDate, 'yyyy-MM-dd') : ''}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4 class="form-header h4">产品信息</h4>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">规格：</label>
+                        <div class="col-sm-8">
+                            <input name="specification" placeholder="请输入规格" class="form-control" type="text" maxlength="200" th:value="${materialDict != null ? materialDict.specification : ''}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">单位：</label>
+                        <div class="col-sm-8">
+                            <input name="unit" placeholder="请输入单位" class="form-control" type="text" maxlength="20" th:value="${materialDict != null ? materialDict.unit : ''}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">型号：</label>
+                        <div class="col-sm-8">
+                            <input name="model" placeholder="请输入型号" class="form-control" type="text" maxlength="200" th:value="${materialDict != null ? materialDict.model : ''}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">生产厂家：</label>
+                        <div class="col-sm-8">
+                            <input name="manufacturerName" placeholder="请输入生产厂家" class="form-control" type="text" maxlength="200" th:value="${materialDict != null ? materialDict.manufacturerName : ''}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4 class="form-header h4">价格信息</h4>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">采购价格：</label>
+                        <div class="col-sm-8">
+                            <input name="purchasePrice" placeholder="请输入采购价格" class="form-control" type="number" step="0.01" th:value="${materialDict != null ? materialDict.purchasePrice : ''}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">销售价格：</label>
+                        <div class="col-sm-8">
+                            <input name="salePrice" placeholder="请输入销售价格" class="form-control" type="number" step="0.01" th:value="${productCertificate.salePrice}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">单价：</label>
+                        <div class="col-sm-8">
+                            <input name="bidPrice" placeholder="请输入单价" class="form-control" type="number" step="0.01" th:value="${productCertificate.bidPrice}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">状态：</label>
+                        <div class="col-sm-8">
+                            <select name="status" class="form-control">
+                                <option value="0" th:selected="${productCertificate.status == '0'}">启用</option>
+                                <option value="1" th:selected="${productCertificate.status == '1'}">停用</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4 class="form-header h4">其他信息</h4>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">医院编码：</label>
+                        <div class="col-sm-8">
+                            <input name="hospitalCode" placeholder="请输入医院编码" class="form-control" type="text" maxlength="50" th:value="${productCertificate.hospitalCode}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">销售客户：</label>
+                        <div class="col-sm-8">
+                            <input name="saleCustomer" placeholder="请输入销售客户" class="form-control" type="text" maxlength="200" th:value="${productCertificate.saleCustomer}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">产品类别：</label>
+                        <div class="col-sm-8">
+                            <select name="productCategory" class="form-control">
+                                <option value="">请选择</option>
+                                <option value="高值" th:selected="${productCertificate.productCategory == '高值'}">高值</option>
+                                <option value="低值" th:selected="${productCertificate.productCategory == '低值'}">低值</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">备注：</label>
+                        <div class="col-sm-8">
+                            <textarea name="remark" maxlength="500" class="form-control" rows="3" th:text="${productCertificate.remark}"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+      
+    <div class="row" style="position: fixed; bottom: 0; left: 0; right: 0; background-color: #fff; padding: 15px 20px; border-top: 1px solid #ddd; z-index: 1000; box-shadow: 0 -2px 8px rgba(0,0,0,0.1);">
+        <div class="col-sm-offset-5 col-sm-10">
+            <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
+        </div>
+    </div>
+    <div style="height: 70px;"></div>
+	<th:block th:include="include :: footer" />
+	<script src="../../../static/layui/layui.js"></script>
+	<script>
+	    var prefix = ctx + "certificate/product";
+	    var laydate;
+	    
+	    layui.use('laydate', function(){
+	        laydate = layui.laydate;
+	        
+	        // 注册证发证日期
+	        laydate.render({
+	            elem: '#registerIssueDate',
+	            type: 'date'
+	        });
+	        
+	        // 注册有效期
+	        laydate.render({
+	            elem: '#registerValidDate',
+	            type: 'date'
+	        });
+	        
+	        // 有效期至
+	        laydate.render({
+	            elem: '#expireDate',
+	            type: 'date'
+	        });
+	    });
+	
+        $("#form-product-certificate-edit").validate({
+        	onkeyup: false,
+        	rules:{
+        		materialName:{
+        			required: true
+        		},
+        		registerNo:{
+        			required: true,
+        			maxlength: 100
+        		}
+        	},
+            focusCleanup: true
+        });
+        
+        function submitHandler() {
+	        if ($.validate.form()) {
+	        	$.operate.saveTab(prefix + "/edit", $("#form-product-certificate-edit").serializeArray());
+	        }
+	    }
+	    
+	    function closeItem() {
+	        console.log("closeItem 被调用");
+	        
+	        // 如果在iframe中，使用父窗口的closeItem函数（来自common.js）
+	        if (window.parent && window.parent !== window) {
+	            try {
+	                // 直接调用全局的closeItem函数
+	                if (typeof window.parent.closeItem === 'function') {
+	                    window.parent.closeItem();
+	                    return;
+	                }
+	            } catch(e) {
+	                console.log("调用父窗口closeItem失败:", e);
+	            }
+	            
+	            try {
+	                // 如果closeItem不可用，尝试直接使用common.js中的逻辑
+	                var topWindow = $(window.parent.document);
+	                var panelUrl = null;
+	                
+	                // 获取当前iframe的data-panel属性
+	                if (window.frameElement) {
+	                    panelUrl = window.frameElement.getAttribute('data-panel');
+	                }
+	                
+	                // 点击当前活动标签页的关闭按钮（X图标）
+	                var closeBtn = $('.page-tabs-content .active i', topWindow);
+	                if (closeBtn.length > 0) {
+	                    closeBtn.click();
+	                    return;
+	                }
+	                
+	                // 如果找不到关闭按钮，尝试直接移除标签页
+	                if (panelUrl) {
+	                    $('.menuTab[data-id="' + panelUrl + '"]', topWindow).remove();
+	                    $('.mainContent .Scm_iframe[data-id="' + panelUrl + '"]', topWindow).remove();
+	                    
+	                    // 激活上一个标签页
+	                    var prevTab = $('.menuTab', topWindow).last();
+	                    if (prevTab.length > 0) {
+	                        var prevId = prevTab.data('id');
+	                        prevTab.addClass('active');
+	                        $('.mainContent .Scm_iframe[data-id="' + prevId + '"]', topWindow).show();
+	                    }
+	                    return;
+	                }
+	            } catch(e) {
+	                console.error("关闭标签页失败:", e);
+	            }
+	        }
+	        
+	        // 如果不在iframe中，尝试使用$.modal.closeTab()
+	        try {
+	            if (typeof $.modal !== 'undefined' && typeof $.modal.closeTab === 'function') {
+	                $.modal.closeTab();
+	                return;
+	            }
+	        } catch(e) {
+	            console.log("使用$.modal.closeTab失败:", e);
+	        }
+	        
+	        console.warn("无法关闭页面，请手动关闭标签页");
+	    }
+    </script>
+</body>
+</html>

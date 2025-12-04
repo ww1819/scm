@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('新增企业用户')" />
+</head>
+<body>
+    <div class="main-content">
+        <form id="form-supplier-user-add" class="form-horizontal">
+            <h4 class="form-header h4">基本信息</h4>
+            <div class="row">
+            	<div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label is-required">供应商：</label>
+                        <div class="col-sm-8">
+                            <select name="supplierId" class="form-control" required>
+                                <option value="">请选择供应商</option>
+                                <option th:each="supplier : ${supplierList}" 
+                                        th:value="${supplier.supplierId}" 
+                                        th:text="${supplier.companyName}">
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label is-required">用户：</label>
+                        <div class="col-sm-8">
+                            <div class="input-group">
+                                <input type="hidden" name="userId" id="userId" required>
+                                <input type="text" name="userName" id="userName" class="form-control" placeholder="请选择用户" readonly required>
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-primary" onclick="selectUser()">
+                                        <i class="fa fa-search"></i> 选择用户
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">是否主账号：</label>
+                        <div class="col-sm-8">
+                            <select name="isMain" class="form-control">
+                                <option value="0">否</option>
+                                <option value="1">是</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">状态：</label>
+                        <div class="col-sm-8">
+                            <select name="status" class="form-control">
+                                <option value="0">正常</option>
+                                <option value="1">停用</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <div class="row">
+        <div class="col-sm-offset-5 col-sm-10">
+            <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
+        </div>
+    </div>
+    <th:block th:include="include :: footer" />
+    <script th:inline="javascript">
+        var prefix = ctx + "supplier/user";
+        
+        // 表单验证
+        $("#form-supplier-user-add").validate({
+            onkeyup: false,
+            rules: {
+                supplierId: {
+                    required: true
+                },
+                userId: {
+                    required: true
+                }
+            },
+            focusCleanup: true
+        });
+        
+        // 提交处理函数
+        function submitHandler() {
+            if ($.validate.form()) {
+                $.operate.saveTab(prefix + "/add", $("#form-supplier-user-add").serializeArray());
+            }
+        }
+        
+        function selectUser() {
+            var options = {
+                title: '选择用户',
+                url: prefix + "/selectUser",
+                width: "800",
+                height: "500",
+                callBack: function(index, layero) {
+                    var body = $.modal.getChildFrame(index);
+                    var userId = body.find('#rowIds').val();
+                    var userName = body.find('#rowNames').val();
+                    if (!userId || userId == '') {
+                        $.modal.alertWarning("请至少选择一条记录");
+                        return false;
+                    }
+                    var userIds = userId.split(',');
+                    if (userIds.length > 1) {
+                        $.modal.alertWarning("只能选择一条记录");
+                        return false;
+                    }
+                    var userNames = userName.split(',');
+                    $("#userId").val(userIds[0]);
+                    $("#userName").val(userNames[0]);
+                    $.modal.close(index);
+                }
+            };
+            $.modal.openOptions(options);
+        }
+    </script>
+</body>
+</html>
+

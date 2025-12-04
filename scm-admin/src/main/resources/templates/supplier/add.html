@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('新增供应商')" />
+</head>
+<body>
+    <div class="main-content">
+        <form id="form-supplier-add" class="form-horizontal">
+            <h4 class="form-header h4">基本信息</h4>
+            <div class="row">
+            	<div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">供应商编码：</label>
+                        <div class="col-sm-8">
+                            <input name="supplierCode" id="supplierCode" placeholder="系统自动生成" class="form-control" type="text" maxlength="50" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label is-required">公司名称：</label>
+                        <div class="col-sm-8">
+                            <input name="companyName" id="companyName" placeholder="请输入公司名称" class="form-control" type="text" maxlength="200" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">拼音简码：</label>
+                        <div class="col-sm-8">
+                            <input name="companyShortName" id="companyShortName" placeholder="根据公司名称自动生成" class="form-control" type="text" maxlength="100" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">税号：</label>
+                        <div class="col-sm-8">
+                            <input name="taxNumber" placeholder="请输入税号" class="form-control" type="text" maxlength="50">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">法人：</label>
+                        <div class="col-sm-8">
+                            <input name="legalPerson" placeholder="请输入法人" class="form-control" type="text" maxlength="50">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">资质有效期：</label>
+                        <div class="col-sm-8">
+                            <input name="qualificationExpiryDate" placeholder="请选择资质有效期" class="form-control" type="text" id="qualificationExpiryDate">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">注册资金（万元）：</label>
+                        <div class="col-sm-8">
+                            <input name="registeredCapital" placeholder="请输入注册资金（万元）" class="form-control" type="text">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">启用状态：</label>
+                        <div class="col-sm-8">
+                            <label class="radio-box">
+                                <input type="radio" name="status" value="1" checked> 启用
+                            </label>
+                            <label class="radio-box" style="margin-left: 20px;">
+                                <input type="radio" name="status" value="2"> 停用
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4 class="form-header h4">联系信息</h4>
+            <div class="row" id="address-select">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">省份/直辖市：</label>
+                        <div class="col-sm-8">
+                            <select name="province" class="province form-control" data-first-title="请选择省份">
+                                <option value="">请选择省份</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">城市：</label>
+                        <div class="col-sm-8">
+                            <select name="city" class="city form-control" data-first-title="请选择城市">
+                                <option value="">请选择城市</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">区县：</label>
+                        <div class="col-sm-8">
+                            <select name="district" class="area form-control" data-first-title="请选择区县">
+                                <option value="">请选择区县</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">详细地址：</label>
+                        <div class="col-sm-8">
+                            <input name="address" placeholder="请输入详细地址" class="form-control" type="text" maxlength="500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">联系人：</label>
+                        <div class="col-sm-8">
+                            <input name="contactPerson" placeholder="请输入联系人" class="form-control" type="text" maxlength="50">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">联系电话：</label>
+                        <div class="col-sm-8">
+                            <input name="contactPhone" placeholder="请输入联系电话" class="form-control" type="text" maxlength="20">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">邮箱：</label>
+                        <div class="col-sm-8">
+                            <input name="email" placeholder="请输入邮箱" class="form-control" type="text" maxlength="100">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">网址：</label>
+                        <div class="col-sm-8">
+                            <input name="website" placeholder="请输入网址" class="form-control" type="text" maxlength="200">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4 class="form-header h4">其他信息</h4>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <label class="col-xs-2 control-label">经营范围：</label>
+                        <div class="col-xs-10">
+                            <textarea name="businessScope" maxlength="1000" class="form-control" rows="3" placeholder="请输入经营范围"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <label class="col-xs-2 control-label">备注：</label>
+                        <div class="col-xs-10">
+                            <textarea name="remark" maxlength="500" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+      
+    <div class="row" style="position: fixed; bottom: 0; left: 0; right: 0; background-color: #fff; padding: 15px 20px; border-top: 1px solid #ddd; z-index: 1000; box-shadow: 0 -2px 8px rgba(0,0,0,0.1);">
+        <div class="col-sm-offset-5 col-sm-10">
+            <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
+        </div>
+    </div>
+    <div style="height: 70px;"></div>
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: jquery-cxselect-js" />
+	<script>
+	    var prefix = ctx + "supplier/supplier";
+	    
+	    // 生成拼音简码（从公司名称提取首字母大写）
+	    function generateCompanyShortCode(companyName) {
+	        if (!companyName || companyName.trim() === '') {
+	            return '';
+	        }
+	        
+	        // 移除常见的公司后缀
+	        var name = companyName.trim();
+	        name = name.replace(/(有限公司|股份有限公司|有限责任公司|股份公司|科技公司|科技有限公司|技术公司|信息技术公司|医疗科技公司|健康产业公司|产业有限公司|集团有限公司|集团股份有限公司)$/g, '');
+	        
+	        // 提取首字母并转为大写
+	        var shortCode = '';
+	        
+	        // 先移除括号及其内容（如果括号内是数字，则忽略括号）
+	        var nameWithoutBrackets = name.replace(/[（(][^）)]*[）)]/g, '').trim();
+	        
+	        // 如果移除括号后还有内容，使用移除括号后的内容
+	        if (nameWithoutBrackets && nameWithoutBrackets.length > 0) {
+	            name = nameWithoutBrackets;
+	        }
+	        
+	        // 提取公司名称的首字符
+	        if (name.length > 0) {
+	            var firstChar = name.charAt(0);
+	            // 如果是英文字母，转为大写
+	            if (/[a-zA-Z]/.test(firstChar)) {
+	                shortCode = firstChar.toUpperCase();
+	            } else {
+	                // 如果是中文或其他字符，保留原字符
+	                shortCode = firstChar;
+	            }
+	        }
+	        
+	        return shortCode;
+	    }
+	    
+	    // 监听公司名称输入，自动生成简码
+	    $(document).ready(function() {
+	        // 使用多种事件确保触发
+	        $('#companyName').on('input keyup change blur', function() {
+	            var companyName = $(this).val();
+	            if (companyName && companyName.trim() !== '') {
+	                var shortCode = generateCompanyShortCode(companyName);
+	                $('#companyShortName').val(shortCode);
+	                console.log('公司名称:', companyName, '生成的简码:', shortCode);
+	            } else {
+	                $('#companyShortName').val('');
+	            }
+	        });
+	        
+	        // 也使用事件委托作为备用
+	        $(document).on('input keyup change blur', 'input[name="companyName"], #companyName', function() {
+	            var companyName = $(this).val();
+	            if (companyName && companyName.trim() !== '') {
+	                var shortCode = generateCompanyShortCode(companyName);
+	                $('#companyShortName').val(shortCode);
+	            } else {
+	                $('#companyShortName').val('');
+	            }
+	        });
+	    });
+	    
+	    // 初始化省市区联动
+	    $(function() {
+	        var urlChina = ctx + 'demo/form/cityData';
+	        $.cxSelect.defaults.url = urlChina;
+	        $('#address-select').cxSelect({
+	            selects: ['province', 'city', 'area'],
+	            nodata: 'none'
+	        });
+	    });
+
+        $("#form-supplier-add").validate({
+        	onkeyup: false,
+        	rules:{
+        		companyName:{
+        			required: true,
+        			maxlength: 200
+        		}
+        	},
+            focusCleanup: true
+        });
+        
+        function submitHandler() {
+	        if ($.validate.form()) {
+	        	// 如果简码为空，根据公司名称自动生成
+	        	var companyName = $('input[name="companyName"]').val();
+	        	var companyShortName = $('#companyShortName').val();
+	        	if (companyName && !companyShortName) {
+	        	    var shortCode = generateCompanyShortCode(companyName);
+	        	    $('#companyShortName').val(shortCode);
+	        	}
+	        	$.operate.saveTab(prefix + "/add", $("#form-supplier-add").serializeArray());
+	        }
+	    }
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('证件过期预警配置')" />
+</head>
+<body>
+    <div class="main-content">
+        <form id="form-certificate-config" class="form-horizontal">
+            <h4 class="form-header h4">证件过期预警配置</h4>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">企业证件预警天数：</label>
+                        <div class="col-sm-4">
+                            <input name="supplierWarningDays" id="supplierWarningDays" class="form-control" type="number" min="1" max="365" value="30" placeholder="请输入预警天数（1-365天）">
+                            <small class="help-block">证件到期前多少天开始预警</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">产品证件预警天数：</label>
+                        <div class="col-sm-4">
+                            <input name="productWarningDays" id="productWarningDays" class="form-control" type="number" min="1" max="365" value="30" placeholder="请输入预警天数（1-365天）">
+                            <small class="help-block">证件到期前多少天开始预警</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label">生产厂家证件预警天数：</label>
+                        <div class="col-sm-4">
+                            <input name="manufacturerWarningDays" id="manufacturerWarningDays" class="form-control" type="number" min="1" max="365" value="30" placeholder="请输入预警天数（1-365天）">
+                            <small class="help-block">证件到期前多少天开始预警</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+      
+    <div class="row">
+        <div class="col-sm-offset-5 col-sm-10">
+            <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
+        </div>
+    </div>
+	<th:block th:include="include :: footer" />
+	<script>
+	    var prefix = ctx + "certificate/type";
+	    
+	    $(function() {
+	        // 加载现有配置
+	        loadConfig();
+	    });
+	    
+	    // 加载配置
+	    function loadConfig() {
+	        // 加载企业证件配置
+	        $.ajax({
+	            url: prefix + "/config/get",
+	            type: "POST",
+	            data: { configType: "supplier_certificate", certificateType: "" },
+	            success: function(result) {
+	                if (result.code == 0 && result.data) {
+	                    $("#supplierWarningDays").val(result.data.warningDays || 30);
+	                }
+	            }
+	        });
+	        
+	        // 加载产品证件配置
+	        $.ajax({
+	            url: prefix + "/config/get",
+	            type: "POST",
+	            data: { configType: "product_certificate", certificateType: "" },
+	            success: function(result) {
+	                if (result.code == 0 && result.data) {
+	                    $("#productWarningDays").val(result.data.warningDays || 30);
+	                }
+	            }
+	        });
+	        
+	        // 加载生产厂家证件配置
+	        $.ajax({
+	            url: prefix + "/config/get",
+	            type: "POST",
+	            data: { configType: "manufacturer_certificate", certificateType: "" },
+	            success: function(result) {
+	                if (result.code == 0 && result.data) {
+	                    $("#manufacturerWarningDays").val(result.data.warningDays || 30);
+	                }
+	            }
+	        });
+	    }
+	    
+        $("#form-certificate-config").validate({
+        	onkeyup: false,
+        	rules:{
+        		supplierWarningDays:{
+        			required: true,
+        			min: 1,
+        			max: 365,
+        			digits: true
+        		},
+        		productWarningDays:{
+        			required: true,
+        			min: 1,
+        			max: 365,
+        			digits: true
+        		},
+        		manufacturerWarningDays:{
+        			required: true,
+        			min: 1,
+        			max: 365,
+        			digits: true
+        		}
+        	},
+            focusCleanup: true
+        });
+        
+        function submitHandler() {
+	        if ($.validate.form()) {
+	            var configs = [
+	                { configType: "supplier_certificate", warningDays: $("#supplierWarningDays").val() },
+	                { configType: "product_certificate", warningDays: $("#productWarningDays").val() },
+	                { configType: "manufacturer_certificate", warningDays: $("#manufacturerWarningDays").val() }
+	            ];
+	            
+	            var savePromises = [];
+	            configs.forEach(function(config) {
+	                savePromises.push(saveConfig(config.configType, config.warningDays));
+	            });
+	            
+	            // 等待所有配置保存完成
+	            Promise.all(savePromises).then(function() {
+	                $.modal.msgSuccess("配置保存成功");
+	            }).catch(function(error) {
+	                $.modal.msgError("配置保存失败：" + (error || "未知错误"));
+	            });
+	        }
+	    }
+	    
+	    // 保存单个配置
+	    function saveConfig(configType, warningDays) {
+	        return new Promise(function(resolve, reject) {
+	            $.ajax({
+	                url: prefix + "/config/get",
+	                type: "POST",
+	                data: { configType: configType, certificateType: "" },
+	                success: function(result) {
+	                    var configData = {
+	                        configType: configType,
+	                        certificateType: "",
+	                        warningDays: parseInt(warningDays),
+	                        recentDays: 7,
+	                        status: "0"
+	                    };
+	                    
+	                    if (result.code == 0 && result.data && result.data.configId) {
+	                        // 更新现有配置
+	                        configData.configId = result.data.configId;
+	                    }
+	                    
+	                    // 保存配置
+	                    $.ajax({
+	                        url: prefix + "/config/save",
+	                        type: "POST",
+	                        data: configData,
+	                        success: function(saveResult) {
+	                            if (saveResult.code == 0) {
+	                                resolve();
+	                            } else {
+	                                reject(saveResult.msg || "保存失败");
+	                            }
+	                        },
+	                        error: function(xhr, status, error) {
+	                            reject(error || "保存失败");
+	                        }
+	                    });
+	                },
+	                error: function(xhr, status, error) {
+	                    reject(error || "查询配置失败");
+	                }
+	            });
+	        });
+	    }
+	    
+	    function closeItem() {
+	        if (parent.layer !== undefined) {
+	            var index = parent.layer.getFrameIndex(window.name);
+	            parent.layer.close(index);
+	        } else {
+	            $.modal.closeTab();
+	        }
+	    }
+    </script>
+</body>
+</html>
+

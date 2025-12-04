@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('选择产品')" />
+	<th:block th:include="include :: layout-latest-css" />
+	<style>
+		/* 缩小产品表格间距 */
+		#bootstrap-table th,
+		#bootstrap-table td {
+			padding: 6px 8px !important;
+			line-height: 1.4 !important;
+		}
+		#bootstrap-table tbody tr {
+			height: auto !important;
+			min-height: 32px !important;
+		}
+		#bootstrap-table tbody td {
+			padding: 4px 8px !important;
+			vertical-align: middle !important;
+		}
+		/* 减小表格整体间距 */
+		.select-table {
+			margin-top: 10px !important;
+		}
+		/* 减小表头间距 */
+		#bootstrap-table thead th {
+			padding: 6px 8px !important;
+			line-height: 1.4 !important;
+		}
+	</style>
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="material-form">
+					<div class="select-list">
+						<ul>
+							<li>
+								产品编码：<input type="text" name="materialCode"/>
+							</li>
+							<li>
+								产品名称：<input type="text" name="materialName"/>
+							</li>
+							<li>
+								状态：<select name="status">
+									<option value="">所有</option>
+									<option value="0">正常</option>
+									<option value="1">停用</option>
+								</select>
+							</li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+			
+	        <div class="col-sm-12 select-table table-striped">
+			    <table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	
+	<!-- 隐藏字段，用于存储选中的产品ID和名称 -->
+	<input type="hidden" id="rowIds" name="rowIds"/>
+	<input type="hidden" id="rowNames" name="rowNames"/>
+	
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script th:inline="javascript">
+		var prefix = ctx + "material/dict";
+
+		$(function() {
+		    queryMaterialDictList();
+		});
+
+		function queryMaterialDictList() {
+		    var options = {
+		        url: prefix + "/list",
+		        sortName: "createTime",
+		        sortOrder: "desc",
+		        modalName: "产品",
+		        clickToSelect: true,
+		        columns: [{
+		            field: 'state',
+		            checkbox: true
+		        },
+		        {
+		            field: 'materialId',
+		            title: '物资ID'
+		        },
+		        {
+		            field: 'materialCode',
+		            title: '产品编码',
+		            sortable: true
+		        },
+		        {
+		            field: 'materialName',
+		            title: '产品名称'
+		        },
+		        {
+		            field: 'specification',
+		            title: '规格'
+		        },
+		        {
+		            field: 'model',
+		            title: '型号'
+		        },
+		        {
+		            field: 'unit',
+		            title: '单位'
+		        },
+		        {
+		            field: 'manufacturerName',
+		            title: '厂家'
+		        },
+		        {
+		            field: 'purchasePrice',
+		            title: '采购价格',
+		            formatter: function (value, row, index) {
+		                if (value) {
+		                    return '¥' + parseFloat(value).toFixed(2);
+		                }
+		                return '¥0.00';
+		            }
+		        },
+		        {
+		        	title: '状态',
+		        	align: 'center',
+		        	formatter: function (value, row, index) {
+		        		var statusMap = {
+		        			'0': '<span class="label label-success">正常</span>',
+		        			'1': '<span class="label label-danger">停用</span>'
+		        		};
+		        		return statusMap[row.status] || '';
+		        	}
+		        }]
+		    };
+		    $.table.init(options);
+		    
+		    // 监听选择事件，更新隐藏字段
+		    $("#bootstrap-table").on("check.bs.table check-all.bs.table uncheck.bs.table uncheck-all.bs.table", function (e, rowsAfter, rowsBefore) {
+		        var rows = $.common.equals("uncheck-all", e.type) ? rowsBefore : rowsAfter;
+		        var rowIds = $.table.affectedRowIds(rows);
+		        var rowNames = [];
+		        if ($.isArray(rows)) {
+		            rowNames = $.map(rows, function(row) {
+		                return row.materialName;
+		            });
+		        } else {
+		            rowNames = [rows.materialName];
+		        }
+		        $("#rowIds").val(rowIds.join(','));
+		        $("#rowNames").val(rowNames.join(','));
+		    });
+		}
+		
+		/* 自定义重置 */
+		function resetPre() {
+			$("#material-form")[0].reset();
+			$.table.search();
+		}
+	</script>
+</body>
+</html>
+

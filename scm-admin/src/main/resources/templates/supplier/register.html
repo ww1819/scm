@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>供应商注册 - 耗材供应链系统</title>
+    <meta name="description" content="供应商注册">
+    <link href="../static/css/bootstrap.min.css" th:href="@{/css/bootstrap.min.css}" rel="stylesheet"/>
+    <link href="../static/css/font-awesome.min.css" th:href="@{/css/font-awesome.min.css}" rel="stylesheet"/>
+    <link href="../static/css/style.min.css" th:href="@{/css/style.min.css}" rel="stylesheet"/>
+    <link href="../static/css/login.min.css" th:href="@{/css/login.min.css}" rel="stylesheet"/>
+    <link href="../static/scm/css/ry-ui.css" th:href="@{/scm/css/ry-ui.css?v=4.8.0}" rel="stylesheet"/>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <link rel="shortcut icon" href="../static/favicon.ico" th:href="@{favicon.ico}"/>
+    <style type="text/css">label.error { position:inherit; }</style>
+</head>
+<body class="signin">
+    <div class="signinpanel">
+        <div class="row">
+            <div class="col-sm-7">
+                <div class="signin-info">
+                    <div class="logopanel m-b">
+                        <h1><img alt="[ 耗材供应链 ]" src="../static/scm.png" th:src="@{/scm.png}"></h1>
+                    </div>
+                    <div class="m-b"></div>
+                    <h4>欢迎注册 <strong>耗材供应链 供应商平台</strong></h4>
+                    <ul class="m-b">
+                        <li><i class="fa fa-arrow-circle-o-right m-r-xs"></i> 供应商信息注册</li>
+                        <li><i class="fa fa-arrow-circle-o-right m-r-xs"></i> 等待管理员审核</li>
+                        <li><i class="fa fa-arrow-circle-o-right m-r-xs"></i> 审核通过后即可使用</li>
+                    </ul>
+                    <strong>已经注册过? <a th:href="@{/login}">直接登录&raquo;</a></strong>
+                </div>
+            </div>
+            <div class="col-sm-5">
+                <form id="registerForm" autocomplete="off">
+                    <h4 class="no-margins">供应商注册：</h4>
+                    <p class="m-t-md">请填写以下信息完成注册</p>
+                    
+                    <h5 class="m-t-md">账号信息</h5>
+                    <input type="text" name="loginName" class="form-control uname" placeholder="登录账号" maxlength="30" required/>
+                    <input type="password" name="password" class="form-control pword m-t" placeholder="密码（数字+字母，至少6位）" maxlength="20" required/>
+                    <input type="password" name="confirmPassword" class="form-control pword m-t" placeholder="确认密码" maxlength="20" required/>
+                    
+                    <h5 class="m-t-md">公司基本信息</h5>
+                    <input type="text" name="companyName" id="companyName" class="form-control m-t" placeholder="公司名称 *" maxlength="200" required/>
+                    <input type="text" name="companyShortName" id="companyShortName" class="form-control m-t" placeholder="根据公司名称自动生成" maxlength="100" readonly/>
+                    <input type="text" name="legalPerson" class="form-control m-t" placeholder="法人" maxlength="50"/>
+                    <input type="text" name="registeredCapital" class="form-control m-t" placeholder="注册资金（万元）" maxlength="20"/>
+                    
+                    <h5 class="m-t-md">联系信息</h5>
+                    <input type="text" name="province" class="form-control m-t" placeholder="省份/直辖市" maxlength="50"/>
+                    <input type="text" name="city" class="form-control m-t" placeholder="城市" maxlength="50"/>
+                    <input type="text" name="district" class="form-control m-t" placeholder="区县" maxlength="50"/>
+                    <input type="text" name="address" class="form-control m-t" placeholder="详细地址" maxlength="500"/>
+                    <input type="text" name="contactPerson" class="form-control m-t" placeholder="联系人" maxlength="50"/>
+                    <input type="text" name="contactPhone" class="form-control m-t" placeholder="联系电话" maxlength="20"/>
+                    <input type="text" name="email" class="form-control m-t" placeholder="邮箱" maxlength="100"/>
+                    <input type="text" name="website" class="form-control m-t" placeholder="网址" maxlength="200"/>
+                    
+                    <h5 class="m-t-md">其他信息</h5>
+                    <textarea name="businessScope" class="form-control m-t" rows="2" placeholder="经营范围" maxlength="1000"></textarea>
+                    
+                    <div class="checkbox-custom m-t">
+                        <input type="checkbox" id="acceptTerm" name="acceptTerm" required> 
+                        <label for="acceptTerm">我已阅读并同意</label>
+                        <a href="javascript:void(0)" target="_blank">使用条款</a>
+                    </div>
+                    <button class="btn btn-success btn-block m-t" id="btnSubmit" data-loading="正在注册，请稍候...">注册</button>
+                </form>
+            </div>
+        </div>
+        <div class="signup-footer">
+            <div class="pull-left">
+                &copy; 2018-2025 All Rights Reserved. Scm <br>
+            </div>
+        </div>
+    </div>
+<script th:inline="javascript"> var ctx = [[@{/}]]; </script>
+<script src="../static/js/jquery.min.js" th:src="@{/js/jquery.min.js}"></script>
+<script src="../static/ajax/libs/validate/jquery.validate.min.js" th:src="@{/ajax/libs/validate/jquery.validate.min.js}"></script>
+<script src="../static/ajax/libs/validate/jquery.validate.extend.js" th:src="@{/ajax/libs/validate/jquery.validate.extend.js}"></script>
+<script src="../static/ajax/libs/layer/layer.min.js" th:src="@{/ajax/libs/layer/layer.min.js}"></script>
+<script src="../static/ajax/libs/blockUI/jquery.blockUI.js" th:src="@{/ajax/libs/blockUI/jquery.blockUI.js}"></script>
+<script src="../static/scm/js/ry-ui.js" th:src="@{/scm/js/ry-ui.js?v=4.8.0}"></script>
+<script>
+// 生成拼音简码（从公司名称提取首字母大写）
+function generateCompanyShortCode(companyName) {
+    if (!companyName || companyName.trim() === '') {
+        return '';
+    }
+    
+    // 移除常见的公司后缀
+    var name = companyName.trim();
+    name = name.replace(/(有限公司|股份有限公司|有限责任公司|股份公司|科技公司|科技有限公司|技术公司|信息技术公司|医疗科技公司|健康产业公司|产业有限公司|集团有限公司|集团股份有限公司)$/g, '');
+    
+    // 提取首字母并转为大写
+    var shortCode = '';
+    
+    // 先移除括号及其内容（如果括号内是数字，则忽略括号）
+    var nameWithoutBrackets = name.replace(/[（(][^）)]*[）)]/g, '').trim();
+    
+    // 如果移除括号后还有内容，使用移除括号后的内容
+    if (nameWithoutBrackets && nameWithoutBrackets.length > 0) {
+        name = nameWithoutBrackets;
+    }
+    
+    // 提取公司名称的首字符
+    if (name.length > 0) {
+        var firstChar = name.charAt(0);
+        // 如果是英文字母，转为大写
+        if (/[a-zA-Z]/.test(firstChar)) {
+            shortCode = firstChar.toUpperCase();
+        } else {
+            // 如果是中文或其他字符，保留原字符
+            shortCode = firstChar;
+        }
+    }
+    
+    return shortCode;
+}
+
+// 监听公司名称输入，自动生成简码
+$(document).ready(function() {
+    // 使用多种事件确保触发
+    $('#companyName').on('input keyup change blur', function() {
+        var companyName = $(this).val();
+        if (companyName && companyName.trim() !== '') {
+            var shortCode = generateCompanyShortCode(companyName);
+            $('#companyShortName').val(shortCode);
+            console.log('公司名称:', companyName, '生成的简码:', shortCode);
+        } else {
+            $('#companyShortName').val('');
+        }
+    });
+    
+    // 也使用事件委托作为备用
+    $(document).on('input keyup change blur', '#companyName', function() {
+        var companyName = $(this).val();
+        if (companyName && companyName.trim() !== '') {
+            var shortCode = generateCompanyShortCode(companyName);
+            $('#companyShortName').val(shortCode);
+        } else {
+            $('#companyShortName').val('');
+        }
+    });
+});
+
+$(function() {
+    $("#registerForm").validate({
+        rules: {
+            loginName: {
+                required: true,
+                minlength: 2,
+                maxlength: 30
+            },
+            password: {
+                required: true,
+                minlength: 6,
+                maxlength: 20,
+                checkPassword: true
+            },
+            confirmPassword: {
+                required: true,
+                equalTo: "input[name='password']"
+            },
+            companyName: {
+                required: true,
+                maxlength: 200
+            },
+            acceptTerm: {
+                required: true
+            }
+        },
+        messages: {
+            loginName: {
+                required: "请输入登录账号",
+                minlength: "登录账号至少2个字符"
+            },
+            password: {
+                required: "请输入密码",
+                minlength: "密码长度至少6位",
+                checkPassword: "密码必须包含数字和字母"
+            },
+            confirmPassword: {
+                required: "请确认密码",
+                equalTo: "两次输入的密码不一致"
+            },
+            companyName: {
+                required: "请输入公司名称"
+            },
+            acceptTerm: {
+                required: "请同意使用条款"
+            }
+        },
+        submitHandler: function(form) {
+            if (!$("#acceptTerm").is(":checked")) {
+                $.modal.msgWarning("请先同意使用条款");
+                return false;
+            }
+            
+            var password = $("input[name='password']").val();
+            var hasDigit = /\d/.test(password);
+            var hasLetter = /[a-zA-Z]/.test(password);
+            
+            if (!hasDigit || !hasLetter) {
+                $.modal.msgWarning("密码必须包含数字和字母");
+                return false;
+            }
+            
+            $.ajax({
+                url: ctx + "supplier/register",
+                type: "post",
+                data: $(form).serialize(),
+                beforeSend: function() {
+                    $("#btnSubmit").button("loading");
+                },
+                success: function(result) {
+                    if (result.code == 0) {
+                        $.modal.msgSuccess(result.msg || "注册成功，请等待管理员审核");
+                        setTimeout(function() {
+                            location.href = ctx + "login";
+                        }, 2000);
+                    } else {
+                        $.modal.msgError(result.msg || "注册失败");
+                        $("#btnSubmit").button("reset");
+                    }
+                },
+                error: function() {
+                    $.modal.msgError("注册失败，请稍后重试");
+                    $("#btnSubmit").button("reset");
+                }
+            });
+            return false;
+        }
+    });
+    
+    // 自定义密码验证
+    $.validator.addMethod("checkPassword", function(value, element) {
+        var hasDigit = /\d/.test(value);
+        var hasLetter = /[a-zA-Z]/.test(value);
+        return hasDigit && hasLetter;
+    }, "密码必须包含数字和字母");
+});
+</script>
+</body>
+</html>
+

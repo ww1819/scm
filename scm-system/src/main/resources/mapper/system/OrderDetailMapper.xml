@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.OrderDetailMapper">
+    
+    <resultMap type="OrderDetail" id="OrderDetailResult">
+        <id     property="detailId"          column="detail_id"          />
+        <result property="orderId"          column="order_id"            />
+        <result property="materialId"        column="material_id"        />
+        <result property="materialCode"     column="material_code"      />
+        <result property="materialName"     column="material_name"      />
+        <result property="specification"    column="specification"      />
+        <result property="model"           column="model"              />
+        <result property="unit"            column="unit"                />
+        <result property="purchasePrice"    column="purchase_price"     />
+        <result property="orderQuantity"    column="order_quantity"     />
+        <result property="remainingQuantity" column="remaining_quantity" />
+        <result property="amount"          column="amount"              />
+        <result property="manufacturer"    column="manufacturer_name"  />
+        <result property="registerNo"      column="register_no"        />
+    </resultMap>
+    
+    <sql id="selectOrderDetailVo">
+        select d.detail_id, d.order_id, d.material_id, d.material_code, d.material_name,
+               d.specification, d.model, d.unit, d.purchase_price, d.order_quantity,
+               d.remaining_quantity, d.amount, d.manufacturer_name, d.register_no
+        from scm_order_detail d
+    </sql>
+    
+    <select id="selectOrderDetailList" parameterType="OrderDetail" resultMap="OrderDetailResult">
+        <include refid="selectOrderDetailVo"/>
+        <where>
+            <if test="orderId != null">
+                AND d.order_id = #{orderId}
+            </if>
+            <if test="materialId != null">
+                AND d.material_id = #{materialId}
+            </if>
+        </where>
+        order by d.detail_id
+    </select>
+    
+    <select id="selectOrderDetailListByOrderId" parameterType="Long" resultMap="OrderDetailResult">
+        <include refid="selectOrderDetailVo"/>
+        where d.order_id = #{orderId}
+        order by d.detail_id
+    </select>
+    
+    <select id="selectOrderDetailById" parameterType="Long" resultMap="OrderDetailResult">
+        <include refid="selectOrderDetailVo"/>
+        where d.detail_id = #{detailId}
+    </select>
+    
+    <insert id="insertOrderDetail" parameterType="OrderDetail" useGeneratedKeys="true" keyProperty="detailId">
+        insert into scm_order_detail(
+            <if test="orderId != null">order_id,</if>
+            <if test="materialId != null">material_id,</if>
+            <if test="materialCode != null and materialCode != ''">material_code,</if>
+            <if test="materialName != null and materialName != ''">material_name,</if>
+            <if test="specification != null and specification != ''">specification,</if>
+            <if test="model != null and model != ''">model,</if>
+            <if test="unit != null and unit != ''">unit,</if>
+            <if test="purchasePrice != null">purchase_price,</if>
+            <if test="orderQuantity != null">order_quantity,</if>
+            <if test="remainingQuantity != null">remaining_quantity,</if>
+            <if test="amount != null">amount,</if>
+            <if test="manufacturer != null and manufacturer != ''">manufacturer_name,</if>
+            <if test="registerNo != null and registerNo != ''">register_no,</if>
+            create_time
+        )values(
+            <if test="orderId != null">#{orderId},</if>
+            <if test="materialId != null">#{materialId},</if>
+            <if test="materialCode != null and materialCode != ''">#{materialCode},</if>
+            <if test="materialName != null and materialName != ''">#{materialName},</if>
+            <if test="specification != null and specification != ''">#{specification},</if>
+            <if test="model != null and model != ''">#{model},</if>
+            <if test="unit != null and unit != ''">#{unit},</if>
+            <if test="purchasePrice != null">#{purchasePrice},</if>
+            <if test="orderQuantity != null">#{orderQuantity},</if>
+            <if test="remainingQuantity != null">#{remainingQuantity},</if>
+            <if test="amount != null">#{amount},</if>
+            <if test="manufacturer != null and manufacturer != ''">#{manufacturer},</if>
+            <if test="registerNo != null and registerNo != ''">#{registerNo},</if>
+            sysdate()
+        )
+    </insert>
+    
+    <insert id="batchInsertOrderDetail" parameterType="java.util.List">
+        insert into scm_order_detail(order_id, material_id, material_code, material_name,
+               specification, model, unit, purchase_price, order_quantity, remaining_quantity,
+               amount, manufacturer_name, register_no, create_time)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.orderId}, #{item.materialId}, #{item.materialCode}, #{item.materialName},
+             #{item.specification}, #{item.model}, #{item.unit}, #{item.purchasePrice},
+             #{item.orderQuantity}, #{item.remainingQuantity}, #{item.amount},
+             #{item.manufacturer}, #{item.registerNo}, sysdate())
+        </foreach>
+    </insert>
+    
+    <update id="updateOrderDetail" parameterType="OrderDetail">
+        update scm_order_detail
+        <set>
+            <if test="orderId != null">order_id = #{orderId},</if>
+            <if test="materialId != null">material_id = #{materialId},</if>
+            <if test="materialCode != null and materialCode != ''">material_code = #{materialCode},</if>
+            <if test="materialName != null and materialName != ''">material_name = #{materialName},</if>
+            <if test="specification != null and specification != ''">specification = #{specification},</if>
+            <if test="model != null and model != ''">model = #{model},</if>
+            <if test="unit != null and unit != ''">unit = #{unit},</if>
+            <if test="purchasePrice != null">purchase_price = #{purchasePrice},</if>
+            <if test="orderQuantity != null">order_quantity = #{orderQuantity},</if>
+            <if test="remainingQuantity != null">remaining_quantity = #{remainingQuantity},</if>
+            <if test="amount != null">amount = #{amount},</if>
+            <if test="manufacturer != null and manufacturer != ''">manufacturer_name = #{manufacturer},</if>
+            <if test="registerNo != null and registerNo != ''">register_no = #{registerNo},</if>
+        </set>
+        where detail_id = #{detailId}
+    </update>
+    
+    <delete id="deleteOrderDetailById" parameterType="Long">
+        delete from scm_order_detail where detail_id = #{detailId}
+    </delete>
+    
+    <delete id="deleteOrderDetailByOrderId" parameterType="Long">
+        delete from scm_order_detail where order_id = #{orderId}
+    </delete>
+    
+    <delete id="deleteOrderDetailByIds" parameterType="String">
+        delete from scm_order_detail where detail_id in
+        <foreach item="detailId" collection="array" open="(" separator="," close=")">
+            #{detailId}
+        </foreach>
+    </delete>
+</mapper>
+

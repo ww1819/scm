@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>物资配送单</title>
+    <style>
+        @media print {
+            @page {
+                size: A4;
+                margin: 1cm;
+            }
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+        
+        body {
+            font-family: "SimSun", "宋体", Arial, sans-serif;
+            font-size: 12px;
+            margin: 0;
+            padding: 20px;
+            background: #fff;
+        }
+        
+        .print-container {
+            width: 100%;
+            max-width: 210mm;
+            margin: 0 auto;
+            background: #fff;
+        }
+        
+        /* 标题区域 */
+        .header {
+            position: relative;
+            text-align: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0;
+            padding: 10px 0;
+        }
+        
+        .input-code {
+            position: absolute;
+            top: 0;
+            right: 0;
+            font-size: 14px;
+        }
+        
+        .input-code-label {
+            margin-right: 5px;
+        }
+        
+        /* 基本信息区域 */
+        .info-section {
+            margin-bottom: 15px;
+        }
+        
+        .info-row {
+            display: flex;
+            flex-wrap: nowrap;
+            margin-bottom: 8px;
+            line-height: 24px;
+        }
+        
+        .info-item {
+            flex: 0 0 25%;
+            min-width: 0;
+            display: flex;
+            margin-right: 20px;
+            white-space: nowrap;
+        }
+        
+        .info-item:last-child {
+            margin-right: 0;
+        }
+        
+        .info-value {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            margin-right: 5px;
+            white-space: nowrap;
+        }
+        
+        .info-value {
+            flex: 1;
+        }
+        
+        /* 表格区域 */
+        .table-section {
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #000;
+            font-size: 11px;
+            margin: 0;
+        }
+        
+        .detail-table th,
+        .detail-table td {
+            border: 1px solid #000;
+            padding: 2px 4px;
+            text-align: center;
+            vertical-align: middle;
+            line-height: 1.2;
+        }
+        
+        .detail-table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            white-space: nowrap;
+            padding: 3px 4px;
+        }
+        
+        .detail-table td {
+            word-break: break-word;
+        }
+        
+        .detail-table tbody tr {
+            height: auto;
+        }
+        
+        /* 表格底部信息行样式 */
+        .detail-table tbody tr:last-child,
+        .detail-table tbody tr:nth-last-child(2),
+        .detail-table tbody tr:nth-last-child(3) {
+            border-top: 2px solid #000;
+        }
+        
+        .detail-table tbody tr:last-child td,
+        .detail-table tbody tr:nth-last-child(2) td,
+        .detail-table tbody tr:nth-last-child(3) td {
+            text-align: left;
+            padding: 4px 6px;
+            vertical-align: top;
+        }
+        
+        /* 验收内容区域 */
+        .acceptance-section {
+            margin-bottom: 15px;
+            border: 1px solid #000;
+            padding: 10px;
+        }
+        
+        .acceptance-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .acceptance-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+            line-height: 20px;
+            white-space: nowrap;
+        }
+        
+        .acceptance-text {
+            flex: 1;
+            margin-right: 10px;
+            white-space: normal;
+            word-break: break-word;
+        }
+        
+        .acceptance-checkbox {
+            display: inline-flex;
+            flex-shrink: 0;
+            white-space: nowrap;
+            align-items: center;
+        }
+        
+        .checkbox-group {
+            display: inline-block;
+            margin: 0 5px;
+            white-space: nowrap;
+        }
+        
+        /* 底部信息区域 */
+        .footer-section {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        
+        .footer-left {
+            flex: 1;
+        }
+        
+        .footer-right {
+            flex: 0 0 300px;
+            text-align: right;
+        }
+        
+        .total-section {
+            margin-bottom: 15px;
+        }
+        
+        .total-row {
+            display: flex;
+            margin-bottom: 5px;
+            line-height: 24px;
+        }
+        
+        .total-label {
+            font-weight: bold;
+            width: 80px;
+        }
+        
+        .total-value {
+            flex: 1;
+        }
+        
+        .signature-section {
+            margin-top: 20px;
+        }
+        
+        .signature-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            line-height: 24px;
+        }
+        
+        .signature-item {
+            flex: 1;
+            margin-right: 20px;
+        }
+        
+        .signature-label {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        
+        .page-info {
+            text-align: right;
+            margin-top: 10px;
+            font-size: 11px;
+        }
+        
+        .website {
+            text-align: right;
+            margin-top: 5px;
+            font-size: 11px;
+        }
+        
+        /* 打印按钮 */
+        .print-actions {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #f5f5f5;
+        }
+        
+        .print-actions button {
+            margin: 0 10px;
+            padding: 8px 20px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="print-container">
+        <!-- 打印操作按钮 -->
+        <div class="print-actions no-print">
+            <button onclick="window.print()" style="background: #5cb85c; color: white; border: none; border-radius: 4px;">
+                <i class="fa fa-print"></i> 打印
+            </button>
+            <button onclick="window.close()" style="background: #d9534f; color: white; border: none; border-radius: 4px;">
+                <i class="fa fa-times"></i> 关闭
+            </button>
+        </div>
+        
+        <!-- 标题区域 -->
+        <div class="header">
+            <div class="input-code">
+                <span class="input-code-label">输入码：</span>
+                <span th:if="${delivery.deliveryNo != null and delivery.deliveryNo.length() > 4}" th:text="${delivery.deliveryNo.substring(delivery.deliveryNo.length() - 4)}">9527</span>
+                <span th:if="${delivery.deliveryNo == null or delivery.deliveryNo.length() <= 4}" th:text="${delivery.deliveryNo ?: ''}">9527</span>
+            </div>
+            <h1>物资配送单</h1>
+        </div>
+        
+        <!-- 基本信息区域 -->
+        <div class="info-section">
+            <div class="info-row">
+                <div class="info-item">
+                    <span class="info-label">配送商：</span>
+                    <span class="info-value" th:text="${delivery.supplierName ?: '-'}">河北国药集团有限责任公司</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">医院：</span>
+                    <span class="info-value" th:text="${delivery.hospitalName ?: '-'}">枣强妇幼保健医院</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">配送单号：</span>
+                    <span class="info-value" th:text="${delivery.deliveryNo ?: '-'}">Ps2023-012021</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">配送地址：</span>
+                    <span class="info-value" th:text="${delivery.deliveryAddress ?: '-'}">枣强县妇幼保健医院10号</span>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-item">
+                    <span class="info-label">代理商：</span>
+                    <span class="info-value" th:text="${delivery.supplierName ?: '-'}">国药乐仁堂集团有限公司</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">仓库：</span>
+                    <span class="info-value" th:text="${delivery.warehouse ?: '中心仓库'}">中心仓库</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">金额：</span>
+                    <span class="info-value" th:text="${delivery.deliveryAmount != null ? #numbers.formatDecimal(delivery.deliveryAmount, 0, 0) : '0'}">3110</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">发票：</span>
+                    <span class="info-value" th:text="${delivery.invoiceNo ?: '-'}">2021021210</span>
+                </div>
+            </div>
+            <div class="info-row">
+                <div class="info-item">
+                    <span class="info-label">备注：</span>
+                    <span class="info-value" th:text="${delivery.remark ?: '无'}">无</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 表格区域 -->
+        <div class="table-section">
+            <table class="detail-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">序号</th>
+                        <th style="width: 120px;">品名</th>
+                        <th style="width: 100px;">规格</th>
+                        <th style="width: 60px;">单位</th>
+                        <th style="width: 60px;">单价</th>
+                        <th style="width: 60px;">数量</th>
+                        <th style="width: 70px;">金额</th>
+                        <th style="width: 80px;">批号</th>
+                        <th style="width: 80px;">生产日期</th>
+                        <th style="width: 80px;">有效期</th>
+                        <th style="width: 120px;">注册证号</th>
+                        <th style="width: 120px;">厂家</th>
+                        <th style="width: 100px;">订单号</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${deliveryDetails == null or #lists.isEmpty(deliveryDetails)}">
+                        <td colspan="13" style="text-align: center; padding: 20px;">暂无明细数据</td>
+                    </tr>
+                    <tr th:each="detail, iterStat : ${deliveryDetails}">
+                        <td th:text="${iterStat.count}">1</td>
+                        <td th:text="${detail.materialName ?: '-'}">浓缩透析液A液</td>
+                        <td th:text="${detail.specification ?: '-'}">UE-2LP 5L FMECal.50</td>
+                        <td th:text="${detail.unit ?: '-'}">人份</td>
+                        <td th:text="${detail.price != null ? #numbers.formatDecimal(detail.price, 1, 2) : '-'}">30</td>
+                        <td th:text="${detail.deliveryQuantity != null ? #numbers.formatDecimal(detail.deliveryQuantity, 0, 0) : '-'}">200</td>
+                        <td th:text="${detail.amount != null ? #numbers.formatDecimal(detail.amount, 1, 2) : '-'}">6000</td>
+                        <td th:text="${detail.batchNo ?: '-'}">E7LK0610</td>
+                        <td th:text="${detail.productionDate != null ? #dates.format(detail.productionDate, 'yyyy/MM/dd') : '-'}">2024/10/5</td>
+                        <td th:text="${detail.expireDate != null ? #dates.format(detail.expireDate, 'yyyy/MM/dd') : '-'}">2024/10/5</td>
+                        <td th:text="${detail.registerNo ?: '-'}">国械注准20193101882</td>
+                        <td th:text="${detail.manufacturer ?: '-'}">北京费森尤斯医疗器械有限公司</td>
+                        <td th:text="${delivery.orderNo ?: '-'}">DH020205</td>
+                    </tr>
+                    <!-- 合计行 -->
+                    <tr>
+                        <td colspan="4" style="text-align: left; font-weight: bold;">合计：</td>
+                        <td colspan="9" style="text-align: left;">
+                            大写：<span th:text="${delivery.deliveryAmount != null ? T(com.scm.common.core.text.Convert).digitUppercase(delivery.deliveryAmount.doubleValue()) : '零元整'}">零元整</span><br/>
+                            合计数量：<span th:text="${totalQuantity}">0</span>
+                        </td>
+                    </tr>
+                    <!-- 签名行 -->
+                    <tr>
+                        <td colspan="3" style="text-align: left;">
+                            制单日期：<span th:text="${delivery.createTime != null ? #dates.format(delivery.createTime, 'yyyy/MM/dd') : ''}">2023/1/2</span>
+                        </td>
+                        <td colspan="3" style="text-align: left;">
+                            制单人：<span th:text="${delivery.createBy ?: '张三'}">张三</span>
+                        </td>
+                        <td colspan="3" style="text-align: left;">
+                            签收人：________________
+                        </td>
+                        <td colspan="4" style="text-align: left;">
+                            签收日期：________________
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 验收内容区域 -->
+        <div class="acceptance-section">
+            <div class="acceptance-title">注/验收内容：</div>
+            <div class="acceptance-item">
+                <span class="acceptance-text">1. 供货单位填写内容是否完整、准确。</span>
+                <span class="acceptance-checkbox">
+                    <span class="checkbox-group">是□</span>
+                    <span class="checkbox-group">否□</span>
+                </span>
+            </div>
+            <div class="acceptance-item">
+                <span class="acceptance-text">2. 产品是否在注册证有效期内生产。</span>
+                <span class="acceptance-checkbox">
+                    <span class="checkbox-group">是□</span>
+                    <span class="checkbox-group">否□</span>
+                </span>
+            </div>
+            <div class="acceptance-item">
+                <span class="acceptance-text">3. 产品外包装是否完整,具有合格证(进口产品需要有中文标识)。</span>
+                <span class="acceptance-checkbox">
+                    <span class="checkbox-group">是□</span>
+                    <span class="checkbox-group">否□</span>
+                </span>
+            </div>
+            <div class="acceptance-item">
+                <span class="acceptance-text">4. 一次性使用无菌耗材需提供检测证明。</span>
+                <span class="acceptance-checkbox">
+                    <span class="checkbox-group">是□</span>
+                    <span class="checkbox-group">否□</span>
+                </span>
+            </div>
+            <div class="acceptance-item">
+                <span class="acceptance-text">5. 进口产品需提供报关单(国产检测报告)。</span>
+                <span class="acceptance-checkbox">
+                    <span class="checkbox-group">是□</span>
+                    <span class="checkbox-group">否□</span>
+                </span>
+            </div>
+        </div>
+        
+        <!-- 网址和页码 - 页面最底部 -->
+        <div style="text-align: right; margin-top: 20px; padding-right: 20px;">
+            网址：http://baidu.do&nbsp;&nbsp;&nbsp;&nbsp;第<span id="currentPage">1</span>页 共<span id="totalPages">1</span>页
+        </div>
+    </div>
+    
+    <script th:inline="javascript">
+        // 数字转中文大写
+        function numberToChinese(num) {
+            if (num == null || num == 0) {
+                return '零';
+            }
+            
+            var chineseNums = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
+            var chineseUnits = ['', '拾', '佰', '仟'];
+            var chineseBigUnits = ['', '万', '亿'];
+            
+            var numStr = Math.floor(num).toString();
+            var result = '';
+            
+            if (numStr.length > 8) {
+                // 处理亿位
+                var yiPart = numStr.substring(0, numStr.length - 8);
+                result += convertPart(yiPart, chineseNums, chineseUnits) + '亿';
+                numStr = numStr.substring(numStr.length - 8);
+            }
+            
+            if (numStr.length > 4) {
+                // 处理万位
+                var wanPart = numStr.substring(0, numStr.length - 4);
+                result += convertPart(wanPart, chineseNums, chineseUnits) + '万';
+                numStr = numStr.substring(numStr.length - 4);
+            }
+            
+            // 处理个位
+            result += convertPart(numStr, chineseNums, chineseUnits);
+            
+            // 清理多余的零
+            result = result.replace(/零+/g, '零').replace(/零$/, '');
+            
+            return result || '零';
+        }
+        
+        function convertPart(part, chineseNums, chineseUnits) {
+            var result = '';
+            var hasValue = false;
+            
+            for (var i = 0; i < part.length; i++) {
+                var digit = parseInt(part[i]);
+                var unitIndex = part.length - i - 1;
+                
+                if (digit != 0) {
+                    if (hasValue && i > 0 && part[i-1] == '0') {
+                        result += '零';
+                    }
+                    result += chineseNums[digit] + chineseUnits[unitIndex];
+                    hasValue = true;
+                }
+            }
+            
+            return result;
+        }
+        
+        // 页面加载时转换金额大写
+        $(function() {
+            var totalAmount = /*[[${delivery.deliveryAmount != null ? delivery.deliveryAmount : 0}]]*/ 0;
+            if (totalAmount > 0) {
+                var chineseAmount = numberToChinese(Math.floor(totalAmount));
+                $('#totalAmountChinese').text(chineseAmount);
+            }
+            
+            // 页面加载完成后自动打开打印预览
+            // 延迟一点时间确保页面内容完全渲染
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        });
+        
+        // 如果页面已经加载完成，也尝试打印（防止jQuery未加载的情况）
+        if (document.readyState === 'complete') {
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        } else {
+            window.addEventListener('load', function() {
+                setTimeout(function() {
+                    window.print();
+                }, 500);
+            });
+        }
+    </script>
+</body>
+</html>
+

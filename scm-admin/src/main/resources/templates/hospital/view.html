@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('医院详情')" />
+</head>
+<body>
+    <div class="main-content">
+        <form id="form-hospital-view" class="form-horizontal">
+            <input name="hospitalId" type="hidden" th:value="${hospital.hospitalId}"/>
+            <h4 class="form-header h4">基本信息</h4>
+            <div class="row">
+            	<div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">医院编码：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" th:value="${hospital.hospitalCode}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">医院名称：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" th:value="${hospital.hospitalName}" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">医院简称：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" th:value="${hospital.hospitalShortName}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">医院等级：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" th:value="${hospital.hospitalLevel}" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4 class="form-header h4">联系信息</h4>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">省份/直辖市：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" th:value="${hospital.province}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">城市：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" th:value="${hospital.city}" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">区县：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" th:value="${hospital.district}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">详细地址：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" th:value="${hospital.address}" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">联系人：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" th:value="${hospital.contactPerson}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">联系电话：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" th:value="${hospital.contactPhone}" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">邮箱：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" th:value="${hospital.email}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">状态：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" th:value="${hospital.status == '0' ? '正常' : '停用'}" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4 class="form-header h4">其他信息</h4>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <label class="col-xs-2 control-label">备注：</label>
+                        <div class="col-xs-10">
+                            <textarea maxlength="500" class="form-control" rows="3" readonly th:text="${hospital.remark}"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+      
+    <div class="row">
+        <div class="col-sm-offset-5 col-sm-10">
+            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
+        </div>
+    </div>
+	<th:block th:include="include :: footer" />
+</body>
+</html>
+

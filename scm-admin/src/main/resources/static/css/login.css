@@ -10,8 +10,8 @@ body.signin {
 	background-size:cover
 }
 .signinpanel {
-	width:750px;
-	margin:10% auto 0;
+	width:900px;
+	margin:8% auto 0;
 	color:rgba(255,255,255,.95)
 }
 .signinpanel .logopanel {
@@ -27,7 +27,10 @@ body.signin {
 }
 .signinpanel .form-control {
 	display:block;
-	margin-top:15px
+	margin-top:20px;
+	font-size:16px;
+	padding:10px 15px!important;
+	height:45px!important;
 }
 .signinpanel .uname {
 	background:#fff url(../img/user.png) no-repeat 95% center;
@@ -41,7 +44,10 @@ body.signin {
     background: #fff no-repeat 95% center;color:#333; margin:0 0 15px 0;
 }
 .signinpanel .btn {
-	margin-top:15px
+	margin-top:20px;
+	padding:12px 20px;
+	font-size:16px;
+	height:45px;
 }
 .signinpanel form {
 	background:rgba(255,255,255,.2);
@@ -52,7 +58,7 @@ body.signin {
 	-moz-border-radius:3px;
 	-webkit-border-radius:3px;
 	border-radius:3px;
-	padding:30px
+	padding:40px
 }
 .signup-footer {
 	border-top:solid 1px rgba(255,255,255,.3);

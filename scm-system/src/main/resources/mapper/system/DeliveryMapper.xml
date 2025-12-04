@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.DeliveryMapper">
+    
+    <resultMap type="Delivery" id="DeliveryResult">
+        <id     property="deliveryId"         column="delivery_id"         />
+        <result property="deliveryNo"        column="delivery_no"         />
+        <result property="hospitalId"       column="hospital_id"         />
+        <result property="hospitalName"     column="hospital_name"        />
+        <result property="warehouse"        column="warehouse_name"      />
+        <result property="orderId"          column="order_id"            />
+        <result property="orderNo"         column="order_no"             />
+        <result property="supplierId"       column="supplier_id"         />
+        <result property="supplierName"     column="supplier_name"       />
+        <result property="deliveryAmount"   column="delivery_amount"     />
+        <result property="deliveryStatus"   column="delivery_status"     />
+        <result property="deliveryPerson"   column="delivery_person"      />
+        <result property="deliveryAddress"  column="delivery_address"      />
+        <result property="expectedDeliveryDate" column="expected_delivery_date" />
+        <result property="invoiceNo"       column="invoice_no"          />
+        <result property="invoiceAmount"   column="invoice_amount"      />
+        <result property="invoiceDate"     column="invoice_date"        />
+        <result property="orderDate"       column="order_date"           />
+        <result property="createBy"        column="create_by"            />
+        <result property="createTime"      column="create_time"         />
+        <result property="updateBy"        column="update_by"            />
+        <result property="updateTime"      column="update_time"          />
+        <result property="remark"          column="remark"              />
+    </resultMap>
+    
+    <sql id="selectDeliveryVo">
+        select d.delivery_id, d.delivery_no, d.hospital_id, d.warehouse_name, d.order_id,
+               d.order_no, d.supplier_id, d.delivery_amount, d.delivery_status, d.delivery_person,
+               d.delivery_address, d.expected_delivery_date, d.invoice_no, d.invoice_amount,
+               d.invoice_date, d.order_date, d.remark, d.create_by, d.create_time,
+               d.update_by, d.update_time,
+               h.hospital_name, s.company_name as supplier_name
+        from scm_delivery d
+        left join scm_hospital h on d.hospital_id = h.hospital_id
+        left join scm_supplier s on d.supplier_id = s.supplier_id
+    </sql>
+    
+    <select id="selectDeliveryList" parameterType="Delivery" resultMap="DeliveryResult">
+        <include refid="selectDeliveryVo"/>
+        <where>
+            <if test="deliveryNo != null and deliveryNo != ''">
+                AND d.delivery_no like concat('%', #{deliveryNo}, '%')
+            </if>
+            <if test="hospitalId != null">
+                AND d.hospital_id = #{hospitalId}
+            </if>
+            <if test="supplierId != null">
+                AND d.supplier_id = #{supplierId}
+            </if>
+            <if test="orderId != null">
+                AND d.order_id = #{orderId}
+            </if>
+            <if test="orderNo != null and orderNo != ''">
+                AND d.order_no like concat('%', #{orderNo}, '%')
+            </if>
+            <if test="deliveryStatus != null and deliveryStatus != ''">
+                AND d.delivery_status = #{deliveryStatus}
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                AND date(d.create_time) &gt;= date(#{params.beginTime})
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                AND date(d.create_time) &lt;= date(#{params.endTime})
+            </if>
+        </where>
+        order by d.create_time desc
+    </select>
+    
+    <select id="selectDeliveryById" parameterType="Long" resultMap="DeliveryResult">
+        <include refid="selectDeliveryVo"/>
+        where d.delivery_id = #{deliveryId}
+    </select>
+    
+    <select id="selectDeliveryByDeliveryNo" parameterType="String" resultMap="DeliveryResult">
+        <include refid="selectDeliveryVo"/>
+        where d.delivery_no = #{deliveryNo}
+    </select>
+    
+    <insert id="insertDelivery" parameterType="Delivery" useGeneratedKeys="true" keyProperty="deliveryId">
+        insert into scm_delivery(
+            <if test="deliveryNo != null and deliveryNo != ''">delivery_no,</if>
+            <if test="hospitalId != null and hospitalId != ''">hospital_id,</if>
+            <if test="warehouse != null and warehouse != ''">warehouse_name,</if>
+            <if test="orderId != null">order_id,</if>
+            <if test="orderNo != null and orderNo != ''">order_no,</if>
+            <if test="supplierId != null and supplierId != ''">supplier_id,</if>
+            <if test="deliveryAmount != null">delivery_amount,</if>
+            <if test="deliveryStatus != null and deliveryStatus != ''">delivery_status,</if>
+            <if test="deliveryPerson != null and deliveryPerson != ''">delivery_person,</if>
+            <if test="deliveryAddress != null and deliveryAddress != ''">delivery_address,</if>
+            <if test="expectedDeliveryDate != null">expected_delivery_date,</if>
+            <if test="invoiceNo != null and invoiceNo != ''">invoice_no,</if>
+            <if test="invoiceAmount != null">invoice_amount,</if>
+            <if test="invoiceDate != null">invoice_date,</if>
+            <if test="orderDate != null">order_date,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time
+        )values(
+            <if test="deliveryNo != null and deliveryNo != ''">#{deliveryNo},</if>
+            <if test="hospitalId != null and hospitalId != ''">#{hospitalId},</if>
+            <if test="warehouse != null and warehouse != ''">#{warehouse},</if>
+            <if test="orderId != null">#{orderId},</if>
+            <if test="orderNo != null and orderNo != ''">#{orderNo},</if>
+            <if test="supplierId != null and supplierId != ''">#{supplierId},</if>
+            <if test="deliveryAmount != null">#{deliveryAmount},</if>
+            <if test="deliveryStatus != null and deliveryStatus != ''">#{deliveryStatus},</if>
+            <if test="deliveryPerson != null and deliveryPerson != ''">#{deliveryPerson},</if>
+            <if test="deliveryAddress != null and deliveryAddress != ''">#{deliveryAddress},</if>
+            <if test="expectedDeliveryDate != null">#{expectedDeliveryDate},</if>
+            <if test="invoiceNo != null and invoiceNo != ''">#{invoiceNo},</if>
+            <if test="invoiceAmount != null">#{invoiceAmount},</if>
+            <if test="invoiceDate != null">#{invoiceDate},</if>
+            <if test="orderDate != null">#{orderDate},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate()
+        )
+    </insert>
+    
+    <update id="updateDelivery" parameterType="Delivery">
+        update scm_delivery
+        <set>
+            <if test="deliveryNo != null and deliveryNo != ''">delivery_no = #{deliveryNo},</if>
+            <choose>
+                <when test="hospitalId != null and hospitalId != ''">
+                    hospital_id = #{hospitalId},
+                </when>
+                <otherwise>
+                    hospital_id = NULL,
+                </otherwise>
+            </choose>
+            <if test="warehouse != null and warehouse != ''">warehouse_name = #{warehouse},</if>
+            <if test="orderId != null">order_id = #{orderId},</if>
+            <if test="orderNo != null and orderNo != ''">order_no = #{orderNo},</if>
+            <choose>
+                <when test="supplierId != null and supplierId != ''">
+                    supplier_id = #{supplierId},
+                </when>
+                <otherwise>
+                    supplier_id = NULL,
+                </otherwise>
+            </choose>
+            <if test="deliveryAmount != null">delivery_amount = #{deliveryAmount},</if>
+            <if test="deliveryStatus != null and deliveryStatus != ''">delivery_status = #{deliveryStatus},</if>
+            <if test="deliveryPerson != null and deliveryPerson != ''">delivery_person = #{deliveryPerson},</if>
+            <if test="deliveryAddress != null and deliveryAddress != ''">delivery_address = #{deliveryAddress},</if>
+            <if test="expectedDeliveryDate != null">expected_delivery_date = #{expectedDeliveryDate},</if>
+            <if test="invoiceNo != null and invoiceNo != ''">invoice_no = #{invoiceNo},</if>
+            <if test="invoiceAmount != null">invoice_amount = #{invoiceAmount},</if>
+            <if test="invoiceDate != null">invoice_date = #{invoiceDate},</if>
+            <if test="orderDate != null">order_date = #{orderDate},</if>
+            <if test="remark != null and remark != ''">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where delivery_id = #{deliveryId}
+    </update>
+    
+    <delete id="deleteDeliveryById" parameterType="Long">
+        delete from scm_delivery where delivery_id = #{deliveryId}
+    </delete>
+    
+    <delete id="deleteDeliveryByIds" parameterType="String">
+        delete from scm_delivery where delivery_id in
+        <foreach item="deliveryId" collection="array" open="(" separator="," close=")">
+            #{deliveryId}
+        </foreach>
+    </delete>
+</mapper>
+

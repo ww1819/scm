@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('新增证件类型')" />
+</head>
+<body>
+    <div class="main-content">
+        <form id="form-certificate-type-add" class="form-horizontal">
+            <h4 class="form-header h4">基本信息</h4>
+            <div class="row">
+            	<div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">类型编码：</label>
+                        <div class="col-sm-8">
+                            <input name="typeCode" placeholder="请输入类型编码（可选，不填则自动生成）" class="form-control" type="text" maxlength="50">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label is-required">类型名称：</label>
+                        <div class="col-sm-8">
+                            <input name="typeName" placeholder="请输入类型名称" class="form-control" type="text" maxlength="100" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label is-required">类型分类：</label>
+                        <div class="col-sm-8">
+                            <select name="typeCategory" id="typeCategory" class="form-control" required>
+                                <option value="">请选择</option>
+                                <option value="supplier" th:selected="${typeCategory == 'supplier'}">企业证件</option>
+                                <option value="product" th:selected="${typeCategory == 'product'}">产品证件</option>
+                                <option value="manufacturer" th:selected="${typeCategory == 'manufacturer'}">生产厂家证件</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">显示顺序：</label>
+                        <div class="col-sm-8">
+                            <input name="orderNum" placeholder="请输入显示顺序（数字越大越靠前）" class="form-control" type="number" value="0">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">启用状态：</label>
+                        <div class="col-sm-8">
+                            <select name="status" class="form-control">
+                                <option value="0">启用</option>
+                                <option value="1">停用</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <h4 class="form-header h4">其他信息</h4>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <label class="col-xs-2 control-label">类型描述：</label>
+                        <div class="col-xs-10">
+                            <textarea name="description" maxlength="500" class="form-control" rows="3" placeholder="请输入类型描述"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <label class="col-xs-2 control-label">备注：</label>
+                        <div class="col-xs-10">
+                            <textarea name="remark" maxlength="500" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+      
+    <div class="row">
+        <div class="col-sm-offset-5 col-sm-10">
+            <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
+        </div>
+    </div>
+	<th:block th:include="include :: footer" />
+	<script>
+	    var prefix = ctx + "certificate/type";
+	    
+	    $(function() {
+	        // 从URL参数中获取typeCategory并设置默认值
+	        var urlParams = new URLSearchParams(window.location.search);
+	        var typeCategory = urlParams.get('typeCategory');
+	        
+	        // 设置类型分类的默认值
+	        if (typeCategory && (typeCategory === 'product' || typeCategory === 'supplier' || typeCategory === 'manufacturer')) {
+	            $('#typeCategory').val(typeCategory);
+	        }
+	    });
+	
+        $("#form-certificate-type-add").validate({
+        	onkeyup: false,
+        	rules:{
+        		typeName:{
+        			required: true,
+        			maxlength: 100
+        		},
+        		typeCategory:{
+        			required: true
+        		}
+        	},
+            focusCleanup: true
+        });
+        
+        function submitHandler() {
+	        if ($.validate.form()) {
+	        	$.operate.saveTab(prefix + "/add", $("#form-certificate-type-add").serializeArray());
+	        }
+	    }
+    </script>
+</body>
+</html>
+
