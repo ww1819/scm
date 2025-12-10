@@ -1,5 +1,6 @@
 package com.scm.common.core.context;
 
+import org.springframework.lang.NonNull;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import com.scm.common.core.text.Convert;
@@ -13,7 +14,7 @@ public class PermissionContextHolder
 {
     private static final String PERMISSION_CONTEXT_ATTRIBUTES = "PERMISSION_CONTEXT";
 
-    public static void setContext(String permission)
+    public static void setContext(@NonNull String permission)
     {
         RequestContextHolder.currentRequestAttributes().setAttribute(PERMISSION_CONTEXT_ATTRIBUTES, permission,
                 RequestAttributes.SCOPE_REQUEST);

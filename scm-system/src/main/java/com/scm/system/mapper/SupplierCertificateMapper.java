@@ -34,7 +34,7 @@ public interface SupplierCertificateMapper
      * @param supplierIds 供应商ID列表
      * @return 证件集合
      */
-    public List<SupplierCertificate> selectSupplierCertificateListBySupplierIds(@Param("supplierCertificate") SupplierCertificate supplierCertificate, @Param("supplierIds") List<Long> supplierIds);
+    public List<SupplierCertificate> selectSupplierCertificateListBySupplierIds(@Param("supplierCertificate") SupplierCertificate supplierCertificate, @Param("supplierIds") List<Long> supplierIds, @Param("hospitalId") Long hospitalId);
 
     /**
      * 查询过期预警的供应商证件列表

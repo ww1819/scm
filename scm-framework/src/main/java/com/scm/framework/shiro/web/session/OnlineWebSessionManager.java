@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.shiro.session.ExpiredSessionException;
 import org.apache.shiro.session.InvalidSessionException;
@@ -84,7 +85,7 @@ public class OnlineWebSessionManager extends DefaultWebSessionManager
         if (StringUtils.isNotNull(obj))
         {
             session = new OnlineSession();
-            BeanUtils.copyBeanProp(session, obj);
+            BeanUtils.copyBeanProp(session, Objects.requireNonNull(obj));
         }
         return session;
     }

@@ -1,5 +1,6 @@
 package com.scm.common.utils;
 
+import java.util.Objects;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.crypto.SecureRandomNumberGenerator;
 import org.apache.shiro.session.Session;
@@ -38,7 +39,7 @@ public class ShiroUtils
         if (StringUtils.isNotNull(obj))
         {
             user = new SysUser();
-            BeanUtils.copyBeanProp(user, obj);
+            BeanUtils.copyBeanProp(user, Objects.requireNonNull(obj));
         }
         return user;
     }

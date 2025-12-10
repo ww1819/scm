@@ -61,12 +61,12 @@ public class DataSourceAspect
     public DataSource getDataSource(ProceedingJoinPoint point)
     {
         MethodSignature signature = (MethodSignature) point.getSignature();
-        DataSource dataSource = AnnotationUtils.findAnnotation(signature.getMethod(), DataSource.class);
+        DataSource dataSource = AnnotationUtils.findAnnotation(Objects.requireNonNull(signature.getMethod()), DataSource.class);
         if (Objects.nonNull(dataSource))
         {
             return dataSource;
         }
 
-        return AnnotationUtils.findAnnotation(signature.getDeclaringType(), DataSource.class);
+        return AnnotationUtils.findAnnotation(Objects.requireNonNull(signature.getDeclaringType()), DataSource.class);
     }
 }

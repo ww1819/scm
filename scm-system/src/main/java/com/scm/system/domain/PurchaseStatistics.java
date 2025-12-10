@@ -1,7 +1,6 @@
 package com.scm.system.domain;
 
 import java.math.BigDecimal;
-import java.util.Date;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.scm.common.annotation.Excel;

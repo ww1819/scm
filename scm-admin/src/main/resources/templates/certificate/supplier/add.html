@@ -119,6 +119,26 @@
 	    
 	    // 从URL参数获取supplierId
 	    $(function() {
+	        // 监听"是否长期"字段变化，自动处理"有效期至"字段
+	        $("#certificateName").on('change', function() {
+	            var isLongTerm = $(this).val();
+	            var $expireDateInput = $("input[name='expireDate']");
+	            
+	            if (isLongTerm === '是') {
+	                // 选择"是"时，清空有效期至并禁用
+	                $expireDateInput.val('').prop('disabled', true);
+	            } else {
+	                // 选择"否"时，启用有效期至
+	                $expireDateInput.prop('disabled', false);
+	            }
+	        });
+	        
+	        // 初始化时，根据默认值设置有效期至字段状态
+	        var defaultIsLongTerm = $("#certificateName").val();
+	        if (defaultIsLongTerm === '是') {
+	            $("input[name='expireDate']").prop('disabled', true);
+	        }
+	        
 	        var urlParams = new URLSearchParams(window.location.search);
 	        var supplierId = urlParams.get('supplierId');
 	        if (supplierId) {
@@ -355,6 +375,20 @@
         
         function submitHandler() {
 	        if ($.validate.form()) {
+	            // 处理"是否长期"和"有效期至"的联动
+	            var isLongTerm = $("#certificateName").val();
+	            var expireDate = $("input[name='expireDate']").val();
+	            
+	            // 如果选择"是"，清空有效期至
+	            if (isLongTerm === '是') {
+	                $("input[name='expireDate']").val('');
+	            }
+	            // 如果选择"否"，必须填写有效期至
+	            else if (isLongTerm === '否' && (!expireDate || expireDate.trim() === '')) {
+	                $.modal.alertWarning("选择"否"时，必须填写有效期至");
+	                return;
+	            }
+	            
 	            // 检查是否有文件正在上传
 	            var $fileInput = $("#certificateFile");
 	            var filesCount = $fileInput.fileinput('getFilesCount') || 0;

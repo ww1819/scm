@@ -55,9 +55,9 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
      * @return 证件集合
      */
     @Override
-    public List<SupplierCertificate> selectSupplierCertificateListBySupplierIds(SupplierCertificate supplierCertificate, List<Long> supplierIds)
+    public List<SupplierCertificate> selectSupplierCertificateListBySupplierIds(SupplierCertificate supplierCertificate, List<Long> supplierIds, Long hospitalId)
     {
-        return supplierCertificateMapper.selectSupplierCertificateListBySupplierIds(supplierCertificate, supplierIds);
+        return supplierCertificateMapper.selectSupplierCertificateListBySupplierIds(supplierCertificate, supplierIds, hospitalId);
     }
 
     /**
@@ -143,8 +143,14 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
     @Override
     public int auditSupplierCertificate(SupplierCertificate supplierCertificate)
     {
+        // 确保审核状态不为空
+        if (supplierCertificate.getAuditStatus() == null || supplierCertificate.getAuditStatus().isEmpty())
+        {
+            throw new RuntimeException("审核状态不能为空");
+        }
         supplierCertificate.setAuditTime(DateUtils.getNowDate());
         supplierCertificate.setUpdateTime(DateUtils.getNowDate());
+        supplierCertificate.setUpdateBy(supplierCertificate.getAuditBy()); // 确保更新人也被设置
         return supplierCertificateMapper.updateSupplierCertificate(supplierCertificate);
     }
 

@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.spring.SpringUtils;
 import com.scm.quartz.domain.SysJob;
@@ -29,7 +30,7 @@ public class JobInvokeUtil
 
         if (!isValidClassName(beanName))
         {
-            Object bean = SpringUtils.getBean(beanName);
+            Object bean = SpringUtils.getBean(Objects.requireNonNull(beanName));
             invokeMethod(bean, methodName, methodParams);
         }
         else

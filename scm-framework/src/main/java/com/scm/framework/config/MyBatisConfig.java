@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import javax.sql.DataSource;
 import org.apache.ibatis.io.VFS;
 import org.apache.ibatis.session.SqlSessionFactory;
@@ -48,7 +49,7 @@ public class MyBatisConfig
             {
                 List<String> result = new ArrayList<String>();
                 aliasesPackage = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX
-                        + ClassUtils.convertClassNameToResourcePath(aliasesPackage.trim()) + "/" + DEFAULT_RESOURCE_PATTERN;
+                        + ClassUtils.convertClassNameToResourcePath(Objects.requireNonNull(aliasesPackage.trim())) + "/" + DEFAULT_RESOURCE_PATTERN;
                 Resource[] resources = resolver.getResources(aliasesPackage);
                 if (resources != null && resources.length > 0)
                 {
@@ -101,7 +102,7 @@ public class MyBatisConfig
             {
                 try
                 {
-                    Resource[] mappers = resourceResolver.getResources(mapperLocation);
+                    Resource[] mappers = resourceResolver.getResources(Objects.requireNonNull(mapperLocation));
                     resources.addAll(Arrays.asList(mappers));
                 }
                 catch (IOException e)
@@ -126,7 +127,7 @@ public class MyBatisConfig
         sessionFactory.setDataSource(dataSource);
         sessionFactory.setTypeAliasesPackage(typeAliasesPackage);
         sessionFactory.setMapperLocations(resolveMapperLocations(StringUtils.split(mapperLocations, ",")));
-        sessionFactory.setConfigLocation(new DefaultResourceLoader().getResource(configLocation));
+        sessionFactory.setConfigLocation(new DefaultResourceLoader().getResource(Objects.requireNonNull(configLocation)));
         return sessionFactory.getObject();
     }
 }

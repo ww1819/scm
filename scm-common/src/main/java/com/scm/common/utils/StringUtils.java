@@ -5,7 +5,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import org.springframework.lang.NonNull;
 import org.springframework.util.AntPathMatcher;
 import com.scm.common.constant.Constants;
 import com.scm.common.core.text.StrFormatter;
@@ -633,7 +635,7 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
         }
         for (String pattern : strs)
         {
-            if (isMatch(pattern, str))
+            if (pattern != null && isMatch(pattern, Objects.requireNonNull(str)))
             {
                 return true;
             }
@@ -651,10 +653,10 @@ public class StringUtils extends org.apache.commons.lang3.StringUtils
      * @param url 需要匹配的url
      * @return
      */
-    public static boolean isMatch(String pattern, String url)
+    public static boolean isMatch(@NonNull String pattern, @NonNull String url)
     {
         AntPathMatcher matcher = new AntPathMatcher();
-        return matcher.match(pattern, url);
+        return matcher.match(Objects.requireNonNull(pattern), Objects.requireNonNull(url));
     }
 
     @SuppressWarnings("unchecked")

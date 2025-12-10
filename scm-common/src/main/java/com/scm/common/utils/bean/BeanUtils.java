@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.springframework.lang.NonNull;
 
 /**
  * Bean 工具类
@@ -28,7 +29,7 @@ public class BeanUtils extends org.springframework.beans.BeanUtils
      * @param dest 目标对象
      * @param src 源对象
      */
-    public static void copyBeanProp(Object dest, Object src)
+    public static void copyBeanProp(@NonNull Object dest, @NonNull Object src)
     {
         try
         {

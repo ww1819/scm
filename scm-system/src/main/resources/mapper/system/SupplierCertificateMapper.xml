@@ -8,6 +8,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <id     property="certificateId"     column="certificate_id"     />
         <result property="supplierId"        column="supplier_id"        />
         <result property="supplierName"      column="supplier_name"      />
+        <result property="supplierCode"      column="supplier_code"       />
+        <result property="hospitalCode"      column="hospital_code"      />
+        <result property="hospitalName"      column="hospital_name"       />
+        <result property="contactPerson"     column="contact_person"      />
+        <result property="address"           column="address"             />
         <result property="certificateType"   column="certificate_type"    />
         <result property="certificateName"   column="certificate_name"    />
         <result property="certificateNo"     column="certificate_no"      />
@@ -33,9 +38,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                c.issue_date, c.expire_date, c.certificate_file, c.audit_status, c.audit_by, c.audit_time,
                c.audit_remark, c.is_expired, c.is_warning, c.status, c.create_by, c.create_time,
                c.update_by, c.update_time, c.remark,
-               s.company_name as supplier_name
+               s.company_name as supplier_name,
+               s.supplier_code as supplier_code,
+               s.contact_person as contact_person,
+               s.address as address,
+               (select h.hospital_code from scm_hospital_supplier hs 
+                left join scm_hospital h on hs.hospital_id = h.hospital_id 
+                where hs.supplier_id = s.supplier_id and hs.status = '0' 
+                limit 1) as hospital_code,
+               (select h.hospital_name from scm_hospital_supplier hs 
+                left join scm_hospital h on hs.hospital_id = h.hospital_id 
+                where hs.supplier_id = s.supplier_id and hs.status = '0' 
+                limit 1) as hospital_name
         from scm_supplier_certificate c
-        left join scm_supplier s on c.supplier_id = s.supplier_id
+        left join scm_supplier s on c.supplier_id = s.supplier_id and s.del_flag = '0'
     </sql>
     
     <select id="selectSupplierCertificateList" parameterType="SupplierCertificate" resultMap="SupplierCertificateResult">
@@ -74,14 +90,43 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
     
     <select id="selectSupplierCertificateListBySupplierIds" resultMap="SupplierCertificateResult">
-        <include refid="selectSupplierCertificateVo"/>
-        <where>
-            c.status != '1'
+        select c.certificate_id, c.supplier_id, c.certificate_type, c.certificate_name, c.certificate_no,
+               c.issue_date, c.expire_date, c.certificate_file, c.audit_status, c.audit_by, c.audit_time,
+               c.audit_remark, c.is_expired, c.is_warning, c.status, c.create_by, c.create_time,
+               c.update_by, c.update_time, c.remark,
+               s.company_name as supplier_name,
+               s.supplier_code as supplier_code,
+               s.contact_person as contact_person,
+               s.address as address,
+               h.hospital_code as hospital_code,
+               h.hospital_name as hospital_name
+        from scm_supplier_certificate c
+        inner join (
+            SELECT MIN(c2.certificate_id) as certificate_id, c2.supplier_id
+            FROM scm_supplier_certificate c2
+            LEFT JOIN scm_hospital_supplier hs2 ON c2.supplier_id = hs2.supplier_id AND hs2.status = '0'
+            WHERE c2.status != '1'
             <if test="supplierIds != null and supplierIds.size() > 0">
-                AND c.supplier_id IN
+                AND c2.supplier_id IN
                 <foreach item="supplierId" collection="supplierIds" open="(" separator="," close=")">
                     #{supplierId}
                 </foreach>
+            </if>
+            <if test="hospitalId != null">
+                AND hs2.hospital_id = #{hospitalId}
+            </if>
+            <if test="supplierCertificate.auditStatus != null and supplierCertificate.auditStatus != ''">
+                AND c2.audit_status = #{supplierCertificate.auditStatus}
+            </if>
+            GROUP BY c2.supplier_id
+        ) c_unique ON c.certificate_id = c_unique.certificate_id
+        left join scm_supplier s on c.supplier_id = s.supplier_id and s.del_flag = '0'
+        left join scm_hospital_supplier hs on c.supplier_id = hs.supplier_id and hs.status = '0'
+        left join scm_hospital h on hs.hospital_id = h.hospital_id
+        <where>
+            c.status != '1'
+            <if test="hospitalId != null">
+                AND hs.hospital_id = #{hospitalId}
             </if>
             <if test="supplierCertificate.certificateType != null and supplierCertificate.certificateType != ''">
                 AND c.certificate_type like concat('%', #{supplierCertificate.certificateType}, '%')
@@ -178,7 +223,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="issueDate != null">issue_date = #{issueDate},</if>
             <if test="expireDate != null">expire_date = #{expireDate},</if>
             <if test="certificateFile != null and certificateFile != ''">certificate_file = #{certificateFile},</if>
-            <if test="auditStatus != null and auditStatus != ''">audit_status = #{auditStatus},</if>
+            <if test="auditStatus != null">audit_status = #{auditStatus},</if>
             <if test="auditBy != null and auditBy != ''">audit_by = #{auditBy},</if>
             <if test="auditTime != null">audit_time = #{auditTime},</if>
             <if test="auditRemark != null and auditRemark != ''">audit_remark = #{auditRemark},</if>

@@ -1,6 +1,7 @@
 package com.scm.quartz.util;
 
 import java.util.Date;
+import java.util.Objects;
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
 import org.slf4j.Logger;
@@ -33,7 +34,11 @@ public abstract class AbstractQuartzJob implements Job
     public void execute(JobExecutionContext context)
     {
         SysJob sysJob = new SysJob();
-        BeanUtils.copyBeanProp(sysJob, context.getMergedJobDataMap().get(ScheduleConstants.TASK_PROPERTIES));
+        Object taskProperties = context.getMergedJobDataMap().get(ScheduleConstants.TASK_PROPERTIES);
+        if (taskProperties != null)
+        {
+            BeanUtils.copyBeanProp(sysJob, Objects.requireNonNull(taskProperties));
+        }
         try
         {
             before(context, sysJob);

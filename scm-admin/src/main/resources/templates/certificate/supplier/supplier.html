@@ -481,12 +481,13 @@
 		            }
 		        },
 		        {
+		            field: 'certificateName',
 		            title: '是否长期',
 		            align: 'center',
 		            width: 80,
 		            formatter: function(value, row, index) {
-		                // 如果expireDate为空或null，则为长期
-		                if (!row.expireDate) {
+		                // 从certificateName字段读取"是否长期"的值
+		                if (value === '是' || value === '1') {
 		                    return '<span class="label label-info">是</span>';
 		                }
 		                return '<span class="label label-default">否</span>';

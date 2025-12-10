@@ -68,7 +68,7 @@ public class SupplierCertificateController extends BaseController
     @RequiresPermissions("certificate:supplier:list")
     @PostMapping("/list")
     @ResponseBody
-    public TableDataInfo list(SupplierCertificate supplierCertificate, String supplierIds)
+    public TableDataInfo list(SupplierCertificate supplierCertificate, String supplierIds, Long hospitalId)
     {
         startPage();
         // 如果传入了供应商ID列表（逗号分隔），则只查询这些供应商的证件
@@ -97,8 +97,8 @@ public class SupplierCertificateController extends BaseController
             }
             else if (supplierIdList.size() > 1)
             {
-                // 多个供应商ID，需要在Service层处理
-                List<SupplierCertificate> list = supplierCertificateService.selectSupplierCertificateListBySupplierIds(supplierCertificate, supplierIdList);
+                // 多个供应商ID，需要在Service层处理，同时传递医院ID用于过滤
+                List<SupplierCertificate> list = supplierCertificateService.selectSupplierCertificateListBySupplierIds(supplierCertificate, supplierIdList, hospitalId);
                 return getDataTable(list);
             }
         }

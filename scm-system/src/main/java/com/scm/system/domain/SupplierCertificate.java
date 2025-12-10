@@ -27,6 +27,21 @@ public class SupplierCertificate extends BaseEntity
     /** 供应商名称 */
     private String supplierName;
 
+    /** 供应商编码 */
+    private String supplierCode;
+
+    /** 医院编码 */
+    private String hospitalCode;
+
+    /** 医院名称 */
+    private String hospitalName;
+
+    /** 公司联系人 */
+    private String contactPerson;
+
+    /** 公司地址 */
+    private String address;
+
     /** 证件类型（营业执照、经营许可证等） */
     @Excel(name = "证件类型")
     private String certificateType;
@@ -95,6 +110,56 @@ public class SupplierCertificate extends BaseEntity
     public void setSupplierName(String supplierName)
     {
         this.supplierName = supplierName;
+    }
+
+    public String getSupplierCode()
+    {
+        return supplierCode;
+    }
+
+    public void setSupplierCode(String supplierCode)
+    {
+        this.supplierCode = supplierCode;
+    }
+
+    public String getHospitalCode()
+    {
+        return hospitalCode;
+    }
+
+    public void setHospitalCode(String hospitalCode)
+    {
+        this.hospitalCode = hospitalCode;
+    }
+
+    public String getHospitalName()
+    {
+        return hospitalName;
+    }
+
+    public void setHospitalName(String hospitalName)
+    {
+        this.hospitalName = hospitalName;
+    }
+
+    public String getContactPerson()
+    {
+        return contactPerson;
+    }
+
+    public void setContactPerson(String contactPerson)
+    {
+        this.contactPerson = contactPerson;
+    }
+
+    public String getAddress()
+    {
+        return address;
+    }
+
+    public void setAddress(String address)
+    {
+        this.address = address;
     }
 
     @NotBlank(message = "证件类型不能为空")

@@ -1,5 +1,6 @@
 package com.scm.framework.aspectj;
 
+import java.util.Objects;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
@@ -25,6 +26,7 @@ public class PermissionsAspect
 
     protected void handleRequiresPermissions(final JoinPoint joinPoint, RequiresPermissions requiresPermissions)
     {
-        PermissionContextHolder.setContext(StringUtils.join(requiresPermissions.value(), ","));
+        String context = StringUtils.join(requiresPermissions.value(), ",");
+        PermissionContextHolder.setContext(Objects.requireNonNull(context));
     }
 }

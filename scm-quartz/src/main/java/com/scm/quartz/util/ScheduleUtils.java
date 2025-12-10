@@ -1,5 +1,6 @@
 package com.scm.quartz.util;
 
+import java.util.Objects;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
 import org.quartz.Job;
@@ -133,7 +134,12 @@ public class ScheduleUtils
         {
             return StringUtils.containsAnyIgnoreCase(invokeTarget, Constants.JOB_WHITELIST_STR);
         }
-        Object obj = SpringUtils.getBean(StringUtils.split(invokeTarget, ".")[0]);
+        String[] parts = StringUtils.split(invokeTarget, ".");
+        if (parts == null || parts.length == 0)
+        {
+            return false;
+        }
+        Object obj = SpringUtils.getBean(Objects.requireNonNull(parts[0]));
         String beanPackageName = obj.getClass().getPackage().getName();
         return StringUtils.containsAnyIgnoreCase(beanPackageName, Constants.JOB_WHITELIST_STR)
                 && !StringUtils.containsAnyIgnoreCase(beanPackageName, Constants.JOB_ERROR_STR);

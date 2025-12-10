@@ -31,9 +31,10 @@ public interface ISupplierCertificateService
      * 
      * @param supplierCertificate 证件信息
      * @param supplierIds 供应商ID列表
+     * @param hospitalId 医院ID（可选，用于过滤只显示绑定该医院的供应商证件）
      * @return 证件集合
      */
-    public List<SupplierCertificate> selectSupplierCertificateListBySupplierIds(SupplierCertificate supplierCertificate, List<Long> supplierIds);
+    public List<SupplierCertificate> selectSupplierCertificateListBySupplierIds(SupplierCertificate supplierCertificate, List<Long> supplierIds, Long hospitalId);
 
     /**
      * 查询过期预警的供应商证件列表

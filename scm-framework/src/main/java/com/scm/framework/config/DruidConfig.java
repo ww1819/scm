@@ -3,6 +3,7 @@ package com.scm.framework.config;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -15,6 +16,7 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.lang.NonNull;
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.spring.boot.autoconfigure.DruidDataSourceBuilder;
 import com.alibaba.druid.spring.boot.autoconfigure.properties.DruidStatProperties;
@@ -55,7 +57,7 @@ public class DruidConfig
     {
         Map<Object, Object> targetDataSources = new HashMap<>();
         targetDataSources.put(DataSourceType.MASTER.name(), masterDataSource);
-        setDataSource(targetDataSources, DataSourceType.SLAVE.name(), "slaveDataSource");
+        setDataSource(targetDataSources, Objects.requireNonNull(DataSourceType.SLAVE.name()), "slaveDataSource");
         return new DynamicDataSource(masterDataSource, targetDataSources);
     }
 
@@ -66,7 +68,7 @@ public class DruidConfig
      * @param sourceName 数据源名称
      * @param beanName bean名称
      */
-    public void setDataSource(Map<Object, Object> targetDataSources, String sourceName, String beanName)
+    public void setDataSource(Map<Object, Object> targetDataSources, @NonNull String sourceName, @NonNull String beanName)
     {
         try
         {

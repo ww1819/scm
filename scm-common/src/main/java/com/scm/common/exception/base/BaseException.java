@@ -1,5 +1,6 @@
 package com.scm.common.exception.base;
 
+import java.util.Objects;
 import com.scm.common.utils.MessageUtils;
 import com.scm.common.utils.StringUtils;
 
@@ -66,7 +67,7 @@ public class BaseException extends RuntimeException
         String message = null;
         if (!StringUtils.isEmpty(code))
         {
-            message = MessageUtils.message(code, args);
+            message = MessageUtils.message(Objects.requireNonNull(code), args);
         }
         if (message == null)
         {
