@@ -44,7 +44,7 @@ insert into sys_menu values('2502', '配送信息查询', '2500', '2', '/deliver
 insert into sys_menu values('2600', '结算管理', '0', '11', '#', '', 'M', '0', '1', '', 'fa fa-money', 'admin', sysdate(), '', null, '结算管理目录');
 -- 二级菜单
 insert into sys_menu values('2601', '发票结算', '2600', '1', '/settlement/settlement', '', 'C', '0', '1', 'settlement:settlement:view', 'fa fa-file-text-o', 'admin', sysdate(), '', null, '发票结算菜单');
-insert into sys_menu values('2602', '结算查询', '2600', '2', '/settlement/query', '', 'C', '0', '1', 'settlement:settlement:view', 'admin', sysdate(), '', null, '结算查询菜单');
+insert into sys_menu values('2602', '结算查询', '2600', '2', '/settlement/query', '', 'C', '0', '1', 'settlement:settlement:view','', 'admin', sysdate(), '', null, '结算查询菜单');
 
 -- 一级菜单 - 数据中心
 insert into sys_menu values('2700', '数据中心', '0', '12', '#', '', 'M', '0', '1', '', 'fa fa-bar-chart', 'admin', sysdate(), '', null, '数据中心目录');
