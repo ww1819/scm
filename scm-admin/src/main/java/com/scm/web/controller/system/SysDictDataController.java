@@ -119,4 +119,17 @@ public class SysDictDataController extends BaseController
         dictDataService.deleteDictDataByIds(ids);
         return success();
     }
+
+    /**
+     * 启用/停用字典数据
+     */
+    @RequiresPermissions("system:dict:edit")
+    @Log(title = "字典数据", businessType = BusinessType.UPDATE)
+    @PostMapping("/changeStatus")
+    @ResponseBody
+    public AjaxResult changeStatus(SysDictData dictData)
+    {
+        dictData.setUpdateBy(getLoginName());
+        return toAjax(dictDataService.updateDictData(dictData));
+    }
 }

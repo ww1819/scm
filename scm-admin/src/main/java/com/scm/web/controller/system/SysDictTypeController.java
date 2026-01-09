@@ -185,4 +185,17 @@ public class SysDictTypeController extends BaseController
         List<Ztree> ztrees = dictTypeService.selectDictTree(new SysDictType());
         return ztrees;
     }
+
+    /**
+     * 启用/停用字典类型
+     */
+    @RequiresPermissions("system:dict:edit")
+    @Log(title = "字典类型", businessType = BusinessType.UPDATE)
+    @PostMapping("/changeStatus")
+    @ResponseBody
+    public AjaxResult changeStatus(SysDictType dictType)
+    {
+        dictType.setUpdateBy(getLoginName());
+        return toAjax(dictTypeService.updateDictType(dictType));
+    }
 }

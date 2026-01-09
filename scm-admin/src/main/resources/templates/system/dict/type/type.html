@@ -103,7 +103,7 @@
 		            title: '状态',
 		            align: 'center',
 		            formatter: function(value, row, index) {
-		            	return $.table.selectDictLabel(datas, value);
+		            	return statusTools(row);
 		            }
 		        },
 		        {
@@ -143,6 +143,36 @@
         function refreshCache() {
             $.operate.get(prefix + "/refreshCache");
         }
+
+		function statusTools(row) {
+		    // 判断启用状态：status为'0'或0表示启用（点亮），其他值表示停用（灰色）
+		    var status = row.status;
+		    // 统一转换为字符串进行比较
+		    var isEnabled = (status === '0' || status === 0 || String(status) === '0');
+		    // 临时调试：如果还是灰色，请查看浏览器控制台输出
+		    if (!isEnabled && (status === null || status === undefined || status === '')) {
+		        console.warn('字典类型状态异常:', row.dictId, 'status值:', status, '类型:', typeof status);
+		    }
+		    if (isEnabled) {
+    			return '<i class="fa fa-toggle-on text-info fa-2x" onclick="disableDictType(\'' + row.dictId + '\')"></i> ';
+    		} else {
+    			return '<i class="fa fa-toggle-off text-info fa-2x" onclick="enableDictType(\'' + row.dictId + '\')"></i> ';
+    		}
+		}
+		
+		/* 字典类型-停用 */
+		function disableDictType(dictId) {
+			$.modal.confirm("确认要停用字典类型吗？", function() {
+				$.operate.post(prefix + "/changeStatus", { "dictId": dictId, "status": "1" });
+		    })
+		}
+
+		/* 字典类型-启用 */
+		function enableDictType(dictId) {
+			$.modal.confirm("确认要启用字典类型吗？", function() {
+				$.operate.post(prefix + "/changeStatus", { "dictId": dictId, "status": "0" });
+		    })
+		}
 	</script>
 </body>
 </html>
