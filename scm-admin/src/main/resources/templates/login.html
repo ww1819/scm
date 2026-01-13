@@ -25,11 +25,11 @@
         <div class="row">
             <div class="col-sm-7">
                 <div class="signin-info">
-                    <div class="logopanel m-b">
+                    <div class="logopanel m-b" style="display: none;">
                         <h1><img alt="[ 耗材供应链 ]" src="../static/scm.png" th:src="@{/scm.png}"></h1>
                     </div>
                     <div class="m-b"></div>
-                    <h4>欢迎使用 <strong>耗材供应链 后台管理系统</strong></h4>
+                    <h4 style="color: #333; font-size: 28px;">欢迎使用！ <strong style="font-weight: bold; color: #000;">医承云配</strong>耗材供应链云平台系统</h4>
                     <ul class="m-b">
                         <li><i class="fa fa-arrow-circle-o-right m-r-xs"></i> SpringBoot</li>
                         <li><i class="fa fa-arrow-circle-o-right m-r-xs"></i> Mybatis</li>
@@ -42,8 +42,7 @@
             </div>
             <div class="col-sm-5">
                 <form id="signupForm" autocomplete="off">
-                    <h3 class="no-margins" style="font-size: 24px; margin-bottom: 15px;">登录：</h3>
-                    <p class="m-t-md" style="font-size: 16px; margin-bottom: 20px;">你若不离不弃，我必生死相依</p>
+                    <h3 class="no-margins" style="font-size: 24px; margin-bottom: 15px; color: #000;">登录：</h3>
                     <input type="text"     name="username" class="form-control uname"     placeholder="用户名" value="admin"    />
                     <input type="password" name="password" class="form-control pword"     placeholder="密码"   value="admin123" />
 					<div class="row m-t" th:if="${captchaEnabled==true}">
@@ -63,9 +62,9 @@
                 </form>
             </div>
         </div>
-        <div class="signup-footer">
+        <div class="signup-footer" style="color: #333;">
             <div class="pull-left">
-                Copyright © 2018-2025 scm.vip All Rights Reserved. <br>
+                ©医承云配供应链云平台 V-3.21 <br>
             </div>
         </div>
     </div>

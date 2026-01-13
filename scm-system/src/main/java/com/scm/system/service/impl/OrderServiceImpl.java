@@ -39,7 +39,7 @@ public class OrderServiceImpl implements IOrderService
     {
         Order order = orderMapper.selectOrderById(orderId);
         if (order != null)
-        {
+    {
             List<OrderDetail> details = orderDetailMapper.selectOrderDetailListByOrderId(orderId);
             order.setOrderDetails(details);
         }
