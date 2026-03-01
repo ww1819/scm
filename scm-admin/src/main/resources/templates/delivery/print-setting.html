@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('添加打印设置')" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .print-setting-container {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+        }
+        
+        /* 左侧画布区域 */
+        .canvas-area {
+            flex: 1;
+            position: relative;
+            background: #f0f0f0;
+            overflow: auto;
+            border-right: 1px solid #ddd;
+        }
+        
+        .canvas-header {
+            padding: 10px 20px;
+            background: #fff;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .canvas-title {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .canvas-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .canvas-content {
+            position: relative;
+            padding: 20px;
+            min-height: 100%;
+        }
+        
+        /* 网格背景 */
+        .canvas-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
+            background-size: 10px 10px;
+            pointer-events: none;
+        }
+        
+        /* 标尺 */
+        .ruler {
+            position: absolute;
+            background: #e8e8e8;
+            z-index: 10;
+        }
+        
+        .ruler-horizontal {
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            border-bottom: 1px solid #ccc;
+        }
+        
+        .ruler-vertical {
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 20px;
+            border-right: 1px solid #ccc;
+        }
+        
+        .ruler-mark {
+            position: absolute;
+            font-size: 10px;
+            color: #666;
+        }
+        
+        /* 文档预览区域 */
+        .document-preview {
+            position: relative;
+            margin: 40px auto;
+            background: #fff;
+            border: 2px solid #0066cc;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-width: 800px;
+            max-width: 800px;
+        }
+        
+        .document-title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 20px;
+            border-bottom: 2px solid #000;
+        }
+        
+        /* 可拖动的表格 */
+        .preview-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: fixed;
+            position: relative;
+        }
+        
+        .preview-table th,
+        .preview-table td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: center;
+            position: relative;
+            background: #fff;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        
+        .preview-table th {
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+        
+        /* 列分隔线 - 可拖动 */
+        .column-resizer {
+            position: absolute;
+            top: 0;
+            right: -3px;
+            width: 6px;
+            height: 100%;
+            cursor: ew-resize;
+            z-index: 1000;
+            background: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        
+        .column-resizer:hover {
+            background: rgba(0, 102, 204, 0.3);
+        }
+        
+        .column-resizer.dragging {
+            background: rgba(0, 102, 204, 0.5);
+        }
+        
+        .preview-table th {
+            position: relative;
+        }
+        
+        /* 右侧配置面板 */
+        .config-panel {
+            width: 400px;
+            background: #fff;
+            border-left: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .config-header {
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .config-title {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .close-btn:hover {
+            color: #000;
+        }
+        
+        .config-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+        
+        .config-section {
+            margin-bottom: 20px;
+        }
+        
+        .config-section-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .column-config-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .column-config-table th,
+        .column-config-table td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .column-config-table th {
+            background: #f5f5f5;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .column-config-table td {
+            font-size: 12px;
+        }
+        
+        .width-input-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .width-input {
+            width: 60px;
+            padding: 4px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            text-align: center;
+        }
+        
+        .width-btn {
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            border: 1px solid #ddd;
+            background: #fff;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .width-btn:hover {
+            background: #f0f0f0;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #2196F3;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(20px);
+        }
+    </style>
+</head>
+<body>
+    <div class="print-setting-container">
+        <!-- 左侧画布区域 -->
+        <div class="canvas-area">
+            <div class="canvas-header">
+                <div class="canvas-title">添加打印设置</div>
+                <div class="canvas-actions">
+                    <button class="btn btn-sm btn-primary" onclick="saveSettings()">
+                        <i class="fa fa-save"></i> 保存
+                    </button>
+                    <button class="btn btn-sm btn-default" onclick="refreshCanvas()">
+                        <i class="fa fa-refresh"></i> 刷新
+                    </button>
+                </div>
+            </div>
+            <div class="canvas-content">
+                <div class="canvas-grid"></div>
+                <!-- 水平标尺 -->
+                <div class="ruler ruler-horizontal" id="ruler-horizontal"></div>
+                <!-- 垂直标尺 -->
+                <div class="ruler ruler-vertical" id="ruler-vertical"></div>
+                
+                <!-- 文档预览 -->
+                <div class="document-preview">
+                    <div class="document-title">出库单</div>
+                    <table class="preview-table" id="preview-table">
+                        <thead>
+                            <tr>
+                                <th data-field="materialCode" style="width: 80px;">耗材编码</th>
+                                <th data-field="materialName" style="width: 120px;">耗材名称</th>
+                                <th data-field="materialSpeci" style="width: 100px;">规格</th>
+                                <th data-field="price" style="width: 80px;">单价</th>
+                                <th data-field="qty" style="width: 60px;">数量</th>
+                                <th data-field="amt" style="width: 80px;">金额</th>
+                                <th data-field="batchNo" style="width: 80px;">批号</th>
+                                <th data-field="expireDate" style="width: 80px;">有效期</th>
+                                <th data-field="manufacturer" style="width: 120px;">厂家</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 右侧配置面板 -->
+        <div class="config-panel">
+            <div class="config-header">
+                <div class="config-title">列配置</div>
+                <button class="close-btn" onclick="closePanel()">×</button>
+            </div>
+            <div class="config-content">
+                <div class="config-section">
+                    <div class="config-section-title">列配置</div>
+                    <table class="column-config-table">
+                        <thead>
+                            <tr>
+                                <th>列名</th>
+                                <th>字段</th>
+                                <th>宽度(px)</th>
+                                <th>是否显示</th>
+                            </tr>
+                        </thead>
+                        <tbody id="column-config-tbody">
+                            <!-- 动态生成 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <th:block th:include="include :: footer" />
+    <script>
+        // 列配置数据
+        var columnConfigs = [
+            { field: 'materialCode', name: '耗材编码', width: 80, visible: true },
+            { field: 'materialName', name: '耗材名称', width: 120, visible: true },
+            { field: 'materialSpeci', name: '规格', width: 100, visible: true },
+            { field: 'price', name: '单价', width: 80, visible: true },
+            { field: 'qty', name: '数量', width: 60, visible: true },
+            { field: 'amt', name: '金额', width: 80, visible: true },
+            { field: 'batchNo', name: '批号', width: 80, visible: true },
+            { field: 'expireDate', name: '有效期', width: 80, visible: true },
+            { field: 'manufacturer', name: '厂家', width: 120, visible: true }
+        ];
+        
+        // 初始化
+        $(function() {
+            initRulers();
+            initColumnConfigs();
+            initColumnResizers();
+        });
+        
+        // 初始化标尺
+        function initRulers() {
+            var hRuler = $('#ruler-horizontal');
+            var vRuler = $('#ruler-vertical');
+            
+            // 水平标尺刻度
+            for (var i = 0; i <= 270; i += 10) {
+                var mark = $('<div class="ruler-mark"></div>');
+                mark.css({
+                    left: (i + 20) + 'px',
+                    top: '5px'
+                });
+                mark.text(i);
+                hRuler.append(mark);
+            }
+            
+            // 垂直标尺刻度
+            for (var i = 0; i <= 170; i += 10) {
+                var mark = $('<div class="ruler-mark"></div>');
+                mark.css({
+                    top: (i + 20) + 'px',
+                    left: '5px'
+                });
+                mark.text(i);
+                vRuler.append(mark);
+            }
+        }
+        
+        // 初始化列配置
+        function initColumnConfigs() {
+            var tbody = $('#column-config-tbody');
+            tbody.empty();
+            
+            columnConfigs.forEach(function(config, index) {
+                var row = $('<tr></tr>');
+                row.append('<td>' + config.name + '</td>');
+                row.append('<td>' + config.field + '</td>');
+                
+                // 宽度输入组
+                var widthGroup = $('<td></td>');
+                var widthInput = $('<input type="number" class="width-input" value="' + config.width + '" data-index="' + index + '">');
+                var btnMinus = $('<button class="width-btn" data-index="' + index + '" data-action="minus">-</button>');
+                var btnPlus = $('<button class="width-btn" data-index="' + index + '" data-action="plus">+</button>');
+                
+                widthInput.on('change', function() {
+                    var idx = $(this).data('index');
+                    var newWidth = parseInt($(this).val()) || 0;
+                    updateColumnWidth(idx, newWidth);
+                });
+                
+                btnMinus.on('click', function() {
+                    var idx = $(this).data('index');
+                    var currentWidth = columnConfigs[idx].width;
+                    updateColumnWidth(idx, Math.max(10, currentWidth - 5));
+                });
+                
+                btnPlus.on('click', function() {
+                    var idx = $(this).data('index');
+                    var currentWidth = columnConfigs[idx].width;
+                    updateColumnWidth(idx, currentWidth + 5);
+                });
+                
+                widthGroup.append(btnMinus);
+                widthGroup.append(widthInput);
+                widthGroup.append(btnPlus);
+                row.append(widthGroup);
+                
+                // 显示开关
+                var toggleCell = $('<td></td>');
+                var toggleSwitch = $('<label class="toggle-switch"></label>');
+                var checkbox = $('<input type="checkbox" data-index="' + index + '" ' + (config.visible ? 'checked' : '') + '>');
+                var slider = $('<span class="toggle-slider"></span>');
+                
+                checkbox.on('change', function() {
+                    var idx = $(this).data('index');
+                    columnConfigs[idx].visible = $(this).is(':checked');
+                    updateColumnVisibility(idx);
+                });
+                
+                toggleSwitch.append(checkbox);
+                toggleSwitch.append(slider);
+                toggleCell.append(toggleSwitch);
+                row.append(toggleCell);
+                
+                tbody.append(row);
+            });
+        }
+        
+        // 全局拖动状态
+        var dragState = {
+            isDragging: false,
+            resizer: null,
+            startX: 0,
+            startWidth: 0,
+            currentIndex: -1
+        };
+        
+        // 初始化列分隔线（可拖动）
+        function initColumnResizers() {
+            var table = $('#preview-table');
+            var thead = table.find('thead tr');
+            var ths = thead.find('th');
+            
+            // 清除之前的分隔线
+            table.find('.column-resizer').remove();
+            
+            ths.each(function(index) {
+                if (index < ths.length - 1) { // 最后一列不需要分隔线
+                    var th = $(this);
+                    var resizer = $('<div class="column-resizer" data-index="' + index + '"></div>');
+                    th.append(resizer);
+                    
+                    // 拖动开始
+                    resizer.on('mousedown', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        dragState.isDragging = true;
+                        dragState.resizer = $(this);
+                        dragState.startX = e.pageX;
+                        dragState.currentIndex = index;
+                        
+                        // 获取当前列的实际宽度
+                        var thElement = th[0];
+                        var computedWidth = thElement.offsetWidth || parseInt(th.css('width')) || columnConfigs[index].width;
+                        dragState.startWidth = computedWidth;
+                        
+                        $(this).addClass('dragging');
+                        $('body').css({
+                            'cursor': 'ew-resize',
+                            'user-select': 'none',
+                            '-webkit-user-select': 'none',
+                            '-moz-user-select': 'none',
+                            '-ms-user-select': 'none'
+                        });
+                        
+                        // 阻止文本选择
+                        return false;
+                    });
+                }
+            });
+            
+            // 全局鼠标移动事件
+            $(document).off('mousemove.columnResize').on('mousemove.columnResize', function(e) {
+                if (!dragState.isDragging) return;
+                
+                e.preventDefault();
+                e.stopPropagation();
+                
+                var diff = e.pageX - dragState.startX;
+                var newWidth = Math.max(20, dragState.startWidth + diff);
+                
+                // 更新当前列宽度
+                updateColumnWidth(dragState.currentIndex, newWidth);
+                
+                return false;
+            });
+            
+            // 全局鼠标释放事件
+            $(document).off('mouseup.columnResize').on('mouseup.columnResize', function(e) {
+                if (dragState.isDragging) {
+                    dragState.isDragging = false;
+                    if (dragState.resizer) {
+                        dragState.resizer.removeClass('dragging');
+                    }
+                    $('body').css({
+                        'cursor': '',
+                        'user-select': '',
+                        '-webkit-user-select': '',
+                        '-moz-user-select': '',
+                        '-ms-user-select': ''
+                    });
+                    dragState.resizer = null;
+                    dragState.currentIndex = -1;
+                }
+            });
+        }
+        
+        // 更新列宽度
+        function updateColumnWidth(index, width) {
+            if (index < 0 || index >= columnConfigs.length) return;
+            
+            columnConfigs[index].width = width;
+            
+            // 更新表格列宽
+            var table = $('#preview-table');
+            var th = table.find('thead tr th').eq(index);
+            
+            // 更新表头宽度 - 使用内联样式确保优先级
+            th.css({
+                'width': width + 'px',
+                'min-width': width + 'px',
+                'max-width': width + 'px'
+            });
+            
+            // 更新所有行的对应列宽度
+            table.find('tbody tr').each(function() {
+                var td = $(this).find('td').eq(index);
+                td.css({
+                    'width': width + 'px',
+                    'min-width': width + 'px',
+                    'max-width': width + 'px'
+                });
+            });
+            
+            // 更新配置面板中的宽度值（不触发change事件，避免循环）
+            var widthInput = $('.width-input[data-index="' + index + '"]');
+            if (widthInput.length > 0 && parseInt(widthInput.val()) !== width) {
+                widthInput.val(width);
+            }
+        }
+        
+        // 更新列显示/隐藏
+        function updateColumnVisibility(index) {
+            var config = columnConfigs[index];
+            var table = $('#preview-table');
+            var th = table.find('thead tr th').eq(index);
+            
+            if (config.visible) {
+                th.show();
+                // 显示所有行的对应列
+                table.find('tbody tr').each(function() {
+                    $(this).find('td').eq(index).show();
+                });
+            } else {
+                th.hide();
+                // 隐藏所有行的对应列
+                table.find('tbody tr').each(function() {
+                    $(this).find('td').eq(index).hide();
+                });
+            }
+        }
+        
+        // 保存设置
+        function saveSettings() {
+            $.modal.msgSuccess("打印设置保存成功");
+            // 这里可以添加保存到服务器的逻辑
+            console.log('保存的配置:', columnConfigs);
+        }
+        
+        // 刷新画布
+        function refreshCanvas() {
+            location.reload();
+        }
+        
+        // 关闭面板
+        function closePanel() {
+            if (parent.layer !== undefined) {
+                var index = parent.layer.getFrameIndex(window.name);
+                parent.layer.close(index);
+            } else {
+                $.modal.closeTab();
+            }
+        }
+    </script>
+</body>
+</html>

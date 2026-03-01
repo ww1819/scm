@@ -16,6 +16,6 @@ public class ScmApplication
     {
         // System.setProperty("spring.devtools.restart.enabled", "false");
         SpringApplication.run(ScmApplication.class, args);
-        System.out.println("耗材供应链管理平台启动成功 ");
+        System.out.println("医承云配耗材供应链云平台启动成功 ");
     }
 }
