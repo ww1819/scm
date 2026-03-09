@@ -12,6 +12,12 @@ scm:
   profile: D:/scm/uploadPath
   # 获取ip地址开关
   addressEnabled: false
+  # 启动时执行数据完整性等 SQL 脚本（仿照 SPD 后端）
+  sql:
+    init:
+      enabled: true
+      location: classpath:sql/mysql/
+      fail-on-error: false
 
 # 开发环境配置
 server:
