@@ -1,5 +1,7 @@
 package com.scm.common.utils.uuid;
 
+import java.util.concurrent.ThreadLocalRandom;
+
 /**
  * ID生成器工具类
  * 
@@ -7,6 +9,16 @@ package com.scm.common.utils.uuid;
  */
 public class IdUtils
 {
+    /**
+     * 生成 UUID7 风格主键（时间有序、32位十六进制字符串）
+     */
+    public static String simpleUuid7()
+    {
+        long ts = System.currentTimeMillis();
+        long r = ThreadLocalRandom.current().nextLong() & 0x0FFFFFFFFFFFFFFFL;
+        return String.format("%012x%020x", ts, r);
+    }
+
     /**
      * 获取随机UUID
      * 

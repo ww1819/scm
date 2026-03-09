@@ -92,3 +92,222 @@ ALTER TABLE scm_delivery MODIFY COLUMN supplier_id bigint(20) DEFAULT NULL COMME
 -- sys_menu 部分版本有 status 字段用于菜单启用/停用
 CALL add_table_column('sys_menu', 'status', 'char(1)', '菜单状态（0正常 1停用）', '0');
 /
+-- ========== 标准 8 字段：create_by, create_time, update_by, update_time, del_flag, del_time, del_by, tenant_id ==========
+-- 以下为各表缺失的列（表已有则通过 add_table_column 跳过）
+/
+-- scm_certificate_config：缺 del_flag, del_by, del_time, tenant_id
+CALL add_table_column('scm_certificate_config', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
+/
+CALL add_table_column('scm_certificate_config', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_certificate_config', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_certificate_config', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_certificate_type
+CALL add_table_column('scm_certificate_type', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
+/
+CALL add_table_column('scm_certificate_type', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_certificate_type', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_certificate_type', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_delivery
+CALL add_table_column('scm_delivery', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
+/
+CALL add_table_column('scm_delivery', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_delivery', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_delivery', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_delivery_detail
+CALL add_table_column('scm_delivery_detail', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
+/
+CALL add_table_column('scm_delivery_detail', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_delivery_detail', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_delivery_detail', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_delivery_invoice
+CALL add_table_column('scm_delivery_invoice', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
+/
+CALL add_table_column('scm_delivery_invoice', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_delivery_invoice', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_delivery_invoice', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_hospital：已有 del_flag，补 del_by, del_time, tenant_id
+CALL add_table_column('scm_hospital', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_hospital', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_hospital', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_hospital_supplier
+CALL add_table_column('scm_hospital_supplier', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
+/
+CALL add_table_column('scm_hospital_supplier', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_hospital_supplier', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_hospital_supplier', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_hospital_user
+CALL add_table_column('scm_hospital_user', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
+/
+CALL add_table_column('scm_hospital_user', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_hospital_user', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_hospital_user', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_manufacturer：已有 del_flag，补 del_by, del_time, tenant_id
+CALL add_table_column('scm_manufacturer', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_manufacturer', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_manufacturer', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_material_category
+CALL add_table_column('scm_material_category', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_material_category', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_material_category', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_material_dict
+CALL add_table_column('scm_material_dict', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_material_dict', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_material_dict', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_order
+CALL add_table_column('scm_order', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
+/
+CALL add_table_column('scm_order', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_order', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_order', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_order_detail
+CALL add_table_column('scm_order_detail', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
+/
+CALL add_table_column('scm_order_detail', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_order_detail', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_order_detail', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_product_certificate
+CALL add_table_column('scm_product_certificate', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
+/
+CALL add_table_column('scm_product_certificate', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_product_certificate', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_product_certificate', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_purchase_statistics：缺 create_by, update_by, del_flag, del_time, del_by, tenant_id
+CALL add_table_column('scm_purchase_statistics', 'create_by', 'varchar(64)', '创建者', NULL);
+/
+CALL add_table_column('scm_purchase_statistics', 'update_by', 'varchar(64)', '更新者', NULL);
+/
+CALL add_table_column('scm_purchase_statistics', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
+/
+CALL add_table_column('scm_purchase_statistics', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_purchase_statistics', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_purchase_statistics', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_settlement
+CALL add_table_column('scm_settlement', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
+/
+CALL add_table_column('scm_settlement', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_settlement', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_settlement', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_settlement_detail
+CALL add_table_column('scm_settlement_detail', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
+/
+CALL add_table_column('scm_settlement_detail', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_settlement_detail', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_settlement_detail', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_supplier：已有 del_flag，补 del_by, del_time, tenant_id
+CALL add_table_column('scm_supplier', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_supplier', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_supplier', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_supplier_certificate
+CALL add_table_column('scm_supplier_certificate', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
+/
+CALL add_table_column('scm_supplier_certificate', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_supplier_certificate', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_supplier_certificate', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_supplier_code_mapping
+CALL add_table_column('scm_supplier_code_mapping', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
+/
+CALL add_table_column('scm_supplier_code_mapping', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_supplier_code_mapping', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_supplier_code_mapping', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_supplier_user
+CALL add_table_column('scm_supplier_user', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
+/
+CALL add_table_column('scm_supplier_user', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_supplier_user', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_supplier_user', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- sys_dept：已有 del_flag，补 del_by, del_time, tenant_id
+CALL add_table_column('sys_dept', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('sys_dept', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('sys_dept', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_tenant：主键为 tenant_id（uuid7），补 del_flag, del_by, del_time, pinyin_code, planned_stop_time
+CALL add_table_column('scm_tenant', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
+/
+CALL add_table_column('scm_tenant', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('scm_tenant', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('scm_tenant', 'pinyin_code', 'varchar(64)', '拼音简码（客户名首字母）', NULL);
+/
+CALL add_table_column('scm_tenant', 'planned_stop_time', 'datetime', '计划停用时间', NULL);
+/
+-- sys_user：已有 del_flag，补 del_by, del_time, tenant_id（user_source 若未加可另脚本）
+CALL add_table_column('sys_user', 'del_time', 'datetime', '删除时间', NULL);
+/
+CALL add_table_column('sys_user', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('sys_user', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+CALL add_table_column('sys_user', 'user_source', 'varchar(32)', '用户来源（platform/supplier/delivery/hospital）', NULL);
+/
+-- sys_role：租户维度角色（医院管理员等）
+CALL add_table_column('sys_role', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+-- scm_tenant_menu_pause：暂停时间（最近一次设为暂停的时间）
+CALL add_table_column('scm_tenant_menu_pause', 'pause_time', 'datetime', '暂停时间', NULL);
+/

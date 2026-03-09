@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('新增客户')" />
+</head>
+<body>
+    <div class="main-content">
+        <form id="form-tenant-add" class="form-horizontal">
+            <h4 class="form-header h4">基本信息</h4>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label is-required">客户名称：</label>
+                        <div class="col-sm-8">
+                            <input name="tenantName" id="tenantName" placeholder="请输入客户名称" class="form-control" type="text" maxlength="100" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">租户编码：</label>
+                        <div class="col-sm-8">
+                            <input name="tenantCode" placeholder="选填" class="form-control" type="text" maxlength="64">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">拼音简码：</label>
+                        <div class="col-sm-8">
+                            <input name="pinyinCode" id="pinyinCode" placeholder="根据客户名称自动生成或后端生成" class="form-control" type="text" maxlength="64" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">状态：</label>
+                        <div class="col-sm-8">
+                            <label class="radio-box">
+                                <input type="radio" name="status" value="0" checked> 正常
+                            </label>
+                            <label class="radio-box" style="margin-left: 20px;">
+                                <input type="radio" name="status" value="1"> 停用
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">计划停用时间：</label>
+                        <div class="col-sm-8">
+                            <input name="plannedStopTime" id="plannedStopTime" placeholder="选填" class="form-control" type="text">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">联系人：</label>
+                        <div class="col-sm-8">
+                            <input name="contactPerson" placeholder="请输入联系人" class="form-control" type="text" maxlength="50">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">联系电话：</label>
+                        <div class="col-sm-8">
+                            <input name="contactPhone" placeholder="请输入联系电话" class="form-control" type="text" maxlength="20">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="form-group">
+                        <label class="col-xs-2 control-label">备注：</label>
+                        <div class="col-xs-10">
+                            <textarea name="remark" maxlength="500" class="form-control" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="row" style="position: fixed; bottom: 0; left: 0; right: 0; background-color: #fff; padding: 15px 20px; border-top: 1px solid #ddd; z-index: 1000; box-shadow: 0 -2px 8px rgba(0,0,0,0.1);">
+        <div class="col-sm-offset-5 col-sm-10">
+            <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
+        </div>
+    </div>
+    <div style="height: 70px;"></div>
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script>
+	    var prefix = ctx + "tenant/tenant";
+
+	    $(function() {
+	        layui.use('laydate', function() {
+	            var laydate = layui.laydate;
+	            laydate.render({
+	                elem: '#plannedStopTime',
+	                type: 'datetime',
+	                format: 'yyyy-MM-dd HH:mm:ss'
+	            });
+	        });
+	        $('#tenantName').on('input', function() {
+	            var v = $(this).val();
+	            if (v) {
+	                $('#pinyinCode').val('');
+	            } else {
+	                $('#pinyinCode').val('');
+	            }
+	        });
+	    });
+
+        $("#form-tenant-add").validate({
+            onkeyup: false,
+            rules: {
+                tenantName: { required: true, maxlength: 100 }
+            },
+            focusCleanup: true
+        });
+
+        function submitHandler() {
+            if ($.validate.form()) {
+                $.operate.saveTab(prefix + "/add", $("#form-tenant-add").serializeArray());
+            }
+        }
+    </script>
+</body>
+</html>

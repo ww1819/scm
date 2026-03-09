@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('客户列表')" />
+	<th:block th:include="include :: layout-latest-css" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="tenant-form">
+					<div class="select-list">
+						<ul>
+							<li>
+								客户名称：<input type="text" name="tenantName"/>
+							</li>
+							<li>
+								租户编码：<input type="text" name="tenantCode"/>
+							</li>
+							<li>
+								拼音简码：<input type="text" name="pinyinCode"/>
+							</li>
+							<li>
+								状态：<select name="status">
+									<option value="">所有</option>
+									<option value="0">正常</option>
+									<option value="1">停用</option>
+								</select>
+							</li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+
+	        <div class="btn-group-sm" id="toolbar" role="group">
+	        	<a class="btn btn-success" onclick="$.operate.addTab()" shiro:hasPermission="tenant:tenant:add">
+	                <i class="fa fa-plus"></i> 新增
+	            </a>
+	            <a class="btn btn-primary single disabled" onclick="$.operate.editTab()" shiro:hasPermission="tenant:tenant:edit">
+		            <i class="fa fa-edit"></i> 修改
+		        </a>
+	            <a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="tenant:tenant:remove">
+	                <i class="fa fa-remove"></i> 删除
+	            </a>
+	            <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="tenant:tenant:export">
+	                <i class="fa fa-download"></i> 导出
+	            </a>
+	        </div>
+
+	        <div class="col-sm-12 select-table table-striped">
+			    <table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script th:inline="javascript">
+		var editFlag = [[${@permission.hasPermi('tenant:tenant:edit')}]];
+		var removeFlag = [[${@permission.hasPermi('tenant:tenant:remove')}]];
+		var authFlag = [[${@permission.hasPermi('tenant:tenant:auth')}]];
+		var resetFlag = [[${@permission.hasPermi('tenant:tenant:reset')}]];
+		var menuPauseFlag = [[${@permission.hasPermi('tenant:menuPause:view')}]];
+		var prefix = ctx + "tenant/tenant";
+
+		$(function() {
+		    queryTenantList();
+		});
+
+		function queryTenantList() {
+		    var options = {
+		        url: prefix + "/list",
+		        createUrl: prefix + "/add",
+		        updateUrl: prefix + "/edit/{id}",
+		        viewUrl: prefix + "/view/{id}",
+		        removeUrl: prefix + "/remove",
+		        exportUrl: prefix + "/export",
+		        sortName: "createTime",
+		        sortOrder: "desc",
+		        modalName: "客户",
+		        uniqueId: "tenantId",
+		        columns: [{
+		            checkbox: true
+		        },
+		        {
+		            title: '序号',
+		            align: 'center',
+		            formatter: function (value, row, index) {
+		                return $.table.serialNumber(index);
+		            }
+		        },
+		        {
+		            field: 'tenantId',
+		            title: '租户ID',
+		            visible: false
+		        },
+		        {
+		            field: 'tenantCode',
+		            title: '租户编码',
+		            sortable: true
+		        },
+		        {
+		            field: 'tenantName',
+		            title: '客户名称',
+		            sortable: true,
+		            formatter: function (value, row, index) {
+		                return '<a href="javascript:void(0)" onclick="$.operate.view(\'' + row.tenantId + '\')">' + value + '</a>';
+		            }
+		        },
+		        {
+		            field: 'pinyinCode',
+		            title: '拼音简码'
+		        },
+		        {
+		            field: 'contactPerson',
+		            title: '联系人'
+		        },
+		        {
+		            field: 'contactPhone',
+		            title: '联系电话'
+		        },
+		        {
+		            field: 'status',
+		            title: '状态',
+		            align: 'center',
+		            formatter: function (value, row, index) {
+		                return value == '0' ? '<span class="label label-success">正常</span>' : '<span class="label label-danger">停用</span>';
+		            }
+		        },
+		        {
+		            field: 'plannedStopTime',
+		            title: '计划停用时间'
+		        },
+		        {
+		            field: 'createTime',
+		            title: '创建时间',
+		            sortable: true
+		        },
+		        {
+		            title: '操作',
+		            align: 'center',
+		            formatter: function(value, row, index) {
+		                var actions = [];
+		                actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.operate.editTab(\'' + row.tenantId + '\')"><i class="fa fa-edit"></i>编辑</a> ');
+		                if (authFlag) actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="authMenu(\'' + row.tenantId + '\')"><i class="fa fa-key"></i>授权</a> ');
+		                if (resetFlag) actions.push('<a class="btn btn-primary btn-xs" href="javascript:void(0)" onclick="resetTenant(\'' + row.tenantId + '\')"><i class="fa fa-refresh"></i>重置</a> ');
+		                if (menuPauseFlag) actions.push('<a class="btn btn-warning btn-xs" href="javascript:void(0)" onclick="menuPause(\'' + row.tenantId + '\')"><i class="fa fa-pause-circle-o"></i>菜单功能</a> ');
+		                actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.tenantId + '\')"><i class="fa fa-remove"></i>删除</a> ');
+		                return actions.join('');
+		            }
+		        }]
+		    };
+		    $.table.init(options);
+		}
+
+		function resetPre() {
+		    $("#tenant-form")[0].reset();
+		    $.table.search();
+		}
+
+		function authMenu(tenantId) {
+		    var url = prefix + '/authMenu/' + tenantId;
+		    $.modal.openTab("客户授权", url);
+		}
+
+		function resetTenant(tenantId) {
+		    $.modal.confirm("确认要重置该客户吗？", function() {
+		        $.operate.post(prefix + "/reset", { "tenantId": tenantId });
+		    });
+		}
+
+		function menuPause(tenantId) {
+		    var url = ctx + "tenant/menuPause/index/" + tenantId;
+		    $.modal.openTab("客户菜单功能管理", url);
+		}
+	</script>
+</body>
+</html>

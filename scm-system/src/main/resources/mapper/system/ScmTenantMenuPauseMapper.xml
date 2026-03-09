@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.ScmTenantMenuPauseMapper">
+    <resultMap type="com.scm.system.domain.ScmTenantMenuPause" id="Result">
+        <id property="pauseId" column="pause_id"/>
+        <result property="tenantId" column="tenant_id"/>
+        <result property="menuId" column="menu_id"/>
+        <result property="pauseStatus" column="pause_status"/>
+        <result property="pauseTime" column="pause_time"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+    <select id="selectByTenantAndMenu" resultMap="Result">
+        select pause_id, tenant_id, menu_id, pause_status, pause_time, create_by, create_time, update_by, update_time, remark
+        from scm_tenant_menu_pause where tenant_id = #{tenantId} and menu_id = #{menuId}
+    </select>
+    <select id="selectByTenantId" resultMap="Result">
+        select pause_id, tenant_id, menu_id, pause_status, pause_time, create_by, create_time, update_by, update_time, remark
+        from scm_tenant_menu_pause where tenant_id = #{tenantId} order by create_time desc
+    </select>
+    <select id="selectPausedMenuIdsByTenantId" resultType="long">
+        select menu_id from scm_tenant_menu_pause where tenant_id = #{tenantId} and pause_status = '1'
+    </select>
+    <insert id="insert" parameterType="com.scm.system.domain.ScmTenantMenuPause">
+        insert into scm_tenant_menu_pause (pause_id, tenant_id, menu_id, pause_status, pause_time, create_by, create_time, remark)
+        values (#{pauseId}, #{tenantId}, #{menuId}, #{pauseStatus}, #{pauseTime}, #{createBy}, now(), #{remark})
+    </insert>
+    <update id="update" parameterType="com.scm.system.domain.ScmTenantMenuPause">
+        update scm_tenant_menu_pause set pause_status = #{pauseStatus}, pause_time = #{pauseTime}, update_by = #{updateBy}, update_time = now(), remark = #{remark} where pause_id = #{pauseId}
+    </update>
+</mapper>

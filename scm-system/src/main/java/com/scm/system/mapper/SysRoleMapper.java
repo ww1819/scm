@@ -1,6 +1,7 @@
 package com.scm.system.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.scm.common.core.domain.entity.SysRole;
 
 /**
@@ -81,4 +82,9 @@ public interface SysRoleMapper
      * @return 角色信息
      */
     public SysRole checkRoleKeyUnique(String roleKey);
+
+    /**
+     * 按租户与权限字符查询角色（用于医院管理员等）
+     */
+    public SysRole selectByRoleKeyAndTenantId(@Param("roleKey") String roleKey, @Param("tenantId") String tenantId);
 }

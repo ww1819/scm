@@ -26,6 +26,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result property="updateBy"      column="update_by"       />
 		<result property="updateTime"    column="update_time"     />
 		<result property="remark"        column="remark"          />
+		<result property="tenantId"      column="tenant_id"       />
 		<association property="dept"     javaType="SysDept"         resultMap="deptResult" />
 		<collection  property="roles"    javaType="java.util.List"  resultMap="RoleResult" />
 	</resultMap>
@@ -50,7 +51,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</resultMap>
 	
 	<sql id="selectUserVo">
-        select  u.user_id, u.dept_id, u.login_name, u.user_name, u.user_type, u.email, u.avatar, u.phonenumber, u.sex, u.password, u.salt, u.status, u.del_flag, u.login_ip, u.login_date, u.pwd_update_date, u.create_by, u.create_time, u.update_by, u.update_time, u.remark,
+        select  u.user_id, u.dept_id, u.login_name, u.user_name, u.user_type, u.email, u.avatar, u.phonenumber, u.sex, u.password, u.salt, u.status, u.del_flag, u.login_ip, u.login_date, u.pwd_update_date, u.create_by, u.create_time, u.update_by, u.update_time, u.remark, u.tenant_id,
        		    d.dept_id, d.parent_id, d.ancestors, d.dept_name, d.order_num, d.leader, d.status as dept_status,
        		    r.role_id, r.role_name, r.role_key, r.role_sort, r.data_scope, r.status as role_status
 		from sys_user u
@@ -150,6 +151,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		select user_id, email from sys_user where email=#{email} and del_flag = '0' limit 1
 	</select>
 	
+	<select id="selectUserListByTenantId" resultMap="SysUserResult">
+		<include refid="selectUserVo"/>
+		where u.del_flag = '0' and u.tenant_id = #{tenantId}
+	</select>
+	
 	<select id="selectUserById" parameterType="Long" resultMap="SysUserResult">
 		<include refid="selectUserVo"/>
 		where u.user_id = #{userId}
@@ -205,11 +211,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  			<if test="status != null and status != ''">status,</if>
  			<if test="pwdUpdateDate != null">pwd_update_date,</if>
  			<if test="createBy != null and createBy != ''">create_by,</if>
- 			<if test="remark != null and remark != ''">remark,</if>
+ 			<if test="tenantId != null and tenantId != ''">tenant_id,</if>
  			create_time
  		)values(
- 			<if test="userId != null and userId != ''">#{userId},</if>
- 			<if test="deptId != null and deptId != ''">#{deptId},</if>
+ 			<if test="userId != null and userId != 0">#{userId},</if>
+ 			<if test="deptId != null and deptId != 0">#{deptId},</if>
  			<if test="loginName != null and loginName != ''">#{loginName},</if>
  			<if test="userName != null and userName != ''">#{userName},</if>
  			<if test="userType != null and userType != ''">#{userType},</if>
@@ -222,7 +228,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  			<if test="status != null and status != ''">#{status},</if>
  			<if test="pwdUpdateDate != null">#{pwdUpdateDate},</if>
  			<if test="createBy != null and createBy != ''">#{createBy},</if>
- 			<if test="remark != null and remark != ''">#{remark},</if>
+ 			<if test="tenantId != null and tenantId != ''">#{tenantId},</if>
  			sysdate()
  		)
 	</insert>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.ScmTenantMapper">
+    <resultMap type="com.scm.system.domain.ScmTenant" id="ScmTenantResult">
+        <id property="tenantId" column="tenant_id"/>
+        <result property="tenantName" column="tenant_name"/>
+        <result property="tenantCode" column="tenant_code"/>
+        <result property="pinyinCode" column="pinyin_code"/>
+        <result property="status" column="status"/>
+        <result property="plannedStopTime" column="planned_stop_time"/>
+        <result property="contactPerson" column="contact_person"/>
+        <result property="contactPhone" column="contact_phone"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="delBy" column="del_by"/>
+        <result property="delTime" column="del_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectScmTenantVo">
+        select tenant_id, tenant_name, tenant_code, pinyin_code, status, planned_stop_time, contact_person, contact_phone,
+               del_flag, create_by, create_time, update_by, update_time, del_by, del_time, remark
+        from scm_tenant
+    </sql>
+
+    <select id="selectScmTenantList" resultMap="ScmTenantResult">
+        <include refid="selectScmTenantVo"/>
+        <where>
+            del_flag = '0'
+            <if test="tenantName != null and tenantName != ''"> and tenant_name like concat('%', #{tenantName}, '%')</if>
+            <if test="tenantCode != null and tenantCode != ''"> and tenant_code like concat('%', #{tenantCode}, '%')</if>
+            <if test="pinyinCode != null and pinyinCode != ''"> and pinyin_code like concat('%', #{pinyinCode}, '%')</if>
+            <if test="status != null and status != ''"> and status = #{status}</if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectScmTenantById" resultMap="ScmTenantResult">
+        <include refid="selectScmTenantVo"/>
+        where tenant_id = #{tenantId} and del_flag = '0'
+    </select>
+
+    <select id="checkTenantCodeUnique" resultMap="ScmTenantResult">
+        <include refid="selectScmTenantVo"/>
+        where tenant_code = #{tenantCode} and del_flag = '0' limit 1
+    </select>
+
+    <insert id="insertScmTenant" parameterType="com.scm.system.domain.ScmTenant">
+        insert into scm_tenant (tenant_id, tenant_name, tenant_code, pinyin_code, status, planned_stop_time, contact_person, contact_phone, create_by, create_time, remark)
+        values (#{tenantId}, #{tenantName}, #{tenantCode}, #{pinyinCode}, #{status}, #{plannedStopTime}, #{contactPerson}, #{contactPhone}, #{createBy}, now(), #{remark})
+    </insert>
+
+    <update id="updateScmTenant" parameterType="com.scm.system.domain.ScmTenant">
+        update scm_tenant
+        <set>
+            <if test="tenantName != null and tenantName != ''">tenant_name = #{tenantName},</if>
+            <if test="tenantCode != null">tenant_code = #{tenantCode},</if>
+            <if test="pinyinCode != null">pinyin_code = #{pinyinCode},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="plannedStopTime != null">planned_stop_time = #{plannedStopTime},</if>
+            <if test="contactPerson != null">contact_person = #{contactPerson},</if>
+            <if test="contactPhone != null">contact_phone = #{contactPhone},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = now()
+        </set>
+        where tenant_id = #{tenantId}
+    </update>
+
+    <update id="deleteScmTenantById">
+        update scm_tenant set del_flag = '2', del_time = now() where tenant_id = #{tenantId}
+    </update>
+
+    <update id="deleteScmTenantByIds">
+        update scm_tenant set del_flag = '2' where tenant_id in
+        <foreach collection="array" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </update>
+</mapper>

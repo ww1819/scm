@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.ScmTenantStatusLogMapper">
+    <resultMap type="com.scm.system.domain.ScmTenantStatusLog" id="Result">
+        <id property="logId" column="log_id"/>
+        <result property="tenantId" column="tenant_id"/>
+        <result property="action" column="action"/>
+        <result property="operBy" column="oper_by"/>
+        <result property="operTime" column="oper_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+    <select id="selectByTenantId" resultMap="Result">
+        select log_id, tenant_id, action, oper_by, oper_time, remark from scm_tenant_status_log where tenant_id = #{tenantId} order by oper_time desc
+    </select>
+    <insert id="insert" parameterType="com.scm.system.domain.ScmTenantStatusLog">
+        insert into scm_tenant_status_log (log_id, tenant_id, action, oper_by, oper_time, remark)
+        values (#{logId}, #{tenantId}, #{action}, #{operBy}, #{operTime}, #{remark})
+    </insert>
+</mapper>

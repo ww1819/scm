@@ -182,6 +182,23 @@ public class SysMenuServiceImpl implements ISysMenuService
         return ztrees;
     }
 
+    @Override
+    public List<Ztree> menuTreeDataWithChecked(Long userId, List<Long> checkedMenuIds)
+    {
+        List<SysMenu> menuList = selectMenuAll(userId);
+        List<String> checkList = null;
+        if (checkedMenuIds != null && !checkedMenuIds.isEmpty())
+        {
+            checkList = new ArrayList<>();
+            for (SysMenu m : menuList)
+            {
+                if (checkedMenuIds.contains(m.getMenuId()))
+                    checkList.add(m.getMenuId() + (m.getPerms() != null ? m.getPerms() : ""));
+            }
+        }
+        return initZtree(menuList, checkList, true);
+    }
+
     /**
      * 查询系统所有权限
      * 

@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.scm.common.core.text.Convert;
 import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.ShiroUtils;
 import com.scm.system.domain.CertificateConfig;
 import com.scm.system.mapper.CertificateConfigMapper;
 import com.scm.system.service.ICertificateConfigService;
@@ -85,6 +86,7 @@ public class CertificateConfigServiceImpl implements ICertificateConfigService
     public int insertCertificateConfig(CertificateConfig certificateConfig)
     {
         certificateConfig.setCreateTime(DateUtils.getNowDate());
+        if (certificateConfig.getDelFlag() == null) certificateConfig.setDelFlag("0");
         return certificateConfigMapper.insertCertificateConfig(certificateConfig);
     }
 
@@ -110,11 +112,12 @@ public class CertificateConfigServiceImpl implements ICertificateConfigService
     @Override
     public int deleteCertificateConfigByConfigIds(String configIds)
     {
-        return certificateConfigMapper.deleteCertificateConfigByConfigIds(Convert.toStrArray(configIds));
+        String delBy = ShiroUtils.getLoginName() != null ? ShiroUtils.getLoginName() : "";
+        return certificateConfigMapper.deleteCertificateConfigByConfigIds(Convert.toStrArray(configIds), delBy);
     }
 
     /**
-     * 删除证件配置信息
+     * 逻辑删除证件配置信息
      *
      * @param configId 证件配置主键
      * @return 结果
@@ -122,7 +125,8 @@ public class CertificateConfigServiceImpl implements ICertificateConfigService
     @Override
     public int deleteCertificateConfigByConfigId(Long configId)
     {
-        return certificateConfigMapper.deleteCertificateConfigByConfigId(configId);
+        String delBy = ShiroUtils.getLoginName() != null ? ShiroUtils.getLoginName() : "";
+        return certificateConfigMapper.deleteCertificateConfigByConfigId(configId, delBy);
     }
 }
 

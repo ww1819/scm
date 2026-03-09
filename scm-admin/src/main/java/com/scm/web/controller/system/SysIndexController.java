@@ -24,8 +24,11 @@ import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.ServletUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.framework.shiro.service.SysPasswordService;
+import com.scm.system.service.IScmTenantMenuPauseService;
 import com.scm.system.service.ISysConfigService;
 import com.scm.system.service.ISysMenuService;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * 首页 业务处理
@@ -37,6 +40,8 @@ public class SysIndexController extends BaseController
 {
     @Autowired
     private ISysMenuService menuService;
+    @Autowired
+    private IScmTenantMenuPauseService tenantMenuPauseService;
 
     @Autowired
     private ISysConfigService configService;
@@ -54,6 +59,10 @@ public class SysIndexController extends BaseController
         List<SysMenu> menus = menuService.selectMenusByUser(user);
         mmap.put("menus", menus);
         mmap.put("user", user);
+        // 租户用户：被暂停的菜单ID列表，点击时提示“当前菜单功能被暂停”
+        List<Long> pausedMenuIds = StringUtils.isNotEmpty(user.getTenantId())
+            ? tenantMenuPauseService.selectPausedMenuIdsByTenantId(user.getTenantId()) : Collections.emptyList();
+        mmap.put("pausedMenuIds", pausedMenuIds);
         mmap.put("sideTheme", configService.selectConfigByKey("sys.index.sideTheme"));
         mmap.put("skinName", configService.selectConfigByKey("sys.index.skinName"));
         Boolean footer = Convert.toBool(configService.selectConfigByKey("sys.index.footer"), true);

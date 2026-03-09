@@ -50,21 +50,21 @@
                     <a class="menuItem" th:href="@{/system/main}"><i class="fa fa-home"></i> <span class="nav-label">首页</span> </a>
                 </li>
                 <li th:each="menu : ${menus}">
-                	<a th:class="@{${!#strings.isEmpty(menu.url) && menu.url != '#'} ? ${menu.target}}" th:href="@{${#strings.isEmpty(menu.url)} ? |#| : ${menu.url}}" th:data-refresh="${menu.isRefresh == '0'}">
+                	<a th:class="@{${!#strings.isEmpty(menu.url) && menu.url != '#'} ? ${menu.target}}" th:href="@{${#strings.isEmpty(menu.url)} ? |#| : ${menu.url}}" th:data-refresh="${menu.isRefresh == '0'}" th:attr="data-menu-id=${menu.menuId}">
                 		<i class="fa fa-bar-chart-o" th:class="${menu.icon}"></i>
                     	<span class="nav-label" th:text="${menu.menuName}">一级菜单</span>
                     	<span th:class="${#strings.isEmpty(menu.url) || menu.url == '#'} ? |fa arrow|"></span>
                 	</a>
                     <ul class="nav nav-second-level collapse">
 						<li th:each="cmenu : ${menu.children}">
-							<a th:if="${#lists.isEmpty(cmenu.children)}" th:class="${#strings.isEmpty(cmenu.target)} ? |menuItem| : ${cmenu.target}" th:utext="${cmenu.menuName}" th:href="@{${cmenu.url}}" th:data-refresh="${cmenu.isRefresh == '0'}">二级菜单</a>
+							<a th:if="${#lists.isEmpty(cmenu.children)}" th:class="${#strings.isEmpty(cmenu.target)} ? |menuItem| : ${cmenu.target}" th:utext="${cmenu.menuName}" th:href="@{${cmenu.url}}" th:data-refresh="${cmenu.isRefresh == '0'}" th:attr="data-menu-id=${cmenu.menuId}">二级菜单</a>
 							<a th:if="${not #lists.isEmpty(cmenu.children)}" href="javascript:;">[[${cmenu.menuName}]]<span class="fa arrow"></span></a>
 							<ul th:if="${not #lists.isEmpty(cmenu.children)}" class="nav nav-third-level">
 								<li th:each="emenu : ${cmenu.children}">
-								    <a th:if="${#lists.isEmpty(emenu.children)}" th:class="${#strings.isEmpty(emenu.target)} ? |menuItem| : ${emenu.target}" th:text="${emenu.menuName}" th:href="@{${emenu.url}}" th:data-refresh="${emenu.isRefresh == '0'}">三级菜单</a>
+								    <a th:if="${#lists.isEmpty(emenu.children)}" th:class="${#strings.isEmpty(emenu.target)} ? |menuItem| : ${emenu.target}" th:text="${emenu.menuName}" th:href="@{${emenu.url}}" th:data-refresh="${emenu.isRefresh == '0'}" th:attr="data-menu-id=${emenu.menuId}">三级菜单</a>
 								    <a th:if="${not #lists.isEmpty(emenu.children)}" href="javascript:;">[[${emenu.menuName}]]<span class="fa arrow"></span></a>
 								    <ul th:if="${not #lists.isEmpty(emenu.children)}" class="nav nav-four-level">
-								      	<li th:each="fmenu : ${emenu.children}"><a th:if="${#lists.isEmpty(fmenu.children)}" th:class="${#strings.isEmpty(fmenu.target)} ? |menuItem| : ${fmenu.target}" th:text="${fmenu.menuName}" th:href="@{${fmenu.url}}" th:data-refresh="${fmenu.isRefresh == '0'}">四级菜单</a></li>
+								      	<li th:each="fmenu : ${emenu.children}"><a th:if="${#lists.isEmpty(fmenu.children)}" th:class="${#strings.isEmpty(fmenu.target)} ? |menuItem| : ${fmenu.target}" th:text="${fmenu.menuName}" th:href="@{${fmenu.url}}" th:data-refresh="${fmenu.isRefresh == '0'}" th:attr="data-menu-id=${fmenu.menuId}">四级菜单</a></li>
 								    </ul>
 								</li>
 							</ul>
@@ -286,6 +286,23 @@ var historyPath = storage.get("historyPath");
 var isLinkage = true;
 // 是否页签切换滚动到顶部
 var isScrollToTop = true;
+// 租户用户：被暂停的菜单ID列表，点击时提示“当前菜单功能被暂停”
+var pausedMenuIds = /*[[${pausedMenuIds}]]*/ [];
+$(function() {
+    $(document).on('click', '#side-menu a[data-menu-id]', function(e) {
+        var mid = $(this).attr('data-menu-id');
+        var href = $(this).attr('href');
+        if (mid && href && href !== '#' && pausedMenuIds && pausedMenuIds.length > 0) {
+            var idNum = parseInt(mid, 10);
+            if (pausedMenuIds.indexOf(idNum) !== -1) {
+                e.preventDefault();
+                e.stopPropagation();
+                $.modal.msgWarning('当前菜单功能被暂停');
+                return false;
+            }
+        }
+    });
+});
 
 // 本地主题优先，未设置取系统配置
 if($.common.isNotEmpty(skin)){

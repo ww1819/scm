@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.ScmTenantStatusPeriodMapper">
+    <resultMap type="com.scm.system.domain.ScmTenantStatusPeriod" id="Result">
+        <id property="periodId" column="period_id"/>
+        <result property="tenantId" column="tenant_id"/>
+        <result property="status" column="status"/>
+        <result property="startTime" column="start_time"/>
+        <result property="endTime" column="end_time"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+    <select id="selectByTenantId" resultMap="Result">
+        select period_id, tenant_id, status, start_time, end_time, create_by, create_time, update_by, update_time, remark
+        from scm_tenant_status_period where tenant_id = #{tenantId} order by start_time desc
+    </select>
+    <insert id="insert" parameterType="com.scm.system.domain.ScmTenantStatusPeriod">
+        insert into scm_tenant_status_period (period_id, tenant_id, status, start_time, end_time, create_by, create_time, remark)
+        values (#{periodId}, #{tenantId}, #{status}, #{startTime}, #{endTime}, #{createBy}, now(), #{remark})
+    </insert>
+    <update id="update" parameterType="com.scm.system.domain.ScmTenantStatusPeriod">
+        update scm_tenant_status_period set end_time = #{endTime}, update_by = #{updateBy}, update_time = now(), remark = #{remark} where period_id = #{periodId}
+    </update>
+</mapper>

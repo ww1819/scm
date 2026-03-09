@@ -74,6 +74,14 @@ public interface ISysMenuService
     public List<Ztree> menuTreeData(Long userId);
 
     /**
+     * 菜单树（带指定勾选）
+     * @param userId 用户ID
+     * @param checkedMenuIds 已勾选菜单ID列表（如租户授权）
+     * @return 树列表
+     */
+    public List<Ztree> menuTreeDataWithChecked(Long userId, List<Long> checkedMenuIds);
+
+    /**
      * 查询系统所有权限
      * 
      * @param userId 用户ID

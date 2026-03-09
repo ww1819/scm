@@ -121,4 +121,9 @@ public interface SysUserMapper
      * @return 结果
      */
     public SysUser checkEmailUnique(String email);
+
+    /**
+     * 按租户ID查询用户列表（用于客户医院管理员等）
+     */
+    public List<SysUser> selectUserListByTenantId(String tenantId);
 }

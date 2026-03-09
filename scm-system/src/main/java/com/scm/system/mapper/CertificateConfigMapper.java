@@ -53,19 +53,21 @@ public interface CertificateConfigMapper
     public int updateCertificateConfig(CertificateConfig certificateConfig);
 
     /**
-     * 删除证件配置
+     * 逻辑删除证件配置
      *
      * @param configId 证件配置主键
+     * @param delBy 删除人
      * @return 结果
      */
-    public int deleteCertificateConfigByConfigId(Long configId);
+    public int deleteCertificateConfigByConfigId(@Param("configId") Long configId, @Param("delBy") String delBy);
 
     /**
-     * 批量删除证件配置
+     * 批量逻辑删除证件配置
      *
      * @param configIds 需要删除的数据主键集合
+     * @param delBy 删除人
      * @return 结果
      */
-    public int deleteCertificateConfigByConfigIds(String[] configIds);
+    public int deleteCertificateConfigByConfigIds(@Param("configIds") String[] configIds, @Param("delBy") String delBy);
 }
 

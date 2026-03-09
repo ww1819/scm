@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.ScmTenantModifyLogMapper">
+    <resultMap type="com.scm.system.domain.ScmTenantModifyLog" id="Result">
+        <id property="logId" column="log_id"/>
+        <result property="tenantId" column="tenant_id"/>
+        <result property="fieldName" column="field_name"/>
+        <result property="oldValue" column="old_value"/>
+        <result property="newValue" column="new_value"/>
+        <result property="operBy" column="oper_by"/>
+        <result property="operTime" column="oper_time"/>
+    </resultMap>
+    <select id="selectByTenantId" resultMap="Result">
+        select log_id, tenant_id, field_name, old_value, new_value, oper_by, oper_time from scm_tenant_modify_log where tenant_id = #{tenantId} order by oper_time desc
+    </select>
+    <insert id="insert" parameterType="com.scm.system.domain.ScmTenantModifyLog">
+        insert into scm_tenant_modify_log (log_id, tenant_id, field_name, old_value, new_value, oper_by, oper_time)
+        values (#{logId}, #{tenantId}, #{fieldName}, #{oldValue}, #{newValue}, #{operBy}, #{operTime})
+    </insert>
+</mapper>

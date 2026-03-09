@@ -50,7 +50,7 @@
 			<div class="tab-pane fade height-full" th:id="|menu_${menu.menuId}|">
 			  <ul class="nav">
                 <li th:each="cmenu : ${menu.children}">
-			      <a class="menu-content" th:if="${#lists.isEmpty(cmenu.children)}" th:href="@{${cmenu.url}}" th:classappend="${#strings.isEmpty(cmenu.target)} ? |menuItem| : ${cmenu.target}" th:data-refresh="${cmenu.isRefresh == '0'}">
+			      <a class="menu-content" th:if="${#lists.isEmpty(cmenu.children)}" th:href="@{${cmenu.url}}" th:classappend="${#strings.isEmpty(cmenu.target)} ? |menuItem| : ${cmenu.target}" th:data-refresh="${cmenu.isRefresh == '0'}" th:attr="data-menu-id=${cmenu.menuId}">
 			        <i th:class="${cmenu.icon} + ' fa-fw'"></i> <span class="nav-label">[[${cmenu.menuName}]]</span>
 			      </a>
 			      <a class="menu-content" th:if="${not #lists.isEmpty(cmenu.children)}" href="javascript:;">
@@ -60,7 +60,7 @@
                   </a>
 				  <ul th:if="${not #lists.isEmpty(cmenu.children)}" class="nav nav-second-level collapse">
 				    <li th:each="emenu : ${cmenu.children}">
-				      <a th:if="${#lists.isEmpty(emenu.children)}" th:href="@{${emenu.url}}" th:class="${#strings.isEmpty(emenu.target)} ? |menuItem| : ${emenu.target}" th:data-refresh="${emenu.isRefresh == '0'}">
+				      <a th:if="${#lists.isEmpty(emenu.children)}" th:href="@{${emenu.url}}" th:class="${#strings.isEmpty(emenu.target)} ? |menuItem| : ${emenu.target}" th:data-refresh="${emenu.isRefresh == '0'}" th:attr="data-menu-id=${emenu.menuId}">
 				        <i th:class="${emenu.icon} + ' fa-fw'"></i> 
 				        [[${emenu.menuName}]]
 				      </a>
@@ -70,7 +70,7 @@
 				        <span class="fa arrow"></span>
 				      </a>
 				      <ul th:if="${not #lists.isEmpty(emenu.children)}" class="nav nav-third-level collapse">
-				        <li th:each="fmenu : ${emenu.children}"><a th:if="${#lists.isEmpty(fmenu.children)}" th:class="${#strings.isEmpty(fmenu.target)} ? |menuItem| : ${fmenu.target}" th:href="@{${fmenu.url}}" th:data-refresh="${fmenu.isRefresh == '0'}">[[${fmenu.menuName}]]</a></li>
+				        <li th:each="fmenu : ${emenu.children}"><a th:if="${#lists.isEmpty(fmenu.children)}" th:class="${#strings.isEmpty(fmenu.target)} ? |menuItem| : ${fmenu.target}" th:href="@{${fmenu.url}}" th:data-refresh="${fmenu.isRefresh == '0'}" th:attr="data-menu-id=${fmenu.menuId}">[[${fmenu.menuName}]]</a></li>
 				      </ul>
 				    </li>
 				  </ul>
@@ -341,6 +341,23 @@ var historyPath = storage.get("historyPath");
 var isLinkage = true;
 // 是否页签切换滚动到顶部
 var isScrollToTop = true;
+// 租户用户：被暂停的菜单ID列表
+var pausedMenuIds = /*[[${pausedMenuIds}]]*/ [];
+$(function() {
+    $(document).on('click', '#side-menu a[data-menu-id]', function(e) {
+        var mid = $(this).attr('data-menu-id');
+        var href = $(this).attr('href');
+        if (mid && href && href !== '#' && pausedMenuIds && pausedMenuIds.length > 0) {
+            var idNum = parseInt(mid, 10);
+            if (pausedMenuIds.indexOf(idNum) !== -1) {
+                e.preventDefault();
+                e.stopPropagation();
+                $.modal.msgWarning('当前菜单功能被暂停');
+                return false;
+            }
+        }
+    });
+});
 
 // 本地主题优先，未设置取系统配置
 if($.common.isNotEmpty(skin)){

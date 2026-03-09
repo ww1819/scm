@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('客户菜单功能管理')" />
+	<th:block th:include="include :: layout-latest-css" />
+	<th:block th:include="include :: ztree-css" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="profile-info">
+					<strong>当前客户：</strong><span th:text="${tenant.tenantName}">-</span>
+				</div>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-sm-12">
+				<h5>暂停配置表</h5>
+				<div class="btn-group-sm" style="margin-bottom: 10px;">
+					<a class="btn btn-warning" onclick="openPauseModal()">
+						<i class="fa fa-pause-circle-o"></i> 暂停菜单
+					</a>
+				</div>
+				<div class="select-table table-striped">
+					<table id="bootstrap-table-pause"></table>
+				</div>
+			</div>
+		</div>
+		<div class="row" style="margin-top: 20px;">
+			<div class="col-sm-12">
+				<h5>暂停记录表</h5>
+				<div class="select-table table-striped">
+					<table id="bootstrap-table-log"></table>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 暂停菜单：选择菜单对话框 -->
+	<div id="pauseMenuModal" class="modal fade" tabindex="-1">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal">&times;</button>
+					<h4 class="modal-title">选择要暂停的菜单</h4>
+				</div>
+				<div class="modal-body">
+					<div class="form-group">
+						<label>选择菜单：</label>
+						<div id="pauseMenuTree" class="ztree ztree-border" style="max-height: 300px; overflow: auto;"></div>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-primary" onclick="confirmPause()">确定暂停</button>
+					<button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<th:block th:include="include :: ztree-js" />
+	<script th:inline="javascript">
+		var tenantId = /*[[${tenant.tenantId}]]*/ '';
+		var prefix = ctx + "tenant/menuPause";
+
+		$(function() {
+			loadPauseTable();
+			loadLogTable();
+		});
+
+		function loadPauseTable() {
+			$('#bootstrap-table-pause').bootstrapTable('destroy').bootstrapTable({
+				url: prefix + '/list/' + tenantId,
+				method: 'post',
+				pagination: true,
+				search: false,
+				showRefresh: true,
+				showColumns: false,
+				sidePagination: 'server',
+				queryParams: function(params) {
+					return $.table.queryParams(params);
+				},
+				columns: [
+					{ field: 'pauseId', title: 'pauseId', visible: false },
+					{ field: 'menuId', title: '菜单ID', align: 'center' },
+					{
+						field: 'pauseStatus',
+						title: '暂停状态',
+						align: 'center',
+						formatter: function(v) {
+							return v == '0' ? '<span class="label label-success">正常</span>' : '<span class="label label-warning">暂停</span>';
+						}
+					},
+					{ field: 'pauseTime', title: '暂停时间', formatter: function(v) { return v || '-'; } },
+					{ field: 'createTime', title: '创建时间' },
+					{
+						title: '操作',
+						align: 'center',
+						formatter: function(v, row) {
+							if (row.pauseStatus != '1') return '-';
+							return '<a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="resume(\'' + row.menuId + '\')"><i class="fa fa-play"></i>恢复</a>';
+						}
+					}
+				]
+			});
+		}
+
+		function loadLogTable() {
+			$('#bootstrap-table-log').bootstrapTable('destroy').bootstrapTable({
+				url: prefix + '/logList/' + tenantId,
+				method: 'post',
+				pagination: true,
+				search: false,
+				showRefresh: true,
+				showColumns: false,
+				sidePagination: 'server',
+				queryParams: function(params) {
+					return $.table.queryParams(params);
+				},
+				columns: [
+					{ field: 'logId', title: 'logId', visible: false },
+					{ field: 'menuId', title: '菜单ID', align: 'center' },
+					{
+						field: 'action',
+						title: '动作',
+						align: 'center',
+						formatter: function(v) {
+							return v == '0' ? '<span class="label label-success">恢复</span>' : '<span class="label label-warning">暂停</span>';
+						}
+					},
+					{ field: 'operBy', title: '操作人' },
+					{ field: 'operTime', title: '操作时间' },
+					{ field: 'remark', title: '备注' }
+				]
+			});
+		}
+
+		function openPauseModal() {
+			$.get(prefix + "/menuTree", function(data) {
+				var setting = {
+					check: { enable: true, chkboxType: { "Y": "s", "N": "s" } },
+					data: { simpleData: { enable: true } },
+					view: { nameIsHTML: true }
+				};
+				$.fn.zTree.init($("#pauseMenuTree"), setting, data || []);
+				$('#pauseMenuModal').modal('show');
+			});
+		}
+
+		function confirmPause() {
+			var treeObj = $.fn.zTree.getZTreeObj("pauseMenuTree");
+			if (!treeObj) {
+				$.modal.alertWarning("请先打开菜单树");
+				return;
+			}
+			var nodes = treeObj.getCheckedNodes(true);
+			if (!nodes || nodes.length === 0) {
+				$.modal.alertWarning("请至少选择一个菜单");
+				return;
+			}
+			var menuId = (nodes[0].menuId != null ? nodes[0].menuId : nodes[0].id);
+			pause(menuId);
+			$('#pauseMenuModal').modal('hide');
+		}
+
+		function pause(menuId) {
+			$.ajax({
+				type: "POST",
+				url: prefix + "/pause",
+				data: { tenantId: tenantId, menuId: menuId },
+				success: function(data) {
+					$.operate.successCallback(data);
+					loadPauseTable();
+					loadLogTable();
+				},
+				error: function() {
+					$.modal.alertError("操作失败");
+				}
+			});
+		}
+
+		function resume(menuId) {
+			$.modal.confirm("确认要恢复该菜单功能吗？", function() {
+				$.operate.post(prefix + "/resume", { tenantId: tenantId, menuId: menuId });
+				loadPauseTable();
+				loadLogTable();
+			});
+		}
+	</script>
+</body>
+</html>

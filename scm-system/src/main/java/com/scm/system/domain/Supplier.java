@@ -104,9 +104,6 @@ public class Supplier extends BaseEntity
     /** 审核备注 */
     private String auditRemark;
 
-    /** 删除标志（0代表存在 2代表删除） */
-    private String delFlag;
-
     /** 配送公司（多个公司名称用逗号分隔） */
     private String deliveryHospitals;
 
@@ -343,16 +340,6 @@ public class Supplier extends BaseEntity
     public void setAuditRemark(String auditRemark)
     {
         this.auditRemark = auditRemark;
-    }
-
-    public String getDelFlag()
-    {
-        return delFlag;
-    }
-
-    public void setDelFlag(String delFlag)
-    {
-        this.delFlag = delFlag;
     }
 
     public String getDeliveryHospitals()

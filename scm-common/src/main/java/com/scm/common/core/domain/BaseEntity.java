@@ -38,6 +38,15 @@ public class BaseEntity implements Serializable
     /** 备注 */
     private String remark;
 
+    /** 删除标志（0存在 2删除） */
+    private String delFlag;
+    /** 删除时间 */
+    private Date delTime;
+    /** 删除人 */
+    private String delBy;
+    /** 租户ID */
+    private String tenantId;
+
     /** 请求参数 */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Map<String, Object> params;
@@ -101,6 +110,15 @@ public class BaseEntity implements Serializable
     {
         this.remark = remark;
     }
+
+    public String getDelFlag() { return delFlag; }
+    public void setDelFlag(String delFlag) { this.delFlag = delFlag; }
+    public Date getDelTime() { return delTime; }
+    public void setDelTime(Date delTime) { this.delTime = delTime; }
+    public String getDelBy() { return delBy; }
+    public void setDelBy(String delBy) { this.delBy = delBy; }
+    public String getTenantId() { return tenantId; }
+    public void setTenantId(String tenantId) { this.tenantId = tenantId; }
 
     public Map<String, Object> getParams()
     {

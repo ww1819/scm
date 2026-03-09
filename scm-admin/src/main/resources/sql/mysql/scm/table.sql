@@ -499,20 +499,111 @@ CREATE TABLE IF NOT EXISTS `scm_purchase_statistics` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='采购统计表';
 /
 CREATE TABLE IF NOT EXISTS `scm_tenant` (
-  `tenant_id` varchar(36) NOT NULL COMMENT '租户ID',
+  `tenant_id` varchar(64) NOT NULL COMMENT '租户ID（UUID7）',
   `tenant_name` varchar(100) NOT NULL COMMENT '租户名称',
   `tenant_code` varchar(64) DEFAULT '' COMMENT '租户编码',
+  `pinyin_code` varchar(64) DEFAULT '' COMMENT '拼音简码',
   `status` char(1) DEFAULT '0' COMMENT '状态（0正常 1停用）',
+  `planned_stop_time` datetime DEFAULT NULL COMMENT '计划停用时间',
   `contact_person` varchar(50) DEFAULT '' COMMENT '联系人',
   `contact_phone` varchar(20) DEFAULT '' COMMENT '联系电话',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0存在 2删除）',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `del_by` varchar(64) DEFAULT NULL COMMENT '删除人',
+  `del_time` datetime DEFAULT NULL COMMENT '删除时间',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`tenant_id`),
+  UNIQUE KEY `uk_tenant_code` (`tenant_code`),
+  KEY `idx_pinyin_code` (`pinyin_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='SCM租户表（客户）';
+/
+-- 客户实际启用/停用时间段
+CREATE TABLE IF NOT EXISTS `scm_tenant_status_period` (
+  `period_id` varchar(32) NOT NULL COMMENT '主键UUID7',
+  `tenant_id` varchar(64) NOT NULL COMMENT '租户ID',
+  `status` char(1) NOT NULL COMMENT '状态（0启用 1停用）',
+  `start_time` datetime NOT NULL COMMENT '开始时间',
+  `end_time` datetime DEFAULT NULL COMMENT '结束时间',
   `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
-  PRIMARY KEY (`tenant_id`),
-  UNIQUE KEY `uk_tenant_code` (`tenant_code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='SCM租户表（SaaS多租户）';
+  PRIMARY KEY (`period_id`),
+  KEY `idx_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='客户实际启用停用时间段';
+/
+-- 客户启用/停用记录
+CREATE TABLE IF NOT EXISTS `scm_tenant_status_log` (
+  `log_id` varchar(32) NOT NULL COMMENT '主键UUID7',
+  `tenant_id` varchar(64) NOT NULL COMMENT '租户ID',
+  `action` char(1) NOT NULL COMMENT '动作（0启用 1停用）',
+  `oper_by` varchar(64) DEFAULT '' COMMENT '操作人',
+  `oper_time` datetime DEFAULT NULL COMMENT '操作时间',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`log_id`),
+  KEY `idx_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='客户启用停用记录';
+/
+-- 客户信息修改记录
+CREATE TABLE IF NOT EXISTS `scm_tenant_modify_log` (
+  `log_id` varchar(32) NOT NULL COMMENT '主键UUID7',
+  `tenant_id` varchar(64) NOT NULL COMMENT '租户ID',
+  `field_name` varchar(64) DEFAULT '' COMMENT '字段名',
+  `old_value` varchar(500) DEFAULT NULL COMMENT '原值',
+  `new_value` varchar(500) DEFAULT NULL COMMENT '新值',
+  `oper_by` varchar(64) DEFAULT '' COMMENT '操作人',
+  `oper_time` datetime DEFAULT NULL COMMENT '操作时间',
+  PRIMARY KEY (`log_id`),
+  KEY `idx_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='客户信息修改记录';
+/
+-- 租户功能菜单授权（主键 UUID7）
+CREATE TABLE IF NOT EXISTS `scm_tenant_menu` (
+  `id` varchar(32) NOT NULL COMMENT '主键UUID7',
+  `tenant_id` varchar(64) NOT NULL COMMENT '租户ID',
+  `menu_id` bigint(20) NOT NULL COMMENT '菜单ID',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_tenant_menu` (`tenant_id`,`menu_id`),
+  KEY `idx_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='租户功能菜单授权';
+/
+-- 客户菜单功能暂停控制
+CREATE TABLE IF NOT EXISTS `scm_tenant_menu_pause` (
+  `pause_id` varchar(32) NOT NULL COMMENT '主键UUID7',
+  `tenant_id` varchar(64) NOT NULL COMMENT '租户ID',
+  `menu_id` bigint(20) NOT NULL COMMENT '菜单ID',
+  `pause_status` char(1) NOT NULL DEFAULT '1' COMMENT '暂停状态（0正常 1暂停）',
+  `pause_time` datetime DEFAULT NULL COMMENT '暂停时间',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`pause_id`),
+  UNIQUE KEY `uk_tenant_menu` (`tenant_id`,`menu_id`),
+  KEY `idx_tenant_id` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='客户菜单功能暂停';
+/
+-- 客户菜单暂停使用记录
+CREATE TABLE IF NOT EXISTS `scm_tenant_menu_pause_log` (
+  `log_id` varchar(32) NOT NULL COMMENT '主键UUID7',
+  `pause_id` varchar(32) NOT NULL COMMENT '暂停控制ID',
+  `tenant_id` varchar(64) NOT NULL COMMENT '租户ID',
+  `menu_id` bigint(20) NOT NULL COMMENT '菜单ID',
+  `action` char(1) NOT NULL COMMENT '动作（0恢复 1暂停）',
+  `oper_by` varchar(64) DEFAULT '' COMMENT '操作人',
+  `oper_time` datetime DEFAULT NULL COMMENT '操作时间',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`log_id`),
+  KEY `idx_tenant_id` (`tenant_id`),
+  KEY `idx_pause_id` (`pause_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='客户菜单暂停使用记录';
 /
 -- ========== 代码生成表（RuoYi） ==========
 /
