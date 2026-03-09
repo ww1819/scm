@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('新增供应商关联')" />
+	<th:block th:include="include :: layout-latest-css" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="panel panel-default">
+					<div class="panel-heading">新增供应商关联</div>
+					<div class="panel-body">
+						<p class="text-muted">选择要关联的供应商并提交申请，供应商管理员审核通过后，您将获得该供应商业务员角色。</p>
+						<form id="associate-form" class="form-horizontal">
+							<div class="form-group">
+								<label class="col-sm-2 control-label">选择供应商</label>
+								<div class="col-sm-6">
+									<select name="supplierId" id="supplierId" class="form-control" required>
+										<option value="">请选择供应商</option>
+									</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<div class="col-sm-offset-2 col-sm-6">
+									<button type="submit" class="btn btn-primary" id="btnSubmit" shiro:hasPermission="supplier:associate:add">
+										<i class="fa fa-check"></i> 提交关联申请
+									</button>
+								</div>
+							</div>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script th:inline="javascript">
+		var prefix = ctx + "supplier/associate";
+		$(function() {
+			loadSuppliers();
+			$("#associate-form").on("submit", function(e) {
+				e.preventDefault();
+				var supplierId = $("#supplierId").val();
+				if (!supplierId) {
+					$.modal.msgWarning("请选择供应商");
+					return;
+				}
+				$("#btnSubmit").prop("disabled", true);
+				$.ajax({
+					url: prefix + "/submit",
+					type: "post",
+					data: { supplierId: supplierId },
+					success: function(result) {
+						if (result.code == 0) {
+							$.modal.msgSuccess(result.msg);
+							$("#supplierId").val("");
+						} else {
+							$.modal.msgError(result.msg);
+						}
+						$("#btnSubmit").prop("disabled", false);
+					},
+					error: function() {
+						$.modal.msgError("提交失败，请稍后重试");
+						$("#btnSubmit").prop("disabled", false);
+					}
+				});
+			});
+		});
+		function loadSuppliers() {
+			$.get(prefix + "/listSuppliers", function(result) {
+				if (result.code == 0 && result.data && result.data.length) {
+					var $sel = $("#supplierId");
+					$sel.find("option:not(:first)").remove();
+					$.each(result.data, function(i, o) {
+						$sel.append("<option value='" + o.supplierId + "'>" + (o.companyName || o.supplierId) + "</option>");
+					});
+				}
+			});
+		}
+	</script>
+</body>
+</html>

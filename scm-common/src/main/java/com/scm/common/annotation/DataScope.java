@@ -30,4 +30,9 @@ public @interface DataScope
      * 权限字符（用于多个角色匹配符合要求的权限）默认根据权限注解@RequiresPermissions获取，多个权限用逗号分隔开来
      */
     public String permission() default "";
+
+    /**
+     * 租户（客户）表别名：当当前用户为医院用户（tenant_id 非空）时，仅能查看本客户数据，会注入 AND alias.tenant_id = 当前用户tenantId
+     */
+    public String tenantAlias() default "";
 }

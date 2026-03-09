@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('业务员审核')" />
+	<th:block th:include="include :: layout-latest-css" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="apply-form">
+					<div class="select-list">
+						<ul>
+							<li>状态：<select name="status">
+								<option value="">全部</option>
+								<option value="0" selected>待审核</option>
+								<option value="1">已通过</option>
+								<option value="2">已拒绝</option>
+							</select></li>
+							<li><a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a></li>
+						</ul>
+					</div>
+				</form>
+			</div>
+	        <div class="col-sm-12 select-table table-striped">
+			    <table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script th:inline="javascript">
+		var auditFlag = [[${@permission.hasPermi('supplier:apply:audit')}]];
+		var prefix = ctx + "supplier/apply";
+
+		$(function() {
+			var options = {
+				url: prefix + "/list",
+				queryParams: function(params) {
+					var status = $("#apply-form select[name='status']").val();
+					return { status: status };
+				},
+				sortName: "createTime",
+				sortOrder: "desc",
+				columns: [{
+					checkbox: true
+				}, {
+					title: '序号',
+					align: 'center',
+					formatter: function(value, row, index) { return $.table.serialNumber(index); }
+				}, {
+					field: 'applyId',
+					title: '申请ID',
+					visible: false
+				}, {
+					field: 'loginName',
+					title: '登录账号'
+				}, {
+					field: 'userName',
+					title: '申请人姓名'
+				}, {
+					field: 'status',
+					title: '状态',
+					formatter: function(value) {
+						if (value == '0') return '<span class="label label-warning">待审核</span>';
+						if (value == '1') return '<span class="label label-success">已通过</span>';
+						if (value == '2') return '<span class="label label-danger">已拒绝</span>';
+						return value;
+					}
+				}, {
+					field: 'applyTime',
+					title: '申请时间'
+				}, {
+					field: 'auditTime',
+					title: '审核时间'
+				}, {
+					field: 'auditRemark',
+					title: '审核备注'
+				}, {
+					title: '操作',
+					align: 'center',
+					formatter: function(value, row) {
+						if (row.status != '0') return '-';
+						var s = [];
+						s.push('<a class="btn btn-success btn-xs ' + auditFlag + '" href="javascript:void(0)" onclick="doAudit(' + row.applyId + ', \'1\')"><i class="fa fa-check"></i>通过</a> ');
+						s.push('<a class="btn btn-danger btn-xs ' + auditFlag + '" href="javascript:void(0)" onclick="doAudit(' + row.applyId + ', \'2\')"><i class="fa fa-remove"></i>拒绝</a>');
+						return s.join('');
+					}
+				}]
+			};
+			$.table.init(options);
+		});
+
+		function doAudit(applyId, approved) {
+			var msg = approved === '1' ? '确认通过该申请？' : '确认拒绝该申请？';
+			$.modal.confirm(msg, function() {
+				var remark = (approved === '2') ? (prompt('拒绝原因（选填）：') || '') : '';
+				$.ajax({
+					url: prefix + "/audit",
+					type: "post",
+					data: { applyId: applyId, approved: approved, auditRemark: remark },
+					success: function(result) {
+						if (result.code == 0) {
+							$.modal.msgSuccess(result.msg);
+							$.table.refresh();
+						} else {
+							$.modal.msgError(result.msg);
+						}
+					}
+				});
+			});
+		}
+	</script>
+</body>
+</html>

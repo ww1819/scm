@@ -73,6 +73,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where su.user_id = #{userId}
         limit 1
     </select>
+
+    <select id="selectSupplierUserByUserIdAndSupplierId" resultMap="SupplierUserResult">
+        <include refid="selectSupplierUserVo"/>
+        where su.user_id = #{userId} and su.supplier_id = #{supplierId} limit 1
+    </select>
         
     <insert id="insertSupplierUser" parameterType="SupplierUser" useGeneratedKeys="true" keyProperty="supplierUserId">
         insert into scm_supplier_user

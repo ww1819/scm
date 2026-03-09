@@ -14,6 +14,14 @@
     <select id="selectByTenantId" resultMap="Result">
         select log_id, pause_id, tenant_id, menu_id, action, oper_by, oper_time, remark from scm_tenant_menu_pause_log where tenant_id = #{tenantId} order by oper_time desc
     </select>
+    <select id="selectByTenantIdWithMenuName" resultType="com.scm.system.domain.ScmTenantMenuPauseLogVo">
+        select l.log_id as logId, l.pause_id as pauseId, l.tenant_id as tenantId, l.menu_id as menuId,
+               m.menu_name as menuName, l.action as action, l.oper_by as operBy, l.oper_time as operTime, l.remark as remark
+        from scm_tenant_menu_pause_log l
+        left join sys_menu m on m.menu_id = l.menu_id
+        where l.tenant_id = #{tenantId}
+        order by l.oper_time desc
+    </select>
     <select id="selectByPauseId" resultMap="Result">
         select log_id, pause_id, tenant_id, menu_id, action, oper_by, oper_time, remark from scm_tenant_menu_pause_log where pause_id = #{pauseId} order by oper_time desc
     </select>

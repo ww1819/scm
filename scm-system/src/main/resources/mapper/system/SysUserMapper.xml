@@ -87,6 +87,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		</if>
 		<!-- 数据范围过滤 -->
 		${params.dataScope}
+		<!-- 医院用户仅看本客户数据 -->
+		<if test="params.tenantScope != null and params.tenantScope != ''">${params.tenantScope}</if>
 	</select>
 	
 	<select id="selectAllocatedList" parameterType="SysUser" resultMap="SysUserResult">
@@ -104,6 +106,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		</if>
 		<!-- 数据范围过滤 -->
 		${params.dataScope}
+		<if test="params.tenantScope != null and params.tenantScope != ''">${params.tenantScope}</if>
 	</select>
 	
 	<select id="selectUnallocatedList" parameterType="SysUser" resultMap="SysUserResult">
@@ -122,6 +125,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		</if>
 		<!-- 数据范围过滤 -->
 		${params.dataScope}
+		<if test="params.tenantScope != null and params.tenantScope != ''">${params.tenantScope}</if>
 	</select>
 	
 	<select id="selectUserByLoginName" parameterType="String" resultMap="SysUserResult">

@@ -87,4 +87,9 @@ public interface SysRoleMapper
      * 按租户与权限字符查询角色（用于医院管理员等）
      */
     public SysRole selectByRoleKeyAndTenantId(@Param("roleKey") String roleKey, @Param("tenantId") String tenantId);
+
+    /**
+     * 按供应商与权限字符查询角色（用于供应商管理员、供应商业务员）
+     */
+    public SysRole selectByRoleKeyAndSupplierId(@Param("roleKey") String roleKey, @Param("supplierId") Long supplierId);
 }

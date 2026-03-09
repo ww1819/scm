@@ -1,6 +1,7 @@
 package com.scm.system.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.scm.system.domain.SupplierUser;
 
 /**
@@ -41,6 +42,11 @@ public interface SupplierUserMapper
      * @return 供应商用户信息
      */
     public SupplierUser selectSupplierUserByUserId(Long userId);
+
+    /**
+     * 根据用户ID和供应商ID查询供应商用户（用于审核权限校验）
+     */
+    public SupplierUser selectSupplierUserByUserIdAndSupplierId(@Param("userId") Long userId, @Param("supplierId") Long supplierId);
 
     /**
      * 新增供应商用户

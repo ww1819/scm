@@ -308,6 +308,9 @@ CALL add_table_column('sys_user', 'user_source', 'varchar(32)', '用户来源（
 -- sys_role：租户维度角色（医院管理员等）
 CALL add_table_column('sys_role', 'tenant_id', 'varchar(64)', '租户ID', NULL);
 /
+-- sys_role：供应商维度角色（供应商管理员、供应商业务员）
+CALL add_table_column('sys_role', 'supplier_id', 'bigint(20)', '供应商ID', NULL);
+/
 -- scm_tenant_menu_pause：暂停时间（最近一次设为暂停的时间）
 CALL add_table_column('scm_tenant_menu_pause', 'pause_time', 'datetime', '暂停时间', NULL);
 /

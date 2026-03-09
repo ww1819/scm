@@ -3,30 +3,55 @@
 <head>
 	<th:block th:include="include :: header('客户菜单功能管理')" />
 	<th:block th:include="include :: layout-latest-css" />
+	<style>
+		.menu-pause-page .container-div { padding: 10px 15px; }
+		.menu-pause-page .row { margin-bottom: 8px; }
+		.menu-pause-page .row.section { margin-top: 12px; margin-bottom: 6px; }
+		.menu-pause-page .toolbar-row { margin-bottom: 6px; }
+		.menu-pause-page .section-title { margin: 0 0 6px 0; font-size: 14px; font-weight: 600; color: #333; }
+		.menu-pause-page .section-desc { margin: 0 0 6px 0; font-size: 12px; color: #999; }
+		.menu-pause-page .select-table { margin-bottom: 0; }
+		.menu-pause-page .table { margin-bottom: 8px; }
+		.menu-pause-page .alert-compact { padding: 8px 12px; margin-bottom: 0; font-size: 13px; }
+		.menu-pause-page #tenantSelect { min-width: 200px; height: 32px; padding: 4px 8px; }
+		.menu-pause-page .current-tenant { font-size: 13px; color: #5a5a5a; margin-left: 16px; }
+		.menu-pause-page .current-tenant strong { color: #333; }
+	</style>
 </head>
-<body class="gray-bg">
+<body class="gray-bg menu-pause-page">
 	<div class="container-div">
-		<div class="row">
+		<div class="row toolbar-row">
 			<div class="col-sm-12">
-				<div class="profile-info">
-					<strong>当前客户：</strong><span th:text="${tenant.tenantName}">-</span>
+				<div class="form-inline">
+					<label class="control-label" style="margin-right:8px;">选择客户</label>
+					<select id="tenantSelect" class="form-control">
+						<option value="">请选择客户</option>
+					</select>
+					<span id="currentTenantWrap" class="current-tenant" style="display:none;"><strong>当前客户：</strong><span id="currentTenantName">-</span></span>
 				</div>
 			</div>
 		</div>
-		<div class="row">
+		<div class="row" id="rowHint">
 			<div class="col-sm-12">
-				<h5>客户菜单权限及状态</h5>
-				<p class="text-muted">以下为该客户已授权的全部菜单及暂停状态，可对单条执行暂停/恢复。</p>
-				<div class="select-table table-striped">
+				<div class="alert alert-info alert-compact">
+					<i class="fa fa-info-circle"></i> 请从下拉列表选择客户，将显示其菜单权限、暂停状态及暂停记录。
+				</div>
+			</div>
+		</div>
+		<div class="row section" id="rowMenuList" style="display: none;">
+			<div class="col-sm-12">
+				<h6 class="section-title"><i class="fa fa-list"></i> 客户菜单权限及状态</h6>
+				<p class="section-desc">已授权菜单及暂停状态，可对单条执行暂停/恢复</p>
+				<div class="select-table table-striped table-condensed">
 					<table id="bootstrap-table-pause"></table>
 				</div>
 			</div>
 		</div>
-		<div class="row" style="margin-top: 20px;">
+		<div class="row section" id="rowLogList" style="display: none;">
 			<div class="col-sm-12">
-				<h5>暂停记录</h5>
-				<p class="text-muted">该客户菜单暂停/恢复的操作历史。</p>
-				<div class="select-table table-striped">
+				<h6 class="section-title"><i class="fa fa-history"></i> 暂停记录</h6>
+				<p class="section-desc">该客户菜单暂停/恢复的操作历史</p>
+				<div class="select-table table-striped table-condensed">
 					<table id="bootstrap-table-log"></table>
 				</div>
 			</div>
@@ -58,24 +83,73 @@
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
 	<script th:inline="javascript">
-		var tenantId = /*[[${tenant.tenantId}]]*/ '';
 		var prefix = ctx + "tenant/menuPause";
+		var tenantId = '';
+		var tenantName = '';
 
 		$(function() {
-			loadPauseTable();
-			loadLogTable();
+			loadTenantOptions();
+			$('#tenantSelect').on('change', onTenantChange);
 		});
 
+		function getUrlParam(name) {
+			var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+			var r = window.location.search.substr(1).match(reg);
+			return r != null ? decodeURIComponent(r[2]) : null;
+		}
+
+		function loadTenantOptions() {
+			$.get(prefix + "/tenantOptions", function(res) {
+				if (res.code === 0 && res.data) {
+					var $sel = $('#tenantSelect');
+					$sel.find('option:not(:first)').remove();
+					$.each(res.data, function(i, o) {
+						$sel.append('<option value="' + o.tenantId + '">' + (o.tenantName || o.tenantId) + '</option>');
+					});
+					var preset = getUrlParam('tenantId');
+					if (preset) {
+						$sel.val(preset);
+						onTenantChange();
+					}
+				}
+			});
+		}
+
+		function onTenantChange() {
+			var val = $('#tenantSelect').val();
+			if (!val) {
+				tenantId = '';
+				tenantName = '';
+				$('#currentTenantWrap').hide();
+				$('#rowMenuList').hide();
+				$('#rowLogList').hide();
+				$('#rowHint').show();
+				return;
+			}
+			tenantId = val;
+			tenantName = $('#tenantSelect option:selected').text();
+			$('#currentTenantName').text(tenantName);
+			$('#currentTenantWrap').show();
+			$('#rowMenuList').show();
+			$('#rowLogList').show();
+			$('#rowHint').hide();
+			loadPauseTable();
+			loadLogTable();
+		}
+
 		function loadPauseTable() {
+			if (!tenantId) return;
 			$('#bootstrap-table-pause').bootstrapTable('destroy').bootstrapTable({
 				url: prefix + '/list/' + tenantId,
 				method: 'post',
 				pagination: true,
+				pageSize: 10,
+				pageList: [10, 25, 50],
 				search: true,
-				searchText: '',
 				showRefresh: true,
 				showColumns: false,
 				sidePagination: 'client',
+				classes: 'table table-condensed',
 				columns: [
 					{ field: 'menuId', title: '菜单ID', visible: false },
 					{ field: 'menuName', title: '菜单名称', align: 'left' },
@@ -104,21 +178,23 @@
 		}
 
 		function loadLogTable() {
+			if (!tenantId) return;
 			$('#bootstrap-table-log').bootstrapTable('destroy').bootstrapTable({
 				url: prefix + '/logList/' + tenantId,
 				method: 'post',
 				pagination: true,
-				search: false,
+				pageSize: 10,
+				pageList: [10, 25, 50],
 				showRefresh: true,
 				showColumns: false,
 				sidePagination: 'server',
+				classes: 'table table-condensed',
 				queryParams: function(params) {
 					return $.table.queryParams(params);
 				},
 				columns: [
 					{ field: 'logId', title: 'logId', visible: false },
 					{ field: 'menuName', title: '菜单名称', align: 'left' },
-					{ field: 'menuId', title: '菜单ID', visible: false },
 					{
 						field: 'action',
 						title: '动作',
@@ -134,35 +210,24 @@
 			});
 		}
 
-		var pendingMenuId = null;
-		var pendingAction = '';
-
 		function openPause(menuId, menuName) {
-			pendingMenuId = menuId;
-			pendingAction = 'pause';
 			$('#remarkModalTitle').text('暂停菜单：' + (menuName || menuId));
 			$('#remarkInput').val('');
 			$('#remarkModalConfirm').off('click').on('click', function() {
 				var remark = $('#remarkInput').val() || '';
 				$('#remarkModal').modal('hide');
-				doPause(pendingMenuId, remark);
-				loadPauseTable();
-				loadLogTable();
+				doPause(menuId, remark);
 			});
 			$('#remarkModal').modal('show');
 		}
 
 		function openResume(menuId, menuName) {
-			pendingMenuId = menuId;
-			pendingAction = 'resume';
 			$('#remarkModalTitle').text('恢复菜单：' + (menuName || menuId));
 			$('#remarkInput').val('');
 			$('#remarkModalConfirm').off('click').on('click', function() {
 				var remark = $('#remarkInput').val() || '';
 				$('#remarkModal').modal('hide');
-				doResume(pendingMenuId, remark);
-				loadPauseTable();
-				loadLogTable();
+				doResume(menuId, remark);
 			});
 			$('#remarkModal').modal('show');
 		}

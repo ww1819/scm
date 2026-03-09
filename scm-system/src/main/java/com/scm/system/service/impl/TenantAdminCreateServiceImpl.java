@@ -18,12 +18,14 @@ import com.scm.system.mapper.SysUserRoleMapper;
 import com.scm.system.service.ITenantAdminCreateService;
 
 /**
- * 客户新增后自动创建医院管理员角色与首字母用户
+ * 客户新增后自动创建医院管理员、供应商、供应商业务员角色及医院管理员用户
  */
 @Service
 public class TenantAdminCreateServiceImpl implements ITenantAdminCreateService
 {
     private static final String ROLE_KEY_HOSPITAL_ADMIN = "hospital_admin";
+    private static final String ROLE_KEY_SUPPLIER = "supplier";
+    private static final String ROLE_KEY_SUPPLIER_SALES = "supplier_sales";
     private static final String DEFAULT_PWD = "123456";
 
     @Autowired
@@ -37,28 +39,25 @@ public class TenantAdminCreateServiceImpl implements ITenantAdminCreateService
     @Transactional(rollbackFor = Exception.class)
     public void ensureHospitalAdminRoleAndUser(String tenantId, String tenantName, String pinyinCode, String operBy)
     {
+        ensureTenantRolesAndAdminUser(tenantId, tenantName, pinyinCode, operBy);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void ensureTenantRolesAndAdminUser(String tenantId, String tenantName, String pinyinCode, String operBy)
+    {
         if (StringUtils.isEmpty(tenantId)) return;
         String name = StringUtils.isNotEmpty(tenantName) ? tenantName : "客户";
         String code = StringUtils.isNotEmpty(pinyinCode) ? pinyinCode : "kh";
 
-        // 1) 查询该租户下医院管理员角色
-        SysRole role = roleMapper.selectByRoleKeyAndTenantId(ROLE_KEY_HOSPITAL_ADMIN, tenantId);
-        if (role == null)
-        {
-            role = new SysRole();
-            role.setRoleName("医院管理员");
-            role.setRoleKey(ROLE_KEY_HOSPITAL_ADMIN);
-            role.setRoleSort("2");
-            role.setDataScope("1");
-            role.setStatus("0");
-            role.setRemark("客户[" + name + "]默认角色");
-            role.setTenantId(tenantId);
-            role.setCreateBy(operBy);
-            roleMapper.insertRole(role);
-        }
-        Long roleId = role.getRoleId();
+        // 1) 确保三个角色存在：医院管理员、供应商、供应商业务员
+        ensureRole(tenantId, name, ROLE_KEY_HOSPITAL_ADMIN, "医院管理员", "2", operBy);
+        ensureRole(tenantId, name, ROLE_KEY_SUPPLIER, "供应商", "3", operBy);
+        ensureRole(tenantId, name, ROLE_KEY_SUPPLIER_SALES, "供应商业务员", "4", operBy);
 
-        // 2) 该租户下是否已有拥有此角色的用户
+        // 2) 确保医院管理员用户存在（若不存在则创建）
+        SysRole adminRole = roleMapper.selectByRoleKeyAndTenantId(ROLE_KEY_HOSPITAL_ADMIN, tenantId);
+        if (adminRole == null) return;
         List<SysUser> tenantUsers = userMapper.selectUserListByTenantId(tenantId);
         for (SysUser u : tenantUsers)
         {
@@ -67,12 +66,12 @@ public class TenantAdminCreateServiceImpl implements ITenantAdminCreateService
                 for (SysRole r : u.getRoles())
                 {
                     if (ROLE_KEY_HOSPITAL_ADMIN.equals(r.getRoleKey()))
-                        return; // 已存在，无需创建用户
+                        return; // 已存在拥有医院管理员角色的用户
                 }
             }
         }
 
-        // 3) 创建首字母用户，登录名全局唯一：pinyinCode_tenantId
+        // 3) 创建首字母管理员用户
         String loginName = code + "_" + tenantId;
         if (loginName.length() > 30)
             loginName = code + "_" + tenantId.substring(0, 20);
@@ -91,8 +90,24 @@ public class TenantAdminCreateServiceImpl implements ITenantAdminCreateService
         List<SysUserRole> list = new ArrayList<>();
         SysUserRole ur = new SysUserRole();
         ur.setUserId(userId);
-        ur.setRoleId(roleId);
+        ur.setRoleId(adminRole.getRoleId());
         list.add(ur);
         userRoleMapper.batchUserRole(list);
+    }
+
+    private void ensureRole(String tenantId, String tenantName, String roleKey, String roleName, String roleSort, String operBy)
+    {
+        SysRole role = roleMapper.selectByRoleKeyAndTenantId(roleKey, tenantId);
+        if (role != null) return;
+        role = new SysRole();
+        role.setRoleName(roleName);
+        role.setRoleKey(roleKey);
+        role.setRoleSort(roleSort);
+        role.setDataScope("1");
+        role.setStatus("0");
+        role.setRemark("客户[" + tenantName + "]默认角色");
+        role.setTenantId(tenantId);
+        role.setCreateBy(operBy);
+        roleMapper.insertRole(role);
     }
 }

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.SupplierUserApplyMapper">
+
+    <resultMap type="com.scm.system.domain.SupplierUserApply" id="Result">
+        <id property="applyId" column="apply_id"/>
+        <result property="supplierId" column="supplier_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="status" column="status"/>
+        <result property="applyTime" column="apply_time"/>
+        <result property="auditBy" column="audit_by"/>
+        <result property="auditTime" column="audit_time"/>
+        <result property="auditRemark" column="audit_remark"/>
+        <result property="createTime" column="create_time"/>
+        <result property="loginName" column="login_name"/>
+        <result property="userName" column="user_name"/>
+    </resultMap>
+
+    <sql id="selectVo">
+        select apply_id, supplier_id, user_id, status, apply_time, audit_by, audit_time, audit_remark, create_time
+        from scm_supplier_user_apply
+    </sql>
+
+    <sql id="selectVoWithUser">
+        select a.apply_id, a.supplier_id, a.user_id, a.status, a.apply_time, a.audit_by, a.audit_time, a.audit_remark, a.create_time,
+               u.user_name as user_name, u.login_name as login_name
+        from scm_supplier_user_apply a
+        left join sys_user u on a.user_id = u.user_id
+    </sql>
+
+    <select id="selectBySupplierId" resultMap="Result">
+        <include refid="selectVoWithUser"/>
+        where a.supplier_id = #{supplierId}
+        <if test="status != null and status != ''">and a.status = #{status}</if>
+        order by a.create_time desc
+    </select>
+
+    <select id="selectByApplyId" resultMap="Result">
+        <include refid="selectVoWithUser"/>
+        where a.apply_id = #{applyId}
+    </select>
+
+    <select id="selectPendingBySupplierAndUser" resultMap="Result">
+        <include refid="selectVoWithUser"/>
+        where a.supplier_id = #{supplierId} and a.user_id = #{userId} and a.status = '0' limit 1
+    </select>
+
+    <insert id="insert" parameterType="com.scm.system.domain.SupplierUserApply" useGeneratedKeys="true" keyProperty="applyId">
+        insert into scm_supplier_user_apply (supplier_id, user_id, status, apply_time, create_time)
+        values (#{supplierId}, #{userId}, #{status}, #{applyTime}, now())
+    </insert>
+
+    <update id="updateStatus">
+        update scm_supplier_user_apply
+        set status = #{status}, audit_by = #{auditBy}, audit_time = now(), audit_remark = #{auditRemark}
+        where apply_id = #{applyId}
+    </update>
+</mapper>

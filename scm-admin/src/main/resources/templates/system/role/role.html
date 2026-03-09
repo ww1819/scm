@@ -91,6 +91,12 @@
 		            sortable: true
 		        },
 		        {
+		            field: 'tenantName',
+		            title: '对应客户',
+		            sortable: true,
+		            formatter: function(v) { return v || '-'; }
+		        },
+		        {
 		            field: 'dataScope',
 		            title: '数据权限',
 		            formatter: function(value, item, index) {

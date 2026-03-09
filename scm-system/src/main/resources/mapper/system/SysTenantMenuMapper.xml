@@ -11,4 +11,15 @@
         insert into scm_tenant_menu (id, tenant_id, menu_id, create_by, create_time)
         values (#{id}, #{tenantId}, #{menuId}, #{createBy}, #{createTime})
     </insert>
+
+    <!-- 客户菜单功能管理：列出客户所有菜单权限及暂停状态（仅目录、菜单类型） -->
+    <select id="selectListWithMenuNameAndPauseByTenantId" resultType="com.scm.system.domain.ScmTenantMenuPauseManageVo">
+        select tm.tenant_id as tenantId, tm.menu_id as menuId, m.menu_name as menuName,
+               ifnull(p.pause_status, '0') as pauseStatus, p.pause_time as pauseTime, p.pause_id as pauseId
+        from scm_tenant_menu tm
+        inner join sys_menu m on m.menu_id = tm.menu_id and m.menu_type in ('M', 'C')
+        left join scm_tenant_menu_pause p on p.tenant_id = tm.tenant_id and p.menu_id = tm.menu_id
+        where tm.tenant_id = #{tenantId}
+        order by m.parent_id, m.order_num
+    </select>
 </mapper>

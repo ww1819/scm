@@ -6,6 +6,13 @@
 </head>
 <body class="gray-bg">
 	<div class="container-div">
+		<div class="row" th:if="${param.entry != null && param.entry[0] == 'menuPause'}">
+			<div class="col-sm-12">
+				<div class="alert alert-info">
+					<i class="fa fa-pause-circle-o"></i> 请从下方列表选择客户，点击该行的 <strong>「菜单功能」</strong> 进入该客户的菜单暂停/恢复管理。
+				</div>
+			</div>
+		</div>
 		<div class="row">
 			<div class="col-sm-12 search-collapse">
 				<form id="tenant-form">
@@ -168,7 +175,7 @@
 		}
 
 		function resetTenant(tenantId) {
-		    $.modal.confirm("确认要重置该客户吗？", function() {
+		    $.modal.confirm("将重置该客户下角色的菜单权限（医院管理员、供应商、供应商业务员等），不会变更已产生的业务数据。请确认是否重置？", function() {
 		        $.operate.post(prefix + "/reset", { "tenantId": tenantId });
 		    });
 		}

@@ -43,6 +43,13 @@ public interface ISupplierUserService
     public SupplierUser selectSupplierUserByUserId(Long userId);
 
     /**
+     * 获取用户作为主账号管理的供应商ID（供应商管理员）
+     * @param userId 用户ID
+     * @return 供应商ID，若不是任何供应商的主账号则返回 null
+     */
+    public Long getManagedSupplierId(Long userId);
+
+    /**
      * 新增供应商用户
      * 
      * @param supplierUser 供应商用户信息

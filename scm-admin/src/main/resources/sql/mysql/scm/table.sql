@@ -50,6 +50,22 @@ CREATE TABLE IF NOT EXISTS `scm_supplier_user` (
   KEY `idx_user_id` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='供应商用户表';
 /
+CREATE TABLE IF NOT EXISTS `scm_supplier_user_apply` (
+  `apply_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '申请ID',
+  `supplier_id` bigint(20) NOT NULL COMMENT '供应商ID',
+  `user_id` bigint(20) NOT NULL COMMENT '用户ID',
+  `status` char(1) DEFAULT '0' COMMENT '状态（0待审核 1通过 2拒绝）',
+  `apply_time` datetime DEFAULT NULL COMMENT '申请时间',
+  `audit_by` varchar(64) DEFAULT '' COMMENT '审核人',
+  `audit_time` datetime DEFAULT NULL COMMENT '审核时间',
+  `audit_remark` varchar(500) DEFAULT '' COMMENT '审核备注',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`apply_id`),
+  KEY `idx_supplier_id` (`supplier_id`),
+  KEY `idx_user_id` (`user_id`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='供应商业务员关联申请';
+/
 CREATE TABLE IF NOT EXISTS `scm_supplier_code_mapping` (
   `mapping_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '对照ID',
   `supplier_id` bigint(20) NOT NULL COMMENT '供应商ID',

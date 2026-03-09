@@ -28,11 +28,13 @@ public interface SupplierMapper
 
     /**
      * 根据供应商编码查询供应商
-     * 
-     * @param supplierCode 供应商编码
-     * @return 供应商信息
      */
     public Supplier checkSupplierCodeUnique(String supplierCode);
+
+    /**
+     * 根据公司名称查询供应商（注册时校验是否已存在）
+     */
+    public Supplier selectSupplierByCompanyName(String companyName);
 
     /**
      * 新增供应商信息

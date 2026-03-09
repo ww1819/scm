@@ -67,6 +67,20 @@ public class SupplierUserServiceImpl implements ISupplierUserService
         return supplierUserMapper.selectSupplierUserByUserId(userId);
     }
 
+    @Override
+    public Long getManagedSupplierId(Long userId)
+    {
+        if (userId == null) return null;
+        SupplierUser q = new SupplierUser();
+        q.setUserId(userId);
+        List<SupplierUser> list = supplierUserMapper.selectSupplierUserList(q);
+        for (SupplierUser su : list) {
+            if ("1".equals(su.getIsMain()))
+                return su.getSupplierId();
+        }
+        return null;
+    }
+
     /**
      * 新增供应商用户
      * 

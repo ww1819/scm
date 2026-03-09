@@ -55,11 +55,17 @@ public class DataScopeAspect
      */
     public static final String DATA_SCOPE = "dataScope";
 
+    /**
+     * 医院用户租户数据范围：params 中放入 tenantScope，供 Mapper 使用
+     */
+    public static final String TENANT_SCOPE = "tenantScope";
+
     @Before("@annotation(controllerDataScope)")
     public void doBefore(JoinPoint point, DataScope controllerDataScope) throws Throwable
     {
         clearDataScope(point);
         handleDataScope(point, controllerDataScope);
+        handleTenantScope(point, controllerDataScope.tenantAlias());
     }
 
     protected void handleDataScope(final JoinPoint joinPoint, DataScope controllerDataScope)
@@ -75,6 +81,21 @@ public class DataScopeAspect
                 dataScopeFilter(joinPoint, currentUser, controllerDataScope.deptAlias(), controllerDataScope.userAlias(), permission);
             }
         }
+    }
+
+    /**
+     * 医院用户：当用户表中客户id（tenant_id）不为空时，仅能查看本客户数据
+     */
+    private void handleTenantScope(final JoinPoint joinPoint, String tenantAlias)
+    {
+        if (StringUtils.isEmpty(tenantAlias)) return;
+        SysUser currentUser = ShiroUtils.getSysUser();
+        if (currentUser == null || StringUtils.isEmpty(currentUser.getTenantId())) return;
+        Object params = joinPoint.getArgs()[0];
+        if (params == null || !(params instanceof BaseEntity)) return;
+        BaseEntity baseEntity = (BaseEntity) params;
+        String safeTenantId = currentUser.getTenantId().replace("'", "''");
+        baseEntity.getParams().put(TENANT_SCOPE, " AND " + tenantAlias + ".tenant_id = '" + safeTenantId + "' ");
     }
 
     /**

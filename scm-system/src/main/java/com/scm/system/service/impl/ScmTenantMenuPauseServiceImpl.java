@@ -5,10 +5,12 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.uuid.IdUtils;
 import com.scm.system.domain.ScmTenantMenuPause;
 import com.scm.system.domain.ScmTenantMenuPauseLog;
+import com.scm.system.domain.ScmTenantMenuPauseLogVo;
+import com.scm.system.domain.ScmTenantMenuPauseManageVo;
+import com.scm.system.mapper.ScmTenantMenuMapper;
 import com.scm.system.mapper.ScmTenantMenuPauseLogMapper;
 import com.scm.system.mapper.ScmTenantMenuPauseMapper;
 import com.scm.system.service.IScmTenantMenuPauseService;
@@ -20,6 +22,14 @@ public class ScmTenantMenuPauseServiceImpl implements IScmTenantMenuPauseService
     private ScmTenantMenuPauseMapper pauseMapper;
     @Autowired
     private ScmTenantMenuPauseLogMapper logMapper;
+    @Autowired
+    private ScmTenantMenuMapper scmTenantMenuMapper;
+
+    @Override
+    public List<ScmTenantMenuPauseManageVo> listMenusWithStatusByTenantId(String tenantId)
+    {
+        return scmTenantMenuMapper.selectListWithMenuNameAndPauseByTenantId(tenantId);
+    }
 
     @Override
     public List<ScmTenantMenuPause> selectByTenantId(String tenantId)
@@ -34,6 +44,12 @@ public class ScmTenantMenuPauseServiceImpl implements IScmTenantMenuPauseService
     }
 
     @Override
+    public List<ScmTenantMenuPauseLogVo> listPauseLogsWithMenuNameByTenantId(String tenantId)
+    {
+        return logMapper.selectByTenantIdWithMenuName(tenantId);
+    }
+
+    @Override
     public List<Long> selectPausedMenuIdsByTenantId(String tenantId)
     {
         return pauseMapper.selectPausedMenuIdsByTenantId(tenantId);
@@ -43,6 +59,9 @@ public class ScmTenantMenuPauseServiceImpl implements IScmTenantMenuPauseService
     @Transactional(rollbackFor = Exception.class)
     public int pauseMenu(String tenantId, Long menuId, String operBy, String remark)
     {
+        if (tenantId == null || menuId == null) return 0;
+        List<Long> allowed = scmTenantMenuMapper.selectMenuIdsByTenantId(tenantId);
+        if (allowed == null || !allowed.contains(menuId)) return 0;
         Date now = new Date();
         ScmTenantMenuPause p = pauseMapper.selectByTenantAndMenu(tenantId, menuId);
         if (p != null)
@@ -81,6 +100,7 @@ public class ScmTenantMenuPauseServiceImpl implements IScmTenantMenuPauseService
     @Transactional(rollbackFor = Exception.class)
     public int resumeMenu(String tenantId, Long menuId, String operBy, String remark)
     {
+        if (tenantId == null || menuId == null) return 0;
         ScmTenantMenuPause p = pauseMapper.selectByTenantAndMenu(tenantId, menuId);
         if (p == null) return 1;
         if ("0".equals(p.getPauseStatus())) return 1;

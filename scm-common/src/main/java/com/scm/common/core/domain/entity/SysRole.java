@@ -56,6 +56,20 @@ public class SysRole extends BaseEntity
     /** 角色菜单权限 */
     private Set<String> permissions;
 
+    /** 租户ID（客户维度角色） */
+    private String tenantId;
+    /** 对应客户名称（列表展示用，查询时关联） */
+    private String tenantName;
+    /** 供应商ID（供应商管理员、供应商业务员等） */
+    private Long supplierId;
+
+    public String getTenantId() { return tenantId; }
+    public void setTenantId(String tenantId) { this.tenantId = tenantId; }
+    public String getTenantName() { return tenantName; }
+    public void setTenantName(String tenantName) { this.tenantName = tenantName; }
+    public Long getSupplierId() { return supplierId; }
+    public void setSupplierId(Long supplierId) { this.supplierId = supplierId; }
+
     public SysRole()
     {
 

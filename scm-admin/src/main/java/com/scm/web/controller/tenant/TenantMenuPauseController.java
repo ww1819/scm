@@ -1,6 +1,9 @@
 package com.scm.web.controller.tenant;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -17,8 +20,8 @@ import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.enums.BusinessType;
 import com.scm.common.core.domain.Ztree;
 import com.scm.system.domain.ScmTenant;
-import com.scm.system.domain.ScmTenantMenuPause;
-import com.scm.system.domain.ScmTenantMenuPauseLog;
+import com.scm.system.domain.ScmTenantMenuPauseLogVo;
+import com.scm.system.domain.ScmTenantMenuPauseManageVo;
 import com.scm.system.service.IScmTenantMenuPauseService;
 import com.scm.system.service.IScmTenantService;
 import com.scm.system.service.ISysMenuService;
@@ -39,32 +42,56 @@ public class TenantMenuPauseController extends BaseController
     @Autowired
     private ISysMenuService menuService;
 
+    /** 客户菜单功能管理入口页（下拉选择客户后列出菜单权限与暂停记录） */
     @RequiresPermissions("tenant:menuPause:view")
-    @GetMapping("/index/{tenantId}")
-    public String index(@PathVariable String tenantId, ModelMap mmap)
+    @GetMapping()
+    public String select()
     {
-        ScmTenant tenant = scmTenantService.selectScmTenantById(tenantId);
-        mmap.put("tenant", tenant);
-        return prefix + "/index";
+        return prefix + "/select";
     }
 
+    /** 客户下拉选项（用于菜单功能管理页选择客户） */
+    @RequiresPermissions("tenant:menuPause:view")
+    @GetMapping("/tenantOptions")
+    @ResponseBody
+    public AjaxResult tenantOptions()
+    {
+        List<ScmTenant> list = scmTenantService.selectScmTenantList(new ScmTenant());
+        List<Map<String, String>> options = list.stream().map(t -> {
+            Map<String, String> m = new HashMap<>(2);
+            m.put("tenantId", t.getTenantId());
+            m.put("tenantName", t.getTenantName() != null ? t.getTenantName() : t.getTenantId());
+            return m;
+        }).collect(Collectors.toList());
+        return success(options);
+    }
+
+    /** 带客户ID 时重定向到选择页并预选该客户（便于从客户维护「菜单功能」进入） */
+    @RequiresPermissions("tenant:menuPause:view")
+    @GetMapping("/index/{tenantId}")
+    public String index(@PathVariable String tenantId)
+    {
+        return "redirect:/tenant/menuPause?tenantId=" + com.scm.common.utils.ServletUtils.urlEncode(tenantId);
+    }
+
+    /** 客户菜单功能管理：列出该客户所有菜单权限及暂停状态 */
     @RequiresPermissions("tenant:menuPause:list")
     @PostMapping("/list/{tenantId}")
     @ResponseBody
     public TableDataInfo list(@PathVariable String tenantId)
     {
-        startPage();
-        List<ScmTenantMenuPause> list = menuPauseService.selectByTenantId(tenantId);
+        List<ScmTenantMenuPauseManageVo> list = menuPauseService.listMenusWithStatusByTenantId(tenantId);
         return getDataTable(list);
     }
 
+    /** 客户菜单暂停记录（含菜单名称） */
     @RequiresPermissions("tenant:menuPause:list")
     @PostMapping("/logList/{tenantId}")
     @ResponseBody
     public TableDataInfo logList(@PathVariable String tenantId)
     {
         startPage();
-        List<ScmTenantMenuPauseLog> list = menuPauseService.selectPauseLogsByTenantId(tenantId);
+        List<ScmTenantMenuPauseLogVo> list = menuPauseService.listPauseLogsWithMenuNameByTenantId(tenantId);
         return getDataTable(list);
     }
 
