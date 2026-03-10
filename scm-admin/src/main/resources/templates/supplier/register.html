@@ -13,7 +13,16 @@
     <meta name="renderer" content="webkit">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <link rel="shortcut icon" href="../static/favicon.ico" th:href="@{favicon.ico}"/>
-    <style type="text/css">label.error { position:inherit; }</style>
+    <style type="text/css">
+        label.error { position:inherit; }
+        .signinpanel input.form-control,
+        .signinpanel textarea.form-control,
+        .signinpanel select.form-control { color: #000 !important; }
+        .signinpanel input::placeholder,
+        .signinpanel textarea::placeholder { color: #333; }
+        #registerMessage { display: none; margin-bottom: 12px; }
+        .field-error { color: #a94442; font-size: 12px; display: block; margin-top: 4px; }
+    </style>
 </head>
 <body class="signin">
     <div class="signinpanel">
@@ -40,14 +49,18 @@
                 </div>
                 <!-- 供应商注册表单 -->
                 <form id="registerFormSupplier" autocomplete="off" class="register-panel">
+                    <div id="registerMessageSupplier" class="alert" role="alert" style="display:none;"></div>
                     <h4 class="no-margins">供应商注册</h4>
                     <p class="m-t-md">请填写公司信息及管理员账号</p>
                     <h5 class="m-t-md">账号信息</h5>
-                    <input type="text" name="loginName" class="form-control uname" placeholder="登录账号" maxlength="30"/>
-                    <input type="password" name="password" class="form-control pword m-t" placeholder="密码（数字+字母，至少6位）" maxlength="20"/>
+                    <input type="text" name="loginName" id="supplierLoginName" class="form-control uname" placeholder="登录账号" maxlength="30"/>
+                    <span class="field-error" id="err-supplier-loginName" aria-live="polite"></span>
+                    <input type="password" name="password" id="supplierPassword" class="form-control pword m-t" placeholder="密码（数字+字母，至少6位）" maxlength="20"/>
+                    <span class="field-error" id="err-supplier-password" aria-live="polite"></span>
                     <input type="password" name="confirmPassword" class="form-control pword m-t" placeholder="确认密码" maxlength="20"/>
                     <h5 class="m-t-md">公司基本信息</h5>
                     <input type="text" name="companyName" id="companyName" class="form-control m-t" placeholder="公司名称 *" maxlength="200"/>
+                    <span class="field-error" id="err-supplier-companyName" aria-live="polite"></span>
                     <input type="text" name="companyShortName" id="companyShortName" class="form-control m-t" placeholder="简码（自动）" maxlength="100" readonly/>
                     <input type="text" name="legalPerson" class="form-control m-t" placeholder="法人" maxlength="50"/>
                     <input type="text" name="registeredCapital" class="form-control m-t" placeholder="注册资金（万元）" maxlength="20"/>
@@ -66,13 +79,17 @@
                 </form>
                 <!-- 业务员注册表单 -->
                 <form id="registerFormSalesperson" autocomplete="off" class="register-panel" style="display:none;">
+                    <div id="registerMessageSalesperson" class="alert" role="alert" style="display:none;"></div>
                     <h4 class="no-margins">业务员注册</h4>
                     <p class="m-t-md">选择供应商并填写账号信息，提交后需供应商管理员审核</p>
                     <h5 class="m-t-md">选择供应商</h5>
                     <select name="supplierId" id="supplierId" class="form-control m-t" required><option value="">请选择供应商</option></select>
+                    <span class="field-error" id="err-salesperson-supplierId" aria-live="polite"></span>
                     <h5 class="m-t-md">账号信息</h5>
-                    <input type="text" name="loginName" class="form-control uname m-t" placeholder="登录账号" maxlength="30"/>
-                    <input type="password" name="password" class="form-control pword m-t" placeholder="密码（数字+字母，至少6位）" maxlength="20"/>
+                    <input type="text" name="loginName" id="salespersonLoginName" class="form-control uname m-t" placeholder="登录账号" maxlength="30"/>
+                    <span class="field-error" id="err-salesperson-loginName" aria-live="polite"></span>
+                    <input type="password" name="password" id="salespersonPassword" class="form-control pword m-t" placeholder="密码（数字+字母，至少6位）" maxlength="20"/>
+                    <span class="field-error" id="err-salesperson-password" aria-live="polite"></span>
                     <input type="password" name="confirmPassword" class="form-control pword m-t" placeholder="确认密码" maxlength="20"/>
                     <input type="text" name="userName" class="form-control m-t" placeholder="姓名" maxlength="30"/>
                     <input type="text" name="phonenumber" class="form-control m-t" placeholder="手机号" maxlength="20"/>
@@ -96,6 +113,29 @@
 <script src="../static/ajax/libs/blockUI/jquery.blockUI.js" th:src="@{/ajax/libs/blockUI/jquery.blockUI.js}"></script>
 <script src="../static/scm/js/ry-ui.js" th:src="@{/scm/js/ry-ui.js?v=4.8.0}"></script>
 <script>
+// 在表单内显示提示（不依赖弹层，保证能看到）
+function showFormMessage(formId, msg, isSuccess) {
+    var mid = formId === "registerFormSupplier" ? "registerMessageSupplier" : "registerMessageSalesperson";
+    var $box = $("#" + mid);
+    $box.removeClass("alert-danger alert-success").addClass(isSuccess ? "alert-success" : "alert-danger").text(msg).show();
+    if (!isSuccess) $box[0].scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+function clearFormErrors(formId) {
+    var prefix = formId === "registerFormSupplier" ? "err-supplier-" : "err-salesperson-";
+    var ids = formId === "registerFormSupplier" ? ["loginName", "password", "companyName"] : ["supplierId", "loginName", "password"];
+    ids.forEach(function(name) { var $e = $("#" + prefix + name); if ($e.length) $e.text("").hide(); });
+}
+// 根据服务端返回的错误文案，匹配到对应字段并显示在输入框下方
+function showFieldError(formId, msg) {
+    clearFormErrors(formId);
+    var prefix = formId === "registerFormSupplier" ? "err-supplier-" : "err-salesperson-";
+    var fieldId = null;
+    if (/登录账号|注册账号|用户名|账号已存在/i.test(msg)) fieldId = prefix + "loginName";
+    else if (/密码|数字和字母/i.test(msg)) fieldId = prefix + "password";
+    else if (/公司名称|该公司|公司.*存在/i.test(msg)) fieldId = prefix + "companyName";
+    else if (/供应商/i.test(msg)) fieldId = prefix + "supplierId";
+    if (fieldId && $("#" + fieldId).length) { $("#" + fieldId).text(msg).show(); }
+}
 // 生成拼音简码（从公司名称提取首字母大写）
 function generateCompanyShortCode(companyName) {
     if (!companyName || companyName.trim() === '') {
@@ -168,12 +208,22 @@ $(function() {
     $("input[name='registerType']").on("change", function() {
         var v = $(this).val();
         $(".register-panel").hide();
+        $("#registerMessageSupplier,#registerMessageSalesperson").hide();
         if (v === "supplier") {
             $("#registerFormSupplier").show();
         } else {
             $("#registerFormSalesperson").show();
             loadSupplierList();
         }
+    });
+    // 用户重新输入时清除该表单的提示与字段错误
+    $("#registerFormSupplier input, #registerFormSupplier textarea").on("input focus", function() {
+        $("#registerMessageSupplier").hide();
+        clearFormErrors("registerFormSupplier");
+    });
+    $("#registerFormSalesperson input, #registerFormSalesperson select").on("input focus change", function() {
+        $("#registerMessageSalesperson").hide();
+        clearFormErrors("registerFormSalesperson");
     });
 
     function loadSupplierList() {
@@ -205,24 +255,36 @@ $(function() {
             acceptTerm1: { required: "请同意使用条款" }
         },
         submitHandler: function(form) {
-            if (!$("#acceptTerm1").is(":checked")) { $.modal.msgWarning("请先同意使用条款"); return false; }
+            if (!$("#acceptTerm1").is(":checked")) { showFormMessage("registerFormSupplier", "请先同意使用条款", false); return false; }
             var pwd = $("#registerFormSupplier input[name='password']").val();
-            if (!/\d/.test(pwd) || !/[a-zA-Z]/.test(pwd)) { $.modal.msgWarning("密码必须包含数字和字母"); return false; }
+            if (!/\d/.test(pwd) || !/[a-zA-Z]/.test(pwd)) { showFormMessage("registerFormSupplier", "密码必须包含数字和字母", false); showFieldError("registerFormSupplier", "密码必须包含数字和字母"); return false; }
+            clearFormErrors("registerFormSupplier");
+            $("#registerMessageSupplier").hide();
             $("#btnSubmitSupplier").button("loading");
             $.ajax({
                 url: ctx + "supplier/register/supplier",
                 type: "post",
+                dataType: "json",
                 data: $(form).serialize(),
                 success: function(result) {
-                    if (result.code == 0) {
-                        $.modal.msgSuccess(result.msg || "注册成功");
+                    var ok = result && (result.code === 0 || result.code === "0");
+                    var msg = (result && result.msg) ? result.msg : (ok ? "注册成功" : "注册失败");
+                    if (ok) {
+                        showFormMessage("registerFormSupplier", msg, true);
                         setTimeout(function() { location.href = ctx + "login"; }, 2000);
                     } else {
-                        $.modal.msgError(result.msg || "注册失败");
-                        $("#btnSubmitSupplier").button("reset");
+                        showFormMessage("registerFormSupplier", msg, false);
+                        showFieldError("registerFormSupplier", msg);
                     }
                 },
-                error: function() { $.modal.msgError("注册失败，请稍后重试"); $("#btnSubmitSupplier").button("reset"); }
+                error: function(xhr, status, err) {
+                    var msg = "注册失败，请稍后重试";
+                    if (xhr && xhr.responseJSON && xhr.responseJSON.msg) msg = xhr.responseJSON.msg;
+                    else if (xhr && xhr.responseText) { try { var r = JSON.parse(xhr.responseText); if (r.msg) msg = r.msg; } catch(e) {} }
+                    showFormMessage("registerFormSupplier", msg, false);
+                    showFieldError("registerFormSupplier", msg);
+                },
+                complete: function() { $("#btnSubmitSupplier").button("reset"); }
             });
             return false;
         }
@@ -244,24 +306,36 @@ $(function() {
             acceptTerm2: { required: "请同意使用条款" }
         },
         submitHandler: function(form) {
-            if (!$("#acceptTerm2").is(":checked")) { $.modal.msgWarning("请先同意使用条款"); return false; }
+            if (!$("#acceptTerm2").is(":checked")) { showFormMessage("registerFormSalesperson", "请先同意使用条款", false); return false; }
             var pwd = $("#registerFormSalesperson input[name='password']").val();
-            if (!/\d/.test(pwd) || !/[a-zA-Z]/.test(pwd)) { $.modal.msgWarning("密码必须包含数字和字母"); return false; }
+            if (!/\d/.test(pwd) || !/[a-zA-Z]/.test(pwd)) { showFormMessage("registerFormSalesperson", "密码必须包含数字和字母", false); showFieldError("registerFormSalesperson", "密码必须包含数字和字母"); return false; }
+            clearFormErrors("registerFormSalesperson");
+            $("#registerMessageSalesperson").hide();
             $("#btnSubmitSalesperson").button("loading");
             $.ajax({
                 url: ctx + "supplier/register/salesperson",
                 type: "post",
+                dataType: "json",
                 data: $(form).serialize(),
                 success: function(result) {
-                    if (result.code == 0) {
-                        $.modal.msgSuccess(result.msg || "提交成功，需供应商管理员审核通过后才能注册成功");
+                    var ok = result && (result.code === 0 || result.code === "0");
+                    var msg = (result && result.msg) ? result.msg : (ok ? "提交成功，需供应商管理员审核通过后才能注册成功" : "提交失败");
+                    if (ok) {
+                        showFormMessage("registerFormSalesperson", msg, true);
                         setTimeout(function() { location.href = ctx + "login"; }, 2500);
                     } else {
-                        $.modal.msgError(result.msg || "提交失败");
-                        $("#btnSubmitSalesperson").button("reset");
+                        showFormMessage("registerFormSalesperson", msg, false);
+                        showFieldError("registerFormSalesperson", msg);
                     }
                 },
-                error: function() { $.modal.msgError("提交失败，请稍后重试"); $("#btnSubmitSalesperson").button("reset"); }
+                error: function(xhr, status, err) {
+                    var msg = "提交失败，请稍后重试";
+                    if (xhr && xhr.responseJSON && xhr.responseJSON.msg) msg = xhr.responseJSON.msg;
+                    else if (xhr && xhr.responseText) { try { var r = JSON.parse(xhr.responseText); if (r.msg) msg = r.msg; } catch(e) {} }
+                    showFormMessage("registerFormSalesperson", msg, false);
+                    showFieldError("registerFormSalesperson", msg);
+                },
+                complete: function() { $("#btnSubmitSalesperson").button("reset"); }
             });
             return false;
         }

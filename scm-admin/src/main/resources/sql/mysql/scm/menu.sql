@@ -94,10 +94,3 @@ INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, targ
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2822', '菜单暂停/恢复', '2802', '2', '#', '', 'F', '0', '1', 'tenant:menuPause:edit', '#', 'admin', sysdate(), '', null, '', '0');
 /
--- 注册用户角色（包含新增供应商关联功能）
-INSERT IGNORE INTO sys_role (role_id, role_name, role_key, role_sort, data_scope, status, del_flag, create_by, create_time, remark) VALUES(100, '注册用户', 'register_user', 100, '1', '0', '0', 'admin', sysdate(), '平台注册用户，可申请关联供应商成为业务员');
-/
-INSERT IGNORE INTO sys_role_menu (role_id, menu_id) VALUES(100, 2004);
-/
-INSERT IGNORE INTO sys_role_menu (role_id, menu_id) VALUES(100, 20041);
-/

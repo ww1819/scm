@@ -2,6 +2,12 @@
 -- 建议在 table.sql、column.sql、menu.sql 之后执行；按「/」分段执行
 -- 数据完整性检查，为有默认值的字段赋值
 /
+-- 开启登录页注册入口（没有该配置时才插入，默认 true 以显示注册链接）
+INSERT INTO sys_config (config_name, config_key, config_value, config_type, create_by, create_time, remark)
+SELECT '账号自助-是否开启用户注册功能', 'sys.account.registerUser', 'true', 'Y', 'admin', sysdate(), '是否开启注册功能（true开启后登录页显示立即注册、供应商/业务员注册）'
+FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key = 'sys.account.registerUser');
+/
 -- 供应商表 status 默认值
 UPDATE scm_supplier SET status = '0' WHERE status IS NULL;
 /
@@ -72,4 +78,20 @@ INSERT IGNORE INTO scm_certificate_type(type_code, type_name, type_category, des
 ('PRODUCT_002', '生产许可证', 'product', '产品生产许可证', 2, '0', 'admin', sysdate());
 /
 UPDATE scm_certificate_type SET status = '0' WHERE status IS NULL;
+/
+
+
+-- 注册用户角色（包含新增供应商关联功能，没有才插入）
+INSERT INTO sys_role (role_id, role_name, role_key, role_sort, data_scope, status, del_flag, create_by, create_time, remark)
+SELECT 110, '注册用户', 'register_user', 110, '1', '0', '0', 'admin', sysdate(), '平台注册用户，可申请关联供应商成为业务员'
+FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM sys_role WHERE role_id = 110);
+/
+INSERT INTO sys_role_menu (role_id, menu_id)
+SELECT 110, 2004 FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 110 AND menu_id = 2004);
+/
+INSERT INTO sys_role_menu (role_id, menu_id)
+SELECT 110, 20041 FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 110 AND menu_id = 20041);
 /
