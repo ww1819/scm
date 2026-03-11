@@ -15,7 +15,30 @@
     <!-- 避免IE使用兼容模式 -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <link rel="shortcut icon" href="../static/favicon.ico" th:href="@{favicon.ico}"/>
-    <style type="text/css">label.error { position:inherit;  }</style>
+    <style type="text/css">
+        label.error { position:inherit; }
+        .signinpanel .row {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 8px;
+            padding: 25px 20px;
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
+        }
+        .signinpanel,
+        .signinpanel .signin-info,
+        .signinpanel .signin-info h4,
+        .signinpanel .signin-info ul li,
+        .signinpanel .signin-info a,
+        .signinpanel .signin-info strong,
+        .signinpanel .signup-footer {
+            color: #333 !important;
+        }
+        .signinpanel .signin-info a {
+            text-decoration: none;
+        }
+        .signinpanel .signin-info a:hover {
+            color: #0b83f0 !important;
+        }
+    </style>
     <script>
         if(window.top!==window.self){alert('未登录或登录超时。请重新登录');window.top.location=window.location};
     </script>
@@ -40,7 +63,7 @@
                     <div class="m-t">
                         <strong>还没有账号？</strong><br/>
                         <a th:href="@{/register}">立即注册</a>
-                         <!-- &nbsp;|&nbsp; <a th:href="@{/supplier/register}">供应商/业务员注册</a> -->
+                         &nbsp;|&nbsp; <a th:href="@{/supplier/register}">供应商注册</a>
                     </div>
                 </div>
             </div>

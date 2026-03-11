@@ -22,6 +22,27 @@
         .signinpanel textarea::placeholder { color: #333; }
         #registerMessage { display: none; margin-bottom: 12px; }
         .field-error { color: #a94442; font-size: 12px; display: block; margin-top: 4px; }
+        .signinpanel .row {
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 8px;
+            padding: 25px 20px;
+            box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
+        }
+        .signinpanel,
+        .signinpanel .signin-info,
+        .signinpanel .signin-info h4,
+        .signinpanel .signin-info ul li,
+        .signinpanel .signin-info a,
+        .signinpanel .signin-info strong,
+        .signinpanel .signup-footer {
+            color: #333 !important;
+        }
+        .signinpanel .signin-info a {
+            text-decoration: none;
+        }
+        .signinpanel .signin-info a:hover {
+            color: #0b83f0 !important;
+        }
     </style>
 </head>
 <body class="signin">
@@ -75,7 +96,7 @@
                     <input type="text" name="website" class="form-control m-t" placeholder="网址" maxlength="200"/>
                     <textarea name="businessScope" class="form-control m-t" rows="2" placeholder="经营范围" maxlength="1000"></textarea>
                     <div class="checkbox-custom m-t"><input type="checkbox" id="acceptTerm1" name="acceptTerm1"/> <label for="acceptTerm1">我已阅读并同意使用条款</label></div>
-                    <button type="submit" class="btn btn-success btn-block m-t" id="btnSubmitSupplier" data-loading="正在注册...">注册</button>
+                    <button type="button" class="btn btn-success btn-block m-t" id="btnSubmitSupplier" data-loading="正在注册...">注册</button>
                 </form>
                 <!-- 业务员注册表单 -->
                 <form id="registerFormSalesperson" autocomplete="off" class="register-panel" style="display:none;">
@@ -95,7 +116,7 @@
                     <input type="text" name="phonenumber" class="form-control m-t" placeholder="手机号" maxlength="20"/>
                     <input type="text" name="email" class="form-control m-t" placeholder="邮箱" maxlength="100"/>
                     <div class="checkbox-custom m-t"><input type="checkbox" id="acceptTerm2" name="acceptTerm2"/> <label for="acceptTerm2">我已阅读并同意使用条款</label></div>
-                    <button type="submit" class="btn btn-success btn-block m-t" id="btnSubmitSalesperson" data-loading="正在提交...">提交申请</button>
+                    <button type="button" class="btn btn-success btn-block m-t" id="btnSubmitSalesperson" data-loading="正在提交...">提交申请</button>
                 </form>
             </div>
         </div>
@@ -239,6 +260,7 @@ $(function() {
         });
     }
 
+    // 初始化校验规则（不接管 submit，由按钮 click 主动触发）
     $("#registerFormSupplier").validate({
         rules: {
             loginName: { required: true, minlength: 2, maxlength: 30 },
@@ -253,40 +275,6 @@ $(function() {
             confirmPassword: { required: "请确认密码", equalTo: "两次密码不一致" },
             companyName: { required: "请输入公司名称" },
             acceptTerm1: { required: "请同意使用条款" }
-        },
-        submitHandler: function(form) {
-            if (!$("#acceptTerm1").is(":checked")) { showFormMessage("registerFormSupplier", "请先同意使用条款", false); return false; }
-            var pwd = $("#registerFormSupplier input[name='password']").val();
-            if (!/\d/.test(pwd) || !/[a-zA-Z]/.test(pwd)) { showFormMessage("registerFormSupplier", "密码必须包含数字和字母", false); showFieldError("registerFormSupplier", "密码必须包含数字和字母"); return false; }
-            clearFormErrors("registerFormSupplier");
-            $("#registerMessageSupplier").hide();
-            $("#btnSubmitSupplier").button("loading");
-            $.ajax({
-                url: ctx + "supplier/register/supplier",
-                type: "post",
-                dataType: "json",
-                data: $(form).serialize(),
-                success: function(result) {
-                    var ok = result && (result.code === 0 || result.code === "0");
-                    var msg = (result && result.msg) ? result.msg : (ok ? "注册成功" : "注册失败");
-                    if (ok) {
-                        showFormMessage("registerFormSupplier", msg, true);
-                        setTimeout(function() { location.href = ctx + "login"; }, 2000);
-                    } else {
-                        showFormMessage("registerFormSupplier", msg, false);
-                        showFieldError("registerFormSupplier", msg);
-                    }
-                },
-                error: function(xhr, status, err) {
-                    var msg = "注册失败，请稍后重试";
-                    if (xhr && xhr.responseJSON && xhr.responseJSON.msg) msg = xhr.responseJSON.msg;
-                    else if (xhr && xhr.responseText) { try { var r = JSON.parse(xhr.responseText); if (r.msg) msg = r.msg; } catch(e) {} }
-                    showFormMessage("registerFormSupplier", msg, false);
-                    showFieldError("registerFormSupplier", msg);
-                },
-                complete: function() { $("#btnSubmitSupplier").button("reset"); }
-            });
-            return false;
         }
     });
 
@@ -304,41 +292,99 @@ $(function() {
             password: { required: "请输入密码", minlength: "至少6位", checkPassword: "密码必须包含数字和字母" },
             confirmPassword: { required: "请确认密码", equalTo: "两次密码不一致" },
             acceptTerm2: { required: "请同意使用条款" }
-        },
-        submitHandler: function(form) {
-            if (!$("#acceptTerm2").is(":checked")) { showFormMessage("registerFormSalesperson", "请先同意使用条款", false); return false; }
-            var pwd = $("#registerFormSalesperson input[name='password']").val();
-            if (!/\d/.test(pwd) || !/[a-zA-Z]/.test(pwd)) { showFormMessage("registerFormSalesperson", "密码必须包含数字和字母", false); showFieldError("registerFormSalesperson", "密码必须包含数字和字母"); return false; }
-            clearFormErrors("registerFormSalesperson");
-            $("#registerMessageSalesperson").hide();
-            $("#btnSubmitSalesperson").button("loading");
-            $.ajax({
-                url: ctx + "supplier/register/salesperson",
-                type: "post",
-                dataType: "json",
-                data: $(form).serialize(),
-                success: function(result) {
+        }
+    });
+
+    // 供应商注册：点击按钮时触发校验和 Ajax 提交
+    $("#btnSubmitSupplier").on("click", function (e) {
+        e.preventDefault();
+        if (!$("#registerFormSupplier").valid()) {
+            return;
+        }
+        if (!$("#acceptTerm1").is(":checked")) {
+            showFormMessage("registerFormSupplier", "请先同意使用条款", false);
+            return;
+        }
+        var pwd = $("#registerFormSupplier input[name='password']").val();
+        if (!/\d/.test(pwd) || !/[a-zA-Z]/.test(pwd)) {
+            showFormMessage("registerFormSupplier", "密码必须包含数字和字母", false);
+            showFieldError("registerFormSupplier", "密码必须包含数字和字母");
+            return;
+        }
+        clearFormErrors("registerFormSupplier");
+        $("#registerMessageSupplier").hide();
+        $("#btnSubmitSupplier").prop("disabled", true).text("正在注册...");
+        $.ajax({
+            url: ctx + "supplier/register/supplier",
+            type: "post",
+            dataType: "json",
+            data: $("#registerFormSupplier").serialize(),
+            success: function (result) {
+                var ok = result && (result.code === 0 || result.code === "0");
+                var msg = (result && result.msg) ? result.msg : (ok ? "注册成功" : "注册失败");
+                if (ok) {
+                    showFormMessage("registerFormSupplier", msg, true);
+                    setTimeout(function () { location.href = ctx + "login"; }, 2000);
+                } else {
+                    showFormMessage("registerFormSupplier", msg, false);
+                    showFieldError("registerFormSupplier", msg);
+                }
+            },
+            error: function (xhr, status, err) {
+                var msg = "注册失败，请稍后重试";
+                if (xhr && xhr.responseJSON && xhr.responseJSON.msg) msg = xhr.responseJSON.msg;
+                else if (xhr && xhr.responseText) { try { var r = JSON.parse(xhr.responseText); if (r.msg) msg = r.msg; } catch (e) { } }
+                showFormMessage("registerFormSupplier", msg, false);
+                showFieldError("registerFormSupplier", msg);
+            },
+            complete: function () { $("#btnSubmitSupplier").prop("disabled", false).text("注册"); }
+        });
+    });
+
+    // 业务员注册：点击按钮时触发校验和 Ajax 提交
+    $("#btnSubmitSalesperson").on("click", function (e) {
+        e.preventDefault();
+        if (!$("#registerFormSalesperson").valid()) {
+            return;
+        }
+        if (!$("#acceptTerm2").is(":checked")) {
+            showFormMessage("registerFormSalesperson", "请先同意使用条款", false);
+            return;
+        }
+        var pwd = $("#registerFormSalesperson input[name='password']").val();
+        if (!/\d/.test(pwd) || !/[a-zA-Z]/.test(pwd)) {
+            showFormMessage("registerFormSalesperson", "密码必须包含数字和字母", false);
+            showFieldError("registerFormSalesperson", "密码必须包含数字和字母");
+            return;
+        }
+        clearFormErrors("registerFormSalesperson");
+        $("#registerMessageSalesperson").hide();
+        $("#btnSubmitSalesperson").prop("disabled", true).text("正在提交...");
+        $.ajax({
+            url: ctx + "supplier/register/salesperson",
+            type: "post",
+            dataType: "json",
+            data: $("#registerFormSalesperson").serialize(),
+                success: function (result) {
                     var ok = result && (result.code === 0 || result.code === "0");
-                    var msg = (result && result.msg) ? result.msg : (ok ? "提交成功，需供应商管理员审核通过后才能注册成功" : "提交失败");
-                    if (ok) {
-                        showFormMessage("registerFormSalesperson", msg, true);
-                        setTimeout(function() { location.href = ctx + "login"; }, 2500);
-                    } else {
-                        showFormMessage("registerFormSalesperson", msg, false);
-                        showFieldError("registerFormSalesperson", msg);
-                    }
-                },
-                error: function(xhr, status, err) {
-                    var msg = "提交失败，请稍后重试";
-                    if (xhr && xhr.responseJSON && xhr.responseJSON.msg) msg = xhr.responseJSON.msg;
-                    else if (xhr && xhr.responseText) { try { var r = JSON.parse(xhr.responseText); if (r.msg) msg = r.msg; } catch(e) {} }
+                    var msg = (result && result.msg) ? result.msg : (ok ? "注册成功！待管理员审核授权。" : "提交失败");
+                if (ok) {
+                    showFormMessage("registerFormSalesperson", msg, true);
+                    setTimeout(function () { location.href = ctx + "login"; }, 2500);
+                } else {
                     showFormMessage("registerFormSalesperson", msg, false);
                     showFieldError("registerFormSalesperson", msg);
-                },
-                complete: function() { $("#btnSubmitSalesperson").button("reset"); }
-            });
-            return false;
-        }
+                }
+            },
+            error: function (xhr, status, err) {
+                var msg = "提交失败，请稍后重试";
+                if (xhr && xhr.responseJSON && xhr.responseJSON.msg) msg = xhr.responseJSON.msg;
+                else if (xhr && xhr.responseText) { try { var r = JSON.parse(xhr.responseText); if (r.msg) msg = r.msg; } catch (e) { } }
+                showFormMessage("registerFormSalesperson", msg, false);
+                showFieldError("registerFormSalesperson", msg);
+            },
+            complete: function () { $("#btnSubmitSalesperson").prop("disabled", false).text("提交申请"); }
+        });
     });
 });
 </script>

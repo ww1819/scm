@@ -126,7 +126,7 @@ public class SupplierRegisterController extends BaseController {
         }
         try {
             supplierRegisterService.registerSalesperson(supplierId, user, null);
-            return success("提交成功，需供应商管理员审核通过后才能注册成功");
+            return success("注册成功！待管理员审核授权。");
         } catch (IllegalArgumentException e) {
             return error(e.getMessage());
         } catch (Exception e) {
