@@ -17,11 +17,23 @@
     <link rel="shortcut icon" href="../static/favicon.ico" th:href="@{favicon.ico}"/>
     <style type="text/css">
         label.error { position:inherit; }
+        /* 整体垂直水平居中登录卡片 */
+        body.signin {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .signinpanel {
+            max-width: 960px;
+            margin: 0 auto;
+        }
         .signinpanel .row {
-            background: rgba(255, 255, 255, 0.92);
-            border-radius: 8px;
-            padding: 25px 20px;
-            box-shadow: 0 0 12px rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 14px;
+            padding: 36px 32px;
+            box-shadow: 0 22px 48px rgba(0, 0, 0, 0.20);
         }
         .signinpanel,
         .signinpanel .signin-info,
@@ -38,13 +50,93 @@
         .signinpanel .signin-info a:hover {
             color: #0b83f0 !important;
         }
+        .signinpanel .signin-info h4 {
+            font-size: 30px;
+        }
+        .signinpanel .signin-info ul li {
+            font-size: 16px;
+        }
+        .signinpanel #signupForm h3 {
+            font-size: 26px;
+        }
+        .signinpanel #signupForm .form-control {
+            height: 42px;
+            font-size: 15px;
+        }
+        /* 底部唤起登录按钮 */
+        .login-entry-bar {
+            position: fixed;
+            left: 50%;
+            bottom: 42px;
+            transform: translateX(-50%);
+            z-index: 30;
+        }
+        .login-entry-bar .btn-open-login {
+            min-width: 210px;
+            padding: 12px 30px;
+            font-size: 17px;
+            border-radius: 24px;
+            border: none;
+            outline: none;
+            background: rgba(255, 255, 255, 0.9);
+            color: #0b83f0;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+            transition: all 0.25s ease;
+        }
+        .login-entry-bar .btn-open-login:hover {
+            background: #0b83f0;
+            color: #fff;
+        }
+        .login-entry-bar .btn-open-login:active {
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+        }
+        /* 背景遮罩层 */
+        .login-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(6, 23, 45, 0.45);
+            backdrop-filter: blur(3px);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.35s ease;
+            z-index: 10;
+        }
+        .login-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        /* 登录卡片的初始与展示动画 */
+        .signinpanel {
+            position: relative;
+            z-index: 20;
+            max-width: 880px;
+            margin: 0 auto;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+        .login-panel-hidden {
+            opacity: 0;
+            transform: translateY(24px) scale(0.98);
+            pointer-events: none;
+        }
+        .login-panel-visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
     </style>
     <script>
         if(window.top!==window.self){alert('未登录或登录超时。请重新登录');window.top.location=window.location};
     </script>
 </head>
 <body class="signin">
-    <div class="signinpanel">
+    <!-- 底部入口按钮 -->
+    <div class="login-entry-bar">
+        <button type="button" class="btn-open-login">进入系统</button>
+    </div>
+    <!-- 遮罩层 -->
+    <div class="login-overlay" id="loginOverlay"></div>
+    <!-- 登录面板 -->
+    <div class="signinpanel login-panel-hidden" id="loginPanel">
         <div class="row">
             <div class="col-sm-7">
                 <div class="signin-info">
@@ -104,5 +196,34 @@
 <script src="../static/ajax/libs/blockUI/jquery.blockUI.js" th:src="@{/ajax/libs/blockUI/jquery.blockUI.js}"></script>
 <script src="../static/scm/js/ry-ui.js" th:src="@{/scm/js/ry-ui.js?v=4.8.0}"></script>
 <script src="../static/scm/login.js" th:src="@{/scm/login.js}"></script>
+<script>
+// 登录入口按钮与遮罩/卡片动画
+$(function () {
+    var $entryBar = $(".login-entry-bar");
+    var $overlay = $("#loginOverlay");
+    var $panel = $("#loginPanel");
+
+    function openLogin() {
+        $entryBar.fadeOut(200);
+        $overlay.addClass("active");
+        // 使用小延时让遮罩先出现，再弹出卡片
+        setTimeout(function () {
+            $panel.removeClass("login-panel-hidden").addClass("login-panel-visible");
+        }, 80);
+    }
+
+    function closeLogin() {
+        $panel.removeClass("login-panel-visible").addClass("login-panel-hidden");
+        $overlay.removeClass("active");
+        $entryBar.fadeIn(200);
+    }
+
+    $(".btn-open-login").on("click", function () {
+        openLogin();
+    });
+
+    // 如需点击遮罩关闭登录卡片，可在此处调用 closeLogin()
+});
+</script>
 </body>
 </html>
