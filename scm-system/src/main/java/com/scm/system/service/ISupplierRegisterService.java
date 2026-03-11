@@ -2,7 +2,6 @@ package com.scm.system.service;
 
 import com.scm.common.core.domain.entity.SysUser;
 import com.scm.system.domain.Supplier;
-import com.scm.system.domain.SupplierUserApply;
 
 /**
  * 供应商注册与业务员申请
