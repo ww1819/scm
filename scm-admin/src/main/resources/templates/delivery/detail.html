@@ -114,11 +114,13 @@
 		    $('#bootstrap-table').bootstrapTable({
 		        url: prefix + "/detailList",
 		        method: 'post',
+		        contentType: "application/x-www-form-urlencoded",
 		        queryParams: function() { return { deliveryId: deliveryId }; },
 		        pagination: false,
 		        search: false,
 		        showRefresh: false,
-		        responseHandler: $.table.responseHandler,
+		        sidePagination: 'server',
+		        responseHandler: ruoyiTableData,
 		        columns: [
 		            { field: 'materialCode', title: '产品编码' },
 		            { field: 'materialName', title: '产品名称' },

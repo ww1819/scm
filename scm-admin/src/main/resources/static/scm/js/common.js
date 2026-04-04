@@ -591,3 +591,19 @@ $.ajaxSetup({
         }
     }
 });
+
+/**
+ * 独立 bootstrapTable 解析 RuoYi TableDataInfo。
+ * 未走 $.table.init 时勿用 $.table.responseHandler（依赖 table.config，会导致脚本异常、表格一直“努力加载中”）。
+ */
+function ruoyiTableData(res) {
+    if (res && res.code === 0) {
+        var rows = res.rows || [];
+        var total = res.total != null ? res.total : rows.length;
+        return { total: total, rows: rows };
+    }
+    if (res && res.msg) {
+        $.modal.alertWarning(res.msg);
+    }
+    return { total: 0, rows: [] };
+}

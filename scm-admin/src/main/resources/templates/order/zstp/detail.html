@@ -73,7 +73,6 @@
 		    var options = {
 		        url: prefix + "/detailList",
 		        queryParams: { zsOrderId: zsOrderId },
-		        responseHandler: $.table.responseHandler,
 		        sortName: "id",
 		        sortOrder: "asc",
 		        pagination: false,
@@ -162,10 +161,12 @@
 		            $('#' + tableId).bootstrapTable({
 		                url: prefix + '/deliveriesByZs/' + zsOrderId,
 		                method: 'post',
+		                contentType: "application/x-www-form-urlencoded",
 		                pagination: false,
 		                search: false,
 		                showRefresh: false,
-		                responseHandler: $.table.responseHandler,
+		                sidePagination: 'server',
+		                responseHandler: ruoyiTableData,
 		                columns: [
 		                    { field: 'deliveryNo', title: '配送单号' },
 		                    { field: 'auditStatus', title: '审核状态', formatter: fmtAudit },
@@ -204,9 +205,11 @@
 		            $('#' + tid).bootstrapTable({
 		                url: prefix + '/detailDeliveryTraces',
 		                method: 'post',
+		                contentType: "application/x-www-form-urlencoded",
 		                queryParams: { zsOrderDetailId: zsDetailId },
 		                pagination: false,
-		                responseHandler: $.table.responseHandler,
+		                sidePagination: 'server',
+		                responseHandler: ruoyiTableData,
 		                columns: [
 		                    { field: 'deliveryNo', title: '配送单号' },
 		                    { field: 'deliveryQuantity', title: '本行配送数量', formatter: fmtQty },

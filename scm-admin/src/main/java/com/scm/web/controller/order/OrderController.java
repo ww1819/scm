@@ -266,9 +266,9 @@ public class OrderController extends BaseController
     }
 
     /**
-     * 查询订单明细列表
+     * 查询订单明细列表（与订单查看页一致）
      */
-    @RequiresPermissions("order:order:list")
+    @RequiresPermissions("order:order:view")
     @PostMapping("/detailList")
     @ResponseBody
     public TableDataInfo detailList(Long orderId)
@@ -280,7 +280,7 @@ public class OrderController extends BaseController
     /**
      * 本系统订单关联的配送单（用于订单查看页回查）
      */
-    @RequiresPermissions("order:order:list")
+    @RequiresPermissions("order:order:view")
     @PostMapping("/deliveriesByOrder/{orderId}")
     @ResponseBody
     public TableDataInfo deliveriesByOrder(@PathVariable("orderId") Long orderId)
@@ -292,7 +292,7 @@ public class OrderController extends BaseController
     /**
      * 订单明细行关联的配送明细
      */
-    @RequiresPermissions("order:order:list")
+    @RequiresPermissions("order:order:view")
     @PostMapping("/detailDeliveryTraces")
     @ResponseBody
     public TableDataInfo detailDeliveryTraces(Long orderDetailId)

@@ -317,9 +317,9 @@ public class DeliveryController extends BaseController
     }
 
     /**
-     * 查询配送明细列表
+     * 查询配送明细列表（与查看配送单详情页权限一致，避免仅有 detail 无 list 时表格一直加载）
      */
-    @RequiresPermissions("delivery:delivery:list")
+    @RequiresPermissions("delivery:delivery:detail")
     @PostMapping("/detailList")
     @ResponseBody
     public TableDataInfo detailList(Long deliveryId)

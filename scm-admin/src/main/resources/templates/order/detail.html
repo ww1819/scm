@@ -263,8 +263,10 @@
 		            $('#' + tid).bootstrapTable({
 		                url: prefix + '/deliveriesByOrder/' + orderId,
 		                method: 'post',
+		                contentType: "application/x-www-form-urlencoded",
 		                pagination: false,
-		                responseHandler: $.table.responseHandler,
+		                sidePagination: 'server',
+		                responseHandler: ruoyiTableData,
 		                columns: [
 		                    { field: 'deliveryNo', title: '配送单号' },
 		                    { field: 'auditStatus', title: '审核状态', formatter: function(v) {
@@ -296,9 +298,11 @@
 		            $('#' + tid).bootstrapTable({
 		                url: prefix + '/detailDeliveryTraces',
 		                method: 'post',
+		                contentType: "application/x-www-form-urlencoded",
 		                queryParams: { orderDetailId: detailId },
 		                pagination: false,
-		                responseHandler: $.table.responseHandler,
+		                sidePagination: 'server',
+		                responseHandler: ruoyiTableData,
 		                columns: [
 		                    { field: 'deliveryNo', title: '配送单号' },
 		                    { field: 'deliveryQuantity', title: '本行配送数量', formatter: fmtQty2 },

@@ -55,6 +55,13 @@
             <artifactId>scm-framework</artifactId>
         </dependency>
 
+        <!-- 系统业务模块：Controller 直接使用 domain（如 ZsTpOrder），须显式依赖。
+             否则在 spring-boot-devtools 的 RestartClassLoader 下可能出现 ClassNotFoundException: ZsTpOrder -->
+        <dependency>
+            <groupId>com.scm</groupId>
+            <artifactId>scm-system</artifactId>
+        </dependency>
+
         <!-- 定时任务-->
         <dependency>
             <groupId>com.scm</groupId>

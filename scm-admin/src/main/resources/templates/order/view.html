@@ -109,8 +109,10 @@
 					$("#" + tid).bootstrapTable({
 						url: prefix + "/deliveriesByOrder/" + orderId,
 						method: "post",
+						contentType: "application/x-www-form-urlencoded",
 						pagination: false,
-						responseHandler: $.table.responseHandler,
+						sidePagination: "server",
+						responseHandler: ruoyiTableData,
 						columns: [
 							{ field: "deliveryNo", title: "配送单号" },
 							{ field: "auditStatus", title: "审核状态", formatter: function (v) {

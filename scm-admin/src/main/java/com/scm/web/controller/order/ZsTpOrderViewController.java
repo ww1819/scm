@@ -39,7 +39,7 @@ public class ZsTpOrderViewController extends BaseController
         return prefix + "/detail";
     }
 
-    @RequiresPermissions("order:order:list")
+    @RequiresPermissions("order:order:view")
     @PostMapping("/detailList")
     @ResponseBody
     public TableDataInfo detailList(String zsOrderId)
@@ -48,7 +48,7 @@ public class ZsTpOrderViewController extends BaseController
         return getDataTable(list);
     }
 
-    @RequiresPermissions("order:order:list")
+    @RequiresPermissions("order:order:view")
     @PostMapping("/deliveriesByZs/{zsOrderId}")
     @ResponseBody
     public TableDataInfo deliveriesByZs(@PathVariable("zsOrderId") String zsOrderId)
@@ -57,7 +57,7 @@ public class ZsTpOrderViewController extends BaseController
         return getDataTable(list);
     }
 
-    @RequiresPermissions("order:order:list")
+    @RequiresPermissions("order:order:view")
     @PostMapping("/detailDeliveryTraces")
     @ResponseBody
     public TableDataInfo detailDeliveryTraces(String zsOrderDetailId)
