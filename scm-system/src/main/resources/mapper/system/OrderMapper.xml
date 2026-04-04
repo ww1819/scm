@@ -71,6 +71,47 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="params.endTime != null and params.endTime != ''">
                 AND date(o.order_date) &lt;= date(#{params.endTime})
             </if>
+            <if test="params != null and params.deliveryFilter != null and params.deliveryFilter == 'none'">
+                AND NOT EXISTS (
+                    SELECT 1 FROM scm_order_detail od
+                    WHERE od.order_id = o.order_id
+                    AND IFNULL(od.order_quantity, 0) &gt; 0
+                    AND IFNULL(od.remaining_quantity, 0) &lt; IFNULL(od.order_quantity, 0)
+                )
+            </if>
+            <if test="params != null and params.deliveryFilter != null and params.deliveryFilter == 'partial'">
+                AND (
+                    EXISTS (
+                        SELECT 1 FROM scm_order_detail od
+                        WHERE od.order_id = o.order_id
+                        AND IFNULL(od.order_quantity, 0) &gt; 0
+                        AND IFNULL(od.remaining_quantity, 0) &gt; 0
+                        AND IFNULL(od.remaining_quantity, 0) &lt; IFNULL(od.order_quantity, 0)
+                    )
+                    OR (
+                        EXISTS (
+                            SELECT 1 FROM scm_order_detail od1
+                            WHERE od1.order_id = o.order_id AND IFNULL(od1.order_quantity, 0) &gt; 0 AND IFNULL(od1.remaining_quantity, 0) = 0
+                        )
+                        AND EXISTS (
+                            SELECT 1 FROM scm_order_detail od2
+                            WHERE od2.order_id = o.order_id AND IFNULL(od2.order_quantity, 0) &gt; 0 AND IFNULL(od2.remaining_quantity, 0) &gt; 0
+                        )
+                    )
+                )
+            </if>
+            <if test="params != null and params.deliveryFilter != null and params.deliveryFilter == 'done'">
+                AND NOT EXISTS (
+                    SELECT 1 FROM scm_order_detail od
+                    WHERE od.order_id = o.order_id
+                    AND IFNULL(od.order_quantity, 0) &gt; 0
+                    AND IFNULL(od.remaining_quantity, 0) &gt; 0
+                )
+                AND EXISTS (
+                    SELECT 1 FROM scm_order_detail od2
+                    WHERE od2.order_id = o.order_id AND IFNULL(od2.order_quantity, 0) &gt; 0
+                )
+            </if>
         </where>
         order by o.order_date desc, o.create_time desc
     </select>

@@ -19,6 +19,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="deliveryQuantity" column="delivery_quantity"  />
         <result property="price"           column="price"                />
         <result property="amount"          column="amount"              />
+        <result property="packCoefficient" column="pack_coefficient"      />
         <result property="batchNo"         column="batch_no"            />
         <result property="mainBarcode"     column="main_barcode"        />
         <result property="auxBarcode"      column="aux_barcode"         />
@@ -27,16 +28,48 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="manufacturer"     column="manufacturer_name"   />
         <result property="registerNo"       column="register_no"         />
         <result property="deliveryNo"       column="delivery_no"         />
+        <result property="deliveryAuditStatus" column="delivery_audit_status"/>
+        <result property="refOrderId"      column="ref_order_id"/>
+        <result property="refOrderNo"      column="ref_order_no"/>
+        <result property="refZsOrderId"    column="ref_zs_order_id"/>
+        <result property="refOrderLineQty" column="ref_order_line_qty"/>
+        <result property="refOrderMaterialCode" column="ref_order_material_code"/>
+        <result property="refOrderMaterialName" column="ref_order_material_name"/>
+        <result property="refZsLineQty"    column="ref_zs_line_qty"/>
+        <result property="refZsMaterialCode" column="ref_zs_material_code"/>
+        <result property="refZsMaterialName" column="ref_zs_material_name"/>
     </resultMap>
     
     <sql id="selectDeliveryDetailVo">
         select d.detail_id, d.delivery_id, d.order_detail_id, d.zs_order_detail_id, d.material_id, d.material_code,
                d.material_name, d.specification, d.model, d.unit, d.remaining_quantity,
-               d.delivery_quantity, d.price, d.amount, d.batch_no, d.main_barcode, d.aux_barcode, d.production_date,
+               d.delivery_quantity, d.price, d.amount, d.pack_coefficient, d.batch_no, d.main_barcode, d.aux_barcode, d.production_date,
                d.expire_date, d.manufacturer_name, d.register_no,
                del.delivery_no
         from scm_delivery_detail d
         left join scm_delivery del on d.delivery_id = del.delivery_id
+    </sql>
+
+    <sql id="selectDeliveryDetailVoEnriched">
+        select d.detail_id, d.delivery_id, d.order_detail_id, d.zs_order_detail_id, d.material_id, d.material_code,
+               d.material_name, d.specification, d.model, d.unit, d.remaining_quantity,
+               d.delivery_quantity, d.price, d.amount, d.pack_coefficient, d.batch_no, d.main_barcode, d.aux_barcode, d.production_date,
+               d.expire_date, d.manufacturer_name, d.register_no,
+               del.delivery_no,
+               del.audit_status as delivery_audit_status,
+               del.order_id as ref_order_id,
+               del.order_no as ref_order_no,
+               del.zs_order_id as ref_zs_order_id,
+               sod.order_quantity as ref_order_line_qty,
+               sod.material_code as ref_order_material_code,
+               sod.material_name as ref_order_material_name,
+               ztd.sl as ref_zs_line_qty,
+               ztd.code as ref_zs_material_code,
+               ztd.name as ref_zs_material_name
+        from scm_delivery_detail d
+        left join scm_delivery del on d.delivery_id = del.delivery_id
+        left join scm_order_detail sod on sod.detail_id = d.order_detail_id
+        left join zs_tp_order_detail ztd on ztd.id = d.zs_order_detail_id
     </sql>
     
     <select id="selectDeliveryDetailList" parameterType="DeliveryDetail" resultMap="DeliveryDetailResult">
@@ -62,7 +95,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
     
     <select id="selectDeliveryDetailListByDeliveryId" parameterType="Long" resultMap="DeliveryDetailResult">
-        <include refid="selectDeliveryDetailVo"/>
+        <include refid="selectDeliveryDetailVoEnriched"/>
         where d.delivery_id = #{deliveryId}
         order by d.detail_id
     </select>
@@ -87,6 +120,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="deliveryQuantity != null">delivery_quantity,</if>
             <if test="price != null">price,</if>
             <if test="amount != null">amount,</if>
+            <if test="packCoefficient != null">pack_coefficient,</if>
             <if test="batchNo != null and batchNo != ''">batch_no,</if>
             <if test="mainBarcode != null and mainBarcode != ''">main_barcode,</if>
             <if test="auxBarcode != null and auxBarcode != ''">aux_barcode,</if>
@@ -109,6 +143,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="deliveryQuantity != null">#{deliveryQuantity},</if>
             <if test="price != null">#{price},</if>
             <if test="amount != null">#{amount},</if>
+            <if test="packCoefficient != null">#{packCoefficient},</if>
             <if test="batchNo != null and batchNo != ''">#{batchNo},</if>
             <if test="mainBarcode != null and mainBarcode != ''">#{mainBarcode},</if>
             <if test="auxBarcode != null and auxBarcode != ''">#{auxBarcode},</if>
@@ -123,12 +158,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <insert id="batchInsertDeliveryDetail" parameterType="java.util.List">
         insert into scm_delivery_detail(delivery_id, order_detail_id, material_id, zs_order_detail_id, material_code,
                material_name, specification, model, unit, remaining_quantity, delivery_quantity,
-               price, amount, batch_no, main_barcode, aux_barcode, production_date, expire_date, manufacturer_name, register_no, create_time)
+               price, amount, pack_coefficient, batch_no, main_barcode, aux_barcode, production_date, expire_date, manufacturer_name, register_no, create_time)
         values
         <foreach collection="list" item="item" separator=",">
             (#{item.deliveryId}, #{item.orderDetailId}, #{item.materialId}, #{item.zsOrderDetailId}, #{item.materialCode},
              #{item.materialName}, #{item.specification}, #{item.model}, #{item.unit},
-             #{item.remainingQuantity}, #{item.deliveryQuantity}, #{item.price}, #{item.amount},
+             #{item.remainingQuantity}, #{item.deliveryQuantity}, #{item.price}, #{item.amount}, #{item.packCoefficient},
              #{item.batchNo}, #{item.mainBarcode}, #{item.auxBarcode}, #{item.productionDate}, #{item.expireDate}, #{item.manufacturer}, #{item.registerNo}, sysdate())
         </foreach>
     </insert>
@@ -148,6 +183,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="deliveryQuantity != null">delivery_quantity = #{deliveryQuantity},</if>
             <if test="price != null">price = #{price},</if>
             <if test="amount != null">amount = #{amount},</if>
+            <if test="packCoefficient != null">pack_coefficient = #{packCoefficient},</if>
             <if test="batchNo != null and batchNo != ''">batch_no = #{batchNo},</if>
             <if test="mainBarcode != null">main_barcode = #{mainBarcode},</if>
             <if test="auxBarcode != null">aux_barcode = #{auxBarcode},</if>

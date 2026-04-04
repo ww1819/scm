@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.OrderDeliveryTraceMapper">
+
+    <resultMap type="com.scm.system.domain.Delivery" id="TraceDeliveryResult">
+        <id     property="deliveryId"         column="delivery_id"/>
+        <result property="deliveryNo"        column="delivery_no"/>
+        <result property="hospitalId"       column="hospital_id"/>
+        <result property="hospitalName"     column="hospital_name"/>
+        <result property="warehouse"        column="warehouse_name"/>
+        <result property="orderId"          column="order_id"/>
+        <result property="orderNo"         column="order_no"/>
+        <result property="supplierId"       column="supplier_id"/>
+        <result property="supplierName"     column="supplier_name"/>
+        <result property="deliveryAmount"   column="delivery_amount"/>
+        <result property="deliveryStatus"   column="delivery_status"/>
+        <result property="deliveryPerson"   column="delivery_person"/>
+        <result property="deliveryAddress"  column="delivery_address"/>
+        <result property="expectedDeliveryDate" column="expected_delivery_date"/>
+        <result property="invoiceNo"       column="invoice_no"/>
+        <result property="invoiceAmount"   column="invoice_amount"/>
+        <result property="invoiceDate"     column="invoice_date"/>
+        <result property="orderDate"       column="order_date"/>
+        <result property="zsOrderId"       column="zs_order_id"/>
+        <result property="auditStatus"     column="audit_status"/>
+        <result property="auditBy"         column="audit_by"/>
+        <result property="auditTime"       column="audit_time"/>
+        <result property="auditRemark"     column="audit_remark"/>
+        <result property="createBy"        column="create_by"/>
+        <result property="createTime"      column="create_time"/>
+        <result property="updateBy"        column="update_by"/>
+        <result property="updateTime"      column="update_time"/>
+        <result property="remark"          column="remark"/>
+    </resultMap>
+
+    <resultMap type="com.scm.system.domain.vo.OrderLineDeliveryQtyVo" id="OrderLineQtyResult">
+        <result property="lineKey" column="line_key"/>
+        <result property="auditedQty" column="audited_qty"/>
+        <result property="pendingQty" column="pending_qty"/>
+        <result property="rejectedQty" column="rejected_qty"/>
+    </resultMap>
+
+    <resultMap type="com.scm.system.domain.vo.OrderDetailDeliveryTraceVo" id="DetailTraceResult">
+        <result property="deliveryId" column="delivery_id"/>
+        <result property="deliveryNo" column="delivery_no"/>
+        <result property="deliveryDetailId" column="delivery_detail_id"/>
+        <result property="auditStatus" column="audit_status"/>
+        <result property="deliveryStatus" column="delivery_status"/>
+        <result property="deliveryQuantity" column="delivery_quantity"/>
+    </resultMap>
+
+    <sql id="selectDeliveryVoTrace">
+        select d.delivery_id, d.delivery_no, d.hospital_id, d.warehouse_name, d.order_id,
+               d.order_no, d.zs_order_id,
+               d.supplier_id, d.delivery_amount, d.delivery_status, d.delivery_person,
+               d.delivery_address, d.expected_delivery_date, d.invoice_no, d.invoice_amount,
+               d.invoice_date, d.order_date,
+               d.audit_status, d.audit_by, d.audit_time, d.audit_remark,
+               d.remark, d.create_by, d.create_time,
+               d.update_by, d.update_time,
+               h.hospital_name, s.company_name as supplier_name
+        from scm_delivery d
+        left join scm_hospital h on d.hospital_id = h.hospital_id
+        left join scm_supplier s on d.supplier_id = s.supplier_id
+    </sql>
+
+    <select id="selectScmOrderLineDeliveryQtyByOrderId" parameterType="long" resultMap="OrderLineQtyResult">
+        select r.order_detail_id as line_key,
+               sum(case when d.audit_status = '1' then ifnull(dd.delivery_quantity, 0) else 0 end) as audited_qty,
+               sum(case when d.audit_status is null or d.audit_status = '0' then ifnull(dd.delivery_quantity, 0) else 0 end) as pending_qty,
+               sum(case when d.audit_status = '2' then ifnull(dd.delivery_quantity, 0) else 0 end) as rejected_qty
+        from scm_order_detail_delivery_rel r
+        inner join scm_delivery_detail dd on dd.detail_id = r.delivery_detail_id
+        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
+        where r.order_id = cast(#{orderId} as char)
+        group by r.order_detail_id
+    </select>
+
+    <select id="selectZsOrderLineDeliveryQtyByZsOrderId" parameterType="String" resultMap="OrderLineQtyResult">
+        select r.order_detail_id as line_key,
+               sum(case when d.audit_status = '1' then ifnull(dd.delivery_quantity, 0) else 0 end) as audited_qty,
+               sum(case when d.audit_status is null or d.audit_status = '0' then ifnull(dd.delivery_quantity, 0) else 0 end) as pending_qty,
+               sum(case when d.audit_status = '2' then ifnull(dd.delivery_quantity, 0) else 0 end) as rejected_qty
+        from zs_tp_order_detail_delivery_rel r
+        inner join scm_delivery_detail dd on dd.detail_id = r.delivery_detail_id
+        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
+        where r.order_id = #{zsOrderId}
+        group by r.order_detail_id
+    </select>
+
+    <select id="selectDeliveriesByOrderId" parameterType="long" resultMap="TraceDeliveryResult">
+        <include refid="selectDeliveryVoTrace"/>
+        where d.order_id = #{orderId}
+          and (d.del_flag is null or d.del_flag = '0')
+        order by d.create_time desc
+    </select>
+
+    <select id="selectDeliveriesByZsOrderId" parameterType="String" resultMap="TraceDeliveryResult">
+        <include refid="selectDeliveryVoTrace"/>
+        where d.zs_order_id = #{zsOrderId}
+          and (d.del_flag is null or d.del_flag = '0')
+        order by d.create_time desc
+    </select>
+
+    <select id="selectTracesByScmOrderDetailId" parameterType="long" resultMap="DetailTraceResult">
+        select d.delivery_id, d.delivery_no, dd.detail_id as delivery_detail_id,
+               d.audit_status, d.delivery_status, dd.delivery_quantity
+        from scm_order_detail_delivery_rel r
+        inner join scm_delivery_detail dd on dd.detail_id = r.delivery_detail_id
+        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
+        where r.order_detail_id = cast(#{orderDetailId} as char)
+        order by d.create_time desc, dd.detail_id
+    </select>
+
+    <select id="selectTracesByZsOrderDetailId" parameterType="String" resultMap="DetailTraceResult">
+        select d.delivery_id, d.delivery_no, dd.detail_id as delivery_detail_id,
+               d.audit_status, d.delivery_status, dd.delivery_quantity
+        from zs_tp_order_detail_delivery_rel r
+        inner join scm_delivery_detail dd on dd.detail_id = r.delivery_detail_id
+        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
+        where r.order_detail_id = #{zsOrderDetailId}
+        order by d.create_time desc, dd.detail_id
+    </select>
+</mapper>

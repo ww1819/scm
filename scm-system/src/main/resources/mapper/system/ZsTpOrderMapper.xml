@@ -49,21 +49,68 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         from zs_tp_order
     </sql>
 
+    <sql id="selectZsTpOrderVoAliased">
+        select z.id, z.third_party_pk, z.customer, z.sheet_je, z.dh, z.supno, z.sup, z.ckno, z.ck, z.ksbh, z.ksmc, z.bz, z.create_time
+        from zs_tp_order z
+    </sql>
+
     <select id="selectZsTpOrderList" parameterType="com.scm.system.domain.ZsTpOrder" resultMap="ZsTpOrderResult">
-        <include refid="selectZsTpOrderVo"/>
+        <include refid="selectZsTpOrderVoAliased"/>
         <where>
-            del_flag = '0'
+            z.del_flag = '0'
             <if test="dh != null and dh != ''">
-                and dh like concat('%', #{dh}, '%')
+                and z.dh like concat('%', #{dh}, '%')
             </if>
             <if test="customer != null and customer != ''">
-                and customer like concat('%', #{customer}, '%')
+                and z.customer like concat('%', #{customer}, '%')
             </if>
             <if test="ksmc != null and ksmc != ''">
-                and ksmc like concat('%', #{ksmc}, '%')
+                and z.ksmc like concat('%', #{ksmc}, '%')
+            </if>
+            <if test="params != null and params.deliveryFilter != null and params.deliveryFilter == 'none'">
+                and not exists (
+                    select 1 from scm_delivery_detail dd
+                    inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
+                    inner join zs_tp_order_detail l on l.id = dd.zs_order_detail_id
+                    where l.order_id = z.id and l.del_flag = '0'
+                )
+            </if>
+            <if test="params != null and params.deliveryFilter != null and params.deliveryFilter == 'partial'">
+                and exists (
+                    select 1 from scm_delivery_detail dd
+                    inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
+                    inner join zs_tp_order_detail l on l.id = dd.zs_order_detail_id
+                    where l.order_id = z.id and l.del_flag = '0'
+                )
+                and exists (
+                    select 1 from zs_tp_order_detail l
+                    where l.order_id = z.id and l.del_flag = '0' and ifnull(l.sl, 0) &gt; 0
+                    and (
+                        select coalesce(sum(dd.delivery_quantity), 0)
+                        from scm_delivery_detail dd
+                        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
+                        where dd.zs_order_detail_id = l.id
+                    ) &lt; ifnull(l.sl, 0)
+                )
+            </if>
+            <if test="params != null and params.deliveryFilter != null and params.deliveryFilter == 'done'">
+                and not exists (
+                    select 1 from zs_tp_order_detail l
+                    where l.order_id = z.id and l.del_flag = '0' and ifnull(l.sl, 0) &gt; 0
+                    and (
+                        select coalesce(sum(dd.delivery_quantity), 0)
+                        from scm_delivery_detail dd
+                        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
+                        where dd.zs_order_detail_id = l.id
+                    ) &lt; ifnull(l.sl, 0)
+                )
+                and exists (
+                    select 1 from zs_tp_order_detail l2
+                    where l2.order_id = z.id and l2.del_flag = '0' and ifnull(l2.sl, 0) &gt; 0
+                )
             </if>
         </where>
-        order by create_time desc
+        order by z.create_time desc
     </select>
 
     <select id="selectZsTpOrderById" parameterType="String" resultMap="ZsTpOrderResult">

@@ -21,6 +21,14 @@
 								科室名称：<input type="text" name="ksmc"/>
 							</li>
 							<li>
+								配送进度：<select name="params[deliveryFilter]">
+									<option value="">全部</option>
+									<option value="none">未配送</option>
+									<option value="partial">部分配送</option>
+									<option value="done">已配送</option>
+								</select>
+							</li>
+							<li>
 								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
 								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetZs()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
 							</li>

@@ -346,6 +346,7 @@ CREATE TABLE IF NOT EXISTS `scm_order_detail` (
   `order_quantity` decimal(18,2) DEFAULT 0 COMMENT '订货数量',
   `remaining_quantity` decimal(18,2) DEFAULT 0 COMMENT '剩余待配送数',
   `amount` decimal(18,2) DEFAULT 0 COMMENT '金额',
+  `pack_coefficient` decimal(18,6) DEFAULT NULL COMMENT '打包系数',
   `manufacturer_id` bigint(20) DEFAULT NULL COMMENT '厂家ID',
   `manufacturer_name` varchar(200) DEFAULT '' COMMENT '厂家名称',
   `register_no` varchar(100) DEFAULT '' COMMENT '注册证号',
@@ -377,6 +378,17 @@ CREATE TABLE IF NOT EXISTS `scm_delivery` (
   `invoice_date` date DEFAULT NULL COMMENT '发票日期',
   `order_date` date DEFAULT NULL COMMENT '订单日期',
   `zs_order_id` varchar(36) DEFAULT NULL COMMENT '中设订单主键 zs_tp_order.id',
+  `src_order_supplier_id` varchar(128) DEFAULT '' COMMENT '订单供应商ID(字符串快照)',
+  `src_order_supplier_name` varchar(256) DEFAULT '' COMMENT '订单供应商名称',
+  `src_order_warehouse_id` varchar(128) DEFAULT '' COMMENT '订单仓库ID(字符串快照)',
+  `src_order_warehouse_name` varchar(256) DEFAULT '' COMMENT '订单仓库名称',
+  `src_order_dept_id` varchar(128) DEFAULT '' COMMENT '订单科室ID(字符串快照)',
+  `src_order_dept_name` varchar(256) DEFAULT '' COMMENT '订单科室名称',
+  `zs_customer_id` varchar(128) DEFAULT '' COMMENT '中设客户ID(zs_tp_order.customer)',
+  `audit_status` char(1) DEFAULT '0' COMMENT '审核状态（0待审核 1已审核 2已拒绝）',
+  `audit_by` varchar(64) DEFAULT '' COMMENT '审核人',
+  `audit_time` datetime DEFAULT NULL COMMENT '审核时间',
+  `audit_remark` varchar(500) DEFAULT '' COMMENT '审核备注',
   `remark` varchar(500) DEFAULT '' COMMENT '备注',
   `create_by` varchar(64) DEFAULT '' COMMENT '制单人',
   `create_time` datetime DEFAULT NULL COMMENT '制单日期',
@@ -405,6 +417,7 @@ CREATE TABLE IF NOT EXISTS `scm_delivery_detail` (
   `delivery_quantity` decimal(18,2) DEFAULT 0 COMMENT '配送数量',
   `price` decimal(18,2) DEFAULT 0 COMMENT '单价',
   `amount` decimal(18,2) DEFAULT 0 COMMENT '金额',
+  `pack_coefficient` decimal(18,6) DEFAULT NULL COMMENT '打包系数',
   `batch_no` varchar(50) DEFAULT '' COMMENT '批号',
   `main_barcode` varchar(128) DEFAULT '' COMMENT '主条码',
   `aux_barcode` varchar(128) DEFAULT '' COMMENT '辅条码',
@@ -1137,4 +1150,38 @@ CREATE TABLE IF NOT EXISTS zs_tp_order_detail (
   KEY idx_zs_tp_detail_order (order_id),
   KEY idx_zs_tp_detail_del (del_flag)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='ZS第三方推送订单明细';
+/
+CREATE TABLE IF NOT EXISTS `scm_order_detail_delivery_rel` (
+  `id`                  VARCHAR(32)  NOT NULL COMMENT '主键UUID7',
+  `order_detail_id`     VARCHAR(64)  NOT NULL COMMENT '订单明细ID',
+  `order_id`            VARCHAR(64)  NOT NULL COMMENT '订单ID',
+  `order_no`            VARCHAR(128) DEFAULT '' COMMENT '订单号',
+  `delivery_id`         VARCHAR(64)  NOT NULL COMMENT '配送单ID',
+  `delivery_no`         VARCHAR(128) DEFAULT '' COMMENT '配送单号',
+  `delivery_detail_id`  VARCHAR(64)  NOT NULL COMMENT '配送单明细ID',
+  `create_time`         VARCHAR(32)  DEFAULT NULL COMMENT '添加时间',
+  `create_by`           VARCHAR(64)  DEFAULT NULL COMMENT '添加人ID',
+  `tenant_id`           VARCHAR(64)  DEFAULT NULL COMMENT '租户ID',
+  PRIMARY KEY (`id`),
+  KEY `idx_soddr_order_detail` (`order_detail_id`),
+  KEY `idx_soddr_order` (`order_id`),
+  KEY `idx_soddr_delivery` (`delivery_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='我方订单明细与配送单明细关联';
+/
+CREATE TABLE IF NOT EXISTS `zs_tp_order_detail_delivery_rel` (
+  `id`                  VARCHAR(32)  NOT NULL COMMENT '主键UUID7',
+  `order_detail_id`     VARCHAR(64)  NOT NULL COMMENT '中设订单明细ID',
+  `order_id`            VARCHAR(64)  NOT NULL COMMENT '中设订单ID',
+  `order_no`            VARCHAR(128) DEFAULT '' COMMENT '订单号(DH)',
+  `delivery_id`         VARCHAR(64)  NOT NULL COMMENT '配送单ID',
+  `delivery_no`         VARCHAR(128) DEFAULT '' COMMENT '配送单号',
+  `delivery_detail_id`  VARCHAR(64)  NOT NULL COMMENT '配送单明细ID',
+  `create_time`         VARCHAR(32)  DEFAULT NULL COMMENT '添加时间',
+  `create_by`           VARCHAR(64)  DEFAULT NULL COMMENT '添加人ID',
+  `tenant_id`           VARCHAR(64)  DEFAULT NULL COMMENT '租户ID',
+  PRIMARY KEY (`id`),
+  KEY `idx_zsoddr_order_detail` (`order_detail_id`),
+  KEY `idx_zsoddr_order` (`order_id`),
+  KEY `idx_zsoddr_delivery` (`delivery_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='中设订单明细与配送单明细关联';
 /

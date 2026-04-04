@@ -197,6 +197,7 @@ public class DeliveryController extends BaseController
     @GetMapping("/edit/{deliveryId}")
     public String edit(@PathVariable("deliveryId") Long deliveryId, ModelMap mmap)
     {
+        deliveryService.assertDeliveryEditable(deliveryId);
         Delivery delivery = deliveryService.selectDeliveryById(deliveryId);
         mmap.put("delivery", delivery);
         // 查询所有医院列表
@@ -277,7 +278,7 @@ public class DeliveryController extends BaseController
         int successCount = 0;
         for (String deliveryId : deliveryIds)
         {
-            if (deliveryService.auditDelivery(Long.parseLong(deliveryId)) > 0)
+            if (deliveryService.auditDelivery(Long.parseLong(deliveryId), getLoginName()) > 0)
             {
                 successCount++;
             }

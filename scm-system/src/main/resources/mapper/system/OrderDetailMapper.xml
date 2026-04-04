@@ -17,6 +17,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="orderQuantity"    column="order_quantity"     />
         <result property="remainingQuantity" column="remaining_quantity" />
         <result property="amount"          column="amount"              />
+        <result property="packCoefficient" column="pack_coefficient"    />
         <result property="manufacturer"    column="manufacturer_name"  />
         <result property="registerNo"      column="register_no"        />
     </resultMap>
@@ -24,7 +25,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <sql id="selectOrderDetailVo">
         select d.detail_id, d.order_id, d.material_id, d.material_code, d.material_name,
                d.specification, d.model, d.unit, d.purchase_price, d.order_quantity,
-               d.remaining_quantity, d.amount, d.manufacturer_name, d.register_no
+               d.remaining_quantity, d.amount, d.pack_coefficient, d.manufacturer_name, d.register_no
         from scm_order_detail d
     </sql>
     
@@ -65,6 +66,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="orderQuantity != null">order_quantity,</if>
             <if test="remainingQuantity != null">remaining_quantity,</if>
             <if test="amount != null">amount,</if>
+            <if test="packCoefficient != null">pack_coefficient,</if>
             <if test="manufacturer != null and manufacturer != ''">manufacturer_name,</if>
             <if test="registerNo != null and registerNo != ''">register_no,</if>
             create_time
@@ -80,6 +82,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="orderQuantity != null">#{orderQuantity},</if>
             <if test="remainingQuantity != null">#{remainingQuantity},</if>
             <if test="amount != null">#{amount},</if>
+            <if test="packCoefficient != null">#{packCoefficient},</if>
             <if test="manufacturer != null and manufacturer != ''">#{manufacturer},</if>
             <if test="registerNo != null and registerNo != ''">#{registerNo},</if>
             sysdate()
@@ -89,13 +92,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <insert id="batchInsertOrderDetail" parameterType="java.util.List">
         insert into scm_order_detail(order_id, material_id, material_code, material_name,
                specification, model, unit, purchase_price, order_quantity, remaining_quantity,
-               amount, manufacturer_name, register_no, create_time)
+               amount, pack_coefficient, manufacturer_name, register_no, create_time)
         values
         <foreach collection="list" item="item" separator=",">
             (#{item.orderId}, #{item.materialId}, #{item.materialCode}, #{item.materialName},
              #{item.specification}, #{item.model}, #{item.unit}, #{item.purchasePrice},
              #{item.orderQuantity}, #{item.remainingQuantity}, #{item.amount},
-             #{item.manufacturer}, #{item.registerNo}, sysdate())
+             #{item.packCoefficient}, #{item.manufacturer}, #{item.registerNo}, sysdate())
         </foreach>
     </insert>
     
@@ -113,6 +116,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="orderQuantity != null">order_quantity = #{orderQuantity},</if>
             <if test="remainingQuantity != null">remaining_quantity = #{remainingQuantity},</if>
             <if test="amount != null">amount = #{amount},</if>
+            <if test="packCoefficient != null">pack_coefficient = #{packCoefficient},</if>
             <if test="manufacturer != null and manufacturer != ''">manufacturer_name = #{manufacturer},</if>
             <if test="registerNo != null and registerNo != ''">register_no = #{registerNo},</if>
         </set>

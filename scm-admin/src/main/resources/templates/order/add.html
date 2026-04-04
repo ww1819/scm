@@ -233,6 +233,16 @@
 	                }
 	            },
 	            {
+	                field: 'packCoefficient',
+	                title: '打包系数',
+	                align: 'right',
+	                width: 100,
+	                formatter: function(value, row, index) {
+	                    var v = (value != null && value !== '') ? String(value) : '';
+	                    return '<input type="text" class="form-control input-sm" style="text-align:right;width:100%;" value="' + v.replace(/"/g, '&quot;') + '" onblur="updateOrderPackCoef(this,' + index + ')" />';
+	                }
+	            },
+	            {
 	                field: 'remainingQuantity',
 	                title: '剩余待配送数',
 	                align: 'right',
@@ -252,6 +262,20 @@
         	onkeyup: false,
             focusCleanup: true
         });
+        
+        function updateOrderPackCoef(input, index) {
+            var data = $('#bootstrap-table').bootstrapTable('getData');
+            if (!data || !data[index]) {
+                return;
+            }
+            var raw = $(input).val().trim();
+            if (raw === '') {
+                data[index].packCoefficient = null;
+                return;
+            }
+            var n = parseFloat(raw);
+            data[index].packCoefficient = isNaN(n) ? null : n;
+        }
         
         function submitHandler() {
 	        if ($.validate.form()) {

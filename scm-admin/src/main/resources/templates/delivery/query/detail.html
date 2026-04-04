@@ -119,6 +119,17 @@
 		            }
 		        },
 		        {
+		            field: 'packCoefficient',
+		            title: '打包系数',
+		            sortable: true,
+		            formatter: function(value, row, index) {
+		                if (value != null) {
+		                    return parseFloat(value).toString();
+		                }
+		                return '-';
+		            }
+		        },
+		        {
 		            field: 'batchNo',
 		            title: '批号',
 		            width: 200,

@@ -17,10 +17,12 @@ import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.enums.BusinessType;
 import com.scm.common.utils.poi.ExcelUtil;
+import com.scm.system.domain.Delivery;
 import com.scm.system.domain.Hospital;
 import com.scm.system.domain.Order;
 import com.scm.system.domain.OrderDetail;
 import com.scm.system.domain.Supplier;
+import com.scm.system.service.IDeliveryService;
 import com.scm.system.service.IHospitalService;
 import com.scm.system.service.IOrderService;
 import com.scm.system.service.ISupplierService;
@@ -47,6 +49,9 @@ public class OrderController extends BaseController
     
     @Autowired
     private IHospitalService hospitalService;
+
+    @Autowired
+    private IDeliveryService deliveryService;
 
     @RequiresPermissions("order:order:view")
     @GetMapping()
@@ -270,6 +275,29 @@ public class OrderController extends BaseController
     {
         List<OrderDetail> list = orderService.selectOrderDetailListByOrderId(orderId);
         return getDataTable(list);
+    }
+
+    /**
+     * 本系统订单关联的配送单（用于订单查看页回查）
+     */
+    @RequiresPermissions("order:order:list")
+    @PostMapping("/deliveriesByOrder/{orderId}")
+    @ResponseBody
+    public TableDataInfo deliveriesByOrder(@PathVariable("orderId") Long orderId)
+    {
+        List<Delivery> list = deliveryService.selectDeliveriesByOrderId(orderId);
+        return getDataTable(list);
+    }
+
+    /**
+     * 订单明细行关联的配送明细
+     */
+    @RequiresPermissions("order:order:list")
+    @PostMapping("/detailDeliveryTraces")
+    @ResponseBody
+    public TableDataInfo detailDeliveryTraces(Long orderDetailId)
+    {
+        return getDataTable(deliveryService.selectTracesByScmOrderDetailId(orderDetailId));
     }
 }
 

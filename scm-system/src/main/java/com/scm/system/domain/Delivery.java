@@ -48,6 +48,27 @@ public class Delivery extends BaseEntity
     /** 中设订单主键 zs_tp_order.id（引用中设订单生成配送单时写入） */
     private String zsOrderId;
 
+    /** 订单供应商ID（字符串快照，入库引用） */
+    private String srcOrderSupplierId;
+
+    /** 订单供应商名称 */
+    private String srcOrderSupplierName;
+
+    /** 订单仓库ID（字符串快照） */
+    private String srcOrderWarehouseId;
+
+    /** 订单仓库名称 */
+    private String srcOrderWarehouseName;
+
+    /** 订单科室ID（字符串快照） */
+    private String srcOrderDeptId;
+
+    /** 订单科室名称 */
+    private String srcOrderDeptName;
+
+    /** 中设客户ID（zs_tp_order.customer） */
+    private String zsCustomerId;
+
     /** 供应商ID */
     private Long supplierId;
 
@@ -90,6 +111,21 @@ public class Delivery extends BaseEntity
     /** 订单日期 */
     @Excel(name = "订单日期", width = 30, dateFormat = "yyyy-MM-dd")
     private Date orderDate;
+
+    /** 审核状态（0待审核 1已审核 2已拒绝） */
+    @Excel(name = "审核状态", readConverterExp = "0=待审核,1=已审核,2=已拒绝")
+    private String auditStatus;
+
+    /** 审核人 */
+    @Excel(name = "审核人")
+    private String auditBy;
+
+    /** 审核时间 */
+    @Excel(name = "审核时间", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
+    private Date auditTime;
+
+    /** 审核备注 */
+    private String auditRemark;
 
     /** 配送明细 */
     private List<DeliveryDetail> deliveryDetails;
@@ -164,6 +200,76 @@ public class Delivery extends BaseEntity
     public void setZsOrderId(String zsOrderId)
     {
         this.zsOrderId = zsOrderId;
+    }
+
+    public String getSrcOrderSupplierId()
+    {
+        return srcOrderSupplierId;
+    }
+
+    public void setSrcOrderSupplierId(String srcOrderSupplierId)
+    {
+        this.srcOrderSupplierId = srcOrderSupplierId;
+    }
+
+    public String getSrcOrderSupplierName()
+    {
+        return srcOrderSupplierName;
+    }
+
+    public void setSrcOrderSupplierName(String srcOrderSupplierName)
+    {
+        this.srcOrderSupplierName = srcOrderSupplierName;
+    }
+
+    public String getSrcOrderWarehouseId()
+    {
+        return srcOrderWarehouseId;
+    }
+
+    public void setSrcOrderWarehouseId(String srcOrderWarehouseId)
+    {
+        this.srcOrderWarehouseId = srcOrderWarehouseId;
+    }
+
+    public String getSrcOrderWarehouseName()
+    {
+        return srcOrderWarehouseName;
+    }
+
+    public void setSrcOrderWarehouseName(String srcOrderWarehouseName)
+    {
+        this.srcOrderWarehouseName = srcOrderWarehouseName;
+    }
+
+    public String getSrcOrderDeptId()
+    {
+        return srcOrderDeptId;
+    }
+
+    public void setSrcOrderDeptId(String srcOrderDeptId)
+    {
+        this.srcOrderDeptId = srcOrderDeptId;
+    }
+
+    public String getSrcOrderDeptName()
+    {
+        return srcOrderDeptName;
+    }
+
+    public void setSrcOrderDeptName(String srcOrderDeptName)
+    {
+        this.srcOrderDeptName = srcOrderDeptName;
+    }
+
+    public String getZsCustomerId()
+    {
+        return zsCustomerId;
+    }
+
+    public void setZsCustomerId(String zsCustomerId)
+    {
+        this.zsCustomerId = zsCustomerId;
     }
 
     public Long getSupplierId()
@@ -279,6 +385,46 @@ public class Delivery extends BaseEntity
         this.orderDate = orderDate;
     }
 
+    public String getAuditStatus()
+    {
+        return auditStatus;
+    }
+
+    public void setAuditStatus(String auditStatus)
+    {
+        this.auditStatus = auditStatus;
+    }
+
+    public String getAuditBy()
+    {
+        return auditBy;
+    }
+
+    public void setAuditBy(String auditBy)
+    {
+        this.auditBy = auditBy;
+    }
+
+    public Date getAuditTime()
+    {
+        return auditTime;
+    }
+
+    public void setAuditTime(Date auditTime)
+    {
+        this.auditTime = auditTime;
+    }
+
+    public String getAuditRemark()
+    {
+        return auditRemark;
+    }
+
+    public void setAuditRemark(String auditRemark)
+    {
+        this.auditRemark = auditRemark;
+    }
+
     public Long getDeliveryId()
     {
         return deliveryId;
@@ -309,6 +455,14 @@ public class Delivery extends BaseEntity
             .append("warehouse", getWarehouse())
             .append("orderId", getOrderId())
             .append("orderNo", getOrderNo())
+            .append("zsOrderId", getZsOrderId())
+            .append("srcOrderSupplierId", getSrcOrderSupplierId())
+            .append("srcOrderSupplierName", getSrcOrderSupplierName())
+            .append("srcOrderWarehouseId", getSrcOrderWarehouseId())
+            .append("srcOrderWarehouseName", getSrcOrderWarehouseName())
+            .append("srcOrderDeptId", getSrcOrderDeptId())
+            .append("srcOrderDeptName", getSrcOrderDeptName())
+            .append("zsCustomerId", getZsCustomerId())
             .append("supplierId", getSupplierId())
             .append("supplierName", getSupplierName())
             .append("deliveryAmount", getDeliveryAmount())
@@ -320,6 +474,10 @@ public class Delivery extends BaseEntity
             .append("invoiceAmount", getInvoiceAmount())
             .append("invoiceDate", getInvoiceDate())
             .append("orderDate", getOrderDate())
+            .append("auditStatus", getAuditStatus())
+            .append("auditBy", getAuditBy())
+            .append("auditTime", getAuditTime())
+            .append("auditRemark", getAuditRemark())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())
             .append("updateBy", getUpdateBy())

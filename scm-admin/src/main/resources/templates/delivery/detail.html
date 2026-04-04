@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('配送单详情')" />
+	<th:block th:include="include :: layout-latest-css" />
+</head>
+<body>
+    <div class="main-content">
+        <form id="form-delivery-detail" class="form-horizontal">
+            <input type="hidden" id="deliveryId" th:value="${delivery.deliveryId}"/>
+            <h4 class="form-header h4">基本信息</h4>
+            <div class="row">
+            	<div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">配送单号：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" th:value="${delivery.deliveryNo}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">医院名称：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" th:value="${delivery.hospitalName}" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">供应商名称：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" th:value="${delivery.supplierName}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">配送金额：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" th:value="${delivery.deliveryAmount}" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">审核状态：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" readonly
+                                   th:value="${delivery.auditStatus == '0' ? '待审核' : (delivery.auditStatus == '1' ? '已审核' : (delivery.auditStatus == '2' ? '已拒绝' : '-'))}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">单据状态：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" readonly
+                                   th:value="${delivery.deliveryStatus == '0' ? '未审核' : (delivery.deliveryStatus == '1' ? '已审核' : (delivery.deliveryStatus == '2' ? '已配送' : (delivery.deliveryStatus == '3' ? '已入库' : '-')))}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row" id="row-link-order" style="display:none;">
+                <div class="col-sm-12">
+                    <a class="btn btn-sm btn-default" href="javascript:void(0)" onclick="openOrderDetail(refOrderId)">
+                        <i class="fa fa-file-text-o"></i> 打开本系统订单
+                    </a>
+                </div>
+            </div>
+            <div class="row" id="row-link-zs" style="display:none;">
+                <div class="col-sm-12">
+                    <a class="btn btn-sm btn-default" href="javascript:void(0)" onclick="openZsOrderDetail(refZsOrderIdStr)">
+                        <i class="fa fa-file-text-o"></i> 打开中设订单
+                    </a>
+                </div>
+            </div>
+        </form>
+
+        <div class="row" style="margin-top: 16px;">
+            <div class="col-sm-12">
+                <h4 class="form-header h4">配送明细（含来源订单行）</h4>
+                <div class="table-responsive">
+                    <table id="bootstrap-table"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-offset-5 col-sm-10">
+            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
+        </div>
+    </div>
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script th:inline="javascript">
+		var deliveryId = [[${delivery.deliveryId}]];
+		var prefix = ctx + "delivery/delivery";
+		var refOrderId = /*[[${delivery.orderId}]]*/ null;
+		var refZsOrderIdStr = /*[[${delivery.zsOrderId}]]*/ '';
+
+		$(function() {
+		    if (refOrderId != null) {
+		        $('#row-link-order').show();
+		    }
+		    if (refZsOrderIdStr != null && refZsOrderIdStr !== '') {
+		        $('#row-link-zs').show();
+		    }
+		    $('#bootstrap-table').bootstrapTable({
+		        url: prefix + "/detailList",
+		        method: 'post',
+		        queryParams: function() { return { deliveryId: deliveryId }; },
+		        pagination: false,
+		        search: false,
+		        showRefresh: false,
+		        responseHandler: $.table.responseHandler,
+		        columns: [
+		            { field: 'materialCode', title: '产品编码' },
+		            { field: 'materialName', title: '产品名称' },
+		            { field: 'deliveryQuantity', title: '配送数量', formatter: function(v) { return v != null ? parseFloat(v).toFixed(2) : ''; } },
+		            { field: 'deliveryAuditStatus', title: '配送单审核', formatter: fmtAudit },
+		            { field: 'refOrderNo', title: '本系统订单号', formatter: function(v, row) { return v || (row.refOrderId ? '#' + row.refOrderId : '-'); } },
+		            { field: 'refOrderLineQty', title: '订单行订货数', formatter: fmtDec },
+		            { field: 'refOrderMaterialCode', title: '订单行编码' },
+		            { field: 'refZsOrderId', title: '中设订单ID', formatter: function(v) { return v || '-'; } },
+		            { field: 'refZsLineQty', title: '中设行数量', formatter: fmtDec },
+		            { field: 'refZsMaterialCode', title: '中设编码' }
+		        ]
+		    });
+		});
+
+		function fmtAudit(v) {
+		    var m = { '0': '待审核', '1': '已审核', '2': '已拒绝' };
+		    return m[v] || (v == null ? '-' : v);
+		}
+		function fmtDec(v) {
+		    if (v != null && v !== '') return parseFloat(v).toFixed(2);
+		    return '-';
+		}
+
+		function openOrderDetail(orderId) {
+		    $.modal.openTab('订单详情', ctx + 'order/order/detail/' + orderId);
+		}
+		function openZsOrderDetail(zsOrderId) {
+		    $.modal.openTab('中设订单', ctx + 'order/zstp/detail/' + zsOrderId);
+		}
+	</script>
+</body>
+</html>

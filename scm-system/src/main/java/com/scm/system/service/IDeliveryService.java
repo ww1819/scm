@@ -5,6 +5,8 @@ import com.scm.system.domain.Delivery;
 import com.scm.system.domain.DeliveryDetail;
 import com.scm.system.domain.Order;
 import com.scm.system.domain.ZsTpOrder;
+import com.scm.system.domain.ZsTpOrderDetail;
+import com.scm.system.domain.vo.OrderDetailDeliveryTraceVo;
 import com.scm.system.domain.vo.ZsTpOrderForDeliveryVo;
 
 /**
@@ -47,6 +49,13 @@ public interface IDeliveryService
     public int updateDelivery(Delivery delivery);
 
     /**
+     * 校验配送单是否允许编辑；已审核（含旧数据仅单据状态为已审核的兼容）则抛业务异常
+     *
+     * @param deliveryId 配送单ID
+     */
+    public void assertDeliveryEditable(Long deliveryId);
+
+    /**
      * 批量删除配送单信息
      * 
      * @param ids 需要删除的数据ID
@@ -76,6 +85,11 @@ public interface IDeliveryService
     public List<ZsTpOrder> selectZsTpOrderList(ZsTpOrder query);
 
     /**
+     * 中设订单主表（查看页）
+     */
+    public ZsTpOrder selectZsTpOrderById(String id);
+
+    /**
      * 按主键加载中设订单并映射为配送单草稿数据
      */
     public ZsTpOrderForDeliveryVo selectZsTpOrderForDelivery(String zsOrderId);
@@ -100,8 +114,34 @@ public interface IDeliveryService
      * 审核配送单
      * 
      * @param deliveryId 配送单ID
+     * @param auditBy 审核人（登录名）
      * @return 结果
      */
-    public int auditDelivery(Long deliveryId);
+    public int auditDelivery(Long deliveryId, String auditBy);
+
+    /**
+     * 中设订单明细分页/查看：带配送数量汇总
+     */
+    public List<ZsTpOrderDetail> selectZsTpOrderDetailListForView(String zsOrderId);
+
+    /**
+     * 本系统订单关联的配送单列表
+     */
+    public List<Delivery> selectDeliveriesByOrderId(Long orderId);
+
+    /**
+     * 中设订单关联的配送单列表
+     */
+    public List<Delivery> selectDeliveriesByZsOrderId(String zsOrderId);
+
+    /**
+     * 我方订单明细行关联的配送明细
+     */
+    public List<OrderDetailDeliveryTraceVo> selectTracesByScmOrderDetailId(Long orderDetailId);
+
+    /**
+     * 中设订单明细行关联的配送明细
+     */
+    public List<OrderDetailDeliveryTraceVo> selectTracesByZsOrderDetailId(String zsOrderDetailId);
 }
 

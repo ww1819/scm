@@ -124,6 +124,28 @@ CALL add_table_column('scm_delivery', 'tenant_id', 'varchar(64)', '租户ID', NU
 /
 CALL add_table_column('scm_delivery', 'zs_order_id', 'varchar(36)', '中设订单主键 zs_tp_order.id', NULL);
 /
+CALL add_table_column('scm_delivery', 'src_order_supplier_id', 'varchar(128)', '订单供应商ID(字符串快照)', NULL);
+/
+CALL add_table_column('scm_delivery', 'src_order_supplier_name', 'varchar(256)', '订单供应商名称', NULL);
+/
+CALL add_table_column('scm_delivery', 'src_order_warehouse_id', 'varchar(128)', '订单仓库ID(字符串快照)', NULL);
+/
+CALL add_table_column('scm_delivery', 'src_order_warehouse_name', 'varchar(256)', '订单仓库名称', NULL);
+/
+CALL add_table_column('scm_delivery', 'src_order_dept_id', 'varchar(128)', '订单科室ID(字符串快照)', NULL);
+/
+CALL add_table_column('scm_delivery', 'src_order_dept_name', 'varchar(256)', '订单科室名称', NULL);
+/
+CALL add_table_column('scm_delivery', 'zs_customer_id', 'varchar(128)', '中设客户ID', NULL);
+/
+CALL add_table_column('scm_delivery', 'audit_status', 'char(1)', '审核状态（0待审核 1已审核 2已拒绝）', '0');
+/
+CALL add_table_column('scm_delivery', 'audit_by', 'varchar(64)', '审核人', NULL);
+/
+CALL add_table_column('scm_delivery', 'audit_time', 'datetime', '审核时间', NULL);
+/
+CALL add_table_column('scm_delivery', 'audit_remark', 'varchar(500)', '审核备注', NULL);
+/
 -- scm_delivery_detail
 CALL add_table_column('scm_delivery_detail', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
 /
@@ -138,6 +160,8 @@ CALL add_table_column('scm_delivery_detail', 'zs_order_detail_id', 'varchar(36)'
 CALL add_table_column('scm_delivery_detail', 'main_barcode', 'varchar(128)', '主条码', NULL);
 /
 CALL add_table_column('scm_delivery_detail', 'aux_barcode', 'varchar(128)', '辅条码', NULL);
+/
+CALL add_table_column('scm_delivery_detail', 'pack_coefficient', 'decimal(18,6)', '打包系数', NULL);
 /
 -- scm_delivery_invoice
 CALL add_table_column('scm_delivery_invoice', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
@@ -219,6 +243,8 @@ CALL add_table_column('scm_order_detail', 'del_time', 'datetime', '删除时间'
 CALL add_table_column('scm_order_detail', 'del_by', 'varchar(64)', '删除人', NULL);
 /
 CALL add_table_column('scm_order_detail', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+CALL add_table_column('scm_order_detail', 'pack_coefficient', 'decimal(18,6)', '打包系数', NULL);
 /
 -- scm_product_certificate
 CALL add_table_column('scm_product_certificate', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
@@ -329,4 +355,39 @@ CALL add_table_column('sys_role', 'supplier_id', 'bigint(20)', '供应商ID', NU
 /
 -- scm_tenant_menu_pause：暂停时间（最近一次设为暂停的时间）
 CALL add_table_column('scm_tenant_menu_pause', 'pause_time', 'datetime', '暂停时间', NULL);
+/
+-- 订单明细与配送单明细关联（部分配送，可重复生成配送单）
+CREATE TABLE IF NOT EXISTS `scm_order_detail_delivery_rel` (
+  `id`                  VARCHAR(32)  NOT NULL COMMENT '主键UUID7',
+  `order_detail_id`     VARCHAR(64)  NOT NULL COMMENT '订单明细ID',
+  `order_id`            VARCHAR(64)  NOT NULL COMMENT '订单ID',
+  `order_no`            VARCHAR(128) DEFAULT '' COMMENT '订单号',
+  `delivery_id`         VARCHAR(64)  NOT NULL COMMENT '配送单ID',
+  `delivery_no`         VARCHAR(128) DEFAULT '' COMMENT '配送单号',
+  `delivery_detail_id`  VARCHAR(64)  NOT NULL COMMENT '配送单明细ID',
+  `create_time`         VARCHAR(32)  DEFAULT NULL COMMENT '添加时间',
+  `create_by`           VARCHAR(64)  DEFAULT NULL COMMENT '添加人ID',
+  `tenant_id`           VARCHAR(64)  DEFAULT NULL COMMENT '租户ID',
+  PRIMARY KEY (`id`),
+  KEY `idx_soddr_order_detail` (`order_detail_id`),
+  KEY `idx_soddr_order` (`order_id`),
+  KEY `idx_soddr_delivery` (`delivery_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='我方订单明细与配送单明细关联';
+/
+CREATE TABLE IF NOT EXISTS `zs_tp_order_detail_delivery_rel` (
+  `id`                  VARCHAR(32)  NOT NULL COMMENT '主键UUID7',
+  `order_detail_id`     VARCHAR(64)  NOT NULL COMMENT '中设订单明细ID',
+  `order_id`            VARCHAR(64)  NOT NULL COMMENT '中设订单ID',
+  `order_no`            VARCHAR(128) DEFAULT '' COMMENT '订单号(DH)',
+  `delivery_id`         VARCHAR(64)  NOT NULL COMMENT '配送单ID',
+  `delivery_no`         VARCHAR(128) DEFAULT '' COMMENT '配送单号',
+  `delivery_detail_id`  VARCHAR(64)  NOT NULL COMMENT '配送单明细ID',
+  `create_time`         VARCHAR(32)  DEFAULT NULL COMMENT '添加时间',
+  `create_by`           VARCHAR(64)  DEFAULT NULL COMMENT '添加人ID',
+  `tenant_id`           VARCHAR(64)  DEFAULT NULL COMMENT '租户ID',
+  PRIMARY KEY (`id`),
+  KEY `idx_zsoddr_order_detail` (`order_detail_id`),
+  KEY `idx_zsoddr_order` (`order_id`),
+  KEY `idx_zsoddr_delivery` (`delivery_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='中设订单明细与配送单明细关联';
 /

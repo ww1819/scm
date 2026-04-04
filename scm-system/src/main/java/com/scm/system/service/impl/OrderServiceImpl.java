@@ -1,7 +1,9 @@
 package com.scm.system.service.impl;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +12,8 @@ import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.Order;
 import com.scm.system.domain.OrderDetail;
+import com.scm.system.domain.vo.OrderLineDeliveryQtyVo;
+import com.scm.system.mapper.OrderDeliveryTraceMapper;
 import com.scm.system.mapper.OrderDetailMapper;
 import com.scm.system.mapper.OrderMapper;
 import com.scm.system.service.IOrderService;
@@ -28,6 +32,9 @@ public class OrderServiceImpl implements IOrderService
     @Autowired
     private OrderDetailMapper orderDetailMapper;
 
+    @Autowired
+    private OrderDeliveryTraceMapper orderDeliveryTraceMapper;
+
     /**
      * 查询订单信息
      * 
@@ -39,9 +46,8 @@ public class OrderServiceImpl implements IOrderService
     {
         Order order = orderMapper.selectOrderById(orderId);
         if (order != null)
-    {
-            List<OrderDetail> details = orderDetailMapper.selectOrderDetailListByOrderId(orderId);
-            order.setOrderDetails(details);
+        {
+            order.setOrderDetails(selectOrderDetailListByOrderId(orderId));
         }
         return order;
     }
@@ -227,7 +233,44 @@ public class OrderServiceImpl implements IOrderService
     @Override
     public List<OrderDetail> selectOrderDetailListByOrderId(Long orderId)
     {
-        return orderDetailMapper.selectOrderDetailListByOrderId(orderId);
+        List<OrderDetail> list = orderDetailMapper.selectOrderDetailListByOrderId(orderId);
+        enrichScmOrderDetailsDeliveryQty(list, orderId);
+        return list;
+    }
+
+    private void enrichScmOrderDetailsDeliveryQty(List<OrderDetail> list, Long orderId)
+    {
+        if (list == null || list.isEmpty() || orderId == null)
+        {
+            return;
+        }
+        List<OrderLineDeliveryQtyVo> agg = orderDeliveryTraceMapper.selectScmOrderLineDeliveryQtyByOrderId(orderId);
+        Map<String, OrderLineDeliveryQtyVo> map = new HashMap<>();
+        for (OrderLineDeliveryQtyVo row : agg)
+        {
+            if (row != null && StringUtils.isNotEmpty(row.getLineKey()))
+            {
+                map.put(row.getLineKey(), row);
+            }
+        }
+        for (OrderDetail od : list)
+        {
+            String key = od.getDetailId() == null ? null : String.valueOf(od.getDetailId());
+            OrderLineDeliveryQtyVo q = key == null ? null : map.get(key);
+            BigDecimal oq = od.getOrderQuantity() == null ? BigDecimal.ZERO
+                : BigDecimal.valueOf(od.getOrderQuantity().longValue());
+            BigDecimal a = (q != null && q.getAuditedQty() != null) ? q.getAuditedQty() : BigDecimal.ZERO;
+            BigDecimal p = (q != null && q.getPendingQty() != null) ? q.getPendingQty() : BigDecimal.ZERO;
+            BigDecimal rj = (q != null && q.getRejectedQty() != null) ? q.getRejectedQty() : BigDecimal.ZERO;
+            od.setDeliveredAuditedQty(a);
+            od.setDeliveredPendingAuditQty(p);
+            BigDecimal und = oq.subtract(a).subtract(p).subtract(rj);
+            if (und.compareTo(BigDecimal.ZERO) < 0)
+            {
+                und = BigDecimal.ZERO;
+            }
+            od.setUndeliveredQty(und);
+        }
     }
 
     /**

@@ -70,6 +70,9 @@ public class DeliveryDetail extends BaseEntity
     @Excel(name = "金额", cellType = ColumnType.NUMERIC)
     private BigDecimal amount;
 
+    /** 打包系数 */
+    private BigDecimal packCoefficient;
+
     /** 批号 */
     @Excel(name = "批号")
     private String batchNo;
@@ -101,6 +104,36 @@ public class DeliveryDetail extends BaseEntity
     /** 配送单号 */
     @Excel(name = "配送单号")
     private String deliveryNo;
+
+    /** 所属配送单审核状态（主表 audit_status） */
+    private String deliveryAuditStatus;
+
+    /** 本系统订单ID（主表快照） */
+    private Long refOrderId;
+
+    /** 本系统订单号 */
+    private String refOrderNo;
+
+    /** 中设订单主键 */
+    private String refZsOrderId;
+
+    /** 我方订单明细订货数量 */
+    private BigDecimal refOrderLineQty;
+
+    /** 我方订单明细产品编码 */
+    private String refOrderMaterialCode;
+
+    /** 我方订单明细产品名称 */
+    private String refOrderMaterialName;
+
+    /** 中设明细数量 sl */
+    private BigDecimal refZsLineQty;
+
+    /** 中设明细编码 */
+    private String refZsMaterialCode;
+
+    /** 中设明细名称 */
+    private String refZsMaterialName;
 
     @NotNull(message = "配送单ID不能为空")
     public Long getDeliveryId()
@@ -235,6 +268,16 @@ public class DeliveryDetail extends BaseEntity
         this.amount = amount;
     }
 
+    public BigDecimal getPackCoefficient()
+    {
+        return packCoefficient;
+    }
+
+    public void setPackCoefficient(BigDecimal packCoefficient)
+    {
+        this.packCoefficient = packCoefficient;
+    }
+
     @Size(min = 0, max = 50, message = "批号不能超过50个字符")
     public String getBatchNo()
     {
@@ -320,6 +363,106 @@ public class DeliveryDetail extends BaseEntity
         this.deliveryNo = deliveryNo;
     }
 
+    public String getDeliveryAuditStatus()
+    {
+        return deliveryAuditStatus;
+    }
+
+    public void setDeliveryAuditStatus(String deliveryAuditStatus)
+    {
+        this.deliveryAuditStatus = deliveryAuditStatus;
+    }
+
+    public Long getRefOrderId()
+    {
+        return refOrderId;
+    }
+
+    public void setRefOrderId(Long refOrderId)
+    {
+        this.refOrderId = refOrderId;
+    }
+
+    public String getRefOrderNo()
+    {
+        return refOrderNo;
+    }
+
+    public void setRefOrderNo(String refOrderNo)
+    {
+        this.refOrderNo = refOrderNo;
+    }
+
+    public String getRefZsOrderId()
+    {
+        return refZsOrderId;
+    }
+
+    public void setRefZsOrderId(String refZsOrderId)
+    {
+        this.refZsOrderId = refZsOrderId;
+    }
+
+    public BigDecimal getRefOrderLineQty()
+    {
+        return refOrderLineQty;
+    }
+
+    public void setRefOrderLineQty(BigDecimal refOrderLineQty)
+    {
+        this.refOrderLineQty = refOrderLineQty;
+    }
+
+    public String getRefOrderMaterialCode()
+    {
+        return refOrderMaterialCode;
+    }
+
+    public void setRefOrderMaterialCode(String refOrderMaterialCode)
+    {
+        this.refOrderMaterialCode = refOrderMaterialCode;
+    }
+
+    public String getRefOrderMaterialName()
+    {
+        return refOrderMaterialName;
+    }
+
+    public void setRefOrderMaterialName(String refOrderMaterialName)
+    {
+        this.refOrderMaterialName = refOrderMaterialName;
+    }
+
+    public BigDecimal getRefZsLineQty()
+    {
+        return refZsLineQty;
+    }
+
+    public void setRefZsLineQty(BigDecimal refZsLineQty)
+    {
+        this.refZsLineQty = refZsLineQty;
+    }
+
+    public String getRefZsMaterialCode()
+    {
+        return refZsMaterialCode;
+    }
+
+    public void setRefZsMaterialCode(String refZsMaterialCode)
+    {
+        this.refZsMaterialCode = refZsMaterialCode;
+    }
+
+    public String getRefZsMaterialName()
+    {
+        return refZsMaterialName;
+    }
+
+    public void setRefZsMaterialName(String refZsMaterialName)
+    {
+        this.refZsMaterialName = refZsMaterialName;
+    }
+
     public Long getDetailId()
     {
         return detailId;
@@ -346,6 +489,7 @@ public class DeliveryDetail extends BaseEntity
             .append("deliveryQuantity", getDeliveryQuantity())
             .append("price", getPrice())
             .append("amount", getAmount())
+            .append("packCoefficient", getPackCoefficient())
             .append("batchNo", getBatchNo())
             .append("mainBarcode", getMainBarcode())
             .append("auxBarcode", getAuxBarcode())

@@ -33,6 +33,22 @@ public class ZsTpOrderForDeliveryVo
     /** 已映射为配送明细行 */
     private List<DeliveryDetail> deliveryDetails;
 
+    /** 中设客户ID customer */
+    private String zsCustomerId;
+
+    /** 订单供应商编码/ID（中设 supno） */
+    private String srcOrderSupplierId;
+
+    private String srcOrderSupplierName;
+
+    private String srcOrderWarehouseId;
+
+    private String srcOrderWarehouseName;
+
+    private String srcOrderDeptId;
+
+    private String srcOrderDeptName;
+
     public String getZsOrderId()
     {
         return zsOrderId;
@@ -101,5 +117,75 @@ public class ZsTpOrderForDeliveryVo
     public void setDeliveryDetails(List<DeliveryDetail> deliveryDetails)
     {
         this.deliveryDetails = deliveryDetails;
+    }
+
+    public String getZsCustomerId()
+    {
+        return zsCustomerId;
+    }
+
+    public void setZsCustomerId(String zsCustomerId)
+    {
+        this.zsCustomerId = zsCustomerId;
+    }
+
+    public String getSrcOrderSupplierId()
+    {
+        return srcOrderSupplierId;
+    }
+
+    public void setSrcOrderSupplierId(String srcOrderSupplierId)
+    {
+        this.srcOrderSupplierId = srcOrderSupplierId;
+    }
+
+    public String getSrcOrderSupplierName()
+    {
+        return srcOrderSupplierName;
+    }
+
+    public void setSrcOrderSupplierName(String srcOrderSupplierName)
+    {
+        this.srcOrderSupplierName = srcOrderSupplierName;
+    }
+
+    public String getSrcOrderWarehouseId()
+    {
+        return srcOrderWarehouseId;
+    }
+
+    public void setSrcOrderWarehouseId(String srcOrderWarehouseId)
+    {
+        this.srcOrderWarehouseId = srcOrderWarehouseId;
+    }
+
+    public String getSrcOrderWarehouseName()
+    {
+        return srcOrderWarehouseName;
+    }
+
+    public void setSrcOrderWarehouseName(String srcOrderWarehouseName)
+    {
+        this.srcOrderWarehouseName = srcOrderWarehouseName;
+    }
+
+    public String getSrcOrderDeptId()
+    {
+        return srcOrderDeptId;
+    }
+
+    public void setSrcOrderDeptId(String srcOrderDeptId)
+    {
+        this.srcOrderDeptId = srcOrderDeptId;
+    }
+
+    public String getSrcOrderDeptName()
+    {
+        return srcOrderDeptName;
+    }
+
+    public void setSrcOrderDeptName(String srcOrderDeptName)
+    {
+        this.srcOrderDeptName = srcOrderDeptName;
     }
 }

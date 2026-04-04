@@ -63,6 +63,9 @@ public class OrderDetail extends BaseEntity
     @Excel(name = "金额", cellType = ColumnType.NUMERIC)
     private BigDecimal amount;
 
+    /** 打包系数 */
+    private BigDecimal packCoefficient;
+
     /** 厂家 */
     @Excel(name = "厂家")
     private String manufacturer;
@@ -70,6 +73,15 @@ public class OrderDetail extends BaseEntity
     /** 注册证号 */
     @Excel(name = "注册证号")
     private String registerNo;
+
+    /** 已审核配送数量（关联配送单审核通过） */
+    private BigDecimal deliveredAuditedQty;
+
+    /** 待审核配送数量（配送单未审核） */
+    private BigDecimal deliveredPendingAuditQty;
+
+    /** 未配送数量（含审核拒绝未计入已发数量部分） */
+    private BigDecimal undeliveredQty;
 
     @NotNull(message = "订单ID不能为空")
     public Long getOrderId()
@@ -184,6 +196,16 @@ public class OrderDetail extends BaseEntity
         this.amount = amount;
     }
 
+    public BigDecimal getPackCoefficient()
+    {
+        return packCoefficient;
+    }
+
+    public void setPackCoefficient(BigDecimal packCoefficient)
+    {
+        this.packCoefficient = packCoefficient;
+    }
+
     public String getManufacturer()
     {
         return manufacturer;
@@ -202,6 +224,36 @@ public class OrderDetail extends BaseEntity
     public void setRegisterNo(String registerNo)
     {
         this.registerNo = registerNo;
+    }
+
+    public BigDecimal getDeliveredAuditedQty()
+    {
+        return deliveredAuditedQty;
+    }
+
+    public void setDeliveredAuditedQty(BigDecimal deliveredAuditedQty)
+    {
+        this.deliveredAuditedQty = deliveredAuditedQty;
+    }
+
+    public BigDecimal getDeliveredPendingAuditQty()
+    {
+        return deliveredPendingAuditQty;
+    }
+
+    public void setDeliveredPendingAuditQty(BigDecimal deliveredPendingAuditQty)
+    {
+        this.deliveredPendingAuditQty = deliveredPendingAuditQty;
+    }
+
+    public BigDecimal getUndeliveredQty()
+    {
+        return undeliveredQty;
+    }
+
+    public void setUndeliveredQty(BigDecimal undeliveredQty)
+    {
+        this.undeliveredQty = undeliveredQty;
     }
 
     public Long getDetailId()
@@ -229,6 +281,7 @@ public class OrderDetail extends BaseEntity
             .append("orderQuantity", getOrderQuantity())
             .append("remainingQuantity", getRemainingQuantity())
             .append("amount", getAmount())
+            .append("packCoefficient", getPackCoefficient())
             .append("manufacturer", getManufacturer())
             .append("registerNo", getRegisterNo())
             .toString();

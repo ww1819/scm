@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('中设订单详情')" />
+	<th:block th:include="include :: layout-latest-css" />
+</head>
+<body>
+    <div class="main-content">
+        <form class="form-horizontal">
+            <h4 class="form-header h4">订单信息</h4>
+            <div class="row">
+            	<div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">单号(DH)：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${head != null ? head.dh : ''}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">服务标识：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${head != null ? head.customer : ''}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">金额：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${head != null && head.sheetJe != null ? head.sheetJe : ''}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">推送时间：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${head != null && head.createTime != null ? #dates.format(head.createTime, 'yyyy-MM-dd HH:mm:ss') : ''}" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <a class="btn btn-info btn-sm" href="javascript:void(0)" onclick="openDeliveries()"><i class="fa fa-truck"></i> 查看关联配送单</a>
+                </div>
+            </div>
+        </form>
+        
+        <div class="row" style="margin-top: 20px;">
+            <div class="col-sm-12">
+                <h4 class="form-header h4">订单明细</h4>
+                <div class="table-responsive">
+                    <table id="bootstrap-table"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+	
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script th:inline="javascript">
+		var zsOrderId = [[${zsOrderId}]];
+		var prefix = ctx + "order/zstp";
+
+		$(function() {
+		    queryDetailList();
+		});
+
+		function queryDetailList() {
+		    var options = {
+		        url: prefix + "/detailList",
+		        queryParams: { zsOrderId: zsOrderId },
+		        responseHandler: $.table.responseHandler,
+		        sortName: "id",
+		        sortOrder: "asc",
+		        pagination: false,
+		        search: false,
+		        showRefresh: false,
+		        showToggle: false,
+		        showColumns: false,
+		        striped: true,
+		        columns: [{
+		            field: 'index',
+		            title: '序号',
+		            align: 'center',
+		            width: 50,
+		            formatter: function(value, row, index) {
+		                return index + 1;
+		            }
+		        },
+		        {
+		            field: 'code',
+		            title: '产品编码',
+		            align: 'center'
+		        },
+		        {
+		            field: 'name',
+		            title: '产品名称',
+		            align: 'left'
+		        },
+		        {
+		            field: 'gg',
+		            title: '规格',
+		            align: 'center'
+		        },
+		        {
+		            field: 'sl',
+		            title: '数量',
+		            align: 'right',
+		            formatter: function(value) {
+		                return value != null ? parseFloat(value).toFixed(2) : '0.00';
+		            }
+		        },
+		        {
+		            field: 'deliveredAuditedQty',
+		            title: '已配送(已审核)',
+		            align: 'right',
+		            formatter: fmtQty
+		        },
+		        {
+		            field: 'deliveredPendingAuditQty',
+		            title: '待审核配送',
+		            align: 'right',
+		            formatter: fmtQty
+		        },
+		        {
+		            field: 'undeliveredQty',
+		            title: '未配送',
+		            align: 'right',
+		            formatter: fmtQty
+		        },
+		        {
+		            title: '操作',
+		            align: 'center',
+		            width: 120,
+		            formatter: function(value, row) {
+		                return '<a class="btn btn-primary btn-xs" href="javascript:void(0)" onclick="openLineTraces(\'' + row.id + '\')"><i class="fa fa-link"></i>配送明细</a>';
+		            }
+		        }]
+		    };
+		    $.table.init(options);
+		}
+
+		function fmtQty(value) {
+		    if (value != null && value !== '') {
+		        return parseFloat(value).toFixed(2);
+		    }
+		    return '0.00';
+		}
+
+		function openDeliveries() {
+		    var tableId = "bootstrap-table-zs-del";
+		    layer.open({
+		        type: 1,
+		        area: ['900px', '420px'],
+		        title: '关联配送单',
+		        content: '<table id="' + tableId + '"></table>',
+		        success: function(layero) {
+		            $('#' + tableId).bootstrapTable({
+		                url: prefix + '/deliveriesByZs/' + zsOrderId,
+		                method: 'post',
+		                pagination: false,
+		                search: false,
+		                showRefresh: false,
+		                responseHandler: $.table.responseHandler,
+		                columns: [
+		                    { field: 'deliveryNo', title: '配送单号' },
+		                    { field: 'auditStatus', title: '审核状态', formatter: fmtAudit },
+		                    { field: 'deliveryStatus', title: '单据状态', formatter: fmtDoc },
+		                    { field: 'deliveryAmount', title: '配送金额' },
+		                    { title: '操作', formatter: function(v, row) {
+		                        return '<a href="javascript:void(0)" onclick="openDeliveryView(' + row.deliveryId + ')">查看</a>';
+		                    }}
+		                ]
+		            });
+		        }
+		    });
+		}
+
+		function fmtAudit(v) {
+		    var m = { '0': '待审核', '1': '已审核', '2': '已拒绝' };
+		    return m[v] || (v == null ? '' : v);
+		}
+		function fmtDoc(v) {
+		    var m = { '0': '未审核', '1': '已审核', '2': '已配送', '3': '已入库' };
+		    return m[v] || (v == null ? '' : v);
+		}
+
+		function openDeliveryView(deliveryId) {
+		    $.modal.openTab('配送单详情', ctx + 'delivery/delivery/detail/' + deliveryId);
+		}
+
+		function openLineTraces(zsDetailId) {
+		    var tid = 'bootstrap-table-zs-line';
+		    layer.open({
+		        type: 1,
+		        area: ['900px', '400px'],
+		        title: '本行关联的配送明细',
+		        content: '<table id="' + tid + '"></table>',
+		        success: function() {
+		            $('#' + tid).bootstrapTable({
+		                url: prefix + '/detailDeliveryTraces',
+		                method: 'post',
+		                queryParams: { zsOrderDetailId: zsDetailId },
+		                pagination: false,
+		                responseHandler: $.table.responseHandler,
+		                columns: [
+		                    { field: 'deliveryNo', title: '配送单号' },
+		                    { field: 'deliveryQuantity', title: '本行配送数量', formatter: fmtQty },
+		                    { field: 'auditStatus', title: '审核状态', formatter: fmtAudit },
+		                    { field: 'deliveryStatus', title: '单据状态', formatter: fmtDoc },
+		                    { title: '操作', formatter: function(v, row) {
+		                        return '<a href="javascript:void(0)" onclick="openDeliveryView(' + row.deliveryId + ')">配送单</a>';
+		                    }}
+		                ]
+		            });
+		        }
+		    });
+		}
+	</script>
+</body>
+</html>

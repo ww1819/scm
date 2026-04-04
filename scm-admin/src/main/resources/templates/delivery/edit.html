@@ -57,15 +57,36 @@
 			max-width: 180px;
 		}
 		.detail-table-scroll-outer {
-			overflow: auto;
+			overflow: auto !important;
 			width: 100%;
-			max-height: min(560px, calc(100vh - 220px));
+			max-height: min(520px, calc(100vh - 200px));
+			min-height: 200px;
 			border: 1px solid #ddd;
 			border-radius: 4px;
 			-webkit-overflow-scrolling: touch;
+			scrollbar-width: thin;
+			-ms-overflow-style: auto;
+		}
+		.detail-table-scroll-outer::-webkit-scrollbar {
+			width: 10px !important;
+			height: 10px !important;
+			display: block !important;
+		}
+		.detail-table-scroll-outer::-webkit-scrollbar-thumb {
+			background: rgba(0, 0, 0, 0.28);
+			border-radius: 5px;
+		}
+		.detail-table-scroll-outer::-webkit-scrollbar-track {
+			background: #f1f1f1;
+			border-radius: 5px;
 		}
 		.detail-table-scroll-outer .bootstrap-table .fixed-table-container {
 			min-width: 2600px;
+		}
+		.detail-table-scroll-outer .fixed-table-container,
+		.detail-table-scroll-outer .fixed-table-body {
+			overflow: visible !important;
+			max-height: none !important;
 		}
 		/* 固定表头 */
 		#detail-table .fixed-table-header {
@@ -248,29 +269,15 @@
 			overflow-y: auto !important;
 			max-height: 450px;
 		}
-		/* 隐藏所有滚动条 */
-		.detail-table-wrapper::-webkit-scrollbar,
-		.detail-table-wrapper .fixed-table-container::-webkit-scrollbar,
-		.detail-table-wrapper .fixed-table-body::-webkit-scrollbar,
-		#detail-table::-webkit-scrollbar,
-		#detail-table .fixed-table-container::-webkit-scrollbar,
-		#detail-table .fixed-table-body::-webkit-scrollbar,
-		.bootstrap-table .fixed-table-container::-webkit-scrollbar,
-		.bootstrap-table .fixed-table-body::-webkit-scrollbar {
+		#detail-table .fixed-columns-left::-webkit-scrollbar,
+		.fixed-columns-left::-webkit-scrollbar {
 			display: none !important;
 			width: 0 !important;
 			height: 0 !important;
 		}
-		.detail-table-wrapper,
-		.detail-table-wrapper .fixed-table-container,
-		.detail-table-wrapper .fixed-table-body,
-		#detail-table,
-		#detail-table .fixed-table-container,
-		#detail-table .fixed-table-body,
-		.bootstrap-table .fixed-table-container,
-		.bootstrap-table .fixed-table-body {
-			-ms-overflow-style: none !important; /* IE and Edge */
-			scrollbar-width: none !important; /* Firefox */
+		#detail-table .fixed-columns-left {
+			-ms-overflow-style: none !important;
+			scrollbar-width: none !important;
 		}
 		/* 表格内部的滚动条样式 */
 		#detail-table .fixed-table-container::-webkit-scrollbar {
@@ -492,6 +499,17 @@
     <div class="main-content" style="overflow: hidden; height: calc(100vh - 80px);">
         <form id="form-delivery-edit" class="form-horizontal">
             <input name="deliveryId" type="hidden" th:value="${delivery.deliveryId}"/>
+            <input type="hidden" name="orderId" id="orderId" th:value="${delivery.orderId != null ? delivery.orderId : ''}">
+            <input type="hidden" name="zsOrderId" id="zsOrderId" th:value="${delivery.zsOrderId != null ? delivery.zsOrderId : ''}">
+            <input type="hidden" name="srcOrderSupplierId" id="srcOrderSupplierId" th:value="${delivery.srcOrderSupplierId != null ? delivery.srcOrderSupplierId : ''}">
+            <input type="hidden" name="srcOrderSupplierName" id="srcOrderSupplierName" th:value="${delivery.srcOrderSupplierName != null ? delivery.srcOrderSupplierName : ''}">
+            <input type="hidden" name="srcOrderWarehouseId" id="srcOrderWarehouseId" th:value="${delivery.srcOrderWarehouseId != null ? delivery.srcOrderWarehouseId : ''}">
+            <input type="hidden" name="srcOrderWarehouseName" id="srcOrderWarehouseName" th:value="${delivery.srcOrderWarehouseName != null ? delivery.srcOrderWarehouseName : ''}">
+            <input type="hidden" name="srcOrderDeptId" id="srcOrderDeptId" th:value="${delivery.srcOrderDeptId != null ? delivery.srcOrderDeptId : ''}">
+            <input type="hidden" name="srcOrderDeptName" id="srcOrderDeptName" th:value="${delivery.srcOrderDeptName != null ? delivery.srcOrderDeptName : ''}">
+            <input type="hidden" name="zsCustomerId" id="zsCustomerId" th:value="${delivery.zsCustomerId != null ? delivery.zsCustomerId : ''}">
+            <input type="hidden" name="orderDate" id="orderDateField" th:value="${delivery.orderDate != null ? #dates.format(delivery.orderDate, 'yyyy-MM-dd') : ''}">
+            <input type="hidden" name="warehouse" id="warehouseField" th:value="${delivery.warehouse != null ? delivery.warehouse : ''}">
             <div class="form-card">
                 <h4 class="form-header h4">单据录入</h4>
             <div class="row">
@@ -858,6 +876,9 @@
 	            for (var i = 0; i < deliveryDetails.length; i++) {
 	                var detail = deliveryDetails[i];
 	                var row = {
+	                    detailId: detail.detailId || null,
+	                    orderDetailId: detail.orderDetailId || null,
+	                    zsOrderDetailId: detail.zsOrderDetailId || '',
 	                    materialId: detail.materialId || null,
 	                    materialCode: detail.materialCode || '',
 	                    materialName: detail.materialName || '',
@@ -868,6 +889,7 @@
 	                    deliveryQuantity: detail.deliveryQuantity || 0,
 	                    price: detail.price || 0,
 	                    amount: detail.amount || 0,
+	                    packCoefficient: detail.packCoefficient != null ? detail.packCoefficient : null,
 	                    batchNo: detail.batchNo || '',
 	                    mainBarcode: detail.mainBarcode || '',
 	                    auxBarcode: detail.auxBarcode || '',
@@ -889,7 +911,6 @@
 	            showToggle: false, // 不显示切换视图按钮
 	            showColumns: false, // 不显示列选择按钮
 	            striped: true, // 斑马纹
-	            height: 450, // 设置表格高度，启用垂直滚动
 	            columns: [{
 	                field: 'index',
 	                title: '序号',
@@ -964,6 +985,17 @@
 	                    var qty = parseFloat(row.deliveryQuantity || 0);
 	                    var price = parseFloat(row.price || 0);
 	                    return '¥' + (qty * price).toFixed(2);
+	                }
+	            }, {
+	                field: 'packCoefficient',
+	                title: '打包系数',
+	                align: 'right',
+	                width: 90,
+	                formatter: function(value, row, index) {
+	                    if (value != null && value !== '' && !isNaN(parseFloat(value))) {
+	                        return parseFloat(value).toString();
+	                    }
+	                    return '-';
 	                }
 	            }, {
 	                field: 'batchNo',
@@ -1583,6 +1615,19 @@
 	                    success: function(result) {
 	                        if (result.code == 0 && result.data) {
 	                            var order = result.data;
+	                            $("#zsOrderId").val('');
+	                            $("#zsCustomerId").val('');
+	                            if (order.orderId) {
+	                                $("#orderId").val(order.orderId);
+	                            } else {
+	                                $("#orderId").val('');
+	                            }
+	                            $("#srcOrderSupplierId").val(order.supplierId != null && order.supplierId !== '' ? String(order.supplierId) : '');
+	                            $("#srcOrderSupplierName").val(order.orderSupplierName || order.supplierName || '');
+	                            $("#srcOrderWarehouseId").val(order.warehouseId != null && order.warehouseId !== '' ? String(order.warehouseId) : '');
+	                            $("#srcOrderWarehouseName").val(order.warehouse || '');
+	                            $("#srcOrderDeptId").val(order.orderDeptId != null && order.orderDeptId !== '' ? String(order.orderDeptId) : '');
+	                            $("#srcOrderDeptName").val(order.orderDeptName || order.department || '');
 	                            // 填充表单字段
 	                            if (order.orderNo) {
 	                                $("input[name='orderNo']").val(order.orderNo);
@@ -1602,7 +1647,11 @@
 	                                    String(orderDate.getMonth() + 1).padStart(2, '0') + '-' + 
 	                                    String(orderDate.getDate()).padStart(2, '0');
 	                                $("#expectedDeliveryDate").val(formattedDate);
+	                                $("#orderDateField").val(formattedDate);
+	                            } else {
+	                                $("#orderDateField").val('');
 	                            }
+	                            $("#warehouseField").val(order.warehouse || '');
 	                            if (order.remark) {
 	                                $("input[name='remark']").val(order.remark);
 	                            }
@@ -1613,20 +1662,25 @@
 	                                for (var i = 0; i < order.orderDetails.length; i++) {
 	                                    var detail = order.orderDetails[i];
 	                                    var deliveryDetail = {
+	                                        orderDetailId: detail.detailId || null,
 	                                        materialId: detail.materialId || null,
 	                                        materialCode: detail.materialCode || '',
 	                                        materialName: detail.materialName || '',
 	                                        specification: detail.specification || '',
 	                                        model: detail.model || '',
 	                                        unit: detail.unit || '',
+	                                        remainingQuantity: detail.remainingQuantity || detail.orderQuantity || 0,
 	                                        deliveryQuantity: detail.remainingQuantity || detail.orderQuantity || 0,
 	                                        price: detail.purchasePrice || 0,
 	                                        amount: detail.amount || (detail.purchasePrice * (detail.remainingQuantity || detail.orderQuantity || 0)) || 0,
+	                                        packCoefficient: detail.packCoefficient != null ? detail.packCoefficient : null,
 	                                        batchNo: '',
 	                                        mainBarcode: '',
 	                                        auxBarcode: '',
 	                                        productionDate: '',
-	                                        expireDate: ''
+	                                        expireDate: '',
+	                                        manufacturer: detail.manufacturer || '',
+	                                        registerNo: detail.registerNo || ''
 	                                    };
 	                                    detailData.push(deliveryDetail);
 	                                }

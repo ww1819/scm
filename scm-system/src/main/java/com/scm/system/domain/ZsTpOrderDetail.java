@@ -32,6 +32,15 @@ public class ZsTpOrderDetail extends BaseEntity
     private String bz2;
     private BigDecimal dsb;
 
+    /** 已审核配送数量 */
+    private BigDecimal deliveredAuditedQty;
+
+    /** 待审核配送数量 */
+    private BigDecimal deliveredPendingAuditQty;
+
+    /** 未配送数量 */
+    private BigDecimal undeliveredQty;
+
     public String getId()
     {
         return id;
@@ -240,5 +249,35 @@ public class ZsTpOrderDetail extends BaseEntity
     public void setDsb(BigDecimal dsb)
     {
         this.dsb = dsb;
+    }
+
+    public BigDecimal getDeliveredAuditedQty()
+    {
+        return deliveredAuditedQty;
+    }
+
+    public void setDeliveredAuditedQty(BigDecimal deliveredAuditedQty)
+    {
+        this.deliveredAuditedQty = deliveredAuditedQty;
+    }
+
+    public BigDecimal getDeliveredPendingAuditQty()
+    {
+        return deliveredPendingAuditQty;
+    }
+
+    public void setDeliveredPendingAuditQty(BigDecimal deliveredPendingAuditQty)
+    {
+        this.deliveredPendingAuditQty = deliveredPendingAuditQty;
+    }
+
+    public BigDecimal getUndeliveredQty()
+    {
+        return undeliveredQty;
+    }
+
+    public void setUndeliveredQty(BigDecimal undeliveredQty)
+    {
+        this.undeliveredQty = undeliveredQty;
     }
 }
