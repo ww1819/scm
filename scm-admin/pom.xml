@@ -62,6 +62,13 @@
             <artifactId>scm-system</artifactId>
         </dependency>
 
+        <!-- 通用模块：Controller 继承 BaseController、返回 TableDataInfo/AjaxResult 等，须显式依赖。
+             否则 DevTools 重启时可能出现 ClassNotFoundException: TableDataInfo -->
+        <dependency>
+            <groupId>com.scm</groupId>
+            <artifactId>scm-common</artifactId>
+        </dependency>
+
         <!-- 定时任务-->
         <dependency>
             <groupId>com.scm</groupId>
