@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('选择中设订单')" />
+	<th:block th:include="include :: layout-latest-css" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="zs-order-form">
+					<div class="select-list">
+						<ul>
+							<li>
+								单号(DH)：<input type="text" name="dh"/>
+							</li>
+							<li>
+								服务标识：<input type="text" name="customer"/>
+							</li>
+							<li>
+								科室名称：<input type="text" name="ksmc"/>
+							</li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetZs()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+			
+	        <div class="col-sm-12 select-table table-striped">
+			    <table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	
+	<input type="hidden" id="rowIds" name="rowIds"/>
+	
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script th:inline="javascript">
+		var prefix = ctx + "delivery/delivery";
+
+		$(function() {
+		    initZsTable();
+		});
+
+		function initZsTable() {
+		    var options = {
+		        url: prefix + "/zsOrder/list",
+		        modalName: "中设订单",
+		        idField: "id",
+		        columns: [{
+		            checkbox: true
+		        },
+		        {
+		            field: 'id',
+		            title: '主键ID',
+		            visible: false
+		        },
+		        {
+		            field: 'dh',
+		            title: '单号(DH)'
+		        },
+		        {
+		            field: 'customer',
+		            title: '服务标识'
+		        },
+		        {
+		            field: 'ksmc',
+		            title: '科室名称'
+		        },
+		        {
+		            field: 'ck',
+		            title: '仓库'
+		        },
+		        {
+		            field: 'sheetJe',
+		            title: '金额',
+		            formatter: function (value, row, index) {
+		                if (value != null && value !== '') {
+		                    return '¥' + parseFloat(value).toFixed(2);
+		                }
+		                return '';
+		            }
+		        },
+		        {
+		            field: 'createTime',
+		            title: '推送时间'
+		        }]
+		    };
+		    $.table.init(options);
+		    
+		    $("#bootstrap-table").on("check.bs.table check-all.bs.table uncheck.bs.table uncheck-all.bs.table", function (e, rowsAfter, rowsBefore) {
+		        var rows = $.common.equals("uncheck-all", e.type) ? rowsBefore : rowsAfter;
+		        var rowIds = $.table.affectedRowIds(rows);
+		        $("#rowIds").val(rowIds.join(','));
+		    });
+		}
+		
+		function resetZs() {
+			$("#zs-order-form")[0].reset();
+			$.table.search();
+		}
+	</script>
+</body>
+</html>

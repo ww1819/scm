@@ -8,6 +8,67 @@
 			padding: 8px 12px !important;
 			white-space: nowrap;
 		}
+		/* 主/辅条码：加宽、单元格与表头允许换行 */
+		#detail-table th[data-field="mainBarcode"],
+		#detail-table th[data-field="auxBarcode"],
+		#detail-table td[data-field="mainBarcode"],
+		#detail-table td[data-field="auxBarcode"] {
+			white-space: normal !important;
+			word-break: break-all;
+			vertical-align: top !important;
+			min-width: 240px;
+			max-width: 420px;
+		}
+		#detail-table .barcode-textarea {
+			width: 100%;
+			min-width: 220px;
+			min-height: 56px;
+			box-sizing: border-box;
+			white-space: pre-wrap;
+			word-break: break-all;
+			line-height: 1.4;
+			resize: vertical;
+			font-size: 12px;
+		}
+		#detail-table .batch-no-textarea {
+			width: 100%;
+			min-width: 160px;
+			min-height: 48px;
+			box-sizing: border-box;
+			white-space: pre-wrap;
+			word-break: break-all;
+			line-height: 1.35;
+			resize: vertical;
+			font-size: 12px;
+		}
+		#detail-table th[data-field="batchNo"],
+		#detail-table td[data-field="batchNo"],
+		#detail-table th[data-field="expireDate"],
+		#detail-table td[data-field="expireDate"],
+		#detail-table th[data-field="productionDate"],
+		#detail-table td[data-field="productionDate"] {
+			white-space: normal !important;
+			vertical-align: top !important;
+		}
+		#detail-table th[data-field="expireDate"],
+		#detail-table td[data-field="expireDate"],
+		#detail-table th[data-field="productionDate"],
+		#detail-table td[data-field="productionDate"] {
+			min-width: 140px;
+			max-width: 180px;
+		}
+		/* 明细表区域：横向+纵向滚动 */
+		.detail-table-scroll-outer {
+			overflow: auto;
+			width: 100%;
+			max-height: min(560px, calc(100vh - 220px));
+			border: 1px solid #ddd;
+			border-radius: 4px;
+			-webkit-overflow-scrolling: touch;
+		}
+		.detail-table-scroll-outer .bootstrap-table .fixed-table-container {
+			min-width: 2600px;
+		}
 		/* 固定表头 */
 		#detail-table .fixed-table-header {
 			position: sticky !important;
@@ -454,6 +515,7 @@
 <body style="overflow: hidden;">
     <div class="main-content" style="overflow: hidden; height: calc(100vh - 80px);">
         <form id="form-delivery-add" class="form-horizontal">
+            <input type="hidden" name="zsOrderId" id="zsOrderId" value="">
             <div class="form-card">
                 <h4 class="form-header h4">单据录入</h4>
             <div class="row">
@@ -574,11 +636,12 @@
                     <button type="button" class="btn btn-sm btn-info" onclick="printDelivery()" id="print-delivery-btn"><i class="fa fa-print"></i> 打印配送单</button>
                     <button type="button" class="btn btn-sm btn-success" onclick="newDocument()"><i class="fa fa-plus"></i> 新增单据</button>
                     <button type="button" class="btn btn-sm btn-info" onclick="importOrder()"><i class="fa fa-file-text-o"></i> 引入订单</button>
+                    <button type="button" class="btn btn-sm btn-warning" onclick="importZsOrder()"><i class="fa fa-link"></i> 引用中设订单</button>
                     <button type="button" class="btn btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i> 保 存</button>
                     <button type="button" class="btn btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i> 关 闭</button>
                 </div>
             </div>
-            <div class="detail-table-wrapper" style="overflow-x: auto; overflow-y: auto; width: 100%; max-height: 500px;">
+            <div class="detail-table-scroll-outer detail-table-wrapper">
                 <table id="detail-table"></table>
             </div>
         </div>
@@ -588,6 +651,14 @@
 	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
 	<script>
 	    var prefix = ctx + "delivery/delivery";
+	    
+	    function escapeHtmlForBarcode(s) {
+	        if (s == null || s === '') return '';
+	        return String(s)
+	            .replace(/&/g, '&amp;')
+	            .replace(/</g, '&lt;')
+	            .replace(/>/g, '&gt;');
+	    }
 	    
 	    // 初始化日期选择器
 	    var laydate;
@@ -884,27 +955,30 @@
 	            }, {
 	                field: 'batchNo',
 	                title: '批号',
-	                align: 'center',
-	                width: 120,
+	                align: 'left',
+	                width: 200,
+	                cellStyle: function() {
+	                    return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'vertical-align': 'top' } };
+	                },
 	                formatter: function(value, row, index) {
-	                    var val = value || '';
-	                    return '<input type="text" class="form-control input-sm" style="width:100%;" value="' + val + '" ' +
-	                           'onblur="updateBatchNo(this, ' + index + ')" ' +
-	                           'onkeypress="if(event.keyCode==13){this.blur();return false;}" ' +
-	                           'maxlength="50" />';
+	                    var safe = escapeHtmlForBarcode(value != null ? String(value) : '');
+	                    return '<textarea class="form-control input-sm batch-no-textarea" rows="2" maxlength="50" ' +
+	                           'onblur="updateBatchNo(this, ' + index + ')">' + safe + '</textarea>';
 	                }
 	            }, {
-	                field: 'productionDate',
-	                title: '生产日期',
+	                field: 'expireDate',
+	                title: '有效期',
 	                align: 'center',
-	                width: 120,
+	                width: 150,
+	                cellStyle: function() {
+	                    return { css: { 'white-space': 'normal', 'vertical-align': 'top' } };
+	                },
 	                formatter: function(value, row, index) {
 	                    var val = '';
 	                    if (value) {
 	                        if (typeof value === 'string') {
 	                            val = value;
 	                        } else {
-	                            // 如果是日期对象，格式化
 	                            var date = new Date(value);
 	                            if (!isNaN(date.getTime())) {
 	                                val = date.getFullYear() + '-' + 
@@ -913,37 +987,65 @@
 	                            }
 	                        }
 	                    }
-	                    return '<input type="text" class="form-control input-sm date-input production-date" style="width:100%;" value="' + val + '" ' +
+	                    return '<input type="text" class="form-control input-sm date-input expire-date" style="width:100%;min-width:130px;" value="' + val + '" ' +
+	                           'placeholder="年/月/日" ' +
+	                           'onblur="updateExpireDate(this, ' + index + ')" ' +
+	                           'onkeypress="if(event.keyCode==13){this.blur();return false;}" ' +
+	                           'data-field="expireDate" data-index="' + index + '" />';
+	                }
+	            }, {
+	                field: 'productionDate',
+	                title: '生产日期',
+	                align: 'center',
+	                width: 150,
+	                cellStyle: function() {
+	                    return { css: { 'white-space': 'normal', 'vertical-align': 'top' } };
+	                },
+	                formatter: function(value, row, index) {
+	                    var val = '';
+	                    if (value) {
+	                        if (typeof value === 'string') {
+	                            val = value;
+	                        } else {
+	                            var date = new Date(value);
+	                            if (!isNaN(date.getTime())) {
+	                                val = date.getFullYear() + '-' + 
+	                                      String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+	                                      String(date.getDate()).padStart(2, '0');
+	                            }
+	                        }
+	                    }
+	                    return '<input type="text" class="form-control input-sm date-input production-date" style="width:100%;min-width:130px;" value="' + val + '" ' +
 	                           'placeholder="年/月/日" ' +
 	                           'onblur="updateProductionDate(this, ' + index + ')" ' +
 	                           'onkeypress="if(event.keyCode==13){this.blur();return false;}" ' +
 	                           'data-field="productionDate" data-index="' + index + '" />';
 	                }
 	            }, {
-	                field: 'expireDate',
-	                title: '有效期',
-	                align: 'center',
-	                width: 120,
+	                field: 'mainBarcode',
+	                title: '主条码',
+	                align: 'left',
+	                width: 300,
+	                cellStyle: function() {
+	                    return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'vertical-align': 'top' } };
+	                },
 	                formatter: function(value, row, index) {
-	                    var val = '';
-	                    if (value) {
-	                        if (typeof value === 'string') {
-	                            val = value;
-	                        } else {
-	                            // 如果是日期对象，格式化
-	                            var date = new Date(value);
-	                            if (!isNaN(date.getTime())) {
-	                                val = date.getFullYear() + '-' + 
-	                                      String(date.getMonth() + 1).padStart(2, '0') + '-' + 
-	                                      String(date.getDate()).padStart(2, '0');
-	                            }
-	                        }
-	                    }
-	                    return '<input type="text" class="form-control input-sm date-input expire-date" style="width:100%;" value="' + val + '" ' +
-	                           'placeholder="年/月/日" ' +
-	                           'onblur="updateExpireDate(this, ' + index + ')" ' +
-	                           'onkeypress="if(event.keyCode==13){this.blur();return false;}" ' +
-	                           'data-field="expireDate" data-index="' + index + '" />';
+	                    var safe = escapeHtmlForBarcode(value != null ? String(value) : '');
+	                    return '<textarea class="form-control input-sm barcode-textarea" rows="3" maxlength="128" ' +
+	                           'onblur="updateMainBarcode(this, ' + index + ')">' + safe + '</textarea>';
+	                }
+	            }, {
+	                field: 'auxBarcode',
+	                title: '辅条码',
+	                align: 'left',
+	                width: 300,
+	                cellStyle: function() {
+	                    return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'vertical-align': 'top' } };
+	                },
+	                formatter: function(value, row, index) {
+	                    var safe = escapeHtmlForBarcode(value != null ? String(value) : '');
+	                    return '<textarea class="form-control input-sm barcode-textarea" rows="3" maxlength="128" ' +
+	                           'onblur="updateAuxBarcode(this, ' + index + ')">' + safe + '</textarea>';
 	                }
 	            }, {
 	                field: 'manufacturer',
@@ -1185,6 +1287,36 @@
 	        }
 	    }
 	    
+	    function updateMainBarcode(input, index) {
+	        var value = $(input).val();
+	        if (value && value.length > 128) {
+	            $.modal.alertWarning('主条码不能超过128个字符');
+	            $(input).focus();
+	            return;
+	        }
+	        var $tr = $(input).closest('tr');
+	        var data = $('#detail-table').bootstrapTable('getData');
+	        var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : index;
+	        if (data[rowIndex]) {
+	            data[rowIndex].mainBarcode = value || '';
+	        }
+	    }
+	    
+	    function updateAuxBarcode(input, index) {
+	        var value = $(input).val();
+	        if (value && value.length > 128) {
+	            $.modal.alertWarning('辅条码不能超过128个字符');
+	            $(input).focus();
+	            return;
+	        }
+	        var $tr = $(input).closest('tr');
+	        var data = $('#detail-table').bootstrapTable('getData');
+	        var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : index;
+	        if (data[rowIndex]) {
+	            data[rowIndex].auxBarcode = value || '';
+	        }
+	    }
+	    
 	    // 更新生产日期
 	    function updateProductionDate(input, index) {
 	        var value = $(input).val();
@@ -1415,9 +1547,96 @@
 	    // 新增单据 - 清空表单
 	    function newDocument() {
 	        $("#form-delivery-add")[0].reset();
+	        $("#zsOrderId").val('');
 	        // 清空日期字段
 	        $("#expectedDeliveryDate").val('');
 	        $("#invoiceDate").val('');
+	    }
+	    
+	    // 引用中设订单（zs_tp_order）生成配送明细草稿
+	    function importZsOrder() {
+	        var options = {
+	            title: '选择中设订单',
+	            url: ctx + "delivery/delivery/zsOrder/select",
+	            width: "1000",
+	            height: "600",
+	            callBack: function(index, layero) {
+	                var body = $.modal.getChildFrame(index);
+	                var rowIds = body.find('#rowIds').val();
+	                if (!rowIds || rowIds == '') {
+	                    $.modal.alertWarning("请至少选择一条中设订单");
+	                    return false;
+	                }
+	                var ids = rowIds.split(',');
+	                var selectedId = ids[0];
+	                $.ajax({
+	                    url: prefix + "/selectZsOrder/" + encodeURIComponent(selectedId),
+	                    type: "GET",
+	                    dataType: "json",
+	                    success: function(result) {
+	                        if (result.code == 0 && result.data) {
+	                            var data = result.data;
+	                            if (data.orderNo) {
+	                                $("input[name='orderNo']").val(data.orderNo);
+	                            }
+	                            if (data.orderAmount != null && data.orderAmount !== '') {
+	                                $("input[name='deliveryAmount']").val(parseFloat(data.orderAmount).toFixed(2));
+	                            }
+	                            if (data.remark) {
+	                                $("input[name='remark']").val(data.remark);
+	                            }
+	                            $("#zsOrderId").val(data.zsOrderId || '');
+	                            if (data.orderDate) {
+	                                var orderDate = new Date(data.orderDate);
+	                                var formattedDate = orderDate.getFullYear() + '-' + 
+	                                    String(orderDate.getMonth() + 1).padStart(2, '0') + '-' + 
+	                                    String(orderDate.getDate()).padStart(2, '0');
+	                                $("#expectedDeliveryDate").val(formattedDate);
+	                            }
+	                            if (data.deliveryDetails && data.deliveryDetails.length > 0) {
+	                                var detailData = [];
+	                                for (var i = 0; i < data.deliveryDetails.length; i++) {
+	                                    var detail = data.deliveryDetails[i];
+	                                    detailData.push({
+	                                        materialId: detail.materialId || 0,
+	                                        zsOrderDetailId: detail.zsOrderDetailId || '',
+	                                        materialCode: detail.materialCode || '',
+	                                        materialName: detail.materialName || '',
+	                                        specification: detail.specification || '',
+	                                        model: detail.model || '',
+	                                        unit: detail.unit || '',
+	                                        remainingQuantity: detail.remainingQuantity || detail.deliveryQuantity || 0,
+	                                        deliveryQuantity: detail.deliveryQuantity || 0,
+	                                        price: detail.price || 0,
+	                                        amount: detail.amount || 0,
+	                                        batchNo: detail.batchNo || '',
+	                                        mainBarcode: detail.mainBarcode || '',
+	                                        auxBarcode: detail.auxBarcode || '',
+	                                        productionDate: detail.productionDate || '',
+	                                        expireDate: detail.expireDate || '',
+	                                        manufacturer: detail.manufacturer || '',
+	                                        registerNo: detail.registerNo || ''
+	                                    });
+	                                }
+	                                $('#detail-table').bootstrapTable('load', detailData);
+	                                setTimeout(function() { fillOperationColumn(); }, 200);
+	                                setTimeout(function() { fillOperationColumn(); }, 500);
+	                            } else {
+	                                $('#detail-table').bootstrapTable('load', []);
+	                            }
+	                            $.modal.close(index);
+	                            $.modal.msgSuccess("已引入中设订单数据，请核对后保存");
+	                        } else {
+	                            $.modal.alertError(result.msg || "加载中设订单失败");
+	                        }
+	                    },
+	                    error: function() {
+	                        $.modal.alertError("加载中设订单失败");
+	                    }
+	                });
+	            }
+	        };
+	        $.modal.openOptions(options);
 	    }
 	    
 	    // 引入订单 - 打开订单选择对话框
@@ -1447,6 +1666,7 @@
 	                    success: function(result) {
 	                        if (result.code == 0 && result.data) {
 	                            var order = result.data;
+	                            $("#zsOrderId").val('');
 	                            // 填充表单字段
 	                            if (order.orderNo) {
 	                                $("input[name='orderNo']").val(order.orderNo);
@@ -1488,6 +1708,8 @@
 	                                        price: detail.purchasePrice || 0,
 	                                        amount: detail.amount || (detail.purchasePrice * (detail.remainingQuantity || detail.orderQuantity || 0)) || 0,
 	                                        batchNo: '',
+	                                        mainBarcode: '',
+	                                        auxBarcode: '',
 	                                        productionDate: '',
 	                                        expireDate: '',
 	                                        manufacturer: detail.manufacturer || '',

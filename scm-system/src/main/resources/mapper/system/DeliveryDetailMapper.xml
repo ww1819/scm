@@ -8,6 +8,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <id     property="detailId"          column="detail_id"          />
         <result property="deliveryId"       column="delivery_id"         />
         <result property="orderDetailId"    column="order_detail_id"     />
+        <result property="zsOrderDetailId"  column="zs_order_detail_id"  />
         <result property="materialId"       column="material_id"         />
         <result property="materialCode"     column="material_code"       />
         <result property="materialName"     column="material_name"       />
@@ -19,6 +20,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="price"           column="price"                />
         <result property="amount"          column="amount"              />
         <result property="batchNo"         column="batch_no"            />
+        <result property="mainBarcode"     column="main_barcode"        />
+        <result property="auxBarcode"      column="aux_barcode"         />
         <result property="productionDate"   column="production_date"     />
         <result property="expireDate"      column="expire_date"          />
         <result property="manufacturer"     column="manufacturer_name"   />
@@ -27,9 +30,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
     
     <sql id="selectDeliveryDetailVo">
-        select d.detail_id, d.delivery_id, d.order_detail_id, d.material_id, d.material_code,
+        select d.detail_id, d.delivery_id, d.order_detail_id, d.zs_order_detail_id, d.material_id, d.material_code,
                d.material_name, d.specification, d.model, d.unit, d.remaining_quantity,
-               d.delivery_quantity, d.price, d.amount, d.batch_no, d.production_date,
+               d.delivery_quantity, d.price, d.amount, d.batch_no, d.main_barcode, d.aux_barcode, d.production_date,
                d.expire_date, d.manufacturer_name, d.register_no,
                del.delivery_no
         from scm_delivery_detail d
@@ -73,6 +76,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         insert into scm_delivery_detail(
             <if test="deliveryId != null">delivery_id,</if>
             <if test="orderDetailId != null">order_detail_id,</if>
+            <if test="zsOrderDetailId != null and zsOrderDetailId != ''">zs_order_detail_id,</if>
             <if test="materialId != null">material_id,</if>
             <if test="materialCode != null and materialCode != ''">material_code,</if>
             <if test="materialName != null and materialName != ''">material_name,</if>
@@ -84,6 +88,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="price != null">price,</if>
             <if test="amount != null">amount,</if>
             <if test="batchNo != null and batchNo != ''">batch_no,</if>
+            <if test="mainBarcode != null and mainBarcode != ''">main_barcode,</if>
+            <if test="auxBarcode != null and auxBarcode != ''">aux_barcode,</if>
             <if test="productionDate != null">production_date,</if>
             <if test="expireDate != null">expire_date,</if>
             <if test="manufacturer != null and manufacturer != ''">manufacturer_name,</if>
@@ -92,6 +98,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         )values(
             <if test="deliveryId != null">#{deliveryId},</if>
             <if test="orderDetailId != null">#{orderDetailId},</if>
+            <if test="zsOrderDetailId != null and zsOrderDetailId != ''">#{zsOrderDetailId},</if>
             <if test="materialId != null">#{materialId},</if>
             <if test="materialCode != null and materialCode != ''">#{materialCode},</if>
             <if test="materialName != null and materialName != ''">#{materialName},</if>
@@ -103,6 +110,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="price != null">#{price},</if>
             <if test="amount != null">#{amount},</if>
             <if test="batchNo != null and batchNo != ''">#{batchNo},</if>
+            <if test="mainBarcode != null and mainBarcode != ''">#{mainBarcode},</if>
+            <if test="auxBarcode != null and auxBarcode != ''">#{auxBarcode},</if>
             <if test="productionDate != null">#{productionDate},</if>
             <if test="expireDate != null">#{expireDate},</if>
             <if test="manufacturer != null and manufacturer != ''">#{manufacturer},</if>
@@ -112,15 +121,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </insert>
     
     <insert id="batchInsertDeliveryDetail" parameterType="java.util.List">
-        insert into scm_delivery_detail(delivery_id, order_detail_id, material_id, material_code,
+        insert into scm_delivery_detail(delivery_id, order_detail_id, material_id, zs_order_detail_id, material_code,
                material_name, specification, model, unit, remaining_quantity, delivery_quantity,
-               price, amount, batch_no, production_date, expire_date, manufacturer_name, register_no, create_time)
+               price, amount, batch_no, main_barcode, aux_barcode, production_date, expire_date, manufacturer_name, register_no, create_time)
         values
         <foreach collection="list" item="item" separator=",">
-            (#{item.deliveryId}, #{item.orderDetailId}, #{item.materialId}, #{item.materialCode},
+            (#{item.deliveryId}, #{item.orderDetailId}, #{item.materialId}, #{item.zsOrderDetailId}, #{item.materialCode},
              #{item.materialName}, #{item.specification}, #{item.model}, #{item.unit},
              #{item.remainingQuantity}, #{item.deliveryQuantity}, #{item.price}, #{item.amount},
-             #{item.batchNo}, #{item.productionDate}, #{item.expireDate}, #{item.manufacturer}, #{item.registerNo}, sysdate())
+             #{item.batchNo}, #{item.mainBarcode}, #{item.auxBarcode}, #{item.productionDate}, #{item.expireDate}, #{item.manufacturer}, #{item.registerNo}, sysdate())
         </foreach>
     </insert>
     
@@ -140,6 +149,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="price != null">price = #{price},</if>
             <if test="amount != null">amount = #{amount},</if>
             <if test="batchNo != null and batchNo != ''">batch_no = #{batchNo},</if>
+            <if test="mainBarcode != null">main_barcode = #{mainBarcode},</if>
+            <if test="auxBarcode != null">aux_barcode = #{auxBarcode},</if>
             <if test="productionDate != null">production_date = #{productionDate},</if>
             <if test="expireDate != null">expire_date = #{expireDate},</if>
             <if test="manufacturer != null and manufacturer != ''">manufacturer_name = #{manufacturer},</if>

@@ -3,6 +3,9 @@
 <head>
 	<th:block th:include="include :: header('配送明细表')" />
 	<th:block th:include="include :: layout-latest-css" />
+	<style>
+		.barcode-cell-wrap { white-space: normal; word-break: break-all; line-height: 1.35; }
+	</style>
 </head>
 <body class="gray-bg">
 	<div class="container-div">
@@ -117,12 +120,25 @@
 		        },
 		        {
 		            field: 'batchNo',
-		            title: '批号'
+		            title: '批号',
+		            width: 200,
+		            cellStyle: function() {
+		                return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'max-width': '320px', 'vertical-align': 'top' } };
+		            },
+		            formatter: function(value) {
+		                if (value == null || value === '') return '-';
+		                var s = String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+		                return '<div class="barcode-cell-wrap">' + s.replace(/\r\n|\n|\r/g, '<br/>') + '</div>';
+		            }
 		        },
 		        {
-		            field: 'productionDate',
-		            title: '生产日期',
+		            field: 'expireDate',
+		            title: '有效期',
+		            width: 120,
 		            sortable: true,
+		            cellStyle: function() {
+		                return { css: { 'white-space': 'normal', 'min-width': '110px' } };
+		            },
 		            formatter: function(value, row, index) {
 		                if (value) {
 		                    return $.common.formatDate(value, "yyyy-MM-dd");
@@ -131,14 +147,44 @@
 		            }
 		        },
 		        {
-		            field: 'expireDate',
-		            title: '有效期',
+		            field: 'productionDate',
+		            title: '生产日期',
+		            width: 120,
 		            sortable: true,
+		            cellStyle: function() {
+		                return { css: { 'white-space': 'normal', 'min-width': '110px' } };
+		            },
 		            formatter: function(value, row, index) {
 		                if (value) {
 		                    return $.common.formatDate(value, "yyyy-MM-dd");
 		                }
 		                return '-';
+		            }
+		        },
+		        {
+		            field: 'mainBarcode',
+		            title: '主条码',
+		            width: 260,
+		            cellStyle: function() {
+		                return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'max-width': '360px', 'min-width': '200px', 'vertical-align': 'top' } };
+		            },
+		            formatter: function(value) {
+		                if (value == null || value === '') return '-';
+		                var s = String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+		                return '<div class="barcode-cell-wrap">' + s.replace(/\r\n|\n|\r/g, '<br/>') + '</div>';
+		            }
+		        },
+		        {
+		            field: 'auxBarcode',
+		            title: '辅条码',
+		            width: 260,
+		            cellStyle: function() {
+		                return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'max-width': '360px', 'min-width': '200px', 'vertical-align': 'top' } };
+		            },
+		            formatter: function(value) {
+		                if (value == null || value === '') return '-';
+		                var s = String(value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+		                return '<div class="barcode-cell-wrap">' + s.replace(/\r\n|\n|\r/g, '<br/>') + '</div>';
 		            }
 		        },
 		        {

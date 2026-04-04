@@ -322,7 +322,8 @@ public class ShiroConfig
         }
         // 退出 logout地址，shiro去清除session
         filterChainDefinitionMap.put("/logout", "logout");
-        // 不需要拦截的访问
+        // 不需要拦截的访问（根路径由 SysLoginController#root 决定跳首页或登录页）
+        filterChainDefinitionMap.put("/", "anon");
         filterChainDefinitionMap.put("/login", "anon,captchaValidate");
         // 注册相关
         filterChainDefinitionMap.put("/register", "anon,captchaValidate");

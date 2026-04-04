@@ -34,12 +34,34 @@ public class SysLoginController extends BaseController
     @Value("${shiro.rememberMe.enabled: false}")
     private boolean rememberMe;
 
+    @Value("${shiro.user.indexUrl}")
+    private String indexUrl;
+
     @Autowired
     private ConfigService configService;
+
+    /**
+     * 访问根路径时：已登录进首页，未登录进登录页。
+     */
+    @GetMapping("/")
+    public String root()
+    {
+        Subject subject = SecurityUtils.getSubject();
+        if (subject != null && subject.isAuthenticated())
+        {
+            return "redirect:" + indexUrl;
+        }
+        return "redirect:/login";
+    }
 
     @GetMapping("/login")
     public String login(HttpServletRequest request, HttpServletResponse response, ModelMap mmap)
     {
+        Subject subject = SecurityUtils.getSubject();
+        if (subject != null && subject.isAuthenticated())
+        {
+            return "redirect:" + indexUrl;
+        }
         // 如果是Ajax请求，返回Json字符串。
         if (ServletUtils.isAjaxRequest(request))
         {

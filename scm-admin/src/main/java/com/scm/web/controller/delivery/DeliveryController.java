@@ -25,6 +25,7 @@ import com.scm.system.domain.DeliveryDetail;
 import com.scm.system.domain.Hospital;
 import com.scm.system.domain.Order;
 import com.scm.system.domain.Supplier;
+import com.scm.system.domain.ZsTpOrder;
 import com.scm.system.service.IDeliveryService;
 import com.scm.system.service.IHospitalService;
 import com.scm.system.service.ISupplierService;
@@ -113,6 +114,40 @@ public class DeliveryController extends BaseController
     {
         Order order = deliveryService.selectOrderForDelivery(orderId);
         return AjaxResult.success(order);
+    }
+
+    /**
+     * 选择中设订单（弹窗页）
+     */
+    @RequiresPermissions("delivery:delivery:add")
+    @GetMapping("/zsOrder/select")
+    public String zsOrderSelect()
+    {
+        return prefix + "/zsOrderSelect";
+    }
+
+    /**
+     * 中设订单列表（zs_tp_order）
+     */
+    @RequiresPermissions("delivery:delivery:list")
+    @PostMapping("/zsOrder/list")
+    @ResponseBody
+    public TableDataInfo zsOrderList(ZsTpOrder query)
+    {
+        startPage();
+        List<ZsTpOrder> list = deliveryService.selectZsTpOrderList(query);
+        return getDataTable(list);
+    }
+
+    /**
+     * 按中设订单主键加载，用于填充配送单
+     */
+    @RequiresPermissions("delivery:delivery:add")
+    @GetMapping("/selectZsOrder/{zsOrderId}")
+    @ResponseBody
+    public AjaxResult selectZsOrderForDelivery(@PathVariable("zsOrderId") String zsOrderId)
+    {
+        return AjaxResult.success(deliveryService.selectZsTpOrderForDelivery(zsOrderId));
     }
 
     /**

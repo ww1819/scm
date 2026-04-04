@@ -45,6 +45,9 @@ public class Delivery extends BaseEntity
     @Excel(name = "订单号")
     private String orderNo;
 
+    /** 中设订单主键 zs_tp_order.id（引用中设订单生成配送单时写入） */
+    private String zsOrderId;
+
     /** 供应商ID */
     private Long supplierId;
 
@@ -151,6 +154,16 @@ public class Delivery extends BaseEntity
     public void setOrderNo(String orderNo)
     {
         this.orderNo = orderNo;
+    }
+
+    public String getZsOrderId()
+    {
+        return zsOrderId;
+    }
+
+    public void setZsOrderId(String zsOrderId)
+    {
+        this.zsOrderId = zsOrderId;
     }
 
     public Long getSupplierId()

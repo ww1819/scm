@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.ZsTpOrderMapper">
+
+    <resultMap type="com.scm.system.domain.ZsTpOrder" id="ZsTpOrderResult">
+        <id     property="id"            column="id"/>
+        <result property="thirdPartyPk" column="third_party_pk"/>
+        <result property="customer"     column="customer"/>
+        <result property="sheetJe"      column="sheet_je"/>
+        <result property="dh"           column="dh"/>
+        <result property="supno"        column="supno"/>
+        <result property="sup"          column="sup"/>
+        <result property="ckno"         column="ckno"/>
+        <result property="ck"           column="ck"/>
+        <result property="ksbh"         column="ksbh"/>
+        <result property="ksmc"         column="ksmc"/>
+        <result property="bz"           column="bz"/>
+        <result property="createTime"   column="create_time"/>
+    </resultMap>
+
+    <resultMap type="com.scm.system.domain.ZsTpOrderDetail" id="ZsTpOrderDetailResult">
+        <id     property="id"            column="id"/>
+        <result property="orderId"      column="order_id"/>
+        <result property="thirdPartyPk" column="third_party_pk"/>
+        <result property="dh"           column="dh"/>
+        <result property="code"         column="code"/>
+        <result property="name"         column="name"/>
+        <result property="gg"           column="gg"/>
+        <result property="dw"           column="dw"/>
+        <result property="bzl"          column="bzl"/>
+        <result property="sccj"         column="sccj"/>
+        <result property="zcz"          column="zcz"/>
+        <result property="phflag"       column="phflag"/>
+        <result property="sl"           column="sl"/>
+        <result property="dj"           column="dj"/>
+        <result property="je"           column="je"/>
+        <result property="jm"           column="jm"/>
+        <result property="cgj"          column="cgj"/>
+        <result property="bz"           column="bz"/>
+        <result property="bz1"          column="bz1"/>
+        <result property="bz2"          column="bz2"/>
+        <result property="dsb"          column="dsb"/>
+    </resultMap>
+
+    <sql id="selectZsTpOrderVo">
+        select id, third_party_pk, customer, sheet_je, dh, supno, sup, ckno, ck, ksbh, ksmc, bz, create_time
+        from zs_tp_order
+    </sql>
+
+    <select id="selectZsTpOrderList" parameterType="com.scm.system.domain.ZsTpOrder" resultMap="ZsTpOrderResult">
+        <include refid="selectZsTpOrderVo"/>
+        <where>
+            del_flag = '0'
+            <if test="dh != null and dh != ''">
+                and dh like concat('%', #{dh}, '%')
+            </if>
+            <if test="customer != null and customer != ''">
+                and customer like concat('%', #{customer}, '%')
+            </if>
+            <if test="ksmc != null and ksmc != ''">
+                and ksmc like concat('%', #{ksmc}, '%')
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectZsTpOrderById" parameterType="String" resultMap="ZsTpOrderResult">
+        <include refid="selectZsTpOrderVo"/>
+        where id = #{id} and del_flag = '0'
+    </select>
+
+    <select id="selectZsTpOrderDetailListByOrderId" parameterType="String" resultMap="ZsTpOrderDetailResult">
+        select id, order_id, third_party_pk, dh, code, name, gg, dw, bzl, sccj, zcz, phflag,
+               sl, dj, je, jm, cgj, bz, bz1, bz2, dsb
+        from zs_tp_order_detail
+        where order_id = #{orderId} and del_flag = '0'
+        order by create_time
+    </select>
+</mapper>

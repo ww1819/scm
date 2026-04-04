@@ -122,6 +122,8 @@ CALL add_table_column('scm_delivery', 'del_by', 'varchar(64)', '删除人', NULL
 /
 CALL add_table_column('scm_delivery', 'tenant_id', 'varchar(64)', '租户ID', NULL);
 /
+CALL add_table_column('scm_delivery', 'zs_order_id', 'varchar(36)', '中设订单主键 zs_tp_order.id', NULL);
+/
 -- scm_delivery_detail
 CALL add_table_column('scm_delivery_detail', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
 /
@@ -130,6 +132,12 @@ CALL add_table_column('scm_delivery_detail', 'del_time', 'datetime', '删除时�
 CALL add_table_column('scm_delivery_detail', 'del_by', 'varchar(64)', '删除人', NULL);
 /
 CALL add_table_column('scm_delivery_detail', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+CALL add_table_column('scm_delivery_detail', 'zs_order_detail_id', 'varchar(36)', '中设明细主键 zs_tp_order_detail.id', NULL);
+/
+CALL add_table_column('scm_delivery_detail', 'main_barcode', 'varchar(128)', '主条码', NULL);
+/
+CALL add_table_column('scm_delivery_detail', 'aux_barcode', 'varchar(128)', '辅条码', NULL);
 /
 -- scm_delivery_invoice
 CALL add_table_column('scm_delivery_invoice', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
@@ -194,6 +202,14 @@ CALL add_table_column('scm_order', 'del_time', 'datetime', '删除时间', NULL)
 CALL add_table_column('scm_order', 'del_by', 'varchar(64)', '删除人', NULL);
 /
 CALL add_table_column('scm_order', 'tenant_id', 'varchar(64)', '租户ID', NULL);
+/
+CALL add_table_column('scm_order', 'order_supplier_name', 'varchar(256)', '订单供应商名称', NULL);
+/
+CALL add_table_column('scm_order', 'warehouse_id', 'bigint(20)', '订单仓库ID', NULL);
+/
+CALL add_table_column('scm_order', 'order_dept_id', 'bigint(20)', '订单科室ID', NULL);
+/
+CALL add_table_column('scm_order', 'order_dept_name', 'varchar(200)', '订单科室名称', NULL);
 /
 -- scm_order_detail
 CALL add_table_column('scm_order_detail', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');

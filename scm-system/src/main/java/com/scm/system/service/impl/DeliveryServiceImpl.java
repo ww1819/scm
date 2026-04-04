@@ -1,21 +1,28 @@
 package com.scm.system.service.impl;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.scm.common.core.text.Convert;
+import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.Delivery;
 import com.scm.system.domain.DeliveryDetail;
 import com.scm.system.domain.Order;
 import com.scm.system.domain.OrderDetail;
+import com.scm.system.domain.ZsTpOrder;
+import com.scm.system.domain.ZsTpOrderDetail;
+import com.scm.system.domain.vo.ZsTpOrderForDeliveryVo;
 import com.scm.system.mapper.DeliveryDetailMapper;
 import com.scm.system.mapper.DeliveryMapper;
 import com.scm.system.mapper.OrderDetailMapper;
 import com.scm.system.mapper.OrderMapper;
+import com.scm.system.mapper.ZsTpOrderMapper;
 import com.scm.system.service.IDeliveryService;
 
 /**
@@ -37,6 +44,9 @@ public class DeliveryServiceImpl implements IDeliveryService
 
     @Autowired
     private OrderDetailMapper orderDetailMapper;
+
+    @Autowired
+    private ZsTpOrderMapper zsTpOrderMapper;
 
     /**
      * 查询配送单信息
@@ -78,6 +88,13 @@ public class DeliveryServiceImpl implements IDeliveryService
     @Transactional
     public int insertDelivery(Delivery delivery)
     {
+        if (StringUtils.isNotEmpty(delivery.getZsOrderId()))
+        {
+            if (deliveryMapper.countDeliveryByZsOrderId(delivery.getZsOrderId()) > 0)
+            {
+                throw new ServiceException("该中设订单已生成配送单，请勿重复生成");
+            }
+        }
         if (StringUtils.isEmpty(delivery.getDeliveryStatus()))
         {
             delivery.setDeliveryStatus("0"); // 默认未审核
@@ -207,6 +224,98 @@ public class DeliveryServiceImpl implements IDeliveryService
             order.setOrderDetails(details);
         }
         return order;
+    }
+
+    @Override
+    public List<ZsTpOrder> selectZsTpOrderList(ZsTpOrder query)
+    {
+        return zsTpOrderMapper.selectZsTpOrderList(query);
+    }
+
+    @Override
+    public ZsTpOrderForDeliveryVo selectZsTpOrderForDelivery(String zsOrderId)
+    {
+        if (StringUtils.isEmpty(zsOrderId))
+        {
+            throw new ServiceException("中设订单主键不能为空");
+        }
+        ZsTpOrder head = zsTpOrderMapper.selectZsTpOrderById(zsOrderId);
+        if (head == null)
+        {
+            throw new ServiceException("中设订单不存在或已删除");
+        }
+        List<ZsTpOrderDetail> lines = zsTpOrderMapper.selectZsTpOrderDetailListByOrderId(zsOrderId);
+        ZsTpOrderForDeliveryVo vo = new ZsTpOrderForDeliveryVo();
+        vo.setZsOrderId(head.getId());
+        vo.setOrderNo(StringUtils.trimToEmpty(head.getDh()));
+        vo.setWarehouse(StringUtils.trimToEmpty(head.getCk()));
+        vo.setOrderAmount(head.getSheetJe() != null
+            ? head.getSheetJe().setScale(2, RoundingMode.HALF_UP)
+            : BigDecimal.ZERO);
+        vo.setOrderDate(head.getCreateTime());
+        StringBuilder remark = new StringBuilder();
+        if (StringUtils.isNotEmpty(head.getKsmc()))
+        {
+            remark.append("科室:").append(head.getKsmc()).append("；");
+        }
+        if (StringUtils.isNotEmpty(head.getCk()))
+        {
+            remark.append("仓库:").append(head.getCk()).append("；");
+        }
+        if (StringUtils.isNotEmpty(head.getSup()))
+        {
+            remark.append("供应商:").append(head.getSup()).append("；");
+        }
+        if (StringUtils.isNotEmpty(head.getBz()))
+        {
+            remark.append(head.getBz());
+        }
+        vo.setRemark(remark.toString());
+
+        List<DeliveryDetail> details = new ArrayList<>();
+        if (lines != null)
+        {
+            for (ZsTpOrderDetail line : lines)
+            {
+                details.add(mapZsDetailLine(line));
+            }
+        }
+        vo.setDeliveryDetails(details);
+        return vo;
+    }
+
+    private DeliveryDetail mapZsDetailLine(ZsTpOrderDetail line)
+    {
+        DeliveryDetail d = new DeliveryDetail();
+        d.setMaterialId(0L);
+        d.setZsOrderDetailId(line.getId());
+        d.setOrderDetailId(null);
+        d.setMaterialCode(StringUtils.trimToEmpty(line.getCode()));
+        d.setMaterialName(StringUtils.trimToEmpty(line.getName()));
+        d.setSpecification(StringUtils.trimToEmpty(line.getGg()));
+        d.setModel(StringUtils.trimToEmpty(line.getBzl()));
+        d.setUnit(StringUtils.trimToEmpty(line.getDw()));
+        BigDecimal sl = line.getSl() != null ? line.getSl() : BigDecimal.ZERO;
+        BigDecimal dj = line.getDj() != null ? line.getDj() : BigDecimal.ZERO;
+        BigDecimal je = line.getJe();
+        if (je == null)
+        {
+            je = sl.multiply(dj).setScale(2, RoundingMode.HALF_UP);
+        }
+        else
+        {
+            je = je.setScale(2, RoundingMode.HALF_UP);
+        }
+        d.setDeliveryQuantity(sl);
+        d.setRemainingQuantity(sl);
+        d.setPrice(dj.setScale(4, RoundingMode.HALF_UP));
+        d.setAmount(je);
+        d.setManufacturer(StringUtils.trimToEmpty(line.getSccj()));
+        d.setRegisterNo(StringUtils.trimToEmpty(line.getZcz()));
+        d.setBatchNo("");
+        d.setMainBarcode("");
+        d.setAuxBarcode("");
+        return d;
     }
 
     /**

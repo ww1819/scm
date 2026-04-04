@@ -4,6 +4,8 @@ import java.util.List;
 import com.scm.system.domain.Delivery;
 import com.scm.system.domain.DeliveryDetail;
 import com.scm.system.domain.Order;
+import com.scm.system.domain.ZsTpOrder;
+import com.scm.system.domain.vo.ZsTpOrderForDeliveryVo;
 
 /**
  * 配送单 服务层
@@ -67,6 +69,16 @@ public interface IDeliveryService
      * @return 订单信息
      */
     public Order selectOrderForDelivery(Long orderId);
+
+    /**
+     * 中设订单列表（zs_tp_order，未删除）
+     */
+    public List<ZsTpOrder> selectZsTpOrderList(ZsTpOrder query);
+
+    /**
+     * 按主键加载中设订单并映射为配送单草稿数据
+     */
+    public ZsTpOrderForDeliveryVo selectZsTpOrderForDelivery(String zsOrderId);
 
     /**
      * 查询配送明细列表

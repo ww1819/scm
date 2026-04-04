@@ -28,6 +28,9 @@ public class DeliveryDetail extends BaseEntity
     /** 订单明细ID */
     private Long orderDetailId;
 
+    /** 中设明细主键 zs_tp_order_detail.id */
+    private String zsOrderDetailId;
+
     /** 物资ID */
     private Long materialId;
 
@@ -71,6 +74,14 @@ public class DeliveryDetail extends BaseEntity
     @Excel(name = "批号")
     private String batchNo;
 
+    /** 主条码 */
+    @Excel(name = "主条码")
+    private String mainBarcode;
+
+    /** 辅条码 */
+    @Excel(name = "辅条码")
+    private String auxBarcode;
+
     /** 生产日期 */
     @Excel(name = "生产日期", width = 30, dateFormat = "yyyy-MM-dd")
     private Date productionDate;
@@ -110,6 +121,16 @@ public class DeliveryDetail extends BaseEntity
     public void setOrderDetailId(Long orderDetailId)
     {
         this.orderDetailId = orderDetailId;
+    }
+
+    public String getZsOrderDetailId()
+    {
+        return zsOrderDetailId;
+    }
+
+    public void setZsOrderDetailId(String zsOrderDetailId)
+    {
+        this.zsOrderDetailId = zsOrderDetailId;
     }
 
     @NotNull(message = "物资ID不能为空")
@@ -225,6 +246,28 @@ public class DeliveryDetail extends BaseEntity
         this.batchNo = batchNo;
     }
 
+    @Size(min = 0, max = 128, message = "主条码不能超过128个字符")
+    public String getMainBarcode()
+    {
+        return mainBarcode;
+    }
+
+    public void setMainBarcode(String mainBarcode)
+    {
+        this.mainBarcode = mainBarcode;
+    }
+
+    @Size(min = 0, max = 128, message = "辅条码不能超过128个字符")
+    public String getAuxBarcode()
+    {
+        return auxBarcode;
+    }
+
+    public void setAuxBarcode(String auxBarcode)
+    {
+        this.auxBarcode = auxBarcode;
+    }
+
     public Date getProductionDate()
     {
         return productionDate;
@@ -304,6 +347,8 @@ public class DeliveryDetail extends BaseEntity
             .append("price", getPrice())
             .append("amount", getAmount())
             .append("batchNo", getBatchNo())
+            .append("mainBarcode", getMainBarcode())
+            .append("auxBarcode", getAuxBarcode())
             .append("productionDate", getProductionDate())
             .append("expireDate", getExpireDate())
             .append("manufacturer", getManufacturer())

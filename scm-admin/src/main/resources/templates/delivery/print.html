@@ -133,6 +133,17 @@
             word-break: break-word;
         }
         
+        .detail-table th.barcode-col,
+        .detail-table td.barcode-col {
+            min-width: 100px;
+            max-width: 140px;
+            white-space: normal;
+            word-break: break-all;
+            line-height: 1.25;
+            vertical-align: top;
+            padding: 3px 4px;
+        }
+        
         .detail-table tbody tr {
             height: auto;
         }
@@ -358,9 +369,11 @@
                         <th style="width: 60px;">单价</th>
                         <th style="width: 60px;">数量</th>
                         <th style="width: 70px;">金额</th>
-                        <th style="width: 80px;">批号</th>
-                        <th style="width: 80px;">生产日期</th>
-                        <th style="width: 80px;">有效期</th>
+                        <th class="barcode-col" style="width: 110px;">批号</th>
+                        <th style="width: 88px;">有效期</th>
+                        <th style="width: 88px;">生产日期</th>
+                        <th class="barcode-col" style="width: 120px;">主条码</th>
+                        <th class="barcode-col" style="width: 120px;">辅条码</th>
                         <th style="width: 120px;">注册证号</th>
                         <th style="width: 120px;">厂家</th>
                         <th style="width: 100px;">订单号</th>
@@ -368,7 +381,7 @@
                 </thead>
                 <tbody>
                     <tr th:if="${deliveryDetails == null or #lists.isEmpty(deliveryDetails)}">
-                        <td colspan="13" style="text-align: center; padding: 20px;">暂无明细数据</td>
+                        <td colspan="15" style="text-align: center; padding: 20px;">暂无明细数据</td>
                     </tr>
                     <tr th:each="detail, iterStat : ${deliveryDetails}">
                         <td th:text="${iterStat.count}">1</td>
@@ -378,9 +391,11 @@
                         <td th:text="${detail.price != null ? #numbers.formatDecimal(detail.price, 1, 2) : '-'}">30</td>
                         <td th:text="${detail.deliveryQuantity != null ? #numbers.formatDecimal(detail.deliveryQuantity, 0, 0) : '-'}">200</td>
                         <td th:text="${detail.amount != null ? #numbers.formatDecimal(detail.amount, 1, 2) : '-'}">6000</td>
-                        <td th:text="${detail.batchNo ?: '-'}">E7LK0610</td>
-                        <td th:text="${detail.productionDate != null ? #dates.format(detail.productionDate, 'yyyy/MM/dd') : '-'}">2024/10/5</td>
+                        <td class="barcode-col" th:text="${detail.batchNo ?: '-'}">E7LK0610</td>
                         <td th:text="${detail.expireDate != null ? #dates.format(detail.expireDate, 'yyyy/MM/dd') : '-'}">2024/10/5</td>
+                        <td th:text="${detail.productionDate != null ? #dates.format(detail.productionDate, 'yyyy/MM/dd') : '-'}">2024/10/5</td>
+                        <td class="barcode-col" th:text="${detail.mainBarcode ?: '-'}">-</td>
+                        <td class="barcode-col" th:text="${detail.auxBarcode ?: '-'}">-</td>
                         <td th:text="${detail.registerNo ?: '-'}">国械注准20193101882</td>
                         <td th:text="${detail.manufacturer ?: '-'}">北京费森尤斯医疗器械有限公司</td>
                         <td th:text="${delivery.orderNo ?: '-'}">DH020205</td>
@@ -388,7 +403,7 @@
                     <!-- 合计行 -->
                     <tr>
                         <td colspan="4" style="text-align: left; font-weight: bold;">合计：</td>
-                        <td colspan="9" style="text-align: left;">
+                        <td colspan="11" style="text-align: left;">
                             大写：<span th:text="${delivery.deliveryAmount != null ? T(com.scm.common.core.text.Convert).digitUppercase(delivery.deliveryAmount.doubleValue()) : '零元整'}">零元整</span><br/>
                             合计数量：<span th:text="${totalQuantity}">0</span>
                         </td>
@@ -404,7 +419,7 @@
                         <td colspan="3" style="text-align: left;">
                             签收人：________________
                         </td>
-                        <td colspan="4" style="text-align: left;">
+                        <td colspan="6" style="text-align: left;">
                             签收日期：________________
                         </td>
                     </tr>

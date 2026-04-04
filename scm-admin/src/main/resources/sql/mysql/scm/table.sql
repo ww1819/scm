@@ -307,8 +307,13 @@ CREATE TABLE IF NOT EXISTS `scm_order` (
   `order_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '订单ID',
   `order_no` varchar(50) NOT NULL COMMENT '订单编号',
   `hospital_id` bigint(20) DEFAULT NULL COMMENT '医院ID',
-  `supplier_id` bigint(20) DEFAULT NULL COMMENT '供应商ID',
-  `warehouse_name` varchar(200) DEFAULT '' COMMENT '要货仓库',
+  `supplier_id` bigint(20) DEFAULT NULL COMMENT '订单供应商ID',
+  `order_supplier_name` varchar(256) DEFAULT '' COMMENT '订单供应商名称',
+  `warehouse_id` bigint(20) DEFAULT NULL COMMENT '订单仓库ID',
+  `warehouse_name` varchar(200) DEFAULT '' COMMENT '订单仓库名称',
+  `order_dept_id` bigint(20) DEFAULT NULL COMMENT '订单科室ID',
+  `order_dept_name` varchar(200) DEFAULT '' COMMENT '订单科室名称',
+  `tenant_id` varchar(64) DEFAULT NULL COMMENT '租户ID',
   `order_date` date DEFAULT NULL COMMENT '订单日期',
   `order_amount` decimal(18,2) DEFAULT 0 COMMENT '订单金额',
   `order_status` char(1) DEFAULT '0' COMMENT '订单状态（0待处理 1已确认 2配送中 3已完成 4已取消）',
@@ -323,7 +328,9 @@ CREATE TABLE IF NOT EXISTS `scm_order` (
   UNIQUE KEY `uk_order_no` (`order_no`),
   KEY `idx_hospital_id` (`hospital_id`),
   KEY `idx_supplier_id` (`supplier_id`),
-  KEY `idx_order_date` (`order_date`)
+  KEY `idx_warehouse_id` (`warehouse_id`),
+  KEY `idx_order_date` (`order_date`),
+  KEY `idx_tenant_id` (`tenant_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单主表';
 /
 CREATE TABLE IF NOT EXISTS `scm_order_detail` (
@@ -369,6 +376,7 @@ CREATE TABLE IF NOT EXISTS `scm_delivery` (
   `invoice_amount` decimal(18,2) DEFAULT 0 COMMENT '发票金额',
   `invoice_date` date DEFAULT NULL COMMENT '发票日期',
   `order_date` date DEFAULT NULL COMMENT '订单日期',
+  `zs_order_id` varchar(36) DEFAULT NULL COMMENT '中设订单主键 zs_tp_order.id',
   `remark` varchar(500) DEFAULT '' COMMENT '备注',
   `create_by` varchar(64) DEFAULT '' COMMENT '制单人',
   `create_time` datetime DEFAULT NULL COMMENT '制单日期',
@@ -378,13 +386,15 @@ CREATE TABLE IF NOT EXISTS `scm_delivery` (
   UNIQUE KEY `uk_delivery_no` (`delivery_no`),
   KEY `idx_hospital_id` (`hospital_id`),
   KEY `idx_supplier_id` (`supplier_id`),
-  KEY `idx_order_id` (`order_id`)
+  KEY `idx_order_id` (`order_id`),
+  KEY `idx_zs_order_id` (`zs_order_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='配送单主表';
 /
 CREATE TABLE IF NOT EXISTS `scm_delivery_detail` (
   `detail_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '明细ID',
   `delivery_id` bigint(20) NOT NULL COMMENT '配送单ID',
   `order_detail_id` bigint(20) DEFAULT NULL COMMENT '订单明细ID',
+  `zs_order_detail_id` varchar(36) DEFAULT NULL COMMENT '中设明细主键 zs_tp_order_detail.id',
   `material_id` bigint(20) NOT NULL COMMENT '物资ID',
   `material_code` varchar(50) DEFAULT '' COMMENT '产品编码',
   `material_name` varchar(200) DEFAULT '' COMMENT '产品名称',
@@ -396,6 +406,8 @@ CREATE TABLE IF NOT EXISTS `scm_delivery_detail` (
   `price` decimal(18,2) DEFAULT 0 COMMENT '单价',
   `amount` decimal(18,2) DEFAULT 0 COMMENT '金额',
   `batch_no` varchar(50) DEFAULT '' COMMENT '批号',
+  `main_barcode` varchar(128) DEFAULT '' COMMENT '主条码',
+  `aux_barcode` varchar(128) DEFAULT '' COMMENT '辅条码',
   `production_date` date DEFAULT NULL COMMENT '生产日期',
   `expire_date` date DEFAULT NULL COMMENT '有效期',
   `manufacturer_id` bigint(20) DEFAULT NULL COMMENT '生产厂家ID',

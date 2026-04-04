@@ -37,9 +37,23 @@ public class Order extends BaseEntity
     /** 供应商ID */
     private Long supplierId;
 
-    /** 供应商名称 */
+    /** 供应商名称（关联供应商档案或冗余展示名） */
     @Excel(name = "供应商名称")
     private String supplierName;
+
+    /** 订单供应商名称（主表冗余，可与供应商档案一致） */
+    @Excel(name = "订单供应商名称")
+    private String orderSupplierName;
+
+    /** 订单仓库ID */
+    private Long warehouseId;
+
+    /** 订单科室ID */
+    private Long orderDeptId;
+
+    /** 订单科室名称（与 apply_dept/科室展示一致时可与 department 同步） */
+    @Excel(name = "订单科室名称")
+    private String orderDeptName;
 
     /** 订单金额 */
     @Excel(name = "订单金额", cellType = ColumnType.NUMERIC)
@@ -113,6 +127,46 @@ public class Order extends BaseEntity
     public void setSupplierName(String supplierName)
     {
         this.supplierName = supplierName;
+    }
+
+    public String getOrderSupplierName()
+    {
+        return orderSupplierName;
+    }
+
+    public void setOrderSupplierName(String orderSupplierName)
+    {
+        this.orderSupplierName = orderSupplierName;
+    }
+
+    public Long getWarehouseId()
+    {
+        return warehouseId;
+    }
+
+    public void setWarehouseId(Long warehouseId)
+    {
+        this.warehouseId = warehouseId;
+    }
+
+    public Long getOrderDeptId()
+    {
+        return orderDeptId;
+    }
+
+    public void setOrderDeptId(Long orderDeptId)
+    {
+        this.orderDeptId = orderDeptId;
+    }
+
+    public String getOrderDeptName()
+    {
+        return orderDeptName;
+    }
+
+    public void setOrderDeptName(String orderDeptName)
+    {
+        this.orderDeptName = orderDeptName;
     }
 
     public BigDecimal getOrderAmount()
@@ -196,6 +250,10 @@ public class Order extends BaseEntity
             .append("hospitalName", getHospitalName())
             .append("supplierId", getSupplierId())
             .append("supplierName", getSupplierName())
+            .append("orderSupplierName", getOrderSupplierName())
+            .append("warehouseId", getWarehouseId())
+            .append("orderDeptId", getOrderDeptId())
+            .append("orderDeptName", getOrderDeptName())
             .append("orderAmount", getOrderAmount())
             .append("warehouse", getWarehouse())
             .append("orderDate", getOrderDate())
