@@ -391,3 +391,34 @@ CREATE TABLE IF NOT EXISTS `zs_tp_order_detail_delivery_rel` (
   KEY `idx_zsoddr_delivery` (`delivery_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='中设订单明细与配送单明细关联';
 /
+CALL add_table_column('zs_tp_order', 'receive_channel', 'varchar(16)', '接收渠道 TENANT=我方推送 ZS=中设客户推送', 'ZS');
+/
+CALL add_table_column('scm_delivery', 'zs_jsfs', 'varchar(32)', '中设订单结算方式jsfs快照', NULL);
+/
+CREATE TABLE IF NOT EXISTS `scm_barcode_seed` (
+  `id` varchar(32) NOT NULL COMMENT '主键UUID7',
+  `counter_type` char(1) NOT NULL COMMENT 'T=按租户维度 Z=按中设客户维度',
+  `tenant_id` varchar(64) NOT NULL DEFAULT '' COMMENT '租户ID',
+  `zs_customer_id` varchar(128) NOT NULL DEFAULT '' COMMENT '中设客户ID(customer)',
+  `warehouse_id` varchar(128) NOT NULL DEFAULT '' COMMENT '仓库ID(如CKNO)',
+  `high_low_flag` char(1) NOT NULL DEFAULT 'L' COMMENT '高低值：H高值 L低值',
+  `seed_value` bigint(20) NOT NULL DEFAULT 0 COMMENT '已分配的最大种子序号',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_scm_barcode_seed` (`counter_type`,`tenant_id`,`zs_customer_id`,`warehouse_id`,`high_low_flag`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='中设条码种子序列表';
+/
+CREATE TABLE IF NOT EXISTS `scm_delivery_detail_barcode` (
+  `id` varchar(32) NOT NULL COMMENT '主键UUID7',
+  `delivery_id` bigint(20) NOT NULL COMMENT '配送单ID',
+  `delivery_no` varchar(50) NOT NULL DEFAULT '' COMMENT '配送单号',
+  `delivery_detail_id` bigint(20) NOT NULL COMMENT '配送单明细ID',
+  `seed_num` bigint(20) NOT NULL COMMENT '种子序号',
+  `barcode_no` varchar(128) NOT NULL DEFAULT '' COMMENT '条码号',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_ddbc_delivery` (`delivery_id`),
+  KEY `idx_ddbc_detail` (`delivery_detail_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='配送单明细条码从表';
+/

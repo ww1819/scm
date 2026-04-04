@@ -2,6 +2,7 @@ package com.scm.system.domain;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
 import javax.validation.constraints.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -134,6 +135,14 @@ public class DeliveryDetail extends BaseEntity
 
     /** 中设明细名称 */
     private String refZsMaterialName;
+
+    /**
+     * 订单行申请数量上限（仅用于前端校验，不落库；中设行对应 zs 明细数量）
+     */
+    private BigDecimal lineApplyQty;
+
+    /** 本明细生成的条码（jsfs=3 时，查询带出） */
+    private List<DeliveryDetailBarcode> detailBarcodes;
 
     @NotNull(message = "配送单ID不能为空")
     public Long getDeliveryId()
@@ -461,6 +470,26 @@ public class DeliveryDetail extends BaseEntity
     public void setRefZsMaterialName(String refZsMaterialName)
     {
         this.refZsMaterialName = refZsMaterialName;
+    }
+
+    public BigDecimal getLineApplyQty()
+    {
+        return lineApplyQty;
+    }
+
+    public void setLineApplyQty(BigDecimal lineApplyQty)
+    {
+        this.lineApplyQty = lineApplyQty;
+    }
+
+    public List<DeliveryDetailBarcode> getDetailBarcodes()
+    {
+        return detailBarcodes;
+    }
+
+    public void setDetailBarcodes(List<DeliveryDetailBarcode> detailBarcodes)
+    {
+        this.detailBarcodes = detailBarcodes;
     }
 
     public Long getDetailId()

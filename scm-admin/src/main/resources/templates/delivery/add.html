@@ -697,6 +697,76 @@
 	        });
 	    });
 	    
+	    /** 操作列：复制拆行 + 删除 */
+	    function deliveryDetailOperationHtml(rowIndex) {
+	        return '<a class="btn btn-xs btn-default" href="javascript:void(0)" onclick="copyDetailRowByIndex(this,' + rowIndex + ')" title="复制拆行（不同批号）" style="margin-right:6px;"><i class="fa fa-copy"></i></a>' +
+	            '<a class="btn-operation-delete" href="javascript:void(0)" onclick="deleteDetailRowByIndex(this,' + rowIndex + ')" title="删除该行明细"><i class="fa fa-trash"></i></a>';
+	    }
+	    function deliveryLineGroupKey(row) {
+	        if (!row) return '';
+	        if (row.orderDetailId != null && row.orderDetailId !== '') return 'o:' + row.orderDetailId;
+	        if (row.zsOrderDetailId) return 'z:' + row.zsOrderDetailId;
+	        return '';
+	    }
+	    function sumDeliveryQtyForGroup(data, groupKey) {
+	        if (!groupKey) return null;
+	        var s = 0;
+	        for (var i = 0; i < data.length; i++) {
+	            if (deliveryLineGroupKey(data[i]) === groupKey) {
+	                s += parseFloat(data[i].deliveryQuantity || 0);
+	            }
+	        }
+	        return s;
+	    }
+	    window.copyDetailRowByIndex = function(btn, index) {
+	        var allData = $('#detail-table').bootstrapTable('getData');
+	        if (!allData || index < 0 || index >= allData.length) return;
+	        var row = allData[index];
+	        var pack = row.packCoefficient != null && row.packCoefficient !== '' ? parseFloat(row.packCoefficient) : NaN;
+	        if (isNaN(pack) || pack <= 0) {
+	            $.modal.alertWarning('未维护打包系数时无法按包装拆分，请先填写打包系数，或直接在本行修改批号、效期等信息。');
+	            return;
+	        }
+	        var dq = parseFloat(row.deliveryQuantity || 0);
+	        var eps = 1e-6;
+	        if (Math.abs(dq - pack) < eps) {
+	            $.modal.alertWarning('当前行配送数量已等于打包系数，若需不同批号、效期，请直接在本行修改，勿再复制拆行。');
+	            return;
+	        }
+	        if (dq < pack - eps) {
+	            $.modal.alertWarning('配送数量不足一个打包单位（' + pack + '），无法拆分。');
+	            return;
+	        }
+	        var newRow = JSON.parse(JSON.stringify(row));
+	        newRow.detailId = null;
+	        newRow.deliveryQuantity = pack;
+	        newRow.amount = pack * parseFloat(row.price || 0);
+	        newRow.batchNo = '';
+	        newRow.productionDate = '';
+	        newRow.expireDate = '';
+	        newRow.mainBarcode = '';
+	        newRow.auxBarcode = '';
+	        allData[index].deliveryQuantity = dq - pack;
+	        allData[index].amount = (dq - pack) * parseFloat(row.price || 0);
+	        allData.splice(index + 1, 0, newRow);
+	        $('#detail-table').bootstrapTable('load', allData);
+	        var totalAmount = 0;
+	        for (var i = 0; i < allData.length; i++) {
+	            var q = parseFloat(allData[i].deliveryQuantity || 0);
+	            var p = parseFloat(allData[i].price || 0);
+	            allData[i].amount = q * p;
+	            totalAmount += allData[i].amount;
+	        }
+	        $("input[name='deliveryAmount']").val(totalAmount.toFixed(2));
+	        setTimeout(function() {
+	            if (typeof fillOperationColumnImmediate === 'function') fillOperationColumnImmediate();
+	            if (typeof fillOperationColumn === 'function') fillOperationColumn();
+	            $('#detail-table').find('.date-input').data('laydate-init', false);
+	            if (typeof initDatePickers === 'function') initDatePickers();
+	        }, 100);
+	        $.modal.msgSuccess('已拆行：原行保留数量 ' + (dq - pack).toFixed(2) + '，新行数量 ' + pack + '，请填写新行批号与效期');
+	    };
+	    
 	    // 确保操作列正确渲染的函数 - 定义为全局函数，以便在所有地方都能访问
 	    var fillOperationColumn = function() {
 	        console.log('fillOperationColumn called'); // 调试信息
@@ -766,7 +836,7 @@
 	                    
 	                    if ($operationCell.length > 0) {
 	                        // 强制填充，无论是否为空
-	                        var btnHtml = '<a class="btn-operation-delete" href="javascript:void(0)" onclick="deleteDetailRowByIndex(this, ' + rowIndex + ')" title="删除该行明细"><i class="fa fa-trash"></i></a>';
+	                        var btnHtml = deliveryDetailOperationHtml(rowIndex);
 	                        $operationCell.html(btnHtml);
 	                        // 确保按钮可见
 	                        $operationCell.find('.btn-operation-delete').css({
@@ -810,7 +880,7 @@
 	            }
 	            if ($operationCell.length > 0) {
 	                // 强制填充操作列，确保操作列有内容（移除条件检查，始终填充）
-	                var btnHtml = '<a class="btn-operation-delete" href="javascript:void(0)" onclick="deleteDetailRowByIndex(this, ' + rowIndex + ')" title="删除该行明细"><i class="fa fa-trash"></i></a>';
+	                var btnHtml = deliveryDetailOperationHtml(rowIndex);
 	                $operationCell.html(btnHtml);
 	                console.log('Filled main table cell for row:', rowIndex, 'Cell:', $operationCell[0]); // 调试信息
 	            } else {
@@ -834,7 +904,7 @@
 	            if ($allCells.length >= 15) {
 	                var $lastCell = $allCells.last();
 	                // 强制填充，确保操作列有内容（移除条件检查，始终填充）
-	                var btnHtml = '<a class="btn-operation-delete" href="javascript:void(0)" onclick="deleteDetailRowByIndex(this, ' + rowIndex + ')" title="删除该行明细"><i class="fa fa-trash"></i></a>';
+	                var btnHtml = deliveryDetailOperationHtml(rowIndex);
 	                $lastCell.html(btnHtml);
 	                console.log('Filled last cell for row:', rowIndex, 'Cell count:', $allCells.length, 'Cell:', $lastCell[0]); // 调试信息
 	            }
@@ -853,7 +923,7 @@
 	                }
 	            }
 	            // 强制填充，确保操作列有内容（移除条件检查，始终填充）
-	            var btnHtml = '<a class="btn-operation-delete" href="javascript:void(0)" onclick="deleteDetailRowByIndex(this, ' + rowIndex + ')" title="删除该行明细"><i class="fa fa-trash"></i></a>';
+	            var btnHtml = deliveryDetailOperationHtml(rowIndex);
 	            $cell.html(btnHtml);
 	            console.log('Filled operation cell for row:', rowIndex, 'Cell:', $cell[0]); // 调试信息
 	        });
@@ -871,7 +941,7 @@
 	                    rowIndex = $tr.attr('data-index') || $tr.index();
 	                }
 	                // 强制填充，无论是否已有内容
-	                var btnHtml = '<a class="btn-operation-delete" href="javascript:void(0)" onclick="deleteDetailRowByIndex(this, ' + rowIndex + ')" title="删除该行明细"><i class="fa fa-trash"></i></a>';
+	                var btnHtml = deliveryDetailOperationHtml(rowIndex);
 	                $lastCell.html(btnHtml);
 	                console.log('Filled last cell for row:', rowIndex, 'Cell count:', $cells.length, 'Cell:', $lastCell[0]); // 调试信息
 	            }
@@ -1102,10 +1172,9 @@
 	                field: 'operation',
 	                title: '<i class="fa fa-cog"></i> 操作',
 	                align: 'center',
-	                width: 90,
+	                width: 115,
 	                formatter: function(value, row, index) {
-	                    // 返回优化的删除按钮，带更好的提示
-	                    return '<a class="btn-operation-delete" href="javascript:void(0)" onclick="deleteDetailRowByIndex(this, ' + index + ')" title="删除该行明细" data-toggle="tooltip" data-placement="left"><i class="fa fa-trash"></i></a>';
+	                    return deliveryDetailOperationHtml(index);
 	                }
 	            }]
 	        };
@@ -1132,16 +1201,16 @@
             }
             
             // 方法1: 直接查找固定列中的所有td并填充
-            $('.fixed-columns-right tbody tr, .fixed-columns-right tr').each(function(index) {
-                var $tr = $(this);
-                var $td = $tr.find('td').first();
-                if ($td.length > 0) {
-                    var rowIndex = $tr.data('index') || $tr.attr('data-index') || index;
-                    var btnHtml = '<a class="btn-operation-delete" href="javascript:void(0)" onclick="deleteDetailRowByIndex(this, ' + rowIndex + ')" title="删除该行明细"><i class="fa fa-trash"></i></a>';
-                    $td.html(btnHtml);
-                    console.log('Filled fixed column row', index, 'with button');
-                }
-            });
+	            $('.fixed-columns-right tbody tr, .fixed-columns-right tr').each(function(index) {
+	                var $tr = $(this);
+	                var $td = $tr.find('td').first();
+	                if ($td.length > 0) {
+	                    var rowIndex = $tr.data('index') || $tr.attr('data-index') || index;
+	                    var btnHtml = deliveryDetailOperationHtml(rowIndex);
+	                    $td.html(btnHtml);
+	                    console.log('Filled fixed column row', index, 'with button');
+	                }
+	            });
             
             // 方法2: 查找主表格中所有操作列单元格
             $('#detail-table tbody tr').each(function(index) {
@@ -1155,11 +1224,11 @@
                         $opCell = $allTds.last();
                     }
                 }
-                if ($opCell.length > 0 && $opCell.find('.btn-operation-delete').length === 0) {
-                    var btnHtml = '<a class="btn-operation-delete" href="javascript:void(0)" onclick="deleteDetailRowByIndex(this, ' + rowIndex + ')" title="删除该行明细"><i class="fa fa-trash"></i></a>';
-                    $opCell.html(btnHtml);
-                    console.log('Filled main table row', index, 'with button');
-                }
+	                if ($opCell.length > 0 && $opCell.find('.btn-operation-delete').length === 0) {
+	                    var btnHtml = deliveryDetailOperationHtml(rowIndex);
+	                    $opCell.html(btnHtml);
+	                    console.log('Filled main table row', index, 'with button');
+	                }
             });
         }
         
@@ -1290,12 +1359,25 @@
 	        var data = $('#detail-table').bootstrapTable('getData');
 	        var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : index;
 	        if (data[rowIndex]) {
-	            data[rowIndex].deliveryQuantity = value ? parseFloat(value) : 0;
-	            // 自动计算金额
+	            var oldQty = parseFloat(data[rowIndex].deliveryQuantity || 0);
+	            var newVal = value ? parseFloat(value) : 0;
+	            data[rowIndex].deliveryQuantity = newVal;
+	            var gk = deliveryLineGroupKey(data[rowIndex]);
+	            if (gk && data[rowIndex].lineApplyQty != null && data[rowIndex].lineApplyQty !== '') {
+	                var cap = parseFloat(data[rowIndex].lineApplyQty);
+	                if (!isNaN(cap) && cap >= 0) {
+	                    var sum = sumDeliveryQtyForGroup(data, gk);
+	                    if (sum > cap + 1e-6) {
+	                        data[rowIndex].deliveryQuantity = oldQty;
+	                        $(input).val(oldQty.toFixed(2));
+	                        $.modal.alertWarning('同一订单明细行配送数量合计不能超过申请数量（' + cap.toFixed(2) + '）');
+	                        return;
+	                    }
+	                }
+	            }
 	            var qty = parseFloat(data[rowIndex].deliveryQuantity || 0);
 	            var price = parseFloat(data[rowIndex].price || 0);
 	            data[rowIndex].amount = qty * price;
-	            // 更新金额列的显示
 	            var amountCell = $tr.find('td[data-field="amount"]');
 	            amountCell.text('¥' + (qty * price).toFixed(2));
 	        }
@@ -1469,6 +1551,23 @@
 	            var detailData = $('#detail-table').bootstrapTable('getData');
 	            
 	            // 转换字段名：quantity -> deliveryQuantity
+	            var caps = {};
+	            for (var j = 0; j < detailData.length; j++) {
+	                var d0 = detailData[j];
+	                var gk0 = deliveryLineGroupKey(d0);
+	                if (gk0 && d0.lineApplyQty != null && d0.lineApplyQty !== '' && caps[gk0] === undefined) {
+	                    caps[gk0] = parseFloat(d0.lineApplyQty);
+	                }
+	            }
+	            for (var gk1 in caps) {
+	                if (!isNaN(caps[gk1])) {
+	                    var s0 = sumDeliveryQtyForGroup(detailData, gk1);
+	                    if (s0 > caps[gk1] + 1e-6) {
+	                        $.modal.alertWarning('同一订单明细行配送数量合计不能超过申请数量（' + caps[gk1].toFixed(2) + '）');
+	                        return;
+	                    }
+	                }
+	            }
 	            for (var i = 0; i < detailData.length; i++) {
 	                var detail = detailData[i];
 	                // 如果存在quantity字段，转换为deliveryQuantity
@@ -1484,6 +1583,7 @@
 	                var qty = parseFloat(detail.deliveryQuantity || 0);
 	                var price = parseFloat(detail.price || 0);
 	                detail.amount = qty * price;
+	                delete detail.lineApplyQty;
 	            }
 	            
 	            // 序列化表单数据
@@ -1652,6 +1752,7 @@
 	                                        unit: detail.unit || '',
 	                                        remainingQuantity: detail.remainingQuantity || detail.deliveryQuantity || 0,
 	                                        deliveryQuantity: detail.deliveryQuantity || 0,
+	                                        lineApplyQty: detail.lineApplyQty != null ? parseFloat(detail.lineApplyQty) : parseFloat(detail.remainingQuantity || 0),
 	                                        price: detail.price || 0,
 	                                        amount: detail.amount || 0,
 	                                        packCoefficient: detail.packCoefficient != null ? detail.packCoefficient : null,
@@ -1768,6 +1869,7 @@
 	                                        unit: detail.unit || '',
 	                                        remainingQuantity: detail.remainingQuantity || detail.orderQuantity || 0,
 	                                        deliveryQuantity: detail.remainingQuantity || detail.orderQuantity || 0,
+	                                        lineApplyQty: parseFloat(detail.orderQuantity != null ? detail.orderQuantity : 0),
 	                                        price: detail.purchasePrice || 0,
 	                                        amount: detail.amount || (detail.purchasePrice * (detail.remainingQuantity || detail.orderQuantity || 0)) || 0,
 	                                        packCoefficient: detail.packCoefficient != null ? detail.packCoefficient : null,

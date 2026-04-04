@@ -22,6 +22,10 @@ public class ZsTpOrder extends BaseEntity
     private String ksbh;
     private String ksmc;
     private String bz;
+    /** 结算方式 JSFS */
+    private String jsfs;
+    /** 接收渠道：TENANT=我方推送 ZS=中设客户推送 */
+    private String receiveChannel;
 
     public String getId()
     {
@@ -141,5 +145,25 @@ public class ZsTpOrder extends BaseEntity
     public void setBz(String bz)
     {
         this.bz = bz;
+    }
+
+    public String getJsfs()
+    {
+        return jsfs;
+    }
+
+    public void setJsfs(String jsfs)
+    {
+        this.jsfs = jsfs;
+    }
+
+    public String getReceiveChannel()
+    {
+        return receiveChannel;
+    }
+
+    public void setReceiveChannel(String receiveChannel)
+    {
+        this.receiveChannel = receiveChannel;
     }
 }

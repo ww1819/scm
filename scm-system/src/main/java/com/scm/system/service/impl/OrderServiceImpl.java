@@ -17,6 +17,7 @@ import com.scm.system.mapper.OrderDeliveryTraceMapper;
 import com.scm.system.mapper.OrderDetailMapper;
 import com.scm.system.mapper.OrderMapper;
 import com.scm.system.service.IOrderService;
+import com.scm.system.service.ScmBarcodeSeedService;
 
 /**
  * 订单 服务层实现
@@ -34,6 +35,9 @@ public class OrderServiceImpl implements IOrderService
 
     @Autowired
     private OrderDeliveryTraceMapper orderDeliveryTraceMapper;
+
+    @Autowired
+    private ScmBarcodeSeedService scmBarcodeSeedService;
 
     /**
      * 查询订单信息
@@ -107,6 +111,12 @@ public class OrderServiceImpl implements IOrderService
         order.setOrderAmount(totalAmount);
         
         int rows = orderMapper.insertOrder(order);
+
+        if (StringUtils.isNotEmpty(order.getTenantId()))
+        {
+            String wid = order.getWarehouseId() != null ? String.valueOf(order.getWarehouseId()) : "";
+            scmBarcodeSeedService.ensureTenantSeedRowIfAbsent(order.getTenantId(), wid);
+        }
         
         // 保存订单明细
         if (order.getOrderDetails() != null && !order.getOrderDetails().isEmpty())

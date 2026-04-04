@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.DeliveryDetailBarcodeMapper">
+
+    <insert id="batchInsert">
+        insert into scm_delivery_detail_barcode (id, delivery_id, delivery_no, delivery_detail_id, seed_num, barcode_no, create_time)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id}, #{item.deliveryId}, #{item.deliveryNo}, #{item.deliveryDetailId}, #{item.seedNum}, #{item.barcodeNo}, now())
+        </foreach>
+    </insert>
+
+    <delete id="deleteByDeliveryId">
+        delete from scm_delivery_detail_barcode where delivery_id = #{deliveryId}
+    </delete>
+
+    <select id="selectListByDeliveryId" resultType="com.scm.system.domain.DeliveryDetailBarcode">
+        select id, delivery_id as deliveryId, delivery_no as deliveryNo, delivery_detail_id as deliveryDetailId,
+               seed_num as seedNum, barcode_no as barcodeNo, create_time as createTime
+        from scm_delivery_detail_barcode
+        where delivery_id = #{deliveryId}
+        order by delivery_detail_id, seed_num
+    </select>
+</mapper>

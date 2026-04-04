@@ -34,6 +34,7 @@ import com.scm.system.mapper.ScmOrderDetailDeliveryRelMapper;
 import com.scm.system.mapper.ZsTpOrderDetailDeliveryRelMapper;
 import com.scm.system.mapper.ZsTpOrderMapper;
 import com.scm.system.service.IDeliveryService;
+import com.scm.system.service.ScmBarcodeSeedService;
 
 /**
  * 配送单 服务层实现
@@ -67,6 +68,9 @@ public class DeliveryServiceImpl implements IDeliveryService
     @Autowired
     private OrderDeliveryTraceMapper orderDeliveryTraceMapper;
 
+    @Autowired
+    private ScmBarcodeSeedService scmBarcodeSeedService;
+
     /**
      * 查询配送单信息
      * 
@@ -80,6 +84,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         if (delivery != null)
         {
             List<DeliveryDetail> details = deliveryDetailMapper.selectDeliveryDetailListByDeliveryId(deliveryId);
+            scmBarcodeSeedService.attachDetailBarcodes(details, deliveryId);
             delivery.setDeliveryDetails(details);
         }
         return delivery;
@@ -158,6 +163,8 @@ public class DeliveryServiceImpl implements IDeliveryService
                 updateOrderRemainingQuantity(delivery);
             }
             insertOrderDeliveryDetailRelations(delivery);
+            List<DeliveryDetail> savedForBarcode = deliveryDetailMapper.selectDeliveryDetailListByDeliveryId(delivery.getDeliveryId());
+            scmBarcodeSeedService.createZsDeliveryDetailBarcodesIfNeeded(delivery, savedForBarcode);
         }
         
         return rows;
@@ -230,6 +237,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         {
             scmOrderDetailDeliveryRelMapper.deleteByDeliveryId(deliveryId);
             zsTpOrderDetailDeliveryRelMapper.deleteByDeliveryId(deliveryId);
+            scmBarcodeSeedService.deleteBarcodesByDeliveryId(Long.parseLong(deliveryId));
             deliveryDetailMapper.deleteDeliveryDetailByDeliveryId(Long.parseLong(deliveryId));
         }
         return deliveryMapper.deleteDeliveryByIds(deliveryIds);
@@ -250,6 +258,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         String did = String.valueOf(deliveryId);
         scmOrderDetailDeliveryRelMapper.deleteByDeliveryId(did);
         zsTpOrderDetailDeliveryRelMapper.deleteByDeliveryId(did);
+        scmBarcodeSeedService.deleteBarcodesByDeliveryId(deliveryId);
         deliveryDetailMapper.deleteDeliveryDetailByDeliveryId(deliveryId);
         return deliveryMapper.deleteDeliveryById(deliveryId);
     }
@@ -402,6 +411,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         {
             d.setPackCoefficient(line.getDsb());
         }
+        d.setLineApplyQty(sl);
         return d;
     }
 
@@ -513,6 +523,10 @@ public class DeliveryServiceImpl implements IDeliveryService
         {
             return;
         }
+        if (StringUtils.isEmpty(d.getZsOrderId()))
+        {
+            d.setZsJsfs(null);
+        }
         if (StringUtils.isNotEmpty(d.getZsOrderId()))
         {
             ZsTpOrder z = zsTpOrderMapper.selectZsTpOrderById(d.getZsOrderId());
@@ -554,10 +568,12 @@ public class DeliveryServiceImpl implements IDeliveryService
                 {
                     d.setWarehouse(StringUtils.trimToEmpty(z.getCk()));
                 }
+                d.setZsJsfs(StringUtils.trimToEmpty(z.getJsfs()));
             }
         }
         else if (d.getOrderId() != null)
         {
+            d.setZsJsfs(null);
             Order o = orderMapper.selectOrderById(d.getOrderId());
             if (o != null)
             {

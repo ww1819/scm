@@ -69,6 +69,9 @@ public class Delivery extends BaseEntity
     /** 中设客户ID（zs_tp_order.customer） */
     private String zsCustomerId;
 
+    /** 中设订单结算方式 jsfs 快照（来自 zs_tp_order.jsfs） */
+    private String zsJsfs;
+
     /** 供应商ID */
     private Long supplierId;
 
@@ -272,6 +275,16 @@ public class Delivery extends BaseEntity
         this.zsCustomerId = zsCustomerId;
     }
 
+    public String getZsJsfs()
+    {
+        return zsJsfs;
+    }
+
+    public void setZsJsfs(String zsJsfs)
+    {
+        this.zsJsfs = zsJsfs;
+    }
+
     public Long getSupplierId()
     {
         return supplierId;
@@ -463,6 +476,7 @@ public class Delivery extends BaseEntity
             .append("srcOrderDeptId", getSrcOrderDeptId())
             .append("srcOrderDeptName", getSrcOrderDeptName())
             .append("zsCustomerId", getZsCustomerId())
+            .append("zsJsfs", getZsJsfs())
             .append("supplierId", getSupplierId())
             .append("supplierName", getSupplierName())
             .append("deliveryAmount", getDeliveryAmount())
