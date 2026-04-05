@@ -385,7 +385,7 @@ CREATE TABLE IF NOT EXISTS `scm_delivery` (
   `src_order_dept_id` varchar(128) DEFAULT '' COMMENT '订单科室ID(字符串快照)',
   `src_order_dept_name` varchar(256) DEFAULT '' COMMENT '订单科室名称',
   `zs_customer_id` varchar(128) DEFAULT '' COMMENT '中设客户ID(zs_tp_order.customer)',
-  `zs_jsfs` varchar(32) DEFAULT NULL COMMENT '中设订单结算方式jsfs快照',
+  `zs_jsfs` varchar(32) DEFAULT NULL COMMENT '中设订单结算方式jsfs快照：3高值0低值',
   `audit_status` char(1) DEFAULT '0' COMMENT '审核状态（0待审核 1已审核 2已拒绝）',
   `audit_by` varchar(64) DEFAULT '' COMMENT '审核人',
   `audit_time` datetime DEFAULT NULL COMMENT '审核时间',
@@ -564,7 +564,7 @@ CREATE TABLE IF NOT EXISTS `scm_tenant` (
 /
 -- 客户实际启用/停用时间段
 CREATE TABLE IF NOT EXISTS `scm_tenant_status_period` (
-  `period_id` varchar(32) NOT NULL COMMENT '主键UUID7',
+  `period_id` varchar(36) NOT NULL COMMENT '主键UUID7',
   `tenant_id` varchar(64) NOT NULL COMMENT '租户ID',
   `status` char(1) NOT NULL COMMENT '状态（0启用 1停用）',
   `start_time` datetime NOT NULL COMMENT '开始时间',
@@ -580,7 +580,7 @@ CREATE TABLE IF NOT EXISTS `scm_tenant_status_period` (
 /
 -- 客户启用/停用记录
 CREATE TABLE IF NOT EXISTS `scm_tenant_status_log` (
-  `log_id` varchar(32) NOT NULL COMMENT '主键UUID7',
+  `log_id` varchar(36) NOT NULL COMMENT '主键UUID7',
   `tenant_id` varchar(64) NOT NULL COMMENT '租户ID',
   `action` char(1) NOT NULL COMMENT '动作（0启用 1停用）',
   `oper_by` varchar(64) DEFAULT '' COMMENT '操作人',
@@ -592,7 +592,7 @@ CREATE TABLE IF NOT EXISTS `scm_tenant_status_log` (
 /
 -- 客户信息修改记录
 CREATE TABLE IF NOT EXISTS `scm_tenant_modify_log` (
-  `log_id` varchar(32) NOT NULL COMMENT '主键UUID7',
+  `log_id` varchar(36) NOT NULL COMMENT '主键UUID7',
   `tenant_id` varchar(64) NOT NULL COMMENT '租户ID',
   `field_name` varchar(64) DEFAULT '' COMMENT '字段名',
   `old_value` varchar(500) DEFAULT NULL COMMENT '原值',
@@ -605,7 +605,7 @@ CREATE TABLE IF NOT EXISTS `scm_tenant_modify_log` (
 /
 -- 租户功能菜单授权（主键 UUID7）
 CREATE TABLE IF NOT EXISTS `scm_tenant_menu` (
-  `id` varchar(32) NOT NULL COMMENT '主键UUID7',
+  `id` varchar(36) NOT NULL COMMENT '主键UUID7',
   `tenant_id` varchar(64) NOT NULL COMMENT '租户ID',
   `menu_id` bigint(20) NOT NULL COMMENT '菜单ID',
   `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
@@ -617,7 +617,7 @@ CREATE TABLE IF NOT EXISTS `scm_tenant_menu` (
 /
 -- 客户菜单功能暂停控制
 CREATE TABLE IF NOT EXISTS `scm_tenant_menu_pause` (
-  `pause_id` varchar(32) NOT NULL COMMENT '主键UUID7',
+  `pause_id` varchar(36) NOT NULL COMMENT '主键UUID7',
   `tenant_id` varchar(64) NOT NULL COMMENT '租户ID',
   `menu_id` bigint(20) NOT NULL COMMENT '菜单ID',
   `pause_status` char(1) NOT NULL DEFAULT '1' COMMENT '暂停状态（0正常 1暂停）',
@@ -634,8 +634,8 @@ CREATE TABLE IF NOT EXISTS `scm_tenant_menu_pause` (
 /
 -- 客户菜单暂停使用记录
 CREATE TABLE IF NOT EXISTS `scm_tenant_menu_pause_log` (
-  `log_id` varchar(32) NOT NULL COMMENT '主键UUID7',
-  `pause_id` varchar(32) NOT NULL COMMENT '暂停控制ID',
+  `log_id` varchar(36) NOT NULL COMMENT '主键UUID7',
+  `pause_id` varchar(36) NOT NULL COMMENT '暂停控制ID',
   `tenant_id` varchar(64) NOT NULL COMMENT '租户ID',
   `menu_id` bigint(20) NOT NULL COMMENT '菜单ID',
   `action` char(1) NOT NULL COMMENT '动作（0恢复 1暂停）',
@@ -1154,7 +1154,7 @@ CREATE TABLE IF NOT EXISTS zs_tp_order_detail (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='ZS第三方推送订单明细';
 /
 CREATE TABLE IF NOT EXISTS `scm_order_detail_delivery_rel` (
-  `id`                  VARCHAR(32)  NOT NULL COMMENT '主键UUID7',
+  `id`                  VARCHAR(36)  NOT NULL COMMENT '主键UUID7',
   `order_detail_id`     VARCHAR(64)  NOT NULL COMMENT '订单明细ID',
   `order_id`            VARCHAR(64)  NOT NULL COMMENT '订单ID',
   `order_no`            VARCHAR(128) DEFAULT '' COMMENT '订单号',
@@ -1171,7 +1171,7 @@ CREATE TABLE IF NOT EXISTS `scm_order_detail_delivery_rel` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='我方订单明细与配送单明细关联';
 /
 CREATE TABLE IF NOT EXISTS `zs_tp_order_detail_delivery_rel` (
-  `id`                  VARCHAR(32)  NOT NULL COMMENT '主键UUID7',
+  `id`                  VARCHAR(36)  NOT NULL COMMENT '主键UUID7',
   `order_detail_id`     VARCHAR(64)  NOT NULL COMMENT '中设订单明细ID',
   `order_id`            VARCHAR(64)  NOT NULL COMMENT '中设订单ID',
   `order_no`            VARCHAR(128) DEFAULT '' COMMENT '订单号(DH)',
@@ -1188,12 +1188,12 @@ CREATE TABLE IF NOT EXISTS `zs_tp_order_detail_delivery_rel` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='中设订单明细与配送单明细关联';
 /
 CREATE TABLE IF NOT EXISTS `scm_barcode_seed` (
-  `id` varchar(32) NOT NULL COMMENT '主键UUID7',
+  `id` varchar(36) NOT NULL COMMENT '主键UUID7',
   `counter_type` char(1) NOT NULL COMMENT 'T=按租户维度 Z=按中设客户维度',
   `tenant_id` varchar(64) NOT NULL DEFAULT '' COMMENT '租户ID',
   `zs_customer_id` varchar(128) NOT NULL DEFAULT '' COMMENT '中设客户ID(customer)',
-  `warehouse_id` varchar(128) NOT NULL DEFAULT '' COMMENT '仓库ID(如CKNO)',
-  `high_low_flag` char(1) NOT NULL DEFAULT 'L' COMMENT '高低值：H高值 L低值',
+  `warehouse_id` varchar(128) NOT NULL DEFAULT '' COMMENT '仓库ID；中设订单种子暂固定空串仅按高低值区分，保留列便于将来按仓扩展',
+  `high_low_flag` char(1) NOT NULL DEFAULT 'L' COMMENT '高低值：H高值 L低值（中设JSFS：3高0低）',
   `seed_value` bigint(20) NOT NULL DEFAULT 0 COMMENT '已分配的最大种子序号',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
@@ -1202,7 +1202,7 @@ CREATE TABLE IF NOT EXISTS `scm_barcode_seed` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='中设条码种子序列表';
 /
 CREATE TABLE IF NOT EXISTS `scm_delivery_detail_barcode` (
-  `id` varchar(32) NOT NULL COMMENT '主键UUID7',
+  `id` varchar(36) NOT NULL COMMENT '主键UUID7',
   `delivery_id` bigint(20) NOT NULL COMMENT '配送单ID',
   `delivery_no` varchar(50) NOT NULL DEFAULT '' COMMENT '配送单号',
   `delivery_detail_id` bigint(20) NOT NULL COMMENT '配送单明细ID',

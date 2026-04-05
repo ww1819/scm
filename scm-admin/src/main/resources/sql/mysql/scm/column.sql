@@ -1,6 +1,6 @@
 -- ========== SCM 模块 增量字段（含 add_table_column 存储过程） ==========
 -- 建议在 table.sql 之后执行；按「/」分段执行。新环境若已执行 table.sql 完整建表，本脚本中与 table 中已存在字段的 CALL 会跳过。
--- 本脚本已包含：add_*.sql/alter_*.sql 中的新增列、常见系统表扩展列。若数据库还有其它已存在但 table.sql 未定义的列，可在此追加 CALL add_table_column(表名, 列名, 类型, 注释, 默认值)。
+-- 本脚本已包含：add_*.sql 中的新增列、常见系统表扩展列，以及 UUID 主键列宽升级（存储过程 upgrade_uuid_column_if_varchar32：列类型非 varchar，或 varchar 长度小于 36 时改为 varchar(36)；已为 varchar 且长度不小于 36 则跳过）。订单/条码四表建表定义在 scm/table.sql 末尾；scminterface 侧副本见 scminterface-admin/src/main/resources/sql/mysql/scm/table.sql。
 -- 先删除再创建，保证可重复执行（MySQL 无 CREATE PROCEDURE IF NOT EXISTS）
 /
 DROP PROCEDURE IF EXISTS `add_table_column`;
@@ -49,6 +49,55 @@ BEGIN
     DEALLOCATE PREPARE stmt;
     SELECT CONCAT('成功：字段【', p_column_name, '】已成功添加到表【', p_table_name, '】') AS 执行结果;
     SET @dynamic_sql = '';
+END;
+/
+DROP PROCEDURE IF EXISTS `upgrade_uuid_column_if_varchar32`;
+/
+CREATE PROCEDURE `upgrade_uuid_column_if_varchar32`(
+    IN p_table_name VARCHAR(64),
+    IN p_column_name VARCHAR(64),
+    IN p_column_comment VARCHAR(256)
+)
+upgrade_uuid_block:
+BEGIN
+    DECLARE v_data_type VARCHAR(64) DEFAULT NULL;
+    DECLARE v_len INT DEFAULT NULL;
+    DECLARE v_table_exists INT DEFAULT 0;
+    IF p_table_name IS NULL OR p_table_name = ''
+        OR p_column_name IS NULL OR p_column_name = ''
+        OR p_column_comment IS NULL OR p_column_comment = '' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = '错误：表名、字段名、字段注释为必填参数，不能为空！';
+    END IF;
+    SELECT COUNT(*) INTO v_table_exists
+    FROM information_schema.TABLES
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = p_table_name;
+    IF v_table_exists = 0 THEN
+        SELECT CONCAT('跳过：表【', p_table_name, '】不存在') AS upgrade_uuid_column_result;
+        LEAVE upgrade_uuid_block;
+    END IF;
+    SELECT DATA_TYPE, CHARACTER_MAXIMUM_LENGTH INTO v_data_type, v_len
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = p_table_name
+      AND COLUMN_NAME = p_column_name;
+    IF v_data_type IS NULL THEN
+        SELECT CONCAT('跳过：列【', p_table_name, '】.【', p_column_name, '】不存在') AS upgrade_uuid_column_result;
+        LEAVE upgrade_uuid_block;
+    END IF;
+    IF v_data_type = 'varchar' AND v_len IS NOT NULL AND v_len >= 36 THEN
+        SELECT CONCAT('跳过：【', p_table_name, '】.【', p_column_name, '】已为 varchar(', v_len, ')，无需变更') AS upgrade_uuid_column_result;
+        LEAVE upgrade_uuid_block;
+    END IF;
+    SET @dynamic_sql = CONCAT(
+        'ALTER TABLE `', p_table_name, '` MODIFY COLUMN `', p_column_name, '` varchar(36) NOT NULL COMMENT ', QUOTE(p_column_comment)
+    );
+    PREPARE stmt FROM @dynamic_sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+    SET @dynamic_sql = NULL;
+    SELECT CONCAT('成功：【', p_table_name, '】.【', p_column_name, '】已调整为 varchar(36)（原类型=', v_data_type, IF(v_len IS NULL, '', CONCAT(' 长度=', v_len)), '）') AS upgrade_uuid_column_result;
 END;
 /
 -- ========== 供应商表新增字段 ==========
@@ -356,69 +405,32 @@ CALL add_table_column('sys_role', 'supplier_id', 'bigint(20)', '供应商ID', NU
 -- scm_tenant_menu_pause：暂停时间（最近一次设为暂停的时间）
 CALL add_table_column('scm_tenant_menu_pause', 'pause_time', 'datetime', '暂停时间', NULL);
 /
--- 订单明细与配送单明细关联（部分配送，可重复生成配送单）
-CREATE TABLE IF NOT EXISTS `scm_order_detail_delivery_rel` (
-  `id`                  VARCHAR(32)  NOT NULL COMMENT '主键UUID7',
-  `order_detail_id`     VARCHAR(64)  NOT NULL COMMENT '订单明细ID',
-  `order_id`            VARCHAR(64)  NOT NULL COMMENT '订单ID',
-  `order_no`            VARCHAR(128) DEFAULT '' COMMENT '订单号',
-  `delivery_id`         VARCHAR(64)  NOT NULL COMMENT '配送单ID',
-  `delivery_no`         VARCHAR(128) DEFAULT '' COMMENT '配送单号',
-  `delivery_detail_id`  VARCHAR(64)  NOT NULL COMMENT '配送单明细ID',
-  `create_time`         VARCHAR(32)  DEFAULT NULL COMMENT '添加时间',
-  `create_by`           VARCHAR(64)  DEFAULT NULL COMMENT '添加人ID',
-  `tenant_id`           VARCHAR(64)  DEFAULT NULL COMMENT '租户ID',
-  PRIMARY KEY (`id`),
-  KEY `idx_soddr_order_detail` (`order_detail_id`),
-  KEY `idx_soddr_order` (`order_id`),
-  KEY `idx_soddr_delivery` (`delivery_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='我方订单明细与配送单明细关联';
-/
-CREATE TABLE IF NOT EXISTS `zs_tp_order_detail_delivery_rel` (
-  `id`                  VARCHAR(32)  NOT NULL COMMENT '主键UUID7',
-  `order_detail_id`     VARCHAR(64)  NOT NULL COMMENT '中设订单明细ID',
-  `order_id`            VARCHAR(64)  NOT NULL COMMENT '中设订单ID',
-  `order_no`            VARCHAR(128) DEFAULT '' COMMENT '订单号(DH)',
-  `delivery_id`         VARCHAR(64)  NOT NULL COMMENT '配送单ID',
-  `delivery_no`         VARCHAR(128) DEFAULT '' COMMENT '配送单号',
-  `delivery_detail_id`  VARCHAR(64)  NOT NULL COMMENT '配送单明细ID',
-  `create_time`         VARCHAR(32)  DEFAULT NULL COMMENT '添加时间',
-  `create_by`           VARCHAR(64)  DEFAULT NULL COMMENT '添加人ID',
-  `tenant_id`           VARCHAR(64)  DEFAULT NULL COMMENT '租户ID',
-  PRIMARY KEY (`id`),
-  KEY `idx_zsoddr_order_detail` (`order_detail_id`),
-  KEY `idx_zsoddr_order` (`order_id`),
-  KEY `idx_zsoddr_delivery` (`delivery_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='中设订单明细与配送单明细关联';
+-- 订单明细与配送单关联、条码种子等四表：建表已合并至 scm-admin 的 sql/mysql/scm/table.sql 末尾；scminterface 工程见 scminterface-admin/src/main/resources/sql/mysql/scm/table.sql
 /
 CALL add_table_column('zs_tp_order', 'receive_channel', 'varchar(16)', '接收渠道 TENANT=我方推送 ZS=中设客户推送', 'ZS');
 /
-CALL add_table_column('scm_delivery', 'zs_jsfs', 'varchar(32)', '中设订单结算方式jsfs快照', NULL);
+CALL add_table_column('scm_delivery', 'zs_jsfs', 'varchar(32)', '中设订单结算方式jsfs快照：3高值0低值', NULL);
 /
-CREATE TABLE IF NOT EXISTS `scm_barcode_seed` (
-  `id` varchar(32) NOT NULL COMMENT '主键UUID7',
-  `counter_type` char(1) NOT NULL COMMENT 'T=按租户维度 Z=按中设客户维度',
-  `tenant_id` varchar(64) NOT NULL DEFAULT '' COMMENT '租户ID',
-  `zs_customer_id` varchar(128) NOT NULL DEFAULT '' COMMENT '中设客户ID(customer)',
-  `warehouse_id` varchar(128) NOT NULL DEFAULT '' COMMENT '仓库ID(如CKNO)',
-  `high_low_flag` char(1) NOT NULL DEFAULT 'L' COMMENT '高低值：H高值 L低值',
-  `seed_value` bigint(20) NOT NULL DEFAULT 0 COMMENT '已分配的最大种子序号',
-  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
-  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_scm_barcode_seed` (`counter_type`,`tenant_id`,`zs_customer_id`,`warehouse_id`,`high_low_flag`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='中设条码种子序列表';
+-- ========== UUID 主键列统一为 varchar(36)（列非 varchar，或 varchar 长度小于 36 时 MODIFY；已为 varchar 且长度≥36 则跳过） ==========
+CALL upgrade_uuid_column_if_varchar32('scm_order_detail_delivery_rel', 'id', '主键UUID7');
 /
-CREATE TABLE IF NOT EXISTS `scm_delivery_detail_barcode` (
-  `id` varchar(32) NOT NULL COMMENT '主键UUID7',
-  `delivery_id` bigint(20) NOT NULL COMMENT '配送单ID',
-  `delivery_no` varchar(50) NOT NULL DEFAULT '' COMMENT '配送单号',
-  `delivery_detail_id` bigint(20) NOT NULL COMMENT '配送单明细ID',
-  `seed_num` bigint(20) NOT NULL COMMENT '种子序号',
-  `barcode_no` varchar(128) NOT NULL DEFAULT '' COMMENT '条码号',
-  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
-  PRIMARY KEY (`id`),
-  KEY `idx_ddbc_delivery` (`delivery_id`),
-  KEY `idx_ddbc_detail` (`delivery_detail_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='配送单明细条码从表';
+CALL upgrade_uuid_column_if_varchar32('zs_tp_order_detail_delivery_rel', 'id', '主键UUID7');
+/
+CALL upgrade_uuid_column_if_varchar32('scm_barcode_seed', 'id', '主键UUID7');
+/
+CALL upgrade_uuid_column_if_varchar32('scm_delivery_detail_barcode', 'id', '主键UUID7');
+/
+CALL upgrade_uuid_column_if_varchar32('scm_tenant_status_period', 'period_id', '主键UUID7');
+/
+CALL upgrade_uuid_column_if_varchar32('scm_tenant_status_log', 'log_id', '主键UUID7');
+/
+CALL upgrade_uuid_column_if_varchar32('scm_tenant_modify_log', 'log_id', '主键UUID7');
+/
+CALL upgrade_uuid_column_if_varchar32('scm_tenant_menu', 'id', '主键UUID7');
+/
+CALL upgrade_uuid_column_if_varchar32('scm_tenant_menu_pause', 'pause_id', '主键UUID7');
+/
+CALL upgrade_uuid_column_if_varchar32('scm_tenant_menu_pause_log', 'log_id', '主键UUID7');
+/
+CALL upgrade_uuid_column_if_varchar32('scm_tenant_menu_pause_log', 'pause_id', '暂停控制ID');
 /

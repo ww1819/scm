@@ -10,6 +10,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.scm.common.constant.ZsJsfsHighLow;
 import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.StringUtils;
@@ -24,7 +25,9 @@ import com.scm.system.mapper.ScmBarcodeSeedMapper;
 import com.scm.system.mapper.ZsTpOrderMapper;
 
 /**
- * 中设条码种子与配送明细条码生成
+ * 中设条码种子与配送明细条码生成。
+ * <p>
+ * 中设订单种子划分仅按高低值（及 T/Z 渠道维度），{@code warehouse_id} 固定 {@link ZsJsfsHighLow#ZS_SEED_WAREHOUSE_ID}，不按仓库拆分。
  */
 @Service
 public class ScmBarcodeSeedService
@@ -85,7 +88,6 @@ public class ScmBarcodeSeedService
         }
         String yymmdd = new SimpleDateFormat("yyMMdd").format(DateUtils.getNowDate());
         String tenantId = StringUtils.trimToEmpty(delivery.getTenantId());
-        String warehouseId = StringUtils.trimToEmpty(delivery.getSrcOrderWarehouseId());
         boolean tenantChannel = CHANNEL_TENANT.equalsIgnoreCase(StringUtils.trimToEmpty(z.getReceiveChannel()));
         String zsCust = StringUtils.trimToEmpty(delivery.getZsCustomerId());
 
@@ -99,7 +101,8 @@ public class ScmBarcodeSeedService
             {
                 continue;
             }
-            List<Long> seeds = allocateSeeds(tenantChannel, tenantId, zsCust, warehouseId, HIGH_LOW_DEFAULT, n);
+            List<Long> seeds = allocateSeeds(tenantChannel, tenantId, zsCust, ZsJsfsHighLow.ZS_SEED_WAREHOUSE_ID,
+                ZsJsfsHighLow.highLowFlagFromJsfs(z.getJsfs()), n);
             for (Long seed : seeds)
             {
                 DeliveryDetailBarcode b = new DeliveryDetailBarcode();

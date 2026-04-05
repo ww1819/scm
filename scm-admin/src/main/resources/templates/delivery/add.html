@@ -85,6 +85,25 @@
 		.detail-table-scroll-outer .bootstrap-table .fixed-table-container {
 			min-width: 2600px;
 		}
+		/* 操作列贴在滚动区域右侧可视区，横向滚动时无需拖到底即可点复制/删除 */
+		.detail-table-scroll-outer #detail-table .fixed-table-header thead th[data-field="operation"] {
+			position: sticky !important;
+			right: 0 !important;
+			top: 0 !important;
+			z-index: 105 !important;
+			background-color: #f5f5f5 !important;
+			box-shadow: -6px 0 10px rgba(0, 0, 0, 0.07);
+		}
+		.detail-table-scroll-outer #detail-table .fixed-table-body tbody td[data-field="operation"] {
+			position: sticky !important;
+			right: 0 !important;
+			z-index: 25 !important;
+			background-color: #fff !important;
+			box-shadow: -6px 0 10px rgba(0, 0, 0, 0.06);
+		}
+		.detail-table-scroll-outer #detail-table.table-striped > tbody > tr:nth-child(odd) > td[data-field="operation"] {
+			background-color: #f9f9f9 !important;
+		}
 		/* 明细列表仅在外层滚动，避免内外双滚动条且内层滚动条被样式吞掉 */
 		.detail-table-scroll-outer .fixed-table-container,
 		.detail-table-scroll-outer .fixed-table-body {
@@ -713,58 +732,123 @@
 	        var s = 0;
 	        for (var i = 0; i < data.length; i++) {
 	            if (deliveryLineGroupKey(data[i]) === groupKey) {
-	                s += parseFloat(data[i].deliveryQuantity || 0);
+	                var v = data[i].deliveryQuantity;
+	                if (v === '' || v === null || v === undefined) continue;
+	                var x = parseFloat(v);
+	                s += isNaN(x) ? 0 : x;
 	            }
 	        }
 	        return s;
 	    }
-	    window.copyDetailRowByIndex = function(btn, index) {
-	        var allData = $('#detail-table').bootstrapTable('getData');
-	        if (!allData || index < 0 || index >= allData.length) return;
-	        var row = allData[index];
+	    /** 从当前行 DOM（含右侧固定列）解析行号，避免操作列 HTML 里写死的 index 与表格不同步 */
+	    function resolveDetailRowIndex(btn, indexHint) {
+	        if (btn) {
+	            var $tr = $(btn).closest('tr');
+	            var ri = $tr.data('index');
+	            if (ri === undefined || ri === null) {
+	                ri = $tr.attr('data-index');
+	            }
+	            if (ri !== undefined && ri !== null && ri !== '') {
+	                var parsed = parseInt(ri, 10);
+	                if (!isNaN(parsed) && parsed >= 0) {
+	                    return parsed;
+	                }
+	            }
+	        }
+	        if (indexHint !== undefined && indexHint !== null && String(indexHint) !== '') {
+	            var p2 = parseInt(indexHint, 10);
+	            if (!isNaN(p2) && p2 >= 0) {
+	                return p2;
+	            }
+	        }
+	        return -1;
+	    }
+	    window.copyDetailRowByIndex = function(btn, indexHint) {
+	        var snapshot = $('#detail-table').bootstrapTable('getData');
+	        var rowIndex = resolveDetailRowIndex(btn, indexHint);
+	        if (!snapshot || rowIndex < 0 || rowIndex >= snapshot.length) {
+	            $.modal.alertWarning('无法定位要复制的行，请刷新页面后重试。');
+	            return;
+	        }
+	        var allData = snapshot.slice();
+	        var row = allData[rowIndex];
 	        var pack = row.packCoefficient != null && row.packCoefficient !== '' ? parseFloat(row.packCoefficient) : NaN;
-	        if (isNaN(pack) || pack <= 0) {
-	            $.modal.alertWarning('未维护打包系数时无法按包装拆分，请先填写打包系数，或直接在本行修改批号、效期等信息。');
-	            return;
-	        }
-	        var dq = parseFloat(row.deliveryQuantity || 0);
+	        var rawDq = row.deliveryQuantity;
+	        var dqNum = (rawDq === '' || rawDq === null || rawDq === undefined) ? NaN : parseFloat(rawDq);
 	        var eps = 1e-6;
-	        if (Math.abs(dq - pack) < eps) {
-	            $.modal.alertWarning('当前行配送数量已等于打包系数，若需不同批号、效期，请直接在本行修改，勿再复制拆行。');
+	        function reloadAfterCopy() {
+	            var totalAmount = 0;
+	            for (var i = 0; i < allData.length; i++) {
+	                var q = parseFloat(allData[i].deliveryQuantity);
+	                if (isNaN(q)) q = 0;
+	                var p = parseFloat(allData[i].price || 0);
+	                allData[i].amount = q * p;
+	                totalAmount += allData[i].amount;
+	            }
+	            $("input[name='deliveryAmount']").val(totalAmount.toFixed(2));
+	            $('#detail-table').bootstrapTable('load', allData);
+	            try {
+	                $('#detail-table').bootstrapTable('resetView');
+	            } catch (e) { /* 旧版无此方法时忽略 */ }
+	            setTimeout(function() {
+	                if (typeof fillOperationColumnImmediate === 'function') fillOperationColumnImmediate();
+	                if (typeof fillOperationColumn === 'function') fillOperationColumn();
+	                $('#detail-table').find('.date-input').data('laydate-init', false);
+	                if (typeof initDatePickers === 'function') initDatePickers();
+	            }, 100);
+	        }
+	        if (!isNaN(pack) && pack > 0) {
+	            if (isNaN(dqNum)) {
+	                $.modal.alertWarning('请先填写本行配送数量。');
+	                return;
+	            }
+	            var dq = dqNum;
+	            if (Math.abs(dq - pack) < eps) {
+	                $.modal.alertWarning('当前行配送数量已等于打包系数，若需不同批号、效期，请直接在本行修改，勿再复制拆行。');
+	                return;
+	            }
+	            if (dq < pack - eps) {
+	                $.modal.alertWarning('配送数量不足一个打包单位（' + pack + '），无法拆分。');
+	                return;
+	            }
+	            var newRow = JSON.parse(JSON.stringify(row));
+	            newRow.detailId = null;
+	            newRow.deliveryQuantity = pack;
+	            newRow.amount = pack * parseFloat(row.price || 0);
+	            newRow.batchNo = '';
+	            newRow.productionDate = '';
+	            newRow.expireDate = '';
+	            newRow.mainBarcode = '';
+	            newRow.auxBarcode = '';
+	            allData[rowIndex].deliveryQuantity = dq - pack;
+	            allData[rowIndex].amount = (dq - pack) * parseFloat(row.price || 0);
+	            allData.splice(rowIndex + 1, 0, newRow);
+	            reloadAfterCopy();
+	            $.modal.msgSuccess('已拆行：原行保留数量 ' + (dq - pack).toFixed(2) + '，新行数量 ' + pack + '，请填写新行批号与效期');
 	            return;
 	        }
-	        if (dq < pack - eps) {
-	            $.modal.alertWarning('配送数量不足一个打包单位（' + pack + '），无法拆分。');
+	        if (isNaN(dqNum)) {
+	            $.modal.alertWarning('请先填写本行配送数量。');
 	            return;
 	        }
-	        var newRow = JSON.parse(JSON.stringify(row));
-	        newRow.detailId = null;
-	        newRow.deliveryQuantity = pack;
-	        newRow.amount = pack * parseFloat(row.price || 0);
-	        newRow.batchNo = '';
-	        newRow.productionDate = '';
-	        newRow.expireDate = '';
-	        newRow.mainBarcode = '';
-	        newRow.auxBarcode = '';
-	        allData[index].deliveryQuantity = dq - pack;
-	        allData[index].amount = (dq - pack) * parseFloat(row.price || 0);
-	        allData.splice(index + 1, 0, newRow);
-	        $('#detail-table').bootstrapTable('load', allData);
-	        var totalAmount = 0;
-	        for (var i = 0; i < allData.length; i++) {
-	            var q = parseFloat(allData[i].deliveryQuantity || 0);
-	            var p = parseFloat(allData[i].price || 0);
-	            allData[i].amount = q * p;
-	            totalAmount += allData[i].amount;
+	        var remRaw = row.remainingQuantity;
+	        var rem = (remRaw === '' || remRaw === null || remRaw === undefined) ? NaN : parseFloat(remRaw);
+	        if (!isNaN(rem) && Math.abs(dqNum - rem) < eps) {
+	            $.modal.alertWarning('当前配送数量等于订单明细待配送数量，无法复制。请直接在本行修改批号、效期等信息，或调整配送数量后再复制。');
+	            return;
 	        }
-	        $("input[name='deliveryAmount']").val(totalAmount.toFixed(2));
-	        setTimeout(function() {
-	            if (typeof fillOperationColumnImmediate === 'function') fillOperationColumnImmediate();
-	            if (typeof fillOperationColumn === 'function') fillOperationColumn();
-	            $('#detail-table').find('.date-input').data('laydate-init', false);
-	            if (typeof initDatePickers === 'function') initDatePickers();
-	        }, 100);
-	        $.modal.msgSuccess('已拆行：原行保留数量 ' + (dq - pack).toFixed(2) + '，新行数量 ' + pack + '，请填写新行批号与效期');
+	        var newRow2 = JSON.parse(JSON.stringify(row));
+	        newRow2.detailId = null;
+	        newRow2.deliveryQuantity = 0;
+	        newRow2.amount = 0;
+	        newRow2.batchNo = '';
+	        newRow2.productionDate = '';
+	        newRow2.expireDate = '';
+	        newRow2.mainBarcode = '';
+	        newRow2.auxBarcode = '';
+	        allData.splice(rowIndex + 1, 0, newRow2);
+	        reloadAfterCopy();
+	        $.modal.msgSuccess('已复制明细，新行数量默认为 0，请填写数量及批号、效期等');
 	    };
 	    
 	    // 确保操作列正确渲染的函数 - 定义为全局函数，以便在所有地方都能访问
@@ -1010,7 +1094,13 @@
 	                align: 'right',
 	                width: 100,
 	                formatter: function(value, row, index) {
-	                    var val = value ? parseFloat(value).toFixed(2) : '0.00';
+	                    var val = '';
+	                    if (value === '' || value === null || value === undefined) {
+	                        val = '';
+	                    } else {
+	                        var n = parseFloat(value);
+	                        val = isNaN(n) ? '' : n.toFixed(2);
+	                    }
 	                    return '<input type="text" class="form-control input-sm" style="text-align:right;width:100%;" value="' + val + '" ' +
 	                           'onblur="updateQuantity(this, ' + index + ')" ' +
 	                           'onkeypress="if(event.keyCode==13){this.blur();return false;}" />';
@@ -1266,30 +1356,7 @@
             }, 300);
         });
         
-        // 使用MutationObserver监听DOM变化，确保操作列被填充
-        setTimeout(function() {
-            var observer = new MutationObserver(function(mutations) {
-                var hasNewRows = false;
-                mutations.forEach(function(mutation) {
-                    if (mutation.addedNodes.length > 0) {
-                        hasNewRows = true;
-                    }
-                });
-                if (hasNewRows) {
-                    setTimeout(function() {
-                        fillOperationColumn();
-                    }, 100);
-                }
-            });
-            
-            var tableContainer = document.querySelector('#detail-table');
-            if (tableContainer) {
-                observer.observe(tableContainer, {
-                    childList: true,
-                    subtree: true
-                });
-            }
-        }, 500);
+        // 不再使用 MutationObserver：fillOperationColumn 会 $td.html() 改 DOM，会触发“新增节点”再回调 fill，形成死循环。
         
         // 初始填充 - 使用多个延迟确保在固定列插件渲染后执行
         setTimeout(function() {
@@ -1350,7 +1417,8 @@
 	    // 更新数量
 	    function updateQuantity(input, index) {
 	        var value = $(input).val();
-	        if (value && (isNaN(value) || parseFloat(value) < 0)) {
+	        var trimmed = (value || '').trim();
+	        if (trimmed !== '' && (isNaN(trimmed) || parseFloat(trimmed) < 0)) {
 	            $.modal.alertWarning('数量必须是大于等于0的数字');
 	            $(input).focus();
 	            return;
@@ -1359,8 +1427,8 @@
 	        var data = $('#detail-table').bootstrapTable('getData');
 	        var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : index;
 	        if (data[rowIndex]) {
-	            var oldQty = parseFloat(data[rowIndex].deliveryQuantity || 0);
-	            var newVal = value ? parseFloat(value) : 0;
+	            var oldQtyRaw = data[rowIndex].deliveryQuantity;
+	            var newVal = trimmed === '' ? '' : parseFloat(trimmed);
 	            data[rowIndex].deliveryQuantity = newVal;
 	            var gk = deliveryLineGroupKey(data[rowIndex]);
 	            if (gk && data[rowIndex].lineApplyQty != null && data[rowIndex].lineApplyQty !== '') {
@@ -1368,14 +1436,19 @@
 	                if (!isNaN(cap) && cap >= 0) {
 	                    var sum = sumDeliveryQtyForGroup(data, gk);
 	                    if (sum > cap + 1e-6) {
-	                        data[rowIndex].deliveryQuantity = oldQty;
-	                        $(input).val(oldQty.toFixed(2));
+	                        data[rowIndex].deliveryQuantity = oldQtyRaw;
+	                        if (oldQtyRaw === '' || oldQtyRaw === null || oldQtyRaw === undefined) {
+	                            $(input).val('');
+	                        } else {
+	                            $(input).val(parseFloat(oldQtyRaw).toFixed(2));
+	                        }
 	                        $.modal.alertWarning('同一订单明细行配送数量合计不能超过申请数量（' + cap.toFixed(2) + '）');
 	                        return;
 	                    }
 	                }
 	            }
-	            var qty = parseFloat(data[rowIndex].deliveryQuantity || 0);
+	            var qty = (newVal === '' || newVal === null || newVal === undefined) ? 0 : parseFloat(newVal);
+	            if (isNaN(qty)) qty = 0;
 	            var price = parseFloat(data[rowIndex].price || 0);
 	            data[rowIndex].amount = qty * price;
 	            var amountCell = $tr.find('td[data-field="amount"]');

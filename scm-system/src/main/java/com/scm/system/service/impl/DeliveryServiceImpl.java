@@ -84,6 +84,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         if (delivery != null)
         {
             List<DeliveryDetail> details = deliveryDetailMapper.selectDeliveryDetailListByDeliveryId(deliveryId);
+            enrichDetailLineApplyQty(details);
             scmBarcodeSeedService.attachDetailBarcodes(details, deliveryId);
             delivery.setDeliveryDetails(details);
         }
@@ -266,6 +267,32 @@ public class DeliveryServiceImpl implements IDeliveryService
     private void assertDeliveryDeletable(Delivery d)
     {
         assertDeliveryNotAudited(d, "删除");
+    }
+
+    /**
+     * 前端按订单行/中设行校验「申请数量」上限：补全 lineApplyQty（不落库，仅展示与校验用）
+     */
+    private void enrichDetailLineApplyQty(List<DeliveryDetail> details)
+    {
+        if (details == null || details.isEmpty())
+        {
+            return;
+        }
+        for (DeliveryDetail dd : details)
+        {
+            if (dd == null || dd.getLineApplyQty() != null)
+            {
+                continue;
+            }
+            if (dd.getRefOrderLineQty() != null)
+            {
+                dd.setLineApplyQty(dd.getRefOrderLineQty());
+            }
+            else if (dd.getRefZsLineQty() != null)
+            {
+                dd.setLineApplyQty(dd.getRefZsLineQty());
+            }
+        }
     }
 
     /**
