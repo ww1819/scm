@@ -27,6 +27,9 @@ public class ZsTpOrder extends BaseEntity
     /** 接收渠道：TENANT=我方推送 ZS=中设客户推送 */
     private String receiveChannel;
 
+    /** 资金来源 ZJLY */
+    private String zjly;
+
     public String getId()
     {
         return id;
@@ -165,5 +168,15 @@ public class ZsTpOrder extends BaseEntity
     public void setReceiveChannel(String receiveChannel)
     {
         this.receiveChannel = receiveChannel;
+    }
+
+    public String getZjly()
+    {
+        return zjly;
+    }
+
+    public void setZjly(String zjly)
+    {
+        this.zjly = zjly;
     }
 }

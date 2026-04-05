@@ -64,7 +64,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <include refid="selectDeliveryVo"/>
         <where>
             <if test="deliveryNo != null and deliveryNo != ''">
-                AND d.delivery_no like concat('%', #{deliveryNo}, '%')
+                <choose>
+                    <when test="params != null and params.exactDeliveryNo != null and (params.exactDeliveryNo == true or params.exactDeliveryNo == 'true')">
+                        AND d.delivery_no = #{deliveryNo}
+                    </when>
+                    <otherwise>
+                        AND d.delivery_no like concat('%', #{deliveryNo}, '%')
+                    </otherwise>
+                </choose>
             </if>
             <if test="hospitalId != null">
                 AND d.hospital_id = #{hospitalId}
@@ -105,6 +112,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectDeliveryByDeliveryNo" parameterType="String" resultMap="DeliveryResult">
         <include refid="selectDeliveryVo"/>
         where d.delivery_no = #{deliveryNo}
+          and (d.del_flag is null or d.del_flag = '0')
     </select>
 
     <select id="countDeliveryByZsOrderId" parameterType="String" resultType="int">
