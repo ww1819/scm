@@ -409,6 +409,8 @@ CALL add_table_column('scm_tenant_menu_pause', 'pause_time', 'datetime', '暂停
 /
 CALL add_table_column('zs_tp_order', 'receive_channel', 'varchar(16)', '接收渠道 TENANT=我方推送 ZS=中设客户推送', 'ZS');
 /
+CALL add_table_column('zs_tp_order', 'scm_sup_code', 'varchar(64)', '接口 SCMSUPCODE：SCM平台供应商编码（客户端随单传递）', NULL);
+/
 CALL add_table_column('scm_delivery', 'zs_jsfs', 'varchar(32)', '中设订单结算方式jsfs快照：3高值0低值', NULL);
 /
 -- ========== UUID 主键列统一为 varchar(36)（列非 varchar，或 varchar 长度小于 36 时 MODIFY；已为 varchar 且长度≥36 则跳过） ==========

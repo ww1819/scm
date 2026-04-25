@@ -27,6 +27,9 @@ public class ZsTpOrder extends BaseEntity
     /** 接收渠道：TENANT=我方推送 ZS=中设客户推送 */
     private String receiveChannel;
 
+    /** 接口 SCMSUPCODE：SCM 平台供应商编码（与中设 supno 区分） */
+    private String scmSupCode;
+
     /** 资金来源 ZJLY */
     private String zjly;
 
@@ -168,6 +171,16 @@ public class ZsTpOrder extends BaseEntity
     public void setReceiveChannel(String receiveChannel)
     {
         this.receiveChannel = receiveChannel;
+    }
+
+    public String getScmSupCode()
+    {
+        return scmSupCode;
+    }
+
+    public void setScmSupCode(String scmSupCode)
+    {
+        this.scmSupCode = scmSupCode;
     }
 
     public String getZjly()

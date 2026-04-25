@@ -1106,6 +1106,7 @@ CREATE TABLE IF NOT EXISTS zs_tp_order (
   bz              VARCHAR(512) NULL,
   jsfs            VARCHAR(32)  NULL,
   receive_channel VARCHAR(16)  NOT NULL DEFAULT 'ZS' COMMENT '接收渠道：TENANT=我方推送 ZS=中设客户推送',
+  scm_sup_code    VARCHAR(64)  NULL COMMENT '接口 SCMSUPCODE：SCM 平台供应商编码（客户端随单传递，与中设 SUPNO 区分）',
   ksbh            VARCHAR(64)  NULL,
   ksmc            VARCHAR(128) NULL,
   zjly            VARCHAR(128) NULL,
