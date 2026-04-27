@@ -20,20 +20,28 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result property="tenantId"     column="tenant_id"      />
 		<result property="tenantName"   column="tenant_name"    />
 		<result property="supplierId"   column="supplier_id"    />
+		<result property="roleType"     column="role_type"      />
+		<result property="hospitalId"   column="hospital_id"    />
+		<result property="hospitalName"  column="hospital_name"  />
+		<result property="supplierCompanyName" column="supplier_company_name" />
 	</resultMap>
 	
 	<sql id="selectRoleContactVo">
         select distinct r.role_id, r.role_name, r.role_key, r.role_sort, r.data_scope,
-            r.status, r.del_flag, r.create_time, r.remark, r.tenant_id, t.tenant_name
+            r.status, r.del_flag, r.create_time, r.remark, r.tenant_id, t.tenant_name,
+            r.role_type, r.hospital_id, r.supplier_id, sh.hospital_name, sup.company_name as supplier_company_name
         from sys_role r
 	        left join sys_user_role ur on ur.role_id = r.role_id
 	        left join sys_user u on u.user_id = ur.user_id
 	        left join sys_dept d on u.dept_id = d.dept_id
 	        left join scm_tenant t on t.tenant_id = r.tenant_id
+            left join scm_hospital sh on sh.hospital_id = r.hospital_id
+            left join scm_supplier sup on sup.supplier_id = r.supplier_id
     </sql>
     
     <sql id="selectRoleVo">
-		select r.role_id, r.role_name, r.role_key, r.role_sort, r.data_scope, r.status, r.del_flag, r.create_time, r.remark, r.tenant_id, r.supplier_id
+		select r.role_id, r.role_name, r.role_key, r.role_sort, r.data_scope, r.status, r.del_flag, r.create_time, r.remark,
+		       r.tenant_id, r.supplier_id, r.role_type, r.hospital_id
         from sys_role r
 	</sql>
 	
@@ -99,12 +107,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		limit 1
 	</select>
 
+	<select id="selectByRoleKeyAndHospitalId" resultMap="SysRoleResult">
+		<include refid="selectRoleVo"/>
+		where r.del_flag = '0' and r.role_key = #{roleKey} and r.hospital_id = #{hospitalId}
+		limit 1
+	</select>
+
 	<select id="selectGlobalRoleByKey" resultMap="SysRoleResult">
 		<include refid="selectRoleVo"/>
 		where r.del_flag = '0'
 		  and r.role_key = #{roleKey}
 		  and (r.tenant_id is null or r.tenant_id = '')
 		  and (r.supplier_id is null or r.supplier_id = 0)
+		  and (r.hospital_id is null or r.hospital_id = 0)
+		  and (r.role_type is null or r.role_type = '' or r.role_type = 'platform')
 		order by r.role_sort, r.role_id
 		limit 1
 	</select>
@@ -115,6 +131,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		  and r.role_name = #{roleName}
 		  and (r.tenant_id is null or r.tenant_id = '')
 		  and (r.supplier_id is null or r.supplier_id = 0)
+		  and (r.hospital_id is null or r.hospital_id = 0)
+		  and (r.role_type is null or r.role_type = '' or r.role_type = 'platform')
 		order by r.role_id
 		limit 1
 	</select>
@@ -139,6 +157,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  			<if test="dataScope != null and dataScope != ''">data_scope = #{dataScope},</if>
  			<if test="status != null and status != ''">status = #{status},</if>
  			<if test="remark != null">remark = #{remark},</if>
+ 			<if test="tenantId != null">tenant_id = #{tenantId},</if>
+ 			<if test="supplierId != null">supplier_id = #{supplierId},</if>
+ 			<if test="hospitalId != null">hospital_id = #{hospitalId},</if>
+ 			<if test="roleType != null and roleType != ''">role_type = #{roleType},</if>
  			<if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
  			update_time = sysdate()
  		</set>
@@ -157,6 +179,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  			<if test="createBy != null and createBy != ''">create_by,</if>
  			<if test="tenantId != null and tenantId != ''">tenant_id,</if>
  			<if test="supplierId != null">supplier_id,</if>
+ 			<if test="hospitalId != null">hospital_id,</if>
+ 			<if test="roleType != null and roleType != ''">role_type,</if>
  			create_time
  		)values(
  			<if test="roleId != null and roleId != 0">#{roleId},</if>
@@ -169,6 +193,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  			<if test="createBy != null and createBy != ''">#{createBy},</if>
  			<if test="tenantId != null and tenantId != ''">#{tenantId},</if>
  			<if test="supplierId != null">#{supplierId},</if>
+ 			<if test="hospitalId != null">#{hospitalId},</if>
+ 			<if test="roleType != null and roleType != ''">#{roleType},</if>
  			sysdate()
  		)
 	</insert>

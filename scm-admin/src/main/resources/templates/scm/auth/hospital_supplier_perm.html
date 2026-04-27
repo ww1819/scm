@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('医院供应商数据权限')" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="perm-form">
+					<div class="select-list">
+						<ul>
+							<li>医院ID：<input type="text" name="hospitalId"/></li>
+							<li>供应商ID：<input type="text" name="supplierId"/></li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i> 搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i> 重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+			<div class="btn-group-sm" id="toolbar" role="group">
+				<a class="btn btn-success" onclick="openSave()" shiro:hasPermission="scmAuth:hospitalSupplier:add"><i class="fa fa-plus"></i> 新增/更新</a>
+			</div>
+			<div class="col-sm-12 select-table table-striped">
+				<table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="modalSave" tabindex="-1">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header"><h4 class="modal-title">维护黑名单</h4></div>
+				<div class="modal-body">
+					<form id="form-save" class="form-horizontal">
+						<input type="hidden" name="id" id="permId"/>
+						<div class="form-group"><label class="col-sm-4">医院ID</label><div class="col-sm-8"><input class="form-control" name="hospitalId" id="fHospitalId" required/></div></div>
+						<div class="form-group"><label class="col-sm-4">供应商ID</label><div class="col-sm-8"><input class="form-control" name="supplierId" id="fSupplierId" required/></div></div>
+						<div class="form-group"><label class="col-sm-4">禁止提交</label><div class="col-sm-8"><select name="forbidSubmitFlag" id="fForbidSubmit" class="form-control"><option value="0">否</option><option value="1">是</option></select></div></div>
+						<div class="form-group"><label class="col-sm-4">禁止关联</label><div class="col-sm-8"><select name="forbidBindFlag" id="fForbidBind" class="form-control"><option value="0">否</option><option value="1">是</option></select></div></div>
+						<div class="form-group"><label class="col-sm-4">备注</label><div class="col-sm-8"><input class="form-control" name="remark" id="fRemark"/></div></div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-primary" onclick="submitSave()">保存</button>
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<th:block th:include="include :: footer" />
+	<script th:inline="javascript">
+		var prefix = ctx + "scm/auth/hospitalSupplierPerm";
+		var removeFlag = [[${@permission.hasPermi('scmAuth:hospitalSupplier:remove')}]];
+
+		$(function() {
+			var options = {
+				formId: "perm-form",
+				url: prefix + "/list",
+				modalName: "数据权限",
+				columns: [{
+					field: 'id',
+					title: 'ID',
+					visible: false
+				},
+				{ field: 'hospitalId', title: '医院ID' },
+				{ field: 'hospitalName', title: '医院名称' },
+				{ field: 'supplierId', title: '供应商ID' },
+				{ field: 'supplierCompanyName', title: '供应商' },
+				{ field: 'forbidSubmitFlag', title: '禁止提交' },
+				{ field: 'forbidBindFlag', title: '禁止关联' },
+				{ field: 'remark', title: '备注' },
+				{
+					title: '操作',
+					align: 'center',
+					formatter: function(value, row, index) {
+						var actions = [];
+						if (removeFlag !== 'hidden') {
+							actions.push('<a class="btn btn-danger btn-xs" href="javascript:void(0)" onclick="removeRow(\'' + row.id + '\')"><i class="fa fa-remove"></i></a>');
+						}
+						return actions.join(' ');
+					}
+				}]
+			};
+			$.table.init(options);
+		});
+
+		function removeRow(id) {
+			$.modal.confirm("确认删除？", function() {
+				$.operate.post(prefix + "/remove", { "id": id });
+			});
+		}
+
+		function openSave() {
+			$("#permId").val('');
+			$("#fHospitalId").val('');
+			$("#fSupplierId").val('');
+			$("#fForbidSubmit").val('1');
+			$("#fForbidBind").val('0');
+			$("#fRemark").val('');
+			$("#modalSave").modal('show');
+		}
+
+		function submitSave() {
+			$.ajax({
+				url: prefix + "/save",
+				type: "post",
+				data: $("#form-save").serialize(),
+				success: function(response) {
+					$.operate.successCallback(response);
+					$("#modalSave").modal('hide');
+					$.table.refresh();
+				}
+			});
+		}
+	</script>
+</body>
+</html>

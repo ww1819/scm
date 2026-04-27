@@ -22,6 +22,7 @@ import com.scm.system.mapper.SysRoleMapper;
 import com.scm.system.mapper.SysUserMapper;
 import com.scm.system.mapper.SysUserRoleMapper;
 import com.scm.common.utils.security.Md5Utils;
+import com.scm.system.service.IScmScopeBootstrapService;
 import com.scm.system.service.ISupplierRegisterService;
 
 /**
@@ -30,11 +31,12 @@ import com.scm.system.service.ISupplierRegisterService;
 @Service
 public class SupplierRegisterServiceImpl implements ISupplierRegisterService {
 
-    private static final String ROLE_KEY_SUPPLIER = "supplier";
     private static final String ROLE_KEY_SUPPLIER_SALES = "supplier_sales";
 
     @Autowired
     private SupplierMapper supplierMapper;
+    @Autowired
+    private IScmScopeBootstrapService scmScopeBootstrapService;
     @Autowired
     private SysRoleMapper roleMapper;
     @Autowired
@@ -73,16 +75,8 @@ public class SupplierRegisterServiceImpl implements ISupplierRegisterService {
         supplierMapper.insertSupplier(supplier);
         Long supplierId = supplier.getSupplierId();
 
-        // 不再为每个注册供应商新建角色，直接绑定系统内已有「供应商」角色
-        // 按“角色名称=供应商”优先绑定现有全局角色，避免因历史 role_key 差异/重复角色绑错
-        SysRole supplierRole = roleMapper.selectGlobalRoleByName("供应商");
-        if (supplierRole == null) {
-            supplierRole = roleMapper.selectGlobalRoleByKey(ROLE_KEY_SUPPLIER);
-        }
-        if (supplierRole == null) {
-            throw new IllegalArgumentException("系统未找到全局角色【供应商】，请在角色管理中创建或修正");
-        }
-        Long adminRoleId = supplierRole.getRoleId();
+        String oper = operBy != null ? operBy : adminUser.getLoginName();
+        Long adminRoleId = scmScopeBootstrapService.bootstrapAfterSupplierRegister(supplierId, oper);
 
         SysUser user = new SysUser();
         user.setLoginName(adminUser.getLoginName().trim());

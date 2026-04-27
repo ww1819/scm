@@ -55,6 +55,13 @@ public class SysMenu extends BaseEntity
     /** 子菜单 */
     private List<SysMenu> children = new ArrayList<SysMenu>();
 
+    /** 菜单权限类型 platform/hospital/supplier/hospital_supplier */
+    private String authType;
+    /** 默认开放范围 */
+    private String defaultOpenScope;
+    /** 是否需医院授予供应商后才可见 0否 1是 */
+    private String hospitalGrantSupplierFlag;
+
     public Long getMenuId()
     {
         return menuId;
@@ -191,6 +198,36 @@ public class SysMenu extends BaseEntity
         this.children = children;
     }
 
+    public String getAuthType()
+    {
+        return authType;
+    }
+
+    public void setAuthType(String authType)
+    {
+        this.authType = authType;
+    }
+
+    public String getDefaultOpenScope()
+    {
+        return defaultOpenScope;
+    }
+
+    public void setDefaultOpenScope(String defaultOpenScope)
+    {
+        this.defaultOpenScope = defaultOpenScope;
+    }
+
+    public String getHospitalGrantSupplierFlag()
+    {
+        return hospitalGrantSupplierFlag;
+    }
+
+    public void setHospitalGrantSupplierFlag(String hospitalGrantSupplierFlag)
+    {
+        this.hospitalGrantSupplierFlag = hospitalGrantSupplierFlag;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
@@ -209,6 +246,9 @@ public class SysMenu extends BaseEntity
             .append("updateBy", getUpdateBy())
             .append("updateTime", getUpdateTime())
             .append("remark", getRemark())
+            .append("authType", getAuthType())
+            .append("defaultOpenScope", getDefaultOpenScope())
+            .append("hospitalGrantSupplierFlag", getHospitalGrantSupplierFlag())
             .toString();
     }
 }

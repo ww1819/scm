@@ -100,6 +100,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="params.endTime != null and params.endTime != ''">
                 AND date(d.create_time) &lt;= date(#{params.endTime})
             </if>
+            <if test="params != null and params.excludeHospitalIds != null and params.excludeHospitalIds.size() &gt; 0">
+                AND d.hospital_id NOT IN
+                <foreach collection="params.excludeHospitalIds" item="hid" open="(" separator="," close=")">
+                    #{hid}
+                </foreach>
+            </if>
         </where>
         order by d.create_time desc
     </select>

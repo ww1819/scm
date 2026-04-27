@@ -186,17 +186,25 @@ public class SysMenuServiceImpl implements ISysMenuService
     public List<Ztree> menuTreeDataWithChecked(Long userId, List<Long> checkedMenuIds)
     {
         List<SysMenu> menuList = selectMenuAll(userId);
+        return buildMenuTreeWithChecked(menuList, checkedMenuIds);
+    }
+
+    @Override
+    public List<Ztree> buildMenuTreeWithChecked(List<SysMenu> menuList, List<Long> checkedMenuIds)
+    {
         List<String> checkList = null;
-        if (checkedMenuIds != null && !checkedMenuIds.isEmpty())
+        if (checkedMenuIds != null && !checkedMenuIds.isEmpty() && menuList != null)
         {
             checkList = new ArrayList<>();
             for (SysMenu m : menuList)
             {
                 if (checkedMenuIds.contains(m.getMenuId()))
+                {
                     checkList.add(m.getMenuId() + (m.getPerms() != null ? m.getPerms() : ""));
+                }
             }
         }
-        return initZtree(menuList, checkList, true);
+        return initZtree(menuList != null ? menuList : new ArrayList<SysMenu>(), checkList, true);
     }
 
     /**

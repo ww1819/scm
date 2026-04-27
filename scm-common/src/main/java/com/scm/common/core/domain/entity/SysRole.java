@@ -63,12 +63,61 @@ public class SysRole extends BaseEntity
     /** 供应商ID（供应商管理员、供应商业务员等） */
     private Long supplierId;
 
+    /** 角色类型 platform/hospital/supplier */
+    private String roleType;
+    /** 医院维度角色绑定的医院 */
+    private Long hospitalId;
+    /** 列表展示：医院名称 */
+    private String hospitalName;
+    /** 列表展示：供应商公司名称 */
+    private String supplierCompanyName;
+
     public String getTenantId() { return tenantId; }
     public void setTenantId(String tenantId) { this.tenantId = tenantId; }
     public String getTenantName() { return tenantName; }
     public void setTenantName(String tenantName) { this.tenantName = tenantName; }
     public Long getSupplierId() { return supplierId; }
     public void setSupplierId(Long supplierId) { this.supplierId = supplierId; }
+
+    public String getRoleType()
+    {
+        return roleType;
+    }
+
+    public void setRoleType(String roleType)
+    {
+        this.roleType = roleType;
+    }
+
+    public Long getHospitalId()
+    {
+        return hospitalId;
+    }
+
+    public void setHospitalId(Long hospitalId)
+    {
+        this.hospitalId = hospitalId;
+    }
+
+    public String getHospitalName()
+    {
+        return hospitalName;
+    }
+
+    public void setHospitalName(String hospitalName)
+    {
+        this.hospitalName = hospitalName;
+    }
+
+    public String getSupplierCompanyName()
+    {
+        return supplierCompanyName;
+    }
+
+    public void setSupplierCompanyName(String supplierCompanyName)
+    {
+        this.supplierCompanyName = supplierCompanyName;
+    }
 
     public SysRole()
     {
@@ -220,6 +269,10 @@ public class SysRole extends BaseEntity
             .append("updateBy", getUpdateBy())
             .append("updateTime", getUpdateTime())
             .append("remark", getRemark())
+            .append("roleType", getRoleType())
+            .append("hospitalId", getHospitalId())
+            .append("hospitalName", getHospitalName())
+            .append("supplierCompanyName", getSupplierCompanyName())
             .toString();
     }
 }

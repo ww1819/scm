@@ -112,6 +112,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                     WHERE od2.order_id = o.order_id AND IFNULL(od2.order_quantity, 0) &gt; 0
                 )
             </if>
+            <if test="params != null and params.excludeHospitalIds != null and params.excludeHospitalIds.size() &gt; 0">
+                AND o.hospital_id NOT IN
+                <foreach collection="params.excludeHospitalIds" item="hid" open="(" separator="," close=")">
+                    #{hid}
+                </foreach>
+            </if>
         </where>
         order by o.order_date desc, o.create_time desc
     </select>

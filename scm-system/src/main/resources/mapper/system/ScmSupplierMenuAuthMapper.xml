@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.ScmSupplierMenuAuthMapper">
+
+    <delete id="deleteBySupplierId">
+        DELETE FROM scm_supplier_menu_auth WHERE supplier_id = #{supplierId} AND hospital_id IS NULL
+    </delete>
+
+    <delete id="deleteBySupplierAndHospital">
+        DELETE FROM scm_supplier_menu_auth WHERE supplier_id = #{supplierId} AND hospital_id = #{hospitalId}
+    </delete>
+
+    <insert id="batchInsert">
+        INSERT INTO scm_supplier_menu_auth (supplier_id, hospital_id, menu_id, create_by, create_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.supplierId}, #{item.hospitalId}, #{item.menuId}, #{item.createBy}, #{item.createTime})
+        </foreach>
+    </insert>
+
+    <select id="selectMenuIdsBySupplierId" resultType="long">
+        SELECT DISTINCT menu_id FROM scm_supplier_menu_auth WHERE supplier_id = #{supplierId} AND hospital_id IS NULL
+    </select>
+
+    <select id="selectMenuIdsBySupplierAndHospital" resultType="long">
+        SELECT DISTINCT menu_id FROM scm_supplier_menu_auth WHERE supplier_id = #{supplierId} AND hospital_id = #{hospitalId}
+    </select>
+</mapper>

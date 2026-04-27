@@ -132,6 +132,7 @@ insert into sys_menu values('25004', '配送单删除', '2501', '4', '#', '', 'F
 insert into sys_menu values('25005', '配送单导出', '2501', '5', '#', '', 'F', '0', '1', 'delivery:delivery:export', '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('25006', '配送单审核', '2501', '6', '#', '', 'F', '0', '1', 'delivery:delivery:audit', '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('25007', '配送单打印', '2501', '7', '#', '', 'F', '0', '1', 'delivery:delivery:print', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('25008', '配送单详情', '2501', '8', '#', '', 'F', '0', '1', 'delivery:delivery:detail', '#', 'admin', sysdate(), '', null, '代码中存在 detail 权限，菜单缺失补齐');
 -- 配送信息查询按钮
 insert into sys_menu values('25011', '明细表查询', '2502', '1', '#', '', 'F', '0', '1', 'delivery:delivery:list', '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('25012', '明细表导出', '2502', '2', '#', '', 'F', '0', '1', 'delivery:delivery:export', '#', 'admin', sysdate(), '', null, '');
@@ -145,6 +146,7 @@ insert into sys_menu values('26003', '结算单修改', '2601', '3', '#', '', 'F
 insert into sys_menu values('26004', '结算单删除', '2601', '4', '#', '', 'F', '0', '1', 'settlement:settlement:remove', '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('26005', '结算单导出', '2601', '5', '#', '', 'F', '0', '1', 'settlement:settlement:export', '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('26006', '结算单审核', '2601', '6', '#', '', 'F', '0', '1', 'settlement:settlement:audit', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('26007', '结算单详情', '2601', '7', '#', '', 'F', '0', '1', 'settlement:settlement:detail', '#', 'admin', sysdate(), '', null, '代码中存在 detail 权限，菜单缺失补齐');
 
 -- 数据中心按钮
 insert into sys_menu values('27001', '统计查询', '2701', '1', '#', '', 'F', '0', '1', 'datacenter:datacenter:list', '#', 'admin', sysdate(), '', null, '');

@@ -91,6 +91,26 @@
 		            sortable: true
 		        },
 		        {
+		            field: 'roleType',
+		            title: '角色类型',
+		            formatter: function(v) {
+		                if (!v || v === 'platform') return '<span class="label label-default">平台</span>';
+		                if (v === 'hospital') return '<span class="label label-info">医院</span>';
+		                if (v === 'supplier') return '<span class="label label-primary">供应商</span>';
+		                return v;
+		            }
+		        },
+		        {
+		            field: 'hospitalName',
+		            title: '绑定医院',
+		            formatter: function(v) { return v || '-'; }
+		        },
+		        {
+		            field: 'supplierCompanyName',
+		            title: '绑定供应商',
+		            formatter: function(v) { return v || '-'; }
+		        },
+		        {
 		            field: 'tenantName',
 		            title: '对应客户',
 		            sortable: true,

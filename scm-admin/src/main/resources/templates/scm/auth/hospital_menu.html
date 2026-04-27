@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('医院菜单授权')" />
+	<th:block th:include="include :: ztree-css" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form class="form-inline">
+					<div class="form-group">
+						<label>医院：</label>
+						<select id="hospitalId" class="form-control">
+							<option value="">请选择</option>
+							<option th:each="h : ${hospitals}" th:value="${h.hospitalId}" th:text="${h.hospitalName}"></option>
+						</select>
+						<a class="btn btn-primary btn-sm" onclick="loadTree()"><i class="fa fa-refresh"></i> 加载菜单</a>
+						<a class="btn btn-warning btn-sm" onclick="resetAuth()" shiro:hasPermission="scmAuth:hospitalMenu:reset"><i class="fa fa-undo"></i> 重置为全量</a>
+						<a class="btn btn-success btn-sm" onclick="saveAuth()" shiro:hasPermission="scmAuth:hospitalMenu:edit"><i class="fa fa-save"></i> 保存</a>
+					</div>
+				</form>
+			</div>
+			<div class="col-sm-12" style="margin-top:12px;">
+				<label class="check-box"><input type="checkbox" value="1">展开/折叠</label>
+				<label class="check-box"><input type="checkbox" value="2">全选/全不选</label>
+				<label class="check-box"><input type="checkbox" value="3" checked>父子联动</label>
+				<div id="menuTrees" class="ztree ztree-border"></div>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: ztree-js" />
+	<script th:inline="javascript">
+		var prefix = ctx + "scm/auth/hospitalMenu";
+
+		function loadTree() {
+			var hid = $("#hospitalId").val();
+			if (!hid) { $.modal.alertWarning("请先选择医院"); return; }
+			var options = {
+				id: "menuTrees",
+				url: prefix + "/menuTree/" + hid,
+				check: { enable: true, chkboxType: { "Y": "ps", "N": "ps" } },
+				expandLevel: 1
+			};
+			$.tree.init(options);
+		}
+
+		$('input').on('ifChanged', function(obj){
+			var type = $(this).val();
+			var checked = obj.currentTarget.checked;
+			if (!$._tree) return;
+			if (type == 1) {
+				if (checked) $._tree.expandAll(true); else $._tree.expandAll(false);
+			} else if (type == "2") {
+				if (checked) $._tree.checkAllNodes(true); else $._tree.checkAllNodes(false);
+			} else if (type == "3") {
+				if (checked) $._tree.setting.check.chkboxType = { "Y": "ps", "N": "ps" };
+				else $._tree.setting.check.chkboxType = { "Y": "", "N": "" };
+			}
+		});
+
+		function saveAuth() {
+			var hid = $("#hospitalId").val();
+			if (!hid) { $.modal.alertWarning("请先选择医院"); return; }
+			var menuIds = $.tree.getCheckedNodes();
+			var menuIdsStr = (Array.isArray(menuIds) ? menuIds.join(',') : (menuIds || ''));
+			$.ajax({
+				cache: true, type: "POST", url: prefix + "/save",
+				data: { hospitalId: hid, menuIds: menuIdsStr },
+				success: function(data) { $.operate.successCallback(data); }
+			});
+		}
+
+		function resetAuth() {
+			var hid = $("#hospitalId").val();
+			if (!hid) { $.modal.alertWarning("请先选择医院"); return; }
+			$.modal.confirm("确认将该医院菜单授权重置为全部医院类菜单？", function() {
+				$.post(prefix + "/reset", { hospitalId: hid }, function(data) {
+					$.operate.successCallback(data);
+					loadTree();
+				});
+			});
+		}
+	</script>
+</body>
+</html>

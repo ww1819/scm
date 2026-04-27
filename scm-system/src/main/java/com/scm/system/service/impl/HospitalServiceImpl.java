@@ -3,12 +3,14 @@ package com.scm.system.service.impl;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.scm.common.core.text.Convert;
 import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.Hospital;
 import com.scm.system.mapper.HospitalMapper;
 import com.scm.system.service.IHospitalService;
+import com.scm.system.service.IScmScopeBootstrapService;
 
 /**
  * 医院信息 服务层实现
@@ -20,6 +22,9 @@ public class HospitalServiceImpl implements IHospitalService
 {
     @Autowired
     private HospitalMapper hospitalMapper;
+
+    @Autowired
+    private IScmScopeBootstrapService scmScopeBootstrapService;
 
     /**
      * 查询医院信息
@@ -52,6 +57,7 @@ public class HospitalServiceImpl implements IHospitalService
      * @return 结果
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int insertHospital(Hospital hospital)
     {
         if (StringUtils.isEmpty(hospital.getStatus()))
@@ -64,7 +70,13 @@ public class HospitalServiceImpl implements IHospitalService
             hospital.setHospitalCode(generateHospitalCode());
         }
         hospital.setCreateTime(DateUtils.getNowDate());
-        return hospitalMapper.insertHospital(hospital);
+        int rows = hospitalMapper.insertHospital(hospital);
+        if (rows > 0 && hospital.getHospitalId() != null)
+        {
+            String oper = StringUtils.isNotEmpty(hospital.getCreateBy()) ? hospital.getCreateBy() : "system";
+            scmScopeBootstrapService.bootstrapAfterHospitalCreated(hospital.getHospitalId(), oper);
+        }
+        return rows;
     }
 
     /**

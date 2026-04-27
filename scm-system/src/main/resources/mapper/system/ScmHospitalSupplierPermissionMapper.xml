@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.ScmHospitalSupplierPermissionMapper">
+
+    <resultMap type="ScmHospitalSupplierPermission" id="ScmHospitalSupplierPermissionResult">
+        <id property="id" column="id"/>
+        <result property="hospitalId" column="hospital_id"/>
+        <result property="supplierId" column="supplier_id"/>
+        <result property="forbidSubmitFlag" column="forbid_submit_flag"/>
+        <result property="forbidBindFlag" column="forbid_bind_flag"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+        <result property="hospitalName" column="hospital_name"/>
+        <result property="supplierCompanyName" column="supplier_company_name"/>
+    </resultMap>
+
+    <sql id="selectVo">
+        SELECT p.id, p.hospital_id, p.supplier_id, p.forbid_submit_flag, p.forbid_bind_flag, p.del_flag,
+               p.create_by, p.create_time, p.update_by, p.update_time, p.remark,
+               h.hospital_name, s.company_name AS supplier_company_name
+        FROM scm_hospital_supplier_permission p
+        LEFT JOIN scm_hospital h ON p.hospital_id = h.hospital_id
+        LEFT JOIN scm_supplier s ON p.supplier_id = s.supplier_id
+    </sql>
+
+    <select id="selectList" parameterType="ScmHospitalSupplierPermission" resultMap="ScmHospitalSupplierPermissionResult">
+        <include refid="selectVo"/>
+        <where>
+            AND (p.del_flag = '0' OR p.del_flag IS NULL)
+            <if test="hospitalId != null">AND p.hospital_id = #{hospitalId}</if>
+            <if test="supplierId != null">AND p.supplier_id = #{supplierId}</if>
+        </where>
+        ORDER BY p.update_time DESC, p.id DESC
+    </select>
+
+    <select id="selectByHospitalAndSupplier" resultMap="ScmHospitalSupplierPermissionResult">
+        <include refid="selectVo"/>
+        WHERE p.hospital_id = #{hospitalId} AND p.supplier_id = #{supplierId}
+          AND (p.del_flag = '0' OR p.del_flag IS NULL)
+        LIMIT 1
+    </select>
+
+    <insert id="insert" parameterType="ScmHospitalSupplierPermission" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO scm_hospital_supplier_permission (
+            hospital_id, supplier_id, forbid_submit_flag, forbid_bind_flag, del_flag,
+            create_by, create_time, update_by, update_time, remark
+        ) VALUES (
+            #{hospitalId}, #{supplierId}, #{forbidSubmitFlag}, #{forbidBindFlag},
+            #{delFlag},
+            #{createBy}, #{createTime}, #{updateBy}, #{updateTime}, #{remark}
+        )
+    </insert>
+
+    <update id="update" parameterType="ScmHospitalSupplierPermission">
+        UPDATE scm_hospital_supplier_permission
+        <set>
+            <if test="forbidSubmitFlag != null">forbid_submit_flag = #{forbidSubmitFlag},</if>
+            <if test="forbidBindFlag != null">forbid_bind_flag = #{forbidBindFlag},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = #{updateTime},
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="logicalDeleteById">
+        UPDATE scm_hospital_supplier_permission
+        SET del_flag = '2', update_by = #{updateBy}, update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectForbidSubmitHospitalIds" resultType="long">
+        SELECT hospital_id FROM scm_hospital_supplier_permission
+        WHERE supplier_id = #{supplierId} AND forbid_submit_flag = '1'
+          AND (del_flag = '0' OR del_flag IS NULL)
+    </select>
+</mapper>

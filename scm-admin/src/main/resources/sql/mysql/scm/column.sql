@@ -141,6 +141,33 @@ ALTER TABLE scm_delivery MODIFY COLUMN supplier_id bigint(20) DEFAULT NULL COMME
 -- sys_menu 部分版本有 status 字段用于菜单启用/停用
 CALL add_table_column('sys_menu', 'status', 'char(1)', '菜单状态（0正常 1停用）', '0');
 /
+CALL add_table_column('sys_menu', 'del_flag', 'char(1)', '删除标志（0未删除 1已删除）', '0');
+/
+CALL add_table_column('sys_menu', 'del_by', 'varchar(64)', '删除人', NULL);
+/
+CALL add_table_column('sys_menu', 'del_time', 'datetime', '删除时间', NULL);
+/
+
+-- sys_menu 重复数据治理建议（可选执行，先备份）
+-- 说明：按 parent_id + menu_name + menu_type + url + perms 判重，保留 menu_id 最小的一条，其余软删除
+WITH dup AS (
+    SELECT
+        menu_id,
+        ROW_NUMBER() OVER (
+            PARTITION BY parent_id, menu_name, menu_type, IFNULL(url, ''), IFNULL(perms, '')
+            ORDER BY menu_id
+        ) AS rn
+    FROM sys_menu
+    WHERE del_flag = '0'
+)
+UPDATE sys_menu m
+INNER JOIN dup d ON d.menu_id = m.menu_id
+SET m.del_flag = '1',
+    m.del_by = IFNULL(m.del_by, 'system'),
+    m.del_time = IFNULL(m.del_time, NOW()),
+    m.update_time = NOW()
+WHERE d.rn > 1;
+/
 -- ========== 标准 8 字段：create_by, create_time, update_by, update_time, del_flag, del_time, del_by, tenant_id ==========
 -- 以下为各表缺失的列（表已有则通过 add_table_column 跳过）
 /
@@ -439,3 +466,59 @@ CALL upgrade_uuid_column_if_varchar32('scm_tenant_menu_pause_log', 'log_id', '�
 /
 CALL upgrade_uuid_column_if_varchar32('scm_tenant_menu_pause_log', 'pause_id', '暂停控制ID');
 /
+-- ========== SCM 权限模型升级：菜单/角色维度、白名单与医院-供应商黑名单 ==========
+CALL add_table_column('sys_menu', 'auth_type', 'varchar(20)', '菜单权限类型 platform/hospital/supplier/hospital_supplier', 'platform');
+/
+CALL add_table_column('sys_menu', 'data_binding_flag', 'char(1)', '废弃字段（历史兼容）', '0');
+/
+CALL add_table_column('sys_menu', 'default_open_scope', 'varchar(32)', '默认开放范围 none/all_hospital/all_supplier/all', 'none');
+/
+CALL add_table_column('sys_menu', 'hospital_grant_supplier_flag', 'char(1)', '是否需要由医院授予供应商 0否 1是', '0');
+/
+CALL add_table_column('sys_role', 'role_type', 'varchar(20)', '角色类型 platform/hospital/supplier', 'platform');
+/
+CALL add_table_column('sys_role', 'hospital_id', 'bigint(20)', '医院角色绑定的医院ID', NULL);
+/
+CREATE TABLE IF NOT EXISTS `scm_hospital_menu_auth` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `hospital_id` bigint(20) NOT NULL COMMENT '医院ID',
+  `menu_id` bigint(20) NOT NULL COMMENT '已授权菜单ID',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_hospital_menu` (`hospital_id`,`menu_id`),
+  KEY `idx_hospital_menu_auth_menu` (`menu_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医院菜单授权白名单';
+/
+CREATE TABLE IF NOT EXISTS `scm_supplier_menu_auth` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `supplier_id` bigint(20) NOT NULL COMMENT '供应商ID',
+  `hospital_id` bigint(20) DEFAULT NULL COMMENT '医院ID（仅医院授予供应商菜单时必填）',
+  `menu_id` bigint(20) NOT NULL COMMENT '已授权菜单ID',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_supplier_hospital_menu` (`supplier_id`,`hospital_id`,`menu_id`),
+  KEY `idx_supplier_menu_auth_menu` (`menu_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='供应商菜单授权白名单';
+/
+CALL add_table_column('scm_supplier_menu_auth', 'hospital_id', 'bigint(20)', '医院ID（仅医院授予供应商菜单时必填）', NULL);
+/
+CREATE TABLE IF NOT EXISTS `scm_hospital_supplier_permission` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `hospital_id` bigint(20) NOT NULL COMMENT '医院ID',
+  `supplier_id` bigint(20) NOT NULL COMMENT '供应商ID',
+  `forbid_submit_flag` char(1) NOT NULL DEFAULT '0' COMMENT '禁止向该院提交业务数据 0否 1是',
+  `forbid_bind_flag` char(1) NOT NULL DEFAULT '0' COMMENT '禁止关联该院 0否 1是',
+  `del_flag` char(1) NOT NULL DEFAULT '0' COMMENT '删除标志 0存在 2删除',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_hospital_supplier_perm` (`hospital_id`,`supplier_id`),
+  KEY `idx_hsp_supplier` (`supplier_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医院-供应商数据权限黑名单';
+/
+-- 菜单初始化/分类/白名单回填语句已迁移至 menu.sql，column.sql 仅保留结构变更。

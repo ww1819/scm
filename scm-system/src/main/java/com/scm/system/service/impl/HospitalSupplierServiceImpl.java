@@ -6,10 +6,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.scm.common.core.text.Convert;
 import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.mapper.HospitalSupplierMapper;
 import com.scm.system.service.IHospitalSupplierService;
+import com.scm.system.service.IScmHospitalSupplierPermissionService;
+import com.scm.system.service.IScmSupplierContextService;
 
 /**
  * 医院供应商关联 服务层实现
@@ -21,6 +24,12 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
 {
     @Autowired
     private HospitalSupplierMapper hospitalSupplierMapper;
+
+    @Autowired
+    private IScmHospitalSupplierPermissionService hospitalSupplierPermissionService;
+
+    @Autowired
+    private IScmSupplierContextService scmSupplierContextService;
 
     /**
      * 查询医院供应商关联信息
@@ -67,6 +76,13 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
     @Override
     public int insertHospitalSupplier(HospitalSupplier hospitalSupplier)
     {
+        Long ctxSupplier = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (ctxSupplier != null && hospitalSupplier.getSupplierId() != null
+            && ctxSupplier.equals(hospitalSupplier.getSupplierId()))
+        {
+            hospitalSupplierPermissionService.assertBindAllowed(hospitalSupplier.getHospitalId(),
+                hospitalSupplier.getSupplierId());
+        }
         if (StringUtils.isEmpty(hospitalSupplier.getStatus()))
         {
             hospitalSupplier.setStatus("0"); // 默认正常
@@ -143,6 +159,11 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
                     try
                     {
                         Long hospitalId = Long.parseLong(hospitalIdStr);
+                        Long ctxSupplier = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+                        if (ctxSupplier != null && ctxSupplier.equals(supplierId))
+                        {
+                            hospitalSupplierPermissionService.assertBindAllowed(hospitalId, supplierId);
+                        }
                         HospitalSupplier hospitalSupplier = new HospitalSupplier();
                         hospitalSupplier.setSupplierId(supplierId);
                         hospitalSupplier.setHospitalId(hospitalId);

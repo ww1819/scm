@@ -22,42 +22,160 @@
 		<result property="updateTime"     column="update_time"    />
 		<result property="updateBy"       column="update_by"      />
 		<result property="remark"         column="remark"         />
+		<result property="authType"       column="auth_type"       />
+		<result property="defaultOpenScope" column="default_open_scope" />
+		<result property="hospitalGrantSupplierFlag" column="hospital_grant_supplier_flag" />
 	</resultMap>
 
+	<!-- 医院/供应商类菜单需同时满足角色菜单与白名单 -->
+	<sql id="authScopeFilterUser">
+		AND (
+			COALESCE(NULLIF(TRIM(m.auth_type), ''), 'platform') = 'platform'
+			OR (
+				m.auth_type = 'hospital'
+				AND EXISTS (
+					SELECT 1 FROM scm_hospital_user hu
+					INNER JOIN scm_hospital_menu_auth hma ON hma.hospital_id = hu.hospital_id AND hma.menu_id = m.menu_id
+					WHERE hu.user_id = #{userId} AND (hu.del_flag = '0' OR hu.del_flag IS NULL)
+				)
+			)
+			OR (
+				m.auth_type = 'supplier'
+				AND EXISTS (
+					SELECT 1 FROM scm_supplier_user su
+					INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id AND sma.menu_id = m.menu_id
+					    AND sma.hospital_id IS NULL
+					WHERE su.user_id = #{userId} AND (su.del_flag = '0' OR su.del_flag IS NULL)
+				)
+			)
+			OR (
+				m.auth_type = 'hospital_supplier'
+				AND COALESCE(m.hospital_grant_supplier_flag, '0') &lt;&gt; '1'
+				AND EXISTS (
+					SELECT 1 FROM scm_supplier_user su
+					INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id AND sma.menu_id = m.menu_id
+					    AND sma.hospital_id IS NULL
+					WHERE su.user_id = #{userId} AND (su.del_flag = '0' OR su.del_flag IS NULL)
+				)
+			)
+			OR (
+				m.auth_type = 'hospital_supplier'
+				AND EXISTS (
+					SELECT 1 FROM scm_hospital_user hu
+					INNER JOIN scm_hospital_menu_auth hma ON hma.hospital_id = hu.hospital_id AND hma.menu_id = m.menu_id
+					WHERE hu.user_id = #{userId} AND (hu.del_flag = '0' OR hu.del_flag IS NULL)
+				)
+			)
+			OR (
+				m.auth_type = 'hospital_supplier'
+				AND COALESCE(m.hospital_grant_supplier_flag, '0') = '1'
+				AND EXISTS (
+					SELECT 1
+					FROM scm_supplier_user su
+					INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id AND sma.menu_id = m.menu_id
+					INNER JOIN scm_hospital_supplier hs ON hs.supplier_id = su.supplier_id AND hs.hospital_id = sma.hospital_id
+					WHERE su.user_id = #{userId}
+					  AND (su.del_flag = '0' OR su.del_flag IS NULL)
+					  AND hs.bind_status = '1'
+				)
+			)
+		)
+	</sql>
+
+	<sql id="authScopeFilterParamsUser">
+		AND (
+			COALESCE(NULLIF(TRIM(m.auth_type), ''), 'platform') = 'platform'
+			OR (
+				m.auth_type = 'hospital'
+				AND EXISTS (
+					SELECT 1 FROM scm_hospital_user hu
+					INNER JOIN scm_hospital_menu_auth hma ON hma.hospital_id = hu.hospital_id AND hma.menu_id = m.menu_id
+					WHERE hu.user_id = #{params.userId} AND (hu.del_flag = '0' OR hu.del_flag IS NULL)
+				)
+			)
+			OR (
+				m.auth_type = 'supplier'
+				AND EXISTS (
+					SELECT 1 FROM scm_supplier_user su
+					INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id AND sma.menu_id = m.menu_id
+					    AND sma.hospital_id IS NULL
+					WHERE su.user_id = #{params.userId} AND (su.del_flag = '0' OR su.del_flag IS NULL)
+				)
+			)
+			OR (
+				m.auth_type = 'hospital_supplier'
+				AND COALESCE(m.hospital_grant_supplier_flag, '0') &lt;&gt; '1'
+				AND EXISTS (
+					SELECT 1 FROM scm_supplier_user su
+					INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id AND sma.menu_id = m.menu_id
+					    AND sma.hospital_id IS NULL
+					WHERE su.user_id = #{params.userId} AND (su.del_flag = '0' OR su.del_flag IS NULL)
+				)
+			)
+			OR (
+				m.auth_type = 'hospital_supplier'
+				AND EXISTS (
+					SELECT 1 FROM scm_hospital_user hu
+					INNER JOIN scm_hospital_menu_auth hma ON hma.hospital_id = hu.hospital_id AND hma.menu_id = m.menu_id
+					WHERE hu.user_id = #{params.userId} AND (hu.del_flag = '0' OR hu.del_flag IS NULL)
+				)
+			)
+			OR (
+				m.auth_type = 'hospital_supplier'
+				AND COALESCE(m.hospital_grant_supplier_flag, '0') = '1'
+				AND EXISTS (
+					SELECT 1
+					FROM scm_supplier_user su
+					INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id AND sma.menu_id = m.menu_id
+					INNER JOIN scm_hospital_supplier hs ON hs.supplier_id = su.supplier_id AND hs.hospital_id = sma.hospital_id
+					WHERE su.user_id = #{params.userId}
+					  AND (su.del_flag = '0' OR su.del_flag IS NULL)
+					  AND hs.bind_status = '1'
+				)
+			)
+		)
+	</sql>
+
 	<sql id="selectMenuVo">
-        select menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, ifnull(perms,'') as perms, icon, create_by, create_time 
+        select menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, ifnull(perms,'') as perms, icon, create_by, create_time,
+		       ifnull(auth_type,'platform') as auth_type, ifnull(default_open_scope,'none') as default_open_scope, ifnull(hospital_grant_supplier_flag,'0') as hospital_grant_supplier_flag
 		from sys_menu
     </sql>
 
 	<select id="selectMenusByUserId" parameterType="Long" resultMap="SysMenuResult">
-		select distinct m.menu_id, m.parent_id, m.menu_name, m.url, m.visible, m.is_refresh, ifnull(m.perms,'') as perms, m.target, m.menu_type, m.icon, m.order_num, m.create_time
+		select distinct m.menu_id, m.parent_id, m.menu_name, m.url, m.visible, m.is_refresh, ifnull(m.perms,'') as perms, m.target, m.menu_type, m.icon, m.order_num, m.create_time,
+		       ifnull(m.auth_type,'platform') as auth_type, ifnull(m.default_open_scope,'none') as default_open_scope, ifnull(m.hospital_grant_supplier_flag,'0') as hospital_grant_supplier_flag
 		from sys_menu m
 			 left join sys_role_menu rm on m.menu_id = rm.menu_id
 			 left join sys_user_role ur on rm.role_id = ur.role_id
 			 LEFT JOIN sys_role ro on ur.role_id = ro.role_id
-		where ur.user_id = #{userId} and m.menu_type in ('M', 'C') and m.visible = 0  AND ro.status = 0
+		where ur.user_id = #{userId} and m.menu_type in ('M', 'C') and m.visible = 0 and m.del_flag = '0' AND ro.status = '0'
+		<include refid="authScopeFilterUser"/>
 		order by m.parent_id, m.order_num
 	</select>
 
 	<select id="selectMenuNormalAll" resultMap="SysMenuResult">
 		select distinct m.menu_id, m.parent_id, m.menu_name, m.url, m.visible, m.is_refresh, ifnull(m.perms,'') as perms, m.target, m.menu_type, m.icon, m.order_num, m.create_time
 		from sys_menu m
-		where m.menu_type in ('M', 'C') and m.visible = 0
+		where m.menu_type in ('M', 'C') and m.visible = 0 and m.del_flag = '0'
 		order by m.parent_id, m.order_num
 	</select>
 
 	<select id="selectMenuAll" resultMap="SysMenuResult">
 		<include refid="selectMenuVo"/>
+		where del_flag = '0'
 		order by parent_id, order_num
 	</select>
 
 	<select id="selectMenuAllByUserId" parameterType="Long" resultMap="SysMenuResult">
-		select distinct m.menu_id, m.parent_id, m.menu_name, m.url, m.visible, m.is_refresh, ifnull(m.perms,'') as perms, m.target, m.menu_type, m.icon, m.order_num, m.create_time
+		select distinct m.menu_id, m.parent_id, m.menu_name, m.url, m.visible, m.is_refresh, ifnull(m.perms,'') as perms, m.target, m.menu_type, m.icon, m.order_num, m.create_time,
+		       ifnull(m.auth_type,'platform') as auth_type, ifnull(m.default_open_scope,'none') as default_open_scope, ifnull(m.hospital_grant_supplier_flag,'0') as hospital_grant_supplier_flag
 		from sys_menu m
 			 left join sys_role_menu rm on m.menu_id = rm.menu_id
 			 left join sys_user_role ur on rm.role_id = ur.role_id
 			 LEFT JOIN sys_role ro on ur.role_id = ro.role_id
-		where ur.user_id = #{userId}
+		where ur.user_id = #{userId} and m.del_flag = '0' AND ro.status = '0'
+		<include refid="authScopeFilterUser"/>
 		order by m.parent_id, m.order_num
 	</select>
 
@@ -67,27 +185,29 @@
 			 left join sys_role_menu rm on m.menu_id = rm.menu_id
 			 left join sys_user_role ur on rm.role_id = ur.role_id
 			 left join sys_role r on r.role_id = ur.role_id
-		where m.visible = '0' and r.status = '0' and ur.user_id = #{userId}
+		where m.visible = '0' and m.del_flag = '0' and r.status = '0' and ur.user_id = #{userId}
+		<include refid="authScopeFilterUser"/>
 	</select>
 
 	<select id="selectPermsByRoleId" parameterType="Long" resultType="String">
 		select distinct m.perms
 		from sys_menu m
 			 left join sys_role_menu rm on m.menu_id = rm.menu_id
-		where m.visible = '0' and rm.role_id = #{roleId}
+		where m.visible = '0' and m.del_flag = '0' and rm.role_id = #{roleId}
 	</select>
 
 	<select id="selectMenuTree" parameterType="Long" resultType="String">
 		select concat(m.menu_id, ifnull(m.perms,'')) as perms
 		from sys_menu m
 			left join sys_role_menu rm on m.menu_id = rm.menu_id
-		where rm.role_id = #{roleId}
+		where rm.role_id = #{roleId} and m.del_flag = '0'
 		order by m.parent_id, m.order_num
 	</select>
 
 	<select id="selectMenuList" parameterType="SysMenu" resultMap="SysMenuResult">
 		<include refid="selectMenuVo"/>
 		<where>
+			AND del_flag = '0'
 			<if test="menuName != null and menuName != ''">
 				AND menu_name like concat('%', #{menuName}, '%')
 			</if>
@@ -99,12 +219,14 @@
 	</select>
 
 	<select id="selectMenuListByUserId" parameterType="SysMenu" resultMap="SysMenuResult">
-		select distinct m.menu_id, m.parent_id, m.menu_name, m.url, m.visible, m.is_refresh, ifnull(m.perms,'') as perms, m.target, m.menu_type, m.icon, m.order_num, m.create_time
+		select distinct m.menu_id, m.parent_id, m.menu_name, m.url, m.visible, m.is_refresh, ifnull(m.perms,'') as perms, m.target, m.menu_type, m.icon, m.order_num, m.create_time,
+		       ifnull(m.auth_type,'platform') as auth_type, ifnull(m.default_open_scope,'none') as default_open_scope, ifnull(m.hospital_grant_supplier_flag,'0') as hospital_grant_supplier_flag
 		from sys_menu m
 		left join sys_role_menu rm on m.menu_id = rm.menu_id
 		left join sys_user_role ur on rm.role_id = ur.role_id
 		LEFT JOIN sys_role ro on ur.role_id = ro.role_id
-		where ur.user_id = #{params.userId}
+		where ur.user_id = #{params.userId} and m.del_flag = '0' AND ro.status = '0'
+		<include refid="authScopeFilterParamsUser"/>
 		<if test="menuName != null and menuName != ''">
 			AND m.menu_name like concat('%', #{menuName}, '%')
 		</if>
@@ -114,24 +236,41 @@
 		order by m.parent_id, m.order_num
 	</select>
 
-	<delete id="deleteMenuById" parameterType="Long">
-	    delete from sys_menu where menu_id = #{menuId} or parent_id = #{menuId}
-	</delete>
+	<update id="deleteMenuById" parameterType="Long">
+	    WITH RECURSIVE menu_tree AS (
+	        SELECT menu_id
+	        FROM sys_menu
+	        WHERE menu_id = #{menuId} AND del_flag = '0'
+	        UNION ALL
+	        SELECT c.menu_id
+	        FROM sys_menu c
+	        INNER JOIN menu_tree t ON c.parent_id = t.menu_id
+	        WHERE c.del_flag = '0'
+	    )
+	    UPDATE sys_menu m
+	    INNER JOIN menu_tree t ON m.menu_id = t.menu_id
+	    SET m.del_flag = '1',
+	        m.del_by = 'system',
+	        m.del_time = sysdate(),
+	        m.update_time = sysdate()
+	    WHERE m.del_flag = '0'
+	</update>
 
 	<select id="selectMenuById" parameterType="Long" resultMap="SysMenuResult">
 		SELECT t.menu_id, t.parent_id, t.menu_name, t.order_num, t.url, t.target, t.menu_type, t.visible, t.is_refresh, t.perms, t.icon, t.remark,
-			(SELECT menu_name FROM sys_menu WHERE menu_id = t.parent_id) parent_name
+			ifnull(t.auth_type,'platform') as auth_type, ifnull(t.default_open_scope,'none') as default_open_scope, ifnull(t.hospital_grant_supplier_flag,'0') as hospital_grant_supplier_flag,
+			(SELECT menu_name FROM sys_menu WHERE menu_id = t.parent_id and del_flag = '0') parent_name
 		FROM sys_menu t
-		where t.menu_id = #{menuId}
+		where t.menu_id = #{menuId} and t.del_flag = '0'
 	</select>
 
 	<select id="selectCountMenuByParentId" resultType="Integer">
-	    select count(1) from sys_menu where parent_id=#{menuId}  
+	    select count(1) from sys_menu where parent_id=#{menuId} and del_flag = '0'
 	</select>
 
 	<select id="checkMenuNameUnique" parameterType="SysMenu" resultMap="SysMenuResult">
 		<include refid="selectMenuVo"/>
-		where menu_name=#{menuName} and parent_id = #{parentId} limit 1
+		where menu_name=#{menuName} and parent_id = #{parentId} and del_flag = '0' limit 1
 	</select>
 
 	<update id="updateMenu" parameterType="SysMenu">
@@ -148,6 +287,9 @@
 			<if test="perms !=null">perms = #{perms},</if>
 			<if test="icon !=null and icon != ''">icon = #{icon},</if>
 			<if test="remark != null">remark = #{remark},</if>
+			<if test="authType != null and authType != ''">auth_type = #{authType},</if>
+			<if test="defaultOpenScope != null and defaultOpenScope != ''">default_open_scope = #{defaultOpenScope},</if>
+			<if test="hospitalGrantSupplierFlag != null and hospitalGrantSupplierFlag != ''">hospital_grant_supplier_flag = #{hospitalGrantSupplierFlag},</if>
 			<if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
 			update_time = sysdate()
 		</set>
@@ -169,6 +311,9 @@
 		<if test="icon != null and icon != ''">icon,</if>
 		<if test="remark != null and remark != ''">remark,</if>
 		<if test="createBy != null and createBy != ''">create_by,</if>
+		<if test="authType != null and authType != ''">auth_type,</if>
+		<if test="defaultOpenScope != null and defaultOpenScope != ''">default_open_scope,</if>
+		<if test="hospitalGrantSupplierFlag != null and hospitalGrantSupplierFlag != ''">hospital_grant_supplier_flag,</if>
 		create_time
 		)values(
 		<if test="menuId != null and menuId != 0">#{menuId},</if>
@@ -184,6 +329,9 @@
 		<if test="icon != null and icon != ''">#{icon},</if>
 		<if test="remark != null and remark != ''">#{remark},</if>
 		<if test="createBy != null and createBy != ''">#{createBy},</if>
+		<if test="authType != null and authType != ''">#{authType},</if>
+		<if test="defaultOpenScope != null and defaultOpenScope != ''">#{defaultOpenScope},</if>
+		<if test="hospitalGrantSupplierFlag != null and hospitalGrantSupplierFlag != ''">#{hospitalGrantSupplierFlag},</if>
 		sysdate()
 		)
 	</insert>

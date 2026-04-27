@@ -11,11 +11,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.scm.common.core.text.Convert;
 import com.scm.common.exception.ServiceException;
+import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.uuid.IdUtils;
 import com.scm.system.domain.Delivery;
 import com.scm.system.domain.DeliveryDetail;
+import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.Order;
 import com.scm.system.domain.OrderDetail;
 import com.scm.system.domain.ScmOrderDetailDeliveryRel;
@@ -27,6 +29,7 @@ import com.scm.system.domain.vo.OrderLineDeliveryQtyVo;
 import com.scm.system.domain.vo.ZsTpOrderForDeliveryVo;
 import com.scm.system.mapper.DeliveryDetailMapper;
 import com.scm.system.mapper.DeliveryMapper;
+import com.scm.system.mapper.HospitalSupplierMapper;
 import com.scm.system.mapper.OrderDeliveryTraceMapper;
 import com.scm.system.mapper.OrderDetailMapper;
 import com.scm.system.mapper.OrderMapper;
@@ -34,6 +37,9 @@ import com.scm.system.mapper.ScmOrderDetailDeliveryRelMapper;
 import com.scm.system.mapper.ZsTpOrderDetailDeliveryRelMapper;
 import com.scm.system.mapper.ZsTpOrderMapper;
 import com.scm.system.service.IDeliveryService;
+import com.scm.system.service.IScmHospitalContextService;
+import com.scm.system.service.IScmHospitalSupplierPermissionService;
+import com.scm.system.service.IScmSupplierContextService;
 import com.scm.system.service.ScmBarcodeSeedService;
 
 /**
@@ -71,6 +77,16 @@ public class DeliveryServiceImpl implements IDeliveryService
     @Autowired
     private ScmBarcodeSeedService scmBarcodeSeedService;
 
+    @Autowired
+    private IScmSupplierContextService scmSupplierContextService;
+    @Autowired
+    private IScmHospitalContextService scmHospitalContextService;
+
+    @Autowired
+    private IScmHospitalSupplierPermissionService hospitalSupplierPermissionService;
+    @Autowired
+    private HospitalSupplierMapper hospitalSupplierMapper;
+
     /**
      * 查询配送单信息
      * 
@@ -100,7 +116,81 @@ public class DeliveryServiceImpl implements IDeliveryService
     @Override
     public List<Delivery> selectDeliveryList(Delivery delivery)
     {
+        applySupplierHospitalDataScope(delivery);
         return deliveryMapper.selectDeliveryList(delivery);
+    }
+
+    /**
+     * 供应商登录：强制本供应商维度，并排除「禁止提交」的医院
+     */
+    private void applySupplierHospitalDataScope(Delivery delivery)
+    {
+        Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());
+        if (hospitalCtx != null)
+        {
+            delivery.setHospitalId(hospitalCtx);
+        }
+        Long supplierCtx = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (supplierCtx == null)
+        {
+            return;
+        }
+        delivery.setSupplierId(supplierCtx);
+        java.util.List<Long> forbid = hospitalSupplierPermissionService.listForbidSubmitHospitalIds(supplierCtx);
+        if (forbid != null && !forbid.isEmpty())
+        {
+            delivery.getParams().put("excludeHospitalIds", forbid);
+        }
+    }
+
+    private void assertSupplierHospitalSubmit(Delivery delivery)
+    {
+        Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());
+        if (hospitalCtx != null)
+        {
+            if (delivery.getHospitalId() != null && !hospitalCtx.equals(delivery.getHospitalId()))
+            {
+                throw new ServiceException("无权访问其他医院数据");
+            }
+            delivery.setHospitalId(hospitalCtx);
+            if (delivery.getSupplierId() != null)
+            {
+                assertHospitalSupplierBound(hospitalCtx, delivery.getSupplierId());
+            }
+        }
+        Long supplierCtx = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (supplierCtx == null)
+        {
+            return;
+        }
+        Long hid = delivery.getHospitalId();
+        if (hid == null)
+        {
+            return;
+        }
+        Long sid = delivery.getSupplierId() != null ? delivery.getSupplierId() : supplierCtx;
+        if (!supplierCtx.equals(sid))
+        {
+            throw new ServiceException("无权代其他供应商提交配送数据");
+        }
+        hospitalSupplierPermissionService.assertSubmitAllowed(hid, sid);
+        assertHospitalSupplierBound(hid, sid);
+    }
+
+    private void assertHospitalSupplierBound(Long hospitalId, Long supplierId)
+    {
+        if (hospitalId == null || supplierId == null)
+        {
+            return;
+        }
+        HospitalSupplier q = new HospitalSupplier();
+        q.setHospitalId(hospitalId);
+        q.setSupplierId(supplierId);
+        List<HospitalSupplier> rels = hospitalSupplierMapper.selectHospitalSupplierList(q);
+        if (rels == null || rels.isEmpty())
+        {
+            throw new ServiceException("医院与供应商未建立有效关联");
+        }
     }
 
     /**
@@ -113,6 +203,7 @@ public class DeliveryServiceImpl implements IDeliveryService
     @Transactional
     public int insertDelivery(Delivery delivery)
     {
+        assertSupplierHospitalSubmit(delivery);
         enrichDeliverySnapshot(delivery);
         enrichDeliveryDetailPackCoefficients(delivery);
         validateDeliveryDetailPackQuantities(delivery.getDeliveryDetails());
@@ -193,6 +284,7 @@ public class DeliveryServiceImpl implements IDeliveryService
     public int updateDelivery(Delivery delivery)
     {
         assertDeliveryEditable(delivery.getDeliveryId());
+        assertSupplierHospitalSubmit(delivery);
 
         delivery.setUpdateTime(DateUtils.getNowDate());
         enrichDeliverySnapshot(delivery);

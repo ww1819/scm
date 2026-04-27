@@ -82,6 +82,11 @@ public interface ISysMenuService
     public List<Ztree> menuTreeDataWithChecked(Long userId, List<Long> checkedMenuIds);
 
     /**
+     * 基于给定菜单集合构建树（带勾选），用于医院/供应商菜单白名单等场景
+     */
+    public List<Ztree> buildMenuTreeWithChecked(List<SysMenu> menuList, List<Long> checkedMenuIds);
+
+    /**
      * 查询系统所有权限
      * 
      * @param userId 用户ID

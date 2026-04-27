@@ -17,7 +17,7 @@
         select tm.tenant_id as tenantId, tm.menu_id as menuId, m.menu_name as menuName,
                ifnull(p.pause_status, '0') as pauseStatus, p.pause_time as pauseTime, p.pause_id as pauseId
         from scm_tenant_menu tm
-        inner join sys_menu m on m.menu_id = tm.menu_id and m.menu_type in ('M', 'C')
+        inner join sys_menu m on m.menu_id = tm.menu_id and m.menu_type in ('M', 'C') and m.del_flag = '0'
         left join scm_tenant_menu_pause p on p.tenant_id = tm.tenant_id and p.menu_id = tm.menu_id
         where tm.tenant_id = #{tenantId}
         order by m.parent_id, m.order_num

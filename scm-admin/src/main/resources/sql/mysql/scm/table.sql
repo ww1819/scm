@@ -852,7 +852,7 @@ CREATE TABLE IF NOT EXISTS `sys_dept` (
   `phone` varchar(11) DEFAULT NULL COMMENT '联系电话',
   `email` varchar(50) DEFAULT NULL COMMENT '邮箱',
   `status` char(1) DEFAULT '0' COMMENT '部门状态（0正常 1停用）',
-  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0存在 2删除）',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0未删除 1已删除）',
   `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
@@ -952,7 +952,15 @@ CREATE TABLE IF NOT EXISTS `sys_menu` (
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `status` char(1) DEFAULT '0' COMMENT '菜单状态（0正常 1停用）',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0未删除 1已删除）',
+  `del_by` varchar(64) DEFAULT NULL COMMENT '删除人',
+  `del_time` datetime DEFAULT NULL COMMENT '删除时间',
   `remark` varchar(500) DEFAULT '' COMMENT '备注',
+  `auth_type` varchar(20) NOT NULL DEFAULT 'platform' COMMENT '菜单权限类型 platform/hospital/supplier/hospital_supplier',
+  `data_binding_flag` char(1) NOT NULL DEFAULT '0' COMMENT '废弃字段（历史兼容）',
+  `default_open_scope` varchar(32) NOT NULL DEFAULT 'none' COMMENT '默认开放范围 none/all_hospital/all_supplier/all',
+  `hospital_grant_supplier_flag` char(1) NOT NULL DEFAULT '0' COMMENT '是否需要由医院授予供应商 0否 1是',
   PRIMARY KEY (`menu_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='菜单权限表';
 /
@@ -1021,6 +1029,8 @@ CREATE TABLE IF NOT EXISTS `sys_role` (
   `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  `role_type` varchar(20) NOT NULL DEFAULT 'platform' COMMENT '角色类型 platform/hospital/supplier',
+  `hospital_id` bigint(20) DEFAULT NULL COMMENT '医院角色绑定的医院ID',
   PRIMARY KEY (`role_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色信息表';
 /
@@ -1035,6 +1045,46 @@ CREATE TABLE IF NOT EXISTS `sys_role_menu` (
   `menu_id` bigint(20) NOT NULL COMMENT '菜单ID',
   PRIMARY KEY (`role_id`,`menu_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色和菜单关联表';
+/
+CREATE TABLE IF NOT EXISTS `scm_hospital_menu_auth` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `hospital_id` bigint(20) NOT NULL COMMENT '医院ID',
+  `menu_id` bigint(20) NOT NULL COMMENT '已授权菜单ID',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_hospital_menu` (`hospital_id`,`menu_id`),
+  KEY `idx_hospital_menu_auth_menu` (`menu_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医院菜单授权白名单';
+/
+CREATE TABLE IF NOT EXISTS `scm_supplier_menu_auth` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `supplier_id` bigint(20) NOT NULL COMMENT '供应商ID',
+  `hospital_id` bigint(20) DEFAULT NULL COMMENT '医院ID（仅医院授予供应商菜单时必填）',
+  `menu_id` bigint(20) NOT NULL COMMENT '已授权菜单ID',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_supplier_hospital_menu` (`supplier_id`,`hospital_id`,`menu_id`),
+  KEY `idx_supplier_menu_auth_menu` (`menu_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='供应商菜单授权白名单';
+/
+CREATE TABLE IF NOT EXISTS `scm_hospital_supplier_permission` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `hospital_id` bigint(20) NOT NULL COMMENT '医院ID',
+  `supplier_id` bigint(20) NOT NULL COMMENT '供应商ID',
+  `forbid_submit_flag` char(1) NOT NULL DEFAULT '0' COMMENT '禁止向该院提交业务数据 0否 1是',
+  `forbid_bind_flag` char(1) NOT NULL DEFAULT '0' COMMENT '禁止关联该院 0否 1是',
+  `del_flag` char(1) NOT NULL DEFAULT '0' COMMENT '删除标志 0存在 2删除',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_hospital_supplier_perm` (`hospital_id`,`supplier_id`),
+  KEY `idx_hsp_supplier` (`supplier_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医院-供应商数据权限黑名单';
 /
 CREATE TABLE IF NOT EXISTS `sys_user` (
   `user_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '用户ID',

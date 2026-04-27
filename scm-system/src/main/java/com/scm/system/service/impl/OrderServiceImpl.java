@@ -8,15 +8,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.scm.common.core.text.Convert;
+import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.Order;
 import com.scm.system.domain.OrderDetail;
+import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.vo.OrderLineDeliveryQtyVo;
+import com.scm.system.mapper.HospitalSupplierMapper;
 import com.scm.system.mapper.OrderDeliveryTraceMapper;
 import com.scm.system.mapper.OrderDetailMapper;
 import com.scm.system.mapper.OrderMapper;
 import com.scm.system.service.IOrderService;
+import com.scm.system.service.IScmHospitalContextService;
+import com.scm.system.service.IScmHospitalSupplierPermissionService;
+import com.scm.system.service.IScmSupplierContextService;
 import com.scm.system.service.ScmBarcodeSeedService;
 
 /**
@@ -38,6 +45,16 @@ public class OrderServiceImpl implements IOrderService
 
     @Autowired
     private ScmBarcodeSeedService scmBarcodeSeedService;
+
+    @Autowired
+    private IScmSupplierContextService scmSupplierContextService;
+
+    @Autowired
+    private IScmHospitalSupplierPermissionService hospitalSupplierPermissionService;
+    @Autowired
+    private IScmHospitalContextService scmHospitalContextService;
+    @Autowired
+    private HospitalSupplierMapper hospitalSupplierMapper;
 
     /**
      * 查询订单信息
@@ -65,7 +82,78 @@ public class OrderServiceImpl implements IOrderService
     @Override
     public List<Order> selectOrderList(Order order)
     {
+        applySupplierHospitalDataScope(order);
         return orderMapper.selectOrderList(order);
+    }
+
+    private void applySupplierHospitalDataScope(Order order)
+    {
+        Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());
+        if (hospitalCtx != null)
+        {
+            order.setHospitalId(hospitalCtx);
+        }
+        Long supplierCtx = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (supplierCtx == null)
+        {
+            return;
+        }
+        order.setSupplierId(supplierCtx);
+        List<Long> forbid = hospitalSupplierPermissionService.listForbidSubmitHospitalIds(supplierCtx);
+        if (forbid != null && !forbid.isEmpty())
+        {
+            order.getParams().put("excludeHospitalIds", forbid);
+        }
+    }
+
+    private void assertSupplierHospitalSubmit(Order order)
+    {
+        Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());
+        if (hospitalCtx != null)
+        {
+            if (order.getHospitalId() != null && !hospitalCtx.equals(order.getHospitalId()))
+            {
+                throw new ServiceException("无权访问其他医院数据");
+            }
+            order.setHospitalId(hospitalCtx);
+            if (order.getSupplierId() != null)
+            {
+                assertHospitalSupplierBound(hospitalCtx, order.getSupplierId());
+            }
+        }
+        Long supplierCtx = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (supplierCtx == null)
+        {
+            return;
+        }
+        Long hid = order.getHospitalId();
+        if (hid == null)
+        {
+            return;
+        }
+        Long sid = order.getSupplierId() != null ? order.getSupplierId() : supplierCtx;
+        if (!supplierCtx.equals(sid))
+        {
+            throw new ServiceException("无权代其他供应商提交订单数据");
+        }
+        hospitalSupplierPermissionService.assertSubmitAllowed(hid, sid);
+        assertHospitalSupplierBound(hid, sid);
+    }
+
+    private void assertHospitalSupplierBound(Long hospitalId, Long supplierId)
+    {
+        if (hospitalId == null || supplierId == null)
+        {
+            return;
+        }
+        HospitalSupplier q = new HospitalSupplier();
+        q.setHospitalId(hospitalId);
+        q.setSupplierId(supplierId);
+        List<HospitalSupplier> rels = hospitalSupplierMapper.selectHospitalSupplierList(q);
+        if (rels == null || rels.isEmpty())
+        {
+            throw new ServiceException("医院与供应商未建立有效关联");
+        }
     }
 
     /**
@@ -78,6 +166,7 @@ public class OrderServiceImpl implements IOrderService
     @Transactional
     public int insertOrder(Order order)
     {
+        assertSupplierHospitalSubmit(order);
         if (StringUtils.isEmpty(order.getOrderStatus()))
         {
             order.setOrderStatus("0"); // 默认待接收
@@ -141,6 +230,7 @@ public class OrderServiceImpl implements IOrderService
     @Transactional
     public int updateOrder(Order order)
     {
+        assertSupplierHospitalSubmit(order);
         order.setUpdateTime(DateUtils.getNowDate());
         
         // 如果修改了明细，重新计算订单金额并保存明细

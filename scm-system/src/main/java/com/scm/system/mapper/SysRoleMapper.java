@@ -94,6 +94,11 @@ public interface SysRoleMapper
     public SysRole selectByRoleKeyAndSupplierId(@Param("roleKey") String roleKey, @Param("supplierId") Long supplierId);
 
     /**
+     * 按医院与权限字符查询角色（医院管理员）
+     */
+    public SysRole selectByRoleKeyAndHospitalId(@Param("roleKey") String roleKey, @Param("hospitalId") Long hospitalId);
+
+    /**
      * 按权限字符查询全局角色（tenant_id/supplier_id 为空）
      */
     public SysRole selectGlobalRoleByKey(@Param("roleKey") String roleKey);
