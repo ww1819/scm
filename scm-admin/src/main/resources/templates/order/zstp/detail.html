@@ -43,6 +43,16 @@
                 </div>
             </div>
             <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">SCM供应商编码：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${head != null ? head.scmSupCode : ''}" readonly placeholder="SCMSUPCODE">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
                 <div class="col-sm-12">
                     <a class="btn btn-info btn-sm" href="javascript:void(0)" onclick="openDeliveries()"><i class="fa fa-truck"></i> 查看关联配送单</a>
                 </div>

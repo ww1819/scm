@@ -19,6 +19,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="bz"           column="bz"/>
         <result property="jsfs"         column="jsfs"/>
         <result property="receiveChannel" column="receive_channel"/>
+        <result property="scmSupCode"   column="scm_sup_code"/>
         <result property="zjly"          column="zjly"/>
         <result property="createTime"   column="create_time"/>
     </resultMap>
@@ -53,7 +54,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </sql>
 
     <sql id="selectZsTpOrderVoAliased">
-        select z.id, z.third_party_pk, z.customer, z.sheet_je, z.dh, z.supno, z.sup, z.ckno, z.ck, z.ksbh, z.ksmc, z.bz, z.jsfs, z.receive_channel, z.zjly, z.create_time
+        select z.id, z.third_party_pk, z.customer, z.sheet_je, z.dh, z.supno, z.sup, z.ckno, z.ck, z.ksbh, z.ksmc, z.bz, z.jsfs, z.receive_channel, z.scm_sup_code, z.zjly, z.create_time
         from zs_tp_order z
     </sql>
 

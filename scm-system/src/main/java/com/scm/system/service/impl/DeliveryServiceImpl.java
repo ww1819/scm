@@ -385,6 +385,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         vo.setRemark(remark.toString());
         vo.setZsCustomerId(StringUtils.trimToEmpty(head.getCustomer()));
         vo.setSrcOrderSupplierId(StringUtils.trimToEmpty(head.getSupno()));
+        vo.setScmSupCode(StringUtils.trimToEmpty(head.getScmSupCode()));
         vo.setSrcOrderSupplierName(StringUtils.trimToEmpty(head.getSup()));
         vo.setSrcOrderWarehouseId(StringUtils.trimToEmpty(head.getCkno()));
         vo.setSrcOrderWarehouseName(StringUtils.trimToEmpty(head.getCk()));
