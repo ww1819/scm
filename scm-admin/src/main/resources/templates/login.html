@@ -25,13 +25,14 @@
             justify-content: center;
         }
         .signinpanel {
-            max-width: 960px;
+            max-width: 460px !important;
+            width: 460px !important;
             margin: 0 auto;
         }
         .signinpanel .row {
             background: rgba(255, 255, 255, 0.96);
             border-radius: 14px;
-            padding: 36px 32px;
+            padding: 28px 24px;
             box-shadow: 0 22px 48px rgba(0, 0, 0, 0.20);
         }
         .signinpanel,
@@ -61,6 +62,18 @@
         .signinpanel #signupForm .form-control {
             height: 42px;
             font-size: 15px;
+        }
+        .remember-row-inline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .remember-row-inline .register-inline {
+            color: #0b83f0 !important;
+            text-decoration: none;
+        }
+        .remember-row-inline .register-inline:hover {
+            text-decoration: underline;
         }
         /* 底部唤起登录按钮 */
         .login-entry-bar {
@@ -109,7 +122,8 @@
         .signinpanel {
             position: relative;
             z-index: 20;
-            max-width: 880px;
+            max-width: 460px !important;
+            width: 460px !important;
             margin: 0 auto;
             transition: opacity 0.4s ease, transform 0.4s ease;
         }
@@ -137,44 +151,38 @@
     <!-- 登录面板 -->
     <div class="signinpanel login-panel-hidden" id="loginPanel">
         <div class="row">
-            <div class="col-sm-7">
+            <div class="col-sm-12">
                 <div class="signin-info">
                     <div class="logopanel m-b" style="display: none;">
                         <h1><img alt="[ 耗材供应链 ]" src="../static/scm.png" th:src="@{/scm.png}"></h1>
                     </div>
                     <div class="m-b"></div>
                     <h4 style="color: #333; font-size: 28px;">医疗物资供应链</h4>
+                    <form id="signupForm" autocomplete="off">
+                        <h3 class="no-margins" style="font-size: 24px; margin: 8px 0 15px; color: #000;">登录：</h3>
+                        <input type="text"     name="username" class="form-control uname"     placeholder="用户名" autocomplete="username" />
+                        <input type="password" name="password" class="form-control pword"     placeholder="密码"   autocomplete="current-password" />
+                        <div class="row m-t" th:if="${captchaEnabled==true}">
+                            <div class="col-xs-6">
+                                <input type="text" name="validateCode" class="form-control code" placeholder="验证码" maxlength="5" />
+                            </div>
+                            <div class="col-xs-6">
+                                <a href="javascript:void(0);" title="点击更换验证码">
+                                    <img th:src="@{/captcha/captchaImage(type=${captchaType})}" class="imgcode" width="85%"/>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="remember-row-inline m-t">
+                            <div class="checkbox-custom" th:if="${isRemembered}" th:classappend="${captchaEnabled==false} ? 'm-t'">
+                                <input type="checkbox" id="rememberme" name="rememberme"> <label for="rememberme">记住我</label>
+                            </div>
+                            <a class="register-inline" th:href="@{/supplier/register}">还没有账号？供应商注册</a>
+                        </div>
+                        <button class="btn btn-success" id="btnSubmit" data-loading="正在验证登录，请稍候..." style="width: 260px; display: block; margin: 0 auto;">登录</button>
+                    </form>
                     <p class="m-b text-muted" style="font-size: 15px;">请使用账号登录系统</p>
-                    <div class="m-t">
-                        <strong>还没有账号？</strong><br/>
-                        <a th:href="@{/supplier/register}">供应商注册</a>
-                    </div>
                 </div>
             </div>
-            <div class="col-sm-5">
-                <form id="signupForm" autocomplete="off">
-                    <h3 class="no-margins" style="font-size: 24px; margin-bottom: 15px; color: #000;">登录：</h3>
-                    <input type="text"     name="username" class="form-control uname"     placeholder="用户名" autocomplete="username" />
-                    <input type="password" name="password" class="form-control pword"     placeholder="密码"   autocomplete="current-password" />
-					<div class="row m-t" th:if="${captchaEnabled==true}">
-						<div class="col-xs-6">
-						    <input type="text" name="validateCode" class="form-control code" placeholder="验证码" maxlength="5" />
-						</div>
-						<div class="col-xs-6">
-							<a href="javascript:void(0);" title="点击更换验证码">
-								<img th:src="@{/captcha/captchaImage(type=${captchaType})}" class="imgcode" width="85%"/>
-							</a>
-						</div>
-					</div>
-                    <div class="checkbox-custom" th:if="${isRemembered}" th:classappend="${captchaEnabled==false} ? 'm-t'">
-				        <input type="checkbox" id="rememberme" name="rememberme"> <label for="rememberme">记住我</label>
-				    </div>
-                    <button class="btn btn-success btn-block" id="btnSubmit" data-loading="正在验证登录，请稍候...">登录</button>
-                </form>
-            </div>
-        </div>
-        <div class="signup-footer" style="color: #666; font-size: 13px;">
-            <div class="text-center">© 版权所有</div>
         </div>
     </div>
 <script th:inline="javascript"> var ctx = [[@{/}]]; var captchaType = [[${captchaType}]]; var captchaEnabled = [[${captchaEnabled}]];</script>

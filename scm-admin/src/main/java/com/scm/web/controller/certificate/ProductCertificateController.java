@@ -19,6 +19,8 @@ import com.scm.common.enums.BusinessType;
 import com.scm.common.utils.poi.ExcelUtil;
 import com.scm.system.domain.ProductCertificate;
 import com.scm.system.domain.Supplier;
+import com.scm.system.domain.SupplierUser;
+import com.scm.system.service.ISupplierUserService;
 import com.scm.system.service.IProductCertificateService;
 import com.scm.system.service.ISupplierService;
 import com.scm.system.service.IMaterialDictService;
@@ -42,6 +44,9 @@ public class ProductCertificateController extends BaseController
     
     @Autowired
     private IMaterialDictService materialDictService;
+
+    @Autowired
+    private ISupplierUserService supplierUserService;
 
     @RequiresPermissions("certificate:product:view")
     @GetMapping()
@@ -72,6 +77,24 @@ public class ProductCertificateController extends BaseController
         startPage();
         List<ProductCertificate> list = productCertificateService.selectProductCertificateList(productCertificate);
         return getDataTable(list);
+    }
+
+    /**
+     * 产品证件审核页左侧供应商列表（同审核权限域，避免跨模块取数失败）
+     */
+    @RequiresPermissions("certificate:product:audit")
+    @GetMapping("/auditSuppliers")
+    @ResponseBody
+    public AjaxResult auditSuppliers()
+    {
+        Supplier supplier = new Supplier();
+        SupplierUser supplierUser = supplierUserService.selectSupplierUserByUserId(getUserId());
+        if (supplierUser != null && supplierUser.getSupplierId() != null)
+        {
+            supplier.setSupplierId(supplierUser.getSupplierId());
+        }
+        List<Supplier> list = supplierService.selectSupplierList(supplier);
+        return success(list);
     }
 
     /**

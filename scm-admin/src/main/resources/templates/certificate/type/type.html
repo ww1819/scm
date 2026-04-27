@@ -10,6 +10,31 @@
 			background: #fff;
 			padding: 15px;
 			margin-top: 10px;
+			min-height: 800px !important;
+		}
+		.detail-box-height {
+			min-height: 730px;
+			position: relative;
+		}
+		.detail-box-height .bootstrap-table {
+			height: 100%;
+			padding-bottom: 46px;
+		}
+		.detail-box-height .fixed-table-container {
+			padding-bottom: 46px;
+		}
+		.detail-box-height .fixed-table-pagination {
+			position: absolute;
+			left: 10px;
+			right: 10px;
+			bottom: 0;
+			background: #fff;
+			margin: 0;
+			padding: 6px 0;
+			border-top: 1px solid #eee;
+		}
+		.detail-box-height .fixed-table-pagination .pagination {
+			margin-right: 36px;
 		}
 		.type-nav-box .nav-title {
 			font-size: 16px;
@@ -52,7 +77,7 @@
 	<div class="container-div">
 		<div class="row">
 			<!-- 左侧：类型框 -->
-			<div class="col-sm-3">
+			<div class="col-sm-3" style="padding-left: 0; padding-right: 8px; width: 20%;">
 				<div class="type-nav-box">
 					<div class="nav-title">
 						<i class="fa fa-list"></i> 证件类型
@@ -70,8 +95,8 @@
 			</div>
 			
 			<!-- 右侧：证件类型列表 -->
-			<div class="col-sm-9">
-				<div class="col-sm-12 search-collapse">
+			<div class="col-sm-9" style="padding-left: 3px; padding-right: 0; width: 80%;">
+				<div class="col-sm-12 search-collapse" style="padding-right: 5px;">
 					<form id="certificate-type-form">
 						<div class="select-list">
 							<ul>
@@ -96,10 +121,6 @@
 										<option value="1">停用</option>
 									</select>
 								</li>
-								<li>
-									<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
-									<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
-								</li>
 							</ul>
 						</div>
 					</form>
@@ -118,12 +139,12 @@
 		            <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="certificate:type:export">
 			            <i class="fa fa-download"></i> 导出
 			        </a>
-		            <a class="btn btn-info" onclick="openConfig()" shiro:hasPermission="certificate:type:view">
-			            <i class="fa fa-cog"></i> 配置
+		            <a class="btn btn-primary" onclick="$.table.search()">
+			            <i class="fa fa-search"></i> 搜索
 			        </a>
 		        </div>
 		        
-		        <div class="col-sm-12 select-table table-striped">
+		        <div class="col-sm-12 select-table table-striped detail-box-height" style="padding-right: 5px;">
 				    <table id="bootstrap-table"></table>
 				</div>
 			</div>
@@ -140,7 +161,43 @@
 
 		$(function() {
 		    queryCertificateTypeList();
+		    alignTypeNavHeight();
+		    $('#bootstrap-table').on('load-success.bs.table post-body.bs.table reset-view.bs.table', function() {
+		    	setTimeout(alignTypeNavHeight, 0);
+		    });
+		    $(window).on('resize', function() {
+		    	var $table = $('#bootstrap-table');
+		    	if ($table.length > 0 && $table.data('bootstrap.table')) {
+		    		$table.bootstrapTable('resetView', {height: calculateDetailTableHeight()});
+		    	}
+		    	alignTypeNavHeight();
+		    });
 		});
+
+		function alignTypeNavHeight() {
+			var $detail = $('.detail-box-height');
+			var $left = $('.type-nav-box');
+			if ($detail.length > 0 && $left.length > 0 && $left.offset()) {
+				var leftTop = $left.offset().top;
+				var $pager = $detail.find('.fixed-table-pagination');
+				var bottom = 0;
+				if ($pager.length > 0 && $pager.offset()) {
+					bottom = $pager.offset().top + $pager.outerHeight();
+				} else {
+					bottom = $detail.offset().top + $detail.outerHeight();
+				}
+				var h = Math.max(Math.ceil(bottom - leftTop) + 24, 800);
+				$left.css('min-height', h + 'px');
+			}
+		}
+
+		function calculateDetailTableHeight() {
+			var $detail = $('.detail-box-height');
+			if ($detail.length === 0) {
+				return 730;
+			}
+			return Math.max($detail.innerHeight() - 8, 650);
+		}
 
 		function queryCertificateTypeList() {
 		    var options = {
@@ -155,6 +212,7 @@
 		        sortOrder: "asc",
 		        modalName: "证件类型",
 		        uniqueId: "typeId",
+		        height: calculateDetailTableHeight(),
 		        columns: [{
 		            checkbox: true,
 		            field: 'state'
@@ -212,11 +270,6 @@
 		    $.table.init(options);
 		}
 		
-		function resetPre() {
-			$("#certificate-type-form")[0].reset();
-			$.table.search();
-		}
-		
 		// 选择证件类型分类
 		function selectCertificateCategory(category, element) {
 			// 移除所有active类
@@ -259,12 +312,6 @@
 			// 构建新增URL，传递类型分类参数
 			var addUrl = prefix + "/add?typeCategory=" + selectedCategory;
 			$.operate.addTab(addUrl, '新增证件类型');
-		}
-		
-		// 打开配置页面
-		function openConfig() {
-			var url = prefix + "/config";
-			$.operate.addTab(url, '证件过期预警配置');
 		}
 		
 		// 导航到证件维护页面
