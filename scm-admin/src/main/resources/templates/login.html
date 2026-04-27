@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>登录耗材供应链系统</title>
-    <meta name="description" content="耗材供应链后台管理框架">
+    <title>登录</title>
+    <meta name="description" content="医疗物资供应链">
     <link href="../static/css/bootstrap.min.css" th:href="@{/css/bootstrap.min.css}" rel="stylesheet"/>
     <link href="../static/css/font-awesome.min.css" th:href="@{/css/font-awesome.min.css}" rel="stylesheet"/>
     <link href="../static/css/style.min.css" th:href="@{/css/style.min.css}" rel="stylesheet"/>
@@ -14,7 +14,6 @@
     <meta name="renderer" content="webkit">
     <!-- 避免IE使用兼容模式 -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <link rel="shortcut icon" href="../static/favicon.ico" th:href="@{favicon.ico}"/>
     <style type="text/css">
         label.error { position:inherit; }
         /* 整体垂直水平居中登录卡片 */
@@ -144,16 +143,8 @@
                         <h1><img alt="[ 耗材供应链 ]" src="../static/scm.png" th:src="@{/scm.png}"></h1>
                     </div>
                     <div class="m-b"></div>
-                    <h4 style="color: #333; font-size: 28px;">欢迎使用！ <strong style="font-weight: bold; color: #000;">医承云配</strong>耗材供应链云平台系统</h4>
-                    <!--
-                    <ul class="m-b">
-                        <li><i class="fa fa-arrow-circle-o-right m-r-xs"></i> SpringBoot</li>
-                        <li><i class="fa fa-arrow-circle-o-right m-r-xs"></i> Mybatis</li>
-                        <li><i class="fa fa-arrow-circle-o-right m-r-xs"></i> Shiro</li>
-                        <li><i class="fa fa-arrow-circle-o-right m-r-xs"></i> Thymeleaf</li>
-                        <li><i class="fa fa-arrow-circle-o-right m-r-xs"></i> Bootstrap</li>
-                    </ul>
-                    -->
+                    <h4 style="color: #333; font-size: 28px;">医疗物资供应链</h4>
+                    <p class="m-b text-muted" style="font-size: 15px;">请使用账号登录系统</p>
                     <div class="m-t">
                         <strong>还没有账号？</strong><br/>
                         <a th:href="@{/supplier/register}">供应商注册</a>
@@ -163,8 +154,8 @@
             <div class="col-sm-5">
                 <form id="signupForm" autocomplete="off">
                     <h3 class="no-margins" style="font-size: 24px; margin-bottom: 15px; color: #000;">登录：</h3>
-                    <input type="text"     name="username" class="form-control uname"     placeholder="用户名" value="admin"    />
-                    <input type="password" name="password" class="form-control pword"     placeholder="密码"   value="admin123" />
+                    <input type="text"     name="username" class="form-control uname"     placeholder="用户名" autocomplete="username" />
+                    <input type="password" name="password" class="form-control pword"     placeholder="密码"   autocomplete="current-password" />
 					<div class="row m-t" th:if="${captchaEnabled==true}">
 						<div class="col-xs-6">
 						    <input type="text" name="validateCode" class="form-control code" placeholder="验证码" maxlength="5" />
@@ -182,10 +173,8 @@
                 </form>
             </div>
         </div>
-        <div class="signup-footer" style="color: #333;">
-            <div class="pull-left">
-                ©医承云配供应链云平台 V-3.21 <br>
-            </div>
+        <div class="signup-footer" style="color: #666; font-size: 13px;">
+            <div class="text-center">© 版权所有</div>
         </div>
     </div>
 <script th:inline="javascript"> var ctx = [[@{/}]]; var captchaType = [[${captchaType}]]; var captchaEnabled = [[${captchaEnabled}]];</script>

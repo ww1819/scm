@@ -4,10 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="renderer" content="webkit">
-    <title>耗材供应链系统首页</title>
+    <title>医疗物资供应链</title>
     <!-- 避免IE使用兼容模式 -->
  	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <link th:href="@{favicon.ico}" rel="shortcut icon"/>
     <link th:href="@{/css/bootstrap.min.css}" rel="stylesheet"/>
     <link th:href="@{/css/jquery.contextMenu.min.css}" rel="stylesheet"/>
     <link th:href="@{/css/font-awesome.min.css}" rel="stylesheet"/>
@@ -236,7 +235,6 @@
 				</div>
                 <!-- 右侧栏 -->
                 <ul class="nav navbar-top-links navbar-right welcome-message">
-                    <!--<li><a data-toggle="tooltip" data-trigger="hover" data-placement="bottom" title="开发文档" href="http://doc.scm.vip/scm" target="_blank"><i class="fa fa-question-circle"></i> 文档</a></li>-->
                     <li><a data-toggle="tooltip" data-trigger="hover" data-placement="bottom" title="锁定屏幕" href="javascript:;" id="lockScreen"><i class="fa fa-lock"></i> 锁屏</a></li>
                     <li><a data-toggle="tooltip" data-trigger="hover" data-placement="bottom" title="版本信息" href="javascript:;" id="showAppVersion" onclick="showAppVersionInfo(); return false;"><i class="fa fa-ellipsis-v"></i></a></li>
 	                <li><a data-toggle="tooltip" data-trigger="hover" data-placement="bottom" title="全屏显示" href="javascript:;" id="fullScreen"><i class="fa fa-arrows-alt"></i> 全屏</a></li>
@@ -293,6 +291,10 @@
         <div class="row mainContent" id="content-main" th:classappend="${mainClass + (footer ? ' footer-hide' : '')}">
             <iframe class="Scm_iframe" name="iframe0" width="100%" height="100%" th:data-id="@{/system/main}"
                 th:src="@{/system/main}" frameborder="0" seamless></iframe>
+        </div>
+        
+        <div th:if="${footer}" class="footer">
+            <div class="pull-right">© 版权所有</div>
         </div>
     </div>
     <!--右侧部分结束-->

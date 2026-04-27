@@ -92,6 +92,7 @@
 		        sortName: "orderDate",
 		        sortOrder: "desc",
 		        modalName: "订单",
+		        uniqueId: "orderId",
 		        columns: [{
 		            checkbox: true
 		        },
@@ -201,8 +202,8 @@
 
 		/* 接收订单 */
 		function receiveOrder() {
-			var ids = $.table.selectColumns();
-			if (ids.length == 0) {
+			var ids = $.table.selectColumns("orderId");
+			if (!ids || ids.length == 0) {
 				$.modal.msgWarning("请选择要接收的订单");
 				return;
 			}
