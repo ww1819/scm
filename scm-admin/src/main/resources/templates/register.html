@@ -22,15 +22,15 @@
             justify-content: center;
         }
         .signinpanel {
-            width: 100%;
-            max-width: 1040px;
+            width: 760px !important;
+            max-width: 760px !important;
             margin: 0 auto;
             padding: 24px 16px;
         }
         .signinpanel .row.main-card {
             background: rgba(255, 255, 255, 0.97);
             border-radius: 16px;
-            padding: 40px 36px 32px;
+            padding: 30px 24px 24px;
             box-shadow: 0 22px 48px rgba(0, 0, 0, 0.18);
         }
         .signinpanel,
@@ -250,9 +250,6 @@
                     <button type="submit" class="btn btn-primary btn-block btn-register-primary" id="btnSubmit" data-loading="正在验证注册，请稍候...">注册</button>
                 </form>
             </div>
-        </div>
-        <div class="signup-footer">
-            <div class="pull-left">©医承云配供应链云平台</div>
         </div>
         <div id="termsLayerTpl" style="display:none">
             <div th:replace="include/terms-of-service :: termsScrollBox"></div>

@@ -186,7 +186,6 @@
 	                <li><a data-toggle="tooltip" data-trigger="hover" data-placement="bottom" title="全屏显示" href="javascript:;" id="fullScreen"><i class="fa fa-arrows-alt"></i> 全屏</a></li>
                     <li class="dropdown user-menu">
 						<a href="javascript:void(0)" class="dropdown-toggle" data-hover="dropdown">
-							<img th:src="(${#strings.isEmpty(user.avatar)}) ? @{/img/profile.jpg} : @{${user.avatar}}" th:onerror="this.src='img/profile.jpg'" class="user-image">
 							<span class="hidden-xs">[[${#strings.defaultString(user.userName, '-')}]]</span>
 						</a>
 						<ul class="dropdown-menu">
@@ -238,9 +237,6 @@
                 th:src="@{/system/main}" frameborder="0" seamless></iframe>
         </div>
 
-        <div th:if="${footer}" class="footer">
-            <div class="pull-right">© 版权所有</div>
-        </div>
     </div>
     <!--右侧部分结束-->
 </div>

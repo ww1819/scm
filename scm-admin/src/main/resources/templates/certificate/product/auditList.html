@@ -90,11 +90,13 @@
 		        
 		        // 监听窗口大小改变事件
 		        $(window).resize(function() {
+		            adjustSupplierTableHeight();
 		            adjustTableHeight();
 		        });
 		        
 		        // 初始化时调整表格高度
 		        setTimeout(function() {
+		            adjustSupplierTableHeight();
 		            adjustTableHeight();
 		        }, 300);
 		    });
@@ -275,128 +277,103 @@
 		    var bodyPadding = 10;
 		    return windowHeight - panelHeaderHeight - searchHeight - bodyPadding - 20;
 		}
+
+		// 调整供应商表格高度
+		function adjustSupplierTableHeight() {
+		    var tableHeight = calculateSupplierTableHeight();
+		    var $table = $('#bootstrap-table-supplier');
+		    if ($table.length > 0 && $table.bootstrapTable('getOptions')) {
+		        $table.bootstrapTable('resetView', {height: tableHeight});
+		    }
+		}
 		
 		// 初始化供应商表格
 		function initSupplierTable() {
 		    var $table = $('#bootstrap-table-supplier');
-		    console.log("查找供应商表格元素，找到:", $table.length, "个");
-		    
 		    if ($table.length === 0) {
-		        console.error("供应商表格元素不存在！3秒后重试...");
 		        setTimeout(function() {
 		            initSupplierTable();
-		        }, 3000);
+		        }, 300);
 		        return;
 		    }
-		    
-		    try {
-		        var existingOptions = $table.bootstrapTable('getOptions');
-		        if (existingOptions) {
-		            console.log("表格已初始化，直接加载数据");
-		            querySupplierList();
-		            return;
-		        }
-		    } catch(e) {
-		        console.log("表格未初始化，开始初始化");
-		    }
-		    
 		    var tableHeight = calculateSupplierTableHeight();
-		    
-		    try {
-		        $table.bootstrapTable({
-		            data: [],
-		            pagination: false,
-		            search: false,
-		            showRefresh: false,
-		            showColumns: false,
-		            showToggle: false,
-		            height: tableHeight,
-		            striped: true,
-		            classes: 'table table-condensed',
-		            locale: 'zh-CN',
-		            showHeader: true,
-		            showEmptyRows: false,
-		            columns: [{
-		                field: 'serialNumber',
-		                title: '序号',
-		                align: 'center',
-		                width: 50,
-		                cellStyle: {fontSize: '12px', padding: '4px'},
-		                formatter: function(value, row, index) {
-		                    return index + 1;
-		                }
-		            },
-		            {
-		                field: 'supplierCode',
-		                title: '编码',
-		                sortable: true,
-		                width: 80,
-		                cellStyle: {fontSize: '12px', padding: '4px'},
-		                formatter: function(value, row, index) {
-		                    return value || '-';
-		                }
-		            },
-		            {
-		                field: 'companyName',
-		                title: '供应商名称',
-		                cellStyle: {fontSize: '12px', padding: '4px'},
-		                formatter: function(value, row, index) {
-		                    if (!value) return '-';
-		                    var name = value.length > 15 ? value.substring(0, 15) + '...' : value;
-		                    var supplierId = row.supplierId || '';
-		                    return '<a href="javascript:void(0)" onclick="selectSupplier(\'' + supplierId + '\')" title="' + value + '" style="font-size: 12px; cursor: pointer;">' + name + '</a>';
-		                }
-		            }],
-		            onClickRow: function(row, $element) {
-		                if (row.supplierId) {
-		                    selectSupplier(row.supplierId);
-		                }
-		            },
-		            rowStyle: function(row, index) {
-		                if (selectedSupplierId && row.supplierId == selectedSupplierId) {
-		                    return {classes: 'info'};
-		                }
-		                return {};
+		    $table.bootstrapTable({
+		        data: [],
+		        pagination: false,
+		        search: false,
+		        showRefresh: false,
+		        showColumns: false,
+		        showToggle: false,
+		        height: tableHeight,
+		        striped: true,
+		        classes: 'table table-condensed',
+		        locale: 'zh-CN',
+		        showHeader: true,
+		        showEmptyRows: false,
+		        columns: [{
+		            field: 'serialNumber',
+		            title: '序号',
+		            align: 'center',
+		            width: 50,
+		            cellStyle: {fontSize: '12px', padding: '4px'},
+		            formatter: function(value, row, index) {
+		                return index + 1;
 		            }
-		        });
-		        console.log("供应商表格初始化完成！");
-		        setTimeout(function() {
-		            querySupplierList();
-		        }, 300);
-		    } catch(e) {
-		        console.error("初始化供应商表格失败:", e);
-		        setTimeout(function() {
-		            initSupplierTable();
-		        }, 1000);
-		    }
+		        },
+		        {
+		            field: 'supplierCode',
+		            title: '编码',
+		            sortable: true,
+		            width: 80,
+		            cellStyle: {fontSize: '12px', padding: '4px'},
+		            formatter: function(value, row, index) {
+		                return value || '-';
+		            }
+		        },
+		        {
+		            field: 'companyName',
+		            title: '供应商名称',
+		            cellStyle: {fontSize: '12px', padding: '4px'},
+		            formatter: function(value, row, index) {
+		                if (!value) return '-';
+		                var name = value.length > 15 ? value.substring(0, 15) + '...' : value;
+		                var supplierId = row.supplierId || '';
+		                return '<a href="javascript:void(0)" onclick="selectSupplier(\'' + supplierId + '\')" title="' + value + '" style="font-size: 12px; cursor: pointer;">' + name + '</a>';
+		            }
+		        }],
+		        onClickRow: function(row, $element) {
+		            if (row.supplierId) {
+		                selectSupplier(row.supplierId);
+		            }
+		        },
+		        rowStyle: function(row, index) {
+		            if (selectedSupplierId && row.supplierId == selectedSupplierId) {
+		                return {classes: 'info'};
+		            }
+		            return {};
+		        }
+		    });
+		    querySupplierList();
 		}
 		
 		// 查询所有供应商列表
 		function querySupplierList() {
-		    console.log("开始查询供应商列表，URL:", supplierPrefix + "/all");
+		    var url = supplierPrefix + "/all";
 		    $.ajax({
-		        url: supplierPrefix + "/all",
+		        url: url,
 		        type: "GET",
 		        dataType: "json",
 		        cache: false,
 		        success: function(result) {
-		            console.log("供应商列表响应:", result);
 		            if (result && result.code == 0) {
 		                var suppliers = result.data || [];
-		                console.log("供应商数据数量:", suppliers.length);
 		                updateSupplierTable(suppliers);
 		            } else {
-		                console.error("获取供应商列表失败:", result);
 		                updateSupplierTable([]);
 		            }
 		        },
 		        error: function(xhr, status, error) {
-		            console.error("获取供应商列表请求失败:", {
-		                status: status,
-		                error: error,
-		                statusText: xhr.statusText,
-		                statusCode: xhr.status
-		            });
+		            console.error("获取供应商列表失败:", error);
 		            updateSupplierTable([]);
 		        }
 		    });
@@ -404,54 +381,38 @@
 		
 		// 更新供应商表格数据
 		function updateSupplierTable(suppliers) {
-		    if (!Array.isArray(suppliers)) {
-		        suppliers = [];
-		    }
-		    
 		    var $table = $('#bootstrap-table-supplier');
 		    if ($table.length === 0) {
 		        setTimeout(function() {
 		            updateSupplierTable(suppliers);
-		        }, 200);
+		        }, 300);
 		        return;
 		    }
-		    
-		    var tableHeight = calculateSupplierTableHeight();
-		    
 		    try {
 		        var tableOptions = $table.bootstrapTable('getOptions');
 		        if (tableOptions) {
-		            if (suppliers.length > 0) {
-		                var processedSuppliers = suppliers.map(function(s) {
-		                    return {
-		                        supplierId: s.supplierId || s.supplier_id,
-		                        supplierCode: s.supplierCode || s.supplier_code || '',
-		                        companyName: s.companyName || s.company_name || ''
-		                    };
-		                });
-		                $table.bootstrapTable('load', processedSuppliers);
-		                $table.bootstrapTable('resetView', {height: tableHeight});
-		            } else {
-		                $table.bootstrapTable('load', []);
-		            }
+		            $table.bootstrapTable('load', suppliers || []);
+		            setTimeout(function() {
+		                if (selectedSupplierId) {
+		                    $table.find('tbody tr').each(function() {
+		                        var rowData = $table.bootstrapTable('getData');
+		                        var rowIndex = $(this).index();
+		                        if (rowIndex >= 0 && rowIndex < rowData.length && rowData[rowIndex].supplierId == selectedSupplierId) {
+		                            $(this).addClass('info');
+		                        }
+		                    });
+		                }
+		            }, 100);
 		        } else {
 		            initSupplierTable();
 		            setTimeout(function() {
-		                var tableOptions = $table.bootstrapTable('getOptions');
-		                if (tableOptions && suppliers.length > 0) {
-		                    var processedSuppliers = suppliers.map(function(s) {
-		                        return {
-		                            supplierId: s.supplierId || s.supplier_id,
-		                            supplierCode: s.supplierCode || s.supplier_code || '',
-		                            companyName: s.companyName || s.company_name || ''
-		                        };
-		                    });
-		                    $table.bootstrapTable('load', processedSuppliers);
+		                if ($table.bootstrapTable('getOptions')) {
+		                    $table.bootstrapTable('load', suppliers || []);
 		                }
-		            }, 800);
+		            }, 500);
 		        }
 		    } catch(e) {
-		        console.error("更新供应商表格时出错:", e);
+		        console.error("更新供应商表格失败:", e);
 		    }
 		}
 		
@@ -500,10 +461,8 @@
 		        $('#bootstrap-table').bootstrapTable('refresh');
 		        return;
 		    }
-		    
 		    selectedSupplierId = supplierId;
-		    
-		    // 刷新产品证件列表，后端可以根据supplierId过滤
+		    querySupplierList();
 		    $('#bootstrap-table').bootstrapTable('refresh');
 		}
 	</script>
