@@ -41,6 +41,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			</if>
 		</where>
     </select>
+
+    <!-- 首页平台公告：仅正常状态，按时间倒序最多 6 条 -->
+    <select id="selectDashboardNotices" resultMap="SysNoticeResult">
+        <include refid="selectNoticeVo"/>
+        where status = '0'
+        order by create_time desc
+        limit 6
+    </select>
     
     <insert id="insertNotice" parameterType="SysNotice">
         insert into sys_notice (

@@ -845,7 +845,7 @@ CREATE TABLE IF NOT EXISTS `sys_config` (
 CREATE TABLE IF NOT EXISTS `sys_dept` (
   `dept_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '部门id',
   `parent_id` bigint(20) DEFAULT 0 COMMENT '父部门id',
-  `ancestors` varchar(50) DEFAULT '' COMMENT '祖级列表',
+  `ancestors` varchar(500) DEFAULT '' COMMENT '祖级列表',
   `dept_name` varchar(30) DEFAULT '' COMMENT '部门名称',
   `order_num` int(4) DEFAULT 0 COMMENT '显示顺序',
   `leader` varchar(20) DEFAULT NULL COMMENT '负责人',

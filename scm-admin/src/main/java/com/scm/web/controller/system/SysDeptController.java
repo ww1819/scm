@@ -1,6 +1,9 @@
 package com.scm.web.controller.system;
 
+import java.util.ArrayList;
 import java.util.List;
+import com.github.pagehelper.PageInfo;
+import com.scm.common.core.page.TableDataInfo;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -18,7 +21,10 @@ import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.domain.Ztree;
 import com.scm.common.core.domain.entity.SysDept;
 import com.scm.common.enums.BusinessType;
+import com.scm.common.core.text.Convert;
+import com.scm.common.utils.ServletUtils;
 import com.scm.common.utils.StringUtils;
+import com.scm.framework.aspectj.DataScopeAspect;
 import com.scm.system.service.ISysDeptService;
 
 /**
@@ -45,10 +51,58 @@ public class SysDeptController extends BaseController
     @RequiresPermissions("system:dept:list")
     @PostMapping("/list")
     @ResponseBody
-    public List<SysDept> list(SysDept dept)
+    public Object list(SysDept dept)
     {
-        List<SysDept> deptList = deptService.selectDeptList(dept);
-        return deptList;
+        // 带 pageNum：树表首页分页（虚拟根，每页最多 10 条根）；并合并各根的直属子部门（默认展开到省级，市/区县仍懒加载）
+        if (StringUtils.isNotEmpty(ServletUtils.getParameter("pageNum")))
+        {
+            dept.setParentId(null);
+            String dataScope = Convert.toStr(dept.getParams().get(DataScopeAspect.DATA_SCOPE));
+            if (StringUtils.isNotEmpty(dataScope))
+            {
+                dept.getParams().put("dataScopeAliasD3", dataScope.replace("d.", "d3."));
+            }
+            dept.getParams().put("treeFirstPage", Boolean.TRUE);
+            startPage();
+            List<SysDept> roots = deptService.selectDeptList(dept);
+            long rootTotal = new PageInfo<>(roots).getTotal();
+            clearPage();
+            dept.getParams().remove("treeFirstPage");
+            dept.getParams().remove("dataScopeAliasD3");
+
+            List<SysDept> merged = new ArrayList<>();
+            for (SysDept r : roots)
+            {
+                merged.add(r);
+                SysDept childQuery = new SysDept();
+                childQuery.setParentId(r.getDeptId());
+                if (StringUtils.isNotEmpty(dept.getDeptName()))
+                {
+                    childQuery.setDeptName(dept.getDeptName());
+                }
+                if (StringUtils.isNotEmpty(dept.getStatus()))
+                {
+                    childQuery.setStatus(dept.getStatus());
+                }
+                List<SysDept> subs = deptService.selectDeptList(childQuery);
+                merged.addAll(subs);
+            }
+            deptService.fillDeptTreeLeafFlag(merged);
+            TableDataInfo rsp = new TableDataInfo();
+            rsp.setCode(0);
+            rsp.setRows(merged);
+            rsp.setTotal(rootTotal);
+            return rsp;
+        }
+        // 无 pageNum 且有 parentId：懒加载直属子部门（整批返回，树表展开用）
+        if (dept.getParentId() != null)
+        {
+            List<SysDept> children = deptService.selectDeptList(dept);
+            deptService.fillDeptTreeLeafFlag(children);
+            return children;
+        }
+        // 兼容旧调用：一次查全表
+        return deptService.selectDeptList(dept);
     }
 
     /**

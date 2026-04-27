@@ -27,6 +27,11 @@ public interface ISysNoticeService
     public List<SysNotice> selectNoticeList(SysNotice notice);
 
     /**
+     * 首页展示：最新公告（正常状态，最多 6 条）
+     */
+    public List<SysNotice> selectDashboardNotices();
+
+    /**
      * 新增公告
      * 
      * @param notice 公告信息

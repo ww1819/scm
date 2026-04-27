@@ -1,6 +1,7 @@
 package com.scm.system.mapper;
 
 import java.util.List;
+import java.util.Map;
 import org.apache.ibatis.annotations.Param;
 import com.scm.common.core.domain.entity.SysDept;
 
@@ -34,6 +35,19 @@ public interface SysDeptMapper
      * @return 部门信息集合
      */
     public List<SysDept> selectDeptList(SysDept dept);
+
+    /**
+     * 统计多个父部门下的直属子部门数量（用于树表 isTreeLeaf）
+     *
+     * @param parentIds 父部门 id 列表
+     * @return 每项含 parentId、cnt
+     */
+    public List<Map<String, Object>> selectDeptChildCountByParents(@Param("parentIds") List<Long> parentIds);
+
+    /**
+     * 根部门列表（parent_id = 0，无数据权限片段）
+     */
+    public List<SysDept> selectRootDeptList();
 
     /**
      * 删除部门管理信息
@@ -114,4 +128,14 @@ public interface SysDeptMapper
      * @return 子部门数
      */
     public int selectNormalChildrenDeptById(Long deptId);
+
+    /**
+     * 按部门名称精确匹配取一条（用于注册页省市区根「医承云配」等，不区分数据权限）
+     */
+    public SysDept selectDeptByNameFirst(@Param("deptName") String deptName);
+
+    /**
+     * 直接子部门列表（不拼接数据权限 SQL）
+     */
+    public List<SysDept> selectDeptDirectChildren(@Param("parentId") Long parentId);
 }

@@ -1,8 +1,12 @@
 package com.scm.web.controller.system;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.shiro.authz.annotation.Logical;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -12,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import com.scm.common.annotation.Log;
@@ -30,6 +35,14 @@ import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.poi.ExcelUtil;
 import com.scm.framework.shiro.service.SysPasswordService;
 import com.scm.framework.shiro.util.AuthorizationUtils;
+import com.scm.system.domain.Hospital;
+import com.scm.system.domain.HospitalUser;
+import com.scm.system.domain.Supplier;
+import com.scm.system.domain.SupplierUser;
+import com.scm.system.mapper.HospitalUserMapper;
+import com.scm.system.service.IHospitalService;
+import com.scm.system.service.ISupplierService;
+import com.scm.system.service.ISupplierUserService;
 import com.scm.system.service.ISysDeptService;
 import com.scm.system.service.ISysPostService;
 import com.scm.system.service.ISysRoleService;
@@ -60,6 +73,18 @@ public class SysUserController extends BaseController
 
     @Autowired
     private SysPasswordService passwordService;
+
+    @Autowired
+    private ISupplierService supplierService;
+
+    @Autowired
+    private ISupplierUserService supplierUserService;
+
+    @Autowired
+    private IHospitalService hospitalService;
+
+    @Autowired
+    private HospitalUserMapper hospitalUserMapper;
 
     @RequiresPermissions("system:user:view")
     @GetMapping()
@@ -119,6 +144,9 @@ public class SysUserController extends BaseController
     {
         mmap.put("roles", roleService.selectRoleAll().stream().filter(r -> !r.isAdmin()).collect(Collectors.toList()));
         mmap.put("posts", postService.selectPostAll());
+        Hospital hospitalQuery = new Hospital();
+        hospitalQuery.setStatus("0");
+        mmap.put("hospitals", hospitalService.selectHospitalList(hospitalQuery));
         return prefix + "/add";
     }
 
@@ -161,9 +189,53 @@ public class SysUserController extends BaseController
     {
         userService.checkUserDataScope(userId);
         List<SysRole> roles = roleService.selectRolesByUserId(userId);
-        mmap.put("user", userService.selectUserById(userId));
-        mmap.put("roles", SysUser.isAdmin(userId) ? roles : roles.stream().filter(r -> !r.isAdmin()).collect(Collectors.toList()));
+        SysUser user = userService.selectUserById(userId);
+        // 超级管理员账号默认归属一级根组织「医承云配」（若库中无该名称则取第一个 parent_id=0 的根部门）
+        if (SysUser.isAdmin(userId))
+        {
+            SysDept rootDept = deptService.selectPreferredRootDept();
+            if (rootDept != null && rootDept.getDeptId() != null
+                && (user.getDeptId() == null || !rootDept.getDeptId().equals(user.getDeptId())))
+            {
+                SysUser sync = new SysUser(userId);
+                sync.setDeptId(rootDept.getDeptId());
+                sync.setUpdateBy(getLoginName());
+                userService.updateUserInfo(sync);
+                user = userService.selectUserById(userId);
+            }
+        }
+        mmap.put("user", user);
+        List<SysRole> rolesForPage = SysUser.isAdmin(userId) ? roles : roles.stream().filter(r -> !r.isAdmin()).collect(Collectors.toList());
+        Long selectedRoleId = null;
+        for (SysRole r : rolesForPage)
+        {
+            if (r.isFlag())
+            {
+                selectedRoleId = r.getRoleId();
+                break;
+            }
+        }
+        mmap.put("roles", rolesForPage);
+        mmap.put("selectedRoleId", selectedRoleId);
         mmap.put("posts", postService.selectPostsByUserId(userId));
+        Hospital hospitalQuery = new Hospital();
+        hospitalQuery.setStatus("0");
+        mmap.put("hospitals", hospitalService.selectHospitalList(hospitalQuery));
+        SupplierUser supplierUser = supplierUserService.selectSupplierUserByUserId(userId);
+        if (supplierUser != null && supplierUser.getSupplierId() != null)
+        {
+            user.setMaintainSupplierId(supplierUser.getSupplierId());
+            mmap.put("maintainSupplierLabel", StringUtils.nvl(supplierUser.getSupplierName(), ""));
+        }
+        else
+        {
+            mmap.put("maintainSupplierLabel", "");
+        }
+        HospitalUser hospitalUser = hospitalUserMapper.selectHospitalUserByUserId(userId);
+        if (hospitalUser != null && hospitalUser.getHospitalId() != null)
+        {
+            user.setMaintainHospitalId(hospitalUser.getHospitalId());
+        }
         return prefix + "/edit";
     }
 
@@ -353,5 +425,33 @@ public class SysUserController extends BaseController
     {
         mmap.put("dept", deptService.selectDeptById(deptId));
         return prefix + "/deptTree";
+    }
+
+    /**
+     * 维护供应商：按关键字检索（用于用户新增/修改页输入联想）
+     */
+    @RequiresPermissions(value = { "system:user:add", "system:user:edit" }, logical = Logical.OR)
+    @GetMapping("/maintainSupplierOptions")
+    @ResponseBody
+    public AjaxResult maintainSupplierOptions(@RequestParam(value = "keyword", required = false) String keyword)
+    {
+        Supplier q = new Supplier();
+        q.setDelFlag("0");
+        if (StringUtils.isNotEmpty(keyword))
+        {
+            q.setCompanyName(keyword);
+        }
+        List<Supplier> list = supplierService.selectSupplierList(q);
+        List<Map<String, Object>> options = new ArrayList<>();
+        int n = Math.min(list.size(), 50);
+        for (int i = 0; i < n; i++)
+        {
+            Supplier s = list.get(i);
+            Map<String, Object> row = new HashMap<>(2);
+            row.put("id", s.getSupplierId());
+            row.put("text", s.getCompanyName());
+            options.add(row);
+        }
+        return AjaxResult.success(options);
     }
 }

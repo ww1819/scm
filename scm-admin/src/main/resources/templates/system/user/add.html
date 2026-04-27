@@ -3,6 +3,18 @@
 <head>
 	<th:block th:include="include :: header('新增用户')" />
 	<th:block th:include="include :: select2-css" />
+	<style>
+		.maintain-supplier-wrap { position: relative; }
+		#maintainSupplierSuggestPanel {
+			position: absolute; left: 0; right: 0; top: 100%; z-index: 2000;
+			max-height: 220px; overflow-y: auto; display: none;
+			border: 1px solid #ddd; background: #fff; margin-top: 2px;
+			box-shadow: 0 2px 6px rgba(0,0,0,.12);
+		}
+		#maintainSupplierSuggestPanel .list-group-item { cursor: pointer; padding: 6px 10px; border: 0; border-bottom: 1px solid #eee; }
+		#maintainSupplierSuggestPanel .list-group-item:hover { background: #f5f5f5; }
+		.field-muted { background-color: #eee !important; cursor: not-allowed !important; color: #888 !important; }
+	</style>
 </head>
 <body>
     <div class="main-content">
@@ -115,11 +127,37 @@
             <div class="row">
             	<div class="col-sm-12">
                     <div class="form-group">
-                        <label class="col-xs-2 control-label">角色：</label>
+                        <label class="col-xs-2 control-label is-required">角色：</label>
                         <div class="col-xs-10">
-                            <label th:each="role:${roles}" class="check-box">
-								<input name="role" type="checkbox" th:value="${role.roleId}" th:text="${role.roleName}" th:disabled="${role.status == '1'}">
-							</label>
+                            <select id="roleIdSelect" class="form-control" required>
+                                <option value="">请选择角色</option>
+                                <option th:each="role : ${roles}" th:value="${role.roleId}" th:text="${role.roleName}"
+                                        th:attr="data-role-key=${role.roleKey}"
+                                        th:disabled="${role.status == '1'}"></option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">维护供应商：</label>
+                        <div class="col-sm-8 maintain-supplier-wrap">
+                            <input type="hidden" name="maintainSupplierId" id="maintainSupplierId"/>
+                            <input type="text" class="form-control" id="maintainSupplierSearch" placeholder="输入公司名称关键字，点选候选项" autocomplete="off"/>
+                            <div id="maintainSupplierSuggestPanel" class="list-group"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">维护医院：</label>
+                        <div class="col-sm-8">
+                            <select name="maintainHospitalId" id="maintainHospitalId" class="form-control">
+                                <option value="">请选择医院</option>
+                                <option th:each="h : ${hospitals}" th:value="${h.hospitalId}" th:text="${h.hospitalName}"></option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -146,8 +184,57 @@
     </div>
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: select2-js" />
-	<script>
+	<script th:inline="javascript">
 	    var prefix = ctx + "system/user";
+
+        function roleKeyFromSelect() {
+            return $('#roleIdSelect option:selected').attr('data-role-key') || '';
+        }
+        function roleNameFromSelect() {
+            return $.common.trim($('#roleIdSelect option:selected').text() || '');
+        }
+        function isHospitalPrincipalRole() {
+            var k = roleKeyFromSelect();
+            var n = roleNameFromSelect();
+            if (!k && !n) return false;
+            if (k === 'hospital_admin') return true;
+            if (n === '医院') return true;
+            return n.indexOf('医院') >= 0;
+        }
+        function isSupplierPrincipalRole() {
+            var k = roleKeyFromSelect();
+            var n = roleNameFromSelect();
+            if (!k && !n) return false;
+            if (k === 'supplier' || k === 'supplier_admin' || k === 'supplier_sales') return true;
+            if (n === '供应商') return true;
+            return n.indexOf('供应商') >= 0;
+        }
+        function applyMaintainFieldsByRole() {
+            var h = isHospitalPrincipalRole();
+            var s = isSupplierPrincipalRole();
+            var $h = $('#maintainHospitalId');
+            var $sid = $('#maintainSupplierId');
+            var $st = $('#maintainSupplierSearch');
+            var $wrap = $('.maintain-supplier-wrap');
+            if (h && !s) {
+                $h.prop('disabled', false).removeClass('field-muted');
+                $sid.val('').prop('disabled', true);
+                $st.val('').prop('disabled', true).addClass('field-muted');
+                $wrap.addClass('field-muted');
+                $('#maintainSupplierSuggestPanel').hide().empty();
+            } else if (s && !h) {
+                $h.val('').prop('disabled', true).addClass('field-muted');
+                $sid.prop('disabled', false);
+                $st.prop('disabled', false).removeClass('field-muted');
+                $wrap.removeClass('field-muted');
+            } else {
+                $h.val('').prop('disabled', true).addClass('field-muted');
+                $sid.val('').prop('disabled', true);
+                $st.val('').prop('disabled', true).addClass('field-muted');
+                $wrap.addClass('field-muted');
+                $('#maintainSupplierSuggestPanel').hide().empty();
+            }
+        }
 	
         $("#form-user-add").validate({
         	onkeyup: false,
@@ -213,15 +300,19 @@
         });
         
         function submitHandler() {
+            var roleId = $.common.trim($("#roleIdSelect").val());
+            if (!roleId) {
+                $.modal.msgWarning("请选择角色");
+                return;
+            }
         	var chrtype = [[${#strings.defaultString(@config.getKey('sys.account.chrtype'), 0)}]];
 			var password = $("#password").val();
 	        if ($.validate.form() && checkpwd(chrtype, password)) {
 	        	var data = $("#form-user-add").serializeArray();
 	        	var status = $("input[id='status']").is(':checked') == true ? 0 : 1;
-	        	var roleIds = $.form.selectCheckeds("role");
 	        	var postIds = $.form.selectSelects("post");
 	        	data.push({"name": "status", "value": status});
-	        	data.push({"name": "roleIds", "value": roleIds});
+	        	data.push({"name": "roleIds", "value": roleId});
 	        	data.push({"name": "postIds", "value": postIds});
 	        	$.operate.saveTab(prefix + "/add", data);
 	        }
@@ -252,6 +343,62 @@
             $('#post').select2({
                 placeholder: "请选择岗位",
                 allowClear: true
+            });
+            $('#roleIdSelect').on('change', function () {
+                applyMaintainFieldsByRole();
+            });
+            applyMaintainFieldsByRole();
+            var supplierTimer;
+            $('#maintainSupplierSearch').on('input', function () {
+                if ($('#maintainSupplierSearch').prop('disabled')) {
+                    return;
+                }
+                clearTimeout(supplierTimer);
+                var kw = $.common.trim($(this).val());
+                supplierTimer = setTimeout(function () {
+                    if (kw === '') {
+                        $('#maintainSupplierSuggestPanel').hide().empty();
+                        return;
+                    }
+                    $.get(prefix + '/maintainSupplierOptions', { keyword: kw }, function (res) {
+                        if (res.code !== 0 || !res.data) {
+                            return;
+                        }
+                        var $p = $('#maintainSupplierSuggestPanel').empty();
+                        $.each(res.data, function (i, row) {
+                            $('<a class="list-group-item"></a>')
+                                .attr('href', 'javascript:void(0)')
+                                .data('id', row.id)
+                                .data('text', row.text)
+                                .text(row.text)
+                                .appendTo($p);
+                        });
+                        if (res.data.length) {
+                            $p.show();
+                        } else {
+                            $p.hide();
+                        }
+                    });
+                }, 300);
+            });
+            $('#maintainSupplierSuggestPanel').on('mousedown', '.list-group-item', function (e) {
+                e.preventDefault();
+                var $t = $(this);
+                $('#maintainSupplierId').val($t.data('id'));
+                $('#maintainSupplierSearch').val($t.data('text'));
+                $('#maintainSupplierSuggestPanel').hide().empty();
+            });
+            $(document).on('click', function (e) {
+                if (!$(e.target).closest('.maintain-supplier-wrap').length) {
+                    $('#maintainSupplierSuggestPanel').hide();
+                }
+            });
+            $('#maintainSupplierSearch').on('blur', function () {
+                setTimeout(function () {
+                    if ($.common.trim($('#maintainSupplierSearch').val()) === '') {
+                        $('#maintainSupplierId').val('');
+                    }
+                }, 250);
             });
         })
     </script>

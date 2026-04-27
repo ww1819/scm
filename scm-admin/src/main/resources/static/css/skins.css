@@ -1,4 +1,4 @@
-﻿/*
+/*
  *
  *   SKIN blue 耗材供应链管理系统
  *   NAME - blue/green/purple/red/yellow
@@ -1111,4 +1111,386 @@
 	color: #ffffff!important;
 	background: #f39c12!important;
 	border: 1px solid #f39c12;
+}
+
+/** 克莱茵蓝 skin-klein（#002FA7） **/
+.skin-klein .navbar {
+	background-color: #002FA7;
+}
+
+.skin-klein .navbar-default .nav>li.selected>a,
+.skin-klein .navbar-default .nav>li.selected>a:focus {
+	background-color: #1890ff;
+	color: rgba(255,255,255,1);
+}
+
+.skin-klein .navbar .nav>li>a {
+	color: #fff;
+}
+
+.skin-klein .navbar .nav>li>a:hover,
+.skin-klein .navbar .nav>li>a:active,
+.skin-klein .navbar .nav>li>a:focus,
+.skin-klein .navbar .nav .open>a,
+.skin-klein .navbar .nav .open>a:hover,
+.skin-klein .navbar .nav .open>a:focus,
+.skin-klein .navbar .nav>.active>a {
+	background: rgba(0, 0, 0, 0.1);
+	color: #f6f6f6;
+}
+
+.skin-klein .navbar .sidebar-toggle {
+	color: #fff;
+}
+
+.skin-klein .navbar .sidebar-toggle:hover {
+	color: #f6f6f6;
+	background-color: #002078;
+}
+
+@media ( max-width :767px) {
+	.skin-klein .navbar .dropdown-menu li.divider {
+		background-color: rgba(255, 255, 255, 0.1);
+	}
+	.skin-klein .navbar .dropdown-menu li a {
+		color: #fff;
+	}
+	.skin-klein .navbar .dropdown-menu li a:hover {
+		background: #002078;
+	}
+}
+
+.skin-klein .logo {
+	background-color: #002078;
+	color: #fff;
+	border-bottom: 0 solid transparent;
+}
+
+.skin-klein .logo:hover {
+	background-color: #001a63;
+}
+
+.skin-klein li.user-header {
+	background-color: #002FA7;
+}
+
+.skin-klein .content-header {
+	background: transparent;
+}
+
+.skin-klein .wrapper,
+.skin-klein .main-sidebar,
+.skin-klein .left-side {
+	background-color: #222d32;
+}
+
+.skin-klein .user-panel>.info,
+.skin-klein .user-panel>.info>a {
+	color: #fff;
+}
+
+.skin-klein .nav>li.header {
+	color: #4b646f;
+	background: #1a2226;
+}
+
+.skin-klein .nav:not(.navbar-toolbar)>li.active {
+	color: #fff;
+	background: #293846;
+	border-left: 3px solid #002FA7;
+}
+
+.skin-klein .nav>li.active>ul li.active {
+	border-left: none;
+}
+
+.skin-klein .dropdown-menu > .active > a, .skin-klein .dropdown-menu > .active > a:hover, .skin-klein .dropdown-menu > .active > a:focus {
+	color: #fff !important;
+	text-decoration: none;
+	outline: 0;
+	background-color: #002FA7;
+}
+
+.skin-klein .sidebar a {
+	color: #b8c7ce;
+}
+
+.skin-klein .sidebar a:hover {
+	text-decoration: none;
+}
+
+.skin-klein .sidebar-form {
+	border-radius: 3px;
+	border: 1px solid #374850;
+	margin: 10px 10px;
+}
+
+.skin-klein .sidebar-form input[type="text"],
+.skin-klein .sidebar-form .btn {
+	box-shadow: none;
+	background-color: #374850;
+	border: 1px solid transparent;
+	height: 35px;
+}
+
+.skin-klein .sidebar-form input[type="text"] {
+	color: #666;
+	border-top-left-radius: 2px;
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 2px;
+}
+
+.skin-klein .sidebar-form input[type="text"]:focus,
+.skin-klein .sidebar-form input[type="text"]:focus+.input-group-btn .btn {
+	background-color: #fff;
+	color: #666;
+}
+
+.skin-klein .sidebar-form input[type="text"]:focus+.input-group-btn .btn {
+	border-left-color: #fff;
+}
+
+.skin-klein .sidebar-form .btn {
+	color: #999;
+	border-top-left-radius: 0;
+	border-top-right-radius: 2px;
+	border-bottom-right-radius: 2px;
+	border-bottom-left-radius: 0;
+}
+
+.skin-klein.layout-top-nav>.logo {
+	background-color: #002FA7;
+	color: #fff;
+	border-bottom: 0 solid transparent;
+}
+
+.skin-klein.layout-top-nav>.logo:hover {
+	background-color: #002d9e;
+}
+
+.skin-klein .content-tabs {
+	border-bottom: 1px solid #e5e5e5;
+}
+
+/** 鸢尾蓝 skin-iris（#2B57DB） **/
+.skin-iris .navbar {
+	background-color: #2B57DB;
+}
+
+.skin-iris .navbar-default .nav>li.selected>a,
+.skin-iris .navbar-default .nav>li.selected>a:focus {
+	background-color: #1890ff;
+	color: rgba(255,255,255,1);
+}
+
+.skin-iris .navbar .nav>li>a {
+	color: #fff;
+}
+
+.skin-iris .navbar .nav>li>a:hover,
+.skin-iris .navbar .nav>li>a:active,
+.skin-iris .navbar .nav>li>a:focus,
+.skin-iris .navbar .nav .open>a,
+.skin-iris .navbar .nav .open>a:hover,
+.skin-iris .navbar .nav .open>a:focus,
+.skin-iris .navbar .nav>.active>a {
+	background: rgba(0, 0, 0, 0.1);
+	color: #f6f6f6;
+}
+
+.skin-iris .navbar .sidebar-toggle {
+	color: #fff;
+}
+
+.skin-iris .navbar .sidebar-toggle:hover {
+	color: #f6f6f6;
+	background-color: #2449b8;
+}
+
+@media ( max-width :767px) {
+	.skin-iris .navbar .dropdown-menu li.divider {
+		background-color: rgba(255, 255, 255, 0.1);
+	}
+	.skin-iris .navbar .dropdown-menu li a {
+		color: #fff;
+	}
+	.skin-iris .navbar .dropdown-menu li a:hover {
+		background: #2449b8;
+	}
+}
+
+.skin-iris .logo {
+	background-color: #2449b8;
+	color: #fff;
+	border-bottom: 0 solid transparent;
+}
+
+.skin-iris .logo:hover {
+	background-color: #1f42a6;
+}
+
+.skin-iris li.user-header {
+	background-color: #2B57DB;
+}
+
+.skin-iris .content-header {
+	background: transparent;
+}
+
+.skin-iris .wrapper,
+.skin-iris .main-sidebar,
+.skin-iris .left-side {
+	background-color: #222d32;
+}
+
+.skin-iris .user-panel>.info,
+.skin-iris .user-panel>.info>a {
+	color: #fff;
+}
+
+.skin-iris .nav>li.header {
+	color: #4b646f;
+	background: #1a2226;
+}
+
+.skin-iris .nav:not(.navbar-toolbar)>li.active {
+	color: #fff;
+	background: #293846;
+	border-left: 3px solid #2B57DB;
+}
+
+.skin-iris .nav>li.active>ul li.active {
+	border-left: none;
+}
+
+.skin-iris .dropdown-menu > .active > a, .skin-iris .dropdown-menu > .active > a:hover, .skin-iris .dropdown-menu > .active > a:focus {
+	color: #fff !important;
+	text-decoration: none;
+	outline: 0;
+	background-color: #2B57DB;
+}
+
+.skin-iris .sidebar a {
+	color: #b8c7ce;
+}
+
+.skin-iris .sidebar a:hover {
+	text-decoration: none;
+}
+
+.skin-iris .sidebar-form {
+	border-radius: 3px;
+	border: 1px solid #374850;
+	margin: 10px 10px;
+}
+
+.skin-iris .sidebar-form input[type="text"],
+.skin-iris .sidebar-form .btn {
+	box-shadow: none;
+	background-color: #374850;
+	border: 1px solid transparent;
+	height: 35px;
+}
+
+.skin-iris .sidebar-form input[type="text"] {
+	color: #666;
+	border-top-left-radius: 2px;
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 2px;
+}
+
+.skin-iris .sidebar-form input[type="text"]:focus,
+.skin-iris .sidebar-form input[type="text"]:focus+.input-group-btn .btn {
+	background-color: #fff;
+	color: #666;
+}
+
+.skin-iris .sidebar-form input[type="text"]:focus+.input-group-btn .btn {
+	border-left-color: #fff;
+}
+
+.skin-iris .sidebar-form .btn {
+	color: #999;
+	border-top-left-radius: 0;
+	border-top-right-radius: 2px;
+	border-bottom-right-radius: 2px;
+	border-bottom-left-radius: 0;
+}
+
+.skin-iris.layout-top-nav>.logo {
+	background-color: #2B57DB;
+	color: #fff;
+	border-bottom: 0 solid transparent;
+}
+
+.skin-iris.layout-top-nav>.logo:hover {
+	background-color: #2850c8;
+}
+
+.skin-iris .content-tabs {
+	border-bottom: 1px solid #e5e5e5;
+}
+
+.theme-light.skin-klein .navbar-default .nav>li.active>a {
+	color: #002FA7;
+}
+
+.theme-light.skin-klein .navbar-default .nav>li.selected>a,
+.theme-light.skin-klein .navbar-default .nav>li.selected>a:focus {
+	background-color: rgb(230, 240, 255);
+	color: #002FA7;
+}
+
+.theme-light.skin-klein .nav:not(.navbar-toolbar)>li.selected {
+	border-right: 3px solid #002FA7;
+	margin-right: 2px;
+}
+
+.theme-light.skin-iris .navbar-default .nav>li.active>a {
+	color: #2B57DB;
+}
+
+.theme-light.skin-iris .navbar-default .nav>li.selected>a,
+.theme-light.skin-iris .navbar-default .nav>li.selected>a:focus {
+	background-color: rgb(235, 241, 255);
+	color: #2B57DB;
+}
+
+.theme-light.skin-iris .nav:not(.navbar-toolbar)>li.selected {
+	border-right: 3px solid #2B57DB;
+	margin-right: 2px;
+}
+
+.theme-blue.skin-klein .navbar-default .nav>li.active>a {
+	color: #1890ff;
+}
+
+.theme-blue.skin-klein .navbar-default .nav>li.selected>a,
+.theme-blue.skin-klein .navbar-default .nav>li.selected>a:focus {
+	background-color: #1890ff;
+	color: rgba(255,255,255,1);
+}
+
+.theme-blue.skin-iris .navbar-default .nav>li.active>a {
+	color: #1890ff;
+}
+
+.theme-blue.skin-iris .navbar-default .nav>li.selected>a,
+.theme-blue.skin-iris .navbar-default .nav>li.selected>a:focus {
+	background-color: #1890ff;
+	color: rgba(255,255,255,1);
+}
+
+.skin-klein .page-tabs a.active {
+	color: #ffffff!important;
+	background: #002FA7!important;
+	border: 1px solid #002FA7;
+}
+
+.skin-iris .page-tabs a.active {
+	color: #ffffff!important;
+	background: #2B57DB!important;
+	border: 1px solid #2B57DB;
 }

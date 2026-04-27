@@ -4,13 +4,19 @@
 	<th:block th:include="include :: header('用户列表')" />
 	<th:block th:include="include :: layout-latest-css" />
 	<th:block th:include="include :: ztree-css" />
+	<style>
+		/* 仅本页：隐藏左侧「医承云配送」标题栏及工具按钮，部门树整体上移 */
+		.ui-layout-west .box-main > .box-header {
+			display: none !important;
+		}
+	</style>
 </head>
 <body class="gray-bg">
 	<div class="ui-layout-west">
 		<div class="box box-main">
 			<div class="box-header">
 				<div class="box-title">
-					<i class="fa fa-sitemap"></i> 组织机构
+					<i class="fa fa-sitemap"></i> 医承云配送
 				</div>
 				<div class="box-tools pull-right">
 				    <a type="button" class="btn btn-box-tool" href="javascript:void(0)" onclick="dept()" title="管理部门"><i class="fa fa-edit"></i></a>
@@ -130,8 +136,17 @@
 		            checkbox: true
 		        },
 		        {
+		            title: '序号',
+		            align: 'center',
+		            width: 60,
+		            formatter: function (value, row, index) {
+		                return $.table.serialNumber(index);
+		            }
+		        },
+		        {
 		            field: 'userId',
-		            title: '用户ID'
+		            title: '用户ID',
+		            visible: false
 		        },
 		        {
 		            field: 'loginName',
@@ -144,6 +159,21 @@
 		        {
 		            field: 'userName',
 		            title: '用户名称'
+		        },
+		        {
+		            field: 'supplierNames',
+		            title: '供应商',
+		            width: 160
+		        },
+		        {
+		            field: 'hospitalNames',
+		            title: '医院',
+		            width: 160
+		        },
+		        {
+		            field: 'roleNames',
+		            title: '角色',
+		            width: 160
 		        },
 		        {
 		            field: 'dept.deptName',
@@ -198,8 +228,23 @@
 			var url = ctx + "system/user/deptTreeData";
 			var options = {
 		        url: url,
-		        expandLevel: 2,
-		        onClick : zOnClick
+		        /* 只展开到根（如医承云配），省级及以下默认收起；点开展开后再看下级 */
+		        expandLevel: 1,
+		        onClick : zOnClick,
+		        /* 手风琴：展开某一节点时，收起同父节点下其它已展开的兄弟节点 */
+		        onExpand: function (event, treeId, treeNode) {
+		        	var treeObj = $.fn.zTree.getZTreeObj(treeId);
+		        	var parent = treeNode.getParentNode();
+		        	if (!parent || !parent.children) {
+		        		return;
+		        	}
+		        	for (var i = 0; i < parent.children.length; i++) {
+		        		var n = parent.children[i];
+		        		if (n !== treeNode && n.open) {
+		        			treeObj.expandNode(n, false, false, false);
+		        		}
+		        	}
+		        }
 		    };
 			$.tree.init(options);
 			

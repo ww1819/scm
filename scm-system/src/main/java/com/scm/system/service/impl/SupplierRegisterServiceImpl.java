@@ -14,14 +14,12 @@ import com.scm.common.utils.ShiroUtils;
 import com.scm.system.domain.Supplier;
 import com.scm.system.domain.SupplierUser;
 import com.scm.system.domain.SupplierUserApply;
-import com.scm.system.domain.SysRoleMenu;
 import com.scm.system.domain.SysUserRole;
 import com.scm.system.mapper.SupplierMapper;
 import com.scm.system.mapper.SupplierUserApplyMapper;
 import com.scm.system.mapper.SupplierUserMapper;
 import com.scm.system.mapper.SysRoleMapper;
 import com.scm.system.mapper.SysUserMapper;
-import com.scm.system.mapper.SysRoleMenuMapper;
 import com.scm.system.mapper.SysUserRoleMapper;
 import com.scm.common.utils.security.Md5Utils;
 import com.scm.system.service.ISupplierRegisterService;
@@ -32,7 +30,7 @@ import com.scm.system.service.ISupplierRegisterService;
 @Service
 public class SupplierRegisterServiceImpl implements ISupplierRegisterService {
 
-    private static final String ROLE_KEY_SUPPLIER_ADMIN = "supplier_admin";
+    private static final String ROLE_KEY_SUPPLIER = "supplier";
     private static final String ROLE_KEY_SUPPLIER_SALES = "supplier_sales";
 
     @Autowired
@@ -47,11 +45,6 @@ public class SupplierRegisterServiceImpl implements ISupplierRegisterService {
     private SupplierUserMapper supplierUserMapper;
     @Autowired
     private SupplierUserApplyMapper applyMapper;
-    @Autowired
-    private SysRoleMenuMapper roleMenuMapper;
-
-    /** 供应商管理员默认菜单：业务员审核(2003,20031,20032)、供应商资质登记(2301)、产品证件登记(2302) */
-    private static final long[] SUPPLIER_ADMIN_MENU_IDS = { 2003L, 20031L, 20032L, 2301L, 2302L };
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -80,38 +73,16 @@ public class SupplierRegisterServiceImpl implements ISupplierRegisterService {
         supplierMapper.insertSupplier(supplier);
         Long supplierId = supplier.getSupplierId();
 
-        SysRole adminRole = new SysRole();
-        adminRole.setRoleName("供应商管理员");
-        adminRole.setRoleKey(ROLE_KEY_SUPPLIER_ADMIN);
-        adminRole.setRoleSort("1");
-        adminRole.setDataScope("1");
-        adminRole.setStatus("0");
-        adminRole.setRemark("供应商[" + supplier.getCompanyName() + "]管理员");
-        adminRole.setSupplierId(supplierId);
-        adminRole.setCreateBy(operBy != null ? operBy : adminUser.getLoginName());
-        roleMapper.insertRole(adminRole);
-        Long adminRoleId = adminRole.getRoleId();
-        List<SysRoleMenu> roleMenus = new ArrayList<>();
-        for (long menuId : SUPPLIER_ADMIN_MENU_IDS) {
-            SysRoleMenu rm = new SysRoleMenu();
-            rm.setRoleId(adminRoleId);
-            rm.setMenuId(menuId);
-            roleMenus.add(rm);
+        // 不再为每个注册供应商新建角色，直接绑定系统内已有「供应商」角色
+        SysRole supplierRole = roleMapper.selectGlobalRoleByKey(ROLE_KEY_SUPPLIER);
+        if (supplierRole == null) {
+            // 兼容现网中权限字符为 common 等历史数据，按角色名称兜底
+            supplierRole = roleMapper.selectGlobalRoleByName("供应商");
         }
-        if (!roleMenus.isEmpty()) {
-            roleMenuMapper.batchRoleMenu(roleMenus);
+        if (supplierRole == null) {
+            throw new IllegalArgumentException("系统未找到全局角色【供应商】，请在角色管理中创建或修正");
         }
-
-        SysRole salesRole = new SysRole();
-        salesRole.setRoleName("供应商业务员");
-        salesRole.setRoleKey(ROLE_KEY_SUPPLIER_SALES);
-        salesRole.setRoleSort("2");
-        salesRole.setDataScope("1");
-        salesRole.setStatus("0");
-        salesRole.setRemark("供应商[" + supplier.getCompanyName() + "]业务员");
-        salesRole.setSupplierId(supplierId);
-        salesRole.setCreateBy(operBy != null ? operBy : adminUser.getLoginName());
-        roleMapper.insertRole(salesRole);
+        Long adminRoleId = supplierRole.getRoleId();
 
         SysUser user = new SysUser();
         user.setLoginName(adminUser.getLoginName().trim());
@@ -230,6 +201,14 @@ public class SupplierRegisterServiceImpl implements ISupplierRegisterService {
         if ("1".equals(approved)) {
             applyMapper.updateStatus(applyId, SupplierUserApply.STATUS_APPROVED, operBy, auditRemark);
             SysRole salesRole = roleMapper.selectByRoleKeyAndSupplierId(ROLE_KEY_SUPPLIER_SALES, supplierId);
+            if (salesRole == null) {
+                // 兼容全局「供应商业务员」角色场景
+                salesRole = roleMapper.selectGlobalRoleByKey(ROLE_KEY_SUPPLIER_SALES);
+            }
+            if (salesRole == null) {
+                // 再按名称兜底
+                salesRole = roleMapper.selectGlobalRoleByName("供应商业务员");
+            }
             if (salesRole != null) {
                 List<SysUserRole> urList = new ArrayList<>();
                 SysUserRole ur = new SysUserRole();

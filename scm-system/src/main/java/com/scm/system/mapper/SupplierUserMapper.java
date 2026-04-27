@@ -87,5 +87,13 @@ public interface SupplierUserMapper
      * @return 结果
      */
     public int deleteSupplierUserBySupplierId(Long supplierId);
+
+    /**
+     * 按用户删除全部供应商用户关联
+     *
+     * @param userId 用户ID
+     * @return 结果
+     */
+    public int deleteSupplierUserByUserId(Long userId);
 }
 

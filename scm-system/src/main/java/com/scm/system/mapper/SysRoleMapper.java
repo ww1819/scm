@@ -92,4 +92,14 @@ public interface SysRoleMapper
      * 按供应商与权限字符查询角色（用于供应商管理员、供应商业务员）
      */
     public SysRole selectByRoleKeyAndSupplierId(@Param("roleKey") String roleKey, @Param("supplierId") Long supplierId);
+
+    /**
+     * 按权限字符查询全局角色（tenant_id/supplier_id 为空）
+     */
+    public SysRole selectGlobalRoleByKey(@Param("roleKey") String roleKey);
+
+    /**
+     * 按角色名称查询全局角色（tenant_id/supplier_id 为空）
+     */
+    public SysRole selectGlobalRoleByName(@Param("roleName") String roleName);
 }

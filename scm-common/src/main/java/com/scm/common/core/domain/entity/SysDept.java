@@ -54,6 +54,9 @@ public class SysDept extends BaseEntity
     /** 排除编号 */
     private Long excludeId;
 
+    /** 树表懒加载：是否末级（无直属子部门），非数据库字段 */
+    private Boolean isTreeLeaf;
+
     public Long getDeptId()
     {
         return deptId;
@@ -179,6 +182,16 @@ public class SysDept extends BaseEntity
     public void setExcludeId(Long excludeId)
     {
         this.excludeId = excludeId;
+    }
+
+    public Boolean getIsTreeLeaf()
+    {
+        return isTreeLeaf;
+    }
+
+    public void setIsTreeLeaf(Boolean treeLeaf)
+    {
+        this.isTreeLeaf = treeLeaf;
     }
 
     @Override

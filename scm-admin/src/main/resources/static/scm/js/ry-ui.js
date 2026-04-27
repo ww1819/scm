@@ -1427,12 +1427,16 @@ var table = {
                 var options = $.extend(defaults, options);
                 $.tree._option = options;
                 // 树结构初始化加载
+                var treeCallbacks = {
+                    onClick: options.onClick,
+                    onCheck: options.onCheck,
+                    onDblClick: options.onDblClick
+                };
+                if (typeof options.onExpand === "function") {
+                    treeCallbacks.onExpand = options.onExpand;
+                }
                 var setting = {
-                    callback: {
-                        onClick: options.onClick,                      // 用于捕获节点被点击的事件回调函数
-                        onCheck: options.onCheck,                      // 用于捕获 checkbox / radio 被勾选 或 取消勾选的事件回调函数
-                        onDblClick: options.onDblClick                 // 用于捕获鼠标双击之后的事件回调函数
-                    },
+                    callback: treeCallbacks,
                     check: options.check,
                     view: options.view,
                     data: options.data

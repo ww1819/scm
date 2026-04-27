@@ -44,6 +44,18 @@ public class SysUser extends BaseEntity
     @Excel(name = "用户名称")
     private String userName;
 
+    /** 关联供应商名称（列表聚合展示，多选逗号分隔） */
+    @Excel(name = "供应商")
+    private String supplierNames;
+
+    /** 关联医院名称（列表聚合展示，多选逗号分隔） */
+    @Excel(name = "医院")
+    private String hospitalNames;
+
+    /** 角色名称（列表聚合展示，多选逗号分隔） */
+    @Excel(name = "角色")
+    private String roleNames;
+
     /** 用户类型 */
     private String userType;
 
@@ -100,6 +112,12 @@ public class SysUser extends BaseEntity
 
     /** 岗位组 */
     private Long[] postIds;
+
+    /** 用户维护表单：供应商（不入 sys_user，保存时同步 scm_supplier_user） */
+    private Long maintainSupplierId;
+
+    /** 用户维护表单：医院（不入 sys_user，保存时同步 scm_hospital_user） */
+    private Long maintainHospitalId;
 
     public SysUser()
     {
@@ -184,6 +202,36 @@ public class SysUser extends BaseEntity
     public void setUserName(String userName)
     {
         this.userName = userName;
+    }
+
+    public String getSupplierNames()
+    {
+        return supplierNames;
+    }
+
+    public void setSupplierNames(String supplierNames)
+    {
+        this.supplierNames = supplierNames;
+    }
+
+    public String getHospitalNames()
+    {
+        return hospitalNames;
+    }
+
+    public void setHospitalNames(String hospitalNames)
+    {
+        this.hospitalNames = hospitalNames;
+    }
+
+    public String getRoleNames()
+    {
+        return roleNames;
+    }
+
+    public void setRoleNames(String roleNames)
+    {
+        this.roleNames = roleNames;
     }
 
     public String getUserType()
@@ -355,6 +403,26 @@ public class SysUser extends BaseEntity
         this.postIds = postIds;
     }
 
+    public Long getMaintainSupplierId()
+    {
+        return maintainSupplierId;
+    }
+
+    public void setMaintainSupplierId(Long maintainSupplierId)
+    {
+        this.maintainSupplierId = maintainSupplierId;
+    }
+
+    public Long getMaintainHospitalId()
+    {
+        return maintainHospitalId;
+    }
+
+    public void setMaintainHospitalId(Long maintainHospitalId)
+    {
+        this.maintainHospitalId = maintainHospitalId;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
@@ -362,6 +430,9 @@ public class SysUser extends BaseEntity
             .append("deptId", getDeptId())
             .append("loginName", getLoginName())
             .append("userName", getUserName())
+            .append("supplierNames", getSupplierNames())
+            .append("hospitalNames", getHospitalNames())
+            .append("roleNames", getRoleNames())
             .append("userType", getUserType())
             .append("email", getEmail())
             .append("phonenumber", getPhonenumber())
@@ -380,6 +451,8 @@ public class SysUser extends BaseEntity
             .append("remark", getRemark())
             .append("dept", getDept())
 			.append("roles", getRoles())
+            .append("maintainSupplierId", getMaintainSupplierId())
+            .append("maintainHospitalId", getMaintainHospitalId())
             .toString();
     }
 }

@@ -1,5 +1,6 @@
 package com.scm.web.controller.supplier;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,12 +14,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
+import com.scm.common.core.domain.entity.SysDept;
 import com.scm.common.core.domain.entity.SysUser;
+import com.scm.common.utils.PinyinUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.Supplier;
 import com.scm.system.service.ISupplierRegisterService;
 import com.scm.system.service.ISupplierService;
 import com.scm.system.service.ISysConfigService;
+import com.scm.system.service.ISysDeptService;
 
 /**
  * 供应商注册：供应商 / 业务员 两种注册入口
@@ -33,10 +37,49 @@ public class SupplierRegisterController extends BaseController {
     private ISupplierService supplierService;
     @Autowired
     private ISupplierRegisterService supplierRegisterService;
+    @Autowired
+    private ISysDeptService deptService;
 
     @GetMapping()
     public String register() {
         return "supplier/register";
+    }
+
+    /**
+     * 根据供应商名称生成拼音首字母简码（如「河北」→ HB），供注册页自动填充公司简码
+     */
+    @GetMapping("/companyShortCode")
+    @ResponseBody
+    public AjaxResult companyShortCode(@RequestParam(value = "name", required = false) String name) {
+        if (!("true".equals(configService.selectConfigByKey("sys.account.registerUser")))) {
+            return error("当前系统未开启注册功能");
+        }
+        if (StringUtils.isEmpty(name)) {
+            return AjaxResult.success("操作成功", "");
+        }
+        String raw = PinyinUtils.getShortCode(name.trim());
+        String code = raw != null ? raw.toUpperCase() : "";
+        return AjaxResult.success("操作成功", code);
+    }
+
+    /**
+     * 注册页省/市/区县级联：数据与部门管理一致。不传 parentId 时返回「医承云配」直属子部门作为省；传 parentId 时返回该部门的直属子部门。
+     */
+    @GetMapping("/deptRegionOptions")
+    @ResponseBody
+    public AjaxResult deptRegionOptions(@RequestParam(value = "parentId", required = false) Long parentId) {
+        if (!("true".equals(configService.selectConfigByKey("sys.account.registerUser")))) {
+            return error("当前系统未开启注册功能");
+        }
+        List<SysDept> list = deptService.listDeptChildrenForSupplierRegister(parentId);
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (SysDept d : list) {
+            Map<String, Object> m = new HashMap<>();
+            m.put("deptId", d.getDeptId());
+            m.put("deptName", d.getDeptName());
+            rows.add(m);
+        }
+        return AjaxResult.success("操作成功", rows);
     }
 
     /** 注册页下拉用：获取供应商列表（id、公司名称） */

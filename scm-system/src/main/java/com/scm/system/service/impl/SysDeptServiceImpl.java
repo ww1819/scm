@@ -1,7 +1,10 @@
 package com.scm.system.service.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,6 +45,58 @@ public class SysDeptServiceImpl implements ISysDeptService
     public List<SysDept> selectDeptList(SysDept dept)
     {
         return deptMapper.selectDeptList(dept);
+    }
+
+    /**
+     * 为部门列表填充树表末级标记（批量统计子部门数）
+     */
+    @Override
+    public void fillDeptTreeLeafFlag(List<SysDept> depts)
+    {
+        if (depts == null || depts.isEmpty())
+        {
+            return;
+        }
+        List<Long> parentIds = new ArrayList<>();
+        for (SysDept d : depts)
+        {
+            if (d.getDeptId() != null)
+            {
+                parentIds.add(d.getDeptId());
+            }
+        }
+        if (parentIds.isEmpty())
+        {
+            return;
+        }
+        List<Map<String, Object>> rows = deptMapper.selectDeptChildCountByParents(parentIds);
+        Map<Long, Integer> cntByParent = new HashMap<>();
+        if (rows != null)
+        {
+            for (Map<String, Object> row : rows)
+            {
+                if (row == null || row.isEmpty())
+                {
+                    continue;
+                }
+                Object pidObj = row.containsKey("parentId") ? row.get("parentId") : row.get("PARENTID");
+                Object cntObj = row.containsKey("cnt") ? row.get("cnt") : row.get("CNT");
+                if (pidObj instanceof Number && cntObj instanceof Number)
+                {
+                    cntByParent.put(((Number) pidObj).longValue(), ((Number) cntObj).intValue());
+                }
+            }
+        }
+        for (SysDept d : depts)
+        {
+            if (d.getDeptId() == null)
+            {
+                d.setIsTreeLeaf(Boolean.TRUE);
+                continue;
+            }
+            int n = cntByParent.getOrDefault(d.getDeptId(), 0);
+            d.setIsTreeLeaf(n == 0);
+        }
     }
 
     /**
@@ -324,5 +379,45 @@ public class SysDeptServiceImpl implements ISysDeptService
                 throw new ServiceException("没有权限访问部门数据！");
             }
         }
+    }
+
+    /**
+     * 优先「医承云配」根节点，否则第一个 parent_id=0 的部门
+     */
+    @Override
+    public SysDept selectPreferredRootDept()
+    {
+        List<SysDept> roots = deptMapper.selectRootDeptList();
+        if (StringUtils.isEmpty(roots))
+        {
+            return null;
+        }
+        for (SysDept d : roots)
+        {
+            if (d != null && "医承云配".equals(StringUtils.trim(d.getDeptName())))
+            {
+                return d;
+            }
+        }
+        return roots.get(0);
+    }
+
+    /**
+     * 注册页省市区：数据来自部门管理同一棵树，匿名接口不走路数据权限 SQL
+     */
+    @Override
+    public List<SysDept> listDeptChildrenForSupplierRegister(Long parentDeptId)
+    {
+        Long pid = parentDeptId;
+        if (pid == null || pid <= 0)
+        {
+            SysDept root = deptMapper.selectDeptByNameFirst("医承云配");
+            if (root == null)
+            {
+                return Collections.emptyList();
+            }
+            pid = root.getDeptId();
+        }
+        return deptMapper.selectDeptDirectChildren(pid);
     }
 }

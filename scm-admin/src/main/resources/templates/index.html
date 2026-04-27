@@ -26,26 +26,11 @@
         </div>
         <a th:href="@{/index}">
             <li class="logo hidden-xs">
-                <span class="logo-lg">Scm</span>
+                <span class="logo-lg">医承云配</span>
             </li>
          </a>
         <div class="sidebar-collapse">
             <ul class="nav" id="side-menu">
-            	<li>
-            		<div class="user-panel">
-            			<a class="menuItem noactive" title="个人中心" th:href="@{/system/user/profile}">
-            				<div class="hide" th:text="个人中心"></div>
-					        <div class="pull-left image">
-		                    	<img th:src="(${#strings.isEmpty(user.avatar)}) ? @{/img/profile.jpg} : @{${user.avatar}}" th:onerror="this.src='img/profile.jpg'" class="img-circle" alt="User Image">
-					        </div>
-				        </a>
-				        <div class="pull-left info">
-				          <p>[[${user.loginName}]]</p>
-				          <a href="javascript:;"><i class="fa fa-circle text-success"></i> 在线</a>
-				          <a th:href="@{logout}" style="padding-left:5px;"><i class="fa fa-sign-out text-danger"></i> 注销</a>
-				        </div>
-				    </div>
-            	</li>
                 <li>
                     <a class="menuItem" th:href="@{/system/main}"><i class="fa fa-home"></i> <span class="nav-label">首页</span> </a>
                 </li>
@@ -194,10 +179,12 @@
                     <a class="navbar-minimalize minimalize-styl-2" style="color:#FFF;" href="javascript:;" title="收起菜单">
                     	<i class="fa fa-bars"></i>
                     </a>
+                    <span style="float:left;color:#fff;line-height:50px;margin-left:6px;font-size:14px;"><i class="fa fa-circle text-success"></i> 在线</span>
                 </div>
                 <ul class="nav navbar-top-links navbar-right welcome-message">
-                    <li><a data-toggle="tooltip" data-trigger="hover" data-placement="bottom" title="开发文档" href="http://doc.scm.vip/scm" target="_blank"><i class="fa fa-question-circle"></i> 文档</a></li>
+                    <!--<li><a data-toggle="tooltip" data-trigger="hover" data-placement="bottom" title="开发文档" href="http://doc.scm.vip/scm" target="_blank"><i class="fa fa-question-circle"></i> 文档</a></li>-->
                     <li><a data-toggle="tooltip" data-trigger="hover" data-placement="bottom" title="锁定屏幕" href="javascript:;" id="lockScreen"><i class="fa fa-lock"></i> 锁屏</a></li>
+                    <li><a data-toggle="tooltip" data-trigger="hover" data-placement="bottom" title="版本信息" href="javascript:;" id="showAppVersion" onclick="showAppVersionInfo(); return false;"><i class="fa fa-ellipsis-v"></i></a></li>
 	                <li><a data-toggle="tooltip" data-trigger="hover" data-placement="bottom" title="全屏显示" href="javascript:;" id="fullScreen"><i class="fa fa-arrows-alt"></i> 全屏</a></li>
                     <li class="dropdown user-menu">
 						<a href="javascript:void(0)" class="dropdown-toggle" data-hover="dropdown">
@@ -248,13 +235,9 @@
 
         <a id="ax_close_max" class="ax_close_max" href="javascript:;" title="关闭全屏"> <i class="fa fa-times-circle-o"></i> </a>
 
-        <div class="row mainContent" id="content-main" th:classappend="${mainClass}">
+        <div class="row mainContent" id="content-main" th:classappend="${mainClass + (footer ? ' footer-hide' : '')}">
             <iframe class="Scm_iframe" name="iframe0" width="100%" height="100%" th:data-id="@{/system/main}"
                 th:src="@{/system/main}" frameborder="0" seamless></iframe>
-        </div>
-
-        <div th:if="${footer}" class="footer">
-            <div class="pull-right">©医承云配供应链云平台 V-3.21</div>
         </div>
     </div>
     <!--右侧部分结束-->
@@ -274,6 +257,7 @@
 <script th:inline="javascript">
 window.history.forward(1);
 var ctx = [[@{/}]]; 
+var appVersionLine = /*[[${appVersionLine}]]*/ '©医承云配供应链云平台 V-3.21';
 var lockscreen = [[${session.lockscreen}]]; 
 if(lockscreen){window.top.location=ctx+"lockscreen";}
 // 皮肤缓存
@@ -319,13 +303,18 @@ function resetPwd() {
     $.modal.open("重置密码", url, '770', '380');
 }
 
+/* 版本信息（原底部版权移至此处） */
+function showAppVersionInfo() {
+	layer.alert(appVersionLine, { title: '版本信息', btn: ['确定'] });
+}
+
 /* 切换主题 */
 function switchSkin() {
     layer.open({
 		type : 2,
 		shadeClose : true,
 		title : "切换主题",
-		area : ["530px", "386px"],
+		area : ["530px", "620px"],
 		content : [ctx + "system/switchSkin", 'no']
 	})
 }
@@ -352,15 +341,32 @@ function tabActive() {
     $('.menuTab[data-id="' + ctx + 'system/main"]').addClass('active');
 }
 
+/** 整页刷新（F5 / 地址栏刷新），与首次进入区分 */
+function isPageReload() {
+	try {
+		if (window.performance && window.performance.navigation && window.performance.navigation.type === 1) {
+			return true;
+		}
+	} catch (e) {}
+	var perfNav = performance.getEntriesByType && performance.getEntriesByType('navigation')[0];
+	return perfNav && perfNav.type === 'reload';
+}
+
 $(function() {
 	var lockPath = storage.get('lockPath');
-	if($.common.equals("history", mode) && window.performance.navigation.type == 1) {
-		var url = storage.get('publicPath');
-	    if ($.common.isNotEmpty(url)) {
-	    	applyPath(url);
-	    } else {
-	        tabActive();
-	    }
+	if (isPageReload()) {
+		if ($.common.equals("history", mode)) {
+			storage.set('publicPath', '');
+		}
+		if (window.location.hash) {
+			history.replaceState(null, '', window.location.pathname + window.location.search);
+		}
+		if ($.common.isNotEmpty(lockPath)) {
+			applyPath(lockPath);
+			storage.remove('lockPath');
+		} else {
+			tabActive();
+		}
 	} else if($.common.isNotEmpty(lockPath)) {
 	    applyPath(lockPath);
 	    storage.remove('lockPath');

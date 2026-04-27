@@ -376,6 +376,9 @@ CALL add_table_column('sys_dept', 'del_by', 'varchar(64)', '删除人', NULL);
 /
 CALL add_table_column('sys_dept', 'tenant_id', 'varchar(64)', '租户ID', NULL);
 /
+-- sys_dept：ancestors 原 varchar(50) 在部门层级较深时易超长（updateDeptChildren 报错），改为 varchar(500)
+ALTER TABLE `sys_dept` MODIFY COLUMN `ancestors` varchar(500) DEFAULT '' COMMENT '祖级列表';
+/
 -- scm_tenant：主键为 tenant_id（uuid7），补 del_flag, del_by, del_time, pinyin_code, planned_stop_time
 CALL add_table_column('scm_tenant', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
 /

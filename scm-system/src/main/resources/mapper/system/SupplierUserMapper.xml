@@ -71,6 +71,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectSupplierUserByUserId" parameterType="Long" resultMap="SupplierUserResult">
         <include refid="selectSupplierUserVo"/>
         where su.user_id = #{userId}
+        order by su.is_main desc, su.create_time desc
         limit 1
     </select>
 
@@ -129,6 +130,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <delete id="deleteSupplierUserBySupplierId" parameterType="Long">
         delete from scm_supplier_user where supplier_id = #{supplierId}
+    </delete>
+
+    <delete id="deleteSupplierUserByUserId" parameterType="Long">
+        delete from scm_supplier_user where user_id = #{userId}
     </delete>
 </mapper>
 

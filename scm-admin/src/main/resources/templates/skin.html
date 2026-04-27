@@ -15,6 +15,8 @@
 		.list-unstyled{margin:10px;}
 		.full-opacity-hover{opacity:1;filter:alpha(opacity=1);border:1px solid #fff}
 		.full-opacity-hover:hover{border:1px solid #f00;}
+		/* 主题项增多时可在弹窗 iframe 内滚动，避免被 layer 固定高度裁切 */
+		html, body.gray-bg { height: 100%; overflow-y: auto; }
 	</style>
 </head>
 <body class="gray-bg">
@@ -137,13 +139,68 @@
 		</a>
 		<p class="text-center">绿浅（新）</p>
 	</li>
+	
+	<li style="float:left; width: 33.33333%; padding: 5px;">
+		<a href="javascript:" data-skin="skin-klein|theme-dark" style="display: block; box-shadow: 0 0 3px rgba(0,0,0,0.4)" class="clearfix full-opacity-hover">
+			<span style="width: 20%; float: left; height: 13px; background: #002078"></span>
+			<span style="width: 80%; float: left; height: 13px; background: #002FA7"></span>
+			<span style="width: 20%; float: left; height: 30px; background: #2f4050"></span>
+			<span style="width: 80%; float: left; height: 30px; background: #f4f5f7"></span>
+		</a>
+		<p class="text-center">克莱茵蓝</p>
+	</li>
+	<li style="float:left; width: 33.33333%; padding: 5px;">
+		<a href="javascript:" data-skin="skin-klein|theme-light" style="display: block; box-shadow: 0 0 3px rgba(0,0,0,0.4)" class="clearfix full-opacity-hover">
+			<span style="width: 20%; float: left; height: 13px; background: #002078"></span>
+			<span style="width: 80%; float: left; height: 13px; background: #002FA7"></span>
+			<span style="width: 20%; float: left; height: 30px; background: #f9fafc"></span>
+			<span style="width: 80%; float: left; height: 30px; background: #f4f5f7"></span>
+		</a>
+		<p class="text-center">克莱茵蓝灰</p>
+	</li>
+	<li style="float:left; width: 33.33333%; padding: 5px;">
+		<a href="javascript:" data-skin="skin-klein|theme-blue" style="display: block; box-shadow: 0 0 3px rgba(0,0,0,0.4)" class="clearfix full-opacity-hover">
+			<span style="width: 20%; float: left; height: 13px; background: #002078"></span>
+			<span style="width: 80%; float: left; height: 13px; background: #002FA7"></span>
+			<span style="width: 20%; float: left; height: 30px; background: rgba(15,41,80,1)"></span>
+			<span style="width: 80%; float: left; height: 30px; background: #f4f5f7"></span>
+		</a>
+		<p class="text-center">克莱茵蓝浅（新）</p>
+	</li>
+	<li style="float:left; width: 33.33333%; padding: 5px;">
+		<a href="javascript:" data-skin="skin-iris|theme-dark" style="display: block; box-shadow: 0 0 3px rgba(0,0,0,0.4)" class="clearfix full-opacity-hover">
+			<span style="width: 20%; float: left; height: 13px; background: #2449b8"></span>
+			<span style="width: 80%; float: left; height: 13px; background: #2B57DB"></span>
+			<span style="width: 20%; float: left; height: 30px; background: #2f4050"></span>
+			<span style="width: 80%; float: left; height: 30px; background: #f4f5f7"></span>
+		</a>
+		<p class="text-center">鸢尾蓝</p>
+	</li>
+	<li style="float:left; width: 33.33333%; padding: 5px;">
+		<a href="javascript:" data-skin="skin-iris|theme-light" style="display: block; box-shadow: 0 0 3px rgba(0,0,0,0.4)" class="clearfix full-opacity-hover">
+			<span style="width: 20%; float: left; height: 13px; background: #2449b8"></span>
+			<span style="width: 80%; float: left; height: 13px; background: #2B57DB"></span>
+			<span style="width: 20%; float: left; height: 30px; background: #f9fafc"></span>
+			<span style="width: 80%; float: left; height: 30px; background: #f4f5f7"></span>
+		</a>
+		<p class="text-center">鸢尾蓝灰</p>
+	</li>
+	<li style="float:left; width: 33.33333%; padding: 5px;">
+		<a href="javascript:" data-skin="skin-iris|theme-blue" style="display: block; box-shadow: 0 0 3px rgba(0,0,0,0.4)" class="clearfix full-opacity-hover">
+			<span style="width: 20%; float: left; height: 13px; background: #2449b8"></span>
+			<span style="width: 80%; float: left; height: 13px; background: #2B57DB"></span>
+			<span style="width: 20%; float: left; height: 30px; background: rgba(15,41,80,1)"></span>
+			<span style="width: 80%; float: left; height: 30px; background: #f4f5f7"></span>
+		</a>
+		<p class="text-center">鸢尾蓝浅（新）</p>
+	</li>
 </ul>
 </body>
 <script th:src="@{/js/jquery.min.js}"></script>
 <script th:src="@{/scm/js/common.js?v=4.8.0}"></script>
 <script type="text/javascript">
 //皮肤样式列表
-var skins = ["skin-blue", "skin-green", "skin-purple", "skin-red", "skin-yellow"];
+var skins = ["skin-blue", "skin-green", "skin-purple", "skin-red", "skin-yellow", "skin-klein", "skin-iris"];
 
 // 主题样式列表
 var themes = ["theme-dark", "theme-light", "theme-blue"];

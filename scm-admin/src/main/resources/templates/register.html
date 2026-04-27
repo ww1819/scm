@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html  lang="zh" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
@@ -10,73 +10,259 @@
     <link href="../static/css/style.min.css" th:href="@{/css/style.min.css}" rel="stylesheet"/>
     <link href="../static/css/login.min.css" th:href="@{/css/login.min.css}" rel="stylesheet"/>
     <link href="../static/scm/css/ry-ui.css" th:href="@{/scm/css/ry-ui.css?v=4.8.0}" rel="stylesheet"/>
-    <!-- 360浏览器急速模式 -->
     <meta name="renderer" content="webkit">
-    <!-- 避免IE使用兼容模式 -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <link rel="shortcut icon" href="../static/favicon.ico" th:href="@{favicon.ico}"/>
     <style type="text/css">
-        label.error { position:inherit; }
-        .signinpanel input.form-control,
-        .signinpanel textarea.form-control,
-        .signinpanel select.form-control { color: #000 !important; }
-        .signinpanel input::placeholder,
-        .signinpanel textarea::placeholder { color: #333; }
+        label.error { position: inherit; }
+        body.signin {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .signinpanel {
+            width: 100%;
+            max-width: 1040px;
+            margin: 0 auto;
+            padding: 24px 16px;
+        }
+        .signinpanel .row.main-card {
+            background: rgba(255, 255, 255, 0.97);
+            border-radius: 16px;
+            padding: 40px 36px 32px;
+            box-shadow: 0 22px 48px rgba(0, 0, 0, 0.18);
+        }
+        .signinpanel,
+        .signinpanel .signin-info,
+        .signinpanel .signin-info h4,
+        .signinpanel .signin-info a,
+        .signinpanel .signin-info strong,
+        .signinpanel .signup-footer {
+            color: #333 !important;
+        }
+        .signinpanel .signin-info a {
+            text-decoration: none;
+        }
+        .signinpanel .signin-info a:hover {
+            color: #1677ff !important;
+        }
+        .register-welcome-title {
+            font-size: 26px;
+            line-height: 1.45;
+            color: #111 !important;
+            font-weight: 600;
+            margin: 0 0 20px 0;
+        }
+        .register-welcome-title strong {
+            color: #000 !important;
+            font-weight: 700;
+        }
+        .register-welcome-sub {
+            font-size: 15px;
+            color: #555;
+            margin-top: 8px;
+        }
+        .signinpanel .signup-footer {
+            border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+            margin-top: 12px;
+            padding-top: 16px;
+            font-size: 13px;
+            color: #666 !important;
+        }
+        /* 右侧表单区：参考「注册新帐户」两列表单 */
+        .register-form-sheet {
+            background: #f7f9fc !important;
+            border: 1px solid rgba(0, 0, 0, 0.08) !important;
+            border-radius: 12px !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            padding: 28px 26px 24px !important;
+            margin: 0;
+        }
+        .register-form-sheet > h4 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #111 !important;
+            margin: 0 0 6px 0;
+        }
+        .register-form-sheet .form-subtitle {
+            color: #666 !important;
+            font-size: 14px;
+            margin-bottom: 22px;
+        }
+        .register-form-sheet .register-row {
+            margin-left: 0;
+            margin-right: 0;
+            margin-bottom: 0;
+            padding: 12px 10px;
+            border-radius: 8px;
+            align-items: center;
+        }
+        .register-form-sheet .register-row:nth-child(odd) {
+            background: #eef4fb;
+        }
+        .register-form-sheet .register-row:nth-child(even) {
+            background: #fff;
+        }
+        .register-form-sheet .control-label {
+            text-align: right;
+            font-weight: 500;
+            color: #333;
+            padding-top: 8px;
+            font-size: 14px;
+        }
+        @media (max-width: 767px) {
+            .register-form-sheet .control-label {
+                text-align: left;
+                padding-top: 0;
+                margin-bottom: 6px;
+            }
+        }
+        .register-form-sheet .form-control {
+            color: #222 !important;
+            height: 40px !important;
+            font-size: 14px;
+            background-color: #fff !important;
+            border-radius: 6px;
+            border: 1px solid #d9e2ef;
+            box-shadow: none;
+        }
+        .register-form-sheet .form-control:focus {
+            border-color: #1677ff;
+            box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.12);
+        }
+        .input-wrap.has-icon-right {
+            position: relative;
+        }
+        .input-wrap.has-icon-right .form-control {
+            padding-right: 40px;
+        }
+        .input-wrap.has-icon-right .field-suffix-icon {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            pointer-events: none;
+            font-size: 15px;
+        }
+        .register-form-sheet .captcha-row .imgcode {
+            border-radius: 6px;
+            border: 1px solid #d9e2ef;
+        }
+        .register-form-sheet .checkbox-row {
+            padding: 14px 8px 6px;
+            background: transparent !important;
+            font-size: 14px;
+            color: #333;
+        }
+        .register-form-sheet .checkbox-row a {
+            color: #1677ff !important;
+        }
+        .register-form-sheet .checkbox-row a:hover {
+            text-decoration: underline;
+        }
+        .btn-register-primary {
+            margin-top: 10px;
+            height: 46px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(180deg, #3c89ff 0%, #1677ff 100%);
+            box-shadow: 0 8px 20px rgba(22, 119, 255, 0.35);
+        }
+        .btn-register-primary:hover,
+        .btn-register-primary:focus {
+            background: linear-gradient(180deg, #5298ff 0%, #0958d9 100%);
+            color: #fff;
+        }
     </style>
 </head>
 <body class="signin">
     <div class="signinpanel">
-        <div class="row">
-            <div class="col-sm-7">
+        <div class="row main-card">
+            <div class="col-sm-6 col-md-6">
                 <div class="signin-info">
-                    <div class="logopanel m-b">
+                    <div class="logopanel m-b" style="display: none;">
                         <h1><img alt="[ 耗材供应链 ]" src="../static/scm.png" th:src="@{/scm.png}"></h1>
                     </div>
-                    <div class="m-b"></div>
-                    <h4>欢迎使用 <strong>耗材供应链 后台管理系统</strong></h4>
-                    <ul class="m-b">
-                        <li><i class="fa fa-arrow-circle-o-right m-r-xs"></i> SpringBoot</li>
-                        <li><i class="fa fa-arrow-circle-o-right m-r-xs"></i> Mybatis</li>
-                        <li><i class="fa fa-arrow-circle-o-right m-r-xs"></i> Shiro</li>
-                        <li><i class="fa fa-arrow-circle-o-right m-r-xs"></i> Thymeleaf</li>
-                        <li><i class="fa fa-arrow-circle-o-right m-r-xs"></i> Bootstrap</li>
-                    </ul>
-                    <strong>已经注册过? <a th:href="@{/login}">直接登录&raquo;</a></strong>
+                    <h4 class="register-welcome-title">欢迎使用！ <strong>医承云配</strong>耗材供应链云平台</h4>
+                    <div class="register-welcome-sub">
+                        <strong>已经注册过？</strong>
+                        <a th:href="@{/login}">直接登录 &raquo;</a>
+                    </div>
                 </div>
             </div>
-            <div class="col-sm-5">
-                <form id="registerForm" autocomplete="off">
-                    <h4 class="no-margins">注册：</h4>
-                    <p class="m-t-md">你若不离不弃，我必生死相依</p>
-                    <input type="text"     name="username" class="form-control uname"         placeholder="用户名"   maxlength="20" />
-                    <input type="password" name="password" class="form-control pword"         placeholder="密码"     maxlength="20" />
-                    <input type="password" name="confirmPassword" class="form-control pword"  placeholder="确认密码" maxlength="20" />
-					<div class="row m-t" th:if="${captchaEnabled==true}">
-						<div class="col-xs-6">
-						    <input type="text" name="validateCode" class="form-control code"  placeholder="验证码"   maxlength="5" >
-						</div>
-						<div class="col-xs-6">
-							<a href="javascript:void(0);" title="点击更换验证码">
-								<img th:src="@{/captcha/captchaImage(type=${captchaType})}" class="imgcode" width="85%"/>
-							</a>
-						</div>
-					</div>
-                    <div class="checkbox-custom" th:classappend="${captchaEnabled==false} ? 'm-t'">
-				        <input type="checkbox" id="acceptTerm" name="acceptTerm"> <label for="acceptTerm">我已阅读并同意</label>
-				        <a href="https://gitee.com/y_project/Scm/blob/master/README.md" target="_blank">使用条款</a>
-				    </div>
-                    <button class="btn btn-success btn-block" id="btnSubmit" data-loading="正在验证注册，请稍候...">注册</button>
+            <div class="col-sm-6 col-md-6">
+                <form id="registerForm" class="register-form-sheet" autocomplete="off">
+                    <h4 class="no-margins">注册账号</h4>
+                    <p class="form-subtitle">请设置登录用户名与密码</p>
+
+                    <div class="form-group row register-row">
+                        <label class="col-sm-4 col-xs-12 control-label"><span class="text-danger">*</span>用户名</label>
+                        <div class="col-sm-8 col-xs-12">
+                            <input type="text" name="username" class="form-control uname" placeholder="请输入用户名" maxlength="20"/>
+                        </div>
+                    </div>
+                    <div class="form-group row register-row">
+                        <label class="col-sm-4 col-xs-12 control-label"><span class="text-danger">*</span>密码</label>
+                        <div class="col-sm-8 col-xs-12">
+                            <div class="input-wrap has-icon-right">
+                                <input type="password" name="password" class="form-control pword" placeholder="密码" maxlength="20"/>
+                                <span class="field-suffix-icon"><i class="fa fa-lock"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group row register-row">
+                        <label class="col-sm-4 col-xs-12 control-label"><span class="text-danger">*</span>确认密码</label>
+                        <div class="col-sm-8 col-xs-12">
+                            <div class="input-wrap has-icon-right">
+                                <input type="password" name="confirmPassword" class="form-control pword" placeholder="确认密码" maxlength="20"/>
+                                <span class="field-suffix-icon"><i class="fa fa-lock"></i></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group row register-row captcha-row" th:if="${captchaEnabled==true}">
+                        <label class="col-sm-4 col-xs-12 control-label"><span class="text-danger">*</span>验证码</label>
+                        <div class="col-sm-8 col-xs-12">
+                            <div class="row" style="margin:0 -6px;">
+                                <div class="col-xs-7" style="padding:0 6px;">
+                                    <input type="text" name="validateCode" class="form-control code" placeholder="验证码" maxlength="5"/>
+                                </div>
+                                <div class="col-xs-5" style="padding:0 6px;">
+                                    <a href="javascript:void(0);" title="点击更换验证码">
+                                        <img th:src="@{/captcha/captchaImage(type=${captchaType})}" class="imgcode" style="width:100%; max-height:40px; object-fit:contain;"/>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="checkbox-custom checkbox-row" th:classappend="${captchaEnabled==false} ? 'm-t'">
+                        <input type="checkbox" id="acceptTerm" name="acceptTerm"/>
+                        <label for="acceptTerm">我已阅读并同意相关</label>
+                        <a href="javascript:void(0);" id="linkTermsOfService">服务条款</a>
+                        <span>和</span>
+                        <a href="javascript:void(0);" id="linkPrivacyPolicy">隐私政策</a>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block btn-register-primary" id="btnSubmit" data-loading="正在验证注册，请稍候...">注册</button>
                 </form>
             </div>
         </div>
         <div class="signup-footer">
-            <div class="pull-left">
-                &copy; 2018-2025 All Rights Reserved. Scm <br>
-            </div>
+            <div class="pull-left">©医承云配供应链云平台</div>
+        </div>
+        <div id="termsLayerTpl" style="display:none">
+            <div th:replace="include/terms-of-service :: termsScrollBox"></div>
+        </div>
+        <div id="privacyLayerTpl" style="display:none">
+            <div th:replace="include/privacy-brief :: privacyScrollBox"></div>
         </div>
     </div>
 <script th:inline="javascript"> var ctx = [[@{/}]]; var captchaType = [[${captchaType}]]; var captchaEnabled = [[${captchaEnabled}]];</script>
-<!-- 全局js -->
 <script src="../static/js/jquery.min.js" th:src="@{/js/jquery.min.js}"></script>
 <script src="../static/ajax/libs/validate/jquery.validate.min.js" th:src="@{/ajax/libs/validate/jquery.validate.min.js}"></script>
 <script src="../static/ajax/libs/validate/jquery.validate.extend.js" th:src="@{/ajax/libs/validate/jquery.validate.extend.js}"></script>
@@ -84,5 +270,27 @@
 <script src="../static/ajax/libs/blockUI/jquery.blockUI.js" th:src="@{/ajax/libs/blockUI/jquery.blockUI.js}"></script>
 <script src="../static/scm/js/ry-ui.js" th:src="@{/scm/js/ry-ui.js?v=4.8.0}"></script>
 <script src="../static/scm/register.js" th:src="@{/scm/register.js}"></script>
+<script>
+$(function () {
+    function openLayer(title, selector) {
+        var w = Math.min(720, Math.max(280, window.innerWidth - 24));
+        layer.open({
+            type: 1,
+            title: title,
+            area: [w + "px", "85%"],
+            shadeClose: true,
+            content: $(selector).html()
+        });
+    }
+    $(document).on("click", "#linkTermsOfService, .link-terms-of-service", function (e) {
+        e.preventDefault();
+        openLayer("服务条款", "#termsLayerTpl");
+    });
+    $(document).on("click", "#linkPrivacyPolicy, .link-privacy-policy", function (e) {
+        e.preventDefault();
+        openLayer("隐私政策", "#privacyLayerTpl");
+    });
+});
+</script>
 </body>
 </html>

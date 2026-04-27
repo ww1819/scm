@@ -172,6 +172,14 @@ public interface ISysUserService
     public void checkUserAllowed(SysUser user);
 
     /**
+     * 校验：分配「超级管理员」角色时，归属部门须为一级组织（parent_id = 0，如医承云配根节点）
+     *
+     * @param deptId  用户归属部门 ID
+     * @param roleIds 拟分配角色 ID 列表
+     */
+    public void checkSuperAdminRoleDept(Long deptId, Long[] roleIds);
+
+    /**
      * 校验用户是否有数据权限
      * 
      * @param userId 用户id

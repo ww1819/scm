@@ -1,6 +1,7 @@
 package com.scm.system.service.impl;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.ConstraintViolationException;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import com.scm.common.annotation.DataScope;
 import com.scm.common.constant.UserConstants;
+import com.scm.common.core.domain.entity.SysDept;
 import com.scm.common.core.domain.entity.SysRole;
 import com.scm.common.core.domain.entity.SysUser;
 import com.scm.common.core.text.Convert;
@@ -24,9 +26,13 @@ import com.scm.common.utils.bean.BeanValidators;
 import com.scm.common.utils.html.EscapeUtil;
 import com.scm.common.utils.security.Md5Utils;
 import com.scm.common.utils.spring.SpringUtils;
+import com.scm.system.domain.HospitalUser;
+import com.scm.system.domain.SupplierUser;
 import com.scm.system.domain.SysPost;
 import com.scm.system.domain.SysUserPost;
 import com.scm.system.domain.SysUserRole;
+import com.scm.system.mapper.HospitalUserMapper;
+import com.scm.system.mapper.SupplierUserMapper;
 import com.scm.system.mapper.SysPostMapper;
 import com.scm.system.mapper.SysRoleMapper;
 import com.scm.system.mapper.SysUserMapper;
@@ -60,6 +66,12 @@ public class SysUserServiceImpl implements ISysUserService
 
     @Autowired
     private SysUserRoleMapper userRoleMapper;
+
+    @Autowired
+    private SupplierUserMapper supplierUserMapper;
+
+    @Autowired
+    private HospitalUserMapper hospitalUserMapper;
 
     @Autowired
     private ISysConfigService configService;
@@ -183,6 +195,8 @@ public class SysUserServiceImpl implements ISysUserService
         userRoleMapper.deleteUserRoleByUserId(userId);
         // 删除用户与岗位表
         userPostMapper.deleteUserPostByUserId(userId);
+        supplierUserMapper.deleteSupplierUserByUserId(userId);
+        hospitalUserMapper.deleteHospitalUserByUserId(userId);
         return userMapper.deleteUserById(userId);
     }
 
@@ -206,6 +220,11 @@ public class SysUserServiceImpl implements ISysUserService
         userRoleMapper.deleteUserRole(userIds);
         // 删除用户与岗位关联
         userPostMapper.deleteUserPost(userIds);
+        for (Long userId : userIds)
+        {
+            supplierUserMapper.deleteSupplierUserByUserId(userId);
+            hospitalUserMapper.deleteHospitalUserByUserId(userId);
+        }
         return userMapper.deleteUserByIds(userIds);
     }
 
@@ -219,12 +238,14 @@ public class SysUserServiceImpl implements ISysUserService
     @Transactional
     public int insertUser(SysUser user)
     {
+        checkSuperAdminRoleDept(user.getDeptId(), user.getRoleIds());
         // 新增用户信息
         int rows = userMapper.insertUser(user);
         // 新增用户岗位关联
         insertUserPost(user);
         // 新增用户与角色管理
         insertUserRole(user.getUserId(), user.getRoleIds());
+        syncMaintainSupplierHospital(user);
         return rows;
     }
 
@@ -251,6 +272,7 @@ public class SysUserServiceImpl implements ISysUserService
     @Transactional
     public int updateUser(SysUser user)
     {
+        checkSuperAdminRoleDept(user.getDeptId(), user.getRoleIds());
         Long userId = user.getUserId();
         // 删除用户与角色关联
         userRoleMapper.deleteUserRoleByUserId(userId);
@@ -260,7 +282,51 @@ public class SysUserServiceImpl implements ISysUserService
         userPostMapper.deleteUserPostByUserId(userId);
         // 新增用户与岗位管理
         insertUserPost(user);
-        return userMapper.updateUser(user);
+        int rows = userMapper.updateUser(user);
+        syncMaintainSupplierHospital(user);
+        return rows;
+    }
+
+    /**
+     * 用户维护：同步「维护供应商 / 维护医院」到 scm_supplier_user、scm_hospital_user（各保留一条主关联）
+     */
+    private void syncMaintainSupplierHospital(SysUser user)
+    {
+        Long userId = user.getUserId();
+        if (userId == null)
+        {
+            return;
+        }
+        String oper = StringUtils.isNotEmpty(user.getUpdateBy()) ? user.getUpdateBy() : user.getCreateBy();
+        if (StringUtils.isEmpty(oper))
+        {
+            oper = ShiroUtils.getLoginName();
+        }
+        Date now = new Date();
+        supplierUserMapper.deleteSupplierUserByUserId(userId);
+        if (user.getMaintainSupplierId() != null)
+        {
+            SupplierUser su = new SupplierUser();
+            su.setSupplierId(user.getMaintainSupplierId());
+            su.setUserId(userId);
+            su.setIsMain("1");
+            su.setStatus("0");
+            su.setCreateBy(oper);
+            su.setCreateTime(now);
+            supplierUserMapper.insertSupplierUser(su);
+        }
+        hospitalUserMapper.deleteHospitalUserByUserId(userId);
+        if (user.getMaintainHospitalId() != null)
+        {
+            HospitalUser hu = new HospitalUser();
+            hu.setHospitalId(user.getMaintainHospitalId());
+            hu.setUserId(userId);
+            hu.setIsMain("1");
+            hu.setStatus("0");
+            hu.setCreateBy(oper);
+            hu.setCreateTime(now);
+            hospitalUserMapper.insertHospitalUser(hu);
+        }
     }
 
     /**
@@ -285,6 +351,12 @@ public class SysUserServiceImpl implements ISysUserService
     @Transactional
     public void insertUserAuth(Long userId, Long[] roleIds)
     {
+        SysUser exist = userMapper.selectUserById(userId);
+        if (exist == null)
+        {
+            throw new ServiceException("用户不存在");
+        }
+        checkSuperAdminRoleDept(exist.getDeptId(), roleIds);
         userRoleMapper.deleteUserRoleByUserId(userId);
         insertUserRole(userId, roleIds);
     }
@@ -418,6 +490,45 @@ public class SysUserServiceImpl implements ISysUserService
         if (StringUtils.isNotNull(user.getUserId()) && user.isAdmin())
         {
             throw new ServiceException("不允许操作超级管理员用户");
+        }
+    }
+
+    /**
+     * 超级管理员角色仅允许挂在「一级部门」（parent_id = 0），避免选二级目录即具备全量权限的误配。
+     */
+    @Override
+    public void checkSuperAdminRoleDept(Long deptId, Long[] roleIds)
+    {
+        if (roleIds == null || roleIds.length == 0)
+        {
+            return;
+        }
+        boolean assignSuperAdmin = false;
+        for (Long roleId : roleIds)
+        {
+            if (roleId != null && SysRole.isAdmin(roleId))
+            {
+                assignSuperAdmin = true;
+                break;
+            }
+        }
+        if (!assignSuperAdmin)
+        {
+            return;
+        }
+        if (deptId == null)
+        {
+            throw new ServiceException("分配超级管理员角色前请先选择归属部门");
+        }
+        SysDept dept = deptService.selectDeptById(deptId);
+        if (dept == null)
+        {
+            throw new ServiceException("归属部门不存在，无法分配超级管理员角色");
+        }
+        Long parentId = dept.getParentId();
+        if (parentId == null || parentId.longValue() != 0L)
+        {
+            throw new ServiceException("超级管理员角色仅可归属一级组织（根部门，如「医承云配」），请更换归属部门或取消该角色");
         }
     }
 

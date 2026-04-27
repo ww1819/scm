@@ -21,6 +21,13 @@ public interface ISysDeptService
     public List<SysDept> selectDeptList(SysDept dept);
 
     /**
+     * 为部门列表填充树表末级标记（无直属子部门则为 true），用于懒加载分页
+     *
+     * @param depts 当前页或当前批次的部门
+     */
+    public void fillDeptTreeLeafFlag(List<SysDept> depts);
+
+    /**
      * 查询部门管理树
      * 
      * @param dept 部门信息
@@ -114,4 +121,14 @@ public interface ISysDeptService
      * @param deptId 部门id
      */
     public void checkDeptDataScope(Long deptId);
+
+    /**
+     * 平台根部门：优先名称为「医承云配」且 parent_id=0；不存在则取第一个根部门（用于超级管理员默认归属）
+     */
+    public SysDept selectPreferredRootDept();
+
+    /**
+     * 供应商注册页省市区下拉：不传或 parentId≤0 时取「医承云配」下直属部门作为省；否则取该父部门直属子部门（不应用数据权限）
+     */
+    public List<SysDept> listDeptChildrenForSupplierRegister(Long parentDeptId);
 }

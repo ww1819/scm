@@ -34,8 +34,21 @@
 			var url = prefix + "/deptTreeData";
 			var options = {
 		        url: url,
-		        expandLevel: 2,
-		        onClick : zOnClick
+		        expandLevel: 1,
+		        onClick : zOnClick,
+		        onExpand: function (event, treeId, treeNode) {
+		        	var treeObj = $.fn.zTree.getZTreeObj(treeId);
+		        	var parent = treeNode.getParentNode();
+		        	if (!parent || !parent.children) {
+		        		return;
+		        	}
+		        	for (var i = 0; i < parent.children.length; i++) {
+		        		var n = parent.children[i];
+		        		if (n !== treeNode && n.open) {
+		        			treeObj.expandNode(n, false, false, false);
+		        		}
+		        	}
+		        }
 		    };
 			$.tree.init(options);
 		});

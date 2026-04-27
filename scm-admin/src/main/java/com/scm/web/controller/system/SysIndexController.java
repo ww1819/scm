@@ -27,6 +27,7 @@ import com.scm.framework.shiro.service.SysPasswordService;
 import com.scm.system.service.IScmTenantMenuPauseService;
 import com.scm.system.service.ISysConfigService;
 import com.scm.system.service.ISysMenuService;
+import com.scm.system.service.ISysNoticeService;
 import java.util.Collections;
 
 /**
@@ -47,6 +48,9 @@ public class SysIndexController extends BaseController
 
     @Autowired
     private SysPasswordService passwordService;
+
+    @Autowired
+    private ISysNoticeService noticeService;
 
     // 系统首页
     @GetMapping("/index")
@@ -70,6 +74,8 @@ public class SysIndexController extends BaseController
         mmap.put("tagsView", tagsView);
         mmap.put("mainClass", contentMainClass(footer, tagsView));
         mmap.put("copyrightYear", ScmConfig.getCopyrightYear());
+        // 首页「版本信息」弹窗文案（与原底部版权一致；若需随配置变更可改为读取 scm.version 等）
+        mmap.put("appVersionLine", "©医承云配供应链云平台 V-3.21");
         mmap.put("demoEnabled", ScmConfig.isDemoEnabled());
         mmap.put("isDefaultModifyPwd", initPasswordIsModify(user.getPwdUpdateDate()));
         mmap.put("isPasswordExpired", passwordIsExpiration(user.getPwdUpdateDate()));
@@ -142,6 +148,7 @@ public class SysIndexController extends BaseController
     public String main(ModelMap mmap)
     {
         mmap.put("version", ScmConfig.getVersion());
+        mmap.put("dashboardNotices", noticeService.selectDashboardNotices());
         return "main";
     }
 
