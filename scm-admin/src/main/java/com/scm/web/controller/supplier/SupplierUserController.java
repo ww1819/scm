@@ -16,8 +16,10 @@ import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.domain.entity.SysUser;
 import com.scm.common.core.page.TableDataInfo;
+import com.scm.common.core.text.Convert;
 import com.scm.common.enums.BusinessType;
 import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.poi.ExcelUtil;
 import com.scm.system.domain.Supplier;
 import com.scm.system.domain.SupplierUser;
@@ -55,11 +57,12 @@ public class SupplierUserController extends BaseController
     /**
      * 查询供应商用户列表
      */
-    @RequiresPermissions("supplier:user:list")
+    @RequiresPermissions("supplier:user:view")
     @PostMapping("/list")
     @ResponseBody
     public TableDataInfo list(SupplierUser supplierUser)
     {
+        applyCurrentUserSupplierScope(supplierUser);
         startPage();
         List<SupplierUser> list = supplierUserService.selectSupplierUserList(supplierUser);
         return getDataTable(list);
@@ -74,6 +77,7 @@ public class SupplierUserController extends BaseController
     @ResponseBody
     public AjaxResult export(SupplierUser supplierUser)
     {
+        applyCurrentUserSupplierScope(supplierUser);
         List<SupplierUser> list = supplierUserService.selectSupplierUserList(supplierUser);
         ExcelUtil<SupplierUser> util = new ExcelUtil<SupplierUser>(SupplierUser.class);
         return util.exportExcel(list, "企业用户数据");
@@ -86,8 +90,14 @@ public class SupplierUserController extends BaseController
     @GetMapping("/add")
     public String add(ModelMap mmap)
     {
-        // 查询所有供应商列表供选择
-        List<Supplier> supplierList = supplierService.selectSupplierList(new Supplier());
+        // 供应商账号仅允许维护自身供应商用户
+        Supplier query = new Supplier();
+        Long currentSupplierId = getCurrentLoginSupplierId();
+        if (currentSupplierId != null)
+        {
+            query.setSupplierId(currentSupplierId);
+        }
+        List<Supplier> supplierList = supplierService.selectSupplierList(query);
         mmap.put("supplierList", supplierList);
         return prefix + "/user/add";
     }
@@ -101,6 +111,16 @@ public class SupplierUserController extends BaseController
     @ResponseBody
     public AjaxResult addSave(@Validated SupplierUser supplierUser)
     {
+        Long currentSupplierId = getCurrentLoginSupplierId();
+        if (currentSupplierId != null)
+        {
+            supplierUser.setSupplierId(currentSupplierId);
+        }
+        if (supplierUser.getSupplierId() == null)
+        {
+            return error("未识别到供应商信息，无法新增企业用户");
+        }
+
         // 检查该用户是否已经关联到其他供应商
         SupplierUser existUser = supplierUserService.selectSupplierUserByUserId(supplierUser.getUserId());
         if (existUser != null)
@@ -138,9 +158,19 @@ public class SupplierUserController extends BaseController
     public String edit(@PathVariable("supplierUserId") Long supplierUserId, ModelMap mmap)
     {
         SupplierUser supplierUser = supplierUserService.selectSupplierUserById(supplierUserId);
+        if (!canAccessSupplierUser(supplierUser))
+        {
+            return prefix + "/user";
+        }
         mmap.put("supplierUser", supplierUser);
-        // 查询所有供应商列表供选择
-        List<Supplier> supplierList = supplierService.selectSupplierList(new Supplier());
+        // 供应商账号仅允许维护自身供应商用户
+        Supplier query = new Supplier();
+        Long currentSupplierId = getCurrentLoginSupplierId();
+        if (currentSupplierId != null)
+        {
+            query.setSupplierId(currentSupplierId);
+        }
+        List<Supplier> supplierList = supplierService.selectSupplierList(query);
         mmap.put("supplierList", supplierList);
         return prefix + "/user/edit";
     }
@@ -154,6 +184,17 @@ public class SupplierUserController extends BaseController
     @ResponseBody
     public AjaxResult editSave(@Validated SupplierUser supplierUser)
     {
+        SupplierUser dbSupplierUser = supplierUserService.selectSupplierUserById(supplierUser.getSupplierUserId());
+        if (!canAccessSupplierUser(dbSupplierUser))
+        {
+            return error("无权限操作该企业用户");
+        }
+        Long currentSupplierId = getCurrentLoginSupplierId();
+        if (currentSupplierId != null)
+        {
+            supplierUser.setSupplierId(currentSupplierId);
+        }
+
         // 如果设置为主账号，需要检查该供应商是否已有其他主账号
         if ("1".equals(supplierUser.getIsMain()))
         {
@@ -181,6 +222,19 @@ public class SupplierUserController extends BaseController
     @ResponseBody
     public AjaxResult remove(String ids)
     {
+        Long currentSupplierId = getCurrentLoginSupplierId();
+        if (currentSupplierId != null && StringUtils.isNotEmpty(ids))
+        {
+            String[] idArray = Convert.toStrArray(ids);
+            for (String idStr : idArray)
+            {
+                SupplierUser dbSupplierUser = supplierUserService.selectSupplierUserById(Long.valueOf(idStr));
+                if (!canAccessSupplierUser(dbSupplierUser))
+                {
+                    return error("包含无权限删除的企业用户数据");
+                }
+            }
+        }
         return toAjax(supplierUserService.deleteSupplierUserByIds(ids));
     }
 
@@ -213,6 +267,54 @@ public class SupplierUserController extends BaseController
             list.removeIf(u -> u.getUserId().equals(su.getUserId()));
         }
         return getDataTable(list);
+    }
+
+    /**
+     * 将供应商用户查询范围收敛到当前登录账号所属供应商。
+     */
+    private void applyCurrentUserSupplierScope(SupplierUser supplierUser)
+    {
+        if (supplierUser == null)
+        {
+            return;
+        }
+        Long currentSupplierId = getCurrentLoginSupplierId();
+        if (currentSupplierId != null)
+        {
+            supplierUser.setSupplierId(currentSupplierId);
+        }
+    }
+
+    /**
+     * 获取当前登录用户所属供应商ID（优先主账号关系，兜底任意关联关系）。
+     */
+    private Long getCurrentLoginSupplierId()
+    {
+        Long userId = getUserId();
+        Long supplierId = supplierUserService.getManagedSupplierId(userId);
+        if (supplierId != null)
+        {
+            return supplierId;
+        }
+        SupplierUser supplierUser = supplierUserService.selectSupplierUserByUserId(userId);
+        return supplierUser != null ? supplierUser.getSupplierId() : null;
+    }
+
+    /**
+     * 校验当前登录账号是否可访问指定企业用户数据。
+     */
+    private boolean canAccessSupplierUser(SupplierUser supplierUser)
+    {
+        if (supplierUser == null)
+        {
+            return false;
+        }
+        Long currentSupplierId = getCurrentLoginSupplierId();
+        if (currentSupplierId == null)
+        {
+            return true;
+        }
+        return currentSupplierId.equals(supplierUser.getSupplierId());
     }
 }
 

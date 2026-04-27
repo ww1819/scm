@@ -42,14 +42,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                s.supplier_code as supplier_code,
                s.contact_person as contact_person,
                s.address as address,
-               (select h.hospital_code from scm_hospital_supplier hs 
-                left join scm_hospital h on hs.hospital_id = h.hospital_id 
-                where hs.supplier_id = s.supplier_id and hs.status = '0' 
-                limit 1) as hospital_code,
-               (select h.hospital_name from scm_hospital_supplier hs 
-                left join scm_hospital h on hs.hospital_id = h.hospital_id 
-                where hs.supplier_id = s.supplier_id and hs.status = '0' 
-                limit 1) as hospital_name
+               c.certificate_no as hospital_code,
+               c.certificate_type as hospital_name
         from scm_supplier_certificate c
         left join scm_supplier s on c.supplier_id = s.supplier_id and s.del_flag = '0'
     </sql>
@@ -63,6 +57,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </if>
             <if test="certificateType != null and certificateType != ''">
                 AND c.certificate_type like concat('%', #{certificateType}, '%')
+            </if>
+            <if test="hospitalName != null and hospitalName != ''">
+                AND EXISTS (
+                    SELECT 1
+                    FROM scm_hospital_supplier hs3
+                    LEFT JOIN scm_hospital h3 ON hs3.hospital_id = h3.hospital_id
+                    WHERE hs3.supplier_id = c.supplier_id
+                    AND hs3.status = '0'
+                    AND h3.hospital_name like concat('%', #{hospitalName}, '%')
+                )
+            </if>
+            <if test="hospitalCode != null and hospitalCode != ''">
+                AND c.certificate_no = #{hospitalCode}
             </if>
             <if test="supplierName != null and supplierName != ''">
                 AND s.company_name like concat('%', #{supplierName}, '%')
@@ -98,38 +105,30 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                s.supplier_code as supplier_code,
                s.contact_person as contact_person,
                s.address as address,
-               h.hospital_code as hospital_code,
-               h.hospital_name as hospital_name
+               c.certificate_no as hospital_code,
+               c.certificate_type as hospital_name
         from scm_supplier_certificate c
-        inner join (
-            SELECT MIN(c2.certificate_id) as certificate_id, c2.supplier_id
-            FROM scm_supplier_certificate c2
-            LEFT JOIN scm_hospital_supplier hs2 ON c2.supplier_id = hs2.supplier_id AND hs2.status = '0'
-            WHERE c2.status != '1'
+        left join scm_supplier s on c.supplier_id = s.supplier_id and s.del_flag = '0'
+        left join scm_hospital_supplier hs on c.supplier_id = hs.supplier_id and hs.status = '0'
+        <where>
+            c.status != '1'
             <if test="supplierIds != null and supplierIds.size() > 0">
-                AND c2.supplier_id IN
+                AND c.supplier_id IN
                 <foreach item="supplierId" collection="supplierIds" open="(" separator="," close=")">
                     #{supplierId}
                 </foreach>
             </if>
             <if test="hospitalId != null">
-                AND hs2.hospital_id = #{hospitalId}
-            </if>
-            <if test="supplierCertificate.auditStatus != null and supplierCertificate.auditStatus != ''">
-                AND c2.audit_status = #{supplierCertificate.auditStatus}
-            </if>
-            GROUP BY c2.supplier_id
-        ) c_unique ON c.certificate_id = c_unique.certificate_id
-        left join scm_supplier s on c.supplier_id = s.supplier_id and s.del_flag = '0'
-        left join scm_hospital_supplier hs on c.supplier_id = hs.supplier_id and hs.status = '0'
-        left join scm_hospital h on hs.hospital_id = h.hospital_id
-        <where>
-            c.status != '1'
-            <if test="hospitalId != null">
                 AND hs.hospital_id = #{hospitalId}
             </if>
             <if test="supplierCertificate.certificateType != null and supplierCertificate.certificateType != ''">
                 AND c.certificate_type like concat('%', #{supplierCertificate.certificateType}, '%')
+            </if>
+            <if test="supplierCertificate.hospitalName != null and supplierCertificate.hospitalName != ''">
+                AND c.certificate_type like concat('%', #{supplierCertificate.hospitalName}, '%')
+            </if>
+            <if test="supplierCertificate.hospitalCode != null and supplierCertificate.hospitalCode != ''">
+                AND c.certificate_no = #{supplierCertificate.hospitalCode}
             </if>
             <if test="supplierCertificate.supplierName != null and supplierCertificate.supplierName != ''">
                 AND s.company_name like concat('%', #{supplierCertificate.supplierName}, '%')
@@ -153,7 +152,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 AND c.is_warning = #{supplierCertificate.isWarning}
             </if>
         </where>
-        order by c.expire_date asc, c.create_time desc
+        order by c.create_time desc
     </select>
     
     <select id="selectExpiringCertificateList" parameterType="SupplierCertificate" resultMap="SupplierCertificateResult">

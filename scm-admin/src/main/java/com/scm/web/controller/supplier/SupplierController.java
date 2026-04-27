@@ -23,10 +23,12 @@ import com.scm.system.domain.Hospital;
 import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.Supplier;
 import com.scm.system.domain.SupplierCertificate;
+import com.scm.system.domain.SupplierUser;
 import com.scm.system.service.IHospitalService;
 import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.ISupplierService;
 import com.scm.system.service.ISupplierCertificateService;
+import com.scm.system.service.ISupplierUserService;
 
 /**
  * 供应商信息
@@ -51,6 +53,9 @@ public class SupplierController extends BaseController
     @Autowired
     private IHospitalService hospitalService;
 
+    @Autowired
+    private ISupplierUserService supplierUserService;
+
     @RequiresPermissions("supplier:supplier:view")
     @GetMapping()
     public String supplier()
@@ -61,11 +66,12 @@ public class SupplierController extends BaseController
     /**
      * 查询供应商信息列表
      */
-    @RequiresPermissions("supplier:supplier:list")
+    @RequiresPermissions("supplier:supplier:view")
     @PostMapping("/list")
     @ResponseBody
     public TableDataInfo list(Supplier supplier)
     {
+        applyCurrentUserSupplierScope(supplier);
         startPage();
         List<Supplier> list = supplierService.selectSupplierList(supplier);
         return getDataTable(list);
@@ -80,6 +86,7 @@ public class SupplierController extends BaseController
     @ResponseBody
     public AjaxResult export(Supplier supplier)
     {
+        applyCurrentUserSupplierScope(supplier);
         List<Supplier> list = supplierService.selectSupplierList(supplier);
         ExcelUtil<Supplier> util = new ExcelUtil<Supplier>(Supplier.class);
         return util.exportExcel(list, "供应商数据");
@@ -148,6 +155,7 @@ public class SupplierController extends BaseController
         try
         {
             Supplier supplier = new Supplier();
+            applyCurrentUserSupplierScope(supplier);
             // 不限制状态，获取所有供应商（包括正常和停用的）
             // 注意：这里不使用startPage()，直接获取所有数据
             List<Supplier> list = supplierService.selectSupplierList(supplier);
@@ -290,6 +298,22 @@ public class SupplierController extends BaseController
     {
         supplier.setUpdateBy(getLoginName());
         return toAjax(supplierService.updateSupplier(supplier));
+    }
+
+    /**
+     * 若当前登录账号关联了供应商，则自动收敛到该供应商数据范围，实现供应商侧隔离。
+     */
+    private void applyCurrentUserSupplierScope(Supplier supplier)
+    {
+        if (supplier == null)
+        {
+            return;
+        }
+        SupplierUser supplierUser = supplierUserService.selectSupplierUserByUserId(getUserId());
+        if (supplierUser != null && supplierUser.getSupplierId() != null)
+        {
+            supplier.setSupplierId(supplierUser.getSupplierId());
+        }
     }
 }
 

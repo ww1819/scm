@@ -287,7 +287,7 @@
 		var prefix = ctx + "certificate/supplier";
 		var hospitalPrefix = ctx + "hospital/hospital";
 		var selectedHospitalId = null; // 当前选中的医院ID
-		var selectedSupplierIds = []; // 当前选中的供应商ID列表
+		var selectedHospitalCode = null; // 当前选中的医院编码（用于资质记录筛选）
 
 		$(function() {
 		    // 先初始化医院列表（与supplier.html保持一致）
@@ -331,10 +331,9 @@
 		            if (auditStatusFilter !== '') {
 		                params.auditStatus = auditStatusFilter;
 		            }
-		            // 如果选中了医院，传递该医院绑定的供应商ID列表和医院ID
-		            if (selectedHospitalId && selectedSupplierIds && selectedSupplierIds.length > 0) {
-		                params.supplierIds = selectedSupplierIds.join(',');
-		                params.hospitalId = selectedHospitalId;
+		            // 如果选中了医院，按医院编码筛选资质记录
+		            if (selectedHospitalCode) {
+		                params.hospitalCode = selectedHospitalCode;
 		            }
 		            return params;
 		        },
@@ -728,42 +727,26 @@
 		    if (!hospitalId) {
 		        // 取消选择，显示所有待审核的证件
 		        selectedHospitalId = null;
-		        selectedSupplierIds = [];
+		        selectedHospitalCode = null;
 		        $('#bootstrap-table').bootstrapTable('refresh');
 		        return;
 		    }
 		    
 		    selectedHospitalId = hospitalId;
-		    
-		    // 获取该医院绑定的供应商ID列表
-		    $.ajax({
-		        url: hospitalPrefix + "/suppliers/" + hospitalId,
-		        type: "GET",
-		        dataType: "json",
-		        success: function(result) {
-		            if (result.code == 0) {
-		                selectedSupplierIds = result.data || [];
-		                
-		                if (selectedSupplierIds.length === 0) {
-		                    // 该医院没有绑定的供应商，清空表格
-		                    $('#bootstrap-table').bootstrapTable('load', []);
-		                    $.modal.msgWarning("该医院暂无绑定的供应商");
-		                } else {
-		                    // 刷新表格，后端会根据supplierIds参数查询
-		                    $('#bootstrap-table').bootstrapTable('refresh');
-		                }
-		                
-		                // 刷新医院列表以高亮选中的医院
-		                queryHospitalList();
-		            } else {
-		                $.modal.alertError(result.msg || "获取供应商列表失败");
-		            }
-		        },
-		        error: function(xhr, status, error) {
-		            console.error("获取供应商列表失败:", error);
-		            $.modal.alertError("获取供应商列表失败");
+		    // 从左侧医院表格数据中找到当前医院编码
+		    var hospitalData = $('#bootstrap-table-hospital').bootstrapTable('getData') || [];
+		    selectedHospitalCode = null;
+		    for (var i = 0; i < hospitalData.length; i++) {
+		        if (String(hospitalData[i].hospitalId) === String(hospitalId)) {
+		            selectedHospitalCode = hospitalData[i].hospitalCode || null;
+		            break;
 		        }
-		    });
+		    }
+		    
+		    // 刷新右侧列表，按医院编码过滤
+		    $('#bootstrap-table').bootstrapTable('refresh');
+		    // 刷新左侧高亮
+		    queryHospitalList();
 		}
 		
 		// 显示详情

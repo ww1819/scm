@@ -1,7 +1,9 @@
 package com.scm.web.controller.hospital;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -20,8 +22,10 @@ import com.scm.common.enums.BusinessType;
 import com.scm.common.utils.poi.ExcelUtil;
 import com.scm.system.domain.Hospital;
 import com.scm.system.domain.HospitalSupplier;
+import com.scm.system.domain.SupplierUser;
 import com.scm.system.service.IHospitalService;
 import com.scm.system.service.IHospitalSupplierService;
+import com.scm.system.service.ISupplierUserService;
 
 /**
  * 医院信息
@@ -40,6 +44,9 @@ public class HospitalController extends BaseController
     @Autowired
     private IHospitalSupplierService hospitalSupplierService;
 
+    @Autowired
+    private ISupplierUserService supplierUserService;
+
     @RequiresPermissions("hospital:hospital:view")
     @GetMapping()
     public String hospital()
@@ -50,13 +57,36 @@ public class HospitalController extends BaseController
     /**
      * 查询医院信息列表
      */
-    @RequiresPermissions("hospital:hospital:list")
+    @RequiresPermissions("hospital:hospital:view")
     @PostMapping("/list")
     @ResponseBody
     public TableDataInfo list(Hospital hospital)
     {
-        startPage();
-        List<Hospital> list = hospitalService.selectHospitalList(hospital);
+        Set<Long> permittedHospitalIds = getCurrentUserPermittedHospitalIds();
+        List<Hospital> list;
+        if (permittedHospitalIds != null)
+        {
+            if (permittedHospitalIds.isEmpty())
+            {
+                return getDataTable(new ArrayList<>());
+            }
+            if (permittedHospitalIds.size() == 1)
+            {
+                hospital.setHospitalId(permittedHospitalIds.iterator().next());
+                startPage();
+                list = hospitalService.selectHospitalList(hospital);
+            }
+            else
+            {
+                List<Hospital> rawList = hospitalService.selectHospitalList(hospital);
+                list = filterHospitalsByIds(rawList, permittedHospitalIds);
+            }
+        }
+        else
+        {
+            startPage();
+            list = hospitalService.selectHospitalList(hospital);
+        }
         return getDataTable(list);
     }
 
@@ -69,7 +99,28 @@ public class HospitalController extends BaseController
     @ResponseBody
     public AjaxResult export(Hospital hospital)
     {
-        List<Hospital> list = hospitalService.selectHospitalList(hospital);
+        Set<Long> permittedHospitalIds = getCurrentUserPermittedHospitalIds();
+        List<Hospital> list;
+        if (permittedHospitalIds != null)
+        {
+            if (permittedHospitalIds.isEmpty())
+            {
+                list = new ArrayList<>();
+            }
+            else if (permittedHospitalIds.size() == 1)
+            {
+                hospital.setHospitalId(permittedHospitalIds.iterator().next());
+                list = hospitalService.selectHospitalList(hospital);
+            }
+            else
+            {
+                list = filterHospitalsByIds(hospitalService.selectHospitalList(hospital), permittedHospitalIds);
+            }
+        }
+        else
+        {
+            list = hospitalService.selectHospitalList(hospital);
+        }
         ExcelUtil<Hospital> util = new ExcelUtil<Hospital>(Hospital.class);
         return util.exportExcel(list, "医院数据");
     }
@@ -181,6 +232,18 @@ public class HospitalController extends BaseController
             // 不限制状态，获取所有医院（包括正常和停用的）
             // 注意：这里不使用startPage()，直接获取所有数据
             List<Hospital> list = hospitalService.selectHospitalList(hospital);
+            Set<Long> permittedHospitalIds = getCurrentUserPermittedHospitalIds();
+            if (permittedHospitalIds != null)
+            {
+                if (permittedHospitalIds.isEmpty())
+                {
+                    list = new ArrayList<>();
+                }
+                else
+                {
+                    list = filterHospitalsByIds(list, permittedHospitalIds);
+                }
+            }
             
             // 为每个医院添加绑定的供应商数量
             if (list != null && !list.isEmpty())
@@ -316,6 +379,58 @@ public class HospitalController extends BaseController
         }
         
         return success(supplierIds);
+    }
+
+    /**
+     * 获取当前登录账号可见医院ID集合。
+     * 返回null表示不限制（例如平台/医院管理账号），返回空集合表示无医院权限。
+     */
+    private Set<Long> getCurrentUserPermittedHospitalIds()
+    {
+        Long userId = getUserId();
+        Long supplierId = supplierUserService.getManagedSupplierId(userId);
+        if (supplierId == null)
+        {
+            SupplierUser supplierUser = supplierUserService.selectSupplierUserByUserId(userId);
+            if (supplierUser != null)
+            {
+                supplierId = supplierUser.getSupplierId();
+            }
+        }
+        if (supplierId == null)
+        {
+            return null;
+        }
+        List<HospitalSupplier> relations = hospitalSupplierService.selectHospitalSupplierBySupplierId(supplierId);
+        Set<Long> hospitalIds = new HashSet<>();
+        if (relations != null)
+        {
+            for (HospitalSupplier relation : relations)
+            {
+                if (relation != null && relation.getHospitalId() != null && "0".equals(relation.getStatus()))
+                {
+                    hospitalIds.add(relation.getHospitalId());
+                }
+            }
+        }
+        return hospitalIds;
+    }
+
+    private List<Hospital> filterHospitalsByIds(List<Hospital> hospitals, Set<Long> permittedHospitalIds)
+    {
+        List<Hospital> result = new ArrayList<>();
+        if (hospitals == null || permittedHospitalIds == null || permittedHospitalIds.isEmpty())
+        {
+            return result;
+        }
+        for (Hospital hospital : hospitals)
+        {
+            if (hospital != null && hospital.getHospitalId() != null && permittedHospitalIds.contains(hospital.getHospitalId()))
+            {
+                result.add(hospital);
+            }
+        }
+        return result;
     }
 }
 

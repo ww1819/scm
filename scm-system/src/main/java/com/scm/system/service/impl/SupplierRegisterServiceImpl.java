@@ -74,10 +74,10 @@ public class SupplierRegisterServiceImpl implements ISupplierRegisterService {
         Long supplierId = supplier.getSupplierId();
 
         // 不再为每个注册供应商新建角色，直接绑定系统内已有「供应商」角色
-        SysRole supplierRole = roleMapper.selectGlobalRoleByKey(ROLE_KEY_SUPPLIER);
+        // 按“角色名称=供应商”优先绑定现有全局角色，避免因历史 role_key 差异/重复角色绑错
+        SysRole supplierRole = roleMapper.selectGlobalRoleByName("供应商");
         if (supplierRole == null) {
-            // 兼容现网中权限字符为 common 等历史数据，按角色名称兜底
-            supplierRole = roleMapper.selectGlobalRoleByName("供应商");
+            supplierRole = roleMapper.selectGlobalRoleByKey(ROLE_KEY_SUPPLIER);
         }
         if (supplierRole == null) {
             throw new IllegalArgumentException("系统未找到全局角色【供应商】，请在角色管理中创建或修正");

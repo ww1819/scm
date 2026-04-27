@@ -55,6 +55,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <include refid="selectSupplierVo"/>
         <where>
             del_flag = '0'
+            <if test="supplierId != null">
+                AND supplier_id = #{supplierId}
+            </if>
             <if test="supplierCode != null and supplierCode != ''">
                 AND supplier_code like concat('%', #{supplierCode}, '%')
             </if>

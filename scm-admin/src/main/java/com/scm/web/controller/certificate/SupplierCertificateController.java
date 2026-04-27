@@ -65,7 +65,7 @@ public class SupplierCertificateController extends BaseController
     /**
      * 查询供应商证件列表
      */
-    @RequiresPermissions("certificate:supplier:list")
+    @RequiresPermissions("certificate:supplier:view")
     @PostMapping("/list")
     @ResponseBody
     public TableDataInfo list(SupplierCertificate supplierCertificate, String supplierIds, Long hospitalId)
@@ -90,6 +90,13 @@ public class SupplierCertificateController extends BaseController
                     }
                 }
             }
+            // 医院筛选场景下，无论供应商数量多少都统一走按供应商ID列表+医院ID查询，
+            // 避免单供应商时遗漏hospitalId过滤导致结果不一致。
+            if (hospitalId != null && supplierIdList.size() > 0)
+            {
+                List<SupplierCertificate> list = supplierCertificateService.selectSupplierCertificateListBySupplierIds(supplierCertificate, supplierIdList, hospitalId);
+                return getDataTable(list);
+            }
             // 如果只有一个供应商ID，直接设置
             if (supplierIdList.size() == 1)
             {
@@ -97,7 +104,6 @@ public class SupplierCertificateController extends BaseController
             }
             else if (supplierIdList.size() > 1)
             {
-                // 多个供应商ID，需要在Service层处理，同时传递医院ID用于过滤
                 List<SupplierCertificate> list = supplierCertificateService.selectSupplierCertificateListBySupplierIds(supplierCertificate, supplierIdList, hospitalId);
                 return getDataTable(list);
             }

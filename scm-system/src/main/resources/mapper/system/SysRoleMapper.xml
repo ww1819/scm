@@ -115,7 +115,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		  and r.role_name = #{roleName}
 		  and (r.tenant_id is null or r.tenant_id = '')
 		  and (r.supplier_id is null or r.supplier_id = 0)
-		order by r.role_sort, r.role_id
+		order by r.role_id
 		limit 1
 	</select>
 	
