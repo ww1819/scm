@@ -44,12 +44,12 @@
         LIMIT 1
     </select>
 
-    <insert id="insert" parameterType="ScmHospitalSupplierPermission" useGeneratedKeys="true" keyProperty="id">
+    <insert id="insert" parameterType="ScmHospitalSupplierPermission">
         INSERT INTO scm_hospital_supplier_permission (
-            hospital_id, supplier_id, forbid_submit_flag, forbid_bind_flag, del_flag,
+            id, hospital_id, supplier_id, forbid_submit_flag, forbid_bind_flag, del_flag,
             create_by, create_time, update_by, update_time, remark
         ) VALUES (
-            #{hospitalId}, #{supplierId}, #{forbidSubmitFlag}, #{forbidBindFlag},
+            #{id}, #{hospitalId}, #{supplierId}, #{forbidSubmitFlag}, #{forbidBindFlag},
             #{delFlag},
             #{createBy}, #{createTime}, #{updateBy}, #{updateTime}, #{remark}
         )

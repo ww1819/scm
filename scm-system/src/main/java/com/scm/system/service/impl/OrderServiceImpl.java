@@ -22,6 +22,7 @@ import com.scm.system.mapper.OrderDetailMapper;
 import com.scm.system.mapper.OrderMapper;
 import com.scm.system.service.IOrderService;
 import com.scm.system.service.IScmHospitalContextService;
+import com.scm.system.service.IScmHospitalSupplierMenuScopeService;
 import com.scm.system.service.IScmHospitalSupplierPermissionService;
 import com.scm.system.service.IScmSupplierContextService;
 import com.scm.system.service.ScmBarcodeSeedService;
@@ -53,6 +54,8 @@ public class OrderServiceImpl implements IOrderService
     private IScmHospitalSupplierPermissionService hospitalSupplierPermissionService;
     @Autowired
     private IScmHospitalContextService scmHospitalContextService;
+    @Autowired
+    private IScmHospitalSupplierMenuScopeService scmHospitalSupplierMenuScopeService;
     @Autowired
     private HospitalSupplierMapper hospitalSupplierMapper;
 
@@ -104,6 +107,7 @@ public class OrderServiceImpl implements IOrderService
         {
             order.getParams().put("excludeHospitalIds", forbid);
         }
+        scmHospitalSupplierMenuScopeService.applyMenuPairScopeToParams(order.getParams(), ShiroUtils.getUserId());
     }
 
     private void assertSupplierHospitalSubmit(Order order)

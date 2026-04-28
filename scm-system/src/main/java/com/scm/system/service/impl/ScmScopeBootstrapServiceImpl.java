@@ -11,10 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.scm.common.constant.ScmAuthConstants;
+import com.scm.common.constant.ScmMenuConstants;
 import com.scm.common.core.domain.entity.SysMenu;
 import com.scm.common.core.domain.entity.SysRole;
 import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.uuid.IdUtils;
 import com.scm.system.domain.ScmHospitalMenuAuth;
 import com.scm.system.domain.ScmSupplierMenuAuth;
 import com.scm.system.domain.SysRoleMenu;
@@ -183,6 +185,7 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         for (Long menuId : menuIds)
         {
             ScmHospitalMenuAuth row = new ScmHospitalMenuAuth();
+            row.setId(IdUtils.simpleUuid7());
             row.setHospitalId(hospitalId);
             row.setMenuId(menuId);
             row.setCreateBy(operBy);
@@ -207,6 +210,7 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         for (Long menuId : menuIds)
         {
             ScmSupplierMenuAuth row = new ScmSupplierMenuAuth();
+            row.setId(IdUtils.simpleUuid7());
             row.setSupplierId(supplierId);
             row.setMenuId(menuId);
             row.setCreateBy(operBy);
@@ -246,7 +250,7 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
     }
 
     /**
-     * 指定 authType 下所有菜单（含祖先目录），仅 del_flag=0
+     * 指定主体侧（医院/供应商）建档时写入白名单的菜单种子（含祖先目录），受 auth_type、default_open_scope、hospital_grant_supplier_flag 约束。
      */
     private Set<Long> collectScopeMenuIdsWithAncestors(String authType)
     {
@@ -259,8 +263,20 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         Set<Long> seed = new HashSet<>();
         for (SysMenu m : all)
         {
-            String t = StringUtils.isEmpty(m.getAuthType()) ? ScmAuthConstants.AUTH_PLATFORM : m.getAuthType();
-            if (authType.equalsIgnoreCase(t))
+            if (m == null)
+            {
+                continue;
+            }
+            String df = StringUtils.trimToEmpty(m.getDelFlag());
+            if (StringUtils.isNotEmpty(df) && !"0".equals(df))
+            {
+                continue;
+            }
+            if (ScmAuthConstants.AUTH_HOSPITAL.equalsIgnoreCase(authType) && eligibleForHospitalMenuAuthSeed(m))
+            {
+                seed.add(m.getMenuId());
+            }
+            else if (ScmAuthConstants.AUTH_SUPPLIER.equalsIgnoreCase(authType) && eligibleForSupplierGlobalMenuAuthSeed(m))
             {
                 seed.add(m.getMenuId());
             }
@@ -271,6 +287,70 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
             addMenuChain(result, mid, byId);
         }
         return result;
+    }
+
+    private static String normalizedOpenScope(SysMenu m)
+    {
+        String s = StringUtils.trim(m.getDefaultOpenScope());
+        if (StringUtils.isEmpty(s))
+        {
+            return ScmMenuConstants.OPEN_SCOPE_ALL;
+        }
+        return s;
+    }
+
+    private static boolean scopeAllowsHospital(String scope)
+    {
+        return ScmMenuConstants.OPEN_SCOPE_ALL.equalsIgnoreCase(scope)
+            || ScmMenuConstants.OPEN_SCOPE_ALL_HOSPITAL.equalsIgnoreCase(scope);
+    }
+
+    private static boolean scopeAllowsSupplier(String scope)
+    {
+        return ScmMenuConstants.OPEN_SCOPE_ALL.equalsIgnoreCase(scope)
+            || ScmMenuConstants.OPEN_SCOPE_ALL_SUPPLIER.equalsIgnoreCase(scope);
+    }
+
+    private boolean eligibleForHospitalMenuAuthSeed(SysMenu m)
+    {
+        String scope = normalizedOpenScope(m);
+        if (ScmMenuConstants.OPEN_SCOPE_NONE.equalsIgnoreCase(scope))
+        {
+            return false;
+        }
+        if (!scopeAllowsHospital(scope))
+        {
+            return false;
+        }
+        String at = StringUtils.isEmpty(m.getAuthType()) ? ScmAuthConstants.AUTH_PLATFORM : m.getAuthType();
+        if (ScmAuthConstants.AUTH_HOSPITAL.equals(at))
+        {
+            return true;
+        }
+        return ScmAuthConstants.AUTH_HOSPITAL_SUPPLIER.equals(at);
+    }
+
+    private boolean eligibleForSupplierGlobalMenuAuthSeed(SysMenu m)
+    {
+        String scope = normalizedOpenScope(m);
+        if (ScmMenuConstants.OPEN_SCOPE_NONE.equalsIgnoreCase(scope))
+        {
+            return false;
+        }
+        if (!scopeAllowsSupplier(scope))
+        {
+            return false;
+        }
+        String at = StringUtils.isEmpty(m.getAuthType()) ? ScmAuthConstants.AUTH_PLATFORM : m.getAuthType();
+        if (ScmAuthConstants.AUTH_SUPPLIER.equals(at))
+        {
+            return true;
+        }
+        if (ScmAuthConstants.AUTH_HOSPITAL_SUPPLIER.equals(at))
+        {
+            return !"1".equals(StringUtils.trim(m.getHospitalGrantSupplierFlag()));
+        }
+        return false;
     }
 
     private void addMenuChain(Set<Long> acc, Long menuId, Map<Long, SysMenu> byId)

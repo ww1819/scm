@@ -961,6 +961,7 @@ CREATE TABLE IF NOT EXISTS `sys_menu` (
   `data_binding_flag` char(1) NOT NULL DEFAULT '0' COMMENT '废弃字段（历史兼容）',
   `default_open_scope` varchar(32) NOT NULL DEFAULT 'none' COMMENT '默认开放范围 none/all_hospital/all_supplier/all',
   `hospital_grant_supplier_flag` char(1) NOT NULL DEFAULT '0' COMMENT '是否需要由医院授予供应商 0否 1是',
+  `menu_biz_category` varchar(32) NOT NULL DEFAULT 'other' COMMENT '业务分类',
   PRIMARY KEY (`menu_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='菜单权限表';
 /
@@ -1047,9 +1048,9 @@ CREATE TABLE IF NOT EXISTS `sys_role_menu` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色和菜单关联表';
 /
 CREATE TABLE IF NOT EXISTS `scm_hospital_menu_auth` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
-  `hospital_id` bigint(20) NOT NULL COMMENT '医院ID',
-  `menu_id` bigint(20) NOT NULL COMMENT '已授权菜单ID',
+  `id` varchar(36) NOT NULL COMMENT '主键 UUID7 风格',
+  `hospital_id` varchar(36) NOT NULL COMMENT '医院ID（与主数据关联，存字符串）',
+  `menu_id` varchar(36) NOT NULL COMMENT '已授权菜单ID',
   `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   PRIMARY KEY (`id`),
@@ -1058,10 +1059,10 @@ CREATE TABLE IF NOT EXISTS `scm_hospital_menu_auth` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医院菜单授权白名单';
 /
 CREATE TABLE IF NOT EXISTS `scm_supplier_menu_auth` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
-  `supplier_id` bigint(20) NOT NULL COMMENT '供应商ID',
-  `hospital_id` bigint(20) DEFAULT NULL COMMENT '医院ID（仅医院授予供应商菜单时必填）',
-  `menu_id` bigint(20) NOT NULL COMMENT '已授权菜单ID',
+  `id` varchar(36) NOT NULL COMMENT '主键 UUID7 风格',
+  `supplier_id` varchar(36) NOT NULL COMMENT '供应商ID',
+  `hospital_id` varchar(36) DEFAULT NULL COMMENT '医院ID（仅医院授予供应商菜单时必填）',
+  `menu_id` varchar(36) NOT NULL COMMENT '已授权菜单ID',
   `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   PRIMARY KEY (`id`),
@@ -1070,9 +1071,9 @@ CREATE TABLE IF NOT EXISTS `scm_supplier_menu_auth` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='供应商菜单授权白名单';
 /
 CREATE TABLE IF NOT EXISTS `scm_hospital_supplier_permission` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
-  `hospital_id` bigint(20) NOT NULL COMMENT '医院ID',
-  `supplier_id` bigint(20) NOT NULL COMMENT '供应商ID',
+  `id` varchar(36) NOT NULL COMMENT '主键 UUID7 风格',
+  `hospital_id` varchar(36) NOT NULL COMMENT '医院ID',
+  `supplier_id` varchar(36) NOT NULL COMMENT '供应商ID',
   `forbid_submit_flag` char(1) NOT NULL DEFAULT '0' COMMENT '禁止向该院提交业务数据 0否 1是',
   `forbid_bind_flag` char(1) NOT NULL DEFAULT '0' COMMENT '禁止关联该院 0否 1是',
   `del_flag` char(1) NOT NULL DEFAULT '0' COMMENT '删除标志 0存在 2删除',

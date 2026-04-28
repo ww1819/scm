@@ -157,4 +157,9 @@ public interface ISysMenuService
      * @return 结果
      */
     public boolean checkMenuNameUnique(SysMenu menu);
+
+    /**
+     * 根据权限标识、路由、名称推断 SCM 菜单维度（不落库，供表单「智能推断」）
+     */
+    SysMenu previewInferScmMenuMetadata(String perms, String url, String menuName);
 }

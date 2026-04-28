@@ -151,6 +151,18 @@
                     }
 		        },
 		        {
+		            field: 'authType',
+		            title: 'SCM类型',
+		            width: '10',
+		            widthUnit: '%',
+		            align: "center",
+		            formatter: function(value, row, index) {
+		                var g = row.hospitalGrantSupplierFlag === '1' || row.hospitalGrantSupplierFlag === 1 ? '<span class="label label-danger" title="需按院授予">院授</span> ' : '';
+		                var v = $.common.isEmpty(value) ? '-' : value;
+		                return g + '<span class="label label-default">' + v + '</span>';
+		            }
+		        },
+		        {
 		            title: '操作',
 		            width: '20',
 		            widthUnit: '%',

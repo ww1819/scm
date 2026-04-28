@@ -11,7 +11,7 @@ public interface IScmHospitalSupplierPermissionService
 
     int saveOrUpdate(ScmHospitalSupplierPermission row, String operBy);
 
-    int removeLogical(Long id, String operBy);
+    int removeLogical(String id, String operBy);
 
     /** 当前供应商用户向指定医院提交业务数据前校验 */
     void assertSubmitAllowed(Long hospitalId, Long supplierId);

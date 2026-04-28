@@ -38,6 +38,7 @@ import com.scm.system.mapper.ZsTpOrderDetailDeliveryRelMapper;
 import com.scm.system.mapper.ZsTpOrderMapper;
 import com.scm.system.service.IDeliveryService;
 import com.scm.system.service.IScmHospitalContextService;
+import com.scm.system.service.IScmHospitalSupplierMenuScopeService;
 import com.scm.system.service.IScmHospitalSupplierPermissionService;
 import com.scm.system.service.IScmSupplierContextService;
 import com.scm.system.service.ScmBarcodeSeedService;
@@ -84,6 +85,8 @@ public class DeliveryServiceImpl implements IDeliveryService
 
     @Autowired
     private IScmHospitalSupplierPermissionService hospitalSupplierPermissionService;
+    @Autowired
+    private IScmHospitalSupplierMenuScopeService scmHospitalSupplierMenuScopeService;
     @Autowired
     private HospitalSupplierMapper hospitalSupplierMapper;
 
@@ -141,6 +144,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         {
             delivery.getParams().put("excludeHospitalIds", forbid);
         }
+        scmHospitalSupplierMenuScopeService.applyMenuPairScopeToParams(delivery.getParams(), ShiroUtils.getUserId());
     }
 
     private void assertSupplierHospitalSubmit(Delivery delivery)

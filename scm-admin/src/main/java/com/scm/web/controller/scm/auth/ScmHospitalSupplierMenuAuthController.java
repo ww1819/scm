@@ -25,6 +25,7 @@ import com.scm.common.core.domain.entity.SysMenu;
 import com.scm.common.enums.BusinessType;
 import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.uuid.IdUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.Hospital;
 import com.scm.system.domain.HospitalSupplier;
@@ -161,6 +162,7 @@ public class ScmHospitalSupplierMenuAuthController extends BaseController
             for (Long menuId : selected)
             {
                 ScmSupplierMenuAuth row = new ScmSupplierMenuAuth();
+                row.setId(IdUtils.simpleUuid7());
                 row.setSupplierId(supplierId);
                 row.setHospitalId(hospitalId);
                 row.setMenuId(menuId);

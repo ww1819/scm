@@ -281,38 +281,94 @@ INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, targ
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('28042', '医院供应商菜单保存', '2804', '2', '#', '', 'F', '0', '1', 'scmAuth:hospitalSupplierMenu:edit', '#', 'admin', sysdate(), '', null, '', '0');
 /
-UPDATE sys_menu SET auth_type = 'platform', data_binding_flag = '0' WHERE menu_id IN ('2800','2801','28011','28012','28013','2802','28021','28022','28023','2803','28031','28032','28033');
+-- ========== SCM 菜单维度：权限类型 / 院授予供应商 / 默认开放范围 / 业务分类 ==========
+CALL add_table_column('sys_menu', 'menu_biz_category', 'varchar(32)', '业务分类', 'other');
 /
-UPDATE sys_menu SET auth_type = 'hospital', hospital_grant_supplier_flag = '0' WHERE menu_id IN ('2804','28041','28042');
+UPDATE sys_menu SET data_binding_flag = '0' WHERE del_flag = '0' OR del_flag IS NULL;
 /
--- 菜单权限类型归类（可按实际再调优）
-UPDATE sys_menu SET auth_type = 'supplier' WHERE del_flag = '0' AND (perms LIKE 'supplier:%' OR url LIKE '/supplier%');
+-- 平台：系统、租户、接口、SCM 授权配置（不进入院/商白名单默认同步）
+UPDATE sys_menu SET auth_type = 'platform', hospital_grant_supplier_flag = '0', default_open_scope = 'none', menu_biz_category = 'scm_auth'
+WHERE del_flag = '0' AND (perms LIKE 'scmAuth:%' OR perms LIKE 'system:%');
 /
-UPDATE sys_menu SET auth_type = 'hospital' WHERE del_flag = '0' AND (perms LIKE 'hospital:%' OR url LIKE '/hospital%');
+UPDATE sys_menu SET auth_type = 'hospital', hospital_grant_supplier_flag = '0', default_open_scope = 'all_hospital', menu_biz_category = 'scm_auth'
+WHERE del_flag = '0' AND perms LIKE 'scmAuth:hospitalSupplierMenu%';
 /
-UPDATE sys_menu SET auth_type = 'supplier' WHERE del_flag = '0' AND menu_id IN ('2000','2300','2400','2500','2600');
+UPDATE sys_menu SET auth_type = 'platform', hospital_grant_supplier_flag = '0', default_open_scope = 'none', menu_biz_category = 'tenant'
+WHERE del_flag = '0' AND perms LIKE 'tenant:%';
 /
-UPDATE sys_menu SET auth_type = 'hospital' WHERE del_flag = '0' AND menu_id IN ('2100');
+UPDATE sys_menu SET auth_type = 'platform', hospital_grant_supplier_flag = '0', default_open_scope = 'none', menu_biz_category = 'integration'
+WHERE del_flag = '0' AND perms LIKE 'interface:%';
 /
-UPDATE sys_menu SET auth_type = 'supplier' WHERE del_flag = '0' AND (perms LIKE 'certificate:%' OR perms LIKE 'order:%' OR perms LIKE 'delivery:%' OR perms LIKE 'settlement:%' OR perms LIKE 'material:%' OR perms LIKE 'manufacturer:%');
+-- 主数据：仅平台维护
+UPDATE sys_menu SET auth_type = 'platform', hospital_grant_supplier_flag = '0', default_open_scope = 'none', menu_biz_category = 'master_data'
+WHERE del_flag = '0' AND perms LIKE 'material:%';
 /
-UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '1' WHERE del_flag = '0' AND (perms LIKE 'order:%' OR perms LIKE 'delivery:%' OR perms LIKE 'settlement:%');
+-- 供应商域
+UPDATE sys_menu SET auth_type = 'supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all_supplier', menu_biz_category = 'supplier_master'
+WHERE del_flag = '0' AND (perms LIKE 'supplier:%' OR url LIKE '/supplier%');
 /
-UPDATE sys_menu SET auth_type = 'platform' WHERE del_flag = '0' AND (auth_type IS NULL OR auth_type = '');
+UPDATE sys_menu SET auth_type = 'supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all_supplier', menu_biz_category = 'supplier_master'
+WHERE del_flag = '0' AND menu_id IN ('2000','2300');
 /
--- data_binding_flag 已废弃，不再参与权限判断
-UPDATE sys_menu SET data_binding_flag = '0' WHERE del_flag = '0';
+-- 医院域
+UPDATE sys_menu SET auth_type = 'hospital', hospital_grant_supplier_flag = '0', default_open_scope = 'all_hospital', menu_biz_category = 'hospital_master'
+WHERE del_flag = '0' AND (perms LIKE 'hospital:%' OR url LIKE '/hospital%');
 /
--- 历史环境：为已有医院/供应商用户补齐白名单（避免升级后侧栏为空）
-INSERT IGNORE INTO scm_supplier_menu_auth (supplier_id, menu_id, create_by, create_time)
-SELECT su.supplier_id, m.menu_id, 'migration', NOW()
+UPDATE sys_menu SET auth_type = 'hospital', hospital_grant_supplier_flag = '0', default_open_scope = 'all_hospital', menu_biz_category = 'hospital_master'
+WHERE del_flag = '0' AND menu_id = '2100';
+/
+-- 资质：登记侧供应商；审核侧院-商联合且需按院授予
+UPDATE sys_menu SET auth_type = 'supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all_supplier', menu_biz_category = 'certificate'
+WHERE del_flag = '0' AND perms LIKE 'certificate:%' AND perms NOT LIKE '%:audit%';
+/
+UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '1', default_open_scope = 'all_hospital', menu_biz_category = 'certificate'
+WHERE del_flag = '0' AND perms LIKE 'certificate:%' AND perms LIKE '%:audit%';
+/
+-- 采供协同：联合菜单，医院先授权菜单范围，再对供应商按院授予
+UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '1', default_open_scope = 'all_hospital', menu_biz_category = 'supply_chain'
+WHERE del_flag = '0' AND (perms LIKE 'order:%' OR perms LIKE 'delivery:%');
+/
+UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '1', default_open_scope = 'all_hospital', menu_biz_category = 'settlement'
+WHERE del_flag = '0' AND perms LIKE 'settlement:%';
+/
+-- 数据中心：院、商均可见，默认不按院授予（与 sys_menu 中 hospital_supplier 非 grant 分支一致）
+UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all', menu_biz_category = 'datacenter'
+WHERE del_flag = '0' AND perms LIKE 'datacenter:%';
+/
+UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all', menu_biz_category = 'datacenter'
+WHERE del_flag = '0' AND menu_id IN ('2700','2701','2702','2703');
+/
+-- 无 perms 的目录：按业务模块补维度（若 menu_id 与历史脚本冲突，可按 menu_name 再调）
+UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '1', default_open_scope = 'all_hospital', menu_biz_category = 'supply_chain'
+WHERE del_flag = '0' AND menu_id IN ('2400','2500');
+/
+UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '1', default_open_scope = 'all_hospital', menu_biz_category = 'settlement'
+WHERE del_flag = '0' AND menu_id = '2600';
+/
+UPDATE sys_menu SET auth_type = 'platform', hospital_grant_supplier_flag = '0', default_open_scope = 'none', menu_biz_category = 'platform_ops'
+WHERE del_flag = '0' AND menu_id IN ('2200','2910');
+/
+UPDATE sys_menu SET auth_type = 'platform', hospital_grant_supplier_flag = '0', default_open_scope = 'none', menu_biz_category = 'tenant'
+WHERE del_flag = '0' AND menu_name = '客户管理' AND parent_id = 0;
+/
+UPDATE sys_menu SET auth_type = 'platform', hospital_grant_supplier_flag = '0', default_open_scope = 'none', menu_biz_category = 'scm_auth'
+WHERE del_flag = '0' AND menu_name = '数据权限' AND parent_id = 0;
+/
+UPDATE sys_menu SET auth_type = 'platform', hospital_grant_supplier_flag = '0', default_open_scope = 'none', menu_biz_category = 'other'
+WHERE del_flag = '0' AND (auth_type IS NULL OR auth_type = '');
+/
+-- 历史环境：为已有医院/供应商用户补齐白名单（尊重 default_open_scope）
+INSERT IGNORE INTO scm_supplier_menu_auth (id, supplier_id, hospital_id, menu_id, create_by, create_time)
+SELECT REPLACE(UUID(), '-', ''), CAST(su.supplier_id AS CHAR), NULL, CAST(m.menu_id AS CHAR), 'migration', NOW()
 FROM scm_supplier_user su
 JOIN sys_menu m ON m.auth_type = 'supplier' AND (m.del_flag = '0' OR m.del_flag IS NULL)
+  AND m.default_open_scope IN ('all','all_supplier')
 WHERE (su.del_flag = '0' OR su.del_flag IS NULL);
 /
-INSERT IGNORE INTO scm_hospital_menu_auth (hospital_id, menu_id, create_by, create_time)
-SELECT hu.hospital_id, m.menu_id, 'migration', NOW()
+INSERT IGNORE INTO scm_hospital_menu_auth (id, hospital_id, menu_id, create_by, create_time)
+SELECT REPLACE(UUID(), '-', ''), CAST(hu.hospital_id AS CHAR), CAST(m.menu_id AS CHAR), 'migration', NOW()
 FROM scm_hospital_user hu
-JOIN sys_menu m ON m.auth_type = 'hospital' AND (m.del_flag = '0' OR m.del_flag IS NULL)
+JOIN sys_menu m ON (m.auth_type = 'hospital' OR m.auth_type = 'hospital_supplier') AND (m.del_flag = '0' OR m.del_flag IS NULL)
+  AND m.default_open_scope IN ('all','all_hospital')
 WHERE (hu.del_flag = '0' OR hu.del_flag IS NULL);
 /

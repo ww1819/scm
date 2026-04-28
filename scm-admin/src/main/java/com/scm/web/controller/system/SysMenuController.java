@@ -175,6 +175,20 @@ public class SysMenuController extends BaseController
     }
 
     /**
+     * 根据权限串、URL、菜单名称推断 SCM 权限维度（不落库）
+     */
+    @RequiresPermissions("system:menu:list")
+    @GetMapping("/inferScmMetadata")
+    @ResponseBody
+    public AjaxResult inferScmMetadata(@RequestParam(value = "perms", required = false) String perms,
+        @RequestParam(value = "url", required = false) String url,
+        @RequestParam(value = "menuName", required = false) String menuName)
+    {
+        SysMenu m = menuService.previewInferScmMenuMetadata(perms, url, menuName);
+        return AjaxResult.success(m);
+    }
+
+    /**
      * 加载角色菜单列表树
      */
     @GetMapping("/roleMenuTreeData")

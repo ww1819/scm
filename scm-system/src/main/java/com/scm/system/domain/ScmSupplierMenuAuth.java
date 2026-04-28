@@ -9,17 +9,18 @@ public class ScmSupplierMenuAuth extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
 
-    private Long id;
+    /** 主键（UUID7 风格，varchar(36)） */
+    private String id;
     private Long supplierId;
     private Long hospitalId;
     private Long menuId;
 
-    public Long getId()
+    public String getId()
     {
         return id;
     }
 
-    public void setId(Long id)
+    public void setId(String id)
     {
         this.id = id;
     }

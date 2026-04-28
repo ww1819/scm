@@ -15,7 +15,7 @@ public interface ScmHospitalSupplierPermissionMapper
 
     int update(ScmHospitalSupplierPermission row);
 
-    int logicalDeleteById(@Param("id") Long id, @Param("updateBy") String updateBy);
+    int logicalDeleteById(@Param("id") String id, @Param("updateBy") String updateBy);
 
     List<Long> selectForbidSubmitHospitalIds(@Param("supplierId") Long supplierId);
 }

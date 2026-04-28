@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.uuid.IdUtils;
 import com.scm.system.domain.ScmHospitalSupplierPermission;
 import com.scm.system.mapper.ScmHospitalSupplierPermissionMapper;
 import com.scm.system.service.IScmHospitalSupplierPermissionService;
@@ -59,6 +60,7 @@ public class ScmHospitalSupplierPermissionServiceImpl implements IScmHospitalSup
         }
         if (exist == null)
         {
+            row.setId(IdUtils.simpleUuid7());
             row.setCreateBy(operBy);
             row.setCreateTime(DateUtils.getNowDate());
             return permissionMapper.insert(row);
@@ -68,7 +70,7 @@ public class ScmHospitalSupplierPermissionServiceImpl implements IScmHospitalSup
     }
 
     @Override
-    public int removeLogical(Long id, String operBy)
+    public int removeLogical(String id, String operBy)
     {
         return permissionMapper.logicalDeleteById(id, operBy);
     }

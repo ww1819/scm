@@ -58,7 +58,7 @@ public class ScmHospitalSupplierPermissionController extends BaseController
     @Log(title = "医院供应商数据权限", businessType = BusinessType.DELETE)
     @PostMapping("/remove")
     @ResponseBody
-    public AjaxResult remove(Long id)
+    public AjaxResult remove(String id)
     {
         return toAjax(permissionService.removeLogical(id, getLoginName()));
     }

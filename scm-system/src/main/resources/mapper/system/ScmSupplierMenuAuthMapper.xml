@@ -11,10 +11,10 @@
     </delete>
 
     <insert id="batchInsert">
-        INSERT INTO scm_supplier_menu_auth (supplier_id, hospital_id, menu_id, create_by, create_time)
+        INSERT INTO scm_supplier_menu_auth (id, supplier_id, hospital_id, menu_id, create_by, create_time)
         VALUES
         <foreach collection="list" item="item" separator=",">
-            (#{item.supplierId}, #{item.hospitalId}, #{item.menuId}, #{item.createBy}, #{item.createTime})
+            (#{item.id}, #{item.supplierId}, #{item.hospitalId}, #{item.menuId}, #{item.createBy}, #{item.createTime})
         </foreach>
     </insert>
 

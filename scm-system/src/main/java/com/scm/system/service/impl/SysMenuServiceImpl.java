@@ -20,6 +20,7 @@ import com.scm.common.core.domain.entity.SysUser;
 import com.scm.common.core.text.Convert;
 import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.scm.ScmMenuMetadataInferer;
 import com.scm.system.mapper.SysMenuMapper;
 import com.scm.system.mapper.SysRoleMenuMapper;
 import com.scm.system.service.ISysMenuService;
@@ -334,6 +335,7 @@ public class SysMenuServiceImpl implements ISysMenuService
     @Override
     public int insertMenu(SysMenu menu)
     {
+        ScmMenuMetadataInferer.applyInference(menu, true);
         return menuMapper.insertMenu(menu);
     }
 
@@ -346,7 +348,19 @@ public class SysMenuServiceImpl implements ISysMenuService
     @Override
     public int updateMenu(SysMenu menu)
     {
+        ScmMenuMetadataInferer.applyInference(menu, true);
         return menuMapper.updateMenu(menu);
+    }
+
+    @Override
+    public SysMenu previewInferScmMenuMetadata(String perms, String url, String menuName)
+    {
+        SysMenu m = new SysMenu();
+        m.setPerms(perms);
+        m.setUrl(url);
+        m.setMenuName(menuName);
+        ScmMenuMetadataInferer.applyInference(m, false);
+        return m;
     }
 
     /**

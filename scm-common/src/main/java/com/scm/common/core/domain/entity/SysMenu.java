@@ -62,6 +62,13 @@ public class SysMenu extends BaseEntity
     /** 是否需医院授予供应商后才可见 0否 1是 */
     private String hospitalGrantSupplierFlag;
 
+    /**
+     * 业务分类（与 ScmMenuConstants.BIZ_* 一致，用于统计与授权策略）
+     * platform_ops / scm_auth / tenant / supplier_master / hospital_master / master_data /
+     * certificate / supply_chain / settlement / datacenter / integration / other
+     */
+    private String menuBizCategory;
+
     public Long getMenuId()
     {
         return menuId;
@@ -228,6 +235,16 @@ public class SysMenu extends BaseEntity
         this.hospitalGrantSupplierFlag = hospitalGrantSupplierFlag;
     }
 
+    public String getMenuBizCategory()
+    {
+        return menuBizCategory;
+    }
+
+    public void setMenuBizCategory(String menuBizCategory)
+    {
+        this.menuBizCategory = menuBizCategory;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
@@ -249,6 +266,7 @@ public class SysMenu extends BaseEntity
             .append("authType", getAuthType())
             .append("defaultOpenScope", getDefaultOpenScope())
             .append("hospitalGrantSupplierFlag", getHospitalGrantSupplierFlag())
+            .append("menuBizCategory", getMenuBizCategory())
             .toString();
     }
 }
