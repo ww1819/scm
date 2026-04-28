@@ -41,6 +41,9 @@
                 <a class="btn btn-default" id="expandAllBtn">
                     <i class="fa fa-exchange"></i> 展开/折叠
                 </a>
+                <a class="btn btn-default" onclick="openChangeLogToolbar()" shiro:hasPermission="system:menu:list">
+                    <i class="fa fa-history"></i> 变更记录
+                </a>
 	        </div>
        		 <div class="col-sm-12 select-table table-striped">
 	            <table id="bootstrap-tree-table"></table>
@@ -53,6 +56,7 @@
 		var addFlag = [[${@permission.hasPermi('system:menu:add')}]];
 		var editFlag = [[${@permission.hasPermi('system:menu:edit')}]];
 		var removeFlag = [[${@permission.hasPermi('system:menu:remove')}]];
+		var listFlag = [[${@permission.hasPermi('system:menu:list')}]];
 		var datas = [[${@dict.getType('sys_show_hide')}]];
 		var prefix = ctx + "system/menu";
 		var originalOrders = {};
@@ -153,13 +157,17 @@
 		        {
 		            field: 'authType',
 		            title: 'SCM类型',
-		            width: '10',
+		            width: '12',
 		            widthUnit: '%',
 		            align: "center",
 		            formatter: function(value, row, index) {
-		                var g = row.hospitalGrantSupplierFlag === '1' || row.hospitalGrantSupplierFlag === 1 ? '<span class="label label-danger" title="需按院授予">院授</span> ' : '';
-		                var v = $.common.isEmpty(value) ? '-' : value;
-		                return g + '<span class="label label-default">' + v + '</span>';
+		                var grant = row.hospitalGrantSupplierFlag === '1' || row.hospitalGrantSupplierFlag === 1 ? '<span class="label label-danger" title="需由医院按院授予供应商">院授</span> ' : '';
+		                var authMap = { platform: '平台', hospital: '医院', supplier: '供应商', hospital_supplier: '医院+供应商' };
+		                var bizMap = { other: '其他', platform_ops: '平台运维', scm_auth: '授权与数据权限', tenant: '客户租户', supplier_master: '供应商主数据', hospital_master: '医院主数据', master_data: '基础主数据', certificate: '资质证件', supply_chain: '订单配送', settlement: '结算', datacenter: '数据中心', integration: '接口对接' };
+		                var acn = authMap[value] || ($.common.isEmpty(value) ? '-' : value);
+		                var biz = row.menuBizCategory || '';
+		                var bizCn = bizMap[biz] || biz || '-';
+		                return grant + '<div><span class="label label-primary">' + acn + '</span></div><div class="text-muted" style="font-size:11px;margin-top:3px;">' + bizCn + '</div>';
 		            }
 		        },
 		        {
@@ -171,6 +179,7 @@
 		                var actions = [];
 		                actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.operate.edit(\'' + row.menuId + '\')"><i class="fa fa-edit"></i>编辑</a> ');
 		                actions.push('<a class="btn btn-info btn-xs ' + addFlag + '" href="javascript:void(0)" onclick="$.operate.add(\'' + row.menuId + '\')"><i class="fa fa-plus"></i>新增</a> ');
+		                actions.push('<a class="btn btn-default btn-xs ' + listFlag + '" href="javascript:void(0)" onclick="openMenuChangeLog(\'' + row.menuId + '\')"><i class="fa fa-history"></i>变更</a> ');
 		                actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.menuId + '\')"><i class="fa fa-trash"></i>删除</a>');
 		                return actions.join('');
 		            }
@@ -178,6 +187,21 @@
 		    };
 		    $.treeTable.init(options);
 		});
+
+		function openMenuChangeLog(menuId) {
+			var url = prefix + "/changeLog/" + menuId;
+			var options = { title: "菜单变更记录与历史状态", width: "960", height: "560", url: url };
+			$.modal.openOptions(options);
+		}
+
+		function openChangeLogToolbar() {
+			var rows = $.bttTable.bootstrapTreeTable("getSelections");
+			if (!rows || rows.length === 0) {
+				$.modal.alertWarning("请先选择一条菜单");
+				return;
+			}
+			openMenuChangeLog(rows[0].menuId);
+		}
 
 		/* 保存排序-菜单 */
 		function saveSort() {

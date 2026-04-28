@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Set;
 import com.scm.common.core.domain.Ztree;
 import com.scm.common.core.domain.entity.SysMenu;
+import com.scm.common.core.domain.entity.SysMenuChangeLog;
 import com.scm.common.core.domain.entity.SysRole;
 import com.scm.common.core.domain.entity.SysUser;
 
@@ -162,4 +163,11 @@ public interface ISysMenuService
      * 根据权限标识、路由、名称推断 SCM 菜单维度（不落库，供表单「智能推断」）
      */
     SysMenu previewInferScmMenuMetadata(String perms, String url, String menuName);
+
+    /**
+     * 菜单变更记录（按操作时间升序，便于前端计算生效时段）
+     */
+    List<SysMenuChangeLog> selectMenuChangeLogList(Long menuId);
+
+    SysMenuChangeLog selectMenuChangeLogById(Long logId);
 }

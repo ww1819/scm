@@ -63,10 +63,10 @@
 						<div class="col-sm-6 m-b-sm">
 							<label class="control-label">权限类型</label>
 							<select name="authType" id="authType" class="form-control" th:field="*{authType}">
-								<option value="platform">platform 平台</option>
-								<option value="hospital">hospital 医院</option>
-								<option value="supplier">supplier 供应商</option>
-								<option value="hospital_supplier">hospital_supplier 医院+供应商</option>
+								<option value="platform">平台（platform）</option>
+								<option value="hospital">医院（hospital）</option>
+								<option value="supplier">供应商（supplier）</option>
+								<option value="hospital_supplier">医院+供应商（hospital_supplier）</option>
 							</select>
 						</div>
 						<div class="col-sm-6 m-b-sm" id="grantFlagWrap">
@@ -81,27 +81,27 @@
 						<div class="col-sm-6 m-b-sm">
 							<label class="control-label">默认开放范围</label>
 							<select name="defaultOpenScope" id="defaultOpenScope" class="form-control" th:field="*{defaultOpenScope}">
-								<option value="none">none 不同步到院/商白名单</option>
-								<option value="all_hospital">all_hospital 新建医院默认进医院菜单白名单</option>
-								<option value="all_supplier">all_supplier 新建供应商默认进供应商菜单白名单</option>
-								<option value="all">all 院、商建档均默认同步</option>
+								<option value="none">不同步到院/商白名单（none）</option>
+								<option value="all_hospital">新建医院默认进医院菜单白名单（all_hospital）</option>
+								<option value="all_supplier">新建供应商默认进供应商菜单白名单（all_supplier）</option>
+								<option value="all">院、商建档均默认同步（all）</option>
 							</select>
 						</div>
 						<div class="col-sm-6 m-b-sm">
 							<label class="control-label">业务分类</label>
 							<select name="menuBizCategory" id="menuBizCategory" class="form-control" th:field="*{menuBizCategory}">
-								<option value="other">other</option>
-								<option value="platform_ops">platform_ops 平台运维</option>
-								<option value="scm_auth">scm_auth 授权与数据权限</option>
-								<option value="tenant">tenant 客户租户</option>
-								<option value="supplier_master">supplier_master 供应商主数据</option>
-								<option value="hospital_master">hospital_master 医院主数据</option>
-								<option value="master_data">master_data 基础主数据</option>
-								<option value="certificate">certificate 资质证件</option>
-								<option value="supply_chain">supply_chain 订单配送</option>
-								<option value="settlement">settlement 结算</option>
-								<option value="datacenter">datacenter 数据中心</option>
-								<option value="integration">integration 接口对接</option>
+								<option value="other">其他（other）</option>
+								<option value="platform_ops">平台运维（platform_ops）</option>
+								<option value="scm_auth">授权与数据权限（scm_auth）</option>
+								<option value="tenant">客户租户（tenant）</option>
+								<option value="supplier_master">供应商主数据（supplier_master）</option>
+								<option value="hospital_master">医院主数据（hospital_master）</option>
+								<option value="master_data">基础主数据（master_data）</option>
+								<option value="certificate">资质证件（certificate）</option>
+								<option value="supply_chain">订单配送（supply_chain）</option>
+								<option value="settlement">结算（settlement）</option>
+								<option value="datacenter">数据中心（datacenter）</option>
+								<option value="integration">接口对接（integration）</option>
 							</select>
 						</div>
 					</div>

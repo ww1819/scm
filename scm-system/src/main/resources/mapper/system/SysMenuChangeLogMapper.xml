@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.SysMenuChangeLogMapper">
+
+	<resultMap type="com.scm.common.core.domain.entity.SysMenuChangeLog" id="SysMenuChangeLogResult">
+		<id property="logId" column="log_id"/>
+		<result property="menuId" column="menu_id"/>
+		<result property="changeType" column="change_type"/>
+		<result property="operBy" column="oper_by"/>
+		<result property="operTime" column="oper_time"/>
+		<result property="menuSnapshot" column="menu_snapshot"/>
+	</resultMap>
+
+	<insert id="insertSysMenuChangeLog" parameterType="com.scm.common.core.domain.entity.SysMenuChangeLog">
+		insert into sys_menu_change_log (menu_id, change_type, oper_by, oper_time, menu_snapshot)
+		values (#{menuId}, #{changeType}, #{operBy}, sysdate(), #{menuSnapshot})
+	</insert>
+
+	<select id="selectByMenuIdOrderAsc" resultMap="SysMenuChangeLogResult">
+		select log_id, menu_id, change_type, oper_by, oper_time, menu_snapshot
+		from sys_menu_change_log
+		where menu_id = #{menuId}
+		order by oper_time asc, log_id asc
+	</select>
+
+	<select id="selectByLogId" resultMap="SysMenuChangeLogResult">
+		select log_id, menu_id, change_type, oper_by, oper_time, menu_snapshot
+		from sys_menu_change_log
+		where log_id = #{logId}
+		limit 1
+	</select>
+</mapper>

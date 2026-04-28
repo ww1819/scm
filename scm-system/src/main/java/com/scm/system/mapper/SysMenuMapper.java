@@ -82,6 +82,11 @@ public interface SysMenuMapper
     public List<SysMenu> selectMenuListByUserId(SysMenu menu);
 
     /**
+     * 软删除前待删除子树中的菜单 ID（含自身），del_flag=0
+     */
+    public List<Long> selectMenuIdsInSoftDeleteSubtree(Long menuId);
+
+    /**
      * 删除菜单管理信息
      * 
      * @param menuId 菜单ID

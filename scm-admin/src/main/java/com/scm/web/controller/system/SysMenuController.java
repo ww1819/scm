@@ -17,6 +17,7 @@ import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.domain.Ztree;
 import com.scm.common.core.domain.entity.SysMenu;
+import com.scm.common.core.domain.entity.SysMenuChangeLog;
 import com.scm.common.core.domain.entity.SysRole;
 import com.scm.common.enums.BusinessType;
 import com.scm.common.utils.ShiroUtils;
@@ -172,6 +173,41 @@ public class SysMenuController extends BaseController
     public boolean checkMenuNameUnique(SysMenu menu)
     {
         return menuService.checkMenuNameUnique(menu);
+    }
+
+    /**
+     * 菜单变更记录页（弹层内嵌）
+     */
+    @RequiresPermissions("system:menu:list")
+    @GetMapping("/changeLog/{menuId}")
+    public String changeLog(@PathVariable("menuId") Long menuId, ModelMap mmap)
+    {
+        mmap.put("menuId", menuId);
+        return prefix + "/change_log";
+    }
+
+    /**
+     * 菜单变更记录数据
+     */
+    @RequiresPermissions("system:menu:list")
+    @GetMapping("/changeLogData/{menuId}")
+    @ResponseBody
+    public AjaxResult changeLogData(@PathVariable("menuId") Long menuId)
+    {
+        List<SysMenuChangeLog> list = menuService.selectMenuChangeLogList(menuId);
+        return AjaxResult.success(list);
+    }
+
+    /**
+     * 单条变更记录（含快照 JSON）
+     */
+    @RequiresPermissions("system:menu:list")
+    @GetMapping("/changeLogRow/{logId}")
+    @ResponseBody
+    public AjaxResult changeLogRow(@PathVariable("logId") Long logId)
+    {
+        SysMenuChangeLog row = menuService.selectMenuChangeLogById(logId);
+        return AjaxResult.success(row);
     }
 
     /**

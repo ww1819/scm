@@ -250,6 +250,15 @@
 		where m.visible = '0' and m.del_flag = '0' and rm.role_id = #{roleId}
 	</select>
 
+	<select id="selectMenuIdsInSoftDeleteSubtree" parameterType="Long" resultType="long">
+		WITH RECURSIVE menu_tree AS (
+			SELECT menu_id FROM sys_menu WHERE menu_id = #{menuId} AND del_flag = '0'
+			UNION ALL
+			SELECT c.menu_id FROM sys_menu c INNER JOIN menu_tree t ON c.parent_id = t.menu_id WHERE c.del_flag = '0'
+		)
+		SELECT menu_id FROM menu_tree
+	</select>
+
 	<select id="selectMenuTree" parameterType="Long" resultType="String">
 		select distinct concat(m.menu_id, ifnull(m.perms,'')) as perms
 		from sys_menu m
@@ -354,7 +363,7 @@
 		where menu_id = #{menuId}
 	</update>
 
-	<insert id="insertMenu" parameterType="SysMenu">
+	<insert id="insertMenu" parameterType="SysMenu" useGeneratedKeys="true" keyProperty="menuId" keyColumn="menu_id">
 		insert into sys_menu(
 		<if test="menuId != null and menuId != 0">menu_id,</if>
 		<if test="parentId != null and parentId != 0">parent_id,</if>

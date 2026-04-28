@@ -9,18 +9,23 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import com.alibaba.fastjson.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.scm.common.constant.UserConstants;
 import com.scm.common.core.domain.Ztree;
 import com.scm.common.core.domain.entity.SysMenu;
+import com.scm.common.core.domain.entity.SysMenuChangeLog;
 import com.scm.common.core.domain.entity.SysRole;
 import com.scm.common.core.domain.entity.SysUser;
 import com.scm.common.core.text.Convert;
 import com.scm.common.exception.ServiceException;
+import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.scm.ScmMenuMetadataInferer;
+import com.scm.common.utils.scm.ScmMenuSnapshotHelper;
+import com.scm.system.mapper.SysMenuChangeLogMapper;
 import com.scm.system.mapper.SysMenuMapper;
 import com.scm.system.mapper.SysRoleMenuMapper;
 import com.scm.system.service.ISysMenuService;
@@ -40,6 +45,9 @@ public class SysMenuServiceImpl implements ISysMenuService
 
     @Autowired
     private SysRoleMenuMapper roleMenuMapper;
+
+    @Autowired
+    private SysMenuChangeLogMapper menuChangeLogMapper;
 
     /**
      * 根据用户查询菜单
@@ -287,6 +295,22 @@ public class SysMenuServiceImpl implements ISysMenuService
     @Override
     public int deleteMenuById(Long menuId)
     {
+        List<Long> ids = menuMapper.selectMenuIdsInSoftDeleteSubtree(menuId);
+        if (ids == null || ids.isEmpty())
+        {
+            return 0;
+        }
+        String oper = currentOperName();
+        for (Long id : ids)
+        {
+            SysMenu snap = menuMapper.selectMenuById(id);
+            if (snap != null)
+            {
+                JSONObject o = new JSONObject();
+                o.put("before", ScmMenuSnapshotHelper.toSnapshot(snap));
+                insertMenuChangeLog(id, "D", oper, o.toJSONString());
+            }
+        }
         return menuMapper.deleteMenuById(menuId);
     }
 
@@ -336,7 +360,16 @@ public class SysMenuServiceImpl implements ISysMenuService
     public int insertMenu(SysMenu menu)
     {
         ScmMenuMetadataInferer.applyInference(menu, true);
-        return menuMapper.insertMenu(menu);
+        int rows = menuMapper.insertMenu(menu);
+        if (rows > 0 && menu.getMenuId() != null)
+        {
+            SysMenu loaded = menuMapper.selectMenuById(menu.getMenuId());
+            if (loaded != null)
+            {
+                insertMenuChangeLog(loaded.getMenuId(), "I", nz(menu.getCreateBy()), jsonAfterOnly(loaded));
+            }
+        }
+        return rows;
     }
 
     /**
@@ -348,8 +381,18 @@ public class SysMenuServiceImpl implements ISysMenuService
     @Override
     public int updateMenu(SysMenu menu)
     {
+        SysMenu before = menu.getMenuId() != null ? menuMapper.selectMenuById(menu.getMenuId()) : null;
         ScmMenuMetadataInferer.applyInference(menu, true);
-        return menuMapper.updateMenu(menu);
+        int rows = menuMapper.updateMenu(menu);
+        if (rows > 0 && before != null)
+        {
+            SysMenu after = menuMapper.selectMenuById(menu.getMenuId());
+            if (after != null)
+            {
+                insertMenuChangeLog(after.getMenuId(), "U", nz(menu.getUpdateBy()), jsonBeforeAfter(before, after));
+            }
+        }
+        return rows;
     }
 
     @Override
@@ -374,17 +417,84 @@ public class SysMenuServiceImpl implements ISysMenuService
     {
         try
         {
+            String oper = currentOperName();
             for (int i = 0; i < menuIds.length; i++)
             {
+                Long mid = Convert.toLong(menuIds[i]);
+                SysMenu before = menuMapper.selectMenuById(mid);
                 SysMenu menu = new SysMenu();
-                menu.setMenuId(Convert.toLong(menuIds[i]));
+                menu.setMenuId(mid);
                 menu.setOrderNum(orderNums[i]);
                 menuMapper.updateMenuSort(menu);
+                SysMenu after = menuMapper.selectMenuById(mid);
+                if (before != null && after != null
+                    && !String.valueOf(before.getOrderNum()).equals(String.valueOf(after.getOrderNum())))
+                {
+                    insertMenuChangeLog(after.getMenuId(), "S", oper, jsonBeforeAfter(before, after));
+                }
             }
         }
         catch (Exception e)
         {
             throw new ServiceException("保存排序异常，请联系管理员");
+        }
+    }
+
+    @Override
+    public List<SysMenuChangeLog> selectMenuChangeLogList(Long menuId)
+    {
+        return menuChangeLogMapper.selectByMenuIdOrderAsc(menuId);
+    }
+
+    @Override
+    public SysMenuChangeLog selectMenuChangeLogById(Long logId)
+    {
+        return menuChangeLogMapper.selectByLogId(logId);
+    }
+
+    private void insertMenuChangeLog(Long menuId, String changeType, String operBy, String snapshotJson)
+    {
+        if (menuId == null || StringUtils.isEmpty(snapshotJson))
+        {
+            return;
+        }
+        SysMenuChangeLog row = new SysMenuChangeLog();
+        row.setMenuId(menuId);
+        row.setChangeType(changeType);
+        row.setOperBy(operBy);
+        row.setMenuSnapshot(snapshotJson);
+        menuChangeLogMapper.insertSysMenuChangeLog(row);
+    }
+
+    private static String jsonAfterOnly(SysMenu after)
+    {
+        JSONObject o = new JSONObject();
+        o.put("after", ScmMenuSnapshotHelper.toSnapshot(after));
+        return o.toJSONString();
+    }
+
+    private static String jsonBeforeAfter(SysMenu before, SysMenu after)
+    {
+        JSONObject o = new JSONObject();
+        o.put("before", ScmMenuSnapshotHelper.toSnapshot(before));
+        o.put("after", ScmMenuSnapshotHelper.toSnapshot(after));
+        return o.toJSONString();
+    }
+
+    private static String nz(String s)
+    {
+        return s == null ? "" : s;
+    }
+
+    private static String currentOperName()
+    {
+        try
+        {
+            return nz(ShiroUtils.getLoginName());
+        }
+        catch (Exception e)
+        {
+            return "";
         }
     }
 
