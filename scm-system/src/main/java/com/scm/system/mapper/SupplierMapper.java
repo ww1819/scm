@@ -67,5 +67,10 @@ public interface SupplierMapper
      * @return 结果
      */
     public int deleteSupplierByIds(String[] supplierIds);
+
+    /**
+     * 查询启用且未删除的供应商ID（用于升级补齐）
+     */
+    public List<Long> selectActiveSupplierIds();
 }
 

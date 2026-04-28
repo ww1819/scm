@@ -1,6 +1,7 @@
 package com.scm.system.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.scm.system.domain.SysRoleMenu;
 
 /**
@@ -41,4 +42,10 @@ public interface SysRoleMenuMapper
      * @return 结果
      */
     public int batchRoleMenu(List<SysRoleMenu> roleMenuList);
+
+    /**
+     * 查询某角色在指定医院/供应商维度下已授权菜单ID（空串表示不限制该维）
+     */
+    public List<Long> selectMenuIdsByRoleAndScope(@Param("roleId") Long roleId, @Param("hospitalId") String hospitalId,
+        @Param("supplierId") String supplierId);
 }

@@ -137,5 +137,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{hospitalId}
         </foreach>
     </update>
+
+    <select id="selectActiveHospitalIds" resultType="long">
+        select hospital_id
+        from scm_hospital
+        where del_flag = '0' and status = '0'
+    </select>
 </mapper>
 

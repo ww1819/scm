@@ -189,5 +189,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{supplierId}
         </foreach>
     </update>
+
+    <select id="selectActiveSupplierIds" resultType="long">
+        select supplier_id
+        from scm_supplier
+        where del_flag = '0' and status = '0'
+    </select>
 </mapper>
 

@@ -65,5 +65,10 @@ public interface HospitalMapper
      * @return 结果
      */
     public int deleteHospitalByIds(String[] hospitalIds);
+
+    /**
+     * 查询启用且未删除的医院ID（用于升级补齐）
+     */
+    public List<Long> selectActiveHospitalIds();
 }
 

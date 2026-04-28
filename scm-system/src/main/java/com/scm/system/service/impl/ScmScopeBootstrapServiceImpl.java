@@ -22,6 +22,8 @@ import com.scm.system.domain.ScmSupplierMenuAuth;
 import com.scm.system.domain.SysRoleMenu;
 import com.scm.system.mapper.ScmHospitalMenuAuthMapper;
 import com.scm.system.mapper.ScmSupplierMenuAuthMapper;
+import com.scm.system.mapper.HospitalMapper;
+import com.scm.system.mapper.SupplierMapper;
 import com.scm.system.mapper.SysMenuMapper;
 import com.scm.system.mapper.SysRoleMapper;
 import com.scm.system.mapper.SysRoleMenuMapper;
@@ -48,6 +50,10 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
     private ScmHospitalMenuAuthMapper hospitalMenuAuthMapper;
     @Autowired
     private ScmSupplierMenuAuthMapper supplierMenuAuthMapper;
+    @Autowired
+    private HospitalMapper hospitalMapper;
+    @Autowired
+    private SupplierMapper supplierMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -102,6 +108,86 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         SysRole admin = ensureSupplierAdminRole(supplierId, operBy);
         Set<Long> normalized = normalizeMenuIdSet(menuIds);
         syncSupplierMenus(admin.getRoleId(), supplierId, normalized, operBy);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Integer> repairLegacyAdminScopes(String operBy)
+    {
+        String realOper = StringUtils.isNotEmpty(operBy) ? operBy : "system_upgrade";
+        Map<String, Integer> stat = new HashMap<>();
+        stat.put("createdHospitalAdminRole", 0);
+        stat.put("createdSupplierAdminRole", 0);
+        stat.put("addedHospitalMenuAuth", 0);
+        stat.put("addedSupplierMenuAuth", 0);
+        stat.put("addedHospitalRoleMenu", 0);
+        stat.put("addedSupplierRoleMenu", 0);
+
+        List<Long> hospitalIds = hospitalMapper.selectActiveHospitalIds();
+        List<Long> supplierIds = supplierMapper.selectActiveSupplierIds();
+        Set<Long> hospitalSeed = collectScopeMenuIdsWithAncestors(ScmAuthConstants.AUTH_HOSPITAL);
+        Set<Long> supplierSeed = collectScopeMenuIdsWithAncestors(ScmAuthConstants.AUTH_SUPPLIER);
+
+        for (Long hospitalId : hospitalIds)
+        {
+            if (hospitalId == null)
+            {
+                continue;
+            }
+            if (sysRoleMapper.selectByRoleKeyAndHospitalId(ScmAuthConstants.ROLE_KEY_HOSPITAL_ADMIN, hospitalId) == null)
+            {
+                stat.put("createdHospitalAdminRole", stat.get("createdHospitalAdminRole") + 1);
+            }
+            SysRole admin = ensureHospitalAdminRole(hospitalId, realOper);
+            Set<Long> existingAuth = new HashSet<>(hospitalMenuAuthMapper.selectMenuIdsByHospitalId(hospitalId));
+            Set<Long> needAuth = new HashSet<>(hospitalSeed);
+            needAuth.removeAll(existingAuth);
+            if (!needAuth.isEmpty())
+            {
+                batchInsertHospitalAuth(hospitalId, needAuth, realOper);
+                stat.put("addedHospitalMenuAuth", stat.get("addedHospitalMenuAuth") + needAuth.size());
+            }
+            Set<Long> existingRoleMenus = new HashSet<>(
+                sysRoleMenuMapper.selectMenuIdsByRoleAndScope(admin.getRoleId(), String.valueOf(hospitalId), ""));
+            Set<Long> needRoleMenus = new HashSet<>(hospitalSeed);
+            needRoleMenus.removeAll(existingRoleMenus);
+            if (!needRoleMenus.isEmpty())
+            {
+                batchInsertRoleMenus(admin.getRoleId(), needRoleMenus, String.valueOf(hospitalId), "");
+                stat.put("addedHospitalRoleMenu", stat.get("addedHospitalRoleMenu") + needRoleMenus.size());
+            }
+        }
+
+        for (Long supplierId : supplierIds)
+        {
+            if (supplierId == null)
+            {
+                continue;
+            }
+            if (sysRoleMapper.selectByRoleKeyAndSupplierId(ScmAuthConstants.ROLE_KEY_SUPPLIER_ADMIN, supplierId) == null)
+            {
+                stat.put("createdSupplierAdminRole", stat.get("createdSupplierAdminRole") + 1);
+            }
+            SysRole admin = ensureSupplierAdminRole(supplierId, realOper);
+            Set<Long> existingAuth = new HashSet<>(supplierMenuAuthMapper.selectMenuIdsBySupplierId(supplierId));
+            Set<Long> needAuth = new HashSet<>(supplierSeed);
+            needAuth.removeAll(existingAuth);
+            if (!needAuth.isEmpty())
+            {
+                batchInsertSupplierAuth(supplierId, needAuth, realOper);
+                stat.put("addedSupplierMenuAuth", stat.get("addedSupplierMenuAuth") + needAuth.size());
+            }
+            Set<Long> existingRoleMenus = new HashSet<>(
+                sysRoleMenuMapper.selectMenuIdsByRoleAndScope(admin.getRoleId(), "", String.valueOf(supplierId)));
+            Set<Long> needRoleMenus = new HashSet<>(supplierSeed);
+            needRoleMenus.removeAll(existingRoleMenus);
+            if (!needRoleMenus.isEmpty())
+            {
+                batchInsertRoleMenus(admin.getRoleId(), needRoleMenus, "", String.valueOf(supplierId));
+                stat.put("addedSupplierRoleMenu", stat.get("addedSupplierRoleMenu") + needRoleMenus.size());
+            }
+        }
+        return stat;
     }
 
     private Set<Long> normalizeMenuIdSet(List<Long> menuIds)

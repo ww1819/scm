@@ -6,6 +6,15 @@ scm:
   demoEnabled: true
   profile: D:/scm/uploadPath
   addressEnabled: false
+  legacy:
+    scope-repair:
+      # 是否在启动时执行补齐任务（关闭则完全不跑）
+      enabled: true
+      # true：仅当应用版本 scm.version 与库中已执行记录不一致时执行（推荐，防重复）
+      # false：每次启动都执行（仅建议开发/排障）
+      upgrade-only: true
+      # 手工「补齐」按钮冷却时间（毫秒），防连点；传 force=true 可跳过
+      manual-cooldown-ms: 120000
   sql:
     init:
       enabled: true

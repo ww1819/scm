@@ -1,6 +1,7 @@
 package com.scm.system.service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -32,4 +33,10 @@ public interface IScmScopeBootstrapService
 
     /** 覆盖供应商白名单，并同步供应商管理员角色菜单为传入集合 */
     void replaceSupplierMenuAuth(Long supplierId, List<Long> menuIds, String operBy);
+
+    /**
+     * 升级维护：为老医院/老供应商补齐管理员角色，并补齐管理员角色菜单与白名单（仅补充缺失，不删除既有授权）。
+     * @return 统计信息（createdHospitalAdminRole/createdSupplierAdminRole/addedHospitalMenuAuth/addedSupplierMenuAuth/addedHospitalRoleMenu/addedSupplierRoleMenu）
+     */
+    Map<String, Integer> repairLegacyAdminScopes(String operBy);
 }

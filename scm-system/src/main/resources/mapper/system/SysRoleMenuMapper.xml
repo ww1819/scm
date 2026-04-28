@@ -33,5 +33,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			(#{item.id}, #{item.roleId}, #{item.menuId}, #{item.hospitalId}, #{item.supplierId})
 		</foreach>
 	</insert>
+
+	<select id="selectMenuIdsByRoleAndScope" resultType="long">
+		select distinct menu_id
+		from sys_role_menu
+		where role_id = #{roleId}
+		  and coalesce(nullif(trim(hospital_id), ''), '') = coalesce(nullif(trim(#{hospitalId}), ''), '')
+		  and coalesce(nullif(trim(supplier_id), ''), '') = coalesce(nullif(trim(#{supplierId}), ''), '')
+	</select>
 	
 </mapper> 
