@@ -13,7 +13,7 @@ INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, targ
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('20032', '审核', '2003', '2', '#', '', 'F', '0', '1', 'supplier:apply:audit', '#', 'admin', sysdate(), '', null, '', '0');
 /
-INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2004', '新增供应商关联', '2000', '4', '/supplier/associate', '', 'C', '0', '1', 'supplier:associate:view', 'fa fa-link', 'admin', sysdate(), '', null, '注册用户选择供应商提交关联申请，供应商管理员审核通过后添加供应商业务员角色', '0');
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2004', '新增医院关联', '2000', '4', '/supplier/associate', '', 'C', '0', '1', 'supplier:associate:view', 'fa fa-link', 'admin', sysdate(), '', null, '供应商向医院提交关联申请，医院审核通过后建立医院供应商绑定关系', '0');
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('20041', '提交关联', '2004', '1', '#', '', 'F', '0', '1', 'supplier:associate:add', '#', 'admin', sysdate(), '', null, '', '0');
 /
@@ -23,11 +23,11 @@ INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, targ
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2101', '医院信息维护', '2100', '1', '/hospital/hospital', '', 'C', '0', '1', 'hospital:hospital:view', 'fa fa-hospital-o', 'admin', sysdate(), '', null, '医院信息维护菜单', '0');
 /
-INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2102', '供应商关联审核', '2100', '2', '/hospital/associateAudit', '', 'C', '0', '1', 'hospital:associateAudit:view', 'fa fa-check-square-o', 'admin', sysdate(), '', null, '医院审核供应商关联申请', '0');
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2102', '医院关联申请审核', '2100', '2', '/hospital/associateAudit', '', 'C', '0', '1', 'hospital:associateAudit:view', 'fa fa-check-square-o', 'admin', sysdate(), '', null, '医院审核供应商发起的医院关联申请', '0');
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('21021', '审核列表', '2102', '1', '#', '', 'F', '0', '1', 'hospital:associateAudit:view', '#', 'admin', sysdate(), '', null, '', '0');
 /
-INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('21022', '关联审核', '2102', '2', '#', '', 'F', '0', '1', 'hospital:associateAudit:audit', '#', 'admin', sysdate(), '', null, '', '0');
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('21022', '申请审核', '2102', '2', '#', '', 'F', '0', '1', 'hospital:associateAudit:audit', '#', 'admin', sysdate(), '', null, '', '0');
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2200', '基础数据', '0', '7', '#', '', 'M', '0', '1', '', 'fa fa-database', 'admin', sysdate(), '', null, '基础数据目录', '0');
 /

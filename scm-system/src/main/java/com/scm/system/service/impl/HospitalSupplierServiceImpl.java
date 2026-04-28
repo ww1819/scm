@@ -618,7 +618,7 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
         }
         String supplierName = relation.getSupplierName();
         String hospitalName = relation.getHospitalName();
-        String title = approved ? "供应商医院关联审核通过" : "供应商医院关联审核拒绝";
+        String title = approved ? "医院关联申请审核通过" : "医院关联申请审核拒绝";
         StringBuilder content = new StringBuilder();
         content.append("供应商【").append(supplierName).append("】向医院【").append(hospitalName).append("】发起的关联申请已审核");
         content.append(approved ? "通过" : "拒绝").append("。");

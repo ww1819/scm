@@ -19,7 +19,7 @@ import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.IScmHospitalContextService;
 
 /**
- * 医院审核供应商关联申请
+ * 医院关联申请审核
  */
 @Controller
 @RequestMapping("/hospital/associateAudit")

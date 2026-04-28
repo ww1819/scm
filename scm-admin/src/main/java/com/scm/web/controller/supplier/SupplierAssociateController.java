@@ -23,7 +23,7 @@ import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.ISupplierUserService;
 
 /**
- * 新增供应商关联：注册用户选择供应商提交关联申请，供应商管理员审核通过后添加供应商业务员角色
+ * 新增医院关联：供应商向医院提交关联申请，医院审核通过后建立医院供应商绑定关系
  */
 @Controller
 @RequestMapping("/supplier/associate")

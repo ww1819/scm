@@ -234,11 +234,14 @@
                         <div class="checkbox-custom"><input type="checkbox" id="acceptTerm1" name="acceptTerm1"/> <label for="acceptTerm1">我已阅读并同意</label> <a href="javascript:void(0);" class="link-terms-of-service">使用条款</a></div>
                     </div>
                     <div class="row form-tight-row" style="margin-bottom:0;">
-                        <div class="col-sm-6">
+                        <div class="col-sm-4">
                             <button type="button" class="btn btn-success btn-block" id="btnSubmitSupplier" data-loading="正在注册...">注册</button>
                         </div>
-                        <div class="col-sm-6">
+                        <div class="col-sm-4">
                             <button type="button" class="btn btn-default btn-block" id="btnClearSupplier">清空</button>
+                        </div>
+                        <div class="col-sm-4">
+                            <button type="button" class="btn btn-default btn-block" id="btnCancelSupplier">取消</button>
                         </div>
                     </div>
                 </form>
@@ -580,6 +583,10 @@ $(function() {
         loadRegionProvinces();
         fillRegionSelect($("#selCity"), [], "请选择城市");
         fillRegionSelect($("#selDistrict"), [], "请选择区县");
+    });
+
+    $("#btnCancelSupplier").on("click", function () {
+        window.location.href = ctx + "login";
     });
 
     // 业务员注册：点击按钮时触发校验和 Ajax 提交

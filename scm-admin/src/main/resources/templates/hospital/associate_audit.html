@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
 <head>
-	<th:block th:include="include :: header('医院审核供应商关联')" />
+	<th:block th:include="include :: header('医院关联申请审核')" />
 	<th:block th:include="include :: layout-latest-css" />
 </head>
 <body class="gray-bg">
@@ -45,7 +45,7 @@
 				},
 				sortName: "createTime",
 				sortOrder: "desc",
-				modalName: "医院供应商关联审核",
+				modalName: "医院关联申请审核",
 				columns: [{
 					field: 'applyId',
 					title: '申请ID',

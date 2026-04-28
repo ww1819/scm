@@ -92,7 +92,7 @@ UPDATE scm_certificate_type SET status = '0' WHERE status IS NULL;
 /
 
 
--- 注册用户角色（包含新增供应商关联功能，没有才插入）
+-- 注册用户角色（包含新增医院关联功能，没有才插入）
 INSERT INTO sys_role (role_id, role_name, role_key, role_sort, data_scope, status, del_flag, create_by, create_time, remark)
 SELECT 110, '注册用户', 'register_user', 110, '1', '0', '0', 'admin', sysdate(), '平台注册用户，可申请关联供应商成为业务员'
 FROM DUAL
