@@ -21,7 +21,11 @@ import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.enums.BusinessType;
 import com.scm.common.utils.poi.ExcelUtil;
 import com.scm.framework.shiro.util.AuthorizationUtils;
+import com.scm.system.domain.Hospital;
+import com.scm.system.domain.Supplier;
 import com.scm.system.domain.SysUserRole;
+import com.scm.system.service.IHospitalService;
+import com.scm.system.service.ISupplierService;
 import com.scm.system.service.ISysDeptService;
 import com.scm.system.service.ISysRoleService;
 import com.scm.system.service.ISysUserService;
@@ -46,10 +50,22 @@ public class SysRoleController extends BaseController
     @Autowired
     private ISysDeptService deptService;
 
+    @Autowired
+    private IHospitalService hospitalService;
+
+    @Autowired
+    private ISupplierService supplierService;
+
     @RequiresPermissions("system:role:view")
     @GetMapping()
-    public String role()
+    public String role(ModelMap mmap)
     {
+        Hospital hq = new Hospital();
+        hq.setStatus("0");
+        mmap.put("hospitals", hospitalService.selectHospitalList(hq));
+        Supplier sq = new Supplier();
+        sq.setStatus("0");
+        mmap.put("suppliers", supplierService.selectSupplierList(sq));
         return prefix + "/role";
     }
 

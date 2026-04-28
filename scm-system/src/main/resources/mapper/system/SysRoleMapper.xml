@@ -60,6 +60,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<if test="roleKey != null and roleKey != ''">
 			AND r.role_key like concat('%', #{roleKey}, '%')
 		</if>
+		<if test="hospitalId != null and hospitalId != 0">
+			AND r.hospital_id = #{hospitalId}
+		</if>
+		<if test="supplierId != null and supplierId != 0">
+			AND r.supplier_id = #{supplierId}
+		</if>
 		<if test="dataScope != null and dataScope != ''">
 			AND r.data_scope = #{dataScope}
 		</if>
