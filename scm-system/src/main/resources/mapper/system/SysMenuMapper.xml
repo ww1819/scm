@@ -137,6 +137,53 @@
 		)
 	</sql>
 
+	<!-- 角色-菜单行上 hospital_id/supplier_id（空串=不限制该维）：与当前用户院/商从属一致才计入可见菜单与权限 -->
+	<sql id="roleMenuScopeFilterUser">
+		AND (
+			(
+				COALESCE(NULLIF(TRIM(rm.hospital_id), ''), '') = ''
+				OR EXISTS (
+					SELECT 1 FROM scm_hospital_user hu
+					WHERE hu.user_id = #{userId}
+					  AND (hu.del_flag = '0' OR hu.del_flag IS NULL)
+					  AND CAST(hu.hospital_id AS CHAR) = TRIM(rm.hospital_id)
+				)
+			)
+			AND (
+				COALESCE(NULLIF(TRIM(rm.supplier_id), ''), '') = ''
+				OR EXISTS (
+					SELECT 1 FROM scm_supplier_user su
+					WHERE su.user_id = #{userId}
+					  AND (su.del_flag = '0' OR su.del_flag IS NULL)
+					  AND CAST(su.supplier_id AS CHAR) = TRIM(rm.supplier_id)
+				)
+			)
+		)
+	</sql>
+
+	<sql id="roleMenuScopeFilterParamsUser">
+		AND (
+			(
+				COALESCE(NULLIF(TRIM(rm.hospital_id), ''), '') = ''
+				OR EXISTS (
+					SELECT 1 FROM scm_hospital_user hu
+					WHERE hu.user_id = #{params.userId}
+					  AND (hu.del_flag = '0' OR hu.del_flag IS NULL)
+					  AND CAST(hu.hospital_id AS CHAR) = TRIM(rm.hospital_id)
+				)
+			)
+			AND (
+				COALESCE(NULLIF(TRIM(rm.supplier_id), ''), '') = ''
+				OR EXISTS (
+					SELECT 1 FROM scm_supplier_user su
+					WHERE su.user_id = #{params.userId}
+					  AND (su.del_flag = '0' OR su.del_flag IS NULL)
+					  AND CAST(su.supplier_id AS CHAR) = TRIM(rm.supplier_id)
+				)
+			)
+		)
+	</sql>
+
     <sql id="selectMenuVo">
         select menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, ifnull(perms,'') as perms, icon, create_by, create_time,
 		       ifnull(auth_type,'platform') as auth_type, ifnull(default_open_scope,'none') as default_open_scope, ifnull(hospital_grant_supplier_flag,'0') as hospital_grant_supplier_flag,
@@ -153,6 +200,7 @@
 			 left join sys_user_role ur on rm.role_id = ur.role_id
 			 LEFT JOIN sys_role ro on ur.role_id = ro.role_id
 		where ur.user_id = #{userId} and m.menu_type in ('M', 'C') and m.visible = 0 and m.del_flag = '0' AND ro.status = '0'
+		<include refid="roleMenuScopeFilterUser"/>
 		<include refid="authScopeFilterUser"/>
 		order by m.parent_id, m.order_num
 	</select>
@@ -179,6 +227,7 @@
 			 left join sys_user_role ur on rm.role_id = ur.role_id
 			 LEFT JOIN sys_role ro on ur.role_id = ro.role_id
 		where ur.user_id = #{userId} and m.del_flag = '0' AND ro.status = '0'
+		<include refid="roleMenuScopeFilterUser"/>
 		<include refid="authScopeFilterUser"/>
 		order by m.parent_id, m.order_num
 	</select>
@@ -190,6 +239,7 @@
 			 left join sys_user_role ur on rm.role_id = ur.role_id
 			 left join sys_role r on r.role_id = ur.role_id
 		where m.visible = '0' and m.del_flag = '0' and r.status = '0' and ur.user_id = #{userId}
+		<include refid="roleMenuScopeFilterUser"/>
 		<include refid="authScopeFilterUser"/>
 	</select>
 
@@ -201,7 +251,7 @@
 	</select>
 
 	<select id="selectMenuTree" parameterType="Long" resultType="String">
-		select concat(m.menu_id, ifnull(m.perms,'')) as perms
+		select distinct concat(m.menu_id, ifnull(m.perms,'')) as perms
 		from sys_menu m
 			left join sys_role_menu rm on m.menu_id = rm.menu_id
 		where rm.role_id = #{roleId} and m.del_flag = '0'
@@ -231,6 +281,7 @@
 		left join sys_user_role ur on rm.role_id = ur.role_id
 		LEFT JOIN sys_role ro on ur.role_id = ro.role_id
 		where ur.user_id = #{params.userId} and m.del_flag = '0' AND ro.status = '0'
+		<include refid="roleMenuScopeFilterParamsUser"/>
 		<include refid="authScopeFilterParamsUser"/>
 		<if test="menuName != null and menuName != ''">
 			AND m.menu_name like concat('%', #{menuName}, '%')

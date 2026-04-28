@@ -87,11 +87,11 @@ SELECT 110, '注册用户', 'register_user', 110, '1', '0', '0', 'admin', sysdat
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM sys_role WHERE role_id = 110);
 /
-INSERT INTO sys_role_menu (role_id, menu_id)
-SELECT 110, 2004 FROM DUAL
-WHERE NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 110 AND menu_id = 2004);
+INSERT INTO sys_role_menu (id, role_id, menu_id, hospital_id, supplier_id)
+SELECT REPLACE(UUID(),'-',''), 110, 2004, '', '' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 110 AND menu_id = 2004 AND hospital_id = '' AND supplier_id = '');
 /
-INSERT INTO sys_role_menu (role_id, menu_id)
-SELECT 110, 20041 FROM DUAL
-WHERE NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 110 AND menu_id = 20041);
+INSERT INTO sys_role_menu (id, role_id, menu_id, hospital_id, supplier_id)
+SELECT REPLACE(UUID(),'-',''), 110, 20041, '', '' FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 110 AND menu_id = 20041 AND hospital_id = '' AND supplier_id = '');
 /

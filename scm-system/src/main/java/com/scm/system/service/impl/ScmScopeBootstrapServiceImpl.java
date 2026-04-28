@@ -167,7 +167,7 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         hospitalMenuAuthMapper.deleteByHospitalId(hospitalId);
         batchInsertHospitalAuth(hospitalId, menuIds, operBy);
         sysRoleMenuMapper.deleteRoleMenuByRoleId(adminRoleId);
-        batchInsertRoleMenus(adminRoleId, menuIds);
+        batchInsertRoleMenus(adminRoleId, menuIds, String.valueOf(hospitalId), "");
     }
 
     private void syncSupplierMenus(Long adminRoleId, Long supplierId, Set<Long> menuIds, String operBy)
@@ -175,7 +175,7 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         supplierMenuAuthMapper.deleteBySupplierId(supplierId);
         batchInsertSupplierAuth(supplierId, menuIds, operBy);
         sysRoleMenuMapper.deleteRoleMenuByRoleId(adminRoleId);
-        batchInsertRoleMenus(adminRoleId, menuIds);
+        batchInsertRoleMenus(adminRoleId, menuIds, "", String.valueOf(supplierId));
     }
 
     private void batchInsertHospitalAuth(Long hospitalId, Set<Long> menuIds, String operBy)
@@ -228,14 +228,19 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         }
     }
 
-    private void batchInsertRoleMenus(Long roleId, Set<Long> menuIds)
+    private void batchInsertRoleMenus(Long roleId, Set<Long> menuIds, String hospitalId, String supplierId)
     {
+        String h = StringUtils.isNotEmpty(hospitalId) ? hospitalId : "";
+        String s = StringUtils.isNotEmpty(supplierId) ? supplierId : "";
         List<SysRoleMenu> buf = new ArrayList<>();
         for (Long menuId : menuIds)
         {
             SysRoleMenu rm = new SysRoleMenu();
+            rm.setId(IdUtils.simpleUuid7());
             rm.setRoleId(roleId);
             rm.setMenuId(menuId);
+            rm.setHospitalId(h);
+            rm.setSupplierId(s);
             buf.add(rm);
             if (buf.size() >= BATCH)
             {

@@ -5,8 +5,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 <mapper namespace="com.scm.system.mapper.SysRoleMenuMapper">
 
 	<resultMap type="SysRoleMenu" id="SysRoleMenuResult">
+		<result property="id"           column="id"            />
 		<result property="roleId"     column="role_id"      />
 		<result property="menuId"     column="menu_id"      />
+		<result property="hospitalId" column="hospital_id"  />
+		<result property="supplierId" column="supplier_id"  />
 	</resultMap>
 
 	<delete id="deleteRoleMenuByRoleId" parameterType="Long">
@@ -25,9 +28,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  	</delete>
 	
 	<insert id="batchRoleMenu">
-		insert into sys_role_menu(role_id, menu_id) values
+		insert into sys_role_menu(id, role_id, menu_id, hospital_id, supplier_id) values
 		<foreach item="item" index="index" collection="list" separator=",">
-			(#{item.roleId},#{item.menuId})
+			(#{item.id}, #{item.roleId}, #{item.menuId}, #{item.hospitalId}, #{item.supplierId})
 		</foreach>
 	</insert>
 	

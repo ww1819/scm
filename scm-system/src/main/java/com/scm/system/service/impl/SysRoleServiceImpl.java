@@ -16,6 +16,7 @@ import com.scm.common.core.text.Convert;
 import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.uuid.IdUtils;
 import com.scm.common.utils.spring.SpringUtils;
 import com.scm.system.domain.SysRoleDept;
 import com.scm.system.domain.SysRoleMenu;
@@ -231,13 +232,21 @@ public class SysRoleServiceImpl implements ISysRoleService
     public int insertRoleMenu(SysRole role)
     {
         int rows = 1;
-        // 新增用户与角色管理
+        String hid = role.getHospitalId() != null ? String.valueOf(role.getHospitalId()) : "";
+        String sid = role.getSupplierId() != null ? String.valueOf(role.getSupplierId()) : "";
         List<SysRoleMenu> list = new ArrayList<SysRoleMenu>();
+        if (role.getMenuIds() == null)
+        {
+            return rows;
+        }
         for (Long menuId : role.getMenuIds())
         {
             SysRoleMenu rm = new SysRoleMenu();
+            rm.setId(IdUtils.simpleUuid7());
             rm.setRoleId(role.getRoleId());
             rm.setMenuId(menuId);
+            rm.setHospitalId(hid);
+            rm.setSupplierId(sid);
             list.add(rm);
         }
         if (list.size() > 0)

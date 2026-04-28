@@ -2,13 +2,13 @@
 
 ## 一、数据库脚本执行顺序（新环境 / 全量）
 
-1. `sql/mysql/scm/table.sql` — 含 `sys_menu`/`sys_role` 扩展字段与三张新表建表定义  
-2. `sql/mysql/scm/column.sql` — 存量库增量列、三张表 `CREATE IF NOT EXISTS`、菜单 `auth_type` 归类 UPDATE、历史白名单 `INSERT IGNORE` 回填  
-3. `sql/mysql/scm/menu.sql` — 菜单数据（含「数据权限」目录 2800+ 及按钮权限）
+1. `sql/mysql/scm/table.sql` — 含 `sys_menu`/`sys_role` 扩展字段；三张授权表白名单表亦可由 SPD 侧 `material/table.sql` 建表  
+2. `sql/mysql/scm/column.sql` — 存量库增量列、`sys_menu.auth_type` 等归类、`scm_*` 白名单回填等  
+3. `sql/mysql/scm/menu.sql` — 菜单数据；其中 **SCM「数据权限」独占 `2850`–`2854` 段**（含按钮 `28511`–`28542`）。**勿与「客户管理」混淆：`2800`–`2802` 为客户管理菜单**，与 SCM 无关。存量库若从未出现过「数据权限」侧栏，可补充执行 `patch_insert_scm_data_scope_menus_285x.sql`。
 
 ## 二、上线后必做（平台管理员）
 
-- 在 **角色管理** 中为平台管理员角色勾选新菜单：**数据权限**（`2800`）及其子菜单，否则看不到授权页面。  
+- **非** `user_id = 1` 的平台用户：在 **角色管理** 中为角色勾选 **数据权限**（根 `menu_id = 2850`）及子菜单，否则看不到授权页面。超级管理员（`user_id = 1`）走全量菜单逻辑，无需在角色里额外勾选。  
 - 执行 `column.sql` 后若仍有用户侧栏为空：确认该用户已在 `scm_hospital_user` / `scm_supplier_user` 中且 `column.sql` 白名单回填已执行。
 
 ## 三、功能验证清单

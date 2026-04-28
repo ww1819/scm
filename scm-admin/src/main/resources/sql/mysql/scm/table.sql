@@ -1042,10 +1042,14 @@ CREATE TABLE IF NOT EXISTS `sys_role_dept` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色和部门关联表';
 /
 CREATE TABLE IF NOT EXISTS `sys_role_menu` (
+  `id` varchar(36) NOT NULL COMMENT '主键 UUID7 风格',
   `role_id` bigint(20) NOT NULL COMMENT '角色ID',
   `menu_id` bigint(20) NOT NULL COMMENT '菜单ID',
-  PRIMARY KEY (`role_id`,`menu_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色和菜单关联表';
+  `hospital_id` varchar(36) NOT NULL DEFAULT '' COMMENT '绑定医院（空串表示不按医院收窄）',
+  `supplier_id` varchar(36) NOT NULL DEFAULT '' COMMENT '绑定供应商（空串表示不按供应商收窄）',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_role_menu_scope` (`role_id`, `menu_id`, `hospital_id`, `supplier_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色和菜单关联表（院/商范围与主键见 column.sql 迁移）';
 /
 CREATE TABLE IF NOT EXISTS `scm_hospital_menu_auth` (
   `id` varchar(36) NOT NULL COMMENT '主键 UUID7 风格',
