@@ -8,6 +8,17 @@ SELECT '账号自助-是否开启用户注册功能', 'sys.account.registerUser'
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key = 'sys.account.registerUser');
 /
+-- 角色默认菜单继承策略：same_as_admin=继承管理员菜单（默认）；none=不自动分配菜单
+INSERT INTO sys_config (config_name, config_key, config_value, config_type, create_by, create_time, remark)
+SELECT '医院职工默认菜单策略', 'scm.auth.bootstrap.hospital_staff.menu_mode', 'same_as_admin', 'N', 'admin', sysdate(), '医院创建/重置/补齐时，医院职工角色菜单策略（same_as_admin/none）'
+FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key = 'scm.auth.bootstrap.hospital_staff.menu_mode');
+/
+INSERT INTO sys_config (config_name, config_key, config_value, config_type, create_by, create_time, remark)
+SELECT '供应商业务员默认菜单策略', 'scm.auth.bootstrap.supplier_sales.menu_mode', 'same_as_admin', 'N', 'admin', sysdate(), '供应商注册/重置/补齐时，供应商业务员角色菜单策略（same_as_admin/none）'
+FROM DUAL
+WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key = 'scm.auth.bootstrap.supplier_sales.menu_mode');
+/
 -- 供应商表 status 默认值
 UPDATE scm_supplier SET status = '0' WHERE status IS NULL;
 /

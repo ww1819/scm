@@ -21,6 +21,8 @@ public final class ScmAuthConstants
 
     /** 每医院唯一的管理员角色 */
     public static final String ROLE_KEY_HOSPITAL_ADMIN = "hospital_admin";
+    /** 每医院默认职工角色 */
+    public static final String ROLE_KEY_HOSPITAL_STAFF = "hospital_staff";
     /** 每供应商唯一的管理员角色 */
     public static final String ROLE_KEY_SUPPLIER_ADMIN = "supplier_admin";
     public static final String ROLE_KEY_SUPPLIER_SALES = "supplier_sales";

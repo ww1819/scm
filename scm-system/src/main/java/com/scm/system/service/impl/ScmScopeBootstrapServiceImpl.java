@@ -29,10 +29,16 @@ import com.scm.system.mapper.SysMenuMapper;
 import com.scm.system.mapper.SysRoleMapper;
 import com.scm.system.mapper.SysRoleMenuMapper;
 import com.scm.system.service.IScmScopeBootstrapService;
+import com.scm.system.service.ISysConfigService;
 
 @Service
 public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
 {
+    private static final String CFG_HOSPITAL_STAFF_MENU_MODE = "scm.auth.bootstrap.hospital_staff.menu_mode";
+    private static final String CFG_SUPPLIER_SALES_MENU_MODE = "scm.auth.bootstrap.supplier_sales.menu_mode";
+    private static final String MENU_MODE_SAME_AS_ADMIN = "same_as_admin";
+    private static final String MENU_MODE_NONE = "none";
+
     @Override
     public Set<Long> listAllScopeMenuIds(String authType)
     {
@@ -55,14 +61,21 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
     private HospitalMapper hospitalMapper;
     @Autowired
     private SupplierMapper supplierMapper;
+    @Autowired
+    private ISysConfigService configService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Long bootstrapAfterSupplierRegister(Long supplierId, String operBy)
     {
         SysRole admin = ensureSupplierAdminRole(supplierId, operBy);
+        SysRole sales = ensureSupplierSalesRole(supplierId, operBy);
         Set<Long> menuIds = collectScopeMenuIdsWithAncestors(ScmAuthConstants.AUTH_SUPPLIER);
         syncSupplierMenus(admin.getRoleId(), supplierId, menuIds, operBy);
+        if (shouldSyncSupplierSalesMenus())
+        {
+            syncScopedRoleMenus(sales.getRoleId(), menuIds, "", String.valueOf(supplierId));
+        }
         return admin.getRoleId();
     }
 
@@ -71,8 +84,13 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
     public void bootstrapAfterHospitalCreated(Long hospitalId, String operBy)
     {
         SysRole admin = ensureHospitalAdminRole(hospitalId, operBy);
+        SysRole staff = ensureHospitalStaffRole(hospitalId, operBy);
         Set<Long> menuIds = collectScopeMenuIdsWithAncestors(ScmAuthConstants.AUTH_HOSPITAL);
         syncHospitalMenus(admin.getRoleId(), hospitalId, menuIds, operBy);
+        if (shouldSyncHospitalStaffMenus())
+        {
+            syncScopedRoleMenus(staff.getRoleId(), menuIds, String.valueOf(hospitalId), "");
+        }
     }
 
     @Override
@@ -80,8 +98,13 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
     public void resetHospitalMenuAuth(Long hospitalId, String operBy)
     {
         SysRole admin = ensureHospitalAdminRole(hospitalId, operBy);
+        SysRole staff = ensureHospitalStaffRole(hospitalId, operBy);
         Set<Long> menuIds = collectScopeMenuIdsWithAncestors(ScmAuthConstants.AUTH_HOSPITAL);
         syncHospitalMenus(admin.getRoleId(), hospitalId, menuIds, operBy);
+        if (shouldSyncHospitalStaffMenus())
+        {
+            syncScopedRoleMenus(staff.getRoleId(), menuIds, String.valueOf(hospitalId), "");
+        }
     }
 
     @Override
@@ -89,8 +112,13 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
     public void resetSupplierMenuAuth(Long supplierId, String operBy)
     {
         SysRole admin = ensureSupplierAdminRole(supplierId, operBy);
+        SysRole sales = ensureSupplierSalesRole(supplierId, operBy);
         Set<Long> menuIds = collectScopeMenuIdsWithAncestors(ScmAuthConstants.AUTH_SUPPLIER);
         syncSupplierMenus(admin.getRoleId(), supplierId, menuIds, operBy);
+        if (shouldSyncSupplierSalesMenus())
+        {
+            syncScopedRoleMenus(sales.getRoleId(), menuIds, "", String.valueOf(supplierId));
+        }
     }
 
     @Override
@@ -98,8 +126,13 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
     public void replaceHospitalMenuAuth(Long hospitalId, List<Long> menuIds, String operBy)
     {
         SysRole admin = ensureHospitalAdminRole(hospitalId, operBy);
+        SysRole staff = ensureHospitalStaffRole(hospitalId, operBy);
         Set<Long> normalized = normalizeMenuIdSet(menuIds);
         syncHospitalMenus(admin.getRoleId(), hospitalId, normalized, operBy);
+        if (shouldSyncHospitalStaffMenus())
+        {
+            syncScopedRoleMenus(staff.getRoleId(), normalized, String.valueOf(hospitalId), "");
+        }
     }
 
     @Override
@@ -107,8 +140,13 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
     public void replaceSupplierMenuAuth(Long supplierId, List<Long> menuIds, String operBy)
     {
         SysRole admin = ensureSupplierAdminRole(supplierId, operBy);
+        SysRole sales = ensureSupplierSalesRole(supplierId, operBy);
         Set<Long> normalized = normalizeMenuIdSet(menuIds);
         syncSupplierMenus(admin.getRoleId(), supplierId, normalized, operBy);
+        if (shouldSyncSupplierSalesMenus())
+        {
+            syncScopedRoleMenus(sales.getRoleId(), normalized, "", String.valueOf(supplierId));
+        }
     }
 
     @Override
@@ -118,11 +156,15 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         String realOper = StringUtils.isNotEmpty(operBy) ? operBy : "system_upgrade";
         Map<String, Integer> stat = new HashMap<>();
         stat.put("createdHospitalAdminRole", 0);
+        stat.put("createdHospitalStaffRole", 0);
         stat.put("createdSupplierAdminRole", 0);
+        stat.put("createdSupplierSalesRole", 0);
         stat.put("addedHospitalMenuAuth", 0);
         stat.put("addedSupplierMenuAuth", 0);
         stat.put("addedHospitalRoleMenu", 0);
         stat.put("addedSupplierRoleMenu", 0);
+        stat.put("addedHospitalStaffRoleMenu", 0);
+        stat.put("addedSupplierSalesRoleMenu", 0);
 
         List<Long> hospitalIds = hospitalMapper.selectActiveHospitalIds();
         List<Long> supplierIds = supplierMapper.selectActiveSupplierIds();
@@ -139,7 +181,12 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
             {
                 stat.put("createdHospitalAdminRole", stat.get("createdHospitalAdminRole") + 1);
             }
+            if (sysRoleMapper.selectByRoleKeyAndHospitalId(ScmAuthConstants.ROLE_KEY_HOSPITAL_STAFF, hospitalId) == null)
+            {
+                stat.put("createdHospitalStaffRole", stat.get("createdHospitalStaffRole") + 1);
+            }
             SysRole admin = ensureHospitalAdminRole(hospitalId, realOper);
+            SysRole staff = ensureHospitalStaffRole(hospitalId, realOper);
             Set<Long> existingAuth = new HashSet<>(hospitalMenuAuthMapper.selectMenuIdsByHospitalId(hospitalId));
             Set<Long> needAuth = new HashSet<>(hospitalSeed);
             needAuth.removeAll(existingAuth);
@@ -157,6 +204,18 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
                 batchInsertRoleMenus(admin.getRoleId(), needRoleMenus, String.valueOf(hospitalId), "");
                 stat.put("addedHospitalRoleMenu", stat.get("addedHospitalRoleMenu") + needRoleMenus.size());
             }
+            if (shouldSyncHospitalStaffMenus())
+            {
+                Set<Long> existingStaffRoleMenus = new HashSet<>(
+                    sysRoleMenuMapper.selectMenuIdsByRoleAndScope(staff.getRoleId(), String.valueOf(hospitalId), ""));
+                Set<Long> needStaffRoleMenus = new HashSet<>(hospitalSeed);
+                needStaffRoleMenus.removeAll(existingStaffRoleMenus);
+                if (!needStaffRoleMenus.isEmpty())
+                {
+                    batchInsertRoleMenus(staff.getRoleId(), needStaffRoleMenus, String.valueOf(hospitalId), "");
+                    stat.put("addedHospitalStaffRoleMenu", stat.get("addedHospitalStaffRoleMenu") + needStaffRoleMenus.size());
+                }
+            }
         }
 
         for (Long supplierId : supplierIds)
@@ -169,7 +228,12 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
             {
                 stat.put("createdSupplierAdminRole", stat.get("createdSupplierAdminRole") + 1);
             }
+            if (sysRoleMapper.selectByRoleKeyAndSupplierId(ScmAuthConstants.ROLE_KEY_SUPPLIER_SALES, supplierId) == null)
+            {
+                stat.put("createdSupplierSalesRole", stat.get("createdSupplierSalesRole") + 1);
+            }
             SysRole admin = ensureSupplierAdminRole(supplierId, realOper);
+            SysRole sales = ensureSupplierSalesRole(supplierId, realOper);
             Set<Long> existingAuth = new HashSet<>(supplierMenuAuthMapper.selectMenuIdsBySupplierId(supplierId));
             Set<Long> needAuth = new HashSet<>(supplierSeed);
             needAuth.removeAll(existingAuth);
@@ -186,6 +250,18 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
             {
                 batchInsertRoleMenus(admin.getRoleId(), needRoleMenus, "", String.valueOf(supplierId));
                 stat.put("addedSupplierRoleMenu", stat.get("addedSupplierRoleMenu") + needRoleMenus.size());
+            }
+            if (shouldSyncSupplierSalesMenus())
+            {
+                Set<Long> existingSalesRoleMenus = new HashSet<>(
+                    sysRoleMenuMapper.selectMenuIdsByRoleAndScope(sales.getRoleId(), "", String.valueOf(supplierId)));
+                Set<Long> needSalesRoleMenus = new HashSet<>(supplierSeed);
+                needSalesRoleMenus.removeAll(existingSalesRoleMenus);
+                if (!needSalesRoleMenus.isEmpty())
+                {
+                    batchInsertRoleMenus(sales.getRoleId(), needSalesRoleMenus, "", String.valueOf(supplierId));
+                    stat.put("addedSupplierSalesRoleMenu", stat.get("addedSupplierSalesRoleMenu") + needSalesRoleMenus.size());
+                }
             }
         }
         return stat;
@@ -229,6 +305,28 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         return role;
     }
 
+    private SysRole ensureHospitalStaffRole(Long hospitalId, String operBy)
+    {
+        SysRole exist = sysRoleMapper.selectByRoleKeyAndHospitalId(ScmAuthConstants.ROLE_KEY_HOSPITAL_STAFF, hospitalId);
+        if (exist != null)
+        {
+            return exist;
+        }
+        SysRole role = new SysRole();
+        role.setRoleName("医院职工");
+        role.setRoleKey(ScmAuthConstants.ROLE_KEY_HOSPITAL_STAFF);
+        role.setRoleSort("20");
+        role.setDataScope("1");
+        role.setStatus("0");
+        role.setRoleType(ScmAuthConstants.ROLE_TYPE_HOSPITAL);
+        role.setHospitalId(hospitalId);
+        role.setRemark("系统自动创建");
+        role.setCreateBy(StringUtils.isNotEmpty(operBy) ? operBy : "system");
+        role.setPinyinCode(PinyinUtils.getShortCode(role.getRoleName()));
+        sysRoleMapper.insertRole(role);
+        return role;
+    }
+
     private SysRole ensureSupplierAdminRole(Long supplierId, String operBy)
     {
         SysRole exist = sysRoleMapper.selectByRoleKeyAndSupplierId(ScmAuthConstants.ROLE_KEY_SUPPLIER_ADMIN, supplierId);
@@ -240,6 +338,28 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         role.setRoleName("供应商管理员");
         role.setRoleKey(ScmAuthConstants.ROLE_KEY_SUPPLIER_ADMIN);
         role.setRoleSort("5");
+        role.setDataScope("1");
+        role.setStatus("0");
+        role.setRoleType(ScmAuthConstants.ROLE_TYPE_SUPPLIER);
+        role.setSupplierId(supplierId);
+        role.setRemark("系统自动创建");
+        role.setCreateBy(StringUtils.isNotEmpty(operBy) ? operBy : "system");
+        role.setPinyinCode(PinyinUtils.getShortCode(role.getRoleName()));
+        sysRoleMapper.insertRole(role);
+        return role;
+    }
+
+    private SysRole ensureSupplierSalesRole(Long supplierId, String operBy)
+    {
+        SysRole exist = sysRoleMapper.selectByRoleKeyAndSupplierId(ScmAuthConstants.ROLE_KEY_SUPPLIER_SALES, supplierId);
+        if (exist != null)
+        {
+            return exist;
+        }
+        SysRole role = new SysRole();
+        role.setRoleName("供应商业务员");
+        role.setRoleKey(ScmAuthConstants.ROLE_KEY_SUPPLIER_SALES);
+        role.setRoleSort("15");
         role.setDataScope("1");
         role.setStatus("0");
         role.setRoleType(ScmAuthConstants.ROLE_TYPE_SUPPLIER);
@@ -263,8 +383,37 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
     {
         supplierMenuAuthMapper.deleteBySupplierId(supplierId);
         batchInsertSupplierAuth(supplierId, menuIds, operBy);
-        sysRoleMenuMapper.deleteRoleMenuByRoleId(adminRoleId);
-        batchInsertRoleMenus(adminRoleId, menuIds, "", String.valueOf(supplierId));
+        syncScopedRoleMenus(adminRoleId, menuIds, "", String.valueOf(supplierId));
+    }
+
+    private void syncScopedRoleMenus(Long roleId, Set<Long> menuIds, String hospitalId, String supplierId)
+    {
+        sysRoleMenuMapper.deleteRoleMenuByRoleId(roleId);
+        batchInsertRoleMenus(roleId, menuIds, hospitalId, supplierId);
+    }
+
+    private boolean shouldSyncHospitalStaffMenus()
+    {
+        return MENU_MODE_SAME_AS_ADMIN.equals(resolveMenuMode(CFG_HOSPITAL_STAFF_MENU_MODE));
+    }
+
+    private boolean shouldSyncSupplierSalesMenus()
+    {
+        return MENU_MODE_SAME_AS_ADMIN.equals(resolveMenuMode(CFG_SUPPLIER_SALES_MENU_MODE));
+    }
+
+    private String resolveMenuMode(String configKey)
+    {
+        String v = StringUtils.trimToEmpty(configService.selectConfigByKey(configKey));
+        if (StringUtils.isEmpty(v))
+        {
+            return MENU_MODE_SAME_AS_ADMIN;
+        }
+        if (MENU_MODE_NONE.equalsIgnoreCase(v))
+        {
+            return MENU_MODE_NONE;
+        }
+        return MENU_MODE_SAME_AS_ADMIN;
     }
 
     private void batchInsertHospitalAuth(Long hospitalId, Set<Long> menuIds, String operBy)

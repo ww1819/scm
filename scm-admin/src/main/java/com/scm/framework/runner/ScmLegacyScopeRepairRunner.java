@@ -17,7 +17,7 @@ import com.scm.system.service.IScmScopeBootstrapService;
 import com.scm.system.service.ISysConfigService;
 
 /**
- * 升级后自动修复：为老医院/老供应商补齐管理员角色及菜单权限（仅补缺，不删除既有授权）。
+ * 升级后自动修复：为老医院/老供应商补齐管理员/职工/业务员角色及菜单权限（仅补缺，不删除既有授权）。
  * 默认仅在检测到应用版本 {@code scm.version} 升级时执行一次，通过 {@code sys_config} 记录防重复。
  */
 @Component
@@ -138,7 +138,7 @@ public class ScmLegacyScopeRepairRunner implements ApplicationRunner
             row.setConfigValue(value);
             row.setConfigType("N");
             row.setCreateBy("system_upgrade");
-            row.setRemark("系统自动写入：老医院/老供应商管理员角色与菜单权限补齐");
+            row.setRemark("系统自动写入：老医院/老供应商角色与菜单权限补齐");
             configService.insertConfig(row);
         }
     }

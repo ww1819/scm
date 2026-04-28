@@ -20,7 +20,7 @@ import com.scm.system.service.IScmScopeBootstrapService;
 import com.scm.system.service.ISysConfigService;
 
 /**
- * 老医院/老供应商：管理员角色与白名单、管理员角色菜单（sys_role_menu）补缺维护。
+ * 老医院/老供应商：管理员/职工/业务员角色与白名单、管理员角色菜单（sys_role_menu）补缺维护。
  */
 @Controller
 @RequestMapping("/scm/maintenance/legacyScope")
@@ -38,7 +38,7 @@ public class ScmLegacyScopeRepairController extends BaseController
 
     /**
      * 手工执行补齐（仅补缺，不删除已有授权）。<br/>
-     * 会补齐：① 缺失的医院/供应商管理员角色；② 医院/供应商菜单白名单缺失项；③ 管理员角色在 sys_role_menu 上缺失的菜单行（与当前菜单种子一致）。<br/>
+     * 会补齐：① 缺失的医院管理员/医院职工/供应商管理员/供应商业务员角色；② 医院/供应商菜单白名单缺失项；③ 管理员角色在 sys_role_menu 上缺失的菜单行（与当前菜单种子一致）。<br/>
      * 防重复：默认 2 分钟内不可重复点击（可传 force=true 跳过冷却）；另受全局防重复提交拦截。
      */
     @RequiresPermissions("system:config:edit")
@@ -83,9 +83,9 @@ public class ScmLegacyScopeRepairController extends BaseController
         }
         if (sum == 0)
         {
-            return AjaxResult.success("未发现待补齐项（管理员角色、白名单、管理员角色菜单均已满足当前规则）。", stat);
+            return AjaxResult.success("未发现待补齐项（角色、白名单、管理员角色菜单均已满足当前规则）。", stat);
         }
-        return AjaxResult.success("补齐完成：已处理缺失的医院/供应商管理员角色、菜单白名单及管理员角色的 sys_role_menu 权限行。", stat);
+        return AjaxResult.success("补齐完成：已处理缺失的医院管理员/医院职工/供应商管理员/供应商业务员角色、菜单白名单及管理员角色的 sys_role_menu 权限行。", stat);
     }
 
     private void upsertLastManualRunMs(String ms)

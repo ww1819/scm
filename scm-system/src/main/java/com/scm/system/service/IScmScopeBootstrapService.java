@@ -13,12 +13,12 @@ public interface IScmScopeBootstrapService
     Set<Long> listAllScopeMenuIds(String authType);
 
     /**
-     * 新供应商注册后：创建供应商管理员角色、写入菜单白名单、角色菜单；返回供应商管理员角色ID
+     * 新供应商注册后：创建供应商管理员+供应商业务员角色、写入菜单白名单、角色菜单；返回供应商管理员角色ID
      */
     Long bootstrapAfterSupplierRegister(Long supplierId, String operBy);
 
     /**
-     * 新医院创建后：创建医院管理员角色、白名单与角色菜单
+     * 新医院创建后：创建医院管理员+医院职工角色、白名单与角色菜单
      */
     void bootstrapAfterHospitalCreated(Long hospitalId, String operBy);
 
@@ -35,8 +35,8 @@ public interface IScmScopeBootstrapService
     void replaceSupplierMenuAuth(Long supplierId, List<Long> menuIds, String operBy);
 
     /**
-     * 升级维护：为老医院/老供应商补齐管理员角色，并补齐管理员角色菜单与白名单（仅补充缺失，不删除既有授权）。
-     * @return 统计信息（createdHospitalAdminRole/createdSupplierAdminRole/addedHospitalMenuAuth/addedSupplierMenuAuth/addedHospitalRoleMenu/addedSupplierRoleMenu）
+     * 升级维护：为老医院/老供应商补齐管理员/职工/业务员角色，并补齐管理员角色菜单与白名单（仅补充缺失，不删除既有授权）。
+     * @return 统计信息（createdHospitalAdminRole/createdHospitalStaffRole/createdSupplierAdminRole/createdSupplierSalesRole/addedHospitalMenuAuth/addedSupplierMenuAuth/addedHospitalRoleMenu/addedSupplierRoleMenu）
      */
     Map<String, Integer> repairLegacyAdminScopes(String operBy);
 }

@@ -18,7 +18,7 @@
 						<a class="btn btn-primary btn-sm" onclick="loadTree()"><i class="fa fa-refresh"></i> 加载菜单</a>
 						<a class="btn btn-warning btn-sm" onclick="resetAuth()" shiro:hasPermission="scmAuth:supplierMenu:reset"><i class="fa fa-undo"></i> 重置为全量</a>
 						<a class="btn btn-success btn-sm" onclick="saveAuth()" shiro:hasPermission="scmAuth:supplierMenu:edit"><i class="fa fa-save"></i> 保存</a>
-						<a class="btn btn-default btn-sm" onclick="repairLegacyScope(false)" shiro:hasPermission="system:config:edit" title="为全部启用中的医院、供应商补缺：管理员角色、菜单白名单、管理员角色菜单（不删已有数据）"><i class="fa fa-wrench"></i> 补齐老数据</a>
+						<a class="btn btn-default btn-sm" onclick="repairLegacyScope(false)" shiro:hasPermission="system:config:edit" title="为全部启用中的医院、供应商补缺：管理员/职工/业务员角色、菜单白名单、管理员角色菜单（不删已有数据）"><i class="fa fa-wrench"></i> 补齐老数据</a>
 						<a class="btn btn-default btn-sm" onclick="repairLegacyScope(true)" shiro:hasPermission="system:config:edit" title="跳过冷却时间，立即再执行一次"><i class="fa fa-bolt"></i> 强制补齐</a>
 					</div>
 				</form>
@@ -86,7 +86,7 @@
 		}
 
 		function repairLegacyScope(force) {
-			var tip = "将对全部启用中的医院、供应商执行补缺：缺失的医院管理员/供应商管理员角色、医院与供应商菜单白名单缺失项、以及管理员角色在 sys_role_menu 上缺失的菜单权限（已有数据不删除）。是否继续？";
+			var tip = "将对全部启用中的医院、供应商执行补缺：缺失的医院管理员/医院职工/供应商管理员/供应商业务员角色、医院与供应商菜单白名单缺失项、以及管理员角色在 sys_role_menu 上缺失的菜单权限（已有数据不删除）。是否继续？";
 			if (force) {
 				tip = "将强制执行上述补缺（忽略手工冷却时间）。是否继续？";
 			}
