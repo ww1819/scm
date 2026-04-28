@@ -11,7 +11,7 @@ public interface SysMenuChangeLogMapper
 {
     int insertSysMenuChangeLog(SysMenuChangeLog row);
 
-    List<SysMenuChangeLog> selectByMenuIdOrderAsc(@Param("menuId") Long menuId);
+    List<SysMenuChangeLog> selectByMenuIdOrderAsc(@Param("menuId") String menuId);
 
-    SysMenuChangeLog selectByLogId(@Param("logId") Long logId);
+    SysMenuChangeLog selectByLogId(@Param("logId") String logId);
 }

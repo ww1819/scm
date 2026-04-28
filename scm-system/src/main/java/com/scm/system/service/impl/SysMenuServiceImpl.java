@@ -23,6 +23,7 @@ import com.scm.common.core.text.Convert;
 import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.uuid.IdUtils;
 import com.scm.common.utils.scm.ScmMenuMetadataInferer;
 import com.scm.common.utils.scm.ScmMenuSnapshotHelper;
 import com.scm.system.mapper.SysMenuChangeLogMapper;
@@ -443,11 +444,15 @@ public class SysMenuServiceImpl implements ISysMenuService
     @Override
     public List<SysMenuChangeLog> selectMenuChangeLogList(Long menuId)
     {
-        return menuChangeLogMapper.selectByMenuIdOrderAsc(menuId);
+        if (menuId == null)
+        {
+            return new ArrayList<>();
+        }
+        return menuChangeLogMapper.selectByMenuIdOrderAsc(String.valueOf(menuId));
     }
 
     @Override
-    public SysMenuChangeLog selectMenuChangeLogById(Long logId)
+    public SysMenuChangeLog selectMenuChangeLogById(String logId)
     {
         return menuChangeLogMapper.selectByLogId(logId);
     }
@@ -459,7 +464,8 @@ public class SysMenuServiceImpl implements ISysMenuService
             return;
         }
         SysMenuChangeLog row = new SysMenuChangeLog();
-        row.setMenuId(menuId);
+        row.setLogId(IdUtils.dashedUuid7());
+        row.setMenuId(String.valueOf(menuId));
         row.setChangeType(changeType);
         row.setOperBy(operBy);
         row.setMenuSnapshot(snapshotJson);

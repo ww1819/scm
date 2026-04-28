@@ -169,5 +169,5 @@ public interface ISysMenuService
      */
     List<SysMenuChangeLog> selectMenuChangeLogList(Long menuId);
 
-    SysMenuChangeLog selectMenuChangeLogById(Long logId);
+    SysMenuChangeLog selectMenuChangeLogById(String logId);
 }

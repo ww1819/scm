@@ -20,6 +20,19 @@ public class IdUtils
     }
 
     /**
+     * 生成 UUID7 风格主键（36位、带连字符，8-4-4-4-12）
+     */
+    public static String dashedUuid7()
+    {
+        String raw = simpleUuid7();
+        return raw.substring(0, 8) + "-"
+            + raw.substring(8, 12) + "-"
+            + raw.substring(12, 16) + "-"
+            + raw.substring(16, 20) + "-"
+            + raw.substring(20);
+    }
+
+    /**
      * 获取随机UUID
      * 
      * @return 随机UUID

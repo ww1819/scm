@@ -5,14 +5,14 @@ import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
 /**
- * 菜单变更记录 sys_menu_change_log
+ * 菜单变更记录 sys_menu_change_log（log_id、menu_id 均为 varchar，主键为 UUID7）
  */
 public class SysMenuChangeLog implements Serializable
 {
     private static final long serialVersionUID = 1L;
 
-    private Long logId;
-    private Long menuId;
+    private String logId;
+    private String menuId;
     /** I 新增 U 修改 D 删除 S 排序 */
     private String changeType;
     private String operBy;
@@ -21,22 +21,22 @@ public class SysMenuChangeLog implements Serializable
     /** JSON：含 before/after 快照 */
     private String menuSnapshot;
 
-    public Long getLogId()
+    public String getLogId()
     {
         return logId;
     }
 
-    public void setLogId(Long logId)
+    public void setLogId(String logId)
     {
         this.logId = logId;
     }
 
-    public Long getMenuId()
+    public String getMenuId()
     {
         return menuId;
     }
 
-    public void setMenuId(Long menuId)
+    public void setMenuId(String menuId)
     {
         this.menuId = menuId;
     }

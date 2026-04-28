@@ -204,7 +204,7 @@ public class SysMenuController extends BaseController
     @RequiresPermissions("system:menu:list")
     @GetMapping("/changeLogRow/{logId}")
     @ResponseBody
-    public AjaxResult changeLogRow(@PathVariable("logId") Long logId)
+    public AjaxResult changeLogRow(@PathVariable("logId") String logId)
     {
         SysMenuChangeLog row = menuService.selectMenuChangeLogById(logId);
         return AjaxResult.success(row);
