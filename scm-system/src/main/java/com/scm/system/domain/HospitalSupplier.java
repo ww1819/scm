@@ -41,6 +41,36 @@ public class HospitalSupplier extends BaseEntity
     /** 状态（0正常 1停用） */
     private String status;
 
+    /** 关联审核状态（0待审核 1已通过 2已拒绝） */
+    private String auditStatus;
+
+    /** 关联审核时间 */
+    private Date auditTime;
+
+    /** 关联审核人 */
+    private String auditBy;
+
+    /** 停用状态（0启用 1停用） */
+    private String disableStatus;
+
+    /** 停用时间 */
+    private Date stopTime;
+
+    /** 停用操作人 */
+    private String stopBy;
+
+    /** 供货开始日期 */
+    private Date supplyStartDate;
+
+    /** 供货结束日期 */
+    private Date supplyEndDate;
+
+    /** 医院名称 */
+    private String hospitalName;
+
+    /** 供应商名称 */
+    private String supplierName;
+
     public Long getRelationId()
     {
         return relationId;
@@ -131,6 +161,106 @@ public class HospitalSupplier extends BaseEntity
         this.status = status;
     }
 
+    public String getAuditStatus()
+    {
+        return auditStatus;
+    }
+
+    public void setAuditStatus(String auditStatus)
+    {
+        this.auditStatus = auditStatus;
+    }
+
+    public Date getAuditTime()
+    {
+        return auditTime;
+    }
+
+    public void setAuditTime(Date auditTime)
+    {
+        this.auditTime = auditTime;
+    }
+
+    public String getAuditBy()
+    {
+        return auditBy;
+    }
+
+    public void setAuditBy(String auditBy)
+    {
+        this.auditBy = auditBy;
+    }
+
+    public String getDisableStatus()
+    {
+        return disableStatus;
+    }
+
+    public void setDisableStatus(String disableStatus)
+    {
+        this.disableStatus = disableStatus;
+    }
+
+    public Date getStopTime()
+    {
+        return stopTime;
+    }
+
+    public void setStopTime(Date stopTime)
+    {
+        this.stopTime = stopTime;
+    }
+
+    public String getStopBy()
+    {
+        return stopBy;
+    }
+
+    public void setStopBy(String stopBy)
+    {
+        this.stopBy = stopBy;
+    }
+
+    public Date getSupplyStartDate()
+    {
+        return supplyStartDate;
+    }
+
+    public void setSupplyStartDate(Date supplyStartDate)
+    {
+        this.supplyStartDate = supplyStartDate;
+    }
+
+    public Date getSupplyEndDate()
+    {
+        return supplyEndDate;
+    }
+
+    public void setSupplyEndDate(Date supplyEndDate)
+    {
+        this.supplyEndDate = supplyEndDate;
+    }
+
+    public String getHospitalName()
+    {
+        return hospitalName;
+    }
+
+    public void setHospitalName(String hospitalName)
+    {
+        this.hospitalName = hospitalName;
+    }
+
+    public String getSupplierName()
+    {
+        return supplierName;
+    }
+
+    public void setSupplierName(String supplierName)
+    {
+        this.supplierName = supplierName;
+    }
+
     @Override
     public String toString()
     {
@@ -144,6 +274,16 @@ public class HospitalSupplier extends BaseEntity
             .append("unbindTime", getUnbindTime())
             .append("unbindBy", getUnbindBy())
             .append("status", getStatus())
+            .append("auditStatus", getAuditStatus())
+            .append("auditTime", getAuditTime())
+            .append("auditBy", getAuditBy())
+            .append("disableStatus", getDisableStatus())
+            .append("stopTime", getStopTime())
+            .append("stopBy", getStopBy())
+            .append("supplyStartDate", getSupplyStartDate())
+            .append("supplyEndDate", getSupplyEndDate())
+            .append("hospitalName", getHospitalName())
+            .append("supplierName", getSupplierName())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())
             .append("updateBy", getUpdateBy())

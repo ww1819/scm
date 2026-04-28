@@ -32,6 +32,11 @@ public interface ISysNoticeService
     public List<SysNotice> selectDashboardNotices();
 
     /**
+     * 首页展示：按用户过滤后的公告（全局 + 指定给该用户）
+     */
+    public List<SysNotice> selectDashboardNoticesByUserId(Long userId);
+
+    /**
      * 新增公告
      * 
      * @param notice 公告信息

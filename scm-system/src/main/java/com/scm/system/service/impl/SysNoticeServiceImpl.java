@@ -50,6 +50,16 @@ public class SysNoticeServiceImpl implements ISysNoticeService
         return noticeMapper.selectDashboardNotices();
     }
 
+    @Override
+    public List<SysNotice> selectDashboardNoticesByUserId(Long userId)
+    {
+        if (userId == null)
+        {
+            return noticeMapper.selectDashboardNotices();
+        }
+        return noticeMapper.selectDashboardNoticesByUserId(userId);
+    }
+
     /**
      * 新增公告
      * 

@@ -35,6 +35,11 @@ public interface HospitalSupplierMapper
     public List<HospitalSupplier> selectHospitalSupplierBySupplierId(Long supplierId);
 
     /**
+     * 按医院+供应商查询关联
+     */
+    public HospitalSupplier selectHospitalSupplierByHospitalAndSupplier(HospitalSupplier hospitalSupplier);
+
+    /**
      * 新增医院供应商关联
      * 
      * @param hospitalSupplier 关联信息
@@ -73,5 +78,15 @@ public interface HospitalSupplierMapper
      * @return 结果
      */
     public int deleteHospitalSupplierBySupplierId(Long supplierId);
+
+    /**
+     * 查询医院供应商关联下是否存在订单
+     */
+    public int countOrderByHospitalAndSupplier(HospitalSupplier hospitalSupplier);
+
+    /**
+     * 查询医院供应商关联下是否存在配送单
+     */
+    public int countDeliveryByHospitalAndSupplier(HospitalSupplier hospitalSupplier);
 }
 

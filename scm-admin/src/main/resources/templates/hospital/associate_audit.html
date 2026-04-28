@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('医院审核供应商关联')" />
+	<th:block th:include="include :: layout-latest-css" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="audit-form">
+					<div class="select-list">
+						<ul>
+							<li>审核状态：
+								<select name="auditStatus">
+									<option value="">全部</option>
+									<option value="0" selected>待审核</option>
+									<option value="1">已通过</option>
+									<option value="2">已拒绝</option>
+								</select>
+							</li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+			<div class="col-sm-12 select-table table-striped">
+				<table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script th:inline="javascript">
+		var auditFlag = [[${@permission.hasPermi('hospital:associateAudit:audit')}]];
+		var prefix = ctx + "hospital/associateAudit";
+
+		$(function() {
+			var options = {
+				url: prefix + "/list",
+				queryParams: function(params) {
+					return { auditStatus: $("#audit-form select[name='auditStatus']").val() };
+				},
+				sortName: "createTime",
+				sortOrder: "desc",
+				modalName: "医院供应商关联审核",
+				columns: [{
+					field: 'applyId',
+					title: '申请ID',
+					visible: false
+				}, {
+					title: '序号',
+					align: 'center',
+					formatter: function (value, row, index) { return $.table.serialNumber(index); }
+				}, {
+					field: 'supplierName',
+					title: '供应商'
+				}, {
+					field: 'supplyStartDate',
+					title: '供货开始'
+				}, {
+					field: 'supplyEndDate',
+					title: '供货结束'
+				}, {
+					field: 'auditStatus',
+					title: '审核状态',
+					formatter: function(v) {
+						if (v == '0') return '<span class="label label-warning">待审核</span>';
+						if (v == '1') return '<span class="label label-success">已通过</span>';
+						if (v == '2') return '<span class="label label-danger">已拒绝</span>';
+						return v || '-';
+					}
+				}, {
+					field: 'auditBy',
+					title: '审核人'
+				}, {
+					field: 'auditTime',
+					title: '审核时间'
+				}, {
+					field: 'auditRemark',
+					title: '审核备注'
+				}, {
+					title: '操作',
+					align: 'center',
+					formatter: function(value, row) {
+						if (row.auditStatus != '0') return '-';
+						var a = [];
+						a.push('<a class="btn btn-success btn-xs ' + auditFlag + '" href="javascript:void(0)" onclick="doAudit(\'' + row.applyId + '\',\'1\')"><i class="fa fa-check"></i>通过</a> ');
+						a.push('<a class="btn btn-danger btn-xs ' + auditFlag + '" href="javascript:void(0)" onclick="doAudit(\'' + row.applyId + '\',\'2\')"><i class="fa fa-remove"></i>拒绝</a>');
+						return a.join('');
+					}
+				}]
+			};
+			$.table.init(options);
+		});
+
+		function doAudit(applyId, approved) {
+			var msg = approved === '1' ? '确认审核通过该关联申请吗？' : '确认拒绝该关联申请吗？';
+			$.modal.confirm(msg, function() {
+				var remark = approved === '2' ? (prompt('请输入拒绝原因（选填）') || '') : '';
+				$.post(prefix + "/audit", { applyId: applyId, approved: approved, auditRemark: remark }, function(res) {
+					if (res.code == web_status.SUCCESS) {
+						$.modal.msgSuccess(res.msg || '操作成功');
+						$.table.refresh();
+					} else {
+						$.modal.msgError(res.msg || '操作失败');
+					}
+				});
+			});
+		}
+	</script>
+</body>
+</html>

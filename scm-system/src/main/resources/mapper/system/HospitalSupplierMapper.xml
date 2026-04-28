@@ -14,6 +14,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="unbindTime"       column="unbind_time"        />
         <result property="unbindBy"         column="unbind_by"          />
         <result property="status"           column="status"             />
+        <result property="auditStatus"      column="audit_status"       />
+        <result property="auditTime"        column="audit_time"         />
+        <result property="auditBy"          column="audit_by"           />
+        <result property="disableStatus"    column="disable_status"     />
+        <result property="stopTime"         column="stop_time"          />
+        <result property="stopBy"           column="stop_by"            />
+        <result property="supplyStartDate"  column="supply_start_date"  />
+        <result property="supplyEndDate"    column="supply_end_date"    />
+        <result property="hospitalName"     column="hospital_name"      />
+        <result property="supplierName"     column="supplier_name"      />
         <result property="createBy"         column="create_by"          />
         <result property="createTime"       column="create_time"       />
         <result property="updateBy"         column="update_by"         />
@@ -22,38 +32,55 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
     
     <sql id="selectHospitalSupplierVo">
-        select relation_id, hospital_id, supplier_id, bind_status, bind_time, bind_by,
-               unbind_time, unbind_by, status, create_by, create_time, update_by, update_time, remark
-        from scm_hospital_supplier
+        select hs.relation_id, hs.hospital_id, hs.supplier_id, hs.bind_status, hs.bind_time, hs.bind_by,
+               hs.unbind_time, hs.unbind_by, hs.status, hs.audit_status, hs.audit_time, hs.audit_by,
+               hs.disable_status, hs.stop_time, hs.stop_by, hs.supply_start_date, hs.supply_end_date,
+               hs.create_by, hs.create_time, hs.update_by, hs.update_time, hs.remark,
+               h.hospital_name, s.company_name as supplier_name
+        from scm_hospital_supplier hs
+        left join scm_hospital h on hs.hospital_id = h.hospital_id
+        left join scm_supplier s on hs.supplier_id = s.supplier_id
     </sql>
     
     <select id="selectHospitalSupplierList" parameterType="HospitalSupplier" resultMap="HospitalSupplierResult">
         <include refid="selectHospitalSupplierVo"/>
         <where>
             <if test="hospitalId != null">
-                AND hospital_id = #{hospitalId}
+                AND hs.hospital_id = #{hospitalId}
             </if>
             <if test="supplierId != null">
-                AND supplier_id = #{supplierId}
+                AND hs.supplier_id = #{supplierId}
             </if>
             <if test="bindStatus != null and bindStatus != ''">
-                AND bind_status = #{bindStatus}
+                AND hs.bind_status = #{bindStatus}
             </if>
             <if test="status != null and status != ''">
-                AND status = #{status}
+                AND hs.status = #{status}
+            </if>
+            <if test="auditStatus != null and auditStatus != ''">
+                AND hs.audit_status = #{auditStatus}
+            </if>
+            <if test="disableStatus != null and disableStatus != ''">
+                AND hs.disable_status = #{disableStatus}
             </if>
         </where>
-        order by create_time desc
+        order by hs.create_time desc
     </select>
     
     <select id="selectHospitalSupplierById" parameterType="Long" resultMap="HospitalSupplierResult">
         <include refid="selectHospitalSupplierVo"/>
-        where relation_id = #{relationId}
+        where hs.relation_id = #{relationId}
     </select>
     
     <select id="selectHospitalSupplierBySupplierId" parameterType="Long" resultMap="HospitalSupplierResult">
         <include refid="selectHospitalSupplierVo"/>
-        where supplier_id = #{supplierId} and status = '0'
+        where hs.supplier_id = #{supplierId} and hs.status = '0'
+    </select>
+
+    <select id="selectHospitalSupplierByHospitalAndSupplier" parameterType="HospitalSupplier" resultMap="HospitalSupplierResult">
+        <include refid="selectHospitalSupplierVo"/>
+        where hs.hospital_id = #{hospitalId} and hs.supplier_id = #{supplierId}
+        limit 1
     </select>
     
     <insert id="insertHospitalSupplier" parameterType="HospitalSupplier" useGeneratedKeys="true" keyProperty="relationId">
@@ -66,6 +93,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="unbindTime != null">unbind_time,</if>
             <if test="unbindBy != null and unbindBy != ''">unbind_by,</if>
             <if test="status != null and status != ''">status,</if>
+            <if test="auditStatus != null and auditStatus != ''">audit_status,</if>
+            <if test="auditTime != null">audit_time,</if>
+            <if test="auditBy != null and auditBy != ''">audit_by,</if>
+            <if test="disableStatus != null and disableStatus != ''">disable_status,</if>
+            <if test="stopTime != null">stop_time,</if>
+            <if test="stopBy != null and stopBy != ''">stop_by,</if>
+            <if test="supplyStartDate != null">supply_start_date,</if>
+            <if test="supplyEndDate != null">supply_end_date,</if>
             <if test="remark != null and remark != ''">remark,</if>
             <if test="createBy != null and createBy != ''">create_by,</if>
             create_time
@@ -78,6 +113,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="unbindTime != null">#{unbindTime},</if>
             <if test="unbindBy != null and unbindBy != ''">#{unbindBy},</if>
             <if test="status != null and status != ''">#{status},</if>
+            <if test="auditStatus != null and auditStatus != ''">#{auditStatus},</if>
+            <if test="auditTime != null">#{auditTime},</if>
+            <if test="auditBy != null and auditBy != ''">#{auditBy},</if>
+            <if test="disableStatus != null and disableStatus != ''">#{disableStatus},</if>
+            <if test="stopTime != null">#{stopTime},</if>
+            <if test="stopBy != null and stopBy != ''">#{stopBy},</if>
+            <if test="supplyStartDate != null">#{supplyStartDate},</if>
+            <if test="supplyEndDate != null">#{supplyEndDate},</if>
             <if test="remark != null and remark != ''">#{remark},</if>
             <if test="createBy != null and createBy != ''">#{createBy},</if>
             sysdate()
@@ -95,6 +138,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="unbindTime != null">unbind_time = #{unbindTime},</if>
             <if test="unbindBy != null and unbindBy != ''">unbind_by = #{unbindBy},</if>
             <if test="status != null and status != ''">status = #{status},</if>
+            <if test="auditStatus != null and auditStatus != ''">audit_status = #{auditStatus},</if>
+            <if test="auditTime != null">audit_time = #{auditTime},</if>
+            <if test="auditBy != null and auditBy != ''">audit_by = #{auditBy},</if>
+            <if test="disableStatus != null and disableStatus != ''">disable_status = #{disableStatus},</if>
+            <if test="stopTime != null">stop_time = #{stopTime},</if>
+            <if test="stopBy != null and stopBy != ''">stop_by = #{stopBy},</if>
+            <if test="supplyStartDate != null">supply_start_date = #{supplyStartDate},</if>
+            <if test="supplyEndDate != null">supply_end_date = #{supplyEndDate},</if>
             <if test="remark != null and remark != ''">remark = #{remark},</if>
             <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
             update_time = sysdate()
@@ -116,5 +167,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <delete id="deleteHospitalSupplierBySupplierId" parameterType="Long">
         delete from scm_hospital_supplier where supplier_id = #{supplierId}
     </delete>
+
+    <select id="countOrderByHospitalAndSupplier" parameterType="HospitalSupplier" resultType="int">
+        select count(1)
+        from scm_order
+        where hospital_id = #{hospitalId}
+          and supplier_id = #{supplierId}
+    </select>
+
+    <select id="countDeliveryByHospitalAndSupplier" parameterType="HospitalSupplier" resultType="int">
+        select count(1)
+        from scm_delivery
+        where hospital_id = #{hospitalId}
+          and supplier_id = #{supplierId}
+    </select>
 </mapper>
 

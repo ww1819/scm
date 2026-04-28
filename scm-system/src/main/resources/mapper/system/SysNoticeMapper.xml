@@ -49,8 +49,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         order by create_time desc
         limit 6
     </select>
+
+    <select id="selectDashboardNoticesByUserId" resultMap="SysNoticeResult">
+        <include refid="selectNoticeVo"/>
+        where status = '0'
+          and (
+            not exists (select 1 from scm_notice_receiver nr where nr.notice_id = sys_notice.notice_id)
+            or exists (select 1 from scm_notice_receiver nr where nr.notice_id = sys_notice.notice_id and nr.user_id = #{userId})
+          )
+        order by create_time desc
+        limit 6
+    </select>
     
-    <insert id="insertNotice" parameterType="SysNotice">
+    <insert id="insertNotice" parameterType="SysNotice" useGeneratedKeys="true" keyProperty="noticeId">
         insert into sys_notice (
 			<if test="noticeTitle != null and noticeTitle != '' ">notice_title, </if>
 			<if test="noticeType != null and noticeType != '' ">notice_type, </if>

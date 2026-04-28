@@ -2,6 +2,7 @@ package com.scm.system.service;
 
 import java.util.List;
 import com.scm.system.domain.HospitalSupplier;
+import com.scm.system.domain.ScmHospitalSupplierApply;
 
 /**
  * 医院供应商关联 服务层
@@ -75,5 +76,39 @@ public interface IHospitalSupplierService
      * @return 结果
      */
     public int saveSupplierHospitals(Long supplierId, String[] hospitalIds, String createBy);
+
+    /**
+     * 供应商向医院发起关联申请（待医院审核）
+     *
+     * @param supplierId 供应商ID
+     * @param hospitalId 医院ID
+     * @param supplyStartDate 供货开始日期
+     * @param supplyEndDate 供货结束日期
+     * @param createBy 发起人
+     * @return 结果
+     */
+    public int submitAssociationFromSupplier(Long supplierId, Long hospitalId, java.util.Date supplyStartDate,
+        java.util.Date supplyEndDate, String createBy, String contractNo, String applyReason, String contactPerson,
+        String contactPhone);
+
+    /**
+     * 医院侧查看关联申请列表
+     */
+    public List<ScmHospitalSupplierApply> selectAssociationApplyList(ScmHospitalSupplierApply query);
+
+    /**
+     * 供应商侧查看自己的关联申请
+     */
+    public List<ScmHospitalSupplierApply> selectSupplierApplyList(Long supplierId, String auditStatus);
+
+    /**
+     * 供应商撤回申请（仅待审核）
+     */
+    public int withdrawAssociationApply(String applyId, Long supplierId, String operBy);
+
+    /**
+     * 医院审核申请（通过后写入 scm_hospital_supplier）
+     */
+    public int auditAssociationApply(String applyId, String approved, String auditRemark, String operBy, Long hospitalCtx);
 }
 

@@ -38,6 +38,9 @@
 	        	<a class="btn btn-success" onclick="$.operate.addTab()" shiro:hasPermission="supplier:supplier:add">
 	                <i class="fa fa-plus"></i> 新增
 	            </a>
+	            <a class="btn btn-info" onclick="$.modal.openTab('新增供应商关联', ctx + 'supplier/associate')" shiro:hasPermission="supplier:associate:view">
+	                <i class="fa fa-link"></i> 新增关联
+	            </a>
 	             <a class="btn btn-primary single disabled" onclick="$.operate.editTab()" shiro:hasPermission="supplier:supplier:edit">
 		            <i class="fa fa-edit"></i> 修改
 		        </a>

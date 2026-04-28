@@ -11,14 +11,46 @@
 				<div class="panel panel-default">
 					<div class="panel-heading">新增供应商关联</div>
 					<div class="panel-body">
-						<p class="text-muted">选择要关联的供应商并提交申请，供应商管理员审核通过后，您将获得该供应商业务员角色。</p>
+						<p class="text-muted">供应商向医院发起关联申请，需填写供货合同起止日期，提交后等待医院审核。</p>
 						<form id="associate-form" class="form-horizontal">
 							<div class="form-group">
-								<label class="col-sm-2 control-label">选择供应商</label>
+								<label class="col-sm-2 control-label">选择医院</label>
 								<div class="col-sm-6">
-									<select name="supplierId" id="supplierId" class="form-control" required>
-										<option value="">请选择供应商</option>
+									<select name="hospitalId" id="hospitalId" class="form-control" required>
+										<option value="">请选择医院</option>
 									</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-sm-2 control-label">供货开始日期</label>
+								<div class="col-sm-3">
+									<input type="date" class="form-control" id="supplyStartDate" name="supplyStartDate" required />
+								</div>
+								<label class="col-sm-1 control-label">至</label>
+								<div class="col-sm-3">
+									<input type="date" class="form-control" id="supplyEndDate" name="supplyEndDate" required />
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-sm-2 control-label">合同编号</label>
+								<div class="col-sm-6">
+									<input type="text" class="form-control" id="contractNo" name="contractNo" placeholder="可选，便于医院核对合同" />
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-sm-2 control-label">联系人</label>
+								<div class="col-sm-3">
+									<input type="text" class="form-control" id="contactPerson" name="contactPerson" placeholder="可选" />
+								</div>
+								<label class="col-sm-1 control-label">联系电话</label>
+								<div class="col-sm-3">
+									<input type="text" class="form-control" id="contactPhone" name="contactPhone" placeholder="可选" />
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-sm-2 control-label">申请说明</label>
+								<div class="col-sm-6">
+									<textarea class="form-control" id="applyReason" name="applyReason" rows="3" placeholder="可填写合作背景、供货范围等"></textarea>
 								</div>
 							</div>
 							<div class="form-group">
@@ -32,30 +64,68 @@
 					</div>
 				</div>
 			</div>
+			<div class="col-sm-12" style="margin-top: 10px;">
+				<div class="panel panel-default">
+					<div class="panel-heading">我的关联申请</div>
+					<div class="panel-body">
+						<div class="btn-group-sm" role="group" style="margin-bottom: 10px;">
+							<a class="btn btn-danger" onclick="withdrawApply()" shiro:hasPermission="supplier:associate:withdraw">
+								<i class="fa fa-undo"></i> 撤回申请
+							</a>
+						</div>
+						<table id="apply-table"></table>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
 	<script th:inline="javascript">
 		var prefix = ctx + "supplier/associate";
+		var withdrawFlag = [[${@permission.hasPermi('supplier:associate:withdraw')}]];
 		$(function() {
-			loadSuppliers();
+			loadHospitals();
+			initMyApplyTable();
 			$("#associate-form").on("submit", function(e) {
 				e.preventDefault();
-				var supplierId = $("#supplierId").val();
-				if (!supplierId) {
-					$.modal.msgWarning("请选择供应商");
+				var hospitalId = $("#hospitalId").val();
+				var supplyStartDate = $("#supplyStartDate").val();
+				var supplyEndDate = $("#supplyEndDate").val();
+				var contractNo = $("#contractNo").val();
+				var applyReason = $("#applyReason").val();
+				var contactPerson = $("#contactPerson").val();
+				var contactPhone = $("#contactPhone").val();
+				if (!hospitalId) {
+					$.modal.msgWarning("请选择医院");
+					return;
+				}
+				if (!supplyStartDate || !supplyEndDate) {
+					$.modal.msgWarning("请填写供货开始和结束日期");
+					return;
+				}
+				if (supplyStartDate > supplyEndDate) {
+					$.modal.msgWarning("供货开始日期不能晚于结束日期");
 					return;
 				}
 				$("#btnSubmit").prop("disabled", true);
 				$.ajax({
 					url: prefix + "/submit",
 					type: "post",
-					data: { supplierId: supplierId },
+					data: {
+						hospitalId: hospitalId,
+						supplyStartDate: supplyStartDate,
+						supplyEndDate: supplyEndDate,
+						contractNo: contractNo,
+						applyReason: applyReason,
+						contactPerson: contactPerson,
+						contactPhone: contactPhone
+					},
 					success: function(result) {
 						if (result.code == 0) {
 							$.modal.msgSuccess(result.msg);
-							$("#supplierId").val("");
+							$("#hospitalId").val("");
+							$.table.refresh('apply-table');
 						} else {
 							$.modal.msgError(result.msg);
 						}
@@ -68,15 +138,87 @@
 				});
 			});
 		});
-		function loadSuppliers() {
-			$.get(prefix + "/listSuppliers", function(result) {
+		function loadHospitals() {
+			$.get(prefix + "/listHospitals", function(result) {
 				if (result.code == 0 && result.data && result.data.length) {
-					var $sel = $("#supplierId");
+					var $sel = $("#hospitalId");
 					$sel.find("option:not(:first)").remove();
 					$.each(result.data, function(i, o) {
-						$sel.append("<option value='" + o.supplierId + "'>" + (o.companyName || o.supplierId) + "</option>");
+						$sel.append("<option value='" + o.hospitalId + "'>" + (o.hospitalName || o.hospitalId) + "</option>");
 					});
 				}
+			});
+		}
+
+		function initMyApplyTable() {
+			var options = {
+				id: "apply-table",
+				url: prefix + "/myList",
+				sortName: "createTime",
+				sortOrder: "desc",
+				modalName: "关联申请",
+				columns: [{
+					checkbox: true
+				}, {
+					field: 'applyId',
+					title: '申请ID',
+					visible: false
+				}, {
+					title: '序号',
+					align: 'center',
+					formatter: function (value, row, index) { return $.table.serialNumber(index); }
+				}, {
+					field: 'hospitalName',
+					title: '医院'
+				}, {
+					field: 'supplyStartDate',
+					title: '供货开始'
+				}, {
+					field: 'supplyEndDate',
+					title: '供货结束'
+				}, {
+					field: 'auditStatus',
+					title: '状态',
+					formatter: function(v) {
+						if (v == '0') return '<span class="label label-warning">待审核</span>';
+						if (v == '1') return '<span class="label label-success">已通过</span>';
+						if (v == '2') return '<span class="label label-danger">已拒绝</span>';
+						return v || '-';
+					}
+				}, {
+					field: 'auditRemark',
+					title: '审核备注'
+				}, {
+					title: '操作',
+					align: 'center',
+					formatter: function(value, row) {
+						if (row.auditStatus != '0') return '-';
+						return '<a class="btn btn-danger btn-xs ' + withdrawFlag + '" href="javascript:void(0)" onclick="withdrawApply(\'' + row.applyId + '\')"><i class="fa fa-undo"></i>撤回</a>';
+					}
+				}]
+			};
+			$.table.init(options);
+		}
+
+		function withdrawApply(applyId) {
+			var targetId = applyId;
+			if (!targetId) {
+				var row = $.table.selectFirstColumns();
+				if (!row || row.length === 0) {
+					$.modal.msgWarning("请先选择一条待撤回申请");
+					return;
+				}
+				targetId = row[0];
+			}
+			$.modal.confirm("确认撤回该申请吗？", function () {
+				$.post(prefix + "/withdraw", { applyId: targetId }, function (res) {
+					if (res.code == web_status.SUCCESS) {
+						$.modal.msgSuccess(res.msg || "撤回成功");
+						$.table.refresh('apply-table');
+					} else {
+						$.modal.msgError(res.msg || "撤回失败");
+					}
+				});
 			});
 		}
 	</script>

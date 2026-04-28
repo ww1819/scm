@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.ScmHospitalSupplierApplyMapper">
+
+    <resultMap id="ApplyResult" type="com.scm.system.domain.ScmHospitalSupplierApply">
+        <id property="applyId" column="apply_id"/>
+        <result property="supplierId" column="supplier_id"/>
+        <result property="hospitalId" column="hospital_id"/>
+        <result property="supplierName" column="supplier_name"/>
+        <result property="hospitalName" column="hospital_name"/>
+        <result property="supplyStartDate" column="supply_start_date"/>
+        <result property="supplyEndDate" column="supply_end_date"/>
+        <result property="contractNo" column="contract_no"/>
+        <result property="applyReason" column="apply_reason"/>
+        <result property="contactPerson" column="contact_person"/>
+        <result property="contactPhone" column="contact_phone"/>
+        <result property="auditStatus" column="audit_status"/>
+        <result property="auditBy" column="audit_by"/>
+        <result property="auditTime" column="audit_time"/>
+        <result property="auditRemark" column="audit_remark"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="delBy" column="del_by"/>
+        <result property="delTime" column="del_time"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectApplyVo">
+        select a.apply_id, a.supplier_id, a.hospital_id, a.supplier_name, a.hospital_name,
+               a.supply_start_date, a.supply_end_date, a.contract_no, a.apply_reason, a.contact_person, a.contact_phone,
+               a.audit_status, a.audit_by, a.audit_time, a.audit_remark,
+               a.del_flag, a.del_by, a.del_time, a.create_by, a.create_time, a.update_by, a.update_time, a.remark
+        from scm_hospital_supplier_apply a
+    </sql>
+
+    <insert id="insertApply" parameterType="com.scm.system.domain.ScmHospitalSupplierApply">
+        insert into scm_hospital_supplier_apply (
+            apply_id, supplier_id, hospital_id, supplier_name, hospital_name,
+            supply_start_date, supply_end_date, contract_no, apply_reason, contact_person, contact_phone,
+            audit_status, audit_by, audit_time, audit_remark,
+            del_flag, del_by, del_time, create_by, create_time, update_by, update_time, remark
+        ) values (
+            #{applyId}, #{supplierId}, #{hospitalId}, #{supplierName}, #{hospitalName},
+            #{supplyStartDate}, #{supplyEndDate}, #{contractNo}, #{applyReason}, #{contactPerson}, #{contactPhone},
+            #{auditStatus}, #{auditBy}, #{auditTime}, #{auditRemark},
+            #{delFlag}, #{delBy}, #{delTime}, #{createBy}, sysdate(), #{updateBy}, #{updateTime}, #{remark}
+        )
+    </insert>
+
+    <update id="updateApply" parameterType="com.scm.system.domain.ScmHospitalSupplierApply">
+        update scm_hospital_supplier_apply
+        <set>
+            <if test="supplierName != null">supplier_name = #{supplierName},</if>
+            <if test="hospitalName != null">hospital_name = #{hospitalName},</if>
+            <if test="supplyStartDate != null">supply_start_date = #{supplyStartDate},</if>
+            <if test="supplyEndDate != null">supply_end_date = #{supplyEndDate},</if>
+            <if test="contractNo != null">contract_no = #{contractNo},</if>
+            <if test="applyReason != null">apply_reason = #{applyReason},</if>
+            <if test="contactPerson != null">contact_person = #{contactPerson},</if>
+            <if test="contactPhone != null">contact_phone = #{contactPhone},</if>
+            <if test="auditStatus != null">audit_status = #{auditStatus},</if>
+            <if test="auditBy != null">audit_by = #{auditBy},</if>
+            <if test="auditTime != null">audit_time = #{auditTime},</if>
+            <if test="auditRemark != null">audit_remark = #{auditRemark},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
+            <if test="delBy != null">del_by = #{delBy},</if>
+            <if test="delTime != null">del_time = #{delTime},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where apply_id = #{applyId}
+    </update>
+
+    <select id="selectByApplyId" resultMap="ApplyResult">
+        <include refid="selectApplyVo"/>
+        where a.apply_id = #{applyId}
+        limit 1
+    </select>
+
+    <select id="selectLatestByHospitalAndSupplier" resultMap="ApplyResult">
+        <include refid="selectApplyVo"/>
+        where a.hospital_id = #{hospitalId} and a.supplier_id = #{supplierId}
+          and (a.del_flag = '0' or a.del_flag is null)
+        order by a.create_time desc
+        limit 1
+    </select>
+
+    <select id="selectApplyList" parameterType="com.scm.system.domain.ScmHospitalSupplierApply" resultMap="ApplyResult">
+        <include refid="selectApplyVo"/>
+        <where>
+            and (a.del_flag = '0' or a.del_flag is null)
+            <if test="hospitalId != null and hospitalId != ''">and a.hospital_id = #{hospitalId}</if>
+            <if test="supplierId != null and supplierId != ''">and a.supplier_id = #{supplierId}</if>
+            <if test="auditStatus != null and auditStatus != ''">and a.audit_status = #{auditStatus}</if>
+        </where>
+        order by a.create_time desc
+    </select>
+</mapper>

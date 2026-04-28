@@ -148,7 +148,7 @@ public class SysIndexController extends BaseController
     public String main(ModelMap mmap)
     {
         mmap.put("version", ScmConfig.getVersion());
-        mmap.put("dashboardNotices", noticeService.selectDashboardNotices());
+        mmap.put("dashboardNotices", noticeService.selectDashboardNoticesByUserId(getUserId()));
         return "main";
     }
 

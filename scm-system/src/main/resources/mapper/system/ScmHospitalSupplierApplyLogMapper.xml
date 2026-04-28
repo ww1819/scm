@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.ScmHospitalSupplierApplyLogMapper">
+
+    <insert id="insertLog" parameterType="com.scm.system.domain.ScmHospitalSupplierApplyLog">
+        insert into scm_hospital_supplier_apply_log (
+            log_id, apply_id, supplier_id, hospital_id, action_type, oper_by, oper_time, snapshot
+        ) values (
+            #{logId}, #{applyId}, #{supplierId}, #{hospitalId}, #{actionType}, #{operBy}, sysdate(), #{snapshot}
+        )
+    </insert>
+</mapper>

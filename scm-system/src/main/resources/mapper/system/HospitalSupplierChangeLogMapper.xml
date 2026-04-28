@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.HospitalSupplierChangeLogMapper">
+
+    <insert id="insertHospitalSupplierChangeLog" parameterType="com.scm.system.domain.HospitalSupplierChangeLog">
+        insert into scm_hospital_supplier_change_log (
+            log_id, relation_id, hospital_id, supplier_id, hospital_name, supplier_name,
+            change_type, oper_by, oper_time, change_snapshot
+        ) values (
+            #{logId}, #{relationId}, #{hospitalId}, #{supplierId}, #{hospitalName}, #{supplierName},
+            #{changeType}, #{operBy}, sysdate(), #{changeSnapshot}
+        )
+    </insert>
+</mapper>

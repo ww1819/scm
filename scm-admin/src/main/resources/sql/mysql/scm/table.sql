@@ -131,8 +131,16 @@ CREATE TABLE IF NOT EXISTS `scm_hospital_supplier` (
   `bind_status` char(1) DEFAULT '0' COMMENT '绑定状态（0待审核 1已绑定 2已解绑）',
   `bind_time` datetime DEFAULT NULL COMMENT '绑定时间',
   `bind_by` varchar(64) DEFAULT '' COMMENT '绑定操作人',
+  `audit_status` char(1) DEFAULT '0' COMMENT '审核状态（0待审核 1已通过 2已拒绝）',
+  `audit_time` datetime DEFAULT NULL COMMENT '审核时间',
+  `audit_by` varchar(64) DEFAULT '' COMMENT '审核人',
   `unbind_time` datetime DEFAULT NULL COMMENT '解绑时间',
   `unbind_by` varchar(64) DEFAULT '' COMMENT '解绑操作人',
+  `disable_status` char(1) DEFAULT '0' COMMENT '停用状态（0启用 1停用）',
+  `stop_time` datetime DEFAULT NULL COMMENT '停用时间',
+  `stop_by` varchar(64) DEFAULT '' COMMENT '停用人',
+  `supply_start_date` date DEFAULT NULL COMMENT '供货开始日期',
+  `supply_end_date` date DEFAULT NULL COMMENT '供货结束日期',
   `status` char(1) DEFAULT '0' COMMENT '状态（0正常 1停用）',
   `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
@@ -144,6 +152,66 @@ CREATE TABLE IF NOT EXISTS `scm_hospital_supplier` (
   KEY `idx_supplier_id` (`supplier_id`),
   UNIQUE KEY `uk_hospital_supplier` (`hospital_id`,`supplier_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医院供应商关联表';
+/
+CREATE TABLE IF NOT EXISTS `scm_hospital_supplier_change_log` (
+  `log_id` varchar(36) NOT NULL COMMENT '主键 UUID7',
+  `relation_id` varchar(36) NOT NULL COMMENT '关联ID（字符化）',
+  `hospital_id` varchar(36) NOT NULL COMMENT '医院ID（字符化）',
+  `supplier_id` varchar(36) NOT NULL COMMENT '供应商ID（字符化）',
+  `hospital_name` varchar(200) DEFAULT '' COMMENT '医院名称快照',
+  `supplier_name` varchar(200) DEFAULT '' COMMENT '供应商名称快照',
+  `change_type` varchar(20) NOT NULL COMMENT '变更类型（SUBMIT/CREATE/UPDATE/DELETE）',
+  `oper_by` varchar(64) DEFAULT '' COMMENT '操作人',
+  `oper_time` datetime DEFAULT NULL COMMENT '操作时间',
+  `change_snapshot` longtext COMMENT '变更快照JSON',
+  PRIMARY KEY (`log_id`),
+  KEY `idx_hscl_relation_time` (`relation_id`, `oper_time`),
+  KEY `idx_hscl_hospital_supplier` (`hospital_id`, `supplier_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医院供应商关联变更日志';
+/
+CREATE TABLE IF NOT EXISTS `scm_hospital_supplier_apply` (
+  `apply_id` varchar(36) NOT NULL COMMENT '主键UUID7',
+  `supplier_id` varchar(36) NOT NULL COMMENT '供应商ID',
+  `hospital_id` varchar(36) NOT NULL COMMENT '医院ID',
+  `supplier_name` varchar(200) DEFAULT '' COMMENT '供应商名称快照',
+  `hospital_name` varchar(200) DEFAULT '' COMMENT '医院名称快照',
+  `supply_start_date` date DEFAULT NULL COMMENT '供货开始日期',
+  `supply_end_date` date DEFAULT NULL COMMENT '供货结束日期',
+  `contract_no` varchar(64) DEFAULT '' COMMENT '合同编号',
+  `apply_reason` varchar(1000) DEFAULT '' COMMENT '申请说明',
+  `contact_person` varchar(64) DEFAULT '' COMMENT '联系人',
+  `contact_phone` varchar(32) DEFAULT '' COMMENT '联系电话',
+  `audit_status` char(1) DEFAULT '0' COMMENT '审核状态（0待审核 1已通过 2已拒绝）',
+  `audit_by` varchar(64) DEFAULT '' COMMENT '审核人',
+  `audit_time` datetime DEFAULT NULL COMMENT '审核时间',
+  `audit_remark` varchar(500) DEFAULT '' COMMENT '审核备注',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除状态（0存在 2删除）',
+  `del_by` varchar(64) DEFAULT '' COMMENT '删除者',
+  `del_time` datetime DEFAULT NULL COMMENT '删除时间',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`apply_id`),
+  KEY `idx_hsa_hospital` (`hospital_id`),
+  KEY `idx_hsa_supplier` (`supplier_id`),
+  KEY `idx_hsa_audit` (`audit_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='供应商向医院关联申请表';
+/
+CREATE TABLE IF NOT EXISTS `scm_hospital_supplier_apply_log` (
+  `log_id` varchar(36) NOT NULL COMMENT '主键UUID7',
+  `apply_id` varchar(36) NOT NULL COMMENT '申请ID',
+  `supplier_id` varchar(36) NOT NULL COMMENT '供应商ID',
+  `hospital_id` varchar(36) NOT NULL COMMENT '医院ID',
+  `action_type` varchar(32) NOT NULL COMMENT '动作类型（SUBMIT/AUDIT_PASS/AUDIT_REJECT/UPDATE/DELETE）',
+  `oper_by` varchar(64) DEFAULT '' COMMENT '操作人',
+  `oper_time` datetime DEFAULT NULL COMMENT '操作时间',
+  `snapshot` longtext COMMENT '快照JSON',
+  PRIMARY KEY (`log_id`),
+  KEY `idx_hsal_apply` (`apply_id`),
+  KEY `idx_hsal_hospital_supplier` (`hospital_id`,`supplier_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='关联申请变更记录表';
 /
 CREATE TABLE IF NOT EXISTS `scm_material_category` (
   `category_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '分类ID',
@@ -991,6 +1059,20 @@ CREATE TABLE IF NOT EXISTS `sys_notice` (
   `remark` varchar(255) DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`notice_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='通知公告表';
+/
+CREATE TABLE IF NOT EXISTS `scm_notice_receiver` (
+  `id` varchar(36) NOT NULL COMMENT '主键UUID7',
+  `notice_id` bigint(20) NOT NULL COMMENT '公告ID',
+  `user_id` bigint(20) NOT NULL COMMENT '接收人用户ID',
+  `read_flag` char(1) DEFAULT '0' COMMENT '是否已读（0未读 1已读）',
+  `read_time` datetime DEFAULT NULL COMMENT '已读时间',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_notice_user` (`notice_id`,`user_id`),
+  KEY `idx_notice_receiver_user` (`user_id`),
+  KEY `idx_notice_receiver_notice` (`notice_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='通知定向接收人表';
 /
 CREATE TABLE IF NOT EXISTS `sys_oper_log` (
   `oper_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '日志主键',
