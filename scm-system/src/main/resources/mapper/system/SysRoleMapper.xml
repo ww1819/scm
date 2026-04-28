@@ -78,10 +78,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			and date_format(r.create_time,'%Y%m%d') &lt;= date_format(#{params.endTime},'%Y%m%d')
 		</if>
 		<if test="params != null and params.hospitalName != null and params.hospitalName != ''">
-			AND sh.hospital_name like concat('%', #{params.hospitalName}, '%')
+			AND (sh.hospital_name like concat('%', #{params.hospitalName}, '%')
+				OR IFNULL(sh.pinyin_code, '') like concat('%', #{params.hospitalName}, '%'))
 		</if>
 		<if test="params != null and params.supplierCompanyName != null and params.supplierCompanyName != ''">
-			AND sup.company_name like concat('%', #{params.supplierCompanyName}, '%')
+			AND (sup.company_name like concat('%', #{params.supplierCompanyName}, '%')
+				OR IFNULL(sup.pinyin_code, '') like concat('%', #{params.supplierCompanyName}, '%'))
 		</if>
 		<if test="params != null and params.excludeAdminRole != null and params.excludeAdminRole != ''">
 			AND r.role_id &lt;&gt; 1
