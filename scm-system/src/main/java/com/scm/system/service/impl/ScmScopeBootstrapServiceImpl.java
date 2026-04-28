@@ -15,6 +15,7 @@ import com.scm.common.constant.ScmMenuConstants;
 import com.scm.common.core.domain.entity.SysMenu;
 import com.scm.common.core.domain.entity.SysRole;
 import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.PinyinUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.uuid.IdUtils;
 import com.scm.system.domain.ScmHospitalMenuAuth;
@@ -223,6 +224,7 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         role.setHospitalId(hospitalId);
         role.setRemark("系统自动创建");
         role.setCreateBy(StringUtils.isNotEmpty(operBy) ? operBy : "system");
+        role.setPinyinCode(PinyinUtils.getShortCode(role.getRoleName()));
         sysRoleMapper.insertRole(role);
         return role;
     }
@@ -244,6 +246,7 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         role.setSupplierId(supplierId);
         role.setRemark("系统自动创建");
         role.setCreateBy(StringUtils.isNotEmpty(operBy) ? operBy : "system");
+        role.setPinyinCode(PinyinUtils.getShortCode(role.getRoleName()));
         sysRoleMapper.insertRole(role);
         return role;
     }

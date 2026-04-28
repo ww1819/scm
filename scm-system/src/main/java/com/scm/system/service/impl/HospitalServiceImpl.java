@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.scm.common.core.text.Convert;
 import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.PinyinUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.Hospital;
 import com.scm.system.mapper.HospitalMapper;
@@ -69,6 +70,7 @@ public class HospitalServiceImpl implements IHospitalService
         {
             hospital.setHospitalCode(generateHospitalCode());
         }
+        fillHospitalPinyin(hospital);
         hospital.setCreateTime(DateUtils.getNowDate());
         int rows = hospitalMapper.insertHospital(hospital);
         if (rows > 0 && hospital.getHospitalId() != null)
@@ -120,8 +122,26 @@ public class HospitalServiceImpl implements IHospitalService
     @Override
     public int updateHospital(Hospital hospital)
     {
+        fillHospitalPinyin(hospital);
         hospital.setUpdateTime(DateUtils.getNowDate());
         return hospitalMapper.updateHospital(hospital);
+    }
+
+    private void fillHospitalPinyin(Hospital hospital)
+    {
+        if (hospital == null)
+        {
+            return;
+        }
+        if (StringUtils.isNotEmpty(hospital.getHospitalName()))
+        {
+            String py = PinyinUtils.getShortCode(hospital.getHospitalName().trim());
+            hospital.setPinyinCode(py != null ? py : "");
+        }
+        else
+        {
+            hospital.setPinyinCode("");
+        }
     }
 
     /**

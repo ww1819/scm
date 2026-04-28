@@ -507,4 +507,11 @@ ALTER TABLE sys_role_menu MODIFY COLUMN hospital_id varchar(36) NOT NULL DEFAULT
 /
 ALTER TABLE sys_role_menu MODIFY COLUMN supplier_id varchar(36) NOT NULL DEFAULT '' COMMENT '绑定供应商（空不按供应商收窄）';
 /
+/
+CALL add_table_column('scm_hospital', 'pinyin_code', 'varchar(64)', '首拼简码（医院名称拼音首字母，小写）', NULL);
+/
+CALL add_table_column('scm_supplier', 'pinyin_code', 'varchar(64)', '首拼简码（公司名称拼音首字母，小写）', NULL);
+/
+CALL add_table_column('sys_role', 'pinyin_code', 'varchar(64)', '首拼简码（角色名称拼音首字母，小写）', NULL);
+/
 -- 菜单初始化/分类/白名单回填语句已迁移至 menu.sql，column.sql 仅保留结构变更。

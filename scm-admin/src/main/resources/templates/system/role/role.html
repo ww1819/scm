@@ -11,7 +11,7 @@
 					<div class="select-list">
 						<ul>
 							<li>
-								角色名称：<input type="text" name="roleName"/>
+								角色名称/首拼：<input type="text" name="roleName" placeholder="名称或拼音首字母"/>
 							</li>
 							<li>
 								权限字符：<input type="text" name="roleKey"/>
@@ -62,6 +62,12 @@
 		        <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="system:role:export">
 		            <i class="fa fa-download"></i> 导出
 		        </a>
+		        <a class="btn btn-info" onclick="backfillHospitalSupplierPinyin(false)" shiro:hasPermission="system:config:edit" title="医院、供应商、角色首拼（仅空值）">
+		            <i class="fa fa-font"></i> 首拼批量生成
+		        </a>
+		        <a class="btn btn-default" onclick="backfillHospitalSupplierPinyin(true)" shiro:hasPermission="system:config:edit" title="覆盖已有首拼">
+		            <i class="fa fa-refresh"></i> 首拼强制重算
+		        </a>
 	        </div>
 	        
 	        <div class="col-sm-12 select-table table-striped">
@@ -96,6 +102,10 @@
 		            field: 'roleName',
 		            title: '角色名称',
 		            sortable: true
+		        },
+		        {
+		            field: 'pinyinCode',
+		            title: '首拼简码'
 		        },
 		        {
 		            field: 'roleKey',
@@ -229,6 +239,24 @@
 			$.modal.confirm("确认要启用角色吗？", function() {
 				$.operate.post(prefix + "/changeStatus", { "roleId": roleId, "status": 0 });
 		    })
+		}
+
+		function backfillHospitalSupplierPinyin(overwrite) {
+			var tip = overwrite
+				? '将按名称重新计算并覆盖已有「首拼简码」（医院+供应商+角色），确定吗？'
+				: '将按名称补全空的「首拼简码」（医院+供应商+角色），确定吗？';
+			$.modal.confirm(tip, function () {
+				$.modal.loading('正在生成…');
+				$.post(ctx + 'scm/maintenance/pinyin/backfill', { overwrite: overwrite }, function (res) {
+					$.modal.closeLoading();
+					if (res.code == web_status.SUCCESS) {
+						$.modal.msgSuccess(res.msg || '完成');
+						$.table.search();
+					} else {
+						$.modal.alertError(res.msg);
+					}
+				});
+			});
 		}
 	</script>
 </body>

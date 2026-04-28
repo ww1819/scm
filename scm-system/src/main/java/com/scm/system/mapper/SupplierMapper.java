@@ -1,6 +1,7 @@
 package com.scm.system.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.scm.system.domain.Supplier;
 
 /**
@@ -72,5 +73,8 @@ public interface SupplierMapper
      * 查询启用且未删除的供应商ID（用于升级补齐）
      */
     public List<Long> selectActiveSupplierIds();
+
+    /** 仅更新首拼简码（批量回填） */
+    public int updateSupplierPinyinCode(@Param("supplierId") Long supplierId, @Param("pinyinCode") String pinyinCode);
 }
 

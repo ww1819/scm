@@ -34,6 +34,10 @@ public class Supplier extends BaseEntity
     @Excel(name = "拼音简码")
     private String companyShortName;
 
+    /** 首拼简码（公司名称拼音首字母，小写；下拉检索用） */
+    @Excel(name = "首拼简码")
+    private String pinyinCode;
+
     /** 法人 */
     @Excel(name = "法人")
     private String legalPerson;
@@ -148,6 +152,17 @@ public class Supplier extends BaseEntity
     public void setCompanyShortName(String companyShortName)
     {
         this.companyShortName = companyShortName;
+    }
+
+    @Size(min = 0, max = 64, message = "首拼简码不能超过64个字符")
+    public String getPinyinCode()
+    {
+        return pinyinCode;
+    }
+
+    public void setPinyinCode(String pinyinCode)
+    {
+        this.pinyinCode = pinyinCode;
     }
 
     @Size(min = 0, max = 50, message = "法人不能超过50个字符")
@@ -359,6 +374,7 @@ public class Supplier extends BaseEntity
             .append("supplierCode", getSupplierCode())
             .append("companyName", getCompanyName())
             .append("companyShortName", getCompanyShortName())
+            .append("pinyinCode", getPinyinCode())
             .append("legalPerson", getLegalPerson())
             .append("registeredCapital", getRegisteredCapital())
             .append("province", getProvince())

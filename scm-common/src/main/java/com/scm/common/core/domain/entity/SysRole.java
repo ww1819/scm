@@ -25,6 +25,10 @@ public class SysRole extends BaseEntity
     @Excel(name = "角色名称")
     private String roleName;
 
+    /** 首拼简码（角色名称拼音首字母，小写） */
+    @Excel(name = "首拼简码")
+    private String pinyinCode;
+
     /** 角色权限 */
     @Excel(name = "角色权限")
     private String roleKey;
@@ -171,6 +175,17 @@ public class SysRole extends BaseEntity
         this.roleName = roleName;
     }
 
+    @Size(min = 0, max = 64, message = "首拼简码长度不能超过64个字符")
+    public String getPinyinCode()
+    {
+        return pinyinCode;
+    }
+
+    public void setPinyinCode(String pinyinCode)
+    {
+        this.pinyinCode = pinyinCode;
+    }
+
     @NotBlank(message = "权限字符不能为空")
     @Size(min = 0, max = 100, message = "权限字符长度不能超过100个字符")
     public String getRoleKey()
@@ -259,6 +274,7 @@ public class SysRole extends BaseEntity
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
             .append("roleId", getRoleId())
             .append("roleName", getRoleName())
+            .append("pinyinCode", getPinyinCode())
             .append("roleKey", getRoleKey())
             .append("roleSort", getRoleSort())
             .append("dataScope", getDataScope())

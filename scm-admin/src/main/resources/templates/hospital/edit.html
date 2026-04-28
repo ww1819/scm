@@ -29,6 +29,16 @@
             <div class="row">
                 <div class="col-sm-6">
                     <div class="form-group">
+                        <label class="col-sm-4 control-label">首拼简码：</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control" th:value="${hospital.pinyinCode}" readonly placeholder="保存时按医院名称自动生成">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
                         <label class="col-sm-4 control-label">医院等级：</label>
                         <div class="col-sm-8">
                             <select name="hospitalLevel" class="form-control">

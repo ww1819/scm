@@ -14,6 +14,8 @@
 		#maintainSupplierSuggestPanel .list-group-item { cursor: pointer; padding: 6px 10px; border: 0; border-bottom: 1px solid #eee; }
 		#maintainSupplierSuggestPanel .list-group-item:hover { background: #f5f5f5; }
 		.field-muted { background-color: #eee !important; cursor: not-allowed !important; color: #888 !important; }
+		#rolePickerModal .fixed-table-toolbar { display: none; }
+		#rolePickerModal .bootstrap-table .table { margin-bottom: 0; }
 	</style>
 </head>
 <body>
@@ -129,12 +131,15 @@
                     <div class="form-group">
                         <label class="col-xs-2 control-label is-required">角色：</label>
                         <div class="col-xs-10">
-                            <select id="roleIdSelect" class="form-control" required>
-                                <option value="">请选择角色</option>
-                                <option th:each="role : ${roles}" th:value="${role.roleId}" th:text="${role.roleName}"
-                                        th:attr="data-role-key=${role.roleKey}"
-                                        th:disabled="${role.status == '1'}"></option>
-                            </select>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="pickedRoleDisplay" readonly placeholder="请点击右侧按钮，在弹窗中选择角色"/>
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-default" onclick="openRolePicker()"><i class="fa fa-search"></i> 选择角色</button>
+                                </span>
+                            </div>
+                            <input type="hidden" id="pickedRoleId"/>
+                            <input type="hidden" id="pickedRoleKey"/>
+                            <input type="hidden" id="pickedRoleName"/>
                         </div>
                     </div>
                 </div>
@@ -175,7 +180,40 @@
             </div>
         </form>
     </div>
-      
+    <div class="modal fade" id="rolePickerModal" tabindex="-1" data-backdrop="static">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">选择角色</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="row" style="margin-bottom:10px;">
+                        <div class="col-sm-4">
+                            <label class="control-label">角色名称</label>
+                            <input type="text" class="form-control" id="rpc_roleName" placeholder="模糊查询"/>
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="control-label">医院名称</label>
+                            <input type="text" class="form-control" id="rpc_hospitalName" placeholder="绑定医院"/>
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="control-label">供应商名称</label>
+                            <input type="text" class="form-control" id="rpc_supplierName" placeholder="绑定供应商"/>
+                        </div>
+                    </div>
+                    <p>
+                        <a class="btn btn-primary btn-sm" onclick="rolePickerSearch()"><i class="fa fa-search"></i> 查询</a>
+                        <a class="btn btn-warning btn-sm" onclick="rolePickerReset()"><i class="fa fa-refresh"></i> 重置</a>
+                    </p>
+                    <table id="rolePickerTable"></table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="row">
         <div class="col-sm-offset-5 col-sm-10">
             <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
@@ -187,11 +225,105 @@
 	<script th:inline="javascript">
 	    var prefix = ctx + "system/user";
 
+        var rolePickerTableInited = false;
+
         function roleKeyFromSelect() {
-            return $('#roleIdSelect option:selected').attr('data-role-key') || '';
+            return $.common.trim($('#pickedRoleKey').val() || '');
         }
         function roleNameFromSelect() {
-            return $.common.trim($('#roleIdSelect option:selected').text() || '');
+            return $.common.trim($('#pickedRoleName').val() || '');
+        }
+
+        function openRolePicker() {
+            $('#rolePickerModal').modal('show');
+            if (!rolePickerTableInited) {
+                initRolePickerTable();
+                rolePickerTableInited = true;
+            } else {
+                $('#rolePickerTable').bootstrapTable('refresh');
+            }
+        }
+
+        function rolePickerSearch() {
+            if (rolePickerTableInited) {
+                $('#rolePickerTable').bootstrapTable('refresh', { pageNumber: 1 });
+            }
+        }
+
+        function rolePickerReset() {
+            $('#rpc_roleName').val('');
+            $('#rpc_hospitalName').val('');
+            $('#rpc_supplierName').val('');
+            rolePickerSearch();
+        }
+
+        function initRolePickerTable() {
+            $('#rolePickerTable').bootstrapTable({
+                url: prefix + '/rolePicker/list',
+                method: 'post',
+                contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                striped: true,
+                sidePagination: 'server',
+                pagination: true,
+                pageSize: 10,
+                pageList: [10, 25, 50],
+                height: 360,
+                queryParams: function (params) {
+                    return {
+                        pageNum: params.offset / params.limit + 1,
+                        pageSize: params.limit,
+                        roleName: $('#rpc_roleName').val(),
+                        pickerHospitalName: $('#rpc_hospitalName').val(),
+                        pickerSupplierName: $('#rpc_supplierName').val()
+                    };
+                },
+                responseHandler: function (res) {
+                    if (res.code === web_status.SUCCESS) {
+                        return { rows: res.rows, total: res.total };
+                    }
+                    $.modal.alertWarning(res.msg || '加载失败');
+                    return { rows: [], total: 0 };
+                },
+                columns: [
+                    { field: 'roleId', title: '编号', width: 70 },
+                    { field: 'roleName', title: '角色名称', sortable: true },
+                    { field: 'roleKey', title: '权限字符' },
+                    { field: 'pinyinCode', title: '首拼简码', formatter: function (v) { return v || '—'; } },
+                    {
+                        field: 'hospitalName',
+                        title: '绑定医院',
+                        formatter: function (v) { return v || '—'; }
+                    },
+                    {
+                        field: 'supplierCompanyName',
+                        title: '绑定供应商',
+                        formatter: function (v) { return v || '—'; }
+                    },
+                    {
+                        title: '操作',
+                        align: 'center',
+                        formatter: function (value, row, index) {
+                            return '<a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="applyPickedRoleAt(' + index + ')"><i class="fa fa-check"></i> 选择</a>';
+                        }
+                    }
+                ]
+            });
+        }
+
+        function applyPickedRoleAt(index) {
+            var rows = $('#rolePickerTable').bootstrapTable('getData');
+            var row = rows[index];
+            if (!row) {
+                return;
+            }
+            $('#pickedRoleId').val(row.roleId);
+            $('#pickedRoleKey').val(row.roleKey || '');
+            $('#pickedRoleName').val(row.roleName || '');
+            var hn = row.hospitalName || '—';
+            var sn = row.supplierCompanyName || '—';
+            $('#pickedRoleDisplay').val((row.roleName || '') + '（医院：' + hn + '，供应商：' + sn + '）');
+            $('#rolePickerModal').modal('hide');
+            applyMaintainFieldsByRole();
         }
         function isHospitalPrincipalRole() {
             var k = roleKeyFromSelect();
@@ -300,7 +432,7 @@
         });
         
         function submitHandler() {
-            var roleId = $.common.trim($("#roleIdSelect").val());
+            var roleId = $.common.trim($("#pickedRoleId").val());
             if (!roleId) {
                 $.modal.msgWarning("请选择角色");
                 return;
@@ -343,9 +475,6 @@
             $('#post').select2({
                 placeholder: "请选择岗位",
                 allowClear: true
-            });
-            $('#roleIdSelect').on('change', function () {
-                applyMaintainFieldsByRole();
             });
             applyMaintainFieldsByRole();
             var supplierTimer;

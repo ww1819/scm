@@ -15,7 +15,7 @@
 								供应商编码：<input type="text" name="supplierCode"/>
 							</li>
 							<li>
-								公司名称：<input type="text" name="companyName"/>
+								公司名称/首拼：<input type="text" name="companyName" placeholder="名称或拼音首字母"/>
 							</li>
 							<li>
 								状态：<select name="status">
@@ -47,6 +47,12 @@
 	            <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="supplier:supplier:export">
 		            <i class="fa fa-download"></i> 导出
 		        </a>
+	            <a class="btn btn-info" onclick="backfillHospitalSupplierPinyin(false)" shiro:hasPermission="system:config:edit" title="为医院、供应商按名称补全首拼简码（仅空值）">
+	                <i class="fa fa-font"></i> 首拼批量生成
+	            </a>
+	            <a class="btn btn-default" onclick="backfillHospitalSupplierPinyin(true)" shiro:hasPermission="system:config:edit" title="覆盖已有首拼简码">
+	                <i class="fa fa-refresh"></i> 首拼强制重算
+	            </a>
 	        </div>
 	        
 	        <div class="col-sm-12 select-table table-striped">
@@ -102,6 +108,10 @@
 		            formatter: function (value, row, index) {
 		                return '<a href="javascript:void(0)" onclick="$.operate.view(\'' + row.supplierId + '\')">' + value + '</a>';
 		            }
+		        },
+		        {
+		            field: 'pinyinCode',
+		            title: '首拼简码'
 		        },
 		        {
 		            field: 'deliveryHospitals',
@@ -164,6 +174,24 @@
 		function resetPre() {
 			$("#supplier-form")[0].reset();
 			$.table.search();
+		}
+
+		function backfillHospitalSupplierPinyin(overwrite) {
+			var tip = overwrite
+				? '将按名称重新计算并覆盖已有「首拼简码」（医院+供应商+角色），确定吗？'
+				: '将按名称补全空的「首拼简码」（医院+供应商+角色），确定吗？';
+			$.modal.confirm(tip, function () {
+				$.modal.loading('正在生成…');
+				$.post(ctx + 'scm/maintenance/pinyin/backfill', { overwrite: overwrite }, function (res) {
+					$.modal.closeLoading();
+					if (res.code == web_status.SUCCESS) {
+						$.modal.msgSuccess(res.msg || '完成');
+						$.table.search();
+					} else {
+						$.modal.alertError(res.msg);
+					}
+				});
+			});
 		}
 
 		/* 供应商状态显示 */

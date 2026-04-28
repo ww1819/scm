@@ -1,6 +1,7 @@
 package com.scm.system.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.scm.system.domain.Hospital;
 
 /**
@@ -70,5 +71,10 @@ public interface HospitalMapper
      * 查询启用且未删除的医院ID（用于升级补齐）
      */
     public List<Long> selectActiveHospitalIds();
+
+    /**
+     * 仅更新首拼简码（批量回填）
+     */
+    public int updateHospitalPinyinCode(@Param("hospitalId") Long hospitalId, @Param("pinyinCode") String pinyinCode);
 }
 

@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS `scm_supplier` (
   `supplier_code` varchar(50) DEFAULT '' COMMENT '供应商编码',
   `company_name` varchar(200) NOT NULL COMMENT '公司名称',
   `company_short_name` varchar(100) DEFAULT '' COMMENT '公司简称',
+  `pinyin_code` varchar(64) DEFAULT '' COMMENT '首拼简码（公司名称拼音首字母，小写）',
   `legal_person` varchar(50) DEFAULT '' COMMENT '法人',
   `registered_capital` decimal(18,2) DEFAULT 0 COMMENT '注册资金',
   `province` varchar(50) DEFAULT '' COMMENT '省份/直辖市',
@@ -88,6 +89,7 @@ CREATE TABLE IF NOT EXISTS `scm_hospital` (
   `hospital_code` varchar(50) DEFAULT '' COMMENT '医院编码',
   `hospital_name` varchar(200) NOT NULL COMMENT '医院名称',
   `hospital_short_name` varchar(100) DEFAULT '' COMMENT '医院简称',
+  `pinyin_code` varchar(64) DEFAULT '' COMMENT '首拼简码（医院名称拼音首字母，小写）',
   `hospital_level` varchar(50) DEFAULT '' COMMENT '医院等级',
   `province` varchar(50) DEFAULT '' COMMENT '省份/直辖市',
   `city` varchar(50) DEFAULT '' COMMENT '城市',
@@ -1031,6 +1033,7 @@ CREATE TABLE IF NOT EXISTS `sys_post` (
 CREATE TABLE IF NOT EXISTS `sys_role` (
   `role_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '角色ID',
   `role_name` varchar(30) NOT NULL COMMENT '角色名称',
+  `pinyin_code` varchar(64) DEFAULT '' COMMENT '首拼简码（角色名称拼音首字母，小写）',
   `role_key` varchar(100) NOT NULL COMMENT '角色权限字符串',
   `role_sort` int(4) NOT NULL COMMENT '显示顺序',
   `data_scope` char(1) DEFAULT '1' COMMENT '数据范围（1全部 2自定义 3本部门 4本部门及以下）',

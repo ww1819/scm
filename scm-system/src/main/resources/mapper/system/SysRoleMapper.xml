@@ -7,6 +7,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<resultMap type="SysRole" id="SysRoleResult">
 		<id     property="roleId"       column="role_id"        />
 		<result property="roleName"     column="role_name"      />
+		<result property="pinyinCode"   column="pinyin_code"    />
 		<result property="roleKey"      column="role_key"       />
 		<result property="roleSort"     column="role_sort"      />
 		<result property="dataScope"    column="data_scope"     />
@@ -27,7 +28,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	</resultMap>
 	
 	<sql id="selectRoleContactVo">
-        select distinct r.role_id, r.role_name, r.role_key, r.role_sort, r.data_scope,
+        select distinct r.role_id, r.role_name, r.pinyin_code, r.role_key, r.role_sort, r.data_scope,
             r.status, r.del_flag, r.create_time, r.remark, r.tenant_id, t.tenant_name,
             r.role_type, r.hospital_id, r.supplier_id, sh.hospital_name, sup.company_name as supplier_company_name
         from sys_role r
@@ -40,7 +41,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </sql>
     
     <sql id="selectRoleVo">
-		select r.role_id, r.role_name, r.role_key, r.role_sort, r.data_scope, r.status, r.del_flag, r.create_time, r.remark,
+		select r.role_id, r.role_name, r.pinyin_code, r.role_key, r.role_sort, r.data_scope, r.status, r.del_flag, r.create_time, r.remark,
 		       r.tenant_id, r.supplier_id, r.role_type, r.hospital_id
         from sys_role r
 	</sql>
@@ -52,7 +53,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 			AND r.role_id = #{roleId}
 		</if>
 		<if test="roleName != null and roleName != ''">
-			AND r.role_name like concat('%', #{roleName}, '%')
+			AND (r.role_name like concat('%', #{roleName}, '%')
+				OR IFNULL(r.pinyin_code, '') like concat('%', #{roleName}, '%'))
 		</if>
 		<if test="status != null and status != ''">
 			AND r.status = #{status}
@@ -74,6 +76,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		</if>
 		<if test="params.endTime != null and params.endTime != ''"><!-- 结束时间检索 -->
 			and date_format(r.create_time,'%Y%m%d') &lt;= date_format(#{params.endTime},'%Y%m%d')
+		</if>
+		<if test="params != null and params.hospitalName != null and params.hospitalName != ''">
+			AND sh.hospital_name like concat('%', #{params.hospitalName}, '%')
+		</if>
+		<if test="params != null and params.supplierCompanyName != null and params.supplierCompanyName != ''">
+			AND sup.company_name like concat('%', #{params.supplierCompanyName}, '%')
+		</if>
+		<if test="params != null and params.excludeAdminRole != null and params.excludeAdminRole != ''">
+			AND r.role_id &lt;&gt; 1
 		</if>
 		<!-- 数据范围过滤 -->
 		${params.dataScope}
@@ -158,6 +169,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  		update sys_role
  		<set>
  			<if test="roleName != null and roleName != ''">role_name = #{roleName},</if>
+ 			<if test="pinyinCode != null">pinyin_code = #{pinyinCode},</if>
  			<if test="roleKey != null and roleKey != ''">role_key = #{roleKey},</if>
  			<if test="roleSort != null and roleSort != ''">role_sort = #{roleSort},</if>
  			<if test="dataScope != null and dataScope != ''">data_scope = #{dataScope},</if>
@@ -177,6 +189,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  		insert into sys_role(
  			<if test="roleId != null and roleId != 0">role_id,</if>
  			<if test="roleName != null and roleName != ''">role_name,</if>
+ 			<if test="pinyinCode != null">pinyin_code,</if>
  			<if test="roleKey != null and roleKey != ''">role_key,</if>
  			<if test="roleSort != null and roleSort != ''">role_sort,</if>
  			<if test="dataScope != null and dataScope != ''">data_scope,</if>
@@ -191,6 +204,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  		)values(
  			<if test="roleId != null and roleId != 0">#{roleId},</if>
  			<if test="roleName != null and roleName != ''">#{roleName},</if>
+ 			<if test="pinyinCode != null">#{pinyinCode},</if>
  			<if test="roleKey != null and roleKey != ''">#{roleKey},</if>
  			<if test="roleSort != null and roleSort != ''">#{roleSort},</if>
  			<if test="dataScope != null and dataScope != ''">#{dataScope},</if>
@@ -204,5 +218,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  			sysdate()
  		)
 	</insert>
+
+	<select id="selectRolesForPinyinBackfill" resultMap="SysRoleResult">
+		select r.role_id, r.role_name, r.pinyin_code, r.role_key, r.role_sort, r.data_scope,
+			r.status, r.del_flag, r.create_time, r.remark, r.tenant_id, null as tenant_name,
+			r.role_type, r.hospital_id, r.supplier_id, null as hospital_name, null as supplier_company_name
+		from sys_role r
+		where r.del_flag = '0'
+	</select>
+
+	<update id="updateRolePinyinCode">
+		update sys_role set pinyin_code = #{pinyinCode}, update_time = sysdate()
+		where role_id = #{roleId}
+	</update>
 	
 </mapper> 

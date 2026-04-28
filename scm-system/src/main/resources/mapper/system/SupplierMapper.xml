@@ -9,6 +9,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="supplierCode"      column="supplier_code"      />
         <result property="companyName"       column="company_name"       />
         <result property="companyShortName"  column="company_short_name" />
+        <result property="pinyinCode"        column="pinyin_code"        />
         <result property="legalPerson"       column="legal_person"       />
         <result property="registeredCapital" column="registered_capital" />
         <result property="province"          column="province"           />
@@ -37,7 +38,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
     
     <sql id="selectSupplierVo">
-        select s.supplier_id, s.supplier_code, s.company_name, s.company_short_name, s.legal_person, s.registered_capital,
+        select s.supplier_id, s.supplier_code, s.company_name, s.company_short_name, s.pinyin_code, s.legal_person, s.registered_capital,
                s.province, s.city, s.district, s.address, s.business_scope, s.email, s.website, s.contact_person, s.contact_phone,
                s.tax_number, s.qualification_expiry_date,
                s.status, s.audit_status, s.audit_by, s.audit_time, s.audit_remark, s.del_flag, s.create_by, s.create_time, s.update_by, s.update_time, s.remark,
@@ -54,27 +55,29 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectSupplierList" parameterType="Supplier" resultMap="SupplierResult">
         <include refid="selectSupplierVo"/>
         <where>
-            del_flag = '0'
+            s.del_flag = '0'
             <if test="supplierId != null">
-                AND supplier_id = #{supplierId}
+                AND s.supplier_id = #{supplierId}
             </if>
             <if test="supplierCode != null and supplierCode != ''">
-                AND supplier_code like concat('%', #{supplierCode}, '%')
+                AND s.supplier_code like concat('%', #{supplierCode}, '%')
             </if>
             <if test="companyName != null and companyName != ''">
-                AND company_name like concat('%', #{companyName}, '%')
+                AND (s.company_name like concat('%', #{companyName}, '%')
+                    OR IFNULL(s.pinyin_code, '') like concat('%', #{companyName}, '%')
+                    OR IFNULL(s.company_short_name, '') like concat('%', #{companyName}, '%'))
             </if>
             <if test="status != null and status != ''">
-                AND status = #{status}
+                AND s.status = #{status}
             </if>
             <if test="auditStatus != null and auditStatus != ''">
-                AND audit_status = #{auditStatus}
+                AND s.audit_status = #{auditStatus}
             </if>
             <if test="province != null and province != ''">
-                AND province = #{province}
+                AND s.province = #{province}
             </if>
             <if test="city != null and city != ''">
-                AND city = #{city}
+                AND s.city = #{city}
             </if>
         </where>
         order by create_time desc
@@ -99,6 +102,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="supplierCode != null and supplierCode != ''">supplier_code,</if>
             <if test="companyName != null and companyName != ''">company_name,</if>
             <if test="companyShortName != null and companyShortName != ''">company_short_name,</if>
+            <if test="pinyinCode != null">pinyin_code,</if>
             <if test="legalPerson != null and legalPerson != ''">legal_person,</if>
             <if test="registeredCapital != null">registered_capital,</if>
             <if test="province != null and province != ''">province,</if>
@@ -124,6 +128,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="supplierCode != null and supplierCode != ''">#{supplierCode},</if>
             <if test="companyName != null and companyName != ''">#{companyName},</if>
             <if test="companyShortName != null and companyShortName != ''">#{companyShortName},</if>
+            <if test="pinyinCode != null">#{pinyinCode},</if>
             <if test="legalPerson != null and legalPerson != ''">#{legalPerson},</if>
             <if test="registeredCapital != null">#{registeredCapital},</if>
             <if test="province != null and province != ''">#{province},</if>
@@ -154,6 +159,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="supplierCode != null and supplierCode != ''">supplier_code = #{supplierCode},</if>
             <if test="companyName != null and companyName != ''">company_name = #{companyName},</if>
             <if test="companyShortName != null and companyShortName != ''">company_short_name = #{companyShortName},</if>
+            <if test="pinyinCode != null">pinyin_code = #{pinyinCode},</if>
             <if test="legalPerson != null and legalPerson != ''">legal_person = #{legalPerson},</if>
             <if test="registeredCapital != null">registered_capital = #{registeredCapital},</if>
             <if test="province != null and province != ''">province = #{province},</if>
@@ -195,5 +201,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         from scm_supplier
         where del_flag = '0' and status = '0'
     </select>
+
+    <update id="updateSupplierPinyinCode">
+        update scm_supplier set pinyin_code = #{pinyinCode}, update_time = sysdate()
+        where supplier_id = #{supplierId}
+    </update>
 </mapper>
 

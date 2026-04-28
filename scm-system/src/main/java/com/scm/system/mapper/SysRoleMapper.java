@@ -107,4 +107,10 @@ public interface SysRoleMapper
      * 按角色名称查询全局角色（tenant_id/supplier_id 为空）
      */
     public SysRole selectGlobalRoleByName(@Param("roleName") String roleName);
+
+    /** 批量回填首拼：仅查未删角色 */
+    public List<SysRole> selectRolesForPinyinBackfill();
+
+    /** 仅更新首拼简码 */
+    public int updateRolePinyinCode(@Param("roleId") Long roleId, @Param("pinyinCode") String pinyinCode);
 }

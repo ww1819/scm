@@ -14,6 +14,7 @@ import com.scm.common.core.domain.entity.SysRole;
 import com.scm.common.core.domain.entity.SysUser;
 import com.scm.common.core.text.Convert;
 import com.scm.common.exception.ServiceException;
+import com.scm.common.utils.PinyinUtils;
 import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.uuid.IdUtils;
@@ -184,6 +185,7 @@ public class SysRoleServiceImpl implements ISysRoleService
     @Transactional
     public int insertRole(SysRole role)
     {
+        fillRolePinyin(role);
         // 新增角色信息
         roleMapper.insertRole(role);
         return insertRoleMenu(role);
@@ -199,6 +201,7 @@ public class SysRoleServiceImpl implements ISysRoleService
     @Transactional
     public int updateRole(SysRole role)
     {
+        fillRolePinyin(role);
         // 修改角色信息
         roleMapper.updateRole(role);
         // 删除角色与菜单关联
@@ -216,6 +219,7 @@ public class SysRoleServiceImpl implements ISysRoleService
     @Transactional
     public int authDataScope(SysRole role)
     {
+        fillRolePinyin(role);
         // 修改角色信息
         roleMapper.updateRole(role);
         // 删除角色与部门关联
@@ -374,7 +378,18 @@ public class SysRoleServiceImpl implements ISysRoleService
     @Override
     public int changeStatus(SysRole role)
     {
+        fillRolePinyin(role);
         return roleMapper.updateRole(role);
+    }
+
+    private void fillRolePinyin(SysRole role)
+    {
+        if (role == null || StringUtils.isEmpty(role.getRoleName()))
+        {
+            return;
+        }
+        String raw = PinyinUtils.getShortCode(role.getRoleName().trim());
+        role.setPinyinCode(raw != null ? raw : "");
     }
 
     /**

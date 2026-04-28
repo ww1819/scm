@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.scm.common.constant.UserConstants;
 import com.scm.common.core.domain.entity.SysRole;
 import com.scm.common.core.domain.entity.SysUser;
+import com.scm.common.utils.PinyinUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.security.Md5Utils;
@@ -108,6 +109,7 @@ public class TenantAdminCreateServiceImpl implements ITenantAdminCreateService
         role.setRemark("客户[" + tenantName + "]默认角色");
         role.setTenantId(tenantId);
         role.setCreateBy(operBy);
+        role.setPinyinCode(PinyinUtils.getShortCode(role.getRoleName()));
         roleMapper.insertRole(role);
     }
 }

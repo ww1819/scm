@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.scm.common.core.text.Convert;
 import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.PinyinUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.Supplier;
 import com.scm.system.mapper.SupplierMapper;
@@ -67,11 +68,7 @@ public class SupplierServiceImpl implements ISupplierService
         {
             supplier.setSupplierCode(generateSupplierCode());
         }
-        // 如果拼音简码为空，根据公司名称自动生成
-        if (StringUtils.isEmpty(supplier.getCompanyShortName()) && StringUtils.isNotEmpty(supplier.getCompanyName()))
-        {
-            supplier.setCompanyShortName(generateCompanyShortCode(supplier.getCompanyName()));
-        }
+        fillSupplierPinyin(supplier);
         supplier.setCreateTime(DateUtils.getNowDate());
         return supplierMapper.insertSupplier(supplier);
     }
@@ -108,68 +105,21 @@ public class SupplierServiceImpl implements ISupplierService
         return code;
     }
 
-    /**
-     * 生成拼音简码（从公司名称提取首字母大写）
-     * 
-     * @param companyName 公司名称
-     * @return 拼音简码
-     */
-    private String generateCompanyShortCode(String companyName)
+    private void fillSupplierPinyin(Supplier supplier)
     {
-        if (StringUtils.isEmpty(companyName))
+        if (supplier == null)
         {
-            return "";
+            return;
         }
-        
-        // 移除常见的公司后缀
-        String name = companyName.trim();
-        name = name.replaceAll("(有限公司|股份有限公司|有限责任公司|股份公司|科技公司|科技有限公司|技术公司|信息技术公司|医疗科技公司|健康产业公司|产业有限公司|集团有限公司|集团股份有限公司)$", "");
-        
-        // 提取首字母并转为大写
-        String shortCode = "";
-        
-        // 如果包含括号，提取括号内的内容的首字母
-        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("[（(]([^）)]+)[）)]");
-        java.util.regex.Matcher matcher = pattern.matcher(name);
-        if (matcher.find())
+        if (StringUtils.isEmpty(supplier.getCompanyName()))
         {
-            String bracketContent = matcher.group(1);
-            // 提取首字符并转为大写
-            if (bracketContent.length() > 0)
-            {
-                char firstChar = bracketContent.charAt(0);
-                // 如果是英文字母，转为大写
-                if (Character.isLetter(firstChar))
-                {
-                    shortCode = String.valueOf(Character.toUpperCase(firstChar));
-                }
-                else
-                {
-                    // 如果是中文或其他字符，保留原字符
-                    shortCode = String.valueOf(firstChar);
-                }
-            }
+            supplier.setPinyinCode("");
+            return;
         }
-        else
-        {
-            // 提取公司名称的首字符
-            if (name.length() > 0)
-            {
-                char firstChar = name.charAt(0);
-                // 如果是英文字母，转为大写
-                if (Character.isLetter(firstChar))
-                {
-                    shortCode = String.valueOf(Character.toUpperCase(firstChar));
-                }
-                else
-                {
-                    // 如果是中文或其他字符，保留原字符
-                    shortCode = String.valueOf(firstChar);
-                }
-            }
-        }
-        
-        return shortCode;
+        String raw = PinyinUtils.getShortCode(supplier.getCompanyName().trim());
+        String py = raw != null ? raw : "";
+        supplier.setPinyinCode(py);
+        supplier.setCompanyShortName(StringUtils.isNotEmpty(py) ? py.toUpperCase() : "");
     }
 
     /**
@@ -181,11 +131,7 @@ public class SupplierServiceImpl implements ISupplierService
     @Override
     public int updateSupplier(Supplier supplier)
     {
-        // 如果拼音简码为空，根据公司名称自动生成
-        if (StringUtils.isEmpty(supplier.getCompanyShortName()) && StringUtils.isNotEmpty(supplier.getCompanyName()))
-        {
-            supplier.setCompanyShortName(generateCompanyShortCode(supplier.getCompanyName()));
-        }
+        fillSupplierPinyin(supplier);
         supplier.setUpdateTime(DateUtils.getNowDate());
         return supplierMapper.updateSupplier(supplier);
     }

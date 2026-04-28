@@ -142,7 +142,6 @@ public class SysUserController extends BaseController
     @GetMapping("/add")
     public String add(ModelMap mmap)
     {
-        mmap.put("roles", roleService.selectRoleAll().stream().filter(r -> !r.isAdmin()).collect(Collectors.toList()));
         mmap.put("posts", postService.selectPostAll());
         Hospital hospitalQuery = new Hospital();
         hospitalQuery.setStatus("0");
@@ -215,8 +214,37 @@ public class SysUserController extends BaseController
                 break;
             }
         }
-        mmap.put("roles", rolesForPage);
-        mmap.put("selectedRoleId", selectedRoleId);
+        mmap.put("pickerInitialRoleId", selectedRoleId);
+        mmap.put("pickerInitialRoleKey", "");
+        mmap.put("pickerInitialRoleName", "");
+        mmap.put("pickerInitialDisplay", "");
+        if (selectedRoleId != null)
+        {
+            SysRole probe = new SysRole();
+            probe.setRoleId(selectedRoleId);
+            List<SysRole> picked = roleService.selectRoleList(probe);
+            if (picked != null && !picked.isEmpty())
+            {
+                SysRole sr = picked.get(0);
+                mmap.put("pickerInitialRoleKey", StringUtils.nvl(sr.getRoleKey(), ""));
+                mmap.put("pickerInitialRoleName", StringUtils.nvl(sr.getRoleName(), ""));
+                mmap.put("pickerInitialDisplay", formatRolePickerDisplay(sr));
+            }
+            else
+            {
+                for (SysRole r : rolesForPage)
+                {
+                    if (selectedRoleId.equals(r.getRoleId()))
+                    {
+                        mmap.put("pickerInitialRoleKey", StringUtils.nvl(r.getRoleKey(), ""));
+                        mmap.put("pickerInitialRoleName", StringUtils.nvl(r.getRoleName(), ""));
+                        mmap.put("pickerInitialDisplay",
+                            StringUtils.nvl(r.getRoleName(), "") + "（医院：—，供应商：—）");
+                        break;
+                    }
+                }
+            }
+        }
         mmap.put("posts", postService.selectPostsByUserId(userId));
         Hospital hospitalQuery = new Hospital();
         hospitalQuery.setStatus("0");
@@ -425,6 +453,42 @@ public class SysUserController extends BaseController
     {
         mmap.put("dept", deptService.selectDeptById(deptId));
         return prefix + "/deptTree";
+    }
+
+    /**
+     * 新增/编辑用户：弹窗内分页查询可选角色（含绑定医院、供应商；支持名称筛选）
+     */
+    @RequiresPermissions(value = { "system:user:add", "system:user:edit" }, logical = Logical.OR)
+    @PostMapping("/rolePicker/list")
+    @ResponseBody
+    public TableDataInfo rolePickerList(SysRole role,
+        @RequestParam(value = "pickerHospitalName", required = false) String pickerHospitalName,
+        @RequestParam(value = "pickerSupplierName", required = false) String pickerSupplierName)
+    {
+        role.setStatus("0");
+        role.getParams().put("excludeAdminRole", "1");
+        if (StringUtils.isNotEmpty(pickerHospitalName))
+        {
+            role.getParams().put("hospitalName", pickerHospitalName.trim());
+        }
+        if (StringUtils.isNotEmpty(pickerSupplierName))
+        {
+            role.getParams().put("supplierCompanyName", pickerSupplierName.trim());
+        }
+        startPage();
+        List<SysRole> list = roleService.selectRoleList(role);
+        return getDataTable(list);
+    }
+
+    private static String formatRolePickerDisplay(SysRole r)
+    {
+        if (r == null)
+        {
+            return "";
+        }
+        String hn = StringUtils.isNotEmpty(r.getHospitalName()) ? r.getHospitalName() : "—";
+        String sn = StringUtils.isNotEmpty(r.getSupplierCompanyName()) ? r.getSupplierCompanyName() : "—";
+        return r.getRoleName() + "（医院：" + hn + "，供应商：" + sn + "）";
     }
 
     /**

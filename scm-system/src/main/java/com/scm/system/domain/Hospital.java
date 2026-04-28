@@ -32,6 +32,10 @@ public class Hospital extends BaseEntity
     @Excel(name = "医院简称")
     private String hospitalShortName;
 
+    /** 首拼简码（医院名称拼音首字母，小写） */
+    @Excel(name = "首拼简码")
+    private String pinyinCode;
+
     /** 医院等级 */
     @Excel(name = "医院等级")
     private String hospitalLevel;
@@ -109,6 +113,17 @@ public class Hospital extends BaseEntity
     public void setHospitalShortName(String hospitalShortName)
     {
         this.hospitalShortName = hospitalShortName;
+    }
+
+    @Size(min = 0, max = 64, message = "首拼简码不能超过64个字符")
+    public String getPinyinCode()
+    {
+        return pinyinCode;
+    }
+
+    public void setPinyinCode(String pinyinCode)
+    {
+        this.pinyinCode = pinyinCode;
     }
 
     @Size(min = 0, max = 50, message = "医院等级不能超过50个字符")
@@ -217,6 +232,7 @@ public class Hospital extends BaseEntity
             .append("hospitalCode", getHospitalCode())
             .append("hospitalName", getHospitalName())
             .append("hospitalShortName", getHospitalShortName())
+            .append("pinyinCode", getPinyinCode())
             .append("hospitalLevel", getHospitalLevel())
             .append("province", getProvince())
             .append("city", getCity())

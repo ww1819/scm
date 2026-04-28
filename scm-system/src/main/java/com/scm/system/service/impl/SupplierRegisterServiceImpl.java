@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.scm.common.constant.UserConstants;
 import com.scm.common.core.domain.entity.SysRole;
 import com.scm.common.core.domain.entity.SysUser;
+import com.scm.common.utils.PinyinUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.ShiroUtils;
 import com.scm.system.domain.Supplier;
@@ -71,6 +72,13 @@ public class SupplierRegisterServiceImpl implements ISupplierRegisterService {
         supplier.setAuditStatus("0");
         if (StringUtils.isEmpty(supplier.getCreateBy())) {
             supplier.setCreateBy(operBy != null ? operBy : adminUser.getLoginName());
+        }
+        String rawPy = PinyinUtils.getShortCode(supplier.getCompanyName().trim());
+        String py = rawPy != null ? rawPy : "";
+        supplier.setPinyinCode(py);
+        if (StringUtils.isEmpty(supplier.getCompanyShortName()) && StringUtils.isNotEmpty(py))
+        {
+            supplier.setCompanyShortName(py.toUpperCase());
         }
         supplierMapper.insertSupplier(supplier);
         Long supplierId = supplier.getSupplierId();
