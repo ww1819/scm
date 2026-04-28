@@ -88,6 +88,14 @@ public interface ISysMenuService
     public List<Ztree> buildMenuTreeWithChecked(List<SysMenu> menuList, List<Long> checkedMenuIds);
 
     /**
+     * 巡检菜单脏数据（名称为空/null/undefined）
+     *
+     * @param userId 当前用户ID（按可见范围巡检）
+     * @return 异常菜单列表
+     */
+    List<SysMenu> selectInvalidMenuNameList(Long userId);
+
+    /**
      * 查询系统所有权限
      * 
      * @param userId 用户ID

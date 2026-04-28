@@ -51,6 +51,11 @@ import com.scm.system.service.ISysUserService;
 public class SysUserServiceImpl implements ISysUserService
 {
     private static final Logger log = LoggerFactory.getLogger(SysUserServiceImpl.class);
+    private static final String ROLE_KEY_HOSPITAL_ADMIN = "hospital_admin";
+    private static final String ROLE_KEY_HOSPITAL_STAFF = "hospital_staff";
+    private static final String ROLE_KEY_SUPPLIER_ADMIN = "supplier_admin";
+    private static final String ROLE_KEY_SUPPLIER_SALES = "supplier_sales";
+    private static final String ROLE_KEY_SUPPLIER_LEGACY = "supplier";
 
     @Autowired
     private SysUserMapper userMapper;
@@ -239,6 +244,7 @@ public class SysUserServiceImpl implements ISysUserService
     public int insertUser(SysUser user)
     {
         checkSuperAdminRoleDept(user.getDeptId(), user.getRoleIds());
+        validateMaintainScopeOnSave(user, user.getRoleIds());
         // 新增用户信息
         int rows = userMapper.insertUser(user);
         // 新增用户岗位关联
@@ -273,6 +279,7 @@ public class SysUserServiceImpl implements ISysUserService
     public int updateUser(SysUser user)
     {
         checkSuperAdminRoleDept(user.getDeptId(), user.getRoleIds());
+        validateMaintainScopeOnSave(user, user.getRoleIds());
         Long userId = user.getUserId();
         // 删除用户与角色关联
         userRoleMapper.deleteUserRoleByUserId(userId);
@@ -357,8 +364,89 @@ public class SysUserServiceImpl implements ISysUserService
             throw new ServiceException("用户不存在");
         }
         checkSuperAdminRoleDept(exist.getDeptId(), roleIds);
+        validateMaintainScopeOnAuth(userId, roleIds);
         userRoleMapper.deleteUserRoleByUserId(userId);
         insertUserRole(userId, roleIds);
+    }
+
+    private void validateMaintainScopeOnSave(SysUser user, Long[] roleIds)
+    {
+        if (roleIds == null || roleIds.length == 0)
+        {
+            return;
+        }
+        boolean requireHospital = false;
+        boolean requireSupplier = false;
+        for (Long roleId : roleIds)
+        {
+            if (roleId == null)
+            {
+                continue;
+            }
+            SysRole role = roleMapper.selectRoleById(roleId);
+            if (role == null || StringUtils.isNotEmpty(role.getDelFlag()) && "2".equals(role.getDelFlag()))
+            {
+                continue;
+            }
+            String roleKey = StringUtils.trimToEmpty(role.getRoleKey());
+            if (ROLE_KEY_HOSPITAL_ADMIN.equals(roleKey) || ROLE_KEY_HOSPITAL_STAFF.equals(roleKey))
+            {
+                requireHospital = true;
+            }
+            if (ROLE_KEY_SUPPLIER_ADMIN.equals(roleKey) || ROLE_KEY_SUPPLIER_SALES.equals(roleKey)
+                || ROLE_KEY_SUPPLIER_LEGACY.equals(roleKey))
+            {
+                requireSupplier = true;
+            }
+        }
+        if (requireHospital && user.getMaintainHospitalId() == null)
+        {
+            throw new ServiceException("当前角色需要维护医院，请先选择“维护医院”");
+        }
+        if (requireSupplier && user.getMaintainSupplierId() == null)
+        {
+            throw new ServiceException("当前角色需要维护供应商，请先选择“维护供应商”");
+        }
+    }
+
+    private void validateMaintainScopeOnAuth(Long userId, Long[] roleIds)
+    {
+        if (roleIds == null || roleIds.length == 0)
+        {
+            return;
+        }
+        boolean requireHospital = false;
+        boolean requireSupplier = false;
+        for (Long roleId : roleIds)
+        {
+            if (roleId == null)
+            {
+                continue;
+            }
+            SysRole role = roleMapper.selectRoleById(roleId);
+            if (role == null || StringUtils.isNotEmpty(role.getDelFlag()) && "2".equals(role.getDelFlag()))
+            {
+                continue;
+            }
+            String roleKey = StringUtils.trimToEmpty(role.getRoleKey());
+            if (ROLE_KEY_HOSPITAL_ADMIN.equals(roleKey) || ROLE_KEY_HOSPITAL_STAFF.equals(roleKey))
+            {
+                requireHospital = true;
+            }
+            if (ROLE_KEY_SUPPLIER_ADMIN.equals(roleKey) || ROLE_KEY_SUPPLIER_SALES.equals(roleKey)
+                || ROLE_KEY_SUPPLIER_LEGACY.equals(roleKey))
+            {
+                requireSupplier = true;
+            }
+        }
+        if (requireHospital && hospitalUserMapper.selectHospitalUserByUserId(userId) == null)
+        {
+            throw new ServiceException("当前用户未绑定医院，请先在“用户编辑”中设置维护医院后再授权医院角色");
+        }
+        if (requireSupplier && supplierUserMapper.selectSupplierUserByUserId(userId) == null)
+        {
+            throw new ServiceException("当前用户未绑定供应商，请先在“用户编辑”中设置维护供应商后再授权供应商角色");
+        }
     }
 
     /**

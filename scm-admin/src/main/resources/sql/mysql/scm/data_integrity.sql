@@ -22,6 +22,12 @@ WHERE NOT EXISTS (SELECT 1 FROM sys_config WHERE config_key = 'scm.auth.bootstra
 -- 供应商表 status 默认值
 UPDATE scm_supplier SET status = '0' WHERE status IS NULL;
 /
+-- 修复菜单异常名称（避免角色授权树出现 undefined）
+UPDATE sys_menu
+SET menu_name = CONCAT('未命名菜单#', menu_id)
+WHERE del_flag = '0'
+  AND (menu_name IS NULL OR TRIM(menu_name) = '' OR LOWER(TRIM(menu_name)) IN ('undefined', 'null'));
+/
 UPDATE scm_supplier SET audit_status = '0' WHERE audit_status IS NULL;
 /
 UPDATE scm_supplier SET del_flag = '0' WHERE del_flag IS NULL;

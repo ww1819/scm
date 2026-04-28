@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+    <th:block th:include="include :: header('数据分析报表')" />
+    <th:block th:include="include :: layout-latest-css" />
+</head>
+<body class="gray-bg">
+<div class="container-div">
+    <div class="row">
+        <div class="col-sm-12 search-collapse">
+            <form id="analysis-form">
+                <div class="select-list">
+                    <ul>
+                        <li>开始日期：<input type="text" name="beginTime" placeholder="yyyy-MM-dd"/></li>
+                        <li>结束日期：<input type="text" name="endTime" placeholder="yyyy-MM-dd"/></li>
+                        <li>
+                            <a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+                            <a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+                        </li>
+                    </ul>
+                </div>
+            </form>
+        </div>
+
+        <div class="btn-group-sm" id="toolbar" role="group">
+            <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="datacenter:datacenter:export">
+                <i class="fa fa-download"></i> 导出
+            </a>
+        </div>
+
+        <div class="col-sm-12 select-table table-striped">
+            <table id="bootstrap-table"></table>
+        </div>
+    </div>
+</div>
+
+<th:block th:include="include :: footer" />
+<th:block th:include="include :: layout-latest-js" />
+<script th:inline="javascript">
+    var prefix = ctx + "datacenter/datacenter";
+
+    $(function () {
+        var options = {
+            url: prefix + "/analysis/list",
+            exportUrl: prefix + "/analysis/export",
+            modalName: "数据分析报表",
+            columns: [{
+                field: "material_name",
+                title: "产品"
+            }, {
+                field: "material_code",
+                title: "产品编码"
+            }, {
+                field: "hospital_name",
+                title: "医院"
+            }, {
+                field: "supplier_name",
+                title: "供应商"
+            }, {
+                field: "total_quantity",
+                title: "采购数量"
+            }, {
+                field: "total_amount",
+                title: "采购金额"
+            }, {
+                field: "avg_price",
+                title: "平均单价"
+            }, {
+                field: "order_count",
+                title: "订单数量"
+            }]
+        };
+        $.table.init(options);
+    });
+
+    function resetPre() {
+        $("#analysis-form")[0].reset();
+        $.table.search();
+    }
+</script>
+</body>
+</html>
+

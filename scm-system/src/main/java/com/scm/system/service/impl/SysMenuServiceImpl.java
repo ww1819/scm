@@ -217,6 +217,29 @@ public class SysMenuServiceImpl implements ISysMenuService
         return initZtree(menuList != null ? menuList : new ArrayList<SysMenu>(), checkList, true);
     }
 
+    @Override
+    public List<SysMenu> selectInvalidMenuNameList(Long userId)
+    {
+        List<SysMenu> menuList = selectMenuAll(userId);
+        List<SysMenu> invalidList = new ArrayList<>();
+        if (menuList == null || menuList.isEmpty())
+        {
+            return invalidList;
+        }
+        for (SysMenu menu : menuList)
+        {
+            if (menu == null || menu.getMenuId() == null)
+            {
+                continue;
+            }
+            if (isInvalidNodeText(StringUtils.trim(menu.getMenuName())))
+            {
+                invalidList.add(menu);
+            }
+        }
+        return invalidList;
+    }
+
     /**
      * 查询系统所有权限
      * 
@@ -262,11 +285,15 @@ public class SysMenuServiceImpl implements ISysMenuService
         boolean isCheck = StringUtils.isNotNull(roleMenuList);
         for (SysMenu menu : menuList)
         {
+            if (menu == null || menu.getMenuId() == null)
+            {
+                continue;
+            }
             Ztree ztree = new Ztree();
             ztree.setId(menu.getMenuId());
-            ztree.setpId(menu.getParentId());
+            ztree.setpId(menu.getParentId() == null ? 0L : menu.getParentId());
             ztree.setName(transMenuName(menu, permsFlag));
-            ztree.setTitle(menu.getMenuName());
+            ztree.setTitle(resolveMenuDisplayName(menu));
             if (isCheck)
             {
                 ztree.setChecked(roleMenuList.contains(menu.getMenuId() + menu.getPerms()));
@@ -279,12 +306,56 @@ public class SysMenuServiceImpl implements ISysMenuService
     public String transMenuName(SysMenu menu, boolean permsFlag)
     {
         StringBuffer sb = new StringBuffer();
-        sb.append(menu.getMenuName());
-        if (permsFlag)
+        String perms = normalizePerms(menu == null ? null : menu.getPerms());
+        sb.append(resolveMenuDisplayName(menu));
+        if (permsFlag && StringUtils.isNotEmpty(perms))
         {
-            sb.append("<font color=\"#888\">&nbsp;&nbsp;&nbsp;" + menu.getPerms() + "</font>");
+            sb.append("<font color=\"#888\">&nbsp;&nbsp;&nbsp;" + perms + "</font>");
         }
         return sb.toString();
+    }
+
+    private String resolveMenuDisplayName(SysMenu menu)
+    {
+        if (menu == null)
+        {
+            return "未命名菜单";
+        }
+        String menuName = StringUtils.trim(menu.getMenuName());
+        if (isInvalidNodeText(menuName))
+        {
+            String perms = normalizePerms(menu.getPerms());
+            if (StringUtils.isNotEmpty(perms))
+            {
+                return "未命名菜单(" + perms + ")";
+            }
+            String url = StringUtils.trim(menu.getUrl());
+            if (StringUtils.isNotEmpty(url))
+            {
+                return "未命名菜单(" + url + ")";
+            }
+            return "未命名菜单#" + menu.getMenuId();
+        }
+        return menuName;
+    }
+
+    private String normalizePerms(String perms)
+    {
+        String normalized = StringUtils.trim(perms);
+        if (isInvalidNodeText(normalized))
+        {
+            return "";
+        }
+        return normalized;
+    }
+
+    private boolean isInvalidNodeText(String text)
+    {
+        if (StringUtils.isEmpty(text))
+        {
+            return true;
+        }
+        return "undefined".equalsIgnoreCase(text) || "null".equalsIgnoreCase(text);
     }
 
     /**

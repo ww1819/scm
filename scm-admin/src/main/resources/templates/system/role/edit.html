@@ -51,6 +51,7 @@
 			<div class="form-group">
 				<label class="col-sm-3 control-label">菜单权限：</label>
 				<div class="col-sm-8">
+					<div id="menuDataHealthWarn" class="alert alert-warning" style="display:none; margin-bottom: 10px;"></div>
 				    <label class="check-box">
 				        <input type="checkbox" value="1">展开/折叠</label>
 				    <label class="check-box">
@@ -80,7 +81,27 @@
 		        expandLevel: 0
 		    };
 			$.tree.init(options);
+			loadInvalidMenuSummary();
 		});
+
+		function loadInvalidMenuSummary() {
+			$.get(ctx + "system/menu/invalidNameSummary", function(res) {
+				var ok = res && (res.code === 0 || res.code === "0");
+				if (!ok || !res.data) {
+					return;
+				}
+				var count = Number(res.data.count || 0);
+				if (count <= 0) {
+					return;
+				}
+				var samples = (res.data.samples || []).join("，");
+				var tip = "检测到 " + count + " 条菜单名称异常（空/null/undefined），已自动兜底显示。建议执行 data_integrity.sql 修复。";
+				if (samples) {
+					tip += " 示例：" + samples;
+				}
+				$("#menuDataHealthWarn").text(tip).show();
+			});
+		}
 	
 		$("#form-role-edit").validate({
 			onkeyup: false,

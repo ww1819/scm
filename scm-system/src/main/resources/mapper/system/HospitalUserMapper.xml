@@ -15,13 +15,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <select id="selectHospitalUserByUserId" parameterType="Long" resultMap="HospitalUserResult">
         select hu.hospital_user_id, hu.hospital_id, hu.user_id, hu.is_main, hu.status,
+               hu.create_time as order_date,
+               hu.create_time as create_time,
                h.hospital_name
         from scm_hospital_user hu
         left join scm_hospital h on hu.hospital_id = h.hospital_id
-        where hu.user_id = #{userId}
-          and (hu.del_flag = '0' or hu.del_flag is null)
-        order by hu.is_main desc, hu.create_time desc
-        limit 1
+        where hu.hospital_user_id = (
+            select t.hospital_user_id
+            from (
+                select hu2.hospital_user_id
+                from scm_hospital_user hu2
+                where hu2.user_id = #{userId}
+                  and (hu2.del_flag = '0' or hu2.del_flag is null)
+                order by hu2.is_main desc, hu2.create_time desc
+                limit 1
+            ) t
+        )
     </select>
 
     <insert id="insertHospitalUser" parameterType="HospitalUser" useGeneratedKeys="true" keyProperty="hospitalUserId">

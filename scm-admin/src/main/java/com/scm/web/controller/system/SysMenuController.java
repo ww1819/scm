@@ -1,6 +1,9 @@
 package com.scm.web.controller.system;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -234,6 +237,27 @@ public class SysMenuController extends BaseController
         Long userId = ShiroUtils.getUserId();
         List<Ztree> ztrees = menuService.roleMenuTreeData(role, userId);
         return ztrees;
+    }
+
+    /**
+     * 菜单名称脏数据巡检（为空/null/undefined）
+     */
+    @GetMapping("/invalidNameSummary")
+    @ResponseBody
+    public AjaxResult invalidNameSummary()
+    {
+        Long userId = ShiroUtils.getUserId();
+        List<SysMenu> invalidList = menuService.selectInvalidMenuNameList(userId);
+        List<String> samples = new ArrayList<>();
+        for (int i = 0; i < invalidList.size() && i < 5; i++)
+        {
+            SysMenu m = invalidList.get(i);
+            samples.add("menuId=" + m.getMenuId());
+        }
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("count", invalidList.size());
+        data.put("samples", samples);
+        return AjaxResult.success(data);
     }
 
     /**

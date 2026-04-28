@@ -1442,6 +1442,7 @@ var table = {
                     data: options.data
                 };
                 $.get(options.url, function(data) {
+                    data = $.tree.normalizeTreeData(data);
                     var treeId = $("#treeId").val();
                     tree = $.fn.zTree.init($("#" + options.id), setting, data);
                     $._tree = tree;
@@ -1458,6 +1459,36 @@ var table = {
                         options.callBack(tree);
                     }
                 });
+            },
+            normalizeTreeData: function(data) {
+                if (!$.isArray(data)) {
+                    return data;
+                }
+                $.each(data, function(_, node) {
+                    if (!node) {
+                        return;
+                    }
+                    var badName = $.tree.isInvalidNodeText(node.name);
+                    if (badName) {
+                        var nid = node.id != null ? node.id : "";
+                        node.name = "未命名菜单#" + nid;
+                    }
+                    if ($.tree.isInvalidNodeText(node.title)) {
+                        node.title = node.name;
+                    }
+                });
+                return data;
+            },
+            isInvalidNodeText: function(text) {
+                if (text === undefined || text === null) {
+                    return true;
+                }
+                var t = $.common.trim(String(text));
+                if (t === "") {
+                    return true;
+                }
+                var low = t.toLowerCase();
+                return low === "undefined" || low === "null";
             },
             // 搜索节点
             searchNode: function() {

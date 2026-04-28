@@ -409,6 +409,14 @@
                 $.modal.msgWarning("请选择角色");
                 return;
             }
+            if (isHospitalPrincipalRole() && !$.common.trim($("#maintainHospitalId").val())) {
+                $.modal.msgWarning("当前角色需要维护医院，请先选择“维护医院”");
+                return;
+            }
+            if (isSupplierPrincipalRole() && !$.common.trim($("#maintainSupplierId").val())) {
+                $.modal.msgWarning("当前角色需要维护供应商，请先选择“维护供应商”");
+                return;
+            }
 	        if ($.validate.form()) {
 	        	var data = $("#form-user-edit").serializeArray();
 	        	var status = $("input[id='status']").is(':checked') == true ? 0 : 1;
