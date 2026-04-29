@@ -76,6 +76,9 @@ public class SysRole extends BaseEntity
     /** 列表展示：供应商公司名称 */
     private String supplierCompanyName;
 
+    /** 是否机构管理员角色 0否 1是（新建/刷新时仅此类角色自动获得「仅管理员开放」的菜单） */
+    private String orgAdmin;
+
     public String getTenantId() { return tenantId; }
     public void setTenantId(String tenantId) { this.tenantId = tenantId; }
     public String getTenantName() { return tenantName; }
@@ -121,6 +124,16 @@ public class SysRole extends BaseEntity
     public void setSupplierCompanyName(String supplierCompanyName)
     {
         this.supplierCompanyName = supplierCompanyName;
+    }
+
+    public String getOrgAdmin()
+    {
+        return orgAdmin;
+    }
+
+    public void setOrgAdmin(String orgAdmin)
+    {
+        this.orgAdmin = orgAdmin;
     }
 
     public SysRole()
@@ -289,6 +302,7 @@ public class SysRole extends BaseEntity
             .append("hospitalId", getHospitalId())
             .append("hospitalName", getHospitalName())
             .append("supplierCompanyName", getSupplierCompanyName())
+            .append("orgAdmin", getOrgAdmin())
             .toString();
     }
 }

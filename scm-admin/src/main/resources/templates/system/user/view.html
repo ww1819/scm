@@ -64,6 +64,17 @@
             <div class="row">
                 <div class="col-sm-6">
                     <div class="form-group">
+                        <label class="col-sm-4 control-label">用户类型：</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-plaintext" th:with="ut=*{userType}"
+                               th:text="${#strings.isEmpty(ut) ? '未设置' : (ut == 'platform' ? '平台' : (ut == 'hospital' ? '医院' : (ut == 'supplier' ? '供应商' : ut)))}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
                         <label class="col-sm-4 control-label">岗位：</label>
                         <div class="col-sm-8">
                             <p class="form-control-plaintext">[[${#strings.defaultString(postGroup, '无岗位')}]]</p>

@@ -113,4 +113,14 @@ public interface SysRoleMapper
 
     /** 仅更新首拼简码 */
     public int updateRolePinyinCode(@Param("roleId") Long roleId, @Param("pinyinCode") String pinyinCode);
+
+    /** 某医院下未删除的角色（含自建角色） */
+    List<SysRole> selectRolesByHospitalId(@Param("hospitalId") Long hospitalId);
+
+    /** 某供应商下未删除的角色 */
+    List<SysRole> selectRolesBySupplierId(@Param("supplierId") Long supplierId);
+
+    int countOrgAdminRolesByHospital(@Param("hospitalId") Long hospitalId, @Param("excludeRoleId") Long excludeRoleId);
+
+    int countOrgAdminRolesBySupplier(@Param("supplierId") Long supplierId, @Param("excludeRoleId") Long excludeRoleId);
 }

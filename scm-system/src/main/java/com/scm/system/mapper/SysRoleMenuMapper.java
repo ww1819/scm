@@ -48,4 +48,14 @@ public interface SysRoleMenuMapper
      */
     public List<Long> selectMenuIdsByRoleAndScope(@Param("roleId") Long roleId, @Param("hospitalId") String hospitalId,
         @Param("supplierId") String supplierId);
+
+    /**
+     * 删除某医院维度下所有角色菜单（hospital_id 存为数字字符串，与 CAST(hospital_id AS CHAR) 一致）
+     */
+    int deleteRoleMenuByHospitalScope(@Param("hospitalId") String hospitalId);
+
+    /**
+     * 删除某供应商维度下所有角色菜单
+     */
+    int deleteRoleMenuBySupplierScope(@Param("supplierId") String supplierId);
 }

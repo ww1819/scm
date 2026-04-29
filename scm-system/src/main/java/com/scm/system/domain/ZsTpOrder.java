@@ -30,6 +30,15 @@ public class ZsTpOrder extends BaseEntity
     /** 接口 SCMSUPCODE：SCM 平台供应商编码（与中设 supno 区分） */
     private String scmSupCode;
 
+    /** 入参 NEWCUSTOMER：SCM 医院编码（scm_hospital.hospital_code） */
+    private String scmHospitalCode;
+
+    /** 由 scm_hospital_code 解析的 hospital_id（varchar 存数字） */
+    private String scmHospitalId;
+
+    /** 由 scm_sup_code 解析的 supplier_id（varchar 存数字） */
+    private String scmSupplierId;
+
     /** 资金来源 ZJLY */
     private String zjly;
 
@@ -181,6 +190,36 @@ public class ZsTpOrder extends BaseEntity
     public void setScmSupCode(String scmSupCode)
     {
         this.scmSupCode = scmSupCode;
+    }
+
+    public String getScmHospitalCode()
+    {
+        return scmHospitalCode;
+    }
+
+    public void setScmHospitalCode(String scmHospitalCode)
+    {
+        this.scmHospitalCode = scmHospitalCode;
+    }
+
+    public String getScmHospitalId()
+    {
+        return scmHospitalId;
+    }
+
+    public void setScmHospitalId(String scmHospitalId)
+    {
+        this.scmHospitalId = scmHospitalId;
+    }
+
+    public String getScmSupplierId()
+    {
+        return scmSupplierId;
+    }
+
+    public void setScmSupplierId(String scmSupplierId)
+    {
+        this.scmSupplierId = scmSupplierId;
     }
 
     public String getZjly()

@@ -1032,6 +1032,10 @@ CREATE TABLE IF NOT EXISTS `sys_menu` (
   `default_open_scope` varchar(32) NOT NULL DEFAULT 'none' COMMENT '默认开放范围 none/all_hospital/all_supplier/all',
   `hospital_grant_supplier_flag` char(1) NOT NULL DEFAULT '0' COMMENT '是否需要由医院授予供应商 0否 1是',
   `menu_biz_category` varchar(32) NOT NULL DEFAULT 'other' COMMENT '业务分类',
+  `default_open_hospital` char(1) NOT NULL DEFAULT '0' COMMENT '是否默认对医院开放 0否 1是',
+  `hospital_admin_only` char(1) NOT NULL DEFAULT '0' COMMENT '是否只对医院管理员默认开放 0否 1是',
+  `default_open_supplier` char(1) NOT NULL DEFAULT '0' COMMENT '是否默认对供应商开放 0否 1是',
+  `supplier_admin_only` char(1) NOT NULL DEFAULT '0' COMMENT '是否只对供应商管理员默认开放 0否 1是',
   PRIMARY KEY (`menu_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='菜单权限表';
 /
@@ -1128,6 +1132,8 @@ CREATE TABLE IF NOT EXISTS `sys_role` (
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   `role_type` varchar(20) NOT NULL DEFAULT 'platform' COMMENT '角色类型 platform/hospital/supplier',
   `hospital_id` bigint(20) DEFAULT NULL COMMENT '医院角色绑定的医院ID',
+  `supplier_id` bigint(20) DEFAULT NULL COMMENT '供应商角色绑定的供应商ID',
+  `org_admin` char(1) NOT NULL DEFAULT '0' COMMENT '是否机构管理员角色 0否 1是',
   PRIMARY KEY (`role_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色信息表';
 /
@@ -1192,7 +1198,7 @@ CREATE TABLE IF NOT EXISTS `sys_user` (
   `dept_id` bigint(20) DEFAULT NULL COMMENT '部门ID',
   `login_name` varchar(30) NOT NULL COMMENT '登录账号',
   `user_name` varchar(30) DEFAULT '' COMMENT '用户昵称',
-  `user_type` varchar(2) DEFAULT '00' COMMENT '用户类型（00系统用户 01注册用户）',
+  `user_type` varchar(32) DEFAULT NULL COMMENT '用户类型 platform/hospital/supplier；兼容历史00',
   `email` varchar(50) DEFAULT '' COMMENT '用户邮箱',
   `phonenumber` varchar(11) DEFAULT '' COMMENT '手机号码',
   `sex` char(1) DEFAULT '0' COMMENT '用户性别（0男 1女 2未知）',
@@ -1258,6 +1264,9 @@ CREATE TABLE IF NOT EXISTS zs_tp_order (
   jsfs            VARCHAR(32)  NULL,
   receive_channel VARCHAR(16)  NOT NULL DEFAULT 'ZS' COMMENT '接收渠道：TENANT=我方推送 ZS=中设客户推送',
   scm_sup_code    VARCHAR(64)  NULL COMMENT '接口 SCMSUPCODE：SCM 平台供应商编码（客户端随单传递，与中设 SUPNO 区分）',
+  scm_hospital_code VARCHAR(64) NULL COMMENT '入参 NEWCUSTOMER：SCM 医院编码，对应 scm_hospital.hospital_code',
+  scm_hospital_id   VARCHAR(64) NULL COMMENT '由 scm_hospital_code 解析的 scm_hospital.hospital_id（字符串）',
+  scm_supplier_id   VARCHAR(64) NULL COMMENT '由 scm_sup_code 解析的 scm_supplier.supplier_id（字符串）',
   ksbh            VARCHAR(64)  NULL,
   ksmc            VARCHAR(128) NULL,
   zjly            VARCHAR(128) NULL,

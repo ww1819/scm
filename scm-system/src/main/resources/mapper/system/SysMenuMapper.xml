@@ -26,6 +26,10 @@
 		<result property="defaultOpenScope" column="default_open_scope" />
 		<result property="hospitalGrantSupplierFlag" column="hospital_grant_supplier_flag" />
 		<result property="menuBizCategory" column="menu_biz_category" />
+		<result property="defaultOpenHospital" column="default_open_hospital" />
+		<result property="hospitalAdminOnly" column="hospital_admin_only" />
+		<result property="defaultOpenSupplier" column="default_open_supplier" />
+		<result property="supplierAdminOnly" column="supplier_admin_only" />
 	</resultMap>
 
 	<!-- 医院/供应商类菜单需同时满足角色菜单与白名单 -->
@@ -187,14 +191,18 @@
     <sql id="selectMenuVo">
         select menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, ifnull(perms,'') as perms, icon, create_by, create_time,
 		       ifnull(auth_type,'platform') as auth_type, ifnull(default_open_scope,'none') as default_open_scope, ifnull(hospital_grant_supplier_flag,'0') as hospital_grant_supplier_flag,
-		       ifnull(nullif(trim(menu_biz_category),''),'other') as menu_biz_category
+		       ifnull(nullif(trim(menu_biz_category),''),'other') as menu_biz_category,
+		       ifnull(default_open_hospital,'0') as default_open_hospital, ifnull(hospital_admin_only,'0') as hospital_admin_only,
+		       ifnull(default_open_supplier,'0') as default_open_supplier, ifnull(supplier_admin_only,'0') as supplier_admin_only
 		from sys_menu
     </sql>
 
 	<select id="selectMenusByUserId" parameterType="Long" resultMap="SysMenuResult">
 		select distinct m.menu_id, m.parent_id, m.menu_name, m.url, m.visible, m.is_refresh, ifnull(m.perms,'') as perms, m.target, m.menu_type, m.icon, m.order_num, m.create_time,
 		       ifnull(m.auth_type,'platform') as auth_type, ifnull(m.default_open_scope,'none') as default_open_scope, ifnull(m.hospital_grant_supplier_flag,'0') as hospital_grant_supplier_flag,
-		       ifnull(nullif(trim(m.menu_biz_category),''),'other') as menu_biz_category
+		       ifnull(nullif(trim(m.menu_biz_category),''),'other') as menu_biz_category,
+		       ifnull(m.default_open_hospital,'0') as default_open_hospital, ifnull(m.hospital_admin_only,'0') as hospital_admin_only,
+		       ifnull(m.default_open_supplier,'0') as default_open_supplier, ifnull(m.supplier_admin_only,'0') as supplier_admin_only
 		from sys_menu m
 			 left join sys_role_menu rm on m.menu_id = rm.menu_id
 			 left join sys_user_role ur on rm.role_id = ur.role_id
@@ -221,7 +229,9 @@
 	<select id="selectMenuAllByUserId" parameterType="Long" resultMap="SysMenuResult">
 		select distinct m.menu_id, m.parent_id, m.menu_name, m.url, m.visible, m.is_refresh, ifnull(m.perms,'') as perms, m.target, m.menu_type, m.icon, m.order_num, m.create_time,
 		       ifnull(m.auth_type,'platform') as auth_type, ifnull(m.default_open_scope,'none') as default_open_scope, ifnull(m.hospital_grant_supplier_flag,'0') as hospital_grant_supplier_flag,
-		       ifnull(nullif(trim(m.menu_biz_category),''),'other') as menu_biz_category
+		       ifnull(nullif(trim(m.menu_biz_category),''),'other') as menu_biz_category,
+		       ifnull(m.default_open_hospital,'0') as default_open_hospital, ifnull(m.hospital_admin_only,'0') as hospital_admin_only,
+		       ifnull(m.default_open_supplier,'0') as default_open_supplier, ifnull(m.supplier_admin_only,'0') as supplier_admin_only
 		from sys_menu m
 			 left join sys_role_menu rm on m.menu_id = rm.menu_id
 			 left join sys_user_role ur on rm.role_id = ur.role_id
@@ -283,7 +293,9 @@
 	<select id="selectMenuListByUserId" parameterType="SysMenu" resultMap="SysMenuResult">
 		select distinct m.menu_id, m.parent_id, m.menu_name, m.url, m.visible, m.is_refresh, ifnull(m.perms,'') as perms, m.target, m.menu_type, m.icon, m.order_num, m.create_time,
 		       ifnull(m.auth_type,'platform') as auth_type, ifnull(m.default_open_scope,'none') as default_open_scope, ifnull(m.hospital_grant_supplier_flag,'0') as hospital_grant_supplier_flag,
-		       ifnull(nullif(trim(m.menu_biz_category),''),'other') as menu_biz_category
+		       ifnull(nullif(trim(m.menu_biz_category),''),'other') as menu_biz_category,
+		       ifnull(m.default_open_hospital,'0') as default_open_hospital, ifnull(m.hospital_admin_only,'0') as hospital_admin_only,
+		       ifnull(m.default_open_supplier,'0') as default_open_supplier, ifnull(m.supplier_admin_only,'0') as supplier_admin_only
 		from sys_menu m
 		left join sys_role_menu rm on m.menu_id = rm.menu_id
 		left join sys_user_role ur on rm.role_id = ur.role_id
@@ -324,6 +336,8 @@
 		SELECT t.menu_id, t.parent_id, t.menu_name, t.order_num, t.url, t.target, t.menu_type, t.visible, t.is_refresh, t.perms, t.icon, t.remark,
 			ifnull(t.auth_type,'platform') as auth_type, ifnull(t.default_open_scope,'none') as default_open_scope, ifnull(t.hospital_grant_supplier_flag,'0') as hospital_grant_supplier_flag,
 			ifnull(nullif(trim(t.menu_biz_category),''),'other') as menu_biz_category,
+			ifnull(t.default_open_hospital,'0') as default_open_hospital, ifnull(t.hospital_admin_only,'0') as hospital_admin_only,
+			ifnull(t.default_open_supplier,'0') as default_open_supplier, ifnull(t.supplier_admin_only,'0') as supplier_admin_only,
 			(SELECT menu_name FROM sys_menu WHERE menu_id = t.parent_id and del_flag = '0') parent_name
 		FROM sys_menu t
 		where t.menu_id = #{menuId} and t.del_flag = '0'
@@ -356,6 +370,10 @@
 			<if test="defaultOpenScope != null and defaultOpenScope != ''">default_open_scope = #{defaultOpenScope},</if>
 			<if test="hospitalGrantSupplierFlag != null and hospitalGrantSupplierFlag != ''">hospital_grant_supplier_flag = #{hospitalGrantSupplierFlag},</if>
 			<if test="menuBizCategory != null and menuBizCategory != ''">menu_biz_category = #{menuBizCategory},</if>
+			<if test="defaultOpenHospital != null and defaultOpenHospital != ''">default_open_hospital = #{defaultOpenHospital},</if>
+			<if test="hospitalAdminOnly != null and hospitalAdminOnly != ''">hospital_admin_only = #{hospitalAdminOnly},</if>
+			<if test="defaultOpenSupplier != null and defaultOpenSupplier != ''">default_open_supplier = #{defaultOpenSupplier},</if>
+			<if test="supplierAdminOnly != null and supplierAdminOnly != ''">supplier_admin_only = #{supplierAdminOnly},</if>
 			<if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
 			update_time = sysdate()
 		</set>
@@ -381,6 +399,10 @@
 		<if test="defaultOpenScope != null and defaultOpenScope != ''">default_open_scope,</if>
 		<if test="hospitalGrantSupplierFlag != null and hospitalGrantSupplierFlag != ''">hospital_grant_supplier_flag,</if>
 		<if test="menuBizCategory != null and menuBizCategory != ''">menu_biz_category,</if>
+		<if test="defaultOpenHospital != null and defaultOpenHospital != ''">default_open_hospital,</if>
+		<if test="hospitalAdminOnly != null and hospitalAdminOnly != ''">hospital_admin_only,</if>
+		<if test="defaultOpenSupplier != null and defaultOpenSupplier != ''">default_open_supplier,</if>
+		<if test="supplierAdminOnly != null and supplierAdminOnly != ''">supplier_admin_only,</if>
 		create_time
 		)values(
 		<if test="menuId != null and menuId != 0">#{menuId},</if>
@@ -400,6 +422,10 @@
 		<if test="defaultOpenScope != null and defaultOpenScope != ''">#{defaultOpenScope},</if>
 		<if test="hospitalGrantSupplierFlag != null and hospitalGrantSupplierFlag != ''">#{hospitalGrantSupplierFlag},</if>
 		<if test="menuBizCategory != null and menuBizCategory != ''">#{menuBizCategory},</if>
+		<if test="defaultOpenHospital != null and defaultOpenHospital != ''">#{defaultOpenHospital},</if>
+		<if test="hospitalAdminOnly != null and hospitalAdminOnly != ''">#{hospitalAdminOnly},</if>
+		<if test="defaultOpenSupplier != null and defaultOpenSupplier != ''">#{defaultOpenSupplier},</if>
+		<if test="supplierAdminOnly != null and supplierAdminOnly != ''">#{supplierAdminOnly},</if>
 		sysdate()
 		)
 	</insert>

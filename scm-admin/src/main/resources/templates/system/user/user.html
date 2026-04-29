@@ -157,6 +157,18 @@
 		            }
 		        },
 		        {
+		            field: 'userType',
+		            title: '用户类型',
+		            width: 100,
+		            formatter: function (v) {
+		                if (!v) return '<span class="text-muted">-</span>';
+		                if (v === 'platform') return '<span class="label label-default">平台</span>';
+		                if (v === 'hospital') return '<span class="label label-info">医院</span>';
+		                if (v === 'supplier') return '<span class="label label-primary">供应商</span>';
+		                return v;
+		            }
+		        },
+		        {
 		            field: 'userName',
 		            title: '用户名称'
 		        },

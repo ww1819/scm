@@ -93,6 +93,26 @@
             <div class="row">
                 <div class="col-sm-6">
                     <div class="form-group">
+                        <label class="col-sm-4 control-label">用户类型：</label>
+                        <div class="col-sm-8">
+                            <select name="userType" id="userType" class="form-control" th:field="*{userType}">
+                                <option value="">未设置（兼容历史）</option>
+                                <option value="platform">平台</option>
+                                <option value="hospital">医院</option>
+                                <option value="supplier">供应商</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <span class="help-block m-b-none text-muted" style="padding-top:7px;">设为医院/供应商时须与所选角色类型一致。</span>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
                         <label class="col-sm-4 control-label">岗位：</label>
                         <div class="col-sm-8">
                             <select id="post" class="form-control select2-multiple" multiple>
@@ -126,6 +146,7 @@
                             <input type="hidden" id="pickedRoleId"/>
                             <input type="hidden" id="pickedRoleKey"/>
                             <input type="hidden" id="pickedRoleName"/>
+                            <input type="hidden" id="pickedRoleType"/>
                         </div>
                     </div>
                 </div>
@@ -221,6 +242,23 @@
         function roleNameFromSelect() {
             return $.common.trim($('#pickedRoleName').val() || '');
         }
+        function roleTypeFromSelect() {
+            return $.common.trim($('#pickedRoleType').val() || '');
+        }
+        function pickerRoleTypeText(t) {
+            if (!t) return '未标注';
+            if (t === 'platform') return '平台';
+            if (t === 'hospital') return '医院';
+            if (t === 'supplier') return '供应商';
+            return t;
+        }
+        function pickerRoleTypeHtml(t) {
+            if (!t) return '<span class="text-muted">—</span>';
+            if (t === 'platform') return '<span class="label label-default">平台</span>';
+            if (t === 'hospital') return '<span class="label label-info">医院</span>';
+            if (t === 'supplier') return '<span class="label label-primary">供应商</span>';
+            return t;
+        }
 
         function openRolePicker() {
             $('#rolePickerModal').modal('show');
@@ -278,6 +316,20 @@
                     { field: 'roleKey', title: '权限字符' },
                     { field: 'pinyinCode', title: '首拼简码', formatter: function (v) { return v || '—'; } },
                     {
+                        field: 'roleType',
+                        title: '角色类型',
+                        width: 88,
+                        formatter: function (v) { return pickerRoleTypeHtml(v); }
+                    },
+                    {
+                        field: 'orgAdmin',
+                        title: '机构管理员',
+                        width: 88,
+                        formatter: function (v) {
+                            return (v === '1' || v === 1) ? '<span class="label label-warning">是</span>' : '<span class="text-muted">否</span>';
+                        }
+                    },
+                    {
                         field: 'hospitalName',
                         title: '绑定医院',
                         formatter: function (v) { return v || '—'; }
@@ -307,13 +359,19 @@
             $('#pickedRoleId').val(row.roleId);
             $('#pickedRoleKey').val(row.roleKey || '');
             $('#pickedRoleName').val(row.roleName || '');
+            $('#pickedRoleType').val(row.roleType || '');
             var hn = row.hospitalName || '—';
             var sn = row.supplierCompanyName || '—';
-            $('#pickedRoleDisplay').val((row.roleName || '') + '（医院：' + hn + '，供应商：' + sn + '）');
+            var rt = pickerRoleTypeText(row.roleType);
+            var oa = (row.orgAdmin === '1' || row.orgAdmin === 1) ? '是' : '否';
+            $('#pickedRoleDisplay').val((row.roleName || '') + '（类型：' + rt + '，医院：' + hn + '，供应商：' + sn + '，机构管理员：' + oa + '）');
             $('#rolePickerModal').modal('hide');
             applyMaintainFieldsByRole();
         }
         function isHospitalPrincipalRole() {
+            var rt = roleTypeFromSelect();
+            if (rt === 'hospital') return true;
+            if (rt === 'supplier' || rt === 'platform') return false;
             var k = roleKeyFromSelect();
             var n = roleNameFromSelect();
             if (!k && !n) return false;
@@ -322,6 +380,9 @@
             return n.indexOf('医院') >= 0;
         }
         function isSupplierPrincipalRole() {
+            var rt = roleTypeFromSelect();
+            if (rt === 'supplier') return true;
+            if (rt === 'hospital' || rt === 'platform') return false;
             var k = roleKeyFromSelect();
             var n = roleNameFromSelect();
             if (!k && !n) return false;
@@ -458,6 +519,7 @@
                 $('#pickedRoleId').val(initRid);
                 $('#pickedRoleKey').val(/*[[${pickerInitialRoleKey}]]*/ '');
                 $('#pickedRoleName').val(/*[[${pickerInitialRoleName}]]*/ '');
+                $('#pickedRoleType').val(/*[[${pickerInitialRoleType}]]*/ '');
                 $('#pickedRoleDisplay').val(/*[[${pickerInitialDisplay}]]*/ '');
             }
             if ($('#maintainSupplierId').val()) {

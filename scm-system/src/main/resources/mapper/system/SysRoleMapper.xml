@@ -25,12 +25,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<result property="hospitalId"   column="hospital_id"    />
 		<result property="hospitalName"  column="hospital_name"  />
 		<result property="supplierCompanyName" column="supplier_company_name" />
+		<result property="orgAdmin"       column="org_admin"        />
 	</resultMap>
 	
 	<sql id="selectRoleContactVo">
         select distinct r.role_id, r.role_name, r.pinyin_code, r.role_key, r.role_sort, r.data_scope,
             r.status, r.del_flag, r.create_time, r.remark, r.tenant_id, t.tenant_name,
-            r.role_type, r.hospital_id, r.supplier_id, sh.hospital_name, sup.company_name as supplier_company_name
+            r.role_type, r.hospital_id, r.supplier_id, ifnull(r.org_admin,'0') as org_admin, sh.hospital_name, sup.company_name as supplier_company_name
         from sys_role r
 	        left join sys_user_role ur on ur.role_id = r.role_id
 	        left join sys_user u on u.user_id = ur.user_id
@@ -42,7 +43,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     
     <sql id="selectRoleVo">
 		select r.role_id, r.role_name, r.pinyin_code, r.role_key, r.role_sort, r.data_scope, r.status, r.del_flag, r.create_time, r.remark,
-		       r.tenant_id, r.supplier_id, r.role_type, r.hospital_id
+		       r.tenant_id, r.supplier_id, r.role_type, r.hospital_id, ifnull(r.org_admin,'0') as org_admin
         from sys_role r
 	</sql>
 	
@@ -176,11 +177,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  			<if test="roleSort != null and roleSort != ''">role_sort = #{roleSort},</if>
  			<if test="dataScope != null and dataScope != ''">data_scope = #{dataScope},</if>
  			<if test="status != null and status != ''">status = #{status},</if>
- 			<if test="remark != null">remark = #{remark},</if>
- 			<if test="tenantId != null">tenant_id = #{tenantId},</if>
- 			<if test="supplierId != null">supplier_id = #{supplierId},</if>
- 			<if test="hospitalId != null">hospital_id = #{hospitalId},</if>
- 			<if test="roleType != null and roleType != ''">role_type = #{roleType},</if>
+			<if test="remark != null">remark = #{remark},</if>
+			<if test="tenantId != null">tenant_id = #{tenantId},</if>
+			<!-- 与 role_type 一并写入，便于类型切换时清空 hospital_id / supplier_id -->
+			<if test="roleType != null and roleType != ''">
+				role_type = #{roleType},
+				hospital_id = #{hospitalId,jdbcType=BIGINT},
+				supplier_id = #{supplierId,jdbcType=BIGINT},
+				org_admin = #{orgAdmin,jdbcType=CHAR},
+			</if>
  			<if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
  			update_time = sysdate()
  		</set>
@@ -202,6 +207,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  			<if test="supplierId != null">supplier_id,</if>
  			<if test="hospitalId != null">hospital_id,</if>
  			<if test="roleType != null and roleType != ''">role_type,</if>
+ 			<if test="orgAdmin != null and orgAdmin != ''">org_admin,</if>
  			create_time
  		)values(
  			<if test="roleId != null and roleId != 0">#{roleId},</if>
@@ -217,6 +223,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  			<if test="supplierId != null">#{supplierId},</if>
  			<if test="hospitalId != null">#{hospitalId},</if>
  			<if test="roleType != null and roleType != ''">#{roleType},</if>
+ 			<if test="orgAdmin != null and orgAdmin != ''">#{orgAdmin},</if>
  			sysdate()
  		)
 	</insert>
@@ -224,9 +231,35 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<select id="selectRolesForPinyinBackfill" resultMap="SysRoleResult">
 		select r.role_id, r.role_name, r.pinyin_code, r.role_key, r.role_sort, r.data_scope,
 			r.status, r.del_flag, r.create_time, r.remark, r.tenant_id, null as tenant_name,
-			r.role_type, r.hospital_id, r.supplier_id, null as hospital_name, null as supplier_company_name
+			r.role_type, r.hospital_id, r.supplier_id, ifnull(r.org_admin,'0') as org_admin, null as hospital_name, null as supplier_company_name
 		from sys_role r
 		where r.del_flag = '0'
+	</select>
+
+	<select id="selectRolesByHospitalId" resultMap="SysRoleResult">
+		<include refid="selectRoleVo"/>
+		where r.del_flag = '0' and r.hospital_id = #{hospitalId}
+		order by r.role_sort, r.role_id
+	</select>
+
+	<select id="selectRolesBySupplierId" resultMap="SysRoleResult">
+		<include refid="selectRoleVo"/>
+		where r.del_flag = '0' and r.supplier_id = #{supplierId}
+		order by r.role_sort, r.role_id
+	</select>
+
+	<select id="countOrgAdminRolesByHospital" resultType="int">
+		select count(1) from sys_role r
+		where r.del_flag = '0' and ifnull(r.org_admin,'0') = '1'
+		  and r.role_type = 'hospital' and r.hospital_id = #{hospitalId}
+		  <if test="excludeRoleId != null">and r.role_id &lt;&gt; #{excludeRoleId}</if>
+	</select>
+
+	<select id="countOrgAdminRolesBySupplier" resultType="int">
+		select count(1) from sys_role r
+		where r.del_flag = '0' and ifnull(r.org_admin,'0') = '1'
+		  and r.role_type = 'supplier' and r.supplier_id = #{supplierId}
+		  <if test="excludeRoleId != null">and r.role_id &lt;&gt; #{excludeRoleId}</if>
 	</select>
 
 	<update id="updateRolePinyinCode">

@@ -133,6 +133,14 @@
 		            formatter: function(v) { return v || '-'; }
 		        },
 		        {
+		            field: 'orgAdmin',
+		            title: '机构管理员',
+		            width: 90,
+		            formatter: function(v) {
+		                return (v === '1' || v === 1) ? '<span class="label label-warning">是</span>' : '<span class="text-muted">否</span>';
+		            }
+		        },
+		        {
 		            field: 'tenantName',
 		            title: '对应客户',
 		            sortable: true,

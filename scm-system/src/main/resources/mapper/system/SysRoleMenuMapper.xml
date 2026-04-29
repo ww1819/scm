@@ -41,5 +41,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		  and coalesce(nullif(trim(hospital_id), ''), '') = coalesce(nullif(trim(#{hospitalId}), ''), '')
 		  and coalesce(nullif(trim(supplier_id), ''), '') = coalesce(nullif(trim(#{supplierId}), ''), '')
 	</select>
+
+	<delete id="deleteRoleMenuByHospitalScope">
+		delete from sys_role_menu where trim(hospital_id) = trim(#{hospitalId}) and trim(hospital_id) &lt;&gt; ''
+	</delete>
+
+	<delete id="deleteRoleMenuBySupplierScope">
+		delete from sys_role_menu where trim(supplier_id) = trim(#{supplierId}) and trim(supplier_id) &lt;&gt; ''
+	</delete>
 	
 </mapper> 

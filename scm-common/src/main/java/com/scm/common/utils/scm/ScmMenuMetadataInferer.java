@@ -48,6 +48,95 @@ public final class ScmMenuMetadataInferer
         {
             menu.setMenuBizCategory(biz);
         }
+        ensureTenantOpenFlags(menu, onlyIfBlank);
+    }
+
+    /**
+     * 根据 auth_type、default_open_scope、hospital_grant_supplier_flag 推导四列（与建档/刷新白名单逻辑一致）。
+     * onlyIfBlank 为 true 时仅填充仍为空的开关列，不覆盖用户已选的 0/1。
+     */
+    private static void ensureTenantOpenFlags(SysMenu menu, boolean onlyIfBlank)
+    {
+        if (menu == null)
+        {
+            return;
+        }
+        String at = StringUtils.trimToEmpty(menu.getAuthType());
+        if (StringUtils.isEmpty(at))
+        {
+            at = ScmAuthConstants.AUTH_PLATFORM;
+        }
+        String scope = StringUtils.trimToEmpty(menu.getDefaultOpenScope());
+        if (StringUtils.isEmpty(scope))
+        {
+            scope = ScmMenuConstants.OPEN_SCOPE_NONE;
+        }
+        String grant = StringUtils.trimToEmpty(menu.getHospitalGrantSupplierFlag());
+
+        String hOpen = "0";
+        String sOpen = "0";
+        if (ScmAuthConstants.AUTH_PLATFORM.equalsIgnoreCase(at))
+        {
+            hOpen = "0";
+            sOpen = "0";
+        }
+        else if (ScmAuthConstants.AUTH_HOSPITAL.equalsIgnoreCase(at))
+        {
+            hOpen = ScmMenuConstants.OPEN_SCOPE_NONE.equalsIgnoreCase(scope) ? "0" : "1";
+        }
+        else if (ScmAuthConstants.AUTH_SUPPLIER.equalsIgnoreCase(at))
+        {
+            sOpen = ScmMenuConstants.OPEN_SCOPE_NONE.equalsIgnoreCase(scope) ? "0" : "1";
+        }
+        else if (ScmAuthConstants.AUTH_HOSPITAL_SUPPLIER.equalsIgnoreCase(at))
+        {
+            if (ScmMenuConstants.OPEN_SCOPE_NONE.equalsIgnoreCase(scope))
+            {
+                hOpen = "0";
+                sOpen = "0";
+            }
+            else if (ScmMenuConstants.OPEN_SCOPE_ALL_HOSPITAL.equalsIgnoreCase(scope))
+            {
+                hOpen = "1";
+                sOpen = "0";
+            }
+            else if (ScmMenuConstants.OPEN_SCOPE_ALL_SUPPLIER.equalsIgnoreCase(scope))
+            {
+                hOpen = "0";
+                sOpen = "1";
+            }
+            else
+            {
+                hOpen = "1";
+                sOpen = "1";
+                if ("1".equals(grant))
+                {
+                    sOpen = "0";
+                }
+            }
+        }
+
+        if (!onlyIfBlank || isUnset(menu.getDefaultOpenHospital()))
+        {
+            menu.setDefaultOpenHospital(hOpen);
+        }
+        if (!onlyIfBlank || isUnset(menu.getDefaultOpenSupplier()))
+        {
+            menu.setDefaultOpenSupplier(sOpen);
+        }
+        if (!onlyIfBlank || isUnset(menu.getHospitalAdminOnly()))
+        {
+            menu.setHospitalAdminOnly("0");
+        }
+        if (!onlyIfBlank || isUnset(menu.getSupplierAdminOnly()))
+        {
+            menu.setSupplierAdminOnly("0");
+        }
+    }
+
+    private static boolean isUnset(String v)
+    {
+        return v == null || StringUtils.trimToEmpty(v).isEmpty();
     }
 
     private static String inferAuthType(String perms, String url, String name)
@@ -68,13 +157,29 @@ public final class ScmMenuMetadataInferer
             }
             if (perms.startsWith("hospital:"))
             {
+                if (StringUtils.isNotEmpty(url) && "/hospital/hospital".equals(url))
+                {
+                    return ScmAuthConstants.AUTH_PLATFORM;
+                }
                 return ScmAuthConstants.AUTH_HOSPITAL;
             }
             if (perms.startsWith("supplier:"))
             {
+                if (StringUtils.isNotEmpty(url) && "/supplier/supplier".equals(url))
+                {
+                    return ScmAuthConstants.AUTH_PLATFORM;
+                }
                 return ScmAuthConstants.AUTH_SUPPLIER;
             }
-            if (perms.startsWith("order:") || perms.startsWith("delivery:") || perms.startsWith("settlement:"))
+            if (perms.startsWith("delivery:"))
+            {
+                if (StringUtils.isNotEmpty(url) && url.contains("/query"))
+                {
+                    return ScmAuthConstants.AUTH_HOSPITAL_SUPPLIER;
+                }
+                return ScmAuthConstants.AUTH_SUPPLIER;
+            }
+            if (perms.startsWith("order:") || perms.startsWith("settlement:"))
             {
                 return ScmAuthConstants.AUTH_HOSPITAL_SUPPLIER;
             }
@@ -86,7 +191,7 @@ public final class ScmMenuMetadataInferer
             {
                 if (perms.contains(":audit"))
                 {
-                    return ScmAuthConstants.AUTH_HOSPITAL_SUPPLIER;
+                    return ScmAuthConstants.AUTH_HOSPITAL;
                 }
                 return ScmAuthConstants.AUTH_SUPPLIER;
             }
@@ -111,15 +216,31 @@ public final class ScmMenuMetadataInferer
         {
             return ScmAuthConstants.AUTH_PLATFORM;
         }
+        if ("/hospital/hospital".equals(url))
+        {
+            return ScmAuthConstants.AUTH_PLATFORM;
+        }
         if (url.startsWith("/hospital/"))
         {
             return ScmAuthConstants.AUTH_HOSPITAL;
+        }
+        if ("/supplier/supplier".equals(url))
+        {
+            return ScmAuthConstants.AUTH_PLATFORM;
         }
         if (url.startsWith("/supplier/"))
         {
             return ScmAuthConstants.AUTH_SUPPLIER;
         }
-        if (url.startsWith("/order/") || url.startsWith("/delivery/") || url.startsWith("/settlement/"))
+        if (url.startsWith("/delivery/delivery/query"))
+        {
+            return ScmAuthConstants.AUTH_HOSPITAL_SUPPLIER;
+        }
+        if (url.startsWith("/delivery/"))
+        {
+            return ScmAuthConstants.AUTH_SUPPLIER;
+        }
+        if (url.startsWith("/order/") || url.startsWith("/settlement/"))
         {
             return ScmAuthConstants.AUTH_HOSPITAL_SUPPLIER;
         }
@@ -131,7 +252,7 @@ public final class ScmMenuMetadataInferer
         {
             if (url.contains("/audit"))
             {
-                return ScmAuthConstants.AUTH_HOSPITAL_SUPPLIER;
+                return ScmAuthConstants.AUTH_HOSPITAL;
             }
             return ScmAuthConstants.AUTH_SUPPLIER;
         }
@@ -139,11 +260,35 @@ public final class ScmMenuMetadataInferer
         {
             return ScmAuthConstants.AUTH_PLATFORM;
         }
+        if (name.contains("医院信息维护") || "医院维护".equals(name))
+        {
+            return ScmAuthConstants.AUTH_PLATFORM;
+        }
         if (name.contains("医院") && (name.contains("管理") || name.contains("维护")))
         {
             return ScmAuthConstants.AUTH_HOSPITAL;
         }
+        if (name.contains("供应商维护") && !name.contains("企业"))
+        {
+            return ScmAuthConstants.AUTH_PLATFORM;
+        }
         if (name.contains("供应商") && (name.contains("管理") || name.contains("维护")))
+        {
+            return ScmAuthConstants.AUTH_SUPPLIER;
+        }
+        if (name.contains("资质证件管理"))
+        {
+            return ScmAuthConstants.AUTH_HOSPITAL_SUPPLIER;
+        }
+        if (name.contains("审核") && (name.contains("资质") || name.contains("证件") || name.contains("证照")))
+        {
+            return ScmAuthConstants.AUTH_HOSPITAL;
+        }
+        if (name.contains("配送信息查询"))
+        {
+            return ScmAuthConstants.AUTH_HOSPITAL_SUPPLIER;
+        }
+        if (name.contains("配送单据申请"))
         {
             return ScmAuthConstants.AUTH_SUPPLIER;
         }
@@ -173,13 +318,17 @@ public final class ScmMenuMetadataInferer
             return "0";
         }
         if (StringUtils.isNotEmpty(perms)
-            && (perms.startsWith("order:") || perms.startsWith("delivery:") || perms.startsWith("settlement:")))
+            && (perms.startsWith("order:") || perms.startsWith("settlement:")))
         {
             return "1";
         }
+        if (StringUtils.isNotEmpty(perms) && perms.startsWith("delivery:"))
+        {
+            return "0";
+        }
         if (StringUtils.isNotEmpty(perms) && perms.startsWith("certificate:") && perms.contains(":audit"))
         {
-            return "1";
+            return "0";
         }
         return "0";
     }

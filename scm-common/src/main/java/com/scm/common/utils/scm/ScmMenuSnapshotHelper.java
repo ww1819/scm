@@ -37,6 +37,10 @@ public final class ScmMenuSnapshotHelper
         put(map, "defaultOpenScope", m.getDefaultOpenScope());
         put(map, "hospitalGrantSupplierFlag", m.getHospitalGrantSupplierFlag());
         put(map, "menuBizCategory", m.getMenuBizCategory());
+        put(map, "defaultOpenHospital", m.getDefaultOpenHospital());
+        put(map, "hospitalAdminOnly", m.getHospitalAdminOnly());
+        put(map, "defaultOpenSupplier", m.getDefaultOpenSupplier());
+        put(map, "supplierAdminOnly", m.getSupplierAdminOnly());
         return map;
     }
 

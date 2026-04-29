@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import com.scm.common.annotation.DataScope;
+import com.scm.common.constant.ScmAuthConstants;
 import com.scm.common.constant.UserConstants;
 import com.scm.common.core.domain.entity.SysDept;
 import com.scm.common.core.domain.entity.SysRole;
@@ -245,6 +246,7 @@ public class SysUserServiceImpl implements ISysUserService
     {
         checkSuperAdminRoleDept(user.getDeptId(), user.getRoleIds());
         validateMaintainScopeOnSave(user, user.getRoleIds());
+        assertUserRoleTypeMatchesForSave(user, user.getRoleIds());
         // 新增用户信息
         int rows = userMapper.insertUser(user);
         // 新增用户岗位关联
@@ -280,6 +282,7 @@ public class SysUserServiceImpl implements ISysUserService
     {
         checkSuperAdminRoleDept(user.getDeptId(), user.getRoleIds());
         validateMaintainScopeOnSave(user, user.getRoleIds());
+        assertUserRoleTypeMatchesForSave(user, user.getRoleIds());
         Long userId = user.getUserId();
         // 删除用户与角色关联
         userRoleMapper.deleteUserRoleByUserId(userId);
@@ -365,8 +368,71 @@ public class SysUserServiceImpl implements ISysUserService
         }
         checkSuperAdminRoleDept(exist.getDeptId(), roleIds);
         validateMaintainScopeOnAuth(userId, roleIds);
+        assertUserRoleTypeMatches(userId, roleIds);
         userRoleMapper.deleteUserRoleByUserId(userId);
         insertUserRole(userId, roleIds);
+    }
+
+    private void assertUserRoleTypeMatchesForSave(SysUser user, Long[] roleIds)
+    {
+        if (user == null || roleIds == null || roleIds.length == 0)
+        {
+            return;
+        }
+        String ut = StringUtils.trimToEmpty(user.getUserType());
+        if (StringUtils.isEmpty(ut) || !isScmTenantUserType(ut))
+        {
+            return;
+        }
+        for (Long roleId : roleIds)
+        {
+            if (roleId == null)
+            {
+                continue;
+            }
+            SysRole role = roleMapper.selectRoleById(roleId);
+            if (role == null || StringUtils.isNotEmpty(role.getDelFlag()) && "2".equals(role.getDelFlag()))
+            {
+                continue;
+            }
+            String rt = normalizeScmRoleType(role);
+            if (!ut.equalsIgnoreCase(rt))
+            {
+                throw new ServiceException("用户类型与角色类型不一致：用户为「" + ut + "」时不能分配「" + rt + "」类角色");
+            }
+        }
+    }
+
+    private void assertUserRoleTypeMatches(Long userId, Long[] roleIds)
+    {
+        if (userId == null || roleIds == null || roleIds.length == 0)
+        {
+            return;
+        }
+        SysUser u = userMapper.selectUserById(userId);
+        if (u == null)
+        {
+            return;
+        }
+        assertUserRoleTypeMatchesForSave(u, roleIds);
+    }
+
+    private static String normalizeScmRoleType(SysRole role)
+    {
+        String rt = StringUtils.trimToEmpty(role.getRoleType());
+        if (StringUtils.isEmpty(rt))
+        {
+            return ScmAuthConstants.ROLE_TYPE_PLATFORM;
+        }
+        return rt;
+    }
+
+    /** 仅对 SCM 主体类型用户校验与角色 role_type 一致（兼容历史 user_type=00 等） */
+    private static boolean isScmTenantUserType(String userType)
+    {
+        return ScmAuthConstants.ROLE_TYPE_PLATFORM.equalsIgnoreCase(userType)
+            || ScmAuthConstants.ROLE_TYPE_HOSPITAL.equalsIgnoreCase(userType)
+            || ScmAuthConstants.ROLE_TYPE_SUPPLIER.equalsIgnoreCase(userType);
     }
 
     private void validateMaintainScopeOnSave(SysUser user, Long[] roleIds)
@@ -469,6 +535,7 @@ public class SysUserServiceImpl implements ISysUserService
      */
     public void insertUserRole(Long userId, Long[] roleIds)
     {
+        assertUserRoleTypeMatches(userId, roleIds);
         if (StringUtils.isNotNull(roleIds))
         {
             // 新增用户与角色管理

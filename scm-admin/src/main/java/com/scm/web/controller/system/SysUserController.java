@@ -218,6 +218,7 @@ public class SysUserController extends BaseController
         mmap.put("pickerInitialRoleKey", "");
         mmap.put("pickerInitialRoleName", "");
         mmap.put("pickerInitialDisplay", "");
+        mmap.put("pickerInitialRoleType", "");
         if (selectedRoleId != null)
         {
             SysRole probe = new SysRole();
@@ -228,6 +229,7 @@ public class SysUserController extends BaseController
                 SysRole sr = picked.get(0);
                 mmap.put("pickerInitialRoleKey", StringUtils.nvl(sr.getRoleKey(), ""));
                 mmap.put("pickerInitialRoleName", StringUtils.nvl(sr.getRoleName(), ""));
+                mmap.put("pickerInitialRoleType", StringUtils.nvl(sr.getRoleType(), ""));
                 mmap.put("pickerInitialDisplay", formatRolePickerDisplay(sr));
             }
             else
@@ -238,8 +240,8 @@ public class SysUserController extends BaseController
                     {
                         mmap.put("pickerInitialRoleKey", StringUtils.nvl(r.getRoleKey(), ""));
                         mmap.put("pickerInitialRoleName", StringUtils.nvl(r.getRoleName(), ""));
-                        mmap.put("pickerInitialDisplay",
-                            StringUtils.nvl(r.getRoleName(), "") + "（医院：—，供应商：—）");
+                        mmap.put("pickerInitialRoleType", StringUtils.nvl(r.getRoleType(), ""));
+                        mmap.put("pickerInitialDisplay", formatRolePickerDisplay(r));
                         break;
                     }
                 }
@@ -488,7 +490,30 @@ public class SysUserController extends BaseController
         }
         String hn = StringUtils.isNotEmpty(r.getHospitalName()) ? r.getHospitalName() : "—";
         String sn = StringUtils.isNotEmpty(r.getSupplierCompanyName()) ? r.getSupplierCompanyName() : "—";
-        return r.getRoleName() + "（医院：" + hn + "，供应商：" + sn + "）";
+        String type = roleTypeDisplayLabel(r.getRoleType());
+        String oa = "1".equals(StringUtils.trimToEmpty(r.getOrgAdmin())) ? "是" : "否";
+        return r.getRoleName() + "（类型：" + type + "，医院：" + hn + "，供应商：" + sn + "，机构管理员：" + oa + "）";
+    }
+
+    private static String roleTypeDisplayLabel(String roleType)
+    {
+        if (StringUtils.isEmpty(roleType))
+        {
+            return "未标注";
+        }
+        if ("platform".equalsIgnoreCase(roleType))
+        {
+            return "平台";
+        }
+        if ("hospital".equalsIgnoreCase(roleType))
+        {
+            return "医院";
+        }
+        if ("supplier".equalsIgnoreCase(roleType))
+        {
+            return "供应商";
+        }
+        return roleType;
     }
 
     /**

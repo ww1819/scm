@@ -105,7 +105,39 @@
 							</select>
 						</div>
 					</div>
-					<span class="help-block m-b-none text-muted">与「医院/供应商菜单授权」及建档白名单同步策略一致；空字段保存时会按规则自动补全。</span>
+					<div class="row">
+						<div class="col-sm-6 m-b-sm">
+							<label class="control-label">默认对医院开放</label>
+							<select name="defaultOpenHospital" id="defaultOpenHospital" class="form-control" th:field="*{defaultOpenHospital}">
+								<option value="0">否（新建/刷新医院时不自动进白名单）</option>
+								<option value="1">是</option>
+							</select>
+						</div>
+						<div class="col-sm-6 m-b-sm">
+							<label class="control-label">仅医院管理员默认获得</label>
+							<select name="hospitalAdminOnly" id="hospitalAdminOnly" class="form-control" th:field="*{hospitalAdminOnly}">
+								<option value="0">否（医院其他角色也自动获得）</option>
+								<option value="1">是（仅机构管理员角色自动获得）</option>
+							</select>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-6 m-b-sm">
+							<label class="control-label">默认对供应商开放</label>
+							<select name="defaultOpenSupplier" id="defaultOpenSupplier" class="form-control" th:field="*{defaultOpenSupplier}">
+								<option value="0">否（新建/刷新供应商时不自动进白名单）</option>
+								<option value="1">是</option>
+							</select>
+						</div>
+						<div class="col-sm-6 m-b-sm">
+							<label class="control-label">仅供应商管理员默认获得</label>
+							<select name="supplierAdminOnly" id="supplierAdminOnly" class="form-control" th:field="*{supplierAdminOnly}">
+								<option value="0">否（供应商其他角色也自动获得）</option>
+								<option value="1">是（仅机构管理员角色自动获得）</option>
+							</select>
+						</div>
+					</div>
+					<span class="help-block m-b-none text-muted">「默认对院/商开放」与建档、刷新白名单一致；平台类菜单（auth_type=platform）不参与院商自动赋权。旧版「默认开放范围」仍保留，保存时会尽量同步到上列开关。</span>
 				</div>
 			</div>
 			<div class="form-group">
@@ -186,6 +218,10 @@
                 }
                 if (d.defaultOpenScope) { $("#defaultOpenScope").val(d.defaultOpenScope); }
                 if (d.menuBizCategory) { $("#menuBizCategory").val(d.menuBizCategory); }
+                if (d.defaultOpenHospital !== undefined && d.defaultOpenHospital !== null) { $("#defaultOpenHospital").val(String(d.defaultOpenHospital)); }
+                if (d.hospitalAdminOnly !== undefined && d.hospitalAdminOnly !== null) { $("#hospitalAdminOnly").val(String(d.hospitalAdminOnly)); }
+                if (d.defaultOpenSupplier !== undefined && d.defaultOpenSupplier !== null) { $("#defaultOpenSupplier").val(String(d.defaultOpenSupplier)); }
+                if (d.supplierAdminOnly !== undefined && d.supplierAdminOnly !== null) { $("#supplierAdminOnly").val(String(d.supplierAdminOnly)); }
                 toggleGrantByAuth();
                 $.modal.msgSuccess("已填充推断结果，请核对后保存");
             });

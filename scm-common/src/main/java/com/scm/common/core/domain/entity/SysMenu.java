@@ -69,6 +69,15 @@ public class SysMenu extends BaseEntity
      */
     private String menuBizCategory;
 
+    /** 是否默认对医院开放 0否 1是（平台菜单不走此列，见需求说明） */
+    private String defaultOpenHospital;
+    /** 是否只对医院管理员默认开放 0否 1是 */
+    private String hospitalAdminOnly;
+    /** 是否默认对供应商开放 0否 1是 */
+    private String defaultOpenSupplier;
+    /** 是否只对供应商管理员默认开放 0否 1是 */
+    private String supplierAdminOnly;
+
     public Long getMenuId()
     {
         return menuId;
@@ -245,6 +254,46 @@ public class SysMenu extends BaseEntity
         this.menuBizCategory = menuBizCategory;
     }
 
+    public String getDefaultOpenHospital()
+    {
+        return defaultOpenHospital;
+    }
+
+    public void setDefaultOpenHospital(String defaultOpenHospital)
+    {
+        this.defaultOpenHospital = defaultOpenHospital;
+    }
+
+    public String getHospitalAdminOnly()
+    {
+        return hospitalAdminOnly;
+    }
+
+    public void setHospitalAdminOnly(String hospitalAdminOnly)
+    {
+        this.hospitalAdminOnly = hospitalAdminOnly;
+    }
+
+    public String getDefaultOpenSupplier()
+    {
+        return defaultOpenSupplier;
+    }
+
+    public void setDefaultOpenSupplier(String defaultOpenSupplier)
+    {
+        this.defaultOpenSupplier = defaultOpenSupplier;
+    }
+
+    public String getSupplierAdminOnly()
+    {
+        return supplierAdminOnly;
+    }
+
+    public void setSupplierAdminOnly(String supplierAdminOnly)
+    {
+        this.supplierAdminOnly = supplierAdminOnly;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
@@ -267,6 +316,10 @@ public class SysMenu extends BaseEntity
             .append("defaultOpenScope", getDefaultOpenScope())
             .append("hospitalGrantSupplierFlag", getHospitalGrantSupplierFlag())
             .append("menuBizCategory", getMenuBizCategory())
+            .append("defaultOpenHospital", getDefaultOpenHospital())
+            .append("hospitalAdminOnly", getHospitalAdminOnly())
+            .append("defaultOpenSupplier", getDefaultOpenSupplier())
+            .append("supplierAdminOnly", getSupplierAdminOnly())
             .toString();
     }
 }

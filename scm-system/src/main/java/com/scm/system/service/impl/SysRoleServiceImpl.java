@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.scm.common.annotation.DataScope;
+import com.scm.common.constant.ScmAuthConstants;
 import com.scm.common.constant.UserConstants;
 import com.scm.common.core.domain.entity.SysRole;
 import com.scm.common.core.domain.entity.SysUser;
@@ -186,6 +187,9 @@ public class SysRoleServiceImpl implements ISysRoleService
     public int insertRole(SysRole role)
     {
         fillRolePinyin(role);
+        normalizeRoleTenantForSave(role);
+        validateRoleTenantConsistency(role);
+        validateOrgAdminUniqueness(role, null);
         // 新增角色信息
         roleMapper.insertRole(role);
         return insertRoleMenu(role);
@@ -202,6 +206,9 @@ public class SysRoleServiceImpl implements ISysRoleService
     public int updateRole(SysRole role)
     {
         fillRolePinyin(role);
+        normalizeRoleTenantForSave(role);
+        validateRoleTenantConsistency(role);
+        validateOrgAdminUniqueness(role, role.getRoleId());
         // 修改角色信息
         roleMapper.updateRole(role);
         // 删除角色与菜单关联
@@ -390,6 +397,123 @@ public class SysRoleServiceImpl implements ISysRoleService
         }
         String raw = PinyinUtils.getShortCode(role.getRoleName().trim());
         role.setPinyinCode(raw != null ? raw : "");
+    }
+
+    /**
+     * 保存前归一化角色类型与院/商绑定，避免平台角色残留 hospital_id 等。
+     */
+    private void normalizeRoleTenantForSave(SysRole role)
+    {
+        if (role == null)
+        {
+            return;
+        }
+        String rt = StringUtils.trimToEmpty(role.getRoleType());
+        if (StringUtils.isEmpty(rt))
+        {
+            rt = ScmAuthConstants.ROLE_TYPE_PLATFORM;
+            role.setRoleType(rt);
+        }
+        if (ScmAuthConstants.ROLE_TYPE_PLATFORM.equalsIgnoreCase(rt))
+        {
+            role.setHospitalId(null);
+            role.setSupplierId(null);
+            role.setOrgAdmin("0");
+            return;
+        }
+        if (ScmAuthConstants.ROLE_TYPE_HOSPITAL.equalsIgnoreCase(rt))
+        {
+            role.setSupplierId(null);
+            if (StringUtils.isEmpty(StringUtils.trimToEmpty(role.getOrgAdmin())))
+            {
+                role.setOrgAdmin("0");
+            }
+            return;
+        }
+        if (ScmAuthConstants.ROLE_TYPE_SUPPLIER.equalsIgnoreCase(rt))
+        {
+            role.setHospitalId(null);
+            if (StringUtils.isEmpty(StringUtils.trimToEmpty(role.getOrgAdmin())))
+            {
+                role.setOrgAdmin("0");
+            }
+        }
+    }
+
+    private void validateRoleTenantConsistency(SysRole role)
+    {
+        if (role == null)
+        {
+            return;
+        }
+        String rt = StringUtils.trimToEmpty(role.getRoleType());
+        if (StringUtils.isEmpty(rt))
+        {
+            rt = ScmAuthConstants.ROLE_TYPE_PLATFORM;
+        }
+        if (ScmAuthConstants.ROLE_TYPE_PLATFORM.equalsIgnoreCase(rt))
+        {
+            if (role.getHospitalId() != null || role.getSupplierId() != null)
+            {
+                throw new ServiceException("平台角色不能填写绑定医院或绑定供应商");
+            }
+            if ("1".equals(StringUtils.trimToEmpty(role.getOrgAdmin())))
+            {
+                throw new ServiceException("平台角色不能设为机构管理员");
+            }
+            return;
+        }
+        if (ScmAuthConstants.ROLE_TYPE_HOSPITAL.equalsIgnoreCase(rt))
+        {
+            if (role.getHospitalId() == null)
+            {
+                throw new ServiceException("医院角色必须选择绑定医院");
+            }
+            if (role.getSupplierId() != null)
+            {
+                throw new ServiceException("医院角色不能绑定供应商");
+            }
+            return;
+        }
+        if (ScmAuthConstants.ROLE_TYPE_SUPPLIER.equalsIgnoreCase(rt))
+        {
+            if (role.getSupplierId() == null)
+            {
+                throw new ServiceException("供应商角色必须选择绑定供应商");
+            }
+            if (role.getHospitalId() != null)
+            {
+                throw new ServiceException("供应商角色不能绑定医院");
+            }
+        }
+    }
+
+    /**
+     * 同一医院/供应商仅允许一个机构管理员角色（org_admin=1）
+     */
+    private void validateOrgAdminUniqueness(SysRole role, Long excludeRoleId)
+    {
+        if (role == null || !"1".equals(StringUtils.trimToEmpty(role.getOrgAdmin())))
+        {
+            return;
+        }
+        String rt = StringUtils.trimToEmpty(role.getRoleType());
+        if (ScmAuthConstants.ROLE_TYPE_HOSPITAL.equalsIgnoreCase(rt) && role.getHospitalId() != null)
+        {
+            int n = roleMapper.countOrgAdminRolesByHospital(role.getHospitalId(), excludeRoleId);
+            if (n > 0)
+            {
+                throw new ServiceException("该医院已存在机构管理员角色，不能重复设置");
+            }
+        }
+        if (ScmAuthConstants.ROLE_TYPE_SUPPLIER.equalsIgnoreCase(rt) && role.getSupplierId() != null)
+        {
+            int n = roleMapper.countOrgAdminRolesBySupplier(role.getSupplierId(), excludeRoleId);
+            if (n > 0)
+            {
+                throw new ServiceException("该供应商已存在机构管理员角色，不能重复设置");
+            }
+        }
     }
 
     /**

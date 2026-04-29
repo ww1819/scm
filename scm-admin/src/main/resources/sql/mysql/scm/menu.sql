@@ -378,6 +378,41 @@ WHERE del_flag = '0' AND menu_id = '2600';
 UPDATE sys_menu SET auth_type = 'platform', hospital_grant_supplier_flag = '0', default_open_scope = 'none', menu_biz_category = 'platform_ops'
 WHERE del_flag = '0' AND menu_id IN ('2200','2910');
 /
+-- ========== 业务菜单维度纠偏（覆盖前文按 perms 批量规则）==========
+-- 供应商维护、医院信息维护：仅平台；资质登记=供应商默认全角色；资质审核=医院默认全角色；
+-- 配送单据申请=供应商默认全角色；配送信息查询=院+商联合、默认对院商全角色开放（不需院授商）
+UPDATE sys_menu SET auth_type = 'platform', hospital_grant_supplier_flag = '0', default_open_scope = 'none',
+  default_open_hospital = '0', hospital_admin_only = '0', default_open_supplier = '0', supplier_admin_only = '0', menu_biz_category = 'platform_ops'
+WHERE del_flag = '0' AND menu_id IN ('2001','20001','20002','20003','20004','20005','20006');
+/
+UPDATE sys_menu SET auth_type = 'platform', hospital_grant_supplier_flag = '0', default_open_scope = 'none',
+  default_open_hospital = '0', hospital_admin_only = '0', default_open_supplier = '0', supplier_admin_only = '0', menu_biz_category = 'platform_ops'
+WHERE del_flag = '0' AND menu_id IN ('2101','21001','21002','21003','21004','21005');
+/
+UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all',
+  default_open_hospital = '1', hospital_admin_only = '0', default_open_supplier = '1', supplier_admin_only = '0', menu_biz_category = 'certificate'
+WHERE del_flag = '0' AND menu_id = '2300';
+/
+UPDATE sys_menu SET auth_type = 'supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all_supplier',
+  default_open_hospital = '0', hospital_admin_only = '0', default_open_supplier = '1', supplier_admin_only = '0', menu_biz_category = 'certificate'
+WHERE del_flag = '0' AND menu_id IN ('2301','2302','23001','23002','23003','23004','23005','23006','23011','23012','23013','23014','23015','23016');
+/
+UPDATE sys_menu SET auth_type = 'hospital', hospital_grant_supplier_flag = '0', default_open_scope = 'all_hospital',
+  default_open_hospital = '1', hospital_admin_only = '0', default_open_supplier = '0', supplier_admin_only = '0', menu_biz_category = 'certificate'
+WHERE del_flag = '0' AND menu_id IN ('2303','2304');
+/
+UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all',
+  default_open_hospital = '1', hospital_admin_only = '0', default_open_supplier = '1', supplier_admin_only = '0', menu_biz_category = 'supply_chain'
+WHERE del_flag = '0' AND menu_id = '2500';
+/
+UPDATE sys_menu SET auth_type = 'supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all_supplier',
+  default_open_hospital = '0', hospital_admin_only = '0', default_open_supplier = '1', supplier_admin_only = '0', menu_biz_category = 'supply_chain'
+WHERE del_flag = '0' AND menu_id IN ('2501','25001','25002','25003','25004','25005','25006','25007','25008');
+/
+UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all',
+  default_open_hospital = '1', hospital_admin_only = '0', default_open_supplier = '1', supplier_admin_only = '0', menu_biz_category = 'supply_chain'
+WHERE del_flag = '0' AND menu_id IN ('2502','25011','25012','25013','25014');
+/
 UPDATE sys_menu SET auth_type = 'platform', hospital_grant_supplier_flag = '0', default_open_scope = 'none', menu_biz_category = 'tenant'
 WHERE del_flag = '0' AND menu_name = '客户管理' AND parent_id = 0;
 /

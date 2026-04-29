@@ -95,8 +95,14 @@ public class SysRoleController extends BaseController
      */
     @RequiresPermissions("system:role:add")
     @GetMapping("/add")
-    public String add()
+    public String add(ModelMap mmap)
     {
+        Hospital hq = new Hospital();
+        hq.setStatus("0");
+        mmap.put("hospitals", hospitalService.selectHospitalList(hq));
+        Supplier sq = new Supplier();
+        sq.setStatus("0");
+        mmap.put("suppliers", supplierService.selectSupplierList(sq));
         return prefix + "/add";
     }
 
@@ -132,6 +138,12 @@ public class SysRoleController extends BaseController
     {
         roleService.checkRoleDataScope(roleId);
         mmap.put("role", roleService.selectRoleById(roleId));
+        Hospital hq = new Hospital();
+        hq.setStatus("0");
+        mmap.put("hospitals", hospitalService.selectHospitalList(hq));
+        Supplier sq = new Supplier();
+        sq.setStatus("0");
+        mmap.put("suppliers", supplierService.selectSupplierList(sq));
         return prefix + "/edit";
     }
 
