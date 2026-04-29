@@ -457,6 +457,61 @@ DELETE FROM scm_hospital_menu_auth WHERE menu_id IN ('2305','23021','23022','230
 /
 DELETE FROM scm_supplier_menu_auth WHERE menu_id IN ('2305','23021','23022','23023','23024','23025');
 /
+-- 历史环境补齐：供应商资质登记按钮权限（父菜单可能为 20016 且 perms 为空）
+-- 目标：确保角色管理可勾选 certificate:supplier:list/add/edit/remove/audit/export
+SET @supplier_cert_parent_id := (
+  SELECT m.menu_id
+  FROM sys_menu m
+  WHERE m.menu_type = 'C'
+    AND (m.perms = 'certificate:supplier:view' OR m.menu_name = '供应商资质登记')
+  ORDER BY m.menu_id
+  LIMIT 1
+);
+/
+UPDATE sys_menu
+SET perms = 'certificate:supplier:view',
+    url = '/certificate/supplier',
+    target = '',
+    menu_type = 'C',
+    visible = '0',
+    is_refresh = '1',
+    status = '0',
+    icon = IFNULL(NULLIF(TRIM(icon), ''), 'fa fa-address-card'),
+    update_by = '1',
+    update_time = NOW(),
+    remark = IFNULL(NULLIF(remark, ''), '供应商资质登记菜单')
+WHERE menu_id = @supplier_cert_parent_id;
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status)
+SELECT 2001601, '证件查询', @supplier_cert_parent_id, 1, '#', '', 'F', '0', '1', 'certificate:supplier:list', '#', 'admin', sysdate(), '', null, '', '0'
+FROM DUAL WHERE @supplier_cert_parent_id IS NOT NULL;
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status)
+SELECT 2001602, '证件新增', @supplier_cert_parent_id, 2, '#', '', 'F', '0', '1', 'certificate:supplier:add', '#', 'admin', sysdate(), '', null, '', '0'
+FROM DUAL WHERE @supplier_cert_parent_id IS NOT NULL;
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status)
+SELECT 2001603, '证件修改', @supplier_cert_parent_id, 3, '#', '', 'F', '0', '1', 'certificate:supplier:edit', '#', 'admin', sysdate(), '', null, '', '0'
+FROM DUAL WHERE @supplier_cert_parent_id IS NOT NULL;
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status)
+SELECT 2001604, '证件删除', @supplier_cert_parent_id, 4, '#', '', 'F', '0', '1', 'certificate:supplier:remove', '#', 'admin', sysdate(), '', null, '', '0'
+FROM DUAL WHERE @supplier_cert_parent_id IS NOT NULL;
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status)
+SELECT 2001605, '证件审核', @supplier_cert_parent_id, 5, '#', '', 'F', '0', '1', 'certificate:supplier:audit', '#', 'admin', sysdate(), '', null, '', '0'
+FROM DUAL WHERE @supplier_cert_parent_id IS NOT NULL;
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status)
+SELECT 2001606, '证件导出', @supplier_cert_parent_id, 6, '#', '', 'F', '0', '1', 'certificate:supplier:export', '#', 'admin', sysdate(), '', null, '', '0'
+FROM DUAL WHERE @supplier_cert_parent_id IS NOT NULL;
+/
+UPDATE sys_menu
+SET auth_type = 'supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all_supplier',
+  default_open_hospital = '0', hospital_admin_only = '0', default_open_supplier = '1', supplier_admin_only = '0', menu_biz_category = 'certificate'
+WHERE del_flag = '0'
+  AND menu_id IN (@supplier_cert_parent_id, 2001601, 2001602, 2001603, 2001604, 2001605, 2001606);
+/
 -- ========== 巡检：菜单 URL / 权限串 一致性检查（只读） ==========
 -- 1) 证件审核类菜单：URL 与 perms 关键字应一致（supplier/product + audit）
 SELECT menu_id, menu_name, url, perms

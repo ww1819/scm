@@ -1,6 +1,7 @@
 package com.scm.web.controller.certificate;
 
 import java.util.List;
+import org.apache.shiro.authz.annotation.Logical;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -48,7 +49,8 @@ public class ProductCertificateController extends BaseController
     @Autowired
     private ISupplierUserService supplierUserService;
 
-    @RequiresPermissions("certificate:product:view")
+    /** 进入登记页：有「登记」菜单(view)或「证件查询」(list)任一即可，避免只配子按钮未配父权限时无法打开页面 */
+    @RequiresPermissions(value = { "certificate:product:view", "certificate:product:list" }, logical = Logical.OR)
     @GetMapping()
     public String productCertificate()
     {
@@ -67,9 +69,10 @@ public class ProductCertificateController extends BaseController
 
 
     /**
-     * 查询产品证件列表
+     * 查询产品证件列表：登记页用 view/list；审核页同样调本接口，需同时具备 audit 时才不报错（仅勾「产品证件审核」未勾登记菜单时常见）
      */
-    @RequiresPermissions("certificate:product:list")
+    @RequiresPermissions(value = { "certificate:product:view", "certificate:product:list", "certificate:product:audit" },
+        logical = Logical.OR)
     @PostMapping("/list")
     @ResponseBody
     public TableDataInfo list(ProductCertificate productCertificate)
@@ -98,9 +101,9 @@ public class ProductCertificateController extends BaseController
     }
 
     /**
-     * 查询过期预警的产品证件列表
+     * 查询过期预警的产品证件列表（与列表接口一致：view 或 list）
      */
-    @RequiresPermissions("certificate:product:view")
+    @RequiresPermissions(value = { "certificate:product:view", "certificate:product:list" }, logical = Logical.OR)
     @PostMapping("/expiringList")
     @ResponseBody
     public TableDataInfo expiringList(ProductCertificate productCertificate)
