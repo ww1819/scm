@@ -2,6 +2,7 @@ package com.scm.web.controller.certificate;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.shiro.authz.annotation.Logical;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -45,7 +46,8 @@ public class SupplierCertificateController extends BaseController
     @Autowired
     private ICertificateTypeService certificateTypeService;
 
-    @RequiresPermissions("certificate:supplier:view")
+    /** 登记页：view 或 list 任一即可（与产品证件登记页策略一致） */
+    @RequiresPermissions(value = { "certificate:supplier:view", "certificate:supplier:list" }, logical = Logical.OR)
     @GetMapping()
     public String supplierCertificate()
     {
@@ -63,9 +65,10 @@ public class SupplierCertificateController extends BaseController
     }
 
     /**
-     * 查询供应商证件列表
+     * 查询供应商证件列表：登记页用 view/list；资质审核页同样调本接口，需含 audit
      */
-    @RequiresPermissions("certificate:supplier:view")
+    @RequiresPermissions(value = { "certificate:supplier:view", "certificate:supplier:list", "certificate:supplier:audit" },
+        logical = Logical.OR)
     @PostMapping("/list")
     @ResponseBody
     public TableDataInfo list(SupplierCertificate supplierCertificate, String supplierIds, Long hospitalId)
@@ -113,9 +116,9 @@ public class SupplierCertificateController extends BaseController
     }
 
     /**
-     * 查询过期预警的供应商证件列表
+     * 查询过期预警的供应商证件列表（view 或 list）
      */
-    @RequiresPermissions("certificate:supplier:view")
+    @RequiresPermissions(value = { "certificate:supplier:view", "certificate:supplier:list" }, logical = Logical.OR)
     @PostMapping("/expiringList")
     @ResponseBody
     public TableDataInfo expiringList(SupplierCertificate supplierCertificate)
