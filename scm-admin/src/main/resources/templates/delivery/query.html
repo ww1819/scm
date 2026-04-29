@@ -10,7 +10,7 @@
 			line-height: 1.35;
 		}
 		.tab-content {
-			padding-top: 15px;
+			padding-top: 6px;
 			min-height: 0;
 		}
 		.tab-pane {
@@ -26,6 +26,22 @@
 		}
 		.nav-tabs {
 			flex-shrink: 0;
+		}
+		.nav-tabs > li > a {
+			color: #555;
+			background: #f5f5f5;
+		}
+		.nav-tabs > li > a:hover {
+			color: #2f4050;
+			background: #e2e8f0;
+			border-color: #d0d7e2;
+		}
+		.nav-tabs > li.active > a,
+		.nav-tabs > li.active > a:focus,
+		.nav-tabs > li.active > a:hover {
+			color: #fff;
+			background: #2d8cf0;
+			border-color: #2d8cf0;
 		}
 		.tab-content {
 			flex: 1;
@@ -47,26 +63,14 @@
 			display: flex;
 			flex-direction: column;
 			overflow: hidden;
+			margin: 0;
 		}
 		.select-table {
 			flex: 1;
 			display: flex;
 			flex-direction: column;
 			overflow: hidden;
-			min-height: 600px;
-		}
-		#toolbar-detail, #toolbar-summary {
-			display: flex;
-			align-items: center;
-			gap: 10px;
-			min-height: 40px;
-			flex-shrink: 0;
-		}
-		#toolbar-detail .btn, #toolbar-summary .btn {
-			white-space: nowrap;
-			overflow: visible;
-			min-width: 80px;
-			text-overflow: ellipsis;
+			min-height: 0;
 		}
 		/* 固定表头 */
 		.bootstrap-table .fixed-table-header {
@@ -129,6 +133,92 @@
 		.search-collapse {
 			flex-shrink: 0;
 		}
+		.query-table-wrap {
+			flex: 1;
+			min-height: 0;
+			position: relative;
+			padding-bottom: 6px;
+			overflow: hidden;
+		}
+		.query-table-wrap .bootstrap-table {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+		}
+		.query-table-wrap .fixed-table-container {
+			display: flex;
+			flex-direction: column;
+			flex: 1;
+			min-height: 0;
+			padding-bottom: 0;
+		}
+		.query-table-wrap .fixed-table-body {
+			overflow-x: auto !important;
+			overflow-y: auto !important;
+			flex: 1;
+			min-height: 0;
+		}
+		.query-table-wrap .fixed-table-pagination {
+			position: sticky;
+			bottom: 0;
+			display: block !important;
+			background: #fff;
+			z-index: 6;
+			border-top: 1px solid #eee;
+			margin: 0 !important;
+			margin-top: auto !important;
+			padding: 8px 10px;
+		}
+		.query-table-wrap .fixed-table-pagination .pagination {
+			margin-right: 28px;
+		}
+		.query-table-wrap .fixed-table-header {
+			position: sticky !important;
+			top: 0 !important;
+			z-index: 10 !important;
+			background: #fff !important;
+		}
+		/* 明细列显示：加宽间距 + 单行不换行 */
+		#detail-tab .fixed-table-header th,
+		#detail-tab .fixed-table-body td {
+			padding: 8px 14px !important;
+			white-space: nowrap !important;
+			word-break: keep-all !important;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		#detail-tab .barcode-cell-wrap {
+			white-space: nowrap !important;
+			word-break: keep-all !important;
+			line-height: 1.4;
+		}
+		#detail-tab .fixed-table-body {
+			overflow-y: auto !important;
+		}
+		/* 明细表左侧操作按钮与右侧工具栏同一行 */
+		#toolbar-detail.detail-action-bar {
+			display: block !important;
+			float: none;
+			margin: 0 8px 0 0;
+			padding: 0;
+			background: #fff;
+		}
+		#toolbar-detail.detail-action-bar .btn {
+			margin-right: 6px;
+		}
+		#detail-tab .fixed-table-toolbar {
+			display: flex;
+			align-items: center;
+		}
+		#detail-tab .fixed-table-toolbar .columns {
+			float: none;
+			margin-left: auto;
+		}
+		#detail-tab .search-collapse,
+		#summary-tab .search-collapse {
+			padding-left: 15px;
+			padding-right: 15px;
+		}
 	</style>
 </head>
 <body class="gray-bg">
@@ -137,12 +227,12 @@
 		<ul class="nav nav-tabs" role="tablist" style="margin-bottom: 0;">
 			<li role="presentation" class="active">
 				<a href="#detail-tab" aria-controls="detail-tab" role="tab" data-toggle="tab" onclick="switchTab('detail')">
-					<i class="fa fa-list"></i> 明细表
+					<i class="fa fa-list"></i> 配送明细表
 				</a>
 			</li>
 			<li role="presentation">
 				<a href="#summary-tab" aria-controls="summary-tab" role="tab" data-toggle="tab" onclick="switchTab('summary')">
-					<i class="fa fa-table"></i> 汇总表
+					<i class="fa fa-table"></i> 配送汇总表
 				</a>
 			</li>
 		</ul>
@@ -166,21 +256,21 @@
 										产品名称：<input type="text" name="materialName"/>
 									</li>
 									<li>
-										<a class="btn btn-primary btn-rounded btn-sm" onclick="searchDetail()"><i class="fa fa-search"></i>&nbsp;搜索</a>
-										<a class="btn btn-warning btn-rounded btn-sm" onclick="resetDetail()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+										<a class="btn btn-primary btn-rounded btn-sm" onclick="searchDetail()" style="display: none;"><i class="fa fa-search"></i>&nbsp;搜索</a>
+										<a class="btn btn-warning btn-rounded btn-sm" onclick="resetDetail()" style="display: none;"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+										<a class="btn btn-warning btn-rounded btn-sm" onclick="exportDetail()" shiro:hasPermission="delivery:delivery:export" style="display: none;"><i class="fa fa-download"></i>&nbsp;导出</a>
 									</li>
 								</ul>
 							</div>
 						</form>
 					</div>
-					
-			        <div class="btn-group-sm" id="toolbar-detail" role="group" style="flex-shrink: 0; padding: 5px 0; width: 100%;">
-			            <a class="btn btn-warning" onclick="exportDetail()" shiro:hasPermission="delivery:delivery:export" style="min-width: 80px;">
-				            <i class="fa fa-download"></i> 导出
-				        </a>
+			        <div class="btn-group-sm" id="toolbar-detail" role="group" style="display: none;">
+			            <a class="btn btn-success btn-sm" onclick="searchDetail()"><i class="fa fa-search"></i> 搜索</a>
+			            <a class="btn btn-warning btn-sm" onclick="resetDetail()"><i class="fa fa-refresh"></i> 重置</a>
+			            <a class="btn btn-primary btn-sm" onclick="exportDetail()" shiro:hasPermission="delivery:delivery:export"><i class="fa fa-download"></i> 导出</a>
 			        </div>
 			        
-			        <div class="col-sm-12 select-table table-striped">
+			        <div class="col-sm-12 select-table table-striped query-table-wrap">
 					    <table id="bootstrap-table-detail"></table>
 					</div>
 				</div>
@@ -214,19 +304,14 @@
 									<li>
 										<a class="btn btn-primary btn-rounded btn-sm" onclick="searchSummary()"><i class="fa fa-search"></i>&nbsp;搜索</a>
 										<a class="btn btn-warning btn-rounded btn-sm" onclick="resetSummary()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+										<a class="btn btn-warning btn-rounded btn-sm" onclick="exportSummary()" shiro:hasPermission="delivery:delivery:export"><i class="fa fa-download"></i>&nbsp;导出</a>
 									</li>
 								</ul>
 							</div>
 						</form>
 					</div>
-					
-			        <div class="btn-group-sm" id="toolbar-summary" role="group" style="flex-shrink: 0; padding: 5px 0; width: 100%;">
-			            <a class="btn btn-warning" onclick="exportSummary()" shiro:hasPermission="delivery:delivery:export" style="min-width: 80px;">
-				            <i class="fa fa-download"></i> 导出
-				        </a>
-			        </div>
 			        
-			        <div class="col-sm-12 select-table table-striped" style="flex: 1; overflow: auto;">
+			        <div class="col-sm-12 select-table table-striped query-table-wrap" style="flex: 1; overflow: auto;">
 					    <table id="bootstrap-table-summary"></table>
 					</div>
 				</div>
@@ -314,6 +399,19 @@
 		    if (detailTableInitialized) {
 		        return;
 		    }
+
+		    var mountDetailToolbar = function() {
+		    	var $table = $('#bootstrap-table-detail');
+		    	var $bootstrapTable = $table.closest('.bootstrap-table');
+		    	var $toolbar = $bootstrapTable.find('.fixed-table-toolbar');
+		    	var $actions = $('#toolbar-detail');
+		    	if ($toolbar.length && $actions.length) {
+		    		if ($actions.parent()[0] !== $toolbar[0]) {
+		    			$actions.prependTo($toolbar);
+		    		}
+		    		$actions.addClass('detail-action-bar').show();
+		    	}
+		    };
 		    
 		    var options = {
 		        id: "bootstrap-table-detail",
@@ -323,6 +421,9 @@
 		        sortOrder: "desc",
 		        modalName: "配送明细",
 		        formId: "delivery-detail-form",
+		        showRefresh: true,
+		        showColumns: true,
+		        showToggle: true,
 		        columns: [{
 		            field: 'serialNumber',
 		            title: '序号',
@@ -475,6 +576,7 @@
 		        options.onLoadSuccess = function(data) {
 		            console.log("明细表加载成功，数据量:", data ? (data.rows ? data.rows.length : (Array.isArray(data) ? data.length : 0)) : 0);
 		            var $table = $('#bootstrap-table-detail');
+		            mountDetailToolbar();
 		            // 确保加载完成后更新页码
 		            if ($table && $table.bootstrapTable) {
 		                var options = $table.bootstrapTable('getOptions');
@@ -498,6 +600,7 @@
 		        };
 		        $.table.init(options);
 		        $table.data('currentPage', 1);
+		        setTimeout(mountDetailToolbar, 0);
 		        detailTableInitialized = true;
 		    }
 		}
@@ -516,6 +619,9 @@
 		        sortOrder: "desc",
 		        modalName: "配送单",
 		        formId: "delivery-summary-form",
+		        showRefresh: true,
+		        showColumns: true,
+		        showToggle: true,
 		        columns: [{
 		            field: 'serialNumber',
 		            title: '序号',
