@@ -98,6 +98,64 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public void resetHospitalBuiltinRoleMenus(Long hospitalId, String operBy)
+    {
+        ensureHospitalAdminRole(hospitalId, operBy);
+        ensureHospitalStaffRole(hospitalId, operBy);
+        List<SysMenu> all = sysMenuMapper.selectMenuAll();
+        Map<Long, SysMenu> byId = indexMenusById(all);
+        Set<Long> rawSeeds = collectRawHospitalDefaultGrantSeeds();
+        Set<Long> adminExpanded = expandSeedsWithAncestors(rawSeeds, byId);
+        Set<Long> nonAdminRaw = filterHospitalSeedsExcludeAdminOnly(rawSeeds, byId);
+        Set<Long> nonAdminExpanded = expandSeedsWithAncestors(nonAdminRaw, byId);
+        hospitalMenuAuthMapper.deleteByHospitalId(hospitalId);
+        batchInsertHospitalAuth(hospitalId, adminExpanded, operBy);
+        String hid = String.valueOf(hospitalId);
+        SysRole admin = sysRoleMapper.selectByRoleKeyAndHospitalId(ScmAuthConstants.ROLE_KEY_HOSPITAL_ADMIN, hospitalId);
+        SysRole staff = sysRoleMapper.selectByRoleKeyAndHospitalId(ScmAuthConstants.ROLE_KEY_HOSPITAL_STAFF, hospitalId);
+        if (admin != null && admin.getRoleId() != null)
+        {
+            sysRoleMenuMapper.deleteRoleMenuByRoleId(admin.getRoleId());
+            batchInsertRoleMenus(admin.getRoleId(), adminExpanded, hid, "");
+        }
+        if (staff != null && staff.getRoleId() != null)
+        {
+            sysRoleMenuMapper.deleteRoleMenuByRoleId(staff.getRoleId());
+            batchInsertRoleMenus(staff.getRoleId(), nonAdminExpanded, hid, "");
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void resetSupplierBuiltinRoleMenus(Long supplierId, String operBy)
+    {
+        ensureSupplierAdminRole(supplierId, operBy);
+        ensureSupplierSalesRole(supplierId, operBy);
+        List<SysMenu> all = sysMenuMapper.selectMenuAll();
+        Map<Long, SysMenu> byId = indexMenusById(all);
+        Set<Long> rawSeeds = collectRawSupplierDefaultGrantSeeds();
+        Set<Long> adminExpanded = expandSeedsWithAncestors(rawSeeds, byId);
+        Set<Long> nonAdminRaw = filterSupplierSeedsExcludeAdminOnly(rawSeeds, byId);
+        Set<Long> nonAdminExpanded = expandSeedsWithAncestors(nonAdminRaw, byId);
+        supplierMenuAuthMapper.deleteBySupplierId(supplierId);
+        batchInsertSupplierAuth(supplierId, adminExpanded, operBy);
+        String sid = String.valueOf(supplierId);
+        SysRole admin = sysRoleMapper.selectByRoleKeyAndSupplierId(ScmAuthConstants.ROLE_KEY_SUPPLIER_ADMIN, supplierId);
+        SysRole sales = sysRoleMapper.selectByRoleKeyAndSupplierId(ScmAuthConstants.ROLE_KEY_SUPPLIER_SALES, supplierId);
+        if (admin != null && admin.getRoleId() != null)
+        {
+            sysRoleMenuMapper.deleteRoleMenuByRoleId(admin.getRoleId());
+            batchInsertRoleMenus(admin.getRoleId(), adminExpanded, "", sid);
+        }
+        if (sales != null && sales.getRoleId() != null)
+        {
+            sysRoleMenuMapper.deleteRoleMenuByRoleId(sales.getRoleId());
+            batchInsertRoleMenus(sales.getRoleId(), nonAdminExpanded, "", sid);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void replaceHospitalMenuAuth(Long hospitalId, List<Long> menuIds, String operBy)
     {
         ensureHospitalAdminRole(hospitalId, operBy);

@@ -3,6 +3,11 @@
 <head>
 	<th:block th:include="include :: header('医院供应商菜单授权')" />
 	<th:block th:include="include :: ztree-css" />
+	<style>
+		#hospitalPickerModal .fixed-table-toolbar, #supplierPickerModal .fixed-table-toolbar { display: none; }
+		#hospitalPickerModal .bootstrap-table .table, #supplierPickerModal .bootstrap-table .table { margin-bottom: 0; }
+		.hs-select-wrap { display: inline-block; vertical-align: middle; min-width: 260px; max-width: 380px; }
+	</style>
 </head>
 <body class="gray-bg">
 	<div class="container-div">
@@ -11,14 +16,21 @@
 				<form class="form-inline">
 					<div class="form-group">
 						<label>医院：</label>
-						<select id="hospitalId" class="form-control" onchange="loadSuppliers()">
-							<option value="">请选择</option>
-							<option th:each="h : ${hospitals}" th:value="${h.hospitalId}" th:text="${h.hospitalName}"></option>
-						</select>
+						<input type="hidden" id="hospitalId" />
+						<div class="input-group hs-select-wrap">
+							<input type="text" class="form-control" id="hospitalDisplay" readonly placeholder="请选择医院" onclick="openHospitalPicker()" style="cursor:pointer; background:#fff;" />
+							<span class="input-group-btn">
+								<button type="button" class="btn btn-default" onclick="openHospitalPicker()" title="选择医院"><i class="fa fa-search"></i></button>
+							</span>
+						</div>
 						<label style="margin-left:12px;">供应商：</label>
-						<select id="supplierId" class="form-control">
-							<option value="">请选择</option>
-						</select>
+						<input type="hidden" id="supplierId" />
+						<div class="input-group hs-select-wrap">
+							<input type="text" class="form-control" id="supplierDisplay" readonly placeholder="请选择供应商" onclick="openSupplierPicker()" style="cursor:pointer; background:#fff;" />
+							<span class="input-group-btn">
+								<button type="button" class="btn btn-default" onclick="openSupplierPicker()" title="选择供应商"><i class="fa fa-search"></i></button>
+							</span>
+						</div>
 						<a class="btn btn-primary btn-sm" onclick="loadTree()"><i class="fa fa-refresh"></i> 加载菜单</a>
 						<a class="btn btn-success btn-sm" onclick="saveAuth()" shiro:hasPermission="scmAuth:hospitalSupplierMenu:edit"><i class="fa fa-save"></i> 保存</a>
 					</div>
@@ -32,22 +44,280 @@
 			</div>
 		</div>
 	</div>
+
+	<div class="modal fade" id="hospitalPickerModal" tabindex="-1" data-backdrop="static">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title">选择医院</h4>
+				</div>
+				<div class="modal-body">
+					<div class="row" style="margin-bottom:10px;">
+						<div class="col-sm-12">
+							<label class="control-label">检索（名称 / 拼音简码 / 编码）</label>
+							<input type="text" class="form-control" id="hospitalPickerKeyword" placeholder="输入关键字模糊过滤" autocomplete="off" />
+						</div>
+					</div>
+					<p>
+						<a class="btn btn-primary btn-sm" onclick="hospitalPickerSearch()"><i class="fa fa-search"></i> 查询</a>
+						<a class="btn btn-warning btn-sm" onclick="hospitalPickerReset()"><i class="fa fa-refresh"></i> 清空条件</a>
+					</p>
+					<table id="hospitalPickerTable"></table>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="supplierPickerModal" tabindex="-1" data-backdrop="static">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title">选择供应商</h4>
+				</div>
+				<div class="modal-body">
+					<div class="row" style="margin-bottom:10px;">
+						<div class="col-sm-12">
+							<label class="control-label">检索（名称 / 拼音简码 / 编码）</label>
+							<input type="text" class="form-control" id="supplierPickerKeyword" placeholder="输入关键字模糊过滤" autocomplete="off" />
+						</div>
+					</div>
+					<p>
+						<a class="btn btn-primary btn-sm" onclick="supplierPickerSearch()"><i class="fa fa-search"></i> 查询</a>
+						<a class="btn btn-warning btn-sm" onclick="supplierPickerReset()"><i class="fa fa-refresh"></i> 清空条件</a>
+					</p>
+					<table id="supplierPickerTable"></table>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: ztree-js" />
 	<script th:inline="javascript">
 		var prefix = ctx + "scm/auth/hospitalSupplierMenu";
 
-		function loadSuppliers() {
-			var hid = $("#hospitalId").val();
-			$("#supplierId").empty().append('<option value="">请选择</option>');
-			if (!hid) return;
-			$.get(prefix + "/suppliers/" + hid, function(res) {
-				var rows = res.data || [];
-				for (var i = 0; i < rows.length; i++) {
-					$("#supplierId").append('<option value="' + rows[i].supplierId + '">' + rows[i].companyName + '</option>');
+		var hospitalPickerAll = [];
+		var hospitalPickerLoaded = false;
+		var hospitalPickerInited = false;
+
+		var supplierPickerAll = [];
+		var supplierPickerInited = false;
+
+		function trimKw(kw) {
+			return ($.common && $.common.trim ? $.common.trim(kw || '') : (kw || '').replace(/^\s+|\s+$/g, ''));
+		}
+
+		function filterHospitalRows(kw) {
+			kw = trimKw(kw).toLowerCase();
+			if (!kw) {
+				return hospitalPickerAll.slice();
+			}
+			return $.grep(hospitalPickerAll, function(row) {
+				var code = (row.code || '').toLowerCase();
+				var name = (row.name || '').toLowerCase();
+				var py = (row.pinyin || '').toLowerCase();
+				return code.indexOf(kw) >= 0 || name.indexOf(kw) >= 0 || py.indexOf(kw) >= 0;
+			});
+		}
+
+		function refreshHospitalPickerTable() {
+			var kw = $('#hospitalPickerKeyword').val();
+			var data = filterHospitalRows(kw);
+			if (hospitalPickerInited) {
+				$('#hospitalPickerTable').bootstrapTable('load', data);
+			}
+		}
+
+		function hospitalPickerSearch() {
+			refreshHospitalPickerTable();
+		}
+
+		function hospitalPickerReset() {
+			$('#hospitalPickerKeyword').val('');
+			refreshHospitalPickerTable();
+		}
+
+		function initHospitalPickerTable() {
+			$('#hospitalPickerTable').bootstrapTable({
+				pagination: true,
+				sidePagination: 'client',
+				pageSize: 25,
+				pageList: [10, 25, 50, 100],
+				height: 400,
+				locale: 'zh-CN',
+				data: [],
+				columns: [
+					{ field: 'code', title: '编码', sortable: true },
+					{ field: 'name', title: '名称', sortable: true },
+					{ field: 'pinyin', title: '拼音简码', sortable: true, formatter: function(v) { return v || '—'; } },
+					{
+						title: '操作',
+						align: 'center',
+						width: 90,
+						formatter: function(value, row) {
+							return '<a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="applyHospitalPick(' + row.id + ')"><i class="fa fa-check"></i> 选择</a>';
+						}
+					}
+				]
+			});
+			hospitalPickerInited = true;
+		}
+
+		function applyHospitalPick(id) {
+			var row = null;
+			for (var i = 0; i < hospitalPickerAll.length; i++) {
+				if (String(hospitalPickerAll[i].id) === String(id)) {
+					row = hospitalPickerAll[i];
+					break;
+				}
+			}
+			if (!row) {
+				return;
+			}
+			$('#hospitalId').val(row.id);
+			$('#hospitalDisplay').val(row.name || '');
+			$('#supplierId').val('');
+			$('#supplierDisplay').val('');
+			$('#hospitalPickerModal').modal('hide');
+		}
+
+		function openHospitalPicker() {
+			var done = function() {
+				if (!hospitalPickerInited) {
+					initHospitalPickerTable();
+				}
+				$('#hospitalPickerKeyword').val('');
+				refreshHospitalPickerTable();
+				$('#hospitalPickerModal').modal('show');
+			};
+			if (hospitalPickerLoaded) {
+				done();
+				return;
+			}
+			$.getJSON(prefix + "/candidates", function(res) {
+				if (res.code === web_status.SUCCESS) {
+					hospitalPickerAll = res.data || [];
+					hospitalPickerLoaded = true;
+					done();
+				} else {
+					$.modal.alertWarning(res.msg || '加载医院列表失败');
 				}
 			});
 		}
+
+		function filterSupplierRows(kw) {
+			kw = trimKw(kw).toLowerCase();
+			if (!kw) {
+				return supplierPickerAll.slice();
+			}
+			return $.grep(supplierPickerAll, function(row) {
+				var code = (row.code || '').toLowerCase();
+				var name = (row.name || '').toLowerCase();
+				var py = (row.pinyin || '').toLowerCase();
+				return code.indexOf(kw) >= 0 || name.indexOf(kw) >= 0 || py.indexOf(kw) >= 0;
+			});
+		}
+
+		function refreshSupplierPickerTable() {
+			var kw = $('#supplierPickerKeyword').val();
+			var data = filterSupplierRows(kw);
+			if (supplierPickerInited) {
+				$('#supplierPickerTable').bootstrapTable('load', data);
+			}
+		}
+
+		function supplierPickerSearch() {
+			refreshSupplierPickerTable();
+		}
+
+		function supplierPickerReset() {
+			$('#supplierPickerKeyword').val('');
+			refreshSupplierPickerTable();
+		}
+
+		function initSupplierPickerTable() {
+			$('#supplierPickerTable').bootstrapTable({
+				pagination: true,
+				sidePagination: 'client',
+				pageSize: 25,
+				pageList: [10, 25, 50, 100],
+				height: 400,
+				locale: 'zh-CN',
+				data: [],
+				columns: [
+					{ field: 'code', title: '编码', sortable: true },
+					{ field: 'name', title: '名称', sortable: true },
+					{ field: 'pinyin', title: '拼音简码', sortable: true, formatter: function(v) { return v || '—'; } },
+					{
+						title: '操作',
+						align: 'center',
+						width: 90,
+						formatter: function(value, row) {
+							return '<a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="applySupplierPick(' + row.id + ')"><i class="fa fa-check"></i> 选择</a>';
+						}
+					}
+				]
+			});
+			supplierPickerInited = true;
+		}
+
+		function applySupplierPick(id) {
+			var row = null;
+			for (var i = 0; i < supplierPickerAll.length; i++) {
+				if (String(supplierPickerAll[i].id) === String(id)) {
+					row = supplierPickerAll[i];
+					break;
+				}
+			}
+			if (!row) {
+				return;
+			}
+			$('#supplierId').val(row.id);
+			$('#supplierDisplay').val(row.name || '');
+			$('#supplierPickerModal').modal('hide');
+		}
+
+		function openSupplierPicker() {
+			var hid = $("#hospitalId").val();
+			if (!hid) {
+				$.modal.alertWarning("请先选择医院");
+				return;
+			}
+			$.getJSON(prefix + "/supplierCandidates/" + hid, function(res) {
+				if (res.code === web_status.SUCCESS) {
+					supplierPickerAll = res.data || [];
+					if (!supplierPickerInited) {
+						initSupplierPickerTable();
+					}
+					$('#supplierPickerKeyword').val('');
+					$('#supplierPickerTable').bootstrapTable('load', filterSupplierRows(''));
+					$('#supplierPickerModal').modal('show');
+				} else {
+					$.modal.alertWarning(res.msg || '加载供应商列表失败');
+				}
+			});
+		}
+
+		$('#hospitalPickerKeyword').on('keydown', function(e) {
+			if (e.keyCode === 13) {
+				e.preventDefault();
+				hospitalPickerSearch();
+			}
+		});
+		$('#supplierPickerKeyword').on('keydown', function(e) {
+			if (e.keyCode === 13) {
+				e.preventDefault();
+				supplierPickerSearch();
+			}
+		});
 
 		function loadTree() {
 			var hid = $("#hospitalId").val();

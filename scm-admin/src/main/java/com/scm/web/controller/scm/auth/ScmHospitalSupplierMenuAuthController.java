@@ -2,14 +2,15 @@ package com.scm.web.controller.scm.auth;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -71,7 +72,18 @@ public class ScmHospitalSupplierMenuAuthController extends BaseController
 
     @RequiresPermissions("scmAuth:hospitalSupplierMenu:view")
     @GetMapping()
-    public String page(ModelMap mmap)
+    public String page()
+    {
+        return PREFIX;
+    }
+
+    /**
+     * 弹窗选择医院：编码、名称、拼音简码（受医院上下文限制时仅返回本院）
+     */
+    @RequiresPermissions("scmAuth:hospitalSupplierMenu:view")
+    @GetMapping("/candidates")
+    @ResponseBody
+    public AjaxResult hospitalCandidates()
     {
         Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(getUserId());
         Hospital q = new Hospital();
@@ -80,8 +92,53 @@ public class ScmHospitalSupplierMenuAuthController extends BaseController
         {
             q.setHospitalId(hospitalCtx);
         }
-        mmap.put("hospitals", hospitalService.selectHospitalList(q));
-        return PREFIX;
+        List<Hospital> list = hospitalService.selectHospitalList(q);
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (Hospital h : list)
+        {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", h.getHospitalId());
+            m.put("code", StringUtils.nvl(h.getHospitalCode(), ""));
+            m.put("name", StringUtils.nvl(h.getHospitalName(), ""));
+            m.put("pinyin", StringUtils.nvl(h.getPinyinCode(), ""));
+            rows.add(m);
+        }
+        return AjaxResult.success(rows);
+    }
+
+    /**
+     * 弹窗选择供应商：当前医院已关联且启用的供应商，编码、名称、拼音简码
+     */
+    @RequiresPermissions("scmAuth:hospitalSupplierMenu:view")
+    @GetMapping("/supplierCandidates/{hospitalId}")
+    @ResponseBody
+    public AjaxResult supplierCandidates(@PathVariable("hospitalId") Long hospitalId)
+    {
+        assertHospitalInScope(hospitalId);
+        HospitalSupplier q = new HospitalSupplier();
+        q.setHospitalId(hospitalId);
+        List<HospitalSupplier> rels = hospitalSupplierService.selectHospitalSupplierList(q);
+        Set<Long> ids = new HashSet<>();
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (HospitalSupplier rel : rels)
+        {
+            if (rel.getSupplierId() != null && ids.add(rel.getSupplierId()))
+            {
+                Supplier s = supplierService.selectSupplierById(rel.getSupplierId());
+                if (s != null && "0".equals(s.getStatus()))
+                {
+                    Map<String, Object> m = new HashMap<>();
+                    m.put("id", s.getSupplierId());
+                    m.put("code", StringUtils.nvl(s.getSupplierCode(), ""));
+                    m.put("name", StringUtils.nvl(s.getCompanyName(), ""));
+                    String py = StringUtils.isNotEmpty(s.getCompanyShortName()) ? s.getCompanyShortName()
+                        : StringUtils.nvl(s.getPinyinCode(), "");
+                    m.put("pinyin", py);
+                    rows.add(m);
+                }
+            }
+        }
+        return AjaxResult.success(rows);
     }
 
     @RequiresPermissions("scmAuth:hospitalSupplierMenu:query")

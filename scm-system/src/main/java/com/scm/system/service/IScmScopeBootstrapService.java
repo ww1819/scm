@@ -25,8 +25,18 @@ public interface IScmScopeBootstrapService
     /** 医院菜单白名单与医院管理员角色菜单重置为「全部医院类菜单」 */
     void resetHospitalMenuAuth(Long hospitalId, String operBy);
 
+    /**
+     * 按系统默认开放规则重置本院菜单白名单，并仅重建「医院管理员」「医院职工」两个内置角色的菜单权限（不修改其他自定义医院角色）。
+     */
+    void resetHospitalBuiltinRoleMenus(Long hospitalId, String operBy);
+
     /** 供应商菜单白名单与供应商管理员角色菜单重置为「全部供应商类菜单」 */
     void resetSupplierMenuAuth(Long supplierId, String operBy);
+
+    /**
+     * 按系统默认开放规则重置本供应商菜单白名单，并仅重建「供应商管理员」「供应商业务员」两个内置角色的菜单权限（不修改其他自定义供应商角色）。
+     */
+    void resetSupplierBuiltinRoleMenus(Long supplierId, String operBy);
 
     /** 覆盖医院白名单，并同步医院管理员角色菜单为传入集合 */
     void replaceHospitalMenuAuth(Long hospitalId, List<Long> menuIds, String operBy);

@@ -3,6 +3,11 @@
 <head>
 	<th:block th:include="include :: header('供应商菜单授权')" />
 	<th:block th:include="include :: ztree-css" />
+	<style>
+		#supplierPickerModal .fixed-table-toolbar { display: none; }
+		#supplierPickerModal .bootstrap-table .table { margin-bottom: 0; }
+		.supplier-select-wrap { display: inline-block; vertical-align: middle; min-width: 280px; max-width: 420px; }
+	</style>
 </head>
 <body class="gray-bg">
 	<div class="container-div">
@@ -11,12 +16,16 @@
 				<form class="form-inline">
 					<div class="form-group">
 						<label>供应商：</label>
-						<select id="supplierId" class="form-control">
-							<option value="">请选择</option>
-							<option th:each="s : ${suppliers}" th:value="${s.supplierId}" th:text="${s.companyName}"></option>
-						</select>
+						<input type="hidden" id="supplierId" />
+						<div class="input-group supplier-select-wrap">
+							<input type="text" class="form-control" id="supplierDisplay" readonly placeholder="请选择供应商" onclick="openSupplierPicker()" style="cursor:pointer; background:#fff;" />
+							<span class="input-group-btn">
+								<button type="button" class="btn btn-default" onclick="openSupplierPicker()" title="选择供应商"><i class="fa fa-search"></i></button>
+							</span>
+						</div>
 						<a class="btn btn-primary btn-sm" onclick="loadTree()"><i class="fa fa-refresh"></i> 加载菜单</a>
 						<a class="btn btn-warning btn-sm" onclick="resetAuth()" shiro:hasPermission="scmAuth:supplierMenu:reset"><i class="fa fa-undo"></i> 重置为全量</a>
+						<a class="btn btn-info btn-sm" onclick="resetBuiltinRoleMenus()" shiro:hasPermission="scmAuth:supplierMenu:reset" title="重置菜单白名单及供应商管理员、供应商业务员角色菜单（不动其他自定义角色）"><i class="fa fa-key"></i> 重置菜单权限</a>
 						<a class="btn btn-success btn-sm" onclick="saveAuth()" shiro:hasPermission="scmAuth:supplierMenu:edit"><i class="fa fa-save"></i> 保存</a>
 						<a class="btn btn-default btn-sm" onclick="repairLegacyScope(false)" shiro:hasPermission="system:config:edit" title="为全部启用中的医院、供应商补缺：管理员/职工/业务员角色、菜单白名单、管理员角色菜单（不删已有数据）"><i class="fa fa-wrench"></i> 补齐老数据</a>
 						<a class="btn btn-default btn-sm" onclick="repairLegacyScope(true)" shiro:hasPermission="system:config:edit" title="跳过冷却时间，立即再执行一次"><i class="fa fa-bolt"></i> 强制补齐</a>
@@ -31,10 +40,144 @@
 			</div>
 		</div>
 	</div>
+
+	<div class="modal fade" id="supplierPickerModal" tabindex="-1" data-backdrop="static">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+					<h4 class="modal-title">选择供应商</h4>
+				</div>
+				<div class="modal-body">
+					<div class="row" style="margin-bottom:10px;">
+						<div class="col-sm-12">
+							<label class="control-label">检索（名称 / 拼音简码 / 编码）</label>
+							<input type="text" class="form-control" id="supplierPickerKeyword" placeholder="输入关键字模糊过滤" autocomplete="off" />
+						</div>
+					</div>
+					<p>
+						<a class="btn btn-primary btn-sm" onclick="supplierPickerSearch()"><i class="fa fa-search"></i> 查询</a>
+						<a class="btn btn-warning btn-sm" onclick="supplierPickerReset()"><i class="fa fa-refresh"></i> 清空条件</a>
+					</p>
+					<table id="supplierPickerTable"></table>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: ztree-js" />
 	<script th:inline="javascript">
 		var prefix = ctx + "scm/auth/supplierMenu";
+		var supplierPickerAll = [];
+		var supplierPickerLoaded = false;
+		var supplierPickerInited = false;
+
+		function filterSupplierRows(kw) {
+			kw = ($.common && $.common.trim ? $.common.trim(kw || '') : (kw || '').replace(/^\s+|\s+$/g, '')).toLowerCase();
+			if (!kw) {
+				return supplierPickerAll.slice();
+			}
+			return $.grep(supplierPickerAll, function(row) {
+				var code = (row.code || '').toLowerCase();
+				var name = (row.name || '').toLowerCase();
+				var py = (row.pinyin || '').toLowerCase();
+				return code.indexOf(kw) >= 0 || name.indexOf(kw) >= 0 || py.indexOf(kw) >= 0;
+			});
+		}
+
+		function refreshSupplierPickerTable() {
+			var kw = $('#supplierPickerKeyword').val();
+			var data = filterSupplierRows(kw);
+			if (supplierPickerInited) {
+				$('#supplierPickerTable').bootstrapTable('load', data);
+			}
+		}
+
+		function supplierPickerSearch() {
+			refreshSupplierPickerTable();
+		}
+
+		function supplierPickerReset() {
+			$('#supplierPickerKeyword').val('');
+			refreshSupplierPickerTable();
+		}
+
+		function initSupplierPickerTable() {
+			$('#supplierPickerTable').bootstrapTable({
+				pagination: true,
+				sidePagination: 'client',
+				pageSize: 25,
+				pageList: [10, 25, 50, 100],
+				height: 400,
+				locale: 'zh-CN',
+				data: [],
+				columns: [
+					{ field: 'code', title: '编码', sortable: true },
+					{ field: 'name', title: '名称', sortable: true },
+					{ field: 'pinyin', title: '拼音简码', sortable: true, formatter: function(v) { return v || '—'; } },
+					{
+						title: '操作',
+						align: 'center',
+						width: 90,
+						formatter: function(value, row) {
+							return '<a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="applySupplierPick(' + row.id + ')"><i class="fa fa-check"></i> 选择</a>';
+						}
+					}
+				]
+			});
+			supplierPickerInited = true;
+		}
+
+		function applySupplierPick(id) {
+			var row = null;
+			for (var i = 0; i < supplierPickerAll.length; i++) {
+				if (String(supplierPickerAll[i].id) === String(id)) {
+					row = supplierPickerAll[i];
+					break;
+				}
+			}
+			if (!row) {
+				return;
+			}
+			$('#supplierId').val(row.id);
+			$('#supplierDisplay').val(row.name || '');
+			$('#supplierPickerModal').modal('hide');
+		}
+
+		function openSupplierPicker() {
+			var done = function() {
+				if (!supplierPickerInited) {
+					initSupplierPickerTable();
+				}
+				$('#supplierPickerKeyword').val('');
+				refreshSupplierPickerTable();
+				$('#supplierPickerModal').modal('show');
+			};
+			if (supplierPickerLoaded) {
+				done();
+				return;
+			}
+			$.getJSON(prefix + "/candidates", function(res) {
+				if (res.code === web_status.SUCCESS) {
+					supplierPickerAll = res.data || [];
+					supplierPickerLoaded = true;
+					done();
+				} else {
+					$.modal.alertWarning(res.msg || '加载供应商列表失败');
+				}
+			});
+		}
+
+		$('#supplierPickerKeyword').on('keydown', function(e) {
+			if (e.keyCode === 13) {
+				e.preventDefault();
+				supplierPickerSearch();
+			}
+		});
 
 		function loadTree() {
 			var sid = $("#supplierId").val();
@@ -79,6 +222,17 @@
 			if (!sid) { $.modal.alertWarning("请先选择供应商"); return; }
 			$.modal.confirm("确认将该供应商菜单授权重置为全部供应商类菜单？", function() {
 				$.post(prefix + "/reset", { supplierId: sid }, function(data) {
+					$.operate.successCallback(data);
+					loadTree();
+				});
+			});
+		}
+
+		function resetBuiltinRoleMenus() {
+			var sid = $("#supplierId").val();
+			if (!sid) { $.modal.alertWarning("请先选择供应商"); return; }
+			$.modal.confirm("将按系统默认开放规则，重置当前供应商的菜单白名单，并重建「供应商管理员」「供应商业务员」两个角色的菜单权限（不修改其他自定义供应商角色）。是否继续？", function() {
+				$.post(prefix + "/resetBuiltinRoles", { supplierId: sid }, function(data) {
 					$.operate.successCallback(data);
 					loadTree();
 				});

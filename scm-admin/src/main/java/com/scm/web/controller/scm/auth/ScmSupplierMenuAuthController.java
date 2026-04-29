@@ -1,13 +1,14 @@
 package com.scm.web.controller.scm.auth;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +20,7 @@ import com.scm.common.constant.ScmAuthConstants;
 import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.domain.Ztree;
+import com.scm.common.utils.StringUtils;
 import com.scm.common.core.domain.entity.SysMenu;
 import com.scm.common.enums.BusinessType;
 import com.scm.system.domain.Supplier;
@@ -50,12 +52,35 @@ public class ScmSupplierMenuAuthController extends BaseController
 
     @RequiresPermissions("scmAuth:supplierMenu:view")
     @GetMapping()
-    public String page(ModelMap mmap)
+    public String page()
+    {
+        return PREFIX;
+    }
+
+    /**
+     * 供应商菜单授权页：弹窗选择用候选列表（编码、名称、拼音简码）
+     */
+    @RequiresPermissions("scmAuth:supplierMenu:view")
+    @GetMapping("/candidates")
+    @ResponseBody
+    public AjaxResult supplierCandidates()
     {
         Supplier q = new Supplier();
         q.setStatus("0");
-        mmap.put("suppliers", supplierService.selectSupplierList(q));
-        return PREFIX;
+        List<Supplier> list = supplierService.selectSupplierList(q);
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (Supplier s : list)
+        {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", s.getSupplierId());
+            m.put("code", StringUtils.nvl(s.getSupplierCode(), ""));
+            m.put("name", StringUtils.nvl(s.getCompanyName(), ""));
+            String py = StringUtils.isNotEmpty(s.getCompanyShortName()) ? s.getCompanyShortName()
+                : StringUtils.nvl(s.getPinyinCode(), "");
+            m.put("pinyin", py);
+            rows.add(m);
+        }
+        return AjaxResult.success(rows);
     }
 
     @RequiresPermissions("scmAuth:supplierMenu:query")
@@ -97,6 +122,17 @@ public class ScmSupplierMenuAuthController extends BaseController
     public AjaxResult reset(@RequestParam("supplierId") Long supplierId)
     {
         scmScopeBootstrapService.resetSupplierMenuAuth(supplierId, getLoginName());
+        return AjaxResult.success();
+    }
+
+    /** 重置本供应商白名单 + 供应商管理员/供应商业务员 两角色菜单（不动其他自定义供应商角色） */
+    @RequiresPermissions("scmAuth:supplierMenu:reset")
+    @Log(title = "供应商菜单权限内置角色重置", businessType = BusinessType.UPDATE)
+    @PostMapping("/resetBuiltinRoles")
+    @ResponseBody
+    public AjaxResult resetBuiltinRoles(@RequestParam("supplierId") Long supplierId)
+    {
+        scmScopeBootstrapService.resetSupplierBuiltinRoleMenus(supplierId, getLoginName());
         return AjaxResult.success();
     }
 }
