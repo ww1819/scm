@@ -3,6 +3,51 @@
 <head>
 	<th:block th:include="include :: header('医院列表')" />
 	<th:block th:include="include :: layout-latest-css" />
+	<style>
+		.hospital-table-wrap {
+			min-height: 730px;
+			position: relative;
+			padding-bottom: 6px;
+			overflow: hidden;
+		}
+
+		.hospital-table-wrap .bootstrap-table {
+			height: 100%;
+			padding-bottom: 46px;
+		}
+
+		.hospital-table-wrap .fixed-table-container {
+			padding-bottom: 46px;
+		}
+
+		.hospital-table-wrap .fixed-table-body {
+			overflow-x: auto !important;
+			overflow-y: auto !important;
+		}
+
+		.hospital-table-wrap .fixed-table-pagination {
+			position: absolute;
+			left: 10px;
+			right: 10px;
+			bottom: 0;
+			background: #fff;
+			z-index: 3;
+			border-top: 1px solid #eee;
+			margin: 0 !important;
+			padding: 6px 0;
+		}
+
+		.hospital-table-wrap .fixed-table-pagination .pagination {
+			margin-right: 28px;
+		}
+
+		.hospital-table-wrap .fixed-table-header {
+			position: sticky;
+			top: 0;
+			z-index: 2;
+			background: #fff;
+		}
+	</style>
 </head>
 <body class="gray-bg">
 	<div class="container-div">
@@ -25,8 +70,8 @@
 								</select>
 							</li>
 							<li>
-								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
-								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()" style="display: none;"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()" style="display: none;"><i class="fa fa-refresh"></i>&nbsp;重置</a>
 							</li>
 						</ul>
 					</div>
@@ -46,15 +91,15 @@
 	            <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="hospital:hospital:export">
 		            <i class="fa fa-download"></i> 导出
 		        </a>
-	            <a class="btn btn-info" onclick="backfillHospitalSupplierPinyin(false)" shiro:hasPermission="system:config:edit" title="为医院、供应商按名称补全首拼简码（仅空值）">
-	                <i class="fa fa-font"></i> 首拼批量生成
-	            </a>
-	            <a class="btn btn-default" onclick="backfillHospitalSupplierPinyin(true)" shiro:hasPermission="system:config:edit" title="覆盖已有首拼简码">
-	                <i class="fa fa-refresh"></i> 首拼强制重算
-	            </a>
+	            <a class="btn btn-primary" onclick="$.table.search()">
+		            <i class="fa fa-search"></i> 搜索
+		        </a>
+	            <a class="btn btn-warning" onclick="resetPre()">
+		            <i class="fa fa-refresh"></i> 重置
+		        </a>
 	        </div>
 	        
-	        <div class="col-sm-12 select-table table-striped">
+	        <div class="col-sm-12 select-table table-striped hospital-table-wrap">
 			    <table id="bootstrap-table"></table>
 			</div>
 		</div>
@@ -69,7 +114,25 @@
 
 		$(function() {
 		    queryHospitalList();
+		    $(window).resize(function() {
+		    	adjustTableHeight();
+		    });
 		});
+
+		function calculateTableHeight() {
+			var $detail = $('.hospital-table-wrap');
+			if ($detail.length === 0) {
+				return 700;
+			}
+			return Math.max($detail.innerHeight() - 8, 650);
+		}
+
+		function adjustTableHeight() {
+			var $table = $('#bootstrap-table');
+			if ($table.length > 0 && $table.bootstrapTable('getOptions')) {
+				$table.bootstrapTable('resetView', { height: calculateTableHeight() });
+			}
+		}
 
 		function queryHospitalList() {
 		    var options = {
@@ -81,6 +144,7 @@
 		        sortName: "createTime",
 		        sortOrder: "desc",
 		        modalName: "医院",
+		        height: calculateTableHeight(),
 		        columns: [{
 		            checkbox: true
 		        },
@@ -166,24 +230,6 @@
 		function resetPre() {
 			$("#hospital-form")[0].reset();
 			$.table.search();
-		}
-
-		function backfillHospitalSupplierPinyin(overwrite) {
-			var tip = overwrite
-				? '将按名称重新计算并覆盖已有「首拼简码」（医院+供应商+角色），确定吗？'
-				: '将按名称补全空的「首拼简码」（医院+供应商+角色），确定吗？';
-			$.modal.confirm(tip, function () {
-				$.modal.loading('正在生成…');
-				$.post(ctx + 'scm/maintenance/pinyin/backfill', { overwrite: overwrite }, function (res) {
-					$.modal.closeLoading();
-					if (res.code == web_status.SUCCESS) {
-						$.modal.msgSuccess(res.msg || '完成');
-						$.table.search();
-					} else {
-						$.modal.alertError(res.msg);
-					}
-				});
-			});
 		}
 
 		function statusTools(row) {
