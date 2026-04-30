@@ -10,7 +10,7 @@ public class OrderLineDeliveryQtyVo implements Serializable
 {
     private static final long serialVersionUID = 1L;
 
-    /** 订单明细主键（与我方明细 Long 或中设明细 id 字符串一致） */
+    /** 订单明细主键（与我方明细 Long 或第三方明细 id 字符串一致） */
     private String lineKey;
 
     private BigDecimal auditedQty;

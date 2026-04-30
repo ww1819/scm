@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import com.scm.common.core.domain.BaseEntity;
 
 /**
- * 中设第三方推送订单明细 zs_tp_order_detail
+ * 第三方推送订单明细 zs_tp_order_detail
  */
 public class ZsTpOrderDetail extends BaseEntity
 {

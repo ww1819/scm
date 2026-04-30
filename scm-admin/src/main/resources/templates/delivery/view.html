@@ -95,7 +95,7 @@
                 <div class="col-sm-12">
                     <a class="btn btn-info btn-sm" href="javascript:void(0)" onclick="openDeliveryDetailFull()"><i class="fa fa-list"></i> 配送明细（含订单行）</a>
                     <span id="wrap-link-order" style="display:none;"><a class="btn btn-default btn-sm" href="javascript:void(0)" onclick="openOrderDetail()"><i class="fa fa-file-text-o"></i> 本系统订单</a></span>
-                    <span id="wrap-link-zs" style="display:none;"><a class="btn btn-default btn-sm" href="javascript:void(0)" onclick="openZsOrderDetail()"><i class="fa fa-file-text-o"></i> 中设订单</a></span>
+                    <span id="wrap-link-zs" style="display:none;"><a class="btn btn-default btn-sm" href="javascript:void(0)" onclick="openZsOrderDetail()"><i class="fa fa-file-text-o"></i> 第三方订单</a></span>
                 </div>
             </div>
             <h4 class="form-header h4">其他信息</h4>
@@ -111,7 +111,7 @@
             </div>
         </form>
     </div>
-      
+
     <div class="row">
         <div class="col-sm-offset-5 col-sm-10">
             <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
@@ -134,7 +134,7 @@
 		}
 		function openZsOrderDetail() {
 			if (refZsOrderIdStr != null && refZsOrderIdStr !== '') {
-				$.modal.openTab("中设订单", ctx + "order/zstp/detail/" + refZsOrderIdStr);
+				$.modal.openTab("第三方订单", ctx + "order/zstp/detail/" + refZsOrderIdStr);
 			}
 		}
 		$(function() {

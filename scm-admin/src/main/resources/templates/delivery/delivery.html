@@ -87,7 +87,7 @@
 					</div>
 				</form>
 			</div>
-			
+
 	        <div class="btn-group-sm" id="toolbar" role="group">
 	        	<a class="btn btn-success" onclick="$.operate.addTab()" shiro:hasPermission="delivery:delivery:add">
 	                <i class="fa fa-plus"></i> 新增
@@ -114,13 +114,13 @@
 		            <i class="fa fa-refresh"></i> 重置
 		        </a>
 	        </div>
-	        
+
 	        <div class="col-sm-12 select-table table-striped delivery-table-wrap">
 			    <table id="bootstrap-table"></table>
 			</div>
 		</div>
 	</div>
-	
+
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
 	<script th:inline="javascript">
@@ -133,30 +133,30 @@
 		    $(window).resize(function() {
 		    	adjustTableHeight();
 		    });
-		    
+
 		    // 仅打印按钮：避免与「审核」等其它 toolbar 按钮冲突
 		    $(document).on('click', '#toolbar-btn-delivery-print', function(e) {
 		        e.preventDefault();
 		        e.stopPropagation();
 		        console.log('Print button clicked');
 		        var $btn = $(this);
-		        
+
 		        // 如果按钮被禁用，提示用户
 		        if ($btn.hasClass('disabled')) {
 		            console.log('Button is disabled');
 		            $.modal.msgWarning("请至少选择一条记录进行打印");
 		            return false;
 		        }
-		        
+
 		        // 直接执行打印逻辑
 		        var rows = $('#bootstrap-table').bootstrapTable('getSelections');
 		        console.log('Selected rows count:', rows ? rows.length : 0);
-		        
+
 		        if (!rows || rows.length === 0) {
 		            $.modal.msgWarning("请至少选择一条记录进行打印");
 		            return false;
 		        }
-		        
+
 		        if (rows.length === 1) {
 		            // 单个打印
 		            var deliveryId = rows[0].deliveryId;
@@ -191,7 +191,7 @@
 		                });
 		            });
 		        }
-		        
+
 		        return false;
 		    });
 		});
@@ -327,7 +327,7 @@
 		                    actions.push('<a class="btn btn-default btn-xs" href="javascript:void(0)" onclick="$.modal.openTab(\'订单\',\'' + ctx + 'order/order/detail/' + row.orderId + '\')">订单</a> ');
 		                }
 		                if (row.zsOrderId) {
-		                    actions.push('<a class="btn btn-default btn-xs" href="javascript:void(0)" onclick="$.modal.openTab(\'中设订单\',\'' + ctx + 'order/zstp/detail/' + row.zsOrderId + '\')">中设</a> ');
+		                    actions.push('<a class="btn btn-default btn-xs" href="javascript:void(0)" onclick="$.modal.openTab(\'第三方订单\',\'' + ctx + 'order/zstp/detail/' + row.zsOrderId + '\')">第三方</a> ');
 		                }
 		                var audited = (row.auditStatus === '1') || (row.auditStatus == null && row.deliveryStatus === '1');
 		                if (!audited) {
@@ -340,12 +340,12 @@
 		    };
 		    $.table.init(options);
 		}
-		
+
 		function resetPre() {
 			$("#delivery-form")[0].reset();
 			$.table.search();
 		}
-		
+
 	</script>
 </body>
 </html>

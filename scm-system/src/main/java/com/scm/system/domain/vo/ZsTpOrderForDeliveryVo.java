@@ -7,23 +7,23 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.scm.system.domain.DeliveryDetail;
 
 /**
- * 引用中设订单生成配送单时，返回给前端的结构化数据
+ * 引用第三方订单生成配送单时，返回给前端的结构化数据
  */
 public class ZsTpOrderForDeliveryVo
 {
-    /** 中设订单主键 zs_tp_order.id */
+    /** 第三方订单主键 zs_tp_order.id */
     private String zsOrderId;
 
-    /** 对应配送单「订单号」字段：中设单号 DH */
+    /** 对应配送单「订单号」字段：第三方单号 DH */
     private String orderNo;
 
-    /** 仓库：中设 ck */
+    /** 仓库：第三方 ck */
     private String warehouse;
 
     /** 备注（科室名称、原备注等拼接） */
     private String remark;
 
-    /** 订单日期：取中设主表创建时间 */
+    /** 订单日期：取第三方主表创建时间 */
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date orderDate;
 
@@ -33,13 +33,13 @@ public class ZsTpOrderForDeliveryVo
     /** 已映射为配送明细行 */
     private List<DeliveryDetail> deliveryDetails;
 
-    /** 中设客户ID customer */
+    /** 第三方客户ID customer */
     private String zsCustomerId;
 
-    /** 订单供应商编码/ID（中设 supno） */
+    /** 订单供应商编码/ID（第三方 supno） */
     private String srcOrderSupplierId;
 
-    /** SCM 平台供应商编码（接口 SCMSUPCODE，与中设 supno 区分） */
+    /** SCM 平台供应商编码（接口 SCMSUPCODE，与第三方 supno 区分） */
     private String scmSupCode;
 
     private String srcOrderSupplierName;

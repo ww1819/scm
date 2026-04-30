@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import com.scm.common.core.domain.BaseEntity;
 
 /**
- * 中设第三方推送订单主表 zs_tp_order（查询/选择用）
+ * 第三方推送订单主表 zs_tp_order（查询/选择用）
  */
 public class ZsTpOrder extends BaseEntity
 {
@@ -24,10 +24,10 @@ public class ZsTpOrder extends BaseEntity
     private String bz;
     /** 结算方式 JSFS */
     private String jsfs;
-    /** 接收渠道：TENANT=我方推送 ZS=中设客户推送 */
+    /** 接收渠道：TENANT=我方推送 ZS=第三方客户推送 */
     private String receiveChannel;
 
-    /** 接口 SCMSUPCODE：SCM 平台供应商编码（与中设 supno 区分） */
+    /** 接口 SCMSUPCODE：SCM 平台供应商编码（与第三方 supno 区分） */
     private String scmSupCode;
 
     /** 入参 NEWCUSTOMER：SCM 医院编码（scm_hospital.hospital_code） */

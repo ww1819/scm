@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh" xmlns:th="http://www.thymeleaf.org">
 <head>
-	<th:block th:include="include :: header('中设订单详情')" />
+	<th:block th:include="include :: header('第三方订单详情')" />
 	<th:block th:include="include :: layout-latest-css" />
 </head>
 <body>
@@ -58,7 +58,7 @@
                 </div>
             </div>
         </form>
-        
+
         <div class="row" style="margin-top: 20px;">
             <div class="col-sm-12">
                 <h4 class="form-header h4">订单明细</h4>
@@ -68,7 +68,7 @@
             </div>
         </div>
     </div>
-	
+
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
 	<script th:inline="javascript">

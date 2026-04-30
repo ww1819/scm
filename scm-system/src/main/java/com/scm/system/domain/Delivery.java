@@ -12,7 +12,7 @@ import com.scm.common.core.domain.BaseEntity;
 
 /**
  * 配送单主表 scm_delivery
- * 
+ *
  * @author scm
  */
 public class Delivery extends BaseEntity
@@ -45,7 +45,7 @@ public class Delivery extends BaseEntity
     @Excel(name = "订单号")
     private String orderNo;
 
-    /** 中设订单主键 zs_tp_order.id（引用中设订单生成配送单时写入） */
+    /** 第三方订单主键 zs_tp_order.id（引用第三方订单生成配送单时写入） */
     private String zsOrderId;
 
     /** 订单供应商ID（字符串快照，入库引用） */
@@ -66,10 +66,10 @@ public class Delivery extends BaseEntity
     /** 订单科室名称 */
     private String srcOrderDeptName;
 
-    /** 中设客户ID（zs_tp_order.customer） */
+    /** 第三方客户ID（zs_tp_order.customer） */
     private String zsCustomerId;
 
-    /** 中设订单结算方式 jsfs 快照（来自 zs_tp_order.jsfs） */
+    /** 第三方订单结算方式 jsfs 快照（来自 zs_tp_order.jsfs） */
     private String zsJsfs;
 
     /** 供应商ID */

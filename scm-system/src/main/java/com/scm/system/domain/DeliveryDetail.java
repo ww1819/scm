@@ -12,7 +12,7 @@ import com.scm.common.core.domain.BaseEntity;
 
 /**
  * 配送明细表 scm_delivery_detail
- * 
+ *
  * @author scm
  */
 public class DeliveryDetail extends BaseEntity
@@ -29,7 +29,7 @@ public class DeliveryDetail extends BaseEntity
     /** 订单明细ID */
     private Long orderDetailId;
 
-    /** 中设明细主键 zs_tp_order_detail.id */
+    /** 第三方明细主键 zs_tp_order_detail.id */
     private String zsOrderDetailId;
 
     /** 物资ID */
@@ -115,7 +115,7 @@ public class DeliveryDetail extends BaseEntity
     /** 本系统订单号 */
     private String refOrderNo;
 
-    /** 中设订单主键 */
+    /** 第三方订单主键 */
     private String refZsOrderId;
 
     /** 我方订单明细订货数量 */
@@ -127,17 +127,17 @@ public class DeliveryDetail extends BaseEntity
     /** 我方订单明细产品名称 */
     private String refOrderMaterialName;
 
-    /** 中设明细数量 sl */
+    /** 第三方明细数量 sl */
     private BigDecimal refZsLineQty;
 
-    /** 中设明细编码 */
+    /** 第三方明细编码 */
     private String refZsMaterialCode;
 
-    /** 中设明细名称 */
+    /** 第三方明细名称 */
     private String refZsMaterialName;
 
     /**
-     * 订单行申请数量上限（仅用于前端校验，不落库；中设行对应 zs 明细数量）
+     * 订单行申请数量上限（仅用于前端校验，不落库；第三方行对应 zs 明细数量）
      */
     private BigDecimal lineApplyQty;
 

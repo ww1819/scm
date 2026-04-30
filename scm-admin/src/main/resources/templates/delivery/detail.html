@@ -75,7 +75,7 @@
             <div class="row" id="row-link-zs" style="display:none;">
                 <div class="col-sm-12">
                     <a class="btn btn-sm btn-default" href="javascript:void(0)" onclick="openZsOrderDetail(refZsOrderIdStr)">
-                        <i class="fa fa-file-text-o"></i> 打开中设订单
+                        <i class="fa fa-file-text-o"></i> 打开第三方订单
                     </a>
                 </div>
             </div>
@@ -129,9 +129,9 @@
 		            { field: 'refOrderNo', title: '本系统订单号', formatter: function(v, row) { return v || (row.refOrderId ? '#' + row.refOrderId : '-'); } },
 		            { field: 'refOrderLineQty', title: '订单行订货数', formatter: fmtDec },
 		            { field: 'refOrderMaterialCode', title: '订单行编码' },
-		            { field: 'refZsOrderId', title: '中设订单ID', formatter: function(v) { return v || '-'; } },
-		            { field: 'refZsLineQty', title: '中设行数量', formatter: fmtDec },
-		            { field: 'refZsMaterialCode', title: '中设编码' }
+		            { field: 'refZsOrderId', title: '第三方订单ID', formatter: function(v) { return v || '-'; } },
+		            { field: 'refZsLineQty', title: '第三方行数量', formatter: fmtDec },
+		            { field: 'refZsMaterialCode', title: '第三方编码' }
 		        ]
 		    });
 		});
@@ -149,7 +149,7 @@
 		    $.modal.openTab('订单详情', ctx + 'order/order/detail/' + orderId);
 		}
 		function openZsOrderDetail(zsOrderId) {
-		    $.modal.openTab('中设订单', ctx + 'order/zstp/detail/' + zsOrderId);
+		    $.modal.openTab('第三方订单', ctx + 'order/zstp/detail/' + zsOrderId);
 		}
 	</script>
 </body>

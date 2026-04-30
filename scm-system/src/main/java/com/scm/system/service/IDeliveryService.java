@@ -11,14 +11,14 @@ import com.scm.system.domain.vo.ZsTpOrderForDeliveryVo;
 
 /**
  * 配送单 服务层
- * 
+ *
  * @author scm
  */
 public interface IDeliveryService
 {
     /**
      * 查询配送单信息
-     * 
+     *
      * @param deliveryId 配送单ID
      * @return 配送单信息
      */
@@ -26,7 +26,7 @@ public interface IDeliveryService
 
     /**
      * 查询配送单列表
-     * 
+     *
      * @param delivery 配送单信息
      * @return 配送单集合
      */
@@ -34,7 +34,7 @@ public interface IDeliveryService
 
     /**
      * 新增配送单信息
-     * 
+     *
      * @param delivery 配送单信息
      * @return 结果
      */
@@ -42,7 +42,7 @@ public interface IDeliveryService
 
     /**
      * 修改配送单信息
-     * 
+     *
      * @param delivery 配送单信息
      * @return 结果
      */
@@ -57,7 +57,7 @@ public interface IDeliveryService
 
     /**
      * 批量删除配送单信息
-     * 
+     *
      * @param ids 需要删除的数据ID
      * @return 结果
      */
@@ -65,7 +65,7 @@ public interface IDeliveryService
 
     /**
      * 删除配送单信息
-     * 
+     *
      * @param deliveryId 配送单ID
      * @return 结果
      */
@@ -73,30 +73,30 @@ public interface IDeliveryService
 
     /**
      * 根据订单ID查询订单信息（用于引用订单）
-     * 
+     *
      * @param orderId 订单ID
      * @return 订单信息
      */
     public Order selectOrderForDelivery(Long orderId);
 
     /**
-     * 中设订单列表（zs_tp_order，未删除）
+     * 第三方订单列表（zs_tp_order，未删除）
      */
     public List<ZsTpOrder> selectZsTpOrderList(ZsTpOrder query);
 
     /**
-     * 中设订单主表（查看页）
+     * 第三方订单主表（查看页）
      */
     public ZsTpOrder selectZsTpOrderById(String id);
 
     /**
-     * 按主键加载中设订单并映射为配送单草稿数据
+     * 按主键加载第三方订单并映射为配送单草稿数据
      */
     public ZsTpOrderForDeliveryVo selectZsTpOrderForDelivery(String zsOrderId);
 
     /**
      * 查询配送明细列表
-     * 
+     *
      * @param deliveryId 配送单ID
      * @return 明细集合
      */
@@ -104,7 +104,7 @@ public interface IDeliveryService
 
     /**
      * 查询配送明细列表（支持条件查询）
-     * 
+     *
      * @param deliveryDetail 明细信息
      * @return 明细集合
      */
@@ -112,7 +112,7 @@ public interface IDeliveryService
 
     /**
      * 审核配送单
-     * 
+     *
      * @param deliveryId 配送单ID
      * @param auditBy 审核人（登录名）
      * @return 结果
@@ -120,7 +120,7 @@ public interface IDeliveryService
     public int auditDelivery(Long deliveryId, String auditBy);
 
     /**
-     * 中设订单明细分页/查看：带配送数量汇总
+     * 第三方订单明细分页/查看：带配送数量汇总
      */
     public List<ZsTpOrderDetail> selectZsTpOrderDetailListForView(String zsOrderId);
 
@@ -130,7 +130,7 @@ public interface IDeliveryService
     public List<Delivery> selectDeliveriesByOrderId(Long orderId);
 
     /**
-     * 中设订单关联的配送单列表
+     * 第三方订单关联的配送单列表
      */
     public List<Delivery> selectDeliveriesByZsOrderId(String zsOrderId);
 
@@ -140,7 +140,7 @@ public interface IDeliveryService
     public List<OrderDetailDeliveryTraceVo> selectTracesByScmOrderDetailId(Long orderDetailId);
 
     /**
-     * 中设订单明细行关联的配送明细
+     * 第三方订单明细行关联的配送明细
      */
     public List<OrderDetailDeliveryTraceVo> selectTracesByZsOrderDetailId(String zsOrderDetailId);
 }

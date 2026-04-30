@@ -5,7 +5,7 @@ import com.scm.system.domain.ZsTpOrder;
 import com.scm.system.domain.ZsTpOrderDetail;
 
 /**
- * 中设订单 zs_tp_order / zs_tp_order_detail
+ * 第三方订单 zs_tp_order / zs_tp_order_detail
  */
 public interface ZsTpOrderMapper
 {

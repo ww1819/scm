@@ -447,15 +447,15 @@ CREATE TABLE IF NOT EXISTS `scm_delivery` (
   `invoice_amount` decimal(18,2) DEFAULT 0 COMMENT '发票金额',
   `invoice_date` date DEFAULT NULL COMMENT '发票日期',
   `order_date` date DEFAULT NULL COMMENT '订单日期',
-  `zs_order_id` varchar(36) DEFAULT NULL COMMENT '中设订单主键 zs_tp_order.id',
+  `zs_order_id` varchar(36) DEFAULT NULL COMMENT '第三方订单主键 zs_tp_order.id',
   `src_order_supplier_id` varchar(128) DEFAULT '' COMMENT '订单供应商ID(字符串快照)',
   `src_order_supplier_name` varchar(256) DEFAULT '' COMMENT '订单供应商名称',
   `src_order_warehouse_id` varchar(128) DEFAULT '' COMMENT '订单仓库ID(字符串快照)',
   `src_order_warehouse_name` varchar(256) DEFAULT '' COMMENT '订单仓库名称',
   `src_order_dept_id` varchar(128) DEFAULT '' COMMENT '订单科室ID(字符串快照)',
   `src_order_dept_name` varchar(256) DEFAULT '' COMMENT '订单科室名称',
-  `zs_customer_id` varchar(128) DEFAULT '' COMMENT '中设客户ID(zs_tp_order.customer)',
-  `zs_jsfs` varchar(32) DEFAULT NULL COMMENT '中设订单结算方式jsfs快照：3高值0低值',
+  `zs_customer_id` varchar(128) DEFAULT '' COMMENT '第三方客户ID(zs_tp_order.customer)',
+  `zs_jsfs` varchar(32) DEFAULT NULL COMMENT '第三方订单结算方式jsfs快照：3高值0低值',
   `audit_status` char(1) DEFAULT '0' COMMENT '审核状态（0待审核 1已审核 2已拒绝）',
   `audit_by` varchar(64) DEFAULT '' COMMENT '审核人',
   `audit_time` datetime DEFAULT NULL COMMENT '审核时间',
@@ -477,7 +477,7 @@ CREATE TABLE IF NOT EXISTS `scm_delivery_detail` (
   `detail_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '明细ID',
   `delivery_id` bigint(20) NOT NULL COMMENT '配送单ID',
   `order_detail_id` bigint(20) DEFAULT NULL COMMENT '订单明细ID',
-  `zs_order_detail_id` varchar(36) DEFAULT NULL COMMENT '中设明细主键 zs_tp_order_detail.id',
+  `zs_order_detail_id` varchar(36) DEFAULT NULL COMMENT '第三方明细主键 zs_tp_order_detail.id',
   `material_id` bigint(20) NOT NULL COMMENT '物资ID',
   `material_code` varchar(50) DEFAULT '' COMMENT '产品编码',
   `material_name` varchar(200) DEFAULT '' COMMENT '产品名称',
@@ -1262,8 +1262,8 @@ CREATE TABLE IF NOT EXISTS zs_tp_order (
   oper            VARCHAR(64)  NULL,
   bz              VARCHAR(512) NULL,
   jsfs            VARCHAR(32)  NULL,
-  receive_channel VARCHAR(16)  NOT NULL DEFAULT 'ZS' COMMENT '接收渠道：TENANT=我方推送 ZS=中设客户推送',
-  scm_sup_code    VARCHAR(64)  NULL COMMENT '接口 SCMSUPCODE：SCM 平台供应商编码（客户端随单传递，与中设 SUPNO 区分）',
+  receive_channel VARCHAR(16)  NOT NULL DEFAULT 'ZS' COMMENT '接收渠道：TENANT=我方推送 ZS=第三方客户推送',
+  scm_sup_code    VARCHAR(64)  NULL COMMENT '接口 SCMSUPCODE：SCM 平台供应商编码（客户端随单传递，与第三方 SUPNO 区分）',
   scm_hospital_code VARCHAR(64) NULL COMMENT '入参 NEWCUSTOMER：SCM 医院编码，对应 scm_hospital.hospital_code',
   scm_hospital_id   VARCHAR(64) NULL COMMENT '由 scm_hospital_code 解析的 scm_hospital.hospital_id（字符串）',
   scm_supplier_id   VARCHAR(64) NULL COMMENT '由 scm_sup_code 解析的 scm_supplier.supplier_id（字符串）',
@@ -1333,8 +1333,8 @@ CREATE TABLE IF NOT EXISTS `scm_order_detail_delivery_rel` (
 /
 CREATE TABLE IF NOT EXISTS `zs_tp_order_detail_delivery_rel` (
   `id`                  VARCHAR(36)  NOT NULL COMMENT '主键UUID7',
-  `order_detail_id`     VARCHAR(64)  NOT NULL COMMENT '中设订单明细ID',
-  `order_id`            VARCHAR(64)  NOT NULL COMMENT '中设订单ID',
+  `order_detail_id`     VARCHAR(64)  NOT NULL COMMENT '第三方订单明细ID',
+  `order_id`            VARCHAR(64)  NOT NULL COMMENT '第三方订单ID',
   `order_no`            VARCHAR(128) DEFAULT '' COMMENT '订单号(DH)',
   `delivery_id`         VARCHAR(64)  NOT NULL COMMENT '配送单ID',
   `delivery_no`         VARCHAR(128) DEFAULT '' COMMENT '配送单号',
@@ -1346,21 +1346,21 @@ CREATE TABLE IF NOT EXISTS `zs_tp_order_detail_delivery_rel` (
   KEY `idx_zsoddr_order_detail` (`order_detail_id`),
   KEY `idx_zsoddr_order` (`order_id`),
   KEY `idx_zsoddr_delivery` (`delivery_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='中设订单明细与配送单明细关联';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='第三方订单明细与配送单明细关联';
 /
 CREATE TABLE IF NOT EXISTS `scm_barcode_seed` (
   `id` varchar(36) NOT NULL COMMENT '主键UUID7',
-  `counter_type` char(1) NOT NULL COMMENT 'T=按租户维度 Z=按中设客户维度',
+  `counter_type` char(1) NOT NULL COMMENT 'T=按租户维度 Z=按第三方客户维度',
   `tenant_id` varchar(64) NOT NULL DEFAULT '' COMMENT '租户ID',
-  `zs_customer_id` varchar(128) NOT NULL DEFAULT '' COMMENT '中设客户ID(customer)',
-  `warehouse_id` varchar(128) NOT NULL DEFAULT '' COMMENT '仓库ID；中设订单种子暂固定空串仅按高低值区分，保留列便于将来按仓扩展',
-  `high_low_flag` char(1) NOT NULL DEFAULT 'L' COMMENT '高低值：H高值 L低值（中设JSFS：3高0低）',
+  `zs_customer_id` varchar(128) NOT NULL DEFAULT '' COMMENT '第三方客户ID(customer)',
+  `warehouse_id` varchar(128) NOT NULL DEFAULT '' COMMENT '仓库ID；第三方订单种子暂固定空串仅按高低值区分，保留列便于将来按仓扩展',
+  `high_low_flag` char(1) NOT NULL DEFAULT 'L' COMMENT '高低值：H高值 L低值（第三方JSFS：3高0低）',
   `seed_value` bigint(20) NOT NULL DEFAULT 0 COMMENT '已分配的最大种子序号',
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_scm_barcode_seed` (`counter_type`,`tenant_id`,`zs_customer_id`,`warehouse_id`,`high_low_flag`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='中设条码种子序列表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='第三方条码种子序列表';
 /
 CREATE TABLE IF NOT EXISTS `scm_delivery_detail_barcode` (
   `id` varchar(36) NOT NULL COMMENT '主键UUID7',

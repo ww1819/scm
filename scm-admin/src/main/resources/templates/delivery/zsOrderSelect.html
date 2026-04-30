@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh" xmlns:th="http://www.thymeleaf.org">
 <head>
-	<th:block th:include="include :: header('选择中设订单')" />
+	<th:block th:include="include :: header('选择第三方订单')" />
 	<th:block th:include="include :: layout-latest-css" />
 </head>
 <body class="gray-bg">
@@ -36,15 +36,15 @@
 					</div>
 				</form>
 			</div>
-			
+
 	        <div class="col-sm-12 select-table table-striped">
 			    <table id="bootstrap-table"></table>
 			</div>
 		</div>
 	</div>
-	
+
 	<input type="hidden" id="rowIds" name="rowIds"/>
-	
+
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
 	<script th:inline="javascript">
@@ -57,7 +57,7 @@
 		function initZsTable() {
 		    var options = {
 		        url: prefix + "/zsOrder/list",
-		        modalName: "中设订单",
+		        modalName: "第三方订单",
 		        idField: "id",
 		        columns: [{
 		            checkbox: true
@@ -103,14 +103,14 @@
 		        }]
 		    };
 		    $.table.init(options);
-		    
+
 		    $("#bootstrap-table").on("check.bs.table check-all.bs.table uncheck.bs.table uncheck-all.bs.table", function (e, rowsAfter, rowsBefore) {
 		        var rows = $.common.equals("uncheck-all", e.type) ? rowsBefore : rowsAfter;
 		        var rowIds = $.table.affectedRowIds(rows);
 		        $("#rowIds").val(rowIds.join(','));
 		    });
 		}
-		
+
 		function resetZs() {
 			$("#zs-order-form")[0].reset();
 			$.table.search();

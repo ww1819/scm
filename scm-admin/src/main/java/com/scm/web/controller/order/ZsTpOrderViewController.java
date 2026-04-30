@@ -18,7 +18,7 @@ import com.scm.system.domain.ZsTpOrderDetail;
 import com.scm.system.service.IDeliveryService;
 
 /**
- * 中设订单查看（明细与配送回查）
+ * 第三方订单查看（明细与配送回查）
  */
 @Controller
 @RequestMapping("/order/zstp")

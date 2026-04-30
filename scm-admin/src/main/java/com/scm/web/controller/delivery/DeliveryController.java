@@ -36,7 +36,7 @@ import com.scm.system.service.ISupplierService;
 
 /**
  * 配送单信息
- * 
+ *
  * @author scm
  */
 @Controller
@@ -47,10 +47,10 @@ public class DeliveryController extends BaseController
 
     @Autowired
     private IDeliveryService deliveryService;
-    
+
     @Autowired
     private IHospitalService hospitalService;
-    
+
     @Autowired
     private ISupplierService supplierService;
     @Autowired
@@ -118,7 +118,7 @@ public class DeliveryController extends BaseController
     }
 
     /**
-     * 选择中设订单（弹窗页）
+     * 选择第三方订单（弹窗页）
      */
     @RequiresPermissions("delivery:delivery:add")
     @GetMapping("/zsOrder/select")
@@ -128,7 +128,7 @@ public class DeliveryController extends BaseController
     }
 
     /**
-     * 中设订单列表（zs_tp_order）
+     * 第三方订单列表（zs_tp_order）
      */
     @RequiresPermissions("delivery:delivery:list")
     @PostMapping("/zsOrder/list")
@@ -141,7 +141,7 @@ public class DeliveryController extends BaseController
     }
 
     /**
-     * 按中设订单主键加载，用于填充配送单
+     * 按第三方订单主键加载，用于填充配送单
      */
     @RequiresPermissions("delivery:delivery:add")
     @GetMapping("/selectZsOrder/{zsOrderId}")
@@ -166,7 +166,7 @@ public class DeliveryController extends BaseController
             try
             {
                 ObjectMapper objectMapper = new ObjectMapper();
-                List<DeliveryDetail> deliveryDetails = objectMapper.readValue(deliveryDetailsJson, 
+                List<DeliveryDetail> deliveryDetails = objectMapper.readValue(deliveryDetailsJson,
                     new TypeReference<List<DeliveryDetail>>() {});
                 delivery.setDeliveryDetails(deliveryDetails);
             }
@@ -285,7 +285,7 @@ public class DeliveryController extends BaseController
             try
             {
                 ObjectMapper objectMapper = new ObjectMapper();
-                List<DeliveryDetail> deliveryDetails = objectMapper.readValue(deliveryDetailsJson, 
+                List<DeliveryDetail> deliveryDetails = objectMapper.readValue(deliveryDetailsJson,
                     new TypeReference<List<DeliveryDetail>>() {});
                 delivery.setDeliveryDetails(deliveryDetails);
             }
@@ -355,7 +355,7 @@ public class DeliveryController extends BaseController
         List<DeliveryDetail> details = delivery.getDeliveryDetails();
         mmap.put("delivery", delivery);
         mmap.put("deliveryDetails", details);
-        
+
         // 计算合计数量
         int totalQuantity = 0;
         if (details != null && !details.isEmpty())
@@ -369,7 +369,7 @@ public class DeliveryController extends BaseController
             }
         }
         mmap.put("totalQuantity", totalQuantity);
-        
+
         return prefix + "/print";
     }
 

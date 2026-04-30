@@ -45,7 +45,7 @@ import com.scm.system.service.ScmBarcodeSeedService;
 
 /**
  * 配送单 服务层实现
- * 
+ *
  * @author scm
  */
 @Service
@@ -92,7 +92,7 @@ public class DeliveryServiceImpl implements IDeliveryService
 
     /**
      * 查询配送单信息
-     * 
+     *
      * @param deliveryId 配送单ID
      * @return 配送单信息
      */
@@ -112,7 +112,7 @@ public class DeliveryServiceImpl implements IDeliveryService
 
     /**
      * 查询配送单列表
-     * 
+     *
      * @param delivery 配送单信息
      * @return 配送单集合
      */
@@ -199,7 +199,7 @@ public class DeliveryServiceImpl implements IDeliveryService
 
     /**
      * 新增配送单信息
-     * 
+     *
      * @param delivery 配送单信息
      * @return 结果
      */
@@ -225,7 +225,7 @@ public class DeliveryServiceImpl implements IDeliveryService
             delivery.setDeliveryNo(generateDeliveryNo());
         }
         delivery.setCreateTime(DateUtils.getNowDate());
-        
+
         // 计算配送金额
         BigDecimal totalAmount = BigDecimal.ZERO;
         if (delivery.getDeliveryDetails() != null && !delivery.getDeliveryDetails().isEmpty())
@@ -241,9 +241,9 @@ public class DeliveryServiceImpl implements IDeliveryService
             }
         }
         delivery.setDeliveryAmount(totalAmount);
-        
+
         int rows = deliveryMapper.insertDelivery(delivery);
-        
+
         // 保存配送明细
         if (delivery.getDeliveryDetails() != null && !delivery.getDeliveryDetails().isEmpty())
         {
@@ -252,7 +252,7 @@ public class DeliveryServiceImpl implements IDeliveryService
                 detail.setDeliveryId(delivery.getDeliveryId());
             }
             deliveryDetailMapper.batchInsertDeliveryDetail(delivery.getDeliveryDetails());
-            
+
             // 更新订单明细的剩余待配送数
             if (delivery.getOrderId() != null)
             {
@@ -262,13 +262,13 @@ public class DeliveryServiceImpl implements IDeliveryService
             List<DeliveryDetail> savedForBarcode = deliveryDetailMapper.selectDeliveryDetailListByDeliveryId(delivery.getDeliveryId());
             scmBarcodeSeedService.createZsDeliveryDetailBarcodesIfNeeded(delivery, savedForBarcode);
         }
-        
+
         return rows;
     }
 
     /**
      * 修改配送单信息
-     * 
+     *
      * @param delivery 配送单信息
      * @return 结果
      */
@@ -294,7 +294,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         enrichDeliverySnapshot(delivery);
         enrichDeliveryDetailPackCoefficients(delivery);
         validateDeliveryDetailPackQuantities(delivery.getDeliveryDetails());
-        
+
         // 如果修改了明细，重新计算配送金额
         if (delivery.getDeliveryDetails() != null && !delivery.getDeliveryDetails().isEmpty())
         {
@@ -310,13 +310,13 @@ public class DeliveryServiceImpl implements IDeliveryService
             }
             delivery.setDeliveryAmount(totalAmount);
         }
-        
+
         return deliveryMapper.updateDelivery(delivery);
     }
 
     /**
      * 批量删除配送单信息
-     * 
+     *
      * @param ids 需要删除的数据ID
      * @return 结果
      */
@@ -342,7 +342,7 @@ public class DeliveryServiceImpl implements IDeliveryService
 
     /**
      * 删除配送单信息
-     * 
+     *
      * @param deliveryId 配送单ID
      * @return 结果
      */
@@ -366,7 +366,7 @@ public class DeliveryServiceImpl implements IDeliveryService
     }
 
     /**
-     * 前端按订单行/中设行校验「申请数量」上限：补全 lineApplyQty（不落库，仅展示与校验用）
+     * 前端按订单行/第三方行校验「申请数量」上限：补全 lineApplyQty（不落库，仅展示与校验用）
      */
     private void enrichDetailLineApplyQty(List<DeliveryDetail> details)
     {
@@ -412,7 +412,7 @@ public class DeliveryServiceImpl implements IDeliveryService
 
     /**
      * 根据订单ID查询订单信息（用于引用订单）
-     * 
+     *
      * @param orderId 订单ID
      * @return 订单信息
      */
@@ -445,12 +445,12 @@ public class DeliveryServiceImpl implements IDeliveryService
     {
         if (StringUtils.isEmpty(zsOrderId))
         {
-            throw new ServiceException("中设订单主键不能为空");
+            throw new ServiceException("第三方订单主键不能为空");
         }
         ZsTpOrder head = zsTpOrderMapper.selectZsTpOrderById(zsOrderId);
         if (head == null)
         {
-            throw new ServiceException("中设订单不存在或已删除");
+            throw new ServiceException("第三方订单不存在或已删除");
         }
         List<ZsTpOrderDetail> lines = zsTpOrderMapper.selectZsTpOrderDetailListByOrderId(zsOrderId);
         ZsTpOrderForDeliveryVo vo = new ZsTpOrderForDeliveryVo();
@@ -639,7 +639,7 @@ public class DeliveryServiceImpl implements IDeliveryService
     }
 
     /**
-     * 保存前从关联的中设订单或本系统订单补全订单侧快照字段（字符串），便于客户端按配送单入库引用。
+     * 保存前从关联的第三方订单或本系统订单补全订单侧快照字段（字符串），便于客户端按配送单入库引用。
      */
     private void enrichDeliverySnapshot(Delivery d)
     {
@@ -747,7 +747,7 @@ public class DeliveryServiceImpl implements IDeliveryService
 
     /**
      * 查询配送明细列表
-     * 
+     *
      * @param deliveryId 配送单ID
      * @return 明细集合
      */
@@ -765,7 +765,7 @@ public class DeliveryServiceImpl implements IDeliveryService
 
     /**
      * 审核配送单
-     * 
+     *
      * @param deliveryId 配送单ID
      * @return 结果
      */
@@ -791,7 +791,7 @@ public class DeliveryServiceImpl implements IDeliveryService
 
     /**
      * 生成唯一的配送单号
-     * 
+     *
      * @return 配送单号
      */
     private String generateDeliveryNo()
@@ -810,20 +810,20 @@ public class DeliveryServiceImpl implements IDeliveryService
             attempt++;
         }
         while (deliveryMapper.selectDeliveryByDeliveryNo(code) != null && attempt < maxAttempts);
-        
+
         if (attempt >= maxAttempts)
         {
             // 如果10次尝试都失败，使用UUID
             String uuid = java.util.UUID.randomUUID().toString().replace("-", "");
             code = "DEL" + uuid.substring(0, Math.min(20, uuid.length()));
         }
-        
+
         return code;
     }
 
     /**
      * 更新订单明细的剩余待配送数
-     * 
+     *
      * @param delivery 配送单信息
      */
     private void updateOrderRemainingQuantity(Delivery delivery)
@@ -832,7 +832,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         {
             return;
         }
-        
+
         for (DeliveryDetail deliveryDetail : delivery.getDeliveryDetails())
         {
             if (deliveryDetail.getOrderDetailId() != null)

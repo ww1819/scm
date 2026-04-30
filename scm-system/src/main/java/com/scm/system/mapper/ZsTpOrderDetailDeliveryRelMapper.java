@@ -4,7 +4,7 @@ import java.util.List;
 import com.scm.system.domain.ZsTpOrderDetailDeliveryRel;
 
 /**
- * 中设订单明细与配送单明细关联
+ * 第三方订单明细与配送单明细关联
  */
 public interface ZsTpOrderDetailDeliveryRelMapper
 {

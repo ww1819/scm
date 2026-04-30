@@ -25,9 +25,9 @@ import com.scm.system.mapper.ScmBarcodeSeedMapper;
 import com.scm.system.mapper.ZsTpOrderMapper;
 
 /**
- * 中设条码种子与配送明细条码生成。
+ * 第三方条码种子与配送明细条码生成。
  * <p>
- * 中设订单种子划分仅按高低值（及 T/Z 渠道维度），{@code warehouse_id} 固定 {@link ZsJsfsHighLow#ZS_SEED_WAREHOUSE_ID}，不按仓库拆分。
+ * 第三方订单种子划分仅按高低值（及 T/Z 渠道维度），{@code warehouse_id} 固定 {@link ZsJsfsHighLow#ZS_SEED_WAREHOUSE_ID}，不按仓库拆分。
  */
 @Service
 public class ScmBarcodeSeedService
@@ -62,7 +62,7 @@ public class ScmBarcodeSeedService
     }
 
     /**
-     * 中设订单 jsfs=3 时生成配送明细条码并落库。
+     * 第三方订单 jsfs=3 时生成配送明细条码并落库。
      */
     @Transactional(rollbackFor = Exception.class)
     public void createZsDeliveryDetailBarcodesIfNeeded(Delivery delivery, List<DeliveryDetail> savedDetails)
@@ -78,13 +78,13 @@ public class ScmBarcodeSeedService
         ZsTpOrder z = zsTpOrderMapper.selectZsTpOrderById(delivery.getZsOrderId());
         if (z == null)
         {
-            throw new ServiceException("中设订单不存在，无法生成条码");
+            throw new ServiceException("第三方订单不存在，无法生成条码");
         }
         String customerRaw = StringUtils.trimToEmpty(z.getCustomer());
         String customerCode = stripKFromCustomerCode(customerRaw);
         if (StringUtils.isEmpty(customerCode))
         {
-            throw new ServiceException("中设客户编码为空，无法生成条码");
+            throw new ServiceException("第三方客户编码为空，无法生成条码");
         }
         String yymmdd = new SimpleDateFormat("yyMMdd").format(DateUtils.getNowDate());
         String tenantId = StringUtils.trimToEmpty(delivery.getTenantId());
@@ -180,7 +180,7 @@ public class ScmBarcodeSeedService
     }
 
     /**
-     * 中设订单条码：P + 去掉K的客户编码 + '-' + yymmdd + 不足6位左补零的种子数
+     * 第三方订单条码：P + 去掉K的客户编码 + '-' + yymmdd + 不足6位左补零的种子数
      */
     public static String buildBarcodeNo(String customerCodeWithoutK, String yymmdd, long seedNum)
     {

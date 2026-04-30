@@ -3,7 +3,7 @@ package com.scm.system.domain;
 import java.io.Serializable;
 
 /**
- * 中设条码种子序列表 scm_barcode_seed
+ * 第三方条码种子序列表 scm_barcode_seed
  */
 public class ScmBarcodeSeed implements Serializable
 {

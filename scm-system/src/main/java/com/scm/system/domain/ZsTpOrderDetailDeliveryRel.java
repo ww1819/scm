@@ -3,7 +3,7 @@ package com.scm.system.domain;
 import java.io.Serializable;
 
 /**
- * 中设订单明细与配送单明细关联 zs_tp_order_detail_delivery_rel
+ * 第三方订单明细与配送单明细关联 zs_tp_order_detail_delivery_rel
  */
 public class ZsTpOrderDetailDeliveryRel implements Serializable
 {
