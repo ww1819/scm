@@ -394,13 +394,19 @@ CREATE TABLE IF NOT EXISTS `scm_order` (
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `spd_order_id` bigint(20) DEFAULT NULL COMMENT 'SPD院内采购订单主键 purchase_order.id（第一方推送对账）',
+  `source_system` varchar(32) DEFAULT NULL COMMENT '订单来源系统编码：SPD第一方推送等',
+  `spd_tenant_id` varchar(64) DEFAULT NULL COMMENT 'SPD租户ID(sb_customer.customer_id，推送快照)',
+  `spd_snapshot_hospital_code` varchar(64) DEFAULT NULL COMMENT '推送时快照：平台医院编码(scm_hospital.hospital_code)',
+  `spd_snapshot_supplier_code` varchar(64) DEFAULT NULL COMMENT '推送时快照：平台供应商编码(scm_supplier.supplier_code)',
   PRIMARY KEY (`order_id`),
   UNIQUE KEY `uk_order_no` (`order_no`),
   KEY `idx_hospital_id` (`hospital_id`),
   KEY `idx_supplier_id` (`supplier_id`),
   KEY `idx_warehouse_id` (`warehouse_id`),
   KEY `idx_order_date` (`order_date`),
-  KEY `idx_tenant_id` (`tenant_id`)
+  KEY `idx_tenant_id` (`tenant_id`),
+  KEY `idx_scm_order_spd_order_id` (`spd_order_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单主表';
 /
 CREATE TABLE IF NOT EXISTS `scm_order_detail` (
@@ -425,9 +431,11 @@ CREATE TABLE IF NOT EXISTS `scm_order_detail` (
   `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `spd_entry_id` bigint(20) DEFAULT NULL COMMENT 'SPD采购订单明细主键 purchase_order_entry.id（第一方推送行级对账）',
   PRIMARY KEY (`detail_id`),
   KEY `idx_order_id` (`order_id`),
-  KEY `idx_material_id` (`material_id`)
+  KEY `idx_material_id` (`material_id`),
+  KEY `idx_scm_order_detail_spd_entry` (`spd_entry_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单明细表';
 /
 CREATE TABLE IF NOT EXISTS `scm_delivery` (
@@ -465,12 +473,15 @@ CREATE TABLE IF NOT EXISTS `scm_delivery` (
   `create_time` datetime DEFAULT NULL COMMENT '制单日期',
   `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `spd_tenant_id` varchar(64) DEFAULT NULL COMMENT 'SPD租户ID（同 sb_customer.customer_id，院内第一方对账）',
+  `spd_ref_no` varchar(128) DEFAULT '' COMMENT 'SPD侧引用/业务流水号（审计、与院内单号对照）',
   PRIMARY KEY (`delivery_id`),
   UNIQUE KEY `uk_delivery_no` (`delivery_no`),
   KEY `idx_hospital_id` (`hospital_id`),
   KEY `idx_supplier_id` (`supplier_id`),
   KEY `idx_order_id` (`order_id`),
-  KEY `idx_zs_order_id` (`zs_order_id`)
+  KEY `idx_zs_order_id` (`zs_order_id`),
+  KEY `idx_scm_delivery_spd_tenant` (`spd_tenant_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='配送单主表';
 /
 CREATE TABLE IF NOT EXISTS `scm_delivery_detail` (
@@ -505,10 +516,12 @@ CREATE TABLE IF NOT EXISTS `scm_delivery_detail` (
   `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(500) DEFAULT '' COMMENT '备注',
+  `spd_order_entry_id` bigint(20) DEFAULT NULL COMMENT 'SPD采购订单明细ID purchase_order_entry.id（配送行与订单行对账）',
   PRIMARY KEY (`detail_id`),
   KEY `idx_delivery_id` (`delivery_id`),
   KEY `idx_material_id` (`material_id`),
-  KEY `idx_order_detail_id` (`order_detail_id`)
+  KEY `idx_order_detail_id` (`order_detail_id`),
+  KEY `idx_scm_delivery_detail_spd_entry` (`spd_order_entry_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='配送明细表';
 /
 CREATE TABLE IF NOT EXISTS `scm_delivery_invoice` (
@@ -1374,4 +1387,54 @@ CREATE TABLE IF NOT EXISTS `scm_delivery_detail_barcode` (
   KEY `idx_ddbc_delivery` (`delivery_id`),
   KEY `idx_ddbc_detail` (`delivery_detail_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='配送单明细条码从表';
+/
+
+-- SPD 租户与平台医院编码映射（云平台侧存档/对账；外键为逻辑 varchar，不设 DB FK）
+CREATE TABLE IF NOT EXISTS `scm_spd_tenant_bind` (
+  `id` varchar(36) NOT NULL COMMENT '主键UUID7',
+  `spd_tenant_id` varchar(36) NOT NULL COMMENT 'SPD租户ID(sb_customer.customer_id)',
+  `scm_hospital_code` varchar(64) NOT NULL COMMENT '平台医院编码 scm_hospital.hospital_code',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  `del_flag` char(1) NOT NULL DEFAULT '0' COMMENT '0正常 2删除',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_scm_spd_tenant_bind` (`spd_tenant_id`),
+  KEY `idx_scm_spd_tenant_hospital_code` (`scm_hospital_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='SPD租户-平台医院编码绑定（SCM库）';
+/
+
+CREATE TABLE IF NOT EXISTS `scm_spd_supplier_bind` (
+  `id` varchar(36) NOT NULL COMMENT '主键UUID7',
+  `spd_tenant_id` varchar(36) NOT NULL COMMENT 'SPD租户ID',
+  `spd_supplier_id` varchar(36) NOT NULL COMMENT 'SPD供应商主键 fd_supplier.id（字符串）',
+  `scm_supplier_code` varchar(64) NOT NULL COMMENT '平台供应商编码 scm_supplier.supplier_code',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  `del_flag` char(1) NOT NULL DEFAULT '0' COMMENT '0正常 2删除',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_scm_spd_supplier_bind` (`spd_tenant_id`,`spd_supplier_id`),
+  KEY `idx_scm_spd_supplier_code` (`scm_supplier_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='SPD供应商-平台供应商编码绑定（SCM库）';
+/
+
+CREATE TABLE IF NOT EXISTS `scm_supplier_export_log` (
+  `id` varchar(36) NOT NULL COMMENT '主键UUID7（36位）',
+  `hospital_code` varchar(64) NOT NULL COMMENT '平台医院编码',
+  `supplier_code` varchar(64) NOT NULL COMMENT '平台供应商编码',
+  `export_scope` varchar(16) NOT NULL COMMENT '导出范围 FULL全量 LIMITED脱敏',
+  `spd_tenant_id` varchar(64) DEFAULT NULL COMMENT 'SPD租户ID（前置机透传）',
+  `request_ip` varchar(64) DEFAULT NULL COMMENT '请求来源IP',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '记录时间',
+  `create_by` varchar(64) DEFAULT NULL COMMENT '操作者（系统/接口）',
+  PRIMARY KEY (`id`),
+  KEY `idx_scm_supplier_export_hospital` (`hospital_code`),
+  KEY `idx_scm_supplier_export_supplier` (`supplier_code`),
+  KEY `idx_scm_supplier_export_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医院侧经前置机拉取平台供应商信息审计日志';
 /

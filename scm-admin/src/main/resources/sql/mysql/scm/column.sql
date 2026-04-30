@@ -523,6 +523,25 @@ CALL add_table_column('zs_tp_order', 'scm_supplier_id', 'varchar(64)', '由scm_s
 /
 CALL add_table_column('scm_delivery', 'zs_jsfs', 'varchar(32)', '第三订单结算方式jsfs快照：3高值0低值', NULL);
 /
+-- ========== 订单/配送：SPD 第一方对账扩展列（与 scm/table.sql 全量建表一致；存量库增量）==========
+CALL add_table_column('scm_order', 'spd_order_id', 'bigint(20)', 'SPD院内采购订单主键 purchase_order.id（第一方推送对账）', NULL);
+/
+CALL add_table_column('scm_order', 'source_system', 'varchar(32)', '订单来源系统编码：SPD第一方推送等', NULL);
+/
+CALL add_table_column('scm_order_detail', 'spd_entry_id', 'bigint(20)', 'SPD采购订单明细主键 purchase_order_entry.id（行级对账）', NULL);
+/
+CALL add_table_column('scm_delivery', 'spd_tenant_id', 'varchar(64)', 'SPD租户ID（同 sb_customer.customer_id）', NULL);
+/
+CALL add_table_column('scm_delivery', 'spd_ref_no', 'varchar(128)', 'SPD侧引用/业务流水号（审计）', '');
+/
+CALL add_table_column('scm_delivery_detail', 'spd_order_entry_id', 'bigint(20)', 'SPD采购订单明细ID purchase_order_entry.id', NULL);
+/
+CALL add_table_column('scm_order', 'spd_tenant_id', 'varchar(64)', 'SPD租户ID(sb_customer.customer_id，推送快照)', NULL);
+/
+CALL add_table_column('scm_order', 'spd_snapshot_hospital_code', 'varchar(64)', '推送时快照：平台医院编码', NULL);
+/
+CALL add_table_column('scm_order', 'spd_snapshot_supplier_code', 'varchar(64)', '推送时快照：平台供应商编码', NULL);
+/
 -- ========== UUID 主键列统一为 varchar(36)（列非 varchar，或 varchar 长度小于 36 时 MODIFY；已为 varchar 且长度≥36 则跳过） ==========
 CALL upgrade_uuid_column_if_varchar32('scm_order_detail_delivery_rel', 'id', '主键UUID7');
 /
@@ -623,3 +642,19 @@ WHERE IFNULL(org_admin, '0') = '0' AND IFNULL(del_flag, '0') = '0'
   AND role_key IN ('hospital_admin', 'supplier_admin');
 /
 -- 菜单初始化/分类/白名单回填语句已迁移至 menu.sql，column.sql 仅保留结构变更。
+
+CREATE TABLE IF NOT EXISTS `scm_supplier_export_log` (
+  `id` varchar(36) NOT NULL COMMENT '主键UUID7（36位）',
+  `hospital_code` varchar(64) NOT NULL COMMENT '平台医院编码',
+  `supplier_code` varchar(64) NOT NULL COMMENT '平台供应商编码',
+  `export_scope` varchar(16) NOT NULL COMMENT '导出范围 FULL全量 LIMITED脱敏',
+  `spd_tenant_id` varchar(64) DEFAULT NULL COMMENT 'SPD租户ID（前置机透传）',
+  `request_ip` varchar(64) DEFAULT NULL COMMENT '请求来源IP',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '记录时间',
+  `create_by` varchar(64) DEFAULT NULL COMMENT '操作者（系统/接口）',
+  PRIMARY KEY (`id`),
+  KEY `idx_scm_supplier_export_hospital` (`hospital_code`),
+  KEY `idx_scm_supplier_export_supplier` (`supplier_code`),
+  KEY `idx_scm_supplier_export_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医院侧经前置机拉取平台供应商信息审计日志';
+/
