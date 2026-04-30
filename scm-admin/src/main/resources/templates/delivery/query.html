@@ -1,17 +1,26 @@
 <!DOCTYPE html>
-<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro" class="delivery-query-root">
 <head>
 	<th:block th:include="include :: header('配送信息查询')" />
 	<th:block th:include="include :: layout-latest-css" />
 	<style>
+		/* 在首页 iframe 内：100vh 常大于 iframe 可视高度，底部会被 #content-main{overflow:hidden} 裁掉；改为占满 iframe 文档高度 */
+		html.delivery-query-root,
+		html.delivery-query-root body.delivery-query-body {
+			height: 100%;
+			margin: 0;
+			overflow: hidden;
+			box-sizing: border-box;
+		}
+		body.delivery-query-body {
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+		}
 		.barcode-cell-wrap {
 			white-space: normal;
 			word-break: break-all;
 			line-height: 1.35;
-		}
-		.tab-content {
-			padding-top: 6px;
-			min-height: 0;
 		}
 		.tab-pane {
 			display: none;
@@ -22,10 +31,21 @@
 		.container-div {
 			display: flex;
 			flex-direction: column;
-			height: calc(100vh - 100px);
+			height: calc(100vh - 84px);
+			min-height: 0;
+		}
+		/* 覆盖上一段：本页在 iframe 内不用 vh，避免底部被最外层内容区裁切 */
+		.delivery-query-page.container-div {
+			flex: 1 1 0%;
+			min-height: 0;
+			height: auto !important;
+			max-height: none !important;
+			padding-left: 10px !important;
+			padding-right: 18px !important;
 		}
 		.nav-tabs {
 			flex-shrink: 0;
+			margin-left: -12px;
 		}
 		.nav-tabs > li > a {
 			color: #555;
@@ -48,12 +68,19 @@
 			display: flex;
 			flex-direction: column;
 			overflow: hidden;
+			min-height: 0;
 		}
 		.tab-pane {
 			flex: 1;
 			display: flex;
 			flex-direction: column;
 			overflow: hidden;
+		}
+		/* 本页：不在竖向裁切 tab 区域，避免表格外包层被算高后底部分页落在 overflow:hidden 外 */
+		.delivery-query-page.container-div > .tab-content,
+		.delivery-query-page.container-div .tab-pane {
+			overflow-x: hidden;
+			overflow-y: visible;
 		}
 		.tab-pane.active {
 			display: flex;
@@ -62,8 +89,9 @@
 			flex: 1;
 			display: flex;
 			flex-direction: column;
-			overflow: hidden;
+			overflow: visible;
 			margin: 0;
+			min-height: 0;
 		}
 		.select-table {
 			flex: 1;
@@ -72,24 +100,13 @@
 			overflow: hidden;
 			min-height: 0;
 		}
-		/* 固定表头 */
+		/* 有 height 时由 bootstrap-table 自己管理表头，勿再加 position:sticky，否则会与表头/表体列宽同步冲突导致错位 */
 		.bootstrap-table .fixed-table-header {
-			position: sticky !important;
-			top: 0 !important;
-			z-index: 100 !important;
 			background-color: #fff !important;
-		}
-		.bootstrap-table .fixed-table-header thead {
-			position: sticky !important;
-			top: 0 !important;
-			z-index: 100 !important;
 		}
 		.bootstrap-table .fixed-table-header th {
 			background-color: #f5f5f5 !important;
 			border-bottom: 2px solid #ddd !important;
-			position: sticky !important;
-			top: 0 !important;
-			z-index: 100 !important;
 		}
 		/* 表格容器布局 */
 		.select-table .bootstrap-table {
@@ -137,10 +154,21 @@
 			flex: 1;
 			min-height: 0;
 			position: relative;
-			padding-bottom: 6px;
-			overflow: hidden;
+			padding-bottom: 0;
+			/* 横向只让 .fixed-table-body 滚动，避免外包层与表体双滚动条导致表头列宽不同步 */
+			overflow-x: hidden;
+			overflow-y: visible;
+			display: flex;
+			flex-direction: column;
 		}
-		.query-table-wrap .bootstrap-table {
+		.query-table-wrap.select-table {
+			overflow-x: hidden !important;
+			overflow-y: visible !important;
+		}
+		.query-table-wrap > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
+			width: 100%;
 			display: flex;
 			flex-direction: column;
 			height: 100%;
@@ -159,41 +187,81 @@
 			min-height: 0;
 		}
 		.query-table-wrap .fixed-table-pagination {
-			position: sticky;
-			bottom: 0;
+			position: relative;
+			bottom: auto;
 			display: block !important;
 			background: #fff;
 			z-index: 6;
 			border-top: 1px solid #eee;
 			margin: 0 !important;
-			margin-top: auto !important;
+			margin-top: 0 !important;
 			padding: 8px 10px;
+			flex-shrink: 0;
+		}
+		/* 明细：分页与表体拉开一点，整体略下移、不贴底栏 */
+		#detail-tab .query-table-wrap .fixed-table-pagination {
+			margin-top: 12px !important;
+			padding-top: 10px !important;
+			padding-bottom: 14px !important;
 		}
 		.query-table-wrap .fixed-table-pagination .pagination {
 			margin-right: 28px;
 		}
 		.query-table-wrap .fixed-table-header {
-			position: sticky !important;
-			top: 0 !important;
-			z-index: 10 !important;
 			background: #fff !important;
 		}
-		/* 明细列显示：加宽间距 + 单行不换行 */
+		/* 明细列显示：加宽间距 + 默认单行；表头/表体须用同一套规则，否则易出现列整体偏移 */
+		/* 内层 table 的 width 由 bootstrap-table 的 fitHeader 设为与主表一致的像素宽；勿写 width:100%，否则表头容器与表体容器的「百分比基准」不一致会逐列错位 */
+		#detail-tab .fixed-table-header table.table,
+		#detail-tab .fixed-table-body table.table {
+			border-collapse: collapse;
+		}
+		#detail-tab #bootstrap-table-detail.delivery-detail-fixed-table {
+			table-layout: fixed !important;
+		}
 		#detail-tab .fixed-table-header th,
 		#detail-tab .fixed-table-body td {
+			box-sizing: border-box !important;
 			padding: 8px 14px !important;
 			white-space: nowrap !important;
 			word-break: keep-all !important;
 			overflow: hidden;
 			text-overflow: ellipsis;
 		}
+		#detail-tab .fixed-table-header th[data-field="batchNo"],
+		#detail-tab .fixed-table-body td[data-field="batchNo"],
+		#detail-tab .fixed-table-header th[data-field="mainBarcode"],
+		#detail-tab .fixed-table-body td[data-field="mainBarcode"],
+		#detail-tab .fixed-table-header th[data-field="auxBarcode"],
+		#detail-tab .fixed-table-body td[data-field="auxBarcode"] {
+			white-space: normal !important;
+			word-break: break-all !important;
+			overflow: visible;
+			text-overflow: clip;
+			vertical-align: top;
+		}
+		#detail-tab .fixed-table-header th[data-field="expireDate"],
+		#detail-tab .fixed-table-body td[data-field="expireDate"],
+		#detail-tab .fixed-table-header th[data-field="productionDate"],
+		#detail-tab .fixed-table-body td[data-field="productionDate"] {
+			white-space: normal !important;
+			word-break: normal !important;
+			overflow: visible;
+			text-overflow: clip;
+		}
 		#detail-tab .barcode-cell-wrap {
-			white-space: nowrap !important;
-			word-break: keep-all !important;
+			white-space: normal !important;
+			word-break: break-all !important;
 			line-height: 1.4;
 		}
+		/*
+		 * 必须与 bootstrap-table fitHeader 一致：仅在有竖向滚动时表头才加 margin-right 补偿。
+		 * 若强制 overflow-y:scroll 或 scrollbar-gutter:stable，会在「无滚动条」时仍占滚动条宽度，
+		 * 但 fitHeader 认为 i=0 不补偿表头 → 表体比表头窄/列宽累加错位（从「单位」后逐渐漂移）。
+		 */
 		#detail-tab .fixed-table-body {
 			overflow-y: auto !important;
+			overflow-x: auto !important;
 		}
 		/* 明细表左侧操作按钮与右侧工具栏同一行 */
 		#toolbar-detail.detail-action-bar {
@@ -214,15 +282,56 @@
 			float: none;
 			margin-left: auto;
 		}
+		#toolbar-summary.summary-action-bar {
+			display: block !important;
+			float: none;
+			margin: 0 8px 0 0;
+			padding: 0;
+			background: #fff;
+		}
+		#toolbar-summary.summary-action-bar .btn {
+			margin-right: 6px;
+		}
+		#summary-tab .fixed-table-toolbar {
+			display: flex;
+			align-items: center;
+		}
+		#summary-tab .fixed-table-toolbar .columns {
+			float: none;
+			margin-left: auto;
+		}
 		#detail-tab .search-collapse,
 		#summary-tab .search-collapse {
-			padding-left: 15px;
-			padding-right: 15px;
+			padding-left: 12px !important;
+			padding-right: 10px !important;
+			margin-left: 0 !important;
+			margin-right: 0 !important;
+			width: 100% !important;
+			box-sizing: border-box;
+		}
+		#detail-tab #delivery-detail-form,
+		#summary-tab #delivery-summary-form {
+			margin: 0 !important;
+			width: 100% !important;
+		}
+		#detail-tab #delivery-detail-form .select-list,
+		#summary-tab #delivery-summary-form .select-list {
+			width: 100% !important;
+			max-width: none !important;
+			margin: 0 !important;
+			padding-left: 0 !important;
+			padding-right: 0 !important;
+			box-sizing: border-box;
+		}
+		#detail-tab .select-list li input,
+		#summary-tab .select-list li input {
+			width: 260px !important;
+			max-width: 100%;
 		}
 	</style>
 </head>
-<body class="gray-bg">
-	<div class="container-div">
+<body class="gray-bg delivery-query-body">
+	<div class="container-div delivery-query-page">
 		<!-- 标签页切换 -->
 		<ul class="nav nav-tabs" role="tablist" style="margin-bottom: 0;">
 			<li role="presentation" class="active">
@@ -241,7 +350,7 @@
 		<div class="tab-content">
 			<!-- 明细表 -->
 			<div role="tabpanel" class="tab-pane active" id="detail-tab">
-				<div class="row">
+				<div class="row" style="margin: 0; display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%;">
 					<div class="col-sm-12 search-collapse">
 						<form id="delivery-detail-form">
 							<div class="select-list">
@@ -271,14 +380,14 @@
 			        </div>
 			        
 			        <div class="col-sm-12 select-table table-striped query-table-wrap">
-					    <table id="bootstrap-table-detail"></table>
+					    <table id="bootstrap-table-detail" class="delivery-detail-fixed-table"></table>
 					</div>
 				</div>
 			</div>
 			
 			<!-- 汇总表 -->
 			<div role="tabpanel" class="tab-pane" id="summary-tab">
-				<div class="row" style="margin: 0; display: flex; flex-direction: column; height: 100%;">
+				<div class="row" style="margin: 0; display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%;">
 					<div class="col-sm-12 search-collapse" style="flex-shrink: 0;">
 						<form id="delivery-summary-form">
 							<div class="select-list">
@@ -302,16 +411,21 @@
 										</select>
 									</li>
 									<li>
-										<a class="btn btn-primary btn-rounded btn-sm" onclick="searchSummary()"><i class="fa fa-search"></i>&nbsp;搜索</a>
-										<a class="btn btn-warning btn-rounded btn-sm" onclick="resetSummary()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
-										<a class="btn btn-warning btn-rounded btn-sm" onclick="exportSummary()" shiro:hasPermission="delivery:delivery:export"><i class="fa fa-download"></i>&nbsp;导出</a>
+										<a class="btn btn-primary btn-rounded btn-sm" onclick="searchSummary()" style="display: none;"><i class="fa fa-search"></i>&nbsp;搜索</a>
+										<a class="btn btn-warning btn-rounded btn-sm" onclick="resetSummary()" style="display: none;"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+										<a class="btn btn-warning btn-rounded btn-sm" onclick="exportSummary()" shiro:hasPermission="delivery:delivery:export" style="display: none;"><i class="fa fa-download"></i>&nbsp;导出</a>
 									</li>
 								</ul>
 							</div>
 						</form>
 					</div>
+			        <div class="btn-group-sm" id="toolbar-summary" role="group" style="display: none;">
+			            <a class="btn btn-success btn-sm" onclick="searchSummary()"><i class="fa fa-search"></i> 搜索</a>
+			            <a class="btn btn-warning btn-sm" onclick="resetSummary()"><i class="fa fa-refresh"></i> 重置</a>
+			            <a class="btn btn-primary btn-sm" onclick="exportSummary()" shiro:hasPermission="delivery:delivery:export"><i class="fa fa-download"></i> 导出</a>
+			        </div>
 			        
-			        <div class="col-sm-12 select-table table-striped query-table-wrap" style="flex: 1; overflow: auto;">
+			        <div class="col-sm-12 select-table table-striped query-table-wrap">
 					    <table id="bootstrap-table-summary"></table>
 					</div>
 				</div>
@@ -379,7 +493,112 @@
 		$(function() {
 		    // 初始化明细表
 		    initDetailTable();
+		    $(window).on('resize', function() {
+		    	relayoutDeliveryQueryTables();
+		    });
+		    $('a[data-toggle="tab"]').on('shown.bs.tab', function() {
+		    	setTimeout(relayoutDeliveryQueryTables, 0);
+		    });
+		    setTimeout(relayoutDeliveryQueryTables, 300);
 		});
+
+		/**
+		 * 表格外包层高度 = 从外包层顶边到「本页主容器 / tab-content / tab-pane」三者底边中的最小值，
+		 * 不得再用视口底边去撑高：否则外包层会高于父级 .tab-pane 的 overflow:hidden，分页整块被裁掉看不见。
+		 */
+		function layoutDeliveryQueryWrapHeights() {
+			var $page = $('.delivery-query-page.container-div');
+			if (!$page.length) {
+				return;
+			}
+			var pageEl = $page[0];
+			var pageBottom = pageEl.getBoundingClientRect().bottom;
+			function applyWrap(selector) {
+				var $w = $(selector);
+				if (!$w.length) {
+					return;
+				}
+				if (!$w.closest('.tab-pane').is(':visible')) {
+					return;
+				}
+				var el = $w[0];
+				var top = el.getBoundingClientRect().top;
+				var bottom = pageBottom;
+				var $tc = $w.closest('.tab-content');
+				if ($tc.length) {
+					bottom = Math.min(bottom, $tc[0].getBoundingClientRect().bottom - 4);
+				}
+				var $pane = $w.closest('.tab-pane');
+				if ($pane.length) {
+					bottom = Math.min(bottom, $pane[0].getBoundingClientRect().bottom - 4);
+				}
+				var base = Math.floor(bottom - top - 6);
+				var h = base;
+				if (selector === '#detail-tab .query-table-wrap') {
+					var docEl = document.documentElement;
+					var viewH = (docEl && docEl.clientHeight) ? docEl.clientHeight : (window.innerHeight || 0);
+					var maxByViewport = Math.floor(viewH - top - 10);
+					var boosted = Math.min(base + 56, maxByViewport);
+					h = Math.max(base, boosted);
+				}
+				if (h < 260) {
+					h = 260;
+				}
+				el.style.setProperty('flex', '0 0 auto', 'important');
+				el.style.setProperty('height', h + 'px', 'important');
+				el.style.setProperty('min-height', h + 'px', 'important');
+				/* 不设 max-height：与内部表格总高略超时会裁掉分页 */
+				el.style.removeProperty('max-height');
+				el.style.setProperty('box-sizing', 'border-box', 'important');
+			}
+			applyWrap('#detail-tab .query-table-wrap');
+			applyWrap('#summary-tab .query-table-wrap');
+		}
+
+		function relayoutDeliveryQueryTables() {
+			layoutDeliveryQueryWrapHeights();
+			resetQueryTableHeights();
+		}
+
+		function calculateQueryTableHeight(tableSelector) {
+			var $table = $(tableSelector);
+			var $wrap = $table.closest('.query-table-wrap');
+			if ($wrap.length === 0) {
+				return 600;
+			}
+			var el = $wrap[0];
+			/* 略小于外包层，给工具栏/表头/分页和边框留余量，避免被外包层 overflow 裁掉 */
+			var h = el ? el.clientHeight : Math.floor($wrap.innerHeight());
+			if (!h || h < 1) {
+				h = Math.floor($wrap.innerHeight());
+			}
+			h = Math.floor(h - 12);
+			return Math.max(h, 280);
+		}
+
+		function resetQueryTableHeights() {
+			var $detail = $('#bootstrap-table-detail');
+			if ($detail.length > 0 && $detail.bootstrapTable('getOptions')) {
+				var hd = calculateQueryTableHeight('#bootstrap-table-detail');
+				$detail.bootstrapTable('resetView', { height: hd });
+				$detail.closest('.bootstrap-table').find('.fixed-table-body').scrollLeft(0);
+			}
+			var $summary = $('#bootstrap-table-summary');
+			if ($summary.length > 0 && $summary.bootstrapTable('getOptions')) {
+				$summary.bootstrapTable('resetView', { height: calculateQueryTableHeight('#bootstrap-table-summary') });
+				$summary.closest('.bootstrap-table').find('.fixed-table-body').scrollLeft(0);
+			}
+			setTimeout(function() {
+				var $d = $('#bootstrap-table-detail');
+				if ($d.length > 0 && $d.bootstrapTable('getOptions')) {
+					$d.bootstrapTable('resetView', { height: calculateQueryTableHeight('#bootstrap-table-detail') });
+				}
+				var $s = $('#bootstrap-table-summary');
+				if ($s.length > 0 && $s.bootstrapTable('getOptions')) {
+					$s.bootstrapTable('resetView', { height: calculateQueryTableHeight('#bootstrap-table-summary') });
+				}
+			}, 80);
+		}
 
 		// 切换标签页
 		function switchTab(tabType) {
@@ -392,6 +611,7 @@
 		            initSummaryTable();
 		        }
 		    }
+		    setTimeout(relayoutDeliveryQueryTables, 0);
 		}
 
 		// 初始化明细表
@@ -399,6 +619,7 @@
 		    if (detailTableInitialized) {
 		        return;
 		    }
+		    layoutDeliveryQueryWrapHeights();
 
 		    var mountDetailToolbar = function() {
 		    	var $table = $('#bootstrap-table-detail');
@@ -421,6 +642,10 @@
 		        sortOrder: "desc",
 		        modalName: "配送明细",
 		        formId: "delivery-detail-form",
+		        /* 若依默认 toolbar 为 #toolbar，本页不存在会干扰表格；指定为实际工具栏容器 */
+		        toolbar: 'toolbar-detail',
+		        mobileResponsive: false,
+		        height: calculateQueryTableHeight('#bootstrap-table-detail'),
 		        showRefresh: true,
 		        showColumns: true,
 		        showToggle: true,
@@ -441,38 +666,47 @@
 		        {
 		            field: 'deliveryNo',
 		            title: '配送单号',
+		            width: 150,
 		            sortable: true
 		        },
 		        {
 		            field: 'materialCode',
 		            title: '产品编码',
+		            width: 120,
 		            sortable: true
 		        },
 		        {
 		            field: 'materialName',
 		            title: '产品名称',
+		            width: 200,
 		            sortable: true
 		        },
 		        {
 		            field: 'specification',
-		            title: '规格'
+		            title: '规格',
+		            width: 110
 		        },
 		        {
 		            field: 'model',
-		            title: '型号'
+		            title: '型号',
+		            width: 100
 		        },
 		        {
 		            field: 'unit',
-		            title: '单位'
+		            title: '单位',
+		            width: 72,
+		            align: 'center'
 		        },
 		        {
 		            field: 'deliveryQuantity',
 		            title: '配送数量',
+		            width: 110,
 		            sortable: true
 		        },
 		        {
 		            field: 'price',
 		            title: '单价',
+		            width: 100,
 		            sortable: true,
 		            formatter: function(value, row, index) {
 		                if (value != null) {
@@ -484,6 +718,7 @@
 		        {
 		            field: 'amount',
 		            title: '金额',
+		            width: 110,
 		            sortable: true,
 		            formatter: function(value, row, index) {
 		                if (value != null) {
@@ -496,8 +731,11 @@
 		            field: 'batchNo',
 		            title: '批号',
 		            width: 200,
+		            headerStyle: function() {
+		                return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'vertical-align': 'top', 'box-sizing': 'border-box' } };
+		            },
 		            cellStyle: function() {
-		                return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'max-width': '320px', 'min-width': '120px', 'vertical-align': 'top' } };
+		                return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'vertical-align': 'top', 'box-sizing': 'border-box' } };
 		            },
 		            formatter: function(value) {
 		                if (value == null || value === '') return '-';
@@ -510,8 +748,11 @@
 		            title: '有效期',
 		            width: 120,
 		            sortable: true,
+		            headerStyle: function() {
+		                return { css: { 'white-space': 'normal', 'box-sizing': 'border-box' } };
+		            },
 		            cellStyle: function() {
-		                return { css: { 'white-space': 'normal', 'min-width': '110px' } };
+		                return { css: { 'white-space': 'normal', 'box-sizing': 'border-box' } };
 		            },
 		            formatter: function(value, row, index) {
 		                return formatDate(value, "yyyy-MM-dd");
@@ -522,8 +763,11 @@
 		            title: '生产日期',
 		            width: 120,
 		            sortable: true,
+		            headerStyle: function() {
+		                return { css: { 'white-space': 'normal', 'box-sizing': 'border-box' } };
+		            },
 		            cellStyle: function() {
-		                return { css: { 'white-space': 'normal', 'min-width': '110px' } };
+		                return { css: { 'white-space': 'normal', 'box-sizing': 'border-box' } };
 		            },
 		            formatter: function(value, row, index) {
 		                return formatDate(value, "yyyy-MM-dd");
@@ -532,9 +776,12 @@
 		        {
 		            field: 'mainBarcode',
 		            title: '主条码',
-		            width: 260,
+		            width: 240,
+		            headerStyle: function() {
+		                return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'vertical-align': 'top', 'box-sizing': 'border-box' } };
+		            },
 		            cellStyle: function() {
-		                return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'max-width': '360px', 'min-width': '200px', 'vertical-align': 'top' } };
+		                return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'vertical-align': 'top', 'box-sizing': 'border-box' } };
 		            },
 		            formatter: function(value) {
 		                if (value == null || value === '') return '-';
@@ -545,9 +792,12 @@
 		        {
 		            field: 'auxBarcode',
 		            title: '辅条码',
-		            width: 260,
+		            width: 240,
+		            headerStyle: function() {
+		                return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'vertical-align': 'top', 'box-sizing': 'border-box' } };
+		            },
 		            cellStyle: function() {
-		                return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'max-width': '360px', 'min-width': '200px', 'vertical-align': 'top' } };
+		                return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'vertical-align': 'top', 'box-sizing': 'border-box' } };
 		            },
 		            formatter: function(value) {
 		                if (value == null || value === '') return '-';
@@ -557,11 +807,13 @@
 		        },
 		        {
 		            field: 'manufacturer',
-		            title: '生产厂家'
+		            title: '生产厂家',
+		            width: 150
 		        },
 		        {
 		            field: 'registerNo',
-		            title: '注册证号'
+		            title: '注册证号',
+		            width: 160
 		        }]
 		    };
 		    
@@ -584,6 +836,8 @@
 		                    $table.data('currentPage', options.pageNumber || 1);
 		                }
 		            }
+		            setTimeout(relayoutDeliveryQueryTables, 0);
+		            setTimeout(relayoutDeliveryQueryTables, 150);
 		        };
 		        // 添加加载错误回调
 		        options.onLoadError = function(status, res) {
@@ -601,6 +855,8 @@
 		        $.table.init(options);
 		        $table.data('currentPage', 1);
 		        setTimeout(mountDetailToolbar, 0);
+		        setTimeout(relayoutDeliveryQueryTables, 0);
+		        setTimeout(relayoutDeliveryQueryTables, 120);
 		        detailTableInitialized = true;
 		    }
 		}
@@ -610,6 +866,20 @@
 		    if (summaryTableInitialized) {
 		        return;
 		    }
+		    layoutDeliveryQueryWrapHeights();
+
+		    var mountSummaryToolbar = function() {
+		    	var $table = $('#bootstrap-table-summary');
+		    	var $bootstrapTable = $table.closest('.bootstrap-table');
+		    	var $toolbar = $bootstrapTable.find('.fixed-table-toolbar');
+		    	var $actions = $('#toolbar-summary');
+		    	if ($toolbar.length && $actions.length) {
+		    		if ($actions.parent()[0] !== $toolbar[0]) {
+		    			$actions.prependTo($toolbar);
+		    		}
+		    		$actions.addClass('summary-action-bar').show();
+		    	}
+		    };
 		    
 		    var options = {
 		        id: "bootstrap-table-summary",
@@ -619,6 +889,9 @@
 		        sortOrder: "desc",
 		        modalName: "配送单",
 		        formId: "delivery-summary-form",
+		        toolbar: 'toolbar-summary',
+		        mobileResponsive: false,
+		        height: calculateQueryTableHeight('#bootstrap-table-summary'),
 		        showRefresh: true,
 		        showColumns: true,
 		        showToggle: true,
@@ -715,6 +988,7 @@
 		        options.onLoadSuccess = function(data) {
 		            console.log("汇总表加载成功，数据量:", data ? (data.rows ? data.rows.length : (Array.isArray(data) ? data.length : 0)) : 0);
 		            var $table = $('#bootstrap-table-summary');
+		            mountSummaryToolbar();
 		            // 确保加载完成后更新页码
 		            if ($table && $table.bootstrapTable) {
 		                var options = $table.bootstrapTable('getOptions');
@@ -722,6 +996,8 @@
 		                    $table.data('currentPage', options.pageNumber || 1);
 		                }
 		            }
+		            setTimeout(relayoutDeliveryQueryTables, 0);
+		            setTimeout(relayoutDeliveryQueryTables, 150);
 		        };
 		        // 添加加载错误回调
 		        options.onLoadError = function(status, res) {
@@ -739,11 +1015,15 @@
 		        $.table.init(options);
 		        $table.data('currentPage', 1);
 		        summaryTableInitialized = true;
+		        setTimeout(mountSummaryToolbar, 0);
+		        setTimeout(relayoutDeliveryQueryTables, 0);
+		        setTimeout(relayoutDeliveryQueryTables, 120);
 		        
 		        // 延迟刷新一次，确保数据正确加载
 		        setTimeout(function() {
 		            if ($table.bootstrapTable('getOptions')) {
 		                $table.bootstrapTable('refresh');
+		                relayoutDeliveryQueryTables();
 		            }
 		        }, 500);
 		    }
