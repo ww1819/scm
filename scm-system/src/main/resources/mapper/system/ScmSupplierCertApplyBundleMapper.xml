@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.ScmSupplierCertApplyBundleMapper">
+
+    <insert id="insertBundle">
+        insert into scm_supplier_cert_apply_bundle (id, apply_id, hospital_id, supplier_id, cert_bundle_json, create_time)
+        values (#{id}, #{applyId}, #{hospitalId}, #{supplierId}, #{certBundleJson}, now())
+    </insert>
+</mapper>

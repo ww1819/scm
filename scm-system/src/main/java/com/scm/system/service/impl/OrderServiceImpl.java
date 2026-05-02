@@ -71,9 +71,24 @@ public class OrderServiceImpl implements IOrderService
         Order order = orderMapper.selectOrderById(orderId);
         if (order != null)
         {
+            assertOrderViewScope(order);
             order.setOrderDetails(selectOrderDetailListByOrderId(orderId));
         }
         return order;
+    }
+
+    private void assertOrderViewScope(Order order)
+    {
+        Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());
+        if (hospitalCtx != null && order.getHospitalId() != null && !hospitalCtx.equals(order.getHospitalId()))
+        {
+            throw new ServiceException("无权查看其他医院订单");
+        }
+        Long supplierCtx = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (supplierCtx != null && order.getSupplierId() != null && !supplierCtx.equals(order.getSupplierId()))
+        {
+            throw new ServiceException("无权查看其他供应商订单");
+        }
     }
 
     /**

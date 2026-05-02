@@ -542,6 +542,14 @@ CALL add_table_column('scm_order', 'spd_snapshot_hospital_code', 'varchar(64)', 
 /
 CALL add_table_column('scm_order', 'spd_snapshot_supplier_code', 'varchar(64)', '推送时快照：平台供应商编码', NULL);
 /
+CALL add_table_column('scm_order', 'hs_bind_snapshot', 'varchar(32)', '下单/推送时医院-供应商绑定关系快照（中文：已绑定、未绑定、申请审核中等）', NULL);
+/
+CALL add_table_column('zs_tp_order', 'hospital_id', 'bigint(20)', '平台医院主键 scm_hospital.hospital_id', NULL);
+/
+CALL add_table_column('zs_tp_order', 'supplier_id', 'bigint(20)', '平台供应商主键 scm_supplier.supplier_id', NULL);
+/
+CALL add_table_column('zs_tp_order', 'hs_bind_snapshot', 'varchar(32)', '落库时医院-供应商绑定关系快照（中文：已绑定、未绑定、申请审核中等）', NULL);
+/
 -- ========== UUID 主键列统一为 varchar(36)（列非 varchar，或 varchar 长度小于 36 时 MODIFY；已为 varchar 且长度≥36 则跳过） ==========
 CALL upgrade_uuid_column_if_varchar32('scm_order_detail_delivery_rel', 'id', '主键UUID7');
 /
@@ -657,4 +665,31 @@ CREATE TABLE IF NOT EXISTS `scm_supplier_export_log` (
   KEY `idx_scm_supplier_export_supplier` (`supplier_code`),
   KEY `idx_scm_supplier_export_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医院侧经前置机拉取平台供应商信息审计日志';
+/
+CREATE TABLE IF NOT EXISTS `scm_supplier_cert_apply_bundle` (
+  `id` varchar(36) NOT NULL COMMENT '主键UUID7',
+  `apply_id` varchar(36) NOT NULL COMMENT '医院关联申请单ID',
+  `hospital_id` varchar(36) NOT NULL COMMENT '目标医院',
+  `supplier_id` varchar(36) NOT NULL COMMENT '供应商',
+  `cert_bundle_json` longtext NOT NULL COMMENT '申请时点供应商全部资质证照JSON快照',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_cert_apply_bundle` (`apply_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='提交医院关联申请时资质证照抄送快照';
+/
+CREATE TABLE IF NOT EXISTS `scm_supplier_cert_change_log` (
+  `log_id` varchar(36) NOT NULL COMMENT '主键UUID7',
+  `supplier_id` bigint(20) NOT NULL COMMENT '供应商',
+  `hospital_id` bigint(20) NOT NULL COMMENT '抄送目标医院',
+  `certificate_id` bigint(20) NOT NULL COMMENT '证件ID',
+  `change_type` varchar(16) NOT NULL COMMENT 'INSERT/UPDATE/DELETE/AUDIT',
+  `before_json` longtext COMMENT '变更前JSON',
+  `after_json` longtext COMMENT '变更后JSON',
+  `create_by` varchar(64) DEFAULT NULL,
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`log_id`),
+  KEY `idx_scc_hospital` (`hospital_id`),
+  KEY `idx_scc_supplier` (`supplier_id`),
+  KEY `idx_scc_cert` (`certificate_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='供应商资质变更抄送记录';
 /

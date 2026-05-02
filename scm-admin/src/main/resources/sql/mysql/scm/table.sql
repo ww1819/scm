@@ -301,6 +301,33 @@ CREATE TABLE IF NOT EXISTS `scm_supplier_certificate` (
   KEY `idx_expire_date` (`expire_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='供应商证件表';
 /
+CREATE TABLE IF NOT EXISTS `scm_supplier_cert_apply_bundle` (
+  `id` varchar(36) NOT NULL COMMENT '主键UUID7',
+  `apply_id` varchar(36) NOT NULL COMMENT '医院关联申请单ID',
+  `hospital_id` varchar(36) NOT NULL COMMENT '目标医院',
+  `supplier_id` varchar(36) NOT NULL COMMENT '供应商',
+  `cert_bundle_json` longtext NOT NULL COMMENT '申请时点供应商全部资质证照JSON快照',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_cert_apply_bundle` (`apply_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='提交医院关联申请时资质证照抄送快照';
+/
+CREATE TABLE IF NOT EXISTS `scm_supplier_cert_change_log` (
+  `log_id` varchar(36) NOT NULL COMMENT '主键UUID7',
+  `supplier_id` bigint(20) NOT NULL COMMENT '供应商',
+  `hospital_id` bigint(20) NOT NULL COMMENT '抄送目标医院',
+  `certificate_id` bigint(20) NOT NULL COMMENT '证件ID',
+  `change_type` varchar(16) NOT NULL COMMENT 'INSERT/UPDATE/DELETE/AUDIT',
+  `before_json` longtext COMMENT '变更前JSON',
+  `after_json` longtext COMMENT '变更后JSON',
+  `create_by` varchar(64) DEFAULT NULL,
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`log_id`),
+  KEY `idx_scc_hospital` (`hospital_id`),
+  KEY `idx_scc_supplier` (`supplier_id`),
+  KEY `idx_scc_cert` (`certificate_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='供应商资质变更抄送记录';
+/
 CREATE TABLE IF NOT EXISTS `scm_product_certificate` (
   `certificate_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '证件ID',
   `material_id` bigint(20) NOT NULL COMMENT '物资ID',
@@ -399,6 +426,7 @@ CREATE TABLE IF NOT EXISTS `scm_order` (
   `spd_tenant_id` varchar(64) DEFAULT NULL COMMENT 'SPD租户ID(sb_customer.customer_id，推送快照)',
   `spd_snapshot_hospital_code` varchar(64) DEFAULT NULL COMMENT '推送时快照：平台医院编码(scm_hospital.hospital_code)',
   `spd_snapshot_supplier_code` varchar(64) DEFAULT NULL COMMENT '推送时快照：平台供应商编码(scm_supplier.supplier_code)',
+  `hs_bind_snapshot` varchar(32) DEFAULT NULL COMMENT '下单/推送时医院-供应商绑定关系快照（中文：已绑定、未绑定、申请审核中等）',
   PRIMARY KEY (`order_id`),
   UNIQUE KEY `uk_order_no` (`order_no`),
   KEY `idx_hospital_id` (`hospital_id`),
@@ -1280,6 +1308,9 @@ CREATE TABLE IF NOT EXISTS zs_tp_order (
   scm_hospital_code VARCHAR(64) NULL COMMENT '入参 NEWCUSTOMER：SCM 医院编码，对应 scm_hospital.hospital_code',
   scm_hospital_id   VARCHAR(64) NULL COMMENT '由 scm_hospital_code 解析的 scm_hospital.hospital_id（字符串）',
   scm_supplier_id   VARCHAR(64) NULL COMMENT '由 scm_sup_code 解析的 scm_supplier.supplier_id（字符串）',
+  hospital_id       BIGINT(20)   NULL COMMENT '平台医院主键 scm_hospital.hospital_id',
+  supplier_id       BIGINT(20)   NULL COMMENT '平台供应商主键 scm_supplier.supplier_id',
+  hs_bind_snapshot  VARCHAR(32)  NULL COMMENT '落库时医院-供应商绑定关系快照（中文）',
   ksbh            VARCHAR(64)  NULL,
   ksmc            VARCHAR(128) NULL,
   zjly            VARCHAR(128) NULL,

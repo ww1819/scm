@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.scm.common.core.text.Convert;
 import com.scm.common.utils.DateUtils;
@@ -19,12 +20,16 @@ import com.scm.system.domain.ScmHospitalSupplierApply;
 import com.scm.system.domain.ScmHospitalSupplierApplyLog;
 import com.scm.system.domain.ScmNoticeReceiver;
 import com.scm.system.domain.SysNotice;
+import com.scm.system.domain.ScmSupplierCertApplyBundle;
 import com.scm.system.domain.Supplier;
+import com.scm.system.domain.SupplierCertificate;
 import com.scm.system.mapper.HospitalSupplierChangeLogMapper;
 import com.scm.system.mapper.HospitalSupplierMapper;
 import com.scm.system.mapper.ScmHospitalSupplierApplyLogMapper;
 import com.scm.system.mapper.ScmHospitalSupplierApplyMapper;
 import com.scm.system.mapper.ScmNoticeReceiverMapper;
+import com.scm.system.mapper.ScmSupplierCertApplyBundleMapper;
+import com.scm.system.mapper.SupplierCertificateMapper;
 import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.IHospitalService;
 import com.scm.system.service.IScmHospitalSupplierPermissionService;
@@ -73,6 +78,12 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
 
     @Autowired
     private ISupplierUserService supplierUserService;
+
+    @Autowired
+    private SupplierCertificateMapper supplierCertificateMapper;
+
+    @Autowired
+    private ScmSupplierCertApplyBundleMapper scmSupplierCertApplyBundleMapper;
 
     /**
      * 查询医院供应商关联信息
@@ -376,8 +387,24 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
         if (rows > 0)
         {
             insertApplyLog(apply, "SUBMIT", createBy, null, apply);
+            snapshotSupplierCertificatesForApply(apply);
         }
         return rows;
+    }
+
+    private void snapshotSupplierCertificatesForApply(ScmHospitalSupplierApply apply)
+    {
+        SupplierCertificate q = new SupplierCertificate();
+        q.setSupplierId(Long.valueOf(apply.getSupplierId()));
+        List<SupplierCertificate> certs = supplierCertificateMapper.selectSupplierCertificateList(q);
+        String json = certs == null ? "[]" : JSON.toJSONString(certs);
+        ScmSupplierCertApplyBundle bundle = new ScmSupplierCertApplyBundle();
+        bundle.setId(IdUtils.dashedUuid7());
+        bundle.setApplyId(apply.getApplyId());
+        bundle.setHospitalId(apply.getHospitalId());
+        bundle.setSupplierId(apply.getSupplierId());
+        bundle.setCertBundleJson(json);
+        scmSupplierCertApplyBundleMapper.insertBundle(bundle);
     }
 
     @Override

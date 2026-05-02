@@ -102,12 +102,27 @@ public class DeliveryServiceImpl implements IDeliveryService
         Delivery delivery = deliveryMapper.selectDeliveryById(deliveryId);
         if (delivery != null)
         {
+            assertDeliveryViewScope(delivery);
             List<DeliveryDetail> details = deliveryDetailMapper.selectDeliveryDetailListByDeliveryId(deliveryId);
             enrichDetailLineApplyQty(details);
             scmBarcodeSeedService.attachDetailBarcodes(details, deliveryId);
             delivery.setDeliveryDetails(details);
         }
         return delivery;
+    }
+
+    private void assertDeliveryViewScope(Delivery delivery)
+    {
+        Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());
+        if (hospitalCtx != null && delivery.getHospitalId() != null && !hospitalCtx.equals(delivery.getHospitalId()))
+        {
+            throw new ServiceException("无权查看其他医院配送单");
+        }
+        Long supplierCtx = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (supplierCtx != null && delivery.getSupplierId() != null && !supplierCtx.equals(delivery.getSupplierId()))
+        {
+            throw new ServiceException("无权查看其他供应商配送单");
+        }
     }
 
     /**

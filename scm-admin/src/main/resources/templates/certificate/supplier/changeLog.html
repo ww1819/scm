@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('供应商资质变更记录')" />
+	<th:block th:include="include :: layout-latest-css" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="formId">
+					<div class="select-list">
+						<ul>
+							<li>
+								证件ID：<input type="text" name="certificateId" placeholder="可选"/>
+							</li>
+							<li>
+								变更类型：
+								<select name="changeType">
+									<option value="">全部</option>
+									<option value="INSERT">新增</option>
+									<option value="UPDATE">修改</option>
+									<option value="DELETE">删除</option>
+									<option value="AUDIT">审核</option>
+								</select>
+							</li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+			<div class="col-sm-12 select-table table-striped">
+				<table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script th:inline="javascript">
+		var prefix = ctx + "certificate/supplier/changeLog";
+		$(function() {
+			var options = {
+				url: prefix + "/list",
+				formId: "formId",
+				modalName: "资质变更记录",
+				columns: [{
+					field: 'logId',
+					title: '日志ID',
+					visible: false
+				},
+				{
+					field: 'supplierId',
+					title: '供应商ID'
+				},
+				{
+					field: 'hospitalId',
+					title: '医院ID'
+				},
+				{
+					field: 'certificateId',
+					title: '证件ID'
+				},
+				{
+					field: 'changeType',
+					title: '变更类型'
+				},
+				{
+					field: 'createBy',
+					title: '操作人'
+				},
+				{
+					field: 'createTime',
+					title: '时间'
+				},
+				{
+					field: 'beforeJson',
+					title: '变更前摘要',
+					formatter: function(v) {
+						if (!v) return '-';
+						return v.length > 80 ? v.substring(0, 80) + '…' : v;
+					}
+				},
+				{
+					field: 'afterJson',
+					title: '变更后摘要',
+					formatter: function(v) {
+						if (!v) return '-';
+						return v.length > 80 ? v.substring(0, 80) + '…' : v;
+					}
+				}]
+			};
+			$.table.init(options);
+		});
+	</script>
+</body>
+</html>
