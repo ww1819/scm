@@ -308,8 +308,18 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         Map<Long, SysMenu> byId = indexMenusById(all);
         Set<Long> adminExpanded = expandSeedsWithAncestors(rawSeedMenuIds, byId);
         String hid = String.valueOf(hospitalId);
+        List<Long> oldHospitalAuthMenus = hospitalMenuAuthMapper.selectMenuIdsByHospitalId(hospitalId);
         hospitalMenuAuthMapper.deleteByHospitalId(hospitalId);
         sysRoleMenuMapper.deleteRoleMenuByHospitalScope(hid);
+        if (oldHospitalAuthMenus != null && !oldHospitalAuthMenus.isEmpty())
+        {
+            Set<Long> revokedMenus = new HashSet<>(oldHospitalAuthMenus);
+            revokedMenus.removeAll(adminExpanded);
+            if (!revokedMenus.isEmpty())
+            {
+                supplierMenuAuthMapper.deleteByHospitalAndMenuIds(hospitalId, new ArrayList<>(revokedMenus));
+            }
+        }
         batchInsertHospitalAuth(hospitalId, adminExpanded, operBy);
         Set<Long> nonAdminRaw = filterHospitalSeedsExcludeAdminOnly(rawSeedMenuIds, byId);
         Set<Long> nonAdminExpanded = expandSeedsWithAncestors(nonAdminRaw, byId);

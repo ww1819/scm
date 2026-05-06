@@ -8,6 +8,7 @@ public interface ScmSupplierMenuAuthMapper
 {
     int deleteBySupplierId(@Param("supplierId") Long supplierId);
     int deleteBySupplierAndHospital(@Param("supplierId") Long supplierId, @Param("hospitalId") Long hospitalId);
+    int deleteByHospitalAndMenuIds(@Param("hospitalId") Long hospitalId, @Param("menuIds") List<Long> menuIds);
 
     int batchInsert(@Param("list") List<ScmSupplierMenuAuth> list);
 
