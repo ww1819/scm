@@ -623,3 +623,39 @@ CREATE TABLE IF NOT EXISTS `scm_product_certificate_aux` (
   KEY `idx_spca_supplier` (`supplier_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品证件扩展行（UUID7主键，varchar逻辑外键）';
 /
+-- ========== 医院产品档案：菜单归入供应商域 + 子按钮 + 白名单与角色自动补齐（解决页面上看不到「新增/维护」） ==========
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('23071', '档案内-证件查询', '2307', '1', '#', '', 'F', '0', '1', 'certificate:product:list', '#', 'admin', sysdate(), '', null, '', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('23072', '档案内-证件新增', '2307', '2', '#', '', 'F', '0', '1', 'certificate:product:add', '#', 'admin', sysdate(), '', null, '', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('23073', '档案内-证件修改', '2307', '3', '#', '', 'F', '0', '1', 'certificate:product:edit', '#', 'admin', sysdate(), '', null, '', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('23074', '档案内-证件删除', '2307', '4', '#', '', 'F', '0', '1', 'certificate:product:remove', '#', 'admin', sysdate(), '', null, '', '0');
+/
+UPDATE sys_menu SET auth_type = 'supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all_supplier',
+  default_open_hospital = '0', hospital_admin_only = '0', default_open_supplier = '1', supplier_admin_only = '0', menu_biz_category = 'certificate'
+WHERE del_flag = '0' AND menu_id IN ('2307','23071','23072','23073','23074');
+/
+INSERT IGNORE INTO scm_supplier_menu_auth (id, supplier_id, hospital_id, menu_id, create_by, create_time)
+SELECT REPLACE(UUID(), '-', ''), CAST(su.supplier_id AS CHAR), NULL, m.menu_id, 'migration', NOW()
+FROM scm_supplier_user su
+CROSS JOIN (
+  SELECT '2307' AS menu_id UNION ALL SELECT '23071' UNION ALL SELECT '23072' UNION ALL SELECT '23073' UNION ALL SELECT '23074'
+) m
+WHERE (su.del_flag = '0' OR su.del_flag IS NULL);
+/
+INSERT IGNORE INTO sys_role_menu (id, role_id, menu_id, hospital_id, supplier_id)
+SELECT REPLACE(UUID(), '-', ''), rm.role_id, CAST(x.mid AS UNSIGNED), rm.hospital_id, rm.supplier_id
+FROM sys_role_menu rm
+CROSS JOIN (
+  SELECT '23071' AS mid UNION ALL SELECT '23072' UNION ALL SELECT '23073' UNION ALL SELECT '23074'
+) x
+WHERE rm.menu_id = 2307
+  AND NOT EXISTS (
+    SELECT 1 FROM sys_role_menu r2
+    WHERE r2.role_id = rm.role_id
+      AND r2.menu_id = CAST(x.mid AS UNSIGNED)
+      AND r2.hospital_id = rm.hospital_id
+      AND r2.supplier_id = rm.supplier_id
+  );
+/

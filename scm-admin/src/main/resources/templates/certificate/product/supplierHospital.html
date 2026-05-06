@@ -7,6 +7,11 @@
 	<style>
 		#hospitalTree { min-height: 280px; }
 		.archive-split { border-top: 1px solid #e7eaec; margin-top: 12px; padding-top: 12px; }
+		#cert-selected-panel { margin-top: 12px; }
+		#cert-selected-panel .cert-thumb-strip { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; margin-top: 10px; min-height: 48px; }
+		#cert-selected-panel .cert-thumb-strip img { max-height: 96px; border: 1px solid #e7eaec; border-radius: 4px; cursor: pointer; object-fit: contain; background: #fff; }
+		#cert-selected-panel .dl-dt { font-weight: 600; color: #676a6c; }
+		#cert-selected-panel .dl-dd { margin-bottom: 6px; }
 	</style>
 </head>
 <body class="gray-bg">
@@ -29,6 +34,11 @@
 				<div class="alert alert-warning" id="tip-select-hospital" th:if="${supplierSelfService}">
 					<i class="fa fa-hand-o-right"></i> 请先在左侧选择一家医院，再查看该院下的产品档案与证件。
 				</div>
+				<div class="alert alert-info" th:if="${supplierSelfService and @permission.hasPermi('certificate:product:add') == 'hidden'}">
+					<i class="fa fa-lock"></i> 当前登录账号<strong>未具备「证件新增」等操作权限</strong>（如 <code>certificate:product:add</code>、<code>certificate:product:edit</code>），因此看不到「新增证件」「上传 / 维护图片」等按钮；直接打开新增页也可能被拒绝访问。
+					请使用管理员在 <strong>系统管理 → 角色管理</strong> 中，为该角色勾选「医院产品档案」菜单下的 <strong>档案内-证件新增、档案内-证件修改</strong> 等子项（与「产品证件登记」下的证件新增/修改为同一权限标识）。
+					若已升级数据库脚本，仍看不到按钮，请<strong>重新登录</strong>或清理缓存后再试。
+				</div>
 
 				<form id="form-material-archive" class="hide">
 					<input type="hidden" name="hospitalCode" id="archiveHospitalCode">
@@ -45,6 +55,7 @@
 
 				<div class="archive-split">
 					<h5 style="margin: 0 0 10px 0;"><i class="fa fa-file-text-o"></i> 选中产品下的证件</h5>
+					<p class="text-muted" style="font-size: 12px; margin-bottom: 8px;">在表格中勾选或点击某一行，下方将展示该条证照的详情；可在此快速预览、上传图片，或使用工具栏进行新增、修改、删除。</p>
 					<form id="form-cert-sub" class="hide">
 						<input type="hidden" name="hospitalCode" id="subHospitalCode">
 						<input type="hidden" name="materialId" id="subMaterialId">
@@ -53,10 +64,10 @@
 						<a class="btn btn-success" onclick="handleAddProductCert()" shiro:hasPermission="certificate:product:add">
 							<i class="fa fa-plus"></i> 新增证件
 						</a>
-						<a class="btn btn-primary single disabled" onclick="$.operate.editTab()" shiro:hasPermission="certificate:product:edit">
+						<a class="btn btn-primary single disabled" onclick="certToolbarEdit()" shiro:hasPermission="certificate:product:edit">
 							<i class="fa fa-edit"></i> 修改
 						</a>
-						<a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="certificate:product:remove">
+						<a class="btn btn-danger multiple disabled" onclick="certToolbarRemove()" shiro:hasPermission="certificate:product:remove">
 							<i class="fa fa-remove"></i> 删除
 						</a>
 						<a class="btn btn-info" onclick="checkExpired()" shiro:hasPermission="certificate:product:edit">
@@ -65,6 +76,42 @@
 					</div>
 					<div class="select-table table-striped">
 						<table id="bootstrap-table-cert"></table>
+					</div>
+
+					<div id="cert-selected-panel" class="panel panel-default">
+						<div class="panel-heading" style="padding: 8px 12px;">
+							<h5 class="panel-title" style="margin: 0; font-size: 14px;"><i class="fa fa-id-card-o"></i> 当前选中证照</h5>
+						</div>
+						<div class="panel-body" style="padding: 12px;">
+							<p class="text-muted" id="cert-selected-empty" style="margin: 0;">请点击上方证件列表中的一条记录，在此查看证照信息并管理图片。</p>
+							<div id="cert-selected-multi" style="display: none;">
+								<p class="text-warning msg" style="margin: 0;"></p>
+							</div>
+							<div id="cert-selected-detail" style="display: none;">
+								<div class="row">
+									<div class="col-sm-6">
+										<div><span class="dl-dt">产品名称</span><div class="dl-dd" id="cert-d-material">—</div></div>
+										<div><span class="dl-dt">证件类型</span><div class="dl-dd" id="cert-d-type">—</div></div>
+										<div><span class="dl-dt">证件名称</span><div class="dl-dd" id="cert-d-name">—</div></div>
+									</div>
+									<div class="col-sm-6">
+										<div><span class="dl-dt">注册证号</span><div class="dl-dd" id="cert-d-reg">—</div></div>
+										<div><span class="dl-dt">有效期至</span><div class="dl-dd" id="cert-d-expire">—</div></div>
+										<div><span class="dl-dt">状态 / 图片</span><div class="dl-dd"><span id="cert-d-status">—</span> ｜ <span id="cert-d-hasimg">—</span></div></div>
+									</div>
+								</div>
+								<div>
+									<span class="dl-dt">证照缩略图（点击图片可大图预览）</span>
+									<div class="cert-thumb-strip" id="cert-thumb-strip"></div>
+								</div>
+								<div class="btn-group-sm" style="margin-top: 12px;">
+									<a href="javascript:void(0)" class="btn btn-primary" id="cert-panel-btn-edit" shiro:hasPermission="certificate:product:edit"><i class="fa fa-edit"></i> 编辑证照信息</a>
+									<a href="javascript:void(0)" class="btn btn-success" id="cert-panel-btn-upload" shiro:hasPermission="certificate:product:edit"><i class="fa fa-cloud-upload"></i> 上传 / 维护图片</a>
+									<a href="javascript:void(0)" class="btn btn-default" id="cert-panel-btn-preview"><i class="fa fa-eye"></i> 预览全部图片</a>
+									<a href="javascript:void(0)" class="btn btn-danger" id="cert-panel-btn-delete" shiro:hasPermission="certificate:product:remove"><i class="fa fa-remove"></i> 删除本条</a>
+								</div>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -188,6 +235,151 @@
 			}
 		}
 
+		var __certArchiveFiles = {};
+
+		function clearCertDetailPanel() {
+			$('#cert-selected-empty').show();
+			$('#cert-selected-detail').hide();
+			$('#cert-selected-multi').hide();
+		}
+
+		function formatCertDate(v) {
+			if (v == null || v === '') {
+				return '—';
+			}
+			if (typeof v === 'string') {
+				return v.indexOf(' ') > 0 ? v.split(' ')[0] : v;
+			}
+			return v;
+		}
+
+		function refreshCertDetailPanel(row) {
+			if (!row || !row.certificateId) {
+				clearCertDetailPanel();
+				return;
+			}
+			$('#cert-selected-empty').hide();
+			$('#cert-selected-multi').hide();
+			$('#cert-selected-detail').show();
+			$('#cert-d-material').text(row.materialName || '—');
+			$('#cert-d-type').text(row.certificateType || '—');
+			$('#cert-d-name').text(row.certificateName || '—');
+			$('#cert-d-reg').text(row.registerNo || '—');
+			$('#cert-d-expire').text(formatCertDate(row.expireDate));
+			$('#cert-d-status').text(row.status == '0' ? '正常' : '过期');
+			var cf = (row.certificateFile || '').trim();
+			$('#cert-d-hasimg').text(cf ? '已上传' : '未上传');
+			var strip = $('#cert-thumb-strip');
+			strip.empty();
+			if (cf) {
+				var urls = cf.split(',');
+				for (var i = 0; i < urls.length; i++) {
+					var u = (urls[i] || '').trim();
+					if (!u) {
+						continue;
+					}
+					var full = (u.indexOf('http://') === 0 || u.indexOf('https://') === 0) ? u
+						: (u.indexOf('/') === 0 ? (ctx + u.substring(1)) : (ctx + u));
+					var $img = $('<img/>', { src: full, alt: '证照' });
+					$img.on('click', function () {
+						previewCertificateImage(cf);
+					});
+					strip.append($img);
+				}
+			} else {
+				strip.append($('<span class="text-muted"/>').text('暂无图片，可点击「上传 / 维护图片」添加'));
+			}
+			if ($('#cert-panel-btn-edit').length) {
+				$('#cert-panel-btn-edit').off('click').on('click', function () {
+					openEditCertTab(row.certificateId);
+				});
+			}
+			if ($('#cert-panel-btn-upload').length) {
+				$('#cert-panel-btn-upload').off('click').on('click', function () {
+					openProductUploadTab(row.certificateId);
+				});
+			}
+			$('#cert-panel-btn-preview').off('click').on('click', function () {
+				if (!cf) {
+					$.modal.alertWarning('暂无证照图片');
+					return;
+				}
+				previewCertificateImage(cf);
+			}).toggleClass('disabled', !cf).attr('aria-disabled', !cf ? 'true' : 'false');
+			if ($('#cert-panel-btn-delete').length) {
+				$('#cert-panel-btn-delete').off('click').on('click', function () {
+					removeCertSingle(row.certificateId);
+				});
+			}
+		}
+
+		function syncCertDetailAfterSelectionChange(lastClickedRow) {
+			var sel = $('#bootstrap-table-cert').bootstrapTable('getSelections') || [];
+			if (sel.length > 1) {
+				$('#cert-selected-empty').hide();
+				$('#cert-selected-detail').hide();
+				$('#cert-selected-multi').show().find('.msg').text(
+					'已选中 ' + sel.length + ' 条证照，请使用工具栏「删除」批量删除。若需编辑信息或上传图片，请仅勾选一条。');
+				return;
+			}
+			if (sel.length === 1) {
+				refreshCertDetailPanel(sel[0]);
+				return;
+			}
+			if (lastClickedRow && lastClickedRow.certificateId) {
+				refreshCertDetailPanel(lastClickedRow);
+				return;
+			}
+			clearCertDetailPanel();
+		}
+
+		function openEditCertTab(certificateId) {
+			if (certificateId == null || certificateId === '') {
+				$.modal.alertWarning('请选择证照');
+				return;
+			}
+			$.modal.openTab('修改产品信息', prefix + '/edit/' + certificateId);
+		}
+
+		function certToolbarEdit() {
+			var rows = $('#bootstrap-table-cert').bootstrapTable('getSelections') || [];
+			if (rows.length !== 1) {
+				$.modal.alertWarning('请选择一条证照记录');
+				return;
+			}
+			openEditCertTab(rows[0].certificateId);
+		}
+
+		function certToolbarRemove() {
+			var rows = $('#bootstrap-table-cert').bootstrapTable('getSelections') || [];
+			if (!rows.length) {
+				$.modal.alertWarning('请至少选择一条记录');
+				return;
+			}
+			$.modal.confirm('确认要删除选中的' + rows.length + '条证照数据吗？', function () {
+				var ids = $.map(rows, function (r) {
+					return r.certificateId;
+				}).join(',');
+				table.set('bootstrap-table-cert');
+				$.operate.submit(prefix + '/remove', 'post', 'json', { ids: ids }, function () {
+					clearCertDetailPanel();
+				});
+			});
+		}
+
+		function removeCertSingle(certificateId) {
+			$.modal.confirm("确定删除该条产品证照信息吗？", function () {
+				table.set('bootstrap-table-cert');
+				$.operate.submit(prefix + "/remove", "post", "json", { ids: certificateId }, function () {
+					clearCertDetailPanel();
+				});
+			});
+		}
+
+		function previewCertRow(certificateId) {
+			previewCertificateImage(__certArchiveFiles[certificateId] || '');
+		}
+
 		function initHospitalTree() {
 			var options = {
 				id: "hospitalTree",
@@ -206,6 +398,7 @@
 					$("#subHospitalCode").val(hc);
 					$("#subMaterialId").val('');
 					$("#tip-select-hospital").hide();
+					clearCertDetailPanel();
 					$.table.refresh("bootstrap-table-material", 1);
 					$.table.refresh("bootstrap-table-cert", 1);
 				}
@@ -247,6 +440,7 @@
 					}
 					$("#subMaterialId").val(row.materialId);
 					$("#subHospitalCode").val($("#archiveHospitalCode").val());
+					clearCertDetailPanel();
 					$.table.refresh("bootstrap-table-cert", 1);
 				}
 			};
@@ -254,7 +448,7 @@
 		}
 
 		function initCertTable() {
-			var h = Math.max(280, Math.floor($(window).height() * 0.36));
+			var h = Math.max(220, Math.floor($(window).height() * 0.30));
 			var opt = {
 				id: "bootstrap-table-cert",
 				formId: "form-cert-sub",
@@ -266,6 +460,48 @@
 				modalName: "产品信息",
 				uniqueId: "certificateId",
 				height: h,
+				clickToSelect: true,
+				onLoadSuccess: function (data) {
+					__certArchiveFiles = {};
+					var rows = [];
+					if (data && data.rows) {
+						rows = data.rows;
+					} else if ($.isArray(data)) {
+						rows = data;
+					}
+					for (var i = 0; i < rows.length; i++) {
+						var r = rows[i];
+						if (r && r.certificateId != null) {
+							__certArchiveFiles[r.certificateId] = r.certificateFile || '';
+						}
+					}
+				},
+				onClickRow: function (row) {
+					table.set('bootstrap-table-cert');
+					setTimeout(function () {
+						syncCertDetailAfterSelectionChange(row);
+					}, 0);
+				},
+				onCheck: function () {
+					setTimeout(function () {
+						syncCertDetailAfterSelectionChange(null);
+					}, 0);
+				},
+				onUncheck: function () {
+					setTimeout(function () {
+						syncCertDetailAfterSelectionChange(null);
+					}, 0);
+				},
+				onCheckAll: function () {
+					setTimeout(function () {
+						syncCertDetailAfterSelectionChange(null);
+					}, 0);
+				},
+				onUncheckAll: function () {
+					setTimeout(function () {
+						syncCertDetailAfterSelectionChange(null);
+					}, 0);
+				},
 				columns: [{
 					checkbox: true
 				},
@@ -285,6 +521,11 @@
 					formatter: function(v) { return v || '-'; }
 				},
 				{
+					field: 'certificateName',
+					title: '证件名称',
+					formatter: function(v) { return v || '-'; }
+				},
+				{
 					field: 'registerNo',
 					title: '注册证号',
 					formatter: function(v) { return v || '-'; }
@@ -295,37 +536,34 @@
 					sortable: true
 				},
 				{
-					title: '是否上传',
+					title: '图片',
 					align: 'center',
-					width: 90,
+					width: 72,
 					formatter: function (value, row) {
 						if (row.certificateFile && row.certificateFile.trim() !== '') {
-							return '<span class="label label-success">是</span>';
+							return '<span class="label label-success">已传</span>';
 						}
-						return '<span class="label label-default">否</span>';
+						return '<span class="label label-default">未传</span>';
 					}
 				},
 				{
-					title: '查看',
+					title: '操作',
 					align: 'center',
-					width: 80,
+					width: 200,
 					formatter: function (value, row) {
+						var cid = row.certificateId;
+						var parts = [];
+						if (editFlag !== 'hidden') {
+							parts.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="openEditCertTab(' + cid + ')" title="修改"><i class="fa fa-edit"></i></a>');
+							parts.push('<a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="openProductUploadTab(' + cid + ')" title="上传"><i class="fa fa-cloud-upload"></i></a>');
+						}
 						if (row.certificateFile && row.certificateFile.trim() !== '') {
-							var fileUrls = row.certificateFile.trim().replace(/'/g, "\\'");
-							return '<a class="btn btn-default btn-xs" href="javascript:void(0)" onclick="previewCertificateImage(\'' + fileUrls + '\')"><i class="fa fa-eye"></i> 查看</a>';
+							parts.push('<a class="btn btn-default btn-xs" href="javascript:void(0)" onclick="previewCertRow(' + cid + ')" title="预览"><i class="fa fa-eye"></i></a>');
 						}
-						return '<span class="text-muted">-</span>';
-					}
-				},
-				{
-					title: '上传',
-					align: 'center',
-					width: 90,
-					formatter: function (value, row) {
-						if (editFlag === 'hidden') {
-							return '<span class="text-muted">-</span>';
+						if (removeFlag !== 'hidden') {
+							parts.push('<a class="btn btn-danger btn-xs" href="javascript:void(0)" onclick="removeCertSingle(' + cid + ')" title="删除"><i class="fa fa-remove"></i></a>');
 						}
-						return '<a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="openProductUploadTab(' + row.certificateId + ')"><i class="fa fa-cloud-upload"></i> 上传</a>';
+						return parts.length ? parts.join(' ') : '<span class="text-muted">-</span>';
 					}
 				}]
 			};

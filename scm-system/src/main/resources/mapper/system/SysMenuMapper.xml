@@ -32,57 +32,146 @@
 		<result property="supplierAdminOnly" column="supplier_admin_only" />
 	</resultMap>
 
+	<!--
+	  白名单中的菜单 ID 视为「整棵子树」均放行：否则仅授权父菜单(如 2307)时，
+	  子按钮(23072)或挂在父下的权限行无法匹配 sma.menu_id = m.menu_id，导致 Shiro 无权限、按钮被隐藏。
+	-->
+	<sql id="supplierAuthMenuCoveredByWhitelistUser">
+		EXISTS (
+			SELECT 1 FROM scm_supplier_user su
+			INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id AND sma.hospital_id IS NULL
+			WHERE su.user_id = #{userId} AND (su.del_flag = '0' OR su.del_flag IS NULL)
+			AND EXISTS (
+				SELECT 1 FROM (
+					WITH RECURSIVE sup_sub AS (
+						SELECT CAST(sma.menu_id AS UNSIGNED) AS mid
+						UNION ALL
+						SELECT mm.menu_id FROM sys_menu mm INNER JOIN sup_sub s ON mm.parent_id = s.mid AND mm.del_flag = '0'
+					)
+					SELECT 1 FROM sup_sub s2 WHERE s2.mid = m.menu_id
+				) chk
+			)
+		)
+	</sql>
+	<sql id="supplierAuthMenuCoveredByWhitelistParams">
+		EXISTS (
+			SELECT 1 FROM scm_supplier_user su
+			INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id AND sma.hospital_id IS NULL
+			WHERE su.user_id = #{params.userId} AND (su.del_flag = '0' OR su.del_flag IS NULL)
+			AND EXISTS (
+				SELECT 1 FROM (
+					WITH RECURSIVE sup_sub AS (
+						SELECT CAST(sma.menu_id AS UNSIGNED) AS mid
+						UNION ALL
+						SELECT mm.menu_id FROM sys_menu mm INNER JOIN sup_sub s ON mm.parent_id = s.mid AND mm.del_flag = '0'
+					)
+					SELECT 1 FROM sup_sub s2 WHERE s2.mid = m.menu_id
+				) chk
+			)
+		)
+	</sql>
+	<sql id="hospitalAuthMenuCoveredByWhitelistUser">
+		EXISTS (
+			SELECT 1 FROM scm_hospital_user hu
+			INNER JOIN scm_hospital_menu_auth hma ON hma.hospital_id = hu.hospital_id
+			WHERE hu.user_id = #{userId} AND (hu.del_flag = '0' OR hu.del_flag IS NULL)
+			AND EXISTS (
+				SELECT 1 FROM (
+					WITH RECURSIVE hosp_sub AS (
+						SELECT CAST(hma.menu_id AS UNSIGNED) AS mid
+						UNION ALL
+						SELECT mm.menu_id FROM sys_menu mm INNER JOIN hosp_sub h ON mm.parent_id = h.mid AND mm.del_flag = '0'
+					)
+					SELECT 1 FROM hosp_sub h2 WHERE h2.mid = m.menu_id
+				) chk
+			)
+		)
+	</sql>
+	<sql id="hospitalAuthMenuCoveredByWhitelistParams">
+		EXISTS (
+			SELECT 1 FROM scm_hospital_user hu
+			INNER JOIN scm_hospital_menu_auth hma ON hma.hospital_id = hu.hospital_id
+			WHERE hu.user_id = #{params.userId} AND (hu.del_flag = '0' OR hu.del_flag IS NULL)
+			AND EXISTS (
+				SELECT 1 FROM (
+					WITH RECURSIVE hosp_sub AS (
+						SELECT CAST(hma.menu_id AS UNSIGNED) AS mid
+						UNION ALL
+						SELECT mm.menu_id FROM sys_menu mm INNER JOIN hosp_sub h ON mm.parent_id = h.mid AND mm.del_flag = '0'
+					)
+					SELECT 1 FROM hosp_sub h2 WHERE h2.mid = m.menu_id
+				) chk
+			)
+		)
+	</sql>
+	<sql id="supplierGrantHospitalMenuAuthUser">
+		EXISTS (
+			SELECT 1
+			FROM scm_supplier_user su
+			INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id
+			INNER JOIN scm_hospital_supplier hs ON hs.supplier_id = su.supplier_id AND hs.hospital_id = sma.hospital_id
+			WHERE su.user_id = #{userId}
+			  AND (su.del_flag = '0' OR su.del_flag IS NULL)
+			  AND hs.bind_status = '1'
+			AND EXISTS (
+				SELECT 1 FROM (
+					WITH RECURSIVE sup_sub AS (
+						SELECT CAST(sma.menu_id AS UNSIGNED) AS mid
+						UNION ALL
+						SELECT mm.menu_id FROM sys_menu mm INNER JOIN sup_sub s ON mm.parent_id = s.mid AND mm.del_flag = '0'
+					)
+					SELECT 1 FROM sup_sub s2 WHERE s2.mid = m.menu_id
+				) chk
+			)
+		)
+	</sql>
+	<sql id="supplierGrantHospitalMenuAuthParams">
+		EXISTS (
+			SELECT 1
+			FROM scm_supplier_user su
+			INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id
+			INNER JOIN scm_hospital_supplier hs ON hs.supplier_id = su.supplier_id AND hs.hospital_id = sma.hospital_id
+			WHERE su.user_id = #{params.userId}
+			  AND (su.del_flag = '0' OR su.del_flag IS NULL)
+			  AND hs.bind_status = '1'
+			AND EXISTS (
+				SELECT 1 FROM (
+					WITH RECURSIVE sup_sub AS (
+						SELECT CAST(sma.menu_id AS UNSIGNED) AS mid
+						UNION ALL
+						SELECT mm.menu_id FROM sys_menu mm INNER JOIN sup_sub s ON mm.parent_id = s.mid AND mm.del_flag = '0'
+					)
+					SELECT 1 FROM sup_sub s2 WHERE s2.mid = m.menu_id
+				) chk
+			)
+		)
+	</sql>
+
 	<!-- 医院/供应商类菜单需同时满足角色菜单与白名单 -->
 	<sql id="authScopeFilterUser">
 		AND (
 			COALESCE(NULLIF(TRIM(m.auth_type), ''), 'platform') = 'platform'
 			OR (
 				m.auth_type = 'hospital'
-				AND EXISTS (
-					SELECT 1 FROM scm_hospital_user hu
-					INNER JOIN scm_hospital_menu_auth hma ON hma.hospital_id = hu.hospital_id AND hma.menu_id = m.menu_id
-					WHERE hu.user_id = #{userId} AND (hu.del_flag = '0' OR hu.del_flag IS NULL)
-				)
+				AND <include refid="hospitalAuthMenuCoveredByWhitelistUser"/>
 			)
 			OR (
 				m.auth_type = 'supplier'
-				AND EXISTS (
-					SELECT 1 FROM scm_supplier_user su
-					INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id AND sma.menu_id = m.menu_id
-					    AND sma.hospital_id IS NULL
-					WHERE su.user_id = #{userId} AND (su.del_flag = '0' OR su.del_flag IS NULL)
-				)
+				AND <include refid="supplierAuthMenuCoveredByWhitelistUser"/>
 			)
 			OR (
 				m.auth_type = 'hospital_supplier'
 				AND COALESCE(m.hospital_grant_supplier_flag, '0') &lt;&gt; '1'
-				AND EXISTS (
-					SELECT 1 FROM scm_supplier_user su
-					INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id AND sma.menu_id = m.menu_id
-					    AND sma.hospital_id IS NULL
-					WHERE su.user_id = #{userId} AND (su.del_flag = '0' OR su.del_flag IS NULL)
-				)
+				AND <include refid="supplierAuthMenuCoveredByWhitelistUser"/>
 			)
 			OR (
 				m.auth_type = 'hospital_supplier'
-				AND EXISTS (
-					SELECT 1 FROM scm_hospital_user hu
-					INNER JOIN scm_hospital_menu_auth hma ON hma.hospital_id = hu.hospital_id AND hma.menu_id = m.menu_id
-					WHERE hu.user_id = #{userId} AND (hu.del_flag = '0' OR hu.del_flag IS NULL)
-				)
+				AND <include refid="hospitalAuthMenuCoveredByWhitelistUser"/>
 			)
 			OR (
 				m.auth_type = 'hospital_supplier'
 				AND COALESCE(m.hospital_grant_supplier_flag, '0') = '1'
-				AND EXISTS (
-					SELECT 1
-					FROM scm_supplier_user su
-					INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id AND sma.menu_id = m.menu_id
-					INNER JOIN scm_hospital_supplier hs ON hs.supplier_id = su.supplier_id AND hs.hospital_id = sma.hospital_id
-					WHERE su.user_id = #{userId}
-					  AND (su.del_flag = '0' OR su.del_flag IS NULL)
-					  AND hs.bind_status = '1'
-				)
+				AND <include refid="supplierGrantHospitalMenuAuthUser"/>
 			)
 		)
 	</sql>
@@ -92,51 +181,25 @@
 			COALESCE(NULLIF(TRIM(m.auth_type), ''), 'platform') = 'platform'
 			OR (
 				m.auth_type = 'hospital'
-				AND EXISTS (
-					SELECT 1 FROM scm_hospital_user hu
-					INNER JOIN scm_hospital_menu_auth hma ON hma.hospital_id = hu.hospital_id AND hma.menu_id = m.menu_id
-					WHERE hu.user_id = #{params.userId} AND (hu.del_flag = '0' OR hu.del_flag IS NULL)
-				)
+				AND <include refid="hospitalAuthMenuCoveredByWhitelistParams"/>
 			)
 			OR (
 				m.auth_type = 'supplier'
-				AND EXISTS (
-					SELECT 1 FROM scm_supplier_user su
-					INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id AND sma.menu_id = m.menu_id
-					    AND sma.hospital_id IS NULL
-					WHERE su.user_id = #{params.userId} AND (su.del_flag = '0' OR su.del_flag IS NULL)
-				)
+				AND <include refid="supplierAuthMenuCoveredByWhitelistParams"/>
 			)
 			OR (
 				m.auth_type = 'hospital_supplier'
 				AND COALESCE(m.hospital_grant_supplier_flag, '0') &lt;&gt; '1'
-				AND EXISTS (
-					SELECT 1 FROM scm_supplier_user su
-					INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id AND sma.menu_id = m.menu_id
-					    AND sma.hospital_id IS NULL
-					WHERE su.user_id = #{params.userId} AND (su.del_flag = '0' OR su.del_flag IS NULL)
-				)
+				AND <include refid="supplierAuthMenuCoveredByWhitelistParams"/>
 			)
 			OR (
 				m.auth_type = 'hospital_supplier'
-				AND EXISTS (
-					SELECT 1 FROM scm_hospital_user hu
-					INNER JOIN scm_hospital_menu_auth hma ON hma.hospital_id = hu.hospital_id AND hma.menu_id = m.menu_id
-					WHERE hu.user_id = #{params.userId} AND (hu.del_flag = '0' OR hu.del_flag IS NULL)
-				)
+				AND <include refid="hospitalAuthMenuCoveredByWhitelistParams"/>
 			)
 			OR (
 				m.auth_type = 'hospital_supplier'
 				AND COALESCE(m.hospital_grant_supplier_flag, '0') = '1'
-				AND EXISTS (
-					SELECT 1
-					FROM scm_supplier_user su
-					INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id AND sma.menu_id = m.menu_id
-					INNER JOIN scm_hospital_supplier hs ON hs.supplier_id = su.supplier_id AND hs.hospital_id = sma.hospital_id
-					WHERE su.user_id = #{params.userId}
-					  AND (su.del_flag = '0' OR su.del_flag IS NULL)
-					  AND hs.bind_status = '1'
-				)
+				AND <include refid="supplierGrantHospitalMenuAuthParams"/>
 			)
 		)
 	</sql>
