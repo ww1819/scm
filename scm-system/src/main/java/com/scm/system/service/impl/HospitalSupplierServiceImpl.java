@@ -9,6 +9,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.scm.common.core.text.Convert;
 import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.PageUtils;
 import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.uuid.IdUtils;
@@ -124,12 +125,18 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
     @Override
     public List<HospitalSupplier> selectSupplierLinkedHospitalsForProduct(Long supplierId)
     {
-        HospitalSupplier q = new HospitalSupplier();
-        q.setSupplierId(supplierId);
-        q.setStatus("0");
-        q.setAuditStatus("1");
-        q.setDisableStatus("0");
-        return hospitalSupplierMapper.selectHospitalSupplierList(q);
+        /*
+         * 产品证件等接口在 startPage() 之后会校验医院关联并调用本方法；若不抑制分页，
+         * PageHelper 会把列表的 order by expire_date 套在 selectHospitalSupplierList 上导致语法错误。
+         */
+        return PageUtils.callWithoutPaging(() -> {
+            HospitalSupplier q = new HospitalSupplier();
+            q.setSupplierId(supplierId);
+            q.setStatus("0");
+            q.setAuditStatus("1");
+            q.setDisableStatus("0");
+            return hospitalSupplierMapper.selectHospitalSupplierList(q);
+        });
     }
 
     /**

@@ -81,6 +81,40 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
     }
 
     /**
+     * 新增时医院必填：供应商须选择关联医院（编码+ID）；平台须填写医院编码。
+     */
+    private void assertHospitalRequiredOnInsert(ProductCertificate productCertificate, Long supplierUserSid)
+    {
+        if (supplierUserSid != null)
+        {
+            if (StringUtils.isEmpty(StringUtils.trimToNull(productCertificate.getHospitalCode())))
+            {
+                throw new ServiceException("请选择医院");
+            }
+            if (StringUtils.isEmpty(StringUtils.trimToNull(productCertificate.getHospitalId())))
+            {
+                throw new ServiceException("请选择医院");
+            }
+            assertHospitalLinkedToSupplier(supplierUserSid, productCertificate.getHospitalCode().trim());
+        }
+        else if (StringUtils.isEmpty(StringUtils.trimToNull(productCertificate.getHospitalCode())))
+        {
+            throw new ServiceException("请填写医院编码");
+        }
+    }
+
+    /** 修改时不允许变更医院，始终以库中原值为准。 */
+    private void preserveHospitalOnUpdate(ProductCertificate incoming, ProductCertificate before)
+    {
+        if (before == null || incoming == null)
+        {
+            return;
+        }
+        incoming.setHospitalCode(before.getHospitalCode());
+        incoming.setHospitalId(before.getHospitalId());
+    }
+
+    /**
      * 查询产品证件信息
      * 
      * @param certificateId 证件ID
@@ -179,11 +213,8 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
         if (sid != null)
         {
             productCertificate.setSupplierId(sid);
-            if (StringUtils.isNotEmpty(productCertificate.getHospitalCode()))
-            {
-                assertHospitalLinkedToSupplier(sid, productCertificate.getHospitalCode().trim());
-            }
         }
+        assertHospitalRequiredOnInsert(productCertificate, sid);
         if (StringUtils.isEmpty(productCertificate.getAuditStatus()))
         {
             productCertificate.setAuditStatus("0"); // 默认待审核
@@ -298,15 +329,12 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
         {
             assertProductCertificateSupplierScope(before);
         }
+        preserveHospitalOnUpdate(productCertificate, before);
         Long sid = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
         if (sid != null)
         {
             productCertificate.setSupplierId(sid);
             String hc = productCertificate.getHospitalCode();
-            if (StringUtils.isEmpty(hc) && before != null)
-            {
-                hc = before.getHospitalCode();
-            }
             if (StringUtils.isNotEmpty(hc))
             {
                 assertHospitalLinkedToSupplier(sid, hc.trim());
@@ -338,15 +366,12 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
         {
             assertProductCertificateSupplierScope(before);
         }
+        preserveHospitalOnUpdate(productCertificate, before);
         Long sid = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
         if (sid != null)
         {
             productCertificate.setSupplierId(sid);
             String hc = productCertificate.getHospitalCode();
-            if (StringUtils.isEmpty(hc) && before != null)
-            {
-                hc = before.getHospitalCode();
-            }
             if (StringUtils.isNotEmpty(hc))
             {
                 assertHospitalLinkedToSupplier(sid, hc.trim());

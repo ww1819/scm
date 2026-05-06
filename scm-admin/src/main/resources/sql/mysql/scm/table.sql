@@ -345,6 +345,7 @@ CREATE TABLE IF NOT EXISTS `scm_product_certificate` (
   `bid_price` decimal(18,2) DEFAULT 0 COMMENT '中标价格',
   `sale_price` decimal(18,2) DEFAULT 0 COMMENT '销售价格',
   `hospital_code` varchar(50) DEFAULT '' COMMENT '医院编码',
+  `hospital_id` varchar(64) DEFAULT NULL COMMENT '医院主键ID字符串(scm_hospital.hospital_id)，varchar兼容',
   `sale_customer` varchar(200) DEFAULT '' COMMENT '销售客户',
   `product_category` varchar(20) DEFAULT '' COMMENT '产品类别（高值、低值）',
   `certificate_file` varchar(500) DEFAULT '' COMMENT '证件文件路径',

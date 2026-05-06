@@ -3,6 +3,7 @@
 <head>
 	<th:block th:include="include :: header('产品证件列表')" />
 	<th:block th:include="include :: layout-latest-css" />
+	<th:block th:include="include :: ztree-css" />
 	<style>
 		/* 表格容器滚动条样式 */
 		.select-table {
@@ -47,10 +48,26 @@
 <body class="gray-bg">
 	<div class="container-div" style="position: relative;">
 		<div class="row">
+			<!-- 供应商登录：左侧关联医院目录树，按医院筛选证件 -->
+			<div class="col-sm-3" th:if="${supplierSelfService}" style="border-right: 1px solid #e7eaec; padding-right: 10px;">
+				<div class="panel panel-default" style="margin-bottom: 0;">
+					<div class="panel-heading" style="padding: 8px 10px;">
+						<h5 class="panel-title" style="margin: 0; font-size: 14px;">
+							<i class="fa fa-sitemap"></i> 关联医院
+						</h5>
+					</div>
+					<div class="panel-body" style="padding: 8px; max-height: calc(100vh - 100px); overflow: auto;">
+						<p class="text-muted" style="font-size: 12px; margin-bottom: 8px;">点击医院筛选该院相关产品证件</p>
+						<div id="productHospitalTree" class="ztree"></div>
+					</div>
+				</div>
+			</div>
 			<!-- 产品证件列表 -->
-			<div class="col-sm-12" style="display: flex; flex-direction: column; background: #fff;">
+			<div th:class="${supplierSelfService ? 'col-sm-9' : 'col-sm-12'}" style="display: flex; flex-direction: column; background: #fff;">
 				<div class="col-sm-12 search-collapse" style="flex-shrink: 0;">
 					<form id="product-certificate-form">
+						<input type="hidden" name="hospitalCode" id="productFilterHospitalCode" value=""/>
+						<input type="hidden" name="hospitalId" id="productFilterHospitalId" value=""/>
 						<div class="select-list">
 							<ul>
 								<li>
@@ -76,7 +93,7 @@
 				</div>
 				
 		        <div class="btn-group-sm" id="toolbar" role="group" style="flex-shrink: 0; padding: 5px 10px;">
-		        	<a class="btn btn-success" onclick="$.operate.addTab()" shiro:hasPermission="certificate:product:add">
+		        	<a class="btn btn-success" onclick="openAddProductInfoTab()" shiro:hasPermission="certificate:product:add">
 	                <i class="fa fa-plus"></i> 新增
 	            </a>
 	             <a class="btn btn-primary single disabled" onclick="$.operate.editTab()" shiro:hasPermission="certificate:product:edit">
@@ -103,15 +120,61 @@
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
 	<th:block th:include="include :: layout-latest-js" />
+	<th:block th:include="include :: ztree-js" />
 	<script th:inline="javascript">
 		var editFlag = [[${@permission.hasPermi('certificate:product:edit')}]];
 		var removeFlag = [[${@permission.hasPermi('certificate:product:remove')}]];
 		var prefix = ctx + "certificate/product";
+		var supplierSelfService = /*[[${supplierSelfService}]]*/ false;
 
 		$(function() {
-		    // 初始化产品证件列表
 		    queryProductCertificateList();
+		    if (supplierSelfService) {
+		        initProductHospitalTree();
+		    }
 		});
+
+		function openAddProductInfoTab() {
+			var url = prefix + "/add";
+			var q = [];
+			var hc = ($("#productFilterHospitalCode").val() || "").trim();
+			var hid = ($("#productFilterHospitalId").val() || "").trim();
+			if (hc) {
+				q.push("hospitalCode=" + encodeURIComponent(hc));
+			}
+			if (hid) {
+				q.push("hospitalId=" + encodeURIComponent(hid));
+			}
+			if (q.length) {
+				url += "?" + q.join("&");
+			}
+			$.modal.openTab("新增产品信息", url);
+		}
+
+		function initProductHospitalTree() {
+		    var options = {
+		        id: "productHospitalTree",
+		        url: prefix + "/hospitalTreeData",
+		        expandLevel: 1,
+		        onClick: function (event, treeId, treeNode) {
+		            if (!treeNode) {
+		                return;
+		            }
+		            if (treeNode.id === 0 || treeNode.id === "0") {
+		                $("#productFilterHospitalCode").val("");
+		                $("#productFilterHospitalId").val("");
+		            } else {
+		                $("#productFilterHospitalCode").val(treeNode.hospitalCode || "");
+		                var hid = treeNode.hospitalId != null && treeNode.hospitalId !== ""
+		                    ? String(treeNode.hospitalId)
+		                    : (treeNode.id != null ? String(treeNode.id) : "");
+		                $("#productFilterHospitalId").val(hid);
+		            }
+		            $.table.search();
+		        }
+		    };
+		    $.tree.init(options);
+		}
 
 		function queryProductCertificateList() {
 		    var calculateTableHeight = function() {
@@ -123,6 +186,7 @@
 		    };
 		    
 		    var options = {
+		        formId: "product-certificate-form",
 		        url: prefix + "/list",
 		        createUrl: prefix + "/add",
 		        updateUrl: prefix + "/edit/{id}",
@@ -130,7 +194,7 @@
 		        exportUrl: prefix + "/export",
 		        sortName: "expireDate",
 		        sortOrder: "asc",
-		        modalName: "产品证件",
+		        modalName: "产品信息",
 		        uniqueId: "certificateId",
 		        height: calculateTableHeight(),
 		        fixedColumns: false,
@@ -237,6 +301,8 @@
 		
 		function resetPre() {
 			$("#product-certificate-form")[0].reset();
+			$("#productFilterHospitalCode").val("");
+			$("#productFilterHospitalId").val("");
 			$.table.search();
 		}
 

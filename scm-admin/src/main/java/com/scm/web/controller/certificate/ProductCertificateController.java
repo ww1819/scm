@@ -69,8 +69,11 @@ public class ProductCertificateController extends BaseController
     /** 进入登记页：有「登记」菜单(view)或「证件查询」(list)任一即可，避免只配子按钮未配父权限时无法打开页面 */
     @RequiresPermissions(value = { "certificate:product:view", "certificate:product:list" }, logical = Logical.OR)
     @GetMapping()
-    public String productCertificate()
+    public String productCertificate(ModelMap mmap)
     {
+        Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
+        mmap.put("supplierSelfService", bindSid != null);
+        mmap.put("bindSupplierId", bindSid);
         return prefix + "/product";
     }
 
@@ -126,6 +129,7 @@ public class ProductCertificateController extends BaseController
                 n.put("name", name + (StringUtils.isNotEmpty(code) ? " (" + code + ")" : ""));
                 n.put("title", name);
                 n.put("hospitalCode", code != null ? code : "");
+                n.put("hospitalId", String.valueOf(hs.getHospitalId()));
                 n.put("open", false);
                 nodes.add(n);
             }
@@ -254,21 +258,34 @@ public class ProductCertificateController extends BaseController
     @RequiresPermissions("certificate:product:add")
     @GetMapping("/add")
     public String add(@RequestParam(value = "hospitalCode", required = false) String hospitalCode,
+        @RequestParam(value = "hospitalId", required = false) String hospitalId,
         @RequestParam(value = "materialId", required = false) Long materialId,
         ModelMap mmap)
     {
         mmap.put("preHospitalCode", hospitalCode != null ? hospitalCode : "");
+        mmap.put("preHospitalId", hospitalId != null ? hospitalId : "");
         mmap.put("preMaterialDict", null);
         if (materialId != null)
         {
             MaterialDict d = materialDictService.selectMaterialDictById(materialId);
             mmap.put("preMaterialDict", d);
         }
-        // 查询所有供应商列表
-        Supplier supplier = new Supplier();
-        supplier.setStatus("0"); // 只查询启用状态的供应商
-        List<Supplier> supplierList = supplierService.selectSupplierList(supplier);
-        mmap.put("supplierList", supplierList);
+        Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
+        boolean supplierSelf = bindSid != null;
+        mmap.put("supplierSelfService", supplierSelf);
+        mmap.put("bindSupplierId", bindSid);
+        if (supplierSelf)
+        {
+            Supplier bindS = supplierService.selectSupplierById(bindSid);
+            mmap.put("bindSupplierCompanyName", bindS != null ? bindS.getCompanyName() : "");
+            mmap.put("linkedHospitals", hospitalSupplierService.selectSupplierLinkedHospitalsForProduct(bindSid));
+        }
+        if (!supplierSelf)
+        {
+            Supplier supplier = new Supplier();
+            supplier.setStatus("0");
+            mmap.put("supplierList", supplierService.selectSupplierList(supplier));
+        }
         return prefix + "/add";
     }
 
@@ -310,11 +327,24 @@ public class ProductCertificateController extends BaseController
     {
         ProductCertificate productCertificate = productCertificateService.selectProductCertificateById(certificateId);
         mmap.put("productCertificate", productCertificate);
-        // 查询所有供应商列表
-        Supplier supplier = new Supplier();
-        supplier.setStatus("0"); // 只查询启用状态的供应商
-        List<Supplier> supplierList = supplierService.selectSupplierList(supplier);
-        mmap.put("supplierList", supplierList);
+        Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
+        boolean supplierSelf = bindSid != null;
+        mmap.put("supplierSelfService", supplierSelf);
+        mmap.put("bindSupplierId", bindSid);
+        if (supplierSelf)
+        {
+            Supplier bindS = supplierService.selectSupplierById(bindSid);
+            mmap.put("bindSupplierCompanyName", bindS != null ? bindS.getCompanyName() : "");
+            List<HospitalSupplier> linkedHospitals = hospitalSupplierService.selectSupplierLinkedHospitalsForProduct(bindSid);
+            mmap.put("linkedHospitals", linkedHospitals);
+            mmap.put("hospitalReadonlyLabel", buildHospitalReadonlyLabel(productCertificate, linkedHospitals));
+        }
+        if (!supplierSelf)
+        {
+            Supplier supplier = new Supplier();
+            supplier.setStatus("0");
+            mmap.put("supplierList", supplierService.selectSupplierList(supplier));
+        }
         // 如果materialId不为空，查询MaterialDict信息用于显示规格、型号、单位、生产厂家、采购价格
         if (productCertificate.getMaterialId() != null && productCertificate.getMaterialId() > 0)
         {
@@ -439,6 +469,42 @@ public class ProductCertificateController extends BaseController
     public AjaxResult updateCertificateFile(Long certificateId, String certificateFile)
     {
         return toAjax(productCertificateService.updateProductCertificateFile(certificateId, certificateFile, getLoginName()));
+    }
+
+    /** 修改页展示用：医院名称（编码）或编码+ID。 */
+    private String buildHospitalReadonlyLabel(ProductCertificate c, List<HospitalSupplier> linked)
+    {
+        if (c == null)
+        {
+            return "—";
+        }
+        String hid = c.getHospitalId();
+        if (linked != null && StringUtils.isNotEmpty(hid))
+        {
+            for (HospitalSupplier h : linked)
+            {
+                if (h.getHospitalId() != null && hid.equals(String.valueOf(h.getHospitalId())))
+                {
+                    String name = h.getHospitalName() != null ? h.getHospitalName() : "医院";
+                    String code = h.getHospitalCode();
+                    return name + (StringUtils.isNotEmpty(code) ? " (" + code + ")" : "");
+                }
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        if (StringUtils.isNotEmpty(c.getHospitalCode()))
+        {
+            sb.append("医院编码：").append(c.getHospitalCode());
+        }
+        if (StringUtils.isNotEmpty(c.getHospitalId()))
+        {
+            if (sb.length() > 0)
+            {
+                sb.append("；");
+            }
+            sb.append("医院ID：").append(c.getHospitalId());
+        }
+        return sb.length() > 0 ? sb.toString() : "—";
     }
 }
 

@@ -32,6 +32,7 @@
 
 				<form id="form-material-archive" class="hide">
 					<input type="hidden" name="hospitalCode" id="archiveHospitalCode">
+					<input type="hidden" name="hospitalId" id="archiveHospitalId">
 				</form>
 				<div class="btn-group-sm" id="toolbar-material" role="group" style="margin-bottom: 8px;">
 					<a class="btn btn-success" onclick="handleAddProductCert()" shiro:hasPermission="certificate:product:add">
@@ -86,17 +87,25 @@
 		}
 
 		function handleAddProductCert() {
-			var hc = $("#archiveHospitalCode").val();
-			if (!hc) {
+			var hc = ($("#archiveHospitalCode").val() || "").trim();
+			var hid = ($("#archiveHospitalId").val() || "").trim();
+			if (!hc && !hid) {
 				$.modal.alertWarning("请先选择医院");
 				return;
 			}
 			var mid = $("#subMaterialId").val();
-			var url = prefix + "/add?hospitalCode=" + encodeURIComponent(hc);
-			if (mid) {
-				url += "&materialId=" + encodeURIComponent(mid);
+			var q = [];
+			if (hc) {
+				q.push("hospitalCode=" + encodeURIComponent(hc));
 			}
-			$.modal.openTab("新增产品证件", url);
+			if (hid) {
+				q.push("hospitalId=" + encodeURIComponent(hid));
+			}
+			if (mid) {
+				q.push("materialId=" + encodeURIComponent(mid));
+			}
+			var url = prefix + "/add" + (q.length ? "?" + q.join("&") : "");
+			$.modal.openTab("新增产品信息", url);
 		}
 
 		function openProductUploadTab(certificateId) {
@@ -189,7 +198,11 @@
 						return;
 					}
 					var hc = treeNode.hospitalCode || '';
+					var hid = treeNode.hospitalId != null && treeNode.hospitalId !== ''
+						? String(treeNode.hospitalId)
+						: (treeNode.id != null ? String(treeNode.id) : '');
 					$("#archiveHospitalCode").val(hc);
+					$("#archiveHospitalId").val(hid);
 					$("#subHospitalCode").val(hc);
 					$("#subMaterialId").val('');
 					$("#tip-select-hospital").hide();
@@ -250,7 +263,7 @@
 				createUrl: prefix + "/add",
 				updateUrl: prefix + "/edit/{id}",
 				removeUrl: prefix + "/remove",
-				modalName: "产品证件",
+				modalName: "产品信息",
 				uniqueId: "certificateId",
 				height: h,
 				columns: [{

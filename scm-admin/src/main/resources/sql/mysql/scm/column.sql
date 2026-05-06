@@ -24,6 +24,8 @@ CALL add_table_column('scm_product_certificate', 'sale_price', 'decimal(18,2)', 
 /
 CALL add_table_column('scm_product_certificate', 'hospital_code', 'varchar(50)', '医院编码', NULL);
 /
+CALL add_table_column('scm_product_certificate', 'hospital_id', 'varchar(64)', '医院主键ID字符串(scm_hospital.hospital_id)', NULL);
+/
 CALL add_table_column('scm_product_certificate', 'sale_customer', 'varchar(200)', '销售客户', NULL);
 /
 CALL add_table_column('scm_product_certificate', 'product_category', 'varchar(20)', '产品类别（高值、低值）', NULL);

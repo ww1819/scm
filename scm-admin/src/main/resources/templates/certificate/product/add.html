@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh" xmlns:th="http://www.thymeleaf.org">
 <head>
-	<th:block th:include="include :: header('新增产品证件')" />
+	<th:block th:include="include :: header('新增产品信息')" />
 	<link rel="stylesheet" href="../../../static/layui/css/layui.css">
 </head>
 <body>
@@ -30,7 +30,18 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <div class="row" th:if="${supplierSelfService}">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">供应商：</label>
+                        <div class="col-sm-8">
+                            <input type="hidden" name="supplierId" id="supplierId" th:value="${bindSupplierId}"/>
+                            <input type="text" class="form-control" readonly th:value="${bindSupplierCompanyName}"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row" th:unless="${supplierSelfService}">
                 <div class="col-sm-6">
                     <div class="form-group">
                         <label class="col-sm-4 control-label">供应商：</label>
@@ -83,14 +94,6 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">注册证发证日期：</label>
-                        <div class="col-sm-8">
-                            <input name="registerIssueDate" id="registerIssueDate" placeholder="年/月/日" class="form-control" type="text">
-                        </div>
-                    </div>
-                </div>
                 <div class="col-sm-6">
                     <div class="form-group">
                         <label class="col-sm-4 control-label">注册有效期：</label>
@@ -178,12 +181,22 @@
                 </div>
             </div>
             <h4 class="form-header h4">其他信息</h4>
-            <div class="row">
+            <div class="row" th:if="${supplierSelfService}">
                 <div class="col-sm-6">
                     <div class="form-group">
-                        <label class="col-sm-4 control-label">医院编码：</label>
+                        <label class="col-sm-4 control-label is-required">医院：</label>
                         <div class="col-sm-8">
-                            <input name="hospitalCode" placeholder="请输入医院编码" class="form-control" type="text" maxlength="50">
+                            <select id="linkedHospitalSelect" class="form-control" title="仅展示与当前供应商已关联的医院" required>
+                                <option value="">请选择医院</option>
+                                <option th:each="h : ${linkedHospitals}"
+                                        th:if="${h.hospitalId != null}"
+                                        th:value="${h.hospitalId}"
+                                        th:attr="data-hospital-code=${h.hospitalCode != null ? h.hospitalCode : ''}"
+                                        th:text="${(h.hospitalName != null ? h.hospitalName : '医院') + (h.hospitalCode != null && !#strings.isEmpty(h.hospitalCode) ? ' (' + h.hospitalCode + ')' : '')}">
+                                </option>
+                            </select>
+                            <input type="hidden" name="hospitalCode" id="hospitalCodeHidden" value=""/>
+                            <input type="hidden" name="hospitalId" id="hospitalIdHidden" value=""/>
                         </div>
                     </div>
                 </div>
@@ -194,6 +207,36 @@
                             <input name="saleCustomer" placeholder="请输入销售客户" class="form-control" type="text" maxlength="200">
                         </div>
                     </div>
+                </div>
+            </div>
+            <div class="row" th:unless="${supplierSelfService}">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label is-required">医院编码：</label>
+                        <div class="col-sm-8">
+                            <input name="hospitalCode" id="hospitalCodePlatform" placeholder="请输入医院编码" class="form-control" type="text" maxlength="50" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">医院ID：</label>
+                        <div class="col-sm-8">
+                            <input name="hospitalId" id="hospitalIdPlatform" placeholder="医院主数据ID（选填）" class="form-control" type="text" maxlength="64">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row" th:unless="${supplierSelfService}">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">销售客户：</label>
+                        <div class="col-sm-8">
+                            <input name="saleCustomer" placeholder="请输入销售客户" class="form-control" type="text" maxlength="200">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
                 </div>
             </div>
             <div class="row">
@@ -220,7 +263,7 @@
             </div>
         </form>
     </div>
-      
+
     <div class="row" style="position: fixed; bottom: 0; left: 0; right: 0; background-color: #fff; padding: 15px 20px; border-top: 1px solid #ddd; z-index: 1000; box-shadow: 0 -2px 8px rgba(0,0,0,0.1);">
         <div class="col-sm-offset-5 col-sm-10">
             <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
@@ -232,22 +275,23 @@
 	<script src="../../../static/layui/layui.js"></script>
 	<script th:inline="javascript">
 	    var preHospitalCode = /*[[${preHospitalCode}]]*/ '';
+	    var preHospitalId = /*[[${preHospitalId}]]*/ '';
 	    var preMaterialId = /*[[${preMaterialDict != null ? preMaterialDict.materialId : ''}]]*/ '';
 	    var preMaterialName = /*[[${preMaterialDict != null ? preMaterialDict.materialName : ''}]]*/ '';
 	</script>
 	<script>
 	    var prefix = ctx + "certificate/product";
 	    var laydate;
-	    
+
 	    layui.use('laydate', function(){
 	        laydate = layui.laydate;
-	        
+
 	        // 注册证发证日期
 	        laydate.render({
 	            elem: '#registerIssueDate',
 	            type: 'date'
 	        });
-	        
+
 	        // 注册有效期
 	        laydate.render({
 	            elem: '#registerValidDate',
@@ -255,9 +299,41 @@
 	        });
 	    });
 
+	    function syncLinkedHospitalFromSelect() {
+	        var sel = $('#linkedHospitalSelect');
+	        if (!sel.length) {
+	            return;
+	        }
+	        var opt = sel.find('option:selected');
+	        var code = opt.attr('data-hospital-code') || '';
+	        var hid = opt.val() || '';
+	        $('#hospitalCodeHidden').val(code);
+	        $('#hospitalIdHidden').val(hid);
+	    }
+
 	    $(function () {
-	        if (typeof preHospitalCode === 'string' && preHospitalCode) {
-	            $('input[name="hospitalCode"]').val(preHospitalCode);
+	        if ($('#linkedHospitalSelect').length) {
+	            $('#linkedHospitalSelect').on('change', syncLinkedHospitalFromSelect);
+	            if (typeof preHospitalId === 'string' && preHospitalId) {
+	                $('#linkedHospitalSelect').val(preHospitalId);
+	            }
+	            if (!$('#linkedHospitalSelect').val() && typeof preHospitalCode === 'string' && preHospitalCode) {
+	                $('#linkedHospitalSelect option').each(function () {
+	                    var c = $(this).attr('data-hospital-code') || '';
+	                    if (c === preHospitalCode) {
+	                        $('#linkedHospitalSelect').val($(this).val());
+	                        return false;
+	                    }
+	                });
+	            }
+	            syncLinkedHospitalFromSelect();
+	        } else {
+	            if (typeof preHospitalCode === 'string' && preHospitalCode) {
+	                $('#hospitalCodePlatform').val(preHospitalCode);
+	            }
+	            if (typeof preHospitalId === 'string' && preHospitalId) {
+	                $('#hospitalIdPlatform').val(preHospitalId);
+	            }
 	        }
 	        if (preMaterialId !== '' && preMaterialId !== null && preMaterialId !== undefined) {
 	            $('#materialId').val(preMaterialId);
@@ -266,7 +342,7 @@
 	            }
 	        }
 	    });
-	    
+
         $("#form-product-certificate-add").validate({
         	onkeyup: false,
         	rules:{
@@ -280,31 +356,48 @@
         	},
             focusCleanup: true
         });
-        
+
         function submitHandler() {
 	        console.log("submitHandler 被调用");
 	        console.log("prefix:", prefix);
-	        
+
 	        // 先检查表单验证
 	        var isValid = $.validate.form();
 	        console.log("表单验证结果:", isValid);
-	        
+
 	        if (!isValid) {
 	            console.log("表单验证失败");
 	            return false;
 	        }
-	        
+
 	        // 确保materialId字段为空，让后端自动生成
 	        $('#materialId').val('');
-	        
+
+	        if (typeof syncLinkedHospitalFromSelect === 'function') {
+	            syncLinkedHospitalFromSelect();
+	        }
+
+	        if ($('#linkedHospitalSelect').length) {
+	            if (!$('#linkedHospitalSelect').val()) {
+	                $.modal.alertWarning('请选择医院');
+	                return false;
+	            }
+	        } else {
+	            var hcPlat = ($('#hospitalCodePlatform').val() || '').trim();
+	            if (!hcPlat) {
+	                $.modal.alertWarning('请填写医院编码');
+	                return false;
+	            }
+	        }
+
 	        // 使用自定义的AJAX请求，添加错误处理和超时
 	        var formData = $("#form-product-certificate-add").serializeArray();
 	        console.log("提交表单数据:", formData);
 	        console.log("请求URL:", prefix + "/add");
-	        
+
 	        // 确保loading在请求开始前显示
 	        $.modal.loading("正在处理中，请稍候...");
-	        
+
 	        $.ajax({
 	            url: prefix + "/add",
 	            type: "post",
@@ -357,13 +450,13 @@
 	                }, 100);
 	            }
 	        });
-	        
+
 	        return false; // 防止表单默认提交
 	    }
-	    
+
 	    function closeItem() {
 	        console.log("closeItem 被调用");
-	        
+
 	        // 如果在iframe中，使用父窗口的closeItem函数（来自common.js）
 	        if (window.parent && window.parent !== window) {
 	            try {
@@ -375,29 +468,29 @@
 	            } catch(e) {
 	                console.log("调用父窗口closeItem失败:", e);
 	            }
-	            
+
 	            try {
 	                // 如果closeItem不可用，尝试直接使用common.js中的逻辑
 	                var topWindow = $(window.parent.document);
 	                var panelUrl = null;
-	                
+
 	                // 获取当前iframe的data-panel属性
 	                if (window.frameElement) {
 	                    panelUrl = window.frameElement.getAttribute('data-panel');
 	                }
-	                
+
 	                // 点击当前活动标签页的关闭按钮（X图标）
 	                var closeBtn = $('.page-tabs-content .active i', topWindow);
 	                if (closeBtn.length > 0) {
 	                    closeBtn.click();
 	                    return;
 	                }
-	                
+
 	                // 如果找不到关闭按钮，尝试直接移除标签页
 	                if (panelUrl) {
 	                    $('.menuTab[data-id="' + panelUrl + '"]', topWindow).remove();
 	                    $('.mainContent .Scm_iframe[data-id="' + panelUrl + '"]', topWindow).remove();
-	                    
+
 	                    // 激活上一个标签页
 	                    var prevTab = $('.menuTab', topWindow).last();
 	                    if (prevTab.length > 0) {
@@ -411,7 +504,7 @@
 	                console.error("关闭标签页失败:", e);
 	            }
 	        }
-	        
+
 	        // 如果不在iframe中，尝试使用$.modal.closeTab()
 	        try {
 	            if (typeof $.modal !== 'undefined' && typeof $.modal.closeTab === 'function') {
@@ -421,7 +514,7 @@
 	        } catch(e) {
 	            console.log("使用$.modal.closeTab失败:", e);
 	        }
-	        
+
 	        console.warn("无法关闭页面，请手动关闭标签页");
 	    }
     </script>
