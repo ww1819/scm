@@ -43,6 +43,70 @@ public class SettlementController extends BaseController
     }
 
     /**
+     * 结算查询页（布局与配送信息查询一致，独立路由供菜单「结算查询」使用）
+     */
+    @RequiresPermissions("settlement:settlement:view")
+    @GetMapping("/query")
+    public String query()
+    {
+        return prefix + "/query";
+    }
+
+    /**
+     * 结算查询：结算明细分页数据
+     */
+    @RequiresPermissions("settlement:settlement:list")
+    @PostMapping("/query/detail/list")
+    @ResponseBody
+    public TableDataInfo queryDetailList(SettlementDetail settlementDetail)
+    {
+        startPage();
+        List<SettlementDetail> list = settlementService.selectSettlementDetailQueryList(settlementDetail);
+        return getDataTable(list);
+    }
+
+    /**
+     * 结算查询：导出结算明细
+     */
+    @RequiresPermissions("settlement:settlement:export")
+    @Log(title = "结算明细表", businessType = BusinessType.EXPORT)
+    @PostMapping("/query/detail/export")
+    @ResponseBody
+    public AjaxResult exportQueryDetail(SettlementDetail settlementDetail)
+    {
+        List<SettlementDetail> list = settlementService.selectSettlementDetailQueryList(settlementDetail);
+        ExcelUtil<SettlementDetail> util = new ExcelUtil<SettlementDetail>(SettlementDetail.class);
+        return util.exportExcel(list, "结算明细表");
+    }
+
+    /**
+     * 结算查询：结算汇总（主表）分页数据
+     */
+    @RequiresPermissions("settlement:settlement:list")
+    @PostMapping("/query/summary/list")
+    @ResponseBody
+    public TableDataInfo querySummaryList(Settlement settlement)
+    {
+        startPage();
+        List<Settlement> list = settlementService.selectSettlementList(settlement);
+        return getDataTable(list);
+    }
+
+    /**
+     * 结算查询：导出结算汇总
+     */
+    @RequiresPermissions("settlement:settlement:export")
+    @Log(title = "结算汇总表", businessType = BusinessType.EXPORT)
+    @PostMapping("/query/summary/export")
+    @ResponseBody
+    public AjaxResult exportQuerySummary(Settlement settlement)
+    {
+        List<Settlement> list = settlementService.selectSettlementList(settlement);
+        ExcelUtil<Settlement> util = new ExcelUtil<Settlement>(Settlement.class);
+        return util.exportExcel(list, "结算汇总表");
+    }
+
+    /**
      * 查询结算单列表
      */
     @RequiresPermissions("settlement:settlement:list")

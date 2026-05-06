@@ -68,6 +68,14 @@ public interface ISettlementService
     public List<SettlementDetail> selectSettlementDetailListBySettlementId(Long settlementId);
 
     /**
+     * 结算查询：明细分页列表（联主表筛选）
+     *
+     * @param query 条件
+     * @return 明细集合
+     */
+    public List<SettlementDetail> selectSettlementDetailQueryList(SettlementDetail query);
+
+    /**
      * 审核结算单
      * 
      * @param settlementId 结算单ID

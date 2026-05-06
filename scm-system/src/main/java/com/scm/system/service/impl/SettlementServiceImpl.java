@@ -191,6 +191,12 @@ public class SettlementServiceImpl implements ISettlementService
         return settlementDetailMapper.selectSettlementDetailListBySettlementId(settlementId);
     }
 
+    @Override
+    public List<SettlementDetail> selectSettlementDetailQueryList(SettlementDetail query)
+    {
+        return settlementDetailMapper.selectSettlementDetailQueryList(query);
+    }
+
     /**
      * 审核结算单
      * 

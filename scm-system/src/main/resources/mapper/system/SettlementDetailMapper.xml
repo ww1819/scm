@@ -19,12 +19,26 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="price"           column="price"               />
         <result property="amount"          column="amount"              />
     </resultMap>
+
+    <resultMap type="SettlementDetail" id="SettlementDetailQueryResult" extends="SettlementDetailResult">
+        <result property="settlementNo" column="settlement_no" />
+        <result property="invoiceNo" column="invoice_no" />
+    </resultMap>
     
     <sql id="selectSettlementDetailVo">
         select d.detail_id, d.settlement_id, d.delivery_id, d.delivery_no, d.material_id,
                d.material_code, d.material_name, d.specification, d.model, d.unit,
                d.quantity, d.price, d.amount
         from scm_settlement_detail d
+    </sql>
+
+    <sql id="selectSettlementDetailQueryVo">
+        select d.detail_id, d.settlement_id, d.delivery_id, d.delivery_no, d.material_id,
+               d.material_code, d.material_name, d.specification, d.model, d.unit,
+               d.quantity, d.price, d.amount,
+               s.settlement_no, s.invoice_no
+        from scm_settlement_detail d
+        inner join scm_settlement s on d.settlement_id = s.settlement_id
     </sql>
     
     <select id="selectSettlementDetailList" parameterType="SettlementDetail" resultMap="SettlementDetailResult">
@@ -44,6 +58,35 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <include refid="selectSettlementDetailVo"/>
         where d.settlement_id = #{settlementId}
         order by d.detail_id
+    </select>
+
+    <!-- 结算查询页：明细分页，条件含主表结算单号/发票号/审核状态及明细行字段 -->
+    <select id="selectSettlementDetailQueryList" parameterType="SettlementDetail" resultMap="SettlementDetailQueryResult">
+        <include refid="selectSettlementDetailQueryVo"/>
+        <where>
+            <if test="settlementNo != null and settlementNo != ''">
+                AND s.settlement_no like concat('%', #{settlementNo}, '%')
+            </if>
+            <if test="invoiceNo != null and invoiceNo != ''">
+                AND s.invoice_no like concat('%', #{invoiceNo}, '%')
+            </if>
+            <if test="auditStatus != null and auditStatus != ''">
+                AND s.audit_status = #{auditStatus}
+            </if>
+            <if test="settlementId != null">
+                AND d.settlement_id = #{settlementId}
+            </if>
+            <if test="deliveryNo != null and deliveryNo != ''">
+                AND d.delivery_no like concat('%', #{deliveryNo}, '%')
+            </if>
+            <if test="materialCode != null and materialCode != ''">
+                AND d.material_code like concat('%', #{materialCode}, '%')
+            </if>
+            <if test="materialName != null and materialName != ''">
+                AND d.material_name like concat('%', #{materialName}, '%')
+            </if>
+        </where>
+        order by d.detail_id desc
     </select>
     
     <select id="selectSettlementDetailById" parameterType="Long" resultMap="SettlementDetailResult">

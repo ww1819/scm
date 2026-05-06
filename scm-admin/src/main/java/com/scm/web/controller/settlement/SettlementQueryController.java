@@ -16,8 +16,7 @@ public class SettlementQueryController
     @GetMapping("/query")
     public String query()
     {
-        // 复用现有结算列表页面，避免历史菜单 URL 出现 404
-        return "settlement/settlement";
+        return "settlement/query";
     }
 }
 

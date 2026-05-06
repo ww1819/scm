@@ -87,7 +87,7 @@ INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, targ
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2601', '发票结算', '2600', '1', '/settlement/settlement', '', 'C', '0', '1', 'settlement:settlement:view', 'fa fa-file-text-o', 'admin', sysdate(), '', null, '发票结算菜单', '0');
 /
-INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2602', '结算查询', '2600', '2', '/settlement/settlement', '', 'C', '0', '1', 'settlement:settlement:view', '', 'admin', sysdate(), '', null, '结算查询菜单', '0');
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2602', '结算查询', '2600', '2', '/settlement/settlement/query', '', 'C', '0', '1', 'settlement:settlement:view', '', 'admin', sysdate(), '', null, '结算查询菜单', '0');
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2700', '数据中心', '0', '12', '#', '', 'M', '0', '1', '', 'fa fa-bar-chart', 'admin', sysdate(), '', null, '数据中心目录', '0');
 /
@@ -525,12 +525,12 @@ WHERE del_flag = '0'
   )
 ORDER BY menu_id;
 /
--- 2) 结算查询菜单：应指向 /settlement/settlement，避免历史 /settlement/query 导致 404
+-- 2) 结算查询菜单：应指向 /settlement/settlement/query（独立查询页）
 SELECT menu_id, menu_name, url, perms
 FROM sys_menu
 WHERE del_flag = '0'
   AND menu_id = '2602'
-  AND url <> '/settlement/settlement';
+  AND url <> '/settlement/settlement/query';
 /
 -- 3) 平台专属菜单是否误开放给医院/供应商角色
 SELECT rm.role_id, r.role_name, r.role_type, rm.menu_id, m.menu_name, m.perms
@@ -557,12 +557,12 @@ WHERE del_flag = '0'
   AND menu_type = 'C'
   AND (perms IS NULL OR perms <> 'certificate:product:audit');
 /
--- B) 结算查询菜单：统一路由到稳定入口
+-- B) 结算查询菜单：统一路由到查询页
 UPDATE sys_menu
-SET url = '/settlement/settlement'
+SET url = '/settlement/settlement/query'
 WHERE del_flag = '0'
   AND menu_id = '2602'
-  AND url <> '/settlement/settlement';
+  AND url <> '/settlement/settlement/query';
 /
 -- C) 平台菜单回收：医院/供应商角色不应持有 auth_type=platform 的菜单
 DELETE rm
