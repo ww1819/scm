@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.scm.common.constant.UserConstants;
@@ -24,6 +25,7 @@ import com.scm.system.mapper.SysUserMapper;
 import com.scm.system.mapper.SysUserRoleMapper;
 import com.scm.common.utils.security.Md5Utils;
 import com.scm.system.service.IScmScopeBootstrapService;
+import com.scm.system.service.ISupplierCertificateService;
 import com.scm.system.service.ISupplierRegisterService;
 
 /**
@@ -48,6 +50,10 @@ public class SupplierRegisterServiceImpl implements ISupplierRegisterService {
     private SupplierUserMapper supplierUserMapper;
     @Autowired
     private SupplierUserApplyMapper applyMapper;
+
+    @Autowired
+    @Lazy
+    private ISupplierCertificateService supplierCertificateService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -82,6 +88,17 @@ public class SupplierRegisterServiceImpl implements ISupplierRegisterService {
         }
         supplierMapper.insertSupplier(supplier);
         Long supplierId = supplier.getSupplierId();
+        if (supplierId != null)
+        {
+            try
+            {
+                supplierCertificateService.ensureMissingCertificatesForSupplier(supplierId,
+                    supplier.getCreateBy() != null ? supplier.getCreateBy() : "");
+            }
+            catch (Exception ignored)
+            {
+            }
+        }
 
         String oper = operBy != null ? operBy : adminUser.getLoginName();
         Long adminRoleId = scmScopeBootstrapService.bootstrapAfterSupplierRegister(supplierId, oper);

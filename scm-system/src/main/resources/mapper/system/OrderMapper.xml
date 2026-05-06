@@ -118,6 +118,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                     #{hid}
                 </foreach>
             </if>
+            <if test="params != null and params.roleSupplierIds != null and params.roleSupplierIds.size() &gt; 0">
+                AND o.supplier_id IN
+                <foreach collection="params.roleSupplierIds" item="sid" open="(" separator="," close=")">
+                    #{sid}
+                </foreach>
+            </if>
             <if test="params != null and params.scopePairBlock != null and (params.scopePairBlock == true or params.scopePairBlock == 'true')">
                 AND 1 = 0
             </if>

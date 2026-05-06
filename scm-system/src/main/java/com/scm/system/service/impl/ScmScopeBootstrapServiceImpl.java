@@ -174,6 +174,76 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public void applyDefaultHospitalGrantedSupplierMenus(Long hospitalId, Long supplierId, String operBy)
+    {
+        if (hospitalId == null || supplierId == null)
+        {
+            return;
+        }
+        String oper = StringUtils.isNotEmpty(operBy) ? operBy : "system";
+        ensureSupplierAdminRole(supplierId, oper);
+
+        Set<Long> scope = collectScopeMenuIdsWithAncestors(ScmAuthConstants.AUTH_HOSPITAL_SUPPLIER);
+        Set<Long> hospitalOwned = new HashSet<>(hospitalMenuAuthMapper.selectMenuIdsByHospitalId(hospitalId));
+        Set<Long> allowed = new HashSet<>(scope);
+        allowed.retainAll(hospitalOwned);
+        if (allowed.isEmpty())
+        {
+            return;
+        }
+
+        List<SysMenu> all = sysMenuMapper.selectMenuAll();
+        Map<Long, SysMenu> byId = indexMenusById(all);
+        Set<Long> grantSeeds = new HashSet<>();
+        for (Long mid : allowed)
+        {
+            SysMenu m = byId.get(mid);
+            if (m == null)
+            {
+                continue;
+            }
+            if (!ScmAuthConstants.AUTH_HOSPITAL_SUPPLIER.equalsIgnoreCase(normalizeAuthType(m)))
+            {
+                continue;
+            }
+            if (!"1".equals(StringUtils.trimToEmpty(m.getHospitalGrantSupplierFlag())))
+            {
+                continue;
+            }
+            grantSeeds.add(mid);
+        }
+        if (grantSeeds.isEmpty())
+        {
+            return;
+        }
+        Set<Long> toAttach = expandSeedsWithAncestors(grantSeeds, byId);
+        toAttach.retainAll(allowed);
+
+        Set<Long> existingPair = new HashSet<>(supplierMenuAuthMapper.selectMenuIdsBySupplierAndHospital(supplierId, hospitalId));
+        Set<Long> needAuth = new HashSet<>(toAttach);
+        needAuth.removeAll(existingPair);
+        if (!needAuth.isEmpty())
+        {
+            batchInsertSupplierHospitalMenuAuth(hospitalId, supplierId, needAuth, oper);
+        }
+
+        SysRole admin = sysRoleMapper.selectByRoleKeyAndSupplierId(ScmAuthConstants.ROLE_KEY_SUPPLIER_ADMIN, supplierId);
+        if (admin == null || admin.getRoleId() == null)
+        {
+            return;
+        }
+        String sid = String.valueOf(supplierId);
+        Set<Long> existingRm = new HashSet<>(sysRoleMenuMapper.selectMenuIdsByRoleAndScope(admin.getRoleId(), "", sid));
+        Set<Long> needRm = new HashSet<>(toAttach);
+        needRm.removeAll(existingRm);
+        if (!needRm.isEmpty())
+        {
+            batchInsertRoleMenus(admin.getRoleId(), needRm, "", sid);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public Map<String, Integer> repairLegacyAdminScopes(String operBy)
     {
         String realOper = StringUtils.isNotEmpty(operBy) ? operBy : "system_upgrade";
@@ -308,8 +378,18 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         Map<Long, SysMenu> byId = indexMenusById(all);
         Set<Long> adminExpanded = expandSeedsWithAncestors(rawSeedMenuIds, byId);
         String hid = String.valueOf(hospitalId);
+        List<Long> oldHospitalAuthMenus = hospitalMenuAuthMapper.selectMenuIdsByHospitalId(hospitalId);
         hospitalMenuAuthMapper.deleteByHospitalId(hospitalId);
         sysRoleMenuMapper.deleteRoleMenuByHospitalScope(hid);
+        if (oldHospitalAuthMenus != null && !oldHospitalAuthMenus.isEmpty())
+        {
+            Set<Long> revokedMenus = new HashSet<>(oldHospitalAuthMenus);
+            revokedMenus.removeAll(adminExpanded);
+            if (!revokedMenus.isEmpty())
+            {
+                supplierMenuAuthMapper.deleteByHospitalAndMenuIds(hospitalId, new ArrayList<>(revokedMenus));
+            }
+        }
         batchInsertHospitalAuth(hospitalId, adminExpanded, operBy);
         Set<Long> nonAdminRaw = filterHospitalSeedsExcludeAdminOnly(rawSeedMenuIds, byId);
         Set<Long> nonAdminExpanded = expandSeedsWithAncestors(nonAdminRaw, byId);
@@ -721,6 +801,33 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
             ScmSupplierMenuAuth row = new ScmSupplierMenuAuth();
             row.setId(IdUtils.simpleUuid7());
             row.setSupplierId(supplierId);
+            row.setMenuId(menuId);
+            row.setCreateBy(operBy);
+            row.setCreateTime(now);
+            buf.add(row);
+            if (buf.size() >= BATCH)
+            {
+                supplierMenuAuthMapper.batchInsert(buf);
+                buf.clear();
+            }
+        }
+        if (!buf.isEmpty())
+        {
+            supplierMenuAuthMapper.batchInsert(buf);
+        }
+    }
+
+    /** 医院授予供应商维度：{@code scm_supplier_menu_auth.hospital_id} 必填 */
+    private void batchInsertSupplierHospitalMenuAuth(Long hospitalId, Long supplierId, Set<Long> menuIds, String operBy)
+    {
+        Date now = DateUtils.getNowDate();
+        List<ScmSupplierMenuAuth> buf = new ArrayList<>();
+        for (Long menuId : menuIds)
+        {
+            ScmSupplierMenuAuth row = new ScmSupplierMenuAuth();
+            row.setId(IdUtils.simpleUuid7());
+            row.setSupplierId(supplierId);
+            row.setHospitalId(hospitalId);
             row.setMenuId(menuId);
             row.setCreateBy(operBy);
             row.setCreateTime(now);

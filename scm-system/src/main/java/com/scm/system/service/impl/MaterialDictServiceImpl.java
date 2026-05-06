@@ -2,6 +2,7 @@ package com.scm.system.service.impl;
 
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import com.scm.common.core.text.Convert;
 import com.scm.common.utils.DateUtils;
@@ -9,6 +10,7 @@ import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.MaterialDict;
 import com.scm.system.mapper.MaterialDictMapper;
 import com.scm.system.service.IMaterialDictService;
+import com.scm.system.service.IProductCertLicenseSnapService;
 
 /**
  * 物资字典 服务层实现
@@ -20,6 +22,10 @@ public class MaterialDictServiceImpl implements IMaterialDictService
 {
     @Autowired
     private MaterialDictMapper materialDictMapper;
+
+    @Autowired
+    @Lazy
+    private IProductCertLicenseSnapService productCertLicenseSnapService;
 
     /**
      * 查询物资字典信息
@@ -64,7 +70,19 @@ public class MaterialDictServiceImpl implements IMaterialDictService
             materialDict.setMaterialCode(generateMaterialCode());
         }
         materialDict.setCreateTime(DateUtils.getNowDate());
-        return materialDictMapper.insertMaterialDict(materialDict);
+        int rows = materialDictMapper.insertMaterialDict(materialDict);
+        if (rows > 0 && materialDict.getMaterialId() != null)
+        {
+            try
+            {
+                productCertLicenseSnapService.ensureProductSnapStubsForMaterial(materialDict.getMaterialId(),
+                    materialDict.getCreateBy() != null ? materialDict.getCreateBy() : "");
+            }
+            catch (Exception ignored)
+            {
+            }
+        }
+        return rows;
     }
 
     /**
@@ -109,7 +127,19 @@ public class MaterialDictServiceImpl implements IMaterialDictService
     public int updateMaterialDict(MaterialDict materialDict)
     {
         materialDict.setUpdateTime(DateUtils.getNowDate());
-        return materialDictMapper.updateMaterialDict(materialDict);
+        int rows = materialDictMapper.updateMaterialDict(materialDict);
+        if (rows > 0 && materialDict.getMaterialId() != null)
+        {
+            try
+            {
+                productCertLicenseSnapService.ensureProductSnapStubsForMaterial(materialDict.getMaterialId(),
+                    materialDict.getUpdateBy() != null ? materialDict.getUpdateBy() : "");
+            }
+            catch (Exception ignored)
+            {
+            }
+        }
+        return rows;
     }
 
     /**

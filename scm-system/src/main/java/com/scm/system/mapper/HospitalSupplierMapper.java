@@ -88,5 +88,10 @@ public interface HospitalSupplierMapper
      * 查询医院供应商关联下是否存在配送单
      */
     public int countDeliveryByHospitalAndSupplier(HospitalSupplier hospitalSupplier);
+
+    /**
+     * 与供应商已绑定且当前处于供货期内的医院（用于资质变更抄送）
+     */
+    public List<Long> selectHospitalIdsInActiveSupplyForSupplier(Long supplierId);
 }
 

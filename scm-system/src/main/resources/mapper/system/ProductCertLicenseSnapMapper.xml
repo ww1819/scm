@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.ProductCertLicenseSnapMapper">
+
+    <resultMap type="com.scm.system.domain.ProductCertLicenseSnap" id="ProductCertLicenseSnapResult">
+        <id     property="licenseId"   column="license_id"/>
+        <result property="certificateId" column="certificate_id"/>
+        <result property="materialId" column="material_id"/>
+        <result property="supplierId" column="supplier_id"/>
+        <result property="hospitalId" column="hospital_id"/>
+        <result property="hospitalCode" column="hospital_code"/>
+        <result property="licenseKindCode" column="license_kind_code"/>
+        <result property="licenseKindName" column="license_kind_name"/>
+        <result property="licenseTitle" column="license_title"/>
+        <result property="licenseNo" column="license_no"/>
+        <result property="issuingBodySnap" column="issuing_body_snap"/>
+        <result property="issueDate" column="issue_date"/>
+        <result property="expireDate" column="expire_date"/>
+        <result property="productNameSnap" column="product_name_snap"/>
+        <result property="manufacturerNameSnap" column="manufacturer_name_snap"/>
+        <result property="supplierCompanyNameSnap" column="supplier_company_name_snap"/>
+        <result property="registerNoSnap" column="register_no_snap"/>
+        <result property="certificateFile" column="certificate_file"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectCols">
+        select license_id, certificate_id, material_id, supplier_id, hospital_id, hospital_code,
+               license_kind_code, license_kind_name, license_title, license_no, issuing_body_snap,
+               issue_date, expire_date, product_name_snap, manufacturer_name_snap, supplier_company_name_snap,
+               register_no_snap, certificate_file, del_flag, create_by, create_time, update_by, update_time, remark
+        from scm_product_cert_license_snap
+    </sql>
+
+    <select id="selectById" parameterType="String" resultMap="ProductCertLicenseSnapResult">
+        <include refid="selectCols"/>
+        where license_id = #{licenseId} and del_flag = '0'
+    </select>
+
+    <select id="selectListByCertificateId" parameterType="String" resultMap="ProductCertLicenseSnapResult">
+        <include refid="selectCols"/>
+        where certificate_id = #{certificateId} and del_flag = '0'
+        order by create_time desc, license_id
+    </select>
+
+    <select id="selectByCertIdAndKind" resultMap="ProductCertLicenseSnapResult">
+        <include refid="selectCols"/>
+        where certificate_id = #{certificateId} and license_kind_code = #{licenseKindCode} and del_flag = '0'
+        limit 1
+    </select>
+
+    <insert id="insert" parameterType="com.scm.system.domain.ProductCertLicenseSnap">
+        insert into scm_product_cert_license_snap(
+            license_id, certificate_id, material_id, supplier_id, hospital_id, hospital_code,
+            license_kind_code, license_kind_name, license_title, license_no, issuing_body_snap,
+            issue_date, expire_date, product_name_snap, manufacturer_name_snap, supplier_company_name_snap,
+            register_no_snap, certificate_file, del_flag, remark, create_by, create_time
+        ) values (
+            #{licenseId}, #{certificateId}, #{materialId}, #{supplierId}, #{hospitalId}, #{hospitalCode},
+            #{licenseKindCode}, #{licenseKindName}, #{licenseTitle}, #{licenseNo}, #{issuingBodySnap},
+            #{issueDate}, #{expireDate}, #{productNameSnap}, #{manufacturerNameSnap}, #{supplierCompanyNameSnap},
+            #{registerNoSnap}, #{certificateFile}, '0', #{remark}, #{createBy}, sysdate()
+        )
+    </insert>
+
+    <update id="update" parameterType="com.scm.system.domain.ProductCertLicenseSnap">
+        update scm_product_cert_license_snap
+        <set>
+            <if test="licenseKindCode != null">license_kind_code = #{licenseKindCode},</if>
+            <if test="licenseKindName != null">license_kind_name = #{licenseKindName},</if>
+            <if test="licenseTitle != null">license_title = #{licenseTitle},</if>
+            <if test="licenseNo != null">license_no = #{licenseNo},</if>
+            <if test="issuingBodySnap != null">issuing_body_snap = #{issuingBodySnap},</if>
+            <if test="issueDate != null">issue_date = #{issueDate},</if>
+            <if test="expireDate != null">expire_date = #{expireDate},</if>
+            <if test="certificateFile != null">certificate_file = #{certificateFile},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="productNameSnap != null">product_name_snap = #{productNameSnap},</if>
+            <if test="manufacturerNameSnap != null">manufacturer_name_snap = #{manufacturerNameSnap},</if>
+            <if test="supplierCompanyNameSnap != null">supplier_company_name_snap = #{supplierCompanyNameSnap},</if>
+            <if test="registerNoSnap != null">register_no_snap = #{registerNoSnap},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where license_id = #{licenseId} and del_flag = '0'
+    </update>
+
+    <update id="softDeleteById" parameterType="com.scm.system.domain.ProductCertLicenseSnap">
+        update scm_product_cert_license_snap
+        set del_flag = '2', update_by = #{updateBy}, update_time = sysdate()
+        where license_id = #{licenseId} and del_flag = '0'
+    </update>
+</mapper>

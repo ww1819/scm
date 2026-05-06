@@ -61,6 +61,11 @@ public interface ISupplierCertificateService
     public int updateSupplierCertificate(SupplierCertificate supplierCertificate);
 
     /**
+     * 仅更新证照图片（可清空）
+     */
+    public int updateCertificateFile(Long certificateId, String certificateFile, String updateBy);
+
+    /**
      * 批量删除供应商证件信息
      * 
      * @param ids 需要删除的数据ID
@@ -88,5 +93,10 @@ public interface ISupplierCertificateService
      * 检查并更新证件过期状态
      */
     public void checkAndUpdateExpiredStatus();
+
+    /**
+     * 按「证件配置 supplier_certificate」与 scm_certificate_type 为供应商补齐缺失的证件占位行
+     */
+    public void ensureMissingCertificatesForSupplier(Long supplierId, String createBy);
 }
 

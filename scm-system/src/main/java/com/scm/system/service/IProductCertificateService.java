@@ -2,6 +2,7 @@ package com.scm.system.service;
 
 import java.util.List;
 import com.scm.system.domain.ProductCertificate;
+import com.scm.system.domain.vo.ProductMaterialArchiveVo;
 
 /**
  * 产品证件 服务层
@@ -25,6 +26,16 @@ public interface IProductCertificateService
      * @return 证件集合
      */
     public List<ProductCertificate> selectProductCertificateList(ProductCertificate productCertificate);
+
+    /**
+     * 校验当前登录供应商与医院编码是否允许进入「医院产品档案」查询
+     */
+    public void ensureProductMaterialArchiveAccess(String hospitalCode);
+
+    /**
+     * 已校验前提下：某供应商在某医院下的物资聚合摘要（供分页查询使用）
+     */
+    public List<ProductMaterialArchiveVo> selectMaterialArchiveSummaryData(Long supplierId, String hospitalCode);
 
     /**
      * 查询过期预警的产品证件列表
@@ -108,5 +119,10 @@ public interface IProductCertificateService
      * 检查并更新证件过期状态
      */
     public void checkAndUpdateExpiredStatus();
+
+    /**
+     * 仅更新产品证照图片
+     */
+    public int updateProductCertificateFile(Long certificateId, String certificateFile, String updateBy);
 }
 

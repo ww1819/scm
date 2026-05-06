@@ -5,9 +5,11 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.scm.common.core.text.Convert;
 import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.PageUtils;
 import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.uuid.IdUtils;
@@ -19,15 +21,20 @@ import com.scm.system.domain.ScmHospitalSupplierApply;
 import com.scm.system.domain.ScmHospitalSupplierApplyLog;
 import com.scm.system.domain.ScmNoticeReceiver;
 import com.scm.system.domain.SysNotice;
+import com.scm.system.domain.ScmSupplierCertApplyBundle;
 import com.scm.system.domain.Supplier;
+import com.scm.system.domain.SupplierCertificate;
 import com.scm.system.mapper.HospitalSupplierChangeLogMapper;
 import com.scm.system.mapper.HospitalSupplierMapper;
 import com.scm.system.mapper.ScmHospitalSupplierApplyLogMapper;
 import com.scm.system.mapper.ScmHospitalSupplierApplyMapper;
 import com.scm.system.mapper.ScmNoticeReceiverMapper;
+import com.scm.system.mapper.ScmSupplierCertApplyBundleMapper;
+import com.scm.system.mapper.SupplierCertificateMapper;
 import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.IHospitalService;
 import com.scm.system.service.IScmHospitalSupplierPermissionService;
+import com.scm.system.service.IScmScopeBootstrapService;
 import com.scm.system.service.IScmSupplierContextService;
 import com.scm.system.service.ISysNoticeService;
 import com.scm.system.service.ISupplierService;
@@ -74,6 +81,15 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
     @Autowired
     private ISupplierUserService supplierUserService;
 
+    @Autowired
+    private SupplierCertificateMapper supplierCertificateMapper;
+
+    @Autowired
+    private ScmSupplierCertApplyBundleMapper scmSupplierCertApplyBundleMapper;
+
+    @Autowired
+    private IScmScopeBootstrapService scmScopeBootstrapService;
+
     /**
      * 查询医院供应商关联信息
      * 
@@ -108,6 +124,23 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
     public List<HospitalSupplier> selectHospitalSupplierBySupplierId(Long supplierId)
     {
         return hospitalSupplierMapper.selectHospitalSupplierBySupplierId(supplierId);
+    }
+
+    @Override
+    public List<HospitalSupplier> selectSupplierLinkedHospitalsForProduct(Long supplierId)
+    {
+        /*
+         * 产品证件等接口在 startPage() 之后会校验医院关联并调用本方法；若不抑制分页，
+         * PageHelper 会把列表的 order by expire_date 套在 selectHospitalSupplierList 上导致语法错误。
+         */
+        return PageUtils.callWithoutPaging(() -> {
+            HospitalSupplier q = new HospitalSupplier();
+            q.setSupplierId(supplierId);
+            q.setStatus("0");
+            q.setAuditStatus("1");
+            q.setDisableStatus("0");
+            return hospitalSupplierMapper.selectHospitalSupplierList(q);
+        });
     }
 
     /**
@@ -151,6 +184,12 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
         if (rows > 0)
         {
             insertChangeLog(hospitalSupplier, "CREATE", hospitalSupplier.getCreateBy(), null, hospitalSupplier);
+            if ("1".equals(StringUtils.trimToEmpty(hospitalSupplier.getAuditStatus()))
+                && hospitalSupplier.getHospitalId() != null && hospitalSupplier.getSupplierId() != null)
+            {
+                scmScopeBootstrapService.applyDefaultHospitalGrantedSupplierMenus(hospitalSupplier.getHospitalId(),
+                    hospitalSupplier.getSupplierId(), hospitalSupplier.getCreateBy());
+            }
         }
         return rows;
     }
@@ -171,6 +210,16 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
         {
             HospitalSupplier after = hospitalSupplierMapper.selectHospitalSupplierById(hospitalSupplier.getRelationId());
             insertChangeLog(after, "UPDATE", hospitalSupplier.getUpdateBy(), before, after);
+            if (after != null && after.getHospitalId() != null && after.getSupplierId() != null
+                && "1".equals(StringUtils.trimToEmpty(after.getAuditStatus())))
+            {
+                String beforeAudit = before == null ? "" : StringUtils.trimToEmpty(before.getAuditStatus());
+                if (!"1".equals(beforeAudit))
+                {
+                    scmScopeBootstrapService.applyDefaultHospitalGrantedSupplierMenus(after.getHospitalId(),
+                        after.getSupplierId(), hospitalSupplier.getUpdateBy());
+                }
+            }
         }
         return rows;
     }
@@ -376,8 +425,24 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
         if (rows > 0)
         {
             insertApplyLog(apply, "SUBMIT", createBy, null, apply);
+            snapshotSupplierCertificatesForApply(apply);
         }
         return rows;
+    }
+
+    private void snapshotSupplierCertificatesForApply(ScmHospitalSupplierApply apply)
+    {
+        SupplierCertificate q = new SupplierCertificate();
+        q.setSupplierId(Long.valueOf(apply.getSupplierId()));
+        List<SupplierCertificate> certs = supplierCertificateMapper.selectSupplierCertificateList(q);
+        String json = certs == null ? "[]" : JSON.toJSONString(certs);
+        ScmSupplierCertApplyBundle bundle = new ScmSupplierCertApplyBundle();
+        bundle.setId(IdUtils.dashedUuid7());
+        bundle.setApplyId(apply.getApplyId());
+        bundle.setHospitalId(apply.getHospitalId());
+        bundle.setSupplierId(apply.getSupplierId());
+        bundle.setCertBundleJson(json);
+        scmSupplierCertApplyBundleMapper.insertBundle(bundle);
     }
 
     @Override
@@ -510,6 +575,7 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
         relation.setCreateBy(operBy);
         hospitalSupplierMapper.insertHospitalSupplier(relation);
         insertChangeLog(relation, "CREATE_FROM_APPLY", operBy, null, relation);
+        scmScopeBootstrapService.applyDefaultHospitalGrantedSupplierMenus(hospitalId, supplierId, operBy);
     }
 
     private void validateSupplyDateRange(Date supplyStartDate, Date supplyEndDate)

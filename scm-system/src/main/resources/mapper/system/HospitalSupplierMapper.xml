@@ -23,6 +23,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="supplyStartDate"  column="supply_start_date"  />
         <result property="supplyEndDate"    column="supply_end_date"    />
         <result property="hospitalName"     column="hospital_name"      />
+        <result property="hospitalCode"     column="hospital_code"      />
         <result property="supplierName"     column="supplier_name"      />
         <result property="createBy"         column="create_by"          />
         <result property="createTime"       column="create_time"       />
@@ -36,7 +37,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                hs.unbind_time, hs.unbind_by, hs.status, hs.audit_status, hs.audit_time, hs.audit_by,
                hs.disable_status, hs.stop_time, hs.stop_by, hs.supply_start_date, hs.supply_end_date,
                hs.create_by, hs.create_time, hs.update_by, hs.update_time, hs.remark,
-               h.hospital_name, s.company_name as supplier_name
+               h.hospital_name, h.hospital_code, s.company_name as supplier_name
         from scm_hospital_supplier hs
         left join scm_hospital h on hs.hospital_id = h.hospital_id
         left join scm_supplier s on hs.supplier_id = s.supplier_id
@@ -180,6 +181,18 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         from scm_delivery
         where hospital_id = #{hospitalId}
           and supplier_id = #{supplierId}
+    </select>
+
+    <select id="selectHospitalIdsInActiveSupplyForSupplier" resultType="long">
+        select distinct hs.hospital_id
+        from scm_hospital_supplier hs
+        where hs.supplier_id = #{supplierId}
+          and (hs.del_flag is null or hs.del_flag = '0')
+          and hs.bind_status = '1'
+          and (hs.audit_status = '1' or hs.audit_status is null)
+          and (hs.disable_status = '0' or hs.disable_status is null)
+          and (hs.supply_end_date is null or hs.supply_end_date &gt;= curdate())
+          and (hs.supply_start_date is null or hs.supply_start_date &lt;= curdate())
     </select>
 </mapper>
 

@@ -1,9 +1,12 @@
 package com.scm.system.service.impl;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,11 +18,13 @@ import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.Order;
 import com.scm.system.domain.OrderDetail;
 import com.scm.system.domain.HospitalSupplier;
+import com.scm.common.core.domain.entity.SysRole;
 import com.scm.system.domain.vo.OrderLineDeliveryQtyVo;
 import com.scm.system.mapper.HospitalSupplierMapper;
 import com.scm.system.mapper.OrderDeliveryTraceMapper;
 import com.scm.system.mapper.OrderDetailMapper;
 import com.scm.system.mapper.OrderMapper;
+import com.scm.system.mapper.SysRoleMapper;
 import com.scm.system.service.IOrderService;
 import com.scm.system.service.IScmHospitalContextService;
 import com.scm.system.service.IScmHospitalSupplierMenuScopeService;
@@ -58,6 +63,8 @@ public class OrderServiceImpl implements IOrderService
     private IScmHospitalSupplierMenuScopeService scmHospitalSupplierMenuScopeService;
     @Autowired
     private HospitalSupplierMapper hospitalSupplierMapper;
+    @Autowired
+    private SysRoleMapper sysRoleMapper;
 
     /**
      * 查询订单信息
@@ -71,9 +78,24 @@ public class OrderServiceImpl implements IOrderService
         Order order = orderMapper.selectOrderById(orderId);
         if (order != null)
         {
+            assertOrderViewScope(order);
             order.setOrderDetails(selectOrderDetailListByOrderId(orderId));
         }
         return order;
+    }
+
+    private void assertOrderViewScope(Order order)
+    {
+        Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());
+        if (hospitalCtx != null && order.getHospitalId() != null && !hospitalCtx.equals(order.getHospitalId()))
+        {
+            throw new ServiceException("无权查看其他医院订单");
+        }
+        Long supplierCtx = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (supplierCtx != null && order.getSupplierId() != null && !supplierCtx.equals(order.getSupplierId()))
+        {
+            throw new ServiceException("无权查看其他供应商订单");
+        }
     }
 
     /**
@@ -91,6 +113,7 @@ public class OrderServiceImpl implements IOrderService
 
     private void applySupplierHospitalDataScope(Order order)
     {
+        Long userId = ShiroUtils.getUserId();
         Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());
         if (hospitalCtx != null)
         {
@@ -100,6 +123,16 @@ public class OrderServiceImpl implements IOrderService
         if (supplierCtx == null)
         {
             return;
+        }
+        List<Long> roleSupplierIds = resolveUserRoleSupplierIds(userId);
+        if (!roleSupplierIds.isEmpty())
+        {
+            if (!roleSupplierIds.contains(supplierCtx))
+            {
+                order.getParams().put("scopePairBlock", Boolean.TRUE);
+                return;
+            }
+            order.getParams().put("roleSupplierIds", roleSupplierIds);
         }
         order.setSupplierId(supplierCtx);
         List<Long> forbid = hospitalSupplierPermissionService.listForbidSubmitHospitalIds(supplierCtx);
@@ -130,6 +163,11 @@ public class OrderServiceImpl implements IOrderService
         {
             return;
         }
+        List<Long> roleSupplierIds = resolveUserRoleSupplierIds(ShiroUtils.getUserId());
+        if (!roleSupplierIds.isEmpty() && !roleSupplierIds.contains(supplierCtx))
+        {
+            throw new ServiceException("当前角色无供应商数据权限");
+        }
         Long hid = order.getHospitalId();
         if (hid == null)
         {
@@ -140,8 +178,34 @@ public class OrderServiceImpl implements IOrderService
         {
             throw new ServiceException("无权代其他供应商提交订单数据");
         }
+        if (!roleSupplierIds.isEmpty() && !roleSupplierIds.contains(sid))
+        {
+            throw new ServiceException("当前角色无该供应商数据权限");
+        }
         hospitalSupplierPermissionService.assertSubmitAllowed(hid, sid);
         assertHospitalSupplierBound(hid, sid);
+    }
+
+    private List<Long> resolveUserRoleSupplierIds(Long userId)
+    {
+        if (userId == null)
+        {
+            return new ArrayList<>();
+        }
+        List<SysRole> roles = sysRoleMapper.selectRolesByUserId(userId);
+        if (roles == null || roles.isEmpty())
+        {
+            return new ArrayList<>();
+        }
+        Set<Long> out = new HashSet<>();
+        for (SysRole role : roles)
+        {
+            if (role != null && role.getSupplierId() != null)
+            {
+                out.add(role.getSupplierId());
+            }
+        }
+        return new ArrayList<>(out);
     }
 
     private void assertHospitalSupplierBound(Long hospitalId, Long supplierId)

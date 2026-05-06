@@ -2,6 +2,7 @@ package com.scm.system.service.impl;
 
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import com.scm.common.core.text.Convert;
 import com.scm.common.utils.DateUtils;
@@ -9,6 +10,7 @@ import com.scm.common.utils.PinyinUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.Supplier;
 import com.scm.system.mapper.SupplierMapper;
+import com.scm.system.service.ISupplierCertificateService;
 import com.scm.system.service.ISupplierService;
 
 /**
@@ -21,6 +23,10 @@ public class SupplierServiceImpl implements ISupplierService
 {
     @Autowired
     private SupplierMapper supplierMapper;
+
+    @Autowired
+    @Lazy
+    private ISupplierCertificateService supplierCertificateService;
 
     /**
      * 查询供应商信息
@@ -70,7 +76,19 @@ public class SupplierServiceImpl implements ISupplierService
         }
         fillSupplierPinyin(supplier);
         supplier.setCreateTime(DateUtils.getNowDate());
-        return supplierMapper.insertSupplier(supplier);
+        int rows = supplierMapper.insertSupplier(supplier);
+        if (rows > 0 && supplier.getSupplierId() != null)
+        {
+            try
+            {
+                supplierCertificateService.ensureMissingCertificatesForSupplier(supplier.getSupplierId(),
+                    supplier.getCreateBy() != null ? supplier.getCreateBy() : "");
+            }
+            catch (Exception ignored)
+            {
+            }
+        }
+        return rows;
     }
 
     /**
@@ -133,7 +151,19 @@ public class SupplierServiceImpl implements ISupplierService
     {
         fillSupplierPinyin(supplier);
         supplier.setUpdateTime(DateUtils.getNowDate());
-        return supplierMapper.updateSupplier(supplier);
+        int rows = supplierMapper.updateSupplier(supplier);
+        if (rows > 0 && supplier.getSupplierId() != null)
+        {
+            try
+            {
+                supplierCertificateService.ensureMissingCertificatesForSupplier(supplier.getSupplierId(),
+                    supplier.getUpdateBy() != null ? supplier.getUpdateBy() : "");
+            }
+            catch (Exception ignored)
+            {
+            }
+        }
+        return rows;
     }
 
     /**

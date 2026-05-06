@@ -1,16 +1,25 @@
 package com.scm.system.service.impl;
 
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import com.scm.common.core.text.Convert;
+import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
+import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.ProductCertificate;
+import com.scm.system.domain.vo.ProductMaterialArchiveVo;
 import com.scm.system.mapper.ProductCertificateMapper;
+import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.IProductCertificateService;
+import com.scm.system.service.IProductCertLicenseSnapService;
+import com.scm.system.service.IScmSupplierContextService;
 
 /**
  * 产品证件 服务层实现
@@ -26,6 +35,108 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
     @Autowired
     private com.scm.system.service.IMaterialDictService materialDictService;
 
+    @Autowired
+    private IScmSupplierContextService scmSupplierContextService;
+
+    @Autowired
+    private IHospitalSupplierService hospitalSupplierService;
+
+    @Autowired
+    @Lazy
+    private IProductCertLicenseSnapService productCertLicenseSnapService;
+
+    private void ensureSnapStubsAfterCertChange(Long certificateId, String createOrUpdateBy)
+    {
+        if (certificateId == null)
+        {
+            return;
+        }
+        try
+        {
+            productCertLicenseSnapService.ensureProductSnapStubsForCertificate(certificateId,
+                createOrUpdateBy != null ? createOrUpdateBy : "");
+        }
+        catch (Exception ignored)
+        {
+            // 权限或类型表未就绪时不阻断主流程
+        }
+    }
+
+    private void assertProductCertificateSupplierScope(ProductCertificate c)
+    {
+        Long sid = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (sid != null && c != null && c.getSupplierId() != null && !sid.equals(c.getSupplierId()))
+        {
+            throw new ServiceException("无权操作其他供应商的产品证件");
+        }
+    }
+
+    private void applySupplierListScope(ProductCertificate q)
+    {
+        Long sid = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (sid != null)
+        {
+            q.setSupplierId(sid);
+            assertHospitalCodeAllowedForSupplier(sid, q.getHospitalCode());
+        }
+    }
+
+    private void assertHospitalCodeAllowedForSupplier(Long supplierId, String hospitalCode)
+    {
+        if (supplierId == null || StringUtils.isEmpty(hospitalCode))
+        {
+            return;
+        }
+        assertHospitalLinkedToSupplier(supplierId, hospitalCode.trim());
+    }
+
+    private void assertHospitalLinkedToSupplier(Long supplierId, String hospitalCode)
+    {
+        List<HospitalSupplier> list = hospitalSupplierService.selectSupplierLinkedHospitalsForProduct(supplierId);
+        for (HospitalSupplier hs : list)
+        {
+            if (hospitalCode.equals(hs.getHospitalCode()))
+            {
+                return;
+            }
+        }
+        throw new ServiceException("无权操作：所选医院与当前供应商无有效关联");
+    }
+
+    /**
+     * 新增时医院必填：供应商须选择关联医院（编码+ID）；平台须填写医院编码。
+     */
+    private void assertHospitalRequiredOnInsert(ProductCertificate productCertificate, Long supplierUserSid)
+    {
+        if (supplierUserSid != null)
+        {
+            if (StringUtils.isEmpty(StringUtils.trimToNull(productCertificate.getHospitalCode())))
+            {
+                throw new ServiceException("请选择医院");
+            }
+            if (StringUtils.isEmpty(StringUtils.trimToNull(productCertificate.getHospitalId())))
+            {
+                throw new ServiceException("请选择医院");
+            }
+            assertHospitalLinkedToSupplier(supplierUserSid, productCertificate.getHospitalCode().trim());
+        }
+        else if (StringUtils.isEmpty(StringUtils.trimToNull(productCertificate.getHospitalCode())))
+        {
+            throw new ServiceException("请填写医院编码");
+        }
+    }
+
+    /** 修改时不允许变更医院，始终以库中原值为准。 */
+    private void preserveHospitalOnUpdate(ProductCertificate incoming, ProductCertificate before)
+    {
+        if (before == null || incoming == null)
+        {
+            return;
+        }
+        incoming.setHospitalCode(before.getHospitalCode());
+        incoming.setHospitalId(before.getHospitalId());
+    }
+
     /**
      * 查询产品证件信息
      * 
@@ -35,7 +146,12 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
     @Override
     public ProductCertificate selectProductCertificateById(Long certificateId)
     {
-        return productCertificateMapper.selectProductCertificateById(certificateId);
+        ProductCertificate c = productCertificateMapper.selectProductCertificateById(certificateId);
+        if (c != null)
+        {
+            assertProductCertificateSupplierScope(c);
+        }
+        return c;
     }
 
     /**
@@ -47,7 +163,33 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
     @Override
     public List<ProductCertificate> selectProductCertificateList(ProductCertificate productCertificate)
     {
+        applySupplierListScope(productCertificate);
         return productCertificateMapper.selectProductCertificateList(productCertificate);
+    }
+
+    @Override
+    public void ensureProductMaterialArchiveAccess(String hospitalCode)
+    {
+        Long sid = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (sid == null)
+        {
+            throw new ServiceException("仅供应商账号可使用医院产品档案");
+        }
+        if (StringUtils.isEmpty(hospitalCode))
+        {
+            throw new ServiceException("请选择医院");
+        }
+        assertHospitalLinkedToSupplier(sid, hospitalCode.trim());
+    }
+
+    @Override
+    public List<ProductMaterialArchiveVo> selectMaterialArchiveSummaryData(Long supplierId, String hospitalCode)
+    {
+        if (supplierId == null || StringUtils.isEmpty(hospitalCode))
+        {
+            return Collections.emptyList();
+        }
+        return productCertificateMapper.selectMaterialArchiveSummaryList(supplierId, hospitalCode.trim());
     }
 
     /**
@@ -59,6 +201,7 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
     @Override
     public List<ProductCertificate> selectExpiringCertificateList(ProductCertificate productCertificate)
     {
+        applySupplierListScope(productCertificate);
         return productCertificateMapper.selectExpiringCertificateList(productCertificate);
     }
 
@@ -89,6 +232,12 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
                                        String specification, String model, String unit,
                                        String manufacturerName, java.math.BigDecimal purchasePrice)
     {
+        Long sid = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (sid != null)
+        {
+            productCertificate.setSupplierId(sid);
+        }
+        assertHospitalRequiredOnInsert(productCertificate, sid);
         if (StringUtils.isEmpty(productCertificate.getAuditStatus()))
         {
             productCertificate.setAuditStatus("0"); // 默认待审核
@@ -120,7 +269,12 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
         productCertificate.setCreateTime(DateUtils.getNowDate());
         // 检查过期状态
         checkExpiredStatus(productCertificate);
-        return productCertificateMapper.insertProductCertificate(productCertificate);
+        int rows = productCertificateMapper.insertProductCertificate(productCertificate);
+        if (rows > 0 && productCertificate.getCertificateId() != null)
+        {
+            ensureSnapStubsAfterCertChange(productCertificate.getCertificateId(), productCertificate.getCreateBy());
+        }
+        return rows;
     }
     
     /**
@@ -198,10 +352,31 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
     @Override
     public int updateProductCertificate(ProductCertificate productCertificate)
     {
+        ProductCertificate before = productCertificateMapper.selectProductCertificateById(productCertificate.getCertificateId());
+        if (before != null)
+        {
+            assertProductCertificateSupplierScope(before);
+        }
+        preserveHospitalOnUpdate(productCertificate, before);
+        Long sid = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (sid != null)
+        {
+            productCertificate.setSupplierId(sid);
+            String hc = productCertificate.getHospitalCode();
+            if (StringUtils.isNotEmpty(hc))
+            {
+                assertHospitalLinkedToSupplier(sid, hc.trim());
+            }
+        }
         productCertificate.setUpdateTime(DateUtils.getNowDate());
         // 检查过期状态
         checkExpiredStatus(productCertificate);
-        return productCertificateMapper.updateProductCertificate(productCertificate);
+        int rows = productCertificateMapper.updateProductCertificate(productCertificate);
+        if (rows > 0 && productCertificate.getCertificateId() != null)
+        {
+            ensureSnapStubsAfterCertChange(productCertificate.getCertificateId(), productCertificate.getUpdateBy());
+        }
+        return rows;
     }
     
     /**
@@ -219,6 +394,22 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
                                        String specification, String model, String unit,
                                        String manufacturerName, java.math.BigDecimal purchasePrice)
     {
+        ProductCertificate before = productCertificateMapper.selectProductCertificateById(productCertificate.getCertificateId());
+        if (before != null)
+        {
+            assertProductCertificateSupplierScope(before);
+        }
+        preserveHospitalOnUpdate(productCertificate, before);
+        Long sid = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (sid != null)
+        {
+            productCertificate.setSupplierId(sid);
+            String hc = productCertificate.getHospitalCode();
+            if (StringUtils.isNotEmpty(hc))
+            {
+                assertHospitalLinkedToSupplier(sid, hc.trim());
+            }
+        }
         productCertificate.setUpdateTime(DateUtils.getNowDate());
         // 检查过期状态
         checkExpiredStatus(productCertificate);
@@ -272,7 +463,10 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
                 }
             }
         }
-        
+        if (result > 0 && productCertificate.getCertificateId() != null)
+        {
+            ensureSnapStubsAfterCertChange(productCertificate.getCertificateId(), productCertificate.getUpdateBy());
+        }
         return result;
     }
 
@@ -285,7 +479,17 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
     @Override
     public int deleteProductCertificateByIds(String ids)
     {
-        return productCertificateMapper.deleteProductCertificateByIds(Convert.toStrArray(ids));
+        String[] arr = Convert.toStrArray(ids);
+        for (String id : arr)
+        {
+            Long certId = Long.parseLong(id);
+            ProductCertificate before = productCertificateMapper.selectProductCertificateById(certId);
+            if (before != null)
+            {
+                assertProductCertificateSupplierScope(before);
+            }
+        }
+        return productCertificateMapper.deleteProductCertificateByIds(arr);
     }
 
     /**
@@ -297,6 +501,11 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
     @Override
     public int deleteProductCertificateById(Long certificateId)
     {
+        ProductCertificate before = productCertificateMapper.selectProductCertificateById(certificateId);
+        if (before != null)
+        {
+            assertProductCertificateSupplierScope(before);
+        }
         return productCertificateMapper.deleteProductCertificateById(certificateId);
     }
 
@@ -309,9 +518,30 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
     @Override
     public int auditProductCertificate(ProductCertificate productCertificate)
     {
+        ProductCertificate before = productCertificateMapper.selectProductCertificateById(productCertificate.getCertificateId());
+        if (before != null)
+        {
+            assertProductCertificateSupplierScope(before);
+        }
         productCertificate.setAuditTime(DateUtils.getNowDate());
         productCertificate.setUpdateTime(DateUtils.getNowDate());
         return productCertificateMapper.updateProductCertificate(productCertificate);
+    }
+
+    @Override
+    public int updateProductCertificateFile(Long certificateId, String certificateFile, String updateBy)
+    {
+        ProductCertificate before = productCertificateMapper.selectProductCertificateById(certificateId);
+        if (before == null)
+        {
+            throw new ServiceException("产品证件不存在");
+        }
+        assertProductCertificateSupplierScope(before);
+        ProductCertificate row = new ProductCertificate();
+        row.setCertificateId(certificateId);
+        row.setCertificateFile(certificateFile != null ? certificateFile : "");
+        row.setUpdateBy(updateBy);
+        return productCertificateMapper.updateProductCertificateFile(row);
     }
 
     /**
@@ -320,7 +550,9 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
     @Override
     public void checkAndUpdateExpiredStatus()
     {
-        List<ProductCertificate> certificates = productCertificateMapper.selectProductCertificateList(new ProductCertificate());
+        ProductCertificate scopeQuery = new ProductCertificate();
+        applySupplierListScope(scopeQuery);
+        List<ProductCertificate> certificates = productCertificateMapper.selectProductCertificateList(scopeQuery);
         Date now = DateUtils.getNowDate();
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(now);

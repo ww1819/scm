@@ -65,5 +65,19 @@ public interface ICertificateTypeService
      * @return 结果
      */
     public boolean checkTypeCodeUnique(CertificateType certificateType);
+
+    /**
+     * 产品证件扩展证照：列出 scm_certificate_type 中 type_category=product（不区分大小写）的启用类型；
+     * scm_certificate_config(product_certificate) 中已配置的类型排在前面，其余按 order_num 排序。
+     */
+    public List<CertificateType> selectProductExtensionTypesForSnap();
+
+    /**
+     * 供应商证件：config_type=supplier_certificate，配置为空则回退 type_category=supplier。
+     */
+    public List<CertificateType> selectSupplierExtensionTypesForSnap();
+
+    /** 按类型编码取一条启用类型（无则返回 null） */
+    public CertificateType selectByTypeCode(String typeCode);
 }
 

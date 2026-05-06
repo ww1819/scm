@@ -94,6 +94,9 @@ public class ProductCertificate extends BaseEntity
     @Excel(name = "医院编码")
     private String hospitalCode;
 
+    /** 医院主键ID（字符串，对应 scm_hospital.hospital_id） */
+    private String hospitalId;
+
     /** 销售客户 */
     @Excel(name = "销售客户")
     private String saleCustomer;
@@ -429,6 +432,16 @@ public class ProductCertificate extends BaseEntity
         this.hospitalCode = hospitalCode;
     }
 
+    public String getHospitalId()
+    {
+        return hospitalId;
+    }
+
+    public void setHospitalId(String hospitalId)
+    {
+        this.hospitalId = hospitalId;
+    }
+
     public String getSaleCustomer()
     {
         return saleCustomer;
@@ -473,6 +486,7 @@ public class ProductCertificate extends BaseEntity
             .append("bidPrice", getBidPrice())
             .append("salePrice", getSalePrice())
             .append("hospitalCode", getHospitalCode())
+            .append("hospitalId", getHospitalId())
             .append("saleCustomer", getSaleCustomer())
             .append("productCategory", getProductCategory())
             .append("certificateFile", getCertificateFile())

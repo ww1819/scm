@@ -235,6 +235,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </set>
         where certificate_id = #{certificateId}
     </update>
+
+    <update id="updateSupplierCertificateFile" parameterType="SupplierCertificate">
+        update scm_supplier_certificate
+        set certificate_file = #{certificateFile, jdbcType=VARCHAR},
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where certificate_id = #{certificateId}
+    </update>
     
     <update id="deleteSupplierCertificateById" parameterType="Long">
         update scm_supplier_certificate set status = '1' where certificate_id = #{certificateId}
@@ -246,5 +254,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{certificateId}
         </foreach>
     </update>
+
+    <select id="countBySupplierIdAndCertificateType" resultType="int">
+        select count(*) from scm_supplier_certificate c
+        where c.supplier_id = #{supplierId}
+          and c.certificate_type = #{certificateType}
+          and (c.status is null or c.status != '1')
+    </select>
 </mapper>
 

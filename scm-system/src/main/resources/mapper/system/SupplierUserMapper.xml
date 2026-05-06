@@ -68,16 +68,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         order by su.is_main desc, su.create_time desc
     </select>
 
+    <!-- 内层 limit：避免与 PageHelper 追加的外层 LIMIT 拼成 "limit 1 LIMIT n" 语法错误 -->
     <select id="selectSupplierUserByUserId" parameterType="Long" resultMap="SupplierUserResult">
-        <include refid="selectSupplierUserVo"/>
-        where su.user_id = #{userId}
-        order by su.is_main desc, su.create_time desc
-        limit 1
+        select * from (
+            <include refid="selectSupplierUserVo"/>
+            where su.user_id = #{userId}
+            order by su.is_main desc, su.create_time desc
+            limit 1
+        ) su_row
     </select>
 
     <select id="selectSupplierUserByUserIdAndSupplierId" resultMap="SupplierUserResult">
-        <include refid="selectSupplierUserVo"/>
-        where su.user_id = #{userId} and su.supplier_id = #{supplierId} limit 1
+        select * from (
+            <include refid="selectSupplierUserVo"/>
+            where su.user_id = #{userId} and su.supplier_id = #{supplierId}
+            limit 1
+        ) su_row
     </select>
         
     <insert id="insertSupplierUser" parameterType="SupplierUser" useGeneratedKeys="true" keyProperty="supplierUserId">

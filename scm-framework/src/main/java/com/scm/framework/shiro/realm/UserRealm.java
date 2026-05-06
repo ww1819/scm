@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.scm.common.core.domain.entity.SysUser;
+import com.scm.common.profiler.OperationProfiler;
 import com.scm.common.exception.user.CaptchaException;
 import com.scm.common.exception.user.RoleBlockedException;
 import com.scm.common.exception.user.UserBlockedException;
@@ -70,8 +71,13 @@ public class UserRealm extends AuthorizingRealm
         }
         else
         {
+            OperationProfiler perf = OperationProfiler.start(log, "shiro-authorization",
+                "userId=" + user.getUserId());
             roles = roleService.selectRoleKeys(user.getUserId());
+            perf.mark("selectRoleKeys");
             menus = menuService.selectPermsByUserId(user.getUserId());
+            perf.mark("selectPermsByUserId");
+            perf.finish(500);
             // 角色加入AuthorizationInfo认证对象
             info.setRoles(roles);
             // 权限加入AuthorizationInfo认证对象

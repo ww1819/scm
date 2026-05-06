@@ -1,5 +1,5 @@
 -- ========== SCM 供应商管理平台 建表脚本 ==========
--- 执行顺序：1.table.sql 2.column.sql 3.view.sql 4.trigger.sql 5.procedure.sql 6.function.sql 7.menu.sql 8.data_integrity.sql
+-- 执行顺序：1.table.sql 2.procedure.sql（增量列存储过程）3.column.sql 4.view.sql 5.trigger.sql 6.function.sql 7.menu.sql 8.data_integrity.sql
 -- 按「/」分段，每段一条语句执行
 /
 CREATE TABLE IF NOT EXISTS `scm_supplier` (
@@ -301,6 +301,33 @@ CREATE TABLE IF NOT EXISTS `scm_supplier_certificate` (
   KEY `idx_expire_date` (`expire_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='供应商证件表';
 /
+CREATE TABLE IF NOT EXISTS `scm_supplier_cert_apply_bundle` (
+  `id` varchar(36) NOT NULL COMMENT '主键UUID7',
+  `apply_id` varchar(36) NOT NULL COMMENT '医院关联申请单ID',
+  `hospital_id` varchar(36) NOT NULL COMMENT '目标医院',
+  `supplier_id` varchar(36) NOT NULL COMMENT '供应商',
+  `cert_bundle_json` longtext NOT NULL COMMENT '申请时点供应商全部资质证照JSON快照',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_cert_apply_bundle` (`apply_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='提交医院关联申请时资质证照抄送快照';
+/
+CREATE TABLE IF NOT EXISTS `scm_supplier_cert_change_log` (
+  `log_id` varchar(36) NOT NULL COMMENT '主键UUID7',
+  `supplier_id` bigint(20) NOT NULL COMMENT '供应商',
+  `hospital_id` bigint(20) NOT NULL COMMENT '抄送目标医院',
+  `certificate_id` bigint(20) NOT NULL COMMENT '证件ID',
+  `change_type` varchar(16) NOT NULL COMMENT 'INSERT/UPDATE/DELETE/AUDIT',
+  `before_json` longtext COMMENT '变更前JSON',
+  `after_json` longtext COMMENT '变更后JSON',
+  `create_by` varchar(64) DEFAULT NULL,
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`log_id`),
+  KEY `idx_scc_hospital` (`hospital_id`),
+  KEY `idx_scc_supplier` (`supplier_id`),
+  KEY `idx_scc_cert` (`certificate_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='供应商资质变更抄送记录';
+/
 CREATE TABLE IF NOT EXISTS `scm_product_certificate` (
   `certificate_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '证件ID',
   `material_id` bigint(20) NOT NULL COMMENT '物资ID',
@@ -318,6 +345,7 @@ CREATE TABLE IF NOT EXISTS `scm_product_certificate` (
   `bid_price` decimal(18,2) DEFAULT 0 COMMENT '中标价格',
   `sale_price` decimal(18,2) DEFAULT 0 COMMENT '销售价格',
   `hospital_code` varchar(50) DEFAULT '' COMMENT '医院编码',
+  `hospital_id` varchar(64) DEFAULT NULL COMMENT '医院主键ID字符串(scm_hospital.hospital_id)，varchar兼容',
   `sale_customer` varchar(200) DEFAULT '' COMMENT '销售客户',
   `product_category` varchar(20) DEFAULT '' COMMENT '产品类别（高值、低值）',
   `certificate_file` varchar(500) DEFAULT '' COMMENT '证件文件路径',
@@ -399,6 +427,7 @@ CREATE TABLE IF NOT EXISTS `scm_order` (
   `spd_tenant_id` varchar(64) DEFAULT NULL COMMENT 'SPD租户ID(sb_customer.customer_id，推送快照)',
   `spd_snapshot_hospital_code` varchar(64) DEFAULT NULL COMMENT '推送时快照：平台医院编码(scm_hospital.hospital_code)',
   `spd_snapshot_supplier_code` varchar(64) DEFAULT NULL COMMENT '推送时快照：平台供应商编码(scm_supplier.supplier_code)',
+  `hs_bind_snapshot` varchar(32) DEFAULT NULL COMMENT '下单/推送时医院-供应商绑定关系快照（中文：已绑定、未绑定、申请审核中等）',
   PRIMARY KEY (`order_id`),
   UNIQUE KEY `uk_order_no` (`order_no`),
   KEY `idx_hospital_id` (`hospital_id`),
@@ -1280,6 +1309,9 @@ CREATE TABLE IF NOT EXISTS zs_tp_order (
   scm_hospital_code VARCHAR(64) NULL COMMENT '入参 NEWCUSTOMER：SCM 医院编码，对应 scm_hospital.hospital_code',
   scm_hospital_id   VARCHAR(64) NULL COMMENT '由 scm_hospital_code 解析的 scm_hospital.hospital_id（字符串）',
   scm_supplier_id   VARCHAR(64) NULL COMMENT '由 scm_sup_code 解析的 scm_supplier.supplier_id（字符串）',
+  hospital_id       BIGINT(20)   NULL COMMENT '平台医院主键 scm_hospital.hospital_id',
+  supplier_id       BIGINT(20)   NULL COMMENT '平台供应商主键 scm_supplier.supplier_id',
+  hs_bind_snapshot  VARCHAR(32)  NULL COMMENT '落库时医院-供应商绑定关系快照（中文）',
   ksbh            VARCHAR(64)  NULL,
   ksmc            VARCHAR(128) NULL,
   zjly            VARCHAR(128) NULL,
@@ -1437,4 +1469,62 @@ CREATE TABLE IF NOT EXISTS `scm_supplier_export_log` (
   KEY `idx_scm_supplier_export_supplier` (`supplier_code`),
   KEY `idx_scm_supplier_export_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医院侧经前置机拉取平台供应商信息审计日志';
+/
+
+-- 产品证件扩展行：主键 UUID7（36 位，应用侧 IdUtils.dashedUuid7）；关联列一律 varchar，存数字字符串或编码，与现有 bigint 主键表逻辑关联、不设 InnoDB 物理外键，便于多源 ID 兼容
+CREATE TABLE IF NOT EXISTS `scm_product_certificate_aux` (
+  `aux_id` varchar(36) NOT NULL COMMENT '主键 UUID7（36位带横线）',
+  `certificate_id` varchar(32) NOT NULL COMMENT '逻辑关联 scm_product_certificate.certificate_id（存数字字符串）',
+  `material_id` varchar(32) DEFAULT NULL COMMENT '逻辑关联 scm_material_dict.material_id（存数字字符串，可空）',
+  `supplier_id` varchar(32) DEFAULT NULL COMMENT '逻辑关联 scm_supplier.supplier_id（存数字字符串，可空）',
+  `hospital_code` varchar(64) DEFAULT NULL COMMENT '医院编码（与 scm_hospital.hospital_code 等逻辑关联）',
+  `item_type` varchar(32) NOT NULL DEFAULT 'ATTACH' COMMENT '扩展项类型 ATTACH/NOTE/LINK 等',
+  `title` varchar(200) DEFAULT '' COMMENT '标题',
+  `file_url` varchar(500) DEFAULT '' COMMENT '附件路径或URL',
+  `content` varchar(2000) DEFAULT NULL COMMENT '文本备注',
+  `sort_num` int(11) NOT NULL DEFAULT '0' COMMENT '排序',
+  `del_flag` char(1) NOT NULL DEFAULT '0' COMMENT '删除标志（0存在 2删除）',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`aux_id`),
+  KEY `idx_spca_certificate` (`certificate_id`),
+  KEY `idx_spca_hospital_material` (`hospital_code`,`material_id`),
+  KEY `idx_spca_supplier` (`supplier_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品证件扩展行（UUID7主键，varchar逻辑外键）';
+/
+
+-- 产品证件扩展证照快照（生产许可证、生产企业营业执照等）：主键 UUID7（36 位）；certificate_id/material_id/supplier_id 等 varchar 逻辑外键；冗余字段与主证件/物资/供应商展示一致便于历史查阅
+CREATE TABLE IF NOT EXISTS `scm_product_cert_license_snap` (
+  `license_id` varchar(36) NOT NULL COMMENT '主键 UUID7（36位带横线，应用侧 IdUtils.dashedUuid7）',
+  `certificate_id` varchar(32) NOT NULL COMMENT '逻辑关联 scm_product_certificate.certificate_id（数字字符串）',
+  `material_id` varchar(32) DEFAULT NULL COMMENT '物资ID快照（逻辑外键）',
+  `supplier_id` varchar(32) DEFAULT NULL COMMENT '供应商ID快照（逻辑外键）',
+  `hospital_id` varchar(64) DEFAULT NULL COMMENT '医院主键快照',
+  `hospital_code` varchar(64) DEFAULT NULL COMMENT '医院编码快照',
+  `license_kind_code` varchar(64) NOT NULL COMMENT '证照类别编码，如 PRODUCTION_LICENSE、MANUFACTURER_BIZ_LICENSE',
+  `license_kind_name` varchar(128) DEFAULT NULL COMMENT '证照类别名称快照',
+  `license_title` varchar(200) DEFAULT NULL COMMENT '证照标题/自定义名称',
+  `license_no` varchar(128) DEFAULT NULL COMMENT '证号',
+  `issuing_body_snap` varchar(200) DEFAULT NULL COMMENT '发证机关快照',
+  `issue_date` date DEFAULT NULL COMMENT '发证日期',
+  `expire_date` date DEFAULT NULL COMMENT '有效期至',
+  `product_name_snap` varchar(200) DEFAULT NULL COMMENT '产品名称快照',
+  `manufacturer_name_snap` varchar(200) DEFAULT NULL COMMENT '生产厂家快照',
+  `supplier_company_name_snap` varchar(200) DEFAULT NULL COMMENT '供应商名称快照',
+  `register_no_snap` varchar(100) DEFAULT NULL COMMENT '注册证号快照',
+  `certificate_file` varchar(2000) DEFAULT NULL COMMENT '证照影像，多路径英文逗号分隔',
+  `del_flag` char(1) NOT NULL DEFAULT '0' COMMENT '删除标志（0存在 2删除）',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`license_id`),
+  UNIQUE KEY `uk_spcls_cert_kind` (`certificate_id`,`license_kind_code`),
+  KEY `idx_spcls_certificate` (`certificate_id`),
+  KEY `idx_spcls_material_supplier` (`material_id`,`supplier_id`,`del_flag`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品证件扩展证照快照（UUID7主键，varchar逻辑外键）';
 /

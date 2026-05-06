@@ -26,6 +26,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="bidPrice"          column="bid_price"           />
         <result property="salePrice"         column="sale_price"          />
         <result property="hospitalCode"      column="hospital_code"       />
+        <result property="hospitalId"        column="hospital_id"         />
         <result property="saleCustomer"      column="sale_customer"       />
         <result property="productCategory"   column="product_category"    />
         <result property="certificateFile"   column="certificate_file"     />
@@ -47,7 +48,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         select c.certificate_id, c.material_id, c.supplier_id, c.certificate_type, c.certificate_name,
                c.register_no, c.udi_code, c.pinyin_code, c.register_name, c.register_date, 
                c.register_issue_date, c.expire_date, c.register_valid_date, c.bid_price, c.sale_price,
-               c.hospital_code, c.sale_customer, c.product_category,
+               c.hospital_code, c.hospital_id, c.sale_customer, c.product_category,
                c.certificate_file, c.audit_status, c.audit_by, c.audit_time, c.audit_remark, 
                c.is_expired, c.is_warning, c.status, c.create_by, c.create_time, c.update_by, c.update_time, c.remark,
                m.material_name, m.material_code, m.specification, m.model, m.unit, 
@@ -85,6 +86,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="isWarning != null and isWarning != ''">
                 AND c.is_warning = #{isWarning}
             </if>
+            <if test="hospitalCode != null and hospitalCode != ''">
+                AND c.hospital_code = #{hospitalCode}
+            </if>
+            <if test="hospitalId != null and hospitalId != ''">
+                AND c.hospital_id = #{hospitalId}
+            </if>
+            <if test="materialName != null and materialName != ''">
+                AND m.material_name like concat('%', #{materialName}, '%')
+            </if>
         </where>
         order by c.expire_date asc
     </select>
@@ -100,8 +110,31 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="supplierId != null">
                 AND c.supplier_id = #{supplierId}
             </if>
+            <if test="hospitalCode != null and hospitalCode != ''">
+                AND c.hospital_code = #{hospitalCode}
+            </if>
+            <if test="hospitalId != null and hospitalId != ''">
+                AND c.hospital_id = #{hospitalId}
+            </if>
+            <if test="materialName != null and materialName != ''">
+                AND m.material_name like concat('%', #{materialName}, '%')
+            </if>
         </where>
         order by c.expire_date asc
+    </select>
+
+    <select id="selectMaterialArchiveSummaryList" resultType="com.scm.system.domain.vo.ProductMaterialArchiveVo">
+        select c.material_id as materialId,
+               max(m.material_name) as materialName,
+               max(m.material_code) as materialCode,
+               count(1) as certCount
+        from scm_product_certificate c
+        left join scm_material_dict m on c.material_id = m.material_id and m.del_flag = '0'
+        where c.status != '1'
+          and c.supplier_id = #{supplierId}
+          and c.hospital_code = #{hospitalCode}
+        group by c.material_id
+        order by max(m.material_name)
     </select>
     
     <select id="selectProductCertificateById" parameterType="Long" resultMap="ProductCertificateResult">
@@ -126,6 +159,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="bidPrice != null">bid_price,</if>
             <if test="salePrice != null">sale_price,</if>
             <if test="hospitalCode != null and hospitalCode != ''">hospital_code,</if>
+            <if test="hospitalId != null and hospitalId != ''">hospital_id,</if>
             <if test="saleCustomer != null and saleCustomer != ''">sale_customer,</if>
             <if test="productCategory != null and productCategory != ''">product_category,</if>
             <if test="certificateFile != null and certificateFile != ''">certificate_file,</if>
@@ -155,6 +189,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="bidPrice != null">#{bidPrice},</if>
             <if test="salePrice != null">#{salePrice},</if>
             <if test="hospitalCode != null and hospitalCode != ''">#{hospitalCode},</if>
+            <if test="hospitalId != null and hospitalId != ''">#{hospitalId},</if>
             <if test="saleCustomer != null and saleCustomer != ''">#{saleCustomer},</if>
             <if test="productCategory != null and productCategory != ''">#{productCategory},</if>
             <if test="certificateFile != null and certificateFile != ''">#{certificateFile},</if>
@@ -189,6 +224,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="bidPrice != null">bid_price = #{bidPrice},</if>
             <if test="salePrice != null">sale_price = #{salePrice},</if>
             <if test="hospitalCode != null and hospitalCode != ''">hospital_code = #{hospitalCode},</if>
+            <if test="hospitalId != null and hospitalId != ''">hospital_id = #{hospitalId},</if>
             <if test="saleCustomer != null and saleCustomer != ''">sale_customer = #{saleCustomer},</if>
             <if test="productCategory != null and productCategory != ''">product_category = #{productCategory},</if>
             <if test="certificateFile != null and certificateFile != ''">certificate_file = #{certificateFile},</if>
@@ -203,6 +239,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
             update_time = sysdate()
         </set>
+        where certificate_id = #{certificateId}
+    </update>
+
+    <update id="updateProductCertificateFile" parameterType="ProductCertificate">
+        update scm_product_certificate
+        set certificate_file = #{certificateFile, jdbcType=VARCHAR},
+            update_by = #{updateBy},
+            update_time = sysdate()
         where certificate_id = #{certificateId}
     </update>
     
@@ -233,6 +277,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <!-- 获取最后插入的厂家ID -->
     <select id="getLastInsertManufacturerId" resultType="Long">
         SELECT LAST_INSERT_ID()
+    </select>
+
+    <select id="selectCertificateIdsByMaterialId" resultType="long">
+        select certificate_id from scm_product_certificate
+        where material_id = #{materialId} and (status is null or status != '1')
     </select>
 </mapper>
 

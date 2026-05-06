@@ -47,6 +47,21 @@ INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, targ
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2305', '证件类型维护', '2300', '5', '/certificate/type', '', 'C', '0', '1', 'certificate:type:view', 'fa fa-list', 'admin', sysdate(), '', null, '证件类型维护菜单', '0');
 /
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2306', '供应商资质变更记录', '2300', '6', '/certificate/supplier/changeLog', '', 'C', '0', '1', 'certificate:supplierChange:view', 'fa fa-history', 'admin', sysdate(), '', null, '医院与供应商查看绑定范围内的资质变更抄送', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2307', '医院产品档案', '2300', '7', '/certificate/product/supplierHospital', '', 'C', '0', '1', 'certificate:product:view', 'fa fa-hospital-o', 'admin', sysdate(), '', null, '按关联医院查看产品档案与证件', '0');
+/
+-- 医院产品档案页内按钮（权限标识与「产品证件登记」一致，便于供应商角色单独授权本页的新增/维护）
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('23071', '档案内-证件查询', '2307', '1', '#', '', 'F', '0', '1', 'certificate:product:list', '#', 'admin', sysdate(), '', null, '', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('23072', '档案内-证件新增', '2307', '2', '#', '', 'F', '0', '1', 'certificate:product:add', '#', 'admin', sysdate(), '', null, '', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('23073', '档案内-证件修改', '2307', '3', '#', '', 'F', '0', '1', 'certificate:product:edit', '#', 'admin', sysdate(), '', null, '', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('23074', '档案内-证件删除', '2307', '4', '#', '', 'F', '0', '1', 'certificate:product:remove', '#', 'admin', sysdate(), '', null, '', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('23061', '变更记录查询', '2306', '1', '#', '', 'F', '0', '1', 'certificate:supplierChange:list', '#', 'admin', sysdate(), '', null, '', '0');
+/
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2400', '订单管理', '0', '9', '#', '', 'M', '0', '1', '', 'fa fa-shopping-cart', 'admin', sysdate(), '', null, '订单管理目录', '0');
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2401', '订单查询', '2400', '1', '/order/order', '', 'C', '0', '1', 'order:order:view', 'fa fa-list-alt', 'admin', sysdate(), '', null, '订单查询菜单', '0');
@@ -395,7 +410,7 @@ WHERE del_flag = '0' AND menu_id = '2300';
 /
 UPDATE sys_menu SET auth_type = 'supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all_supplier',
   default_open_hospital = '0', hospital_admin_only = '0', default_open_supplier = '1', supplier_admin_only = '0', menu_biz_category = 'certificate'
-WHERE del_flag = '0' AND menu_id IN ('2301','2302','23001','23002','23003','23004','23005','23006','23011','23012','23013','23014','23015','23016');
+WHERE del_flag = '0' AND menu_id IN ('2301','2302','2307','23001','23002','23003','23004','23005','23006','23011','23012','23013','23014','23015','23016','23071','23072','23073','23074');
 /
 UPDATE sys_menu SET auth_type = 'hospital', hospital_grant_supplier_flag = '0', default_open_scope = 'all_hospital',
   default_open_hospital = '1', hospital_admin_only = '0', default_open_supplier = '0', supplier_admin_only = '0', menu_biz_category = 'certificate'
@@ -563,6 +578,37 @@ SET url = '/settlement/settlement/query'
 WHERE del_flag = '0'
   AND menu_id = '2602'
   AND url <> '/settlement/settlement/query';
+/
+-- D) 2026-05-02 配送单据申请：页面级对院商可见；新增/修改/删除/审核按钮仅供应商
+UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '1', default_open_scope = 'all_hospital',
+  default_open_hospital = '1', default_open_supplier = '1', menu_biz_category = 'supply_chain'
+WHERE del_flag = '0' AND menu_id IN ('2501','25001','25005','25007','25008');
+/
+UPDATE sys_menu SET auth_type = 'supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all_supplier',
+  default_open_hospital = '0', default_open_supplier = '1', menu_biz_category = 'supply_chain'
+WHERE del_flag = '0' AND menu_id IN ('25002','25003','25004','25006');
+/
+DELETE rm FROM sys_role_menu rm INNER JOIN sys_role r ON r.role_id = rm.role_id
+WHERE r.del_flag = '0' AND r.role_type = 'hospital' AND rm.menu_id IN ('25002','25003','25004','25006');
+/
+DELETE FROM scm_hospital_menu_auth WHERE menu_id IN ('25002','25003','25004','25006');
+/
+-- E) 供应商资质变更记录：院、商均可查看各自数据域
+UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all',
+  default_open_hospital = '1', default_open_supplier = '1', menu_biz_category = 'certificate'
+WHERE del_flag = '0' AND menu_id IN ('2306','23061');
+/
+INSERT IGNORE INTO scm_hospital_menu_auth (id, hospital_id, menu_id, create_by, create_time)
+SELECT REPLACE(UUID(), '-', ''), CAST(hu.hospital_id AS CHAR), CAST(m.menu_id AS CHAR), 'migration-menu2306', NOW()
+FROM scm_hospital_user hu
+JOIN sys_menu m ON m.menu_id IN ('2306','23061') AND (m.del_flag = '0' OR m.del_flag IS NULL)
+WHERE (hu.del_flag = '0' OR hu.del_flag IS NULL);
+/
+INSERT IGNORE INTO scm_supplier_menu_auth (id, supplier_id, hospital_id, menu_id, create_by, create_time)
+SELECT REPLACE(UUID(), '-', ''), CAST(su.supplier_id AS CHAR), NULL, CAST(m.menu_id AS CHAR), 'migration-menu2306', NOW()
+FROM scm_supplier_user su
+JOIN sys_menu m ON m.menu_id IN ('2306','23061') AND (m.del_flag = '0' OR m.del_flag IS NULL)
+WHERE (su.del_flag = '0' OR su.del_flag IS NULL);
 /
 -- C) 平台菜单回收：医院/供应商角色不应持有 auth_type=platform 的菜单
 DELETE rm

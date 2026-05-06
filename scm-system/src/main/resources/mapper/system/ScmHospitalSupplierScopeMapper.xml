@@ -10,6 +10,7 @@
     <select id="selectPairsHospitalGrantMenu" resultMap="PairResult">
         SELECT sma.hospital_id, sma.supplier_id
         FROM scm_supplier_menu_auth sma
+        INNER JOIN scm_hospital_menu_auth hma ON hma.hospital_id = sma.hospital_id AND hma.menu_id = sma.menu_id
         INNER JOIN scm_hospital_supplier hs ON hs.hospital_id = sma.hospital_id AND hs.supplier_id = sma.supplier_id AND hs.bind_status = '1'
         WHERE sma.menu_id = #{menuId} AND sma.hospital_id = #{hospitalId}
     </select>
@@ -18,12 +19,14 @@
         SELECT #{hospitalId} AS hospital_id, hs.supplier_id
         FROM scm_hospital_supplier hs
         INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = hs.supplier_id AND sma.menu_id = #{menuId} AND sma.hospital_id IS NULL
+        INNER JOIN scm_hospital_menu_auth hma ON hma.hospital_id = hs.hospital_id AND hma.menu_id = sma.menu_id
         WHERE hs.hospital_id = #{hospitalId} AND hs.bind_status = '1'
     </select>
 
     <select id="selectPairsSupplierGrantMenu" resultMap="PairResult">
         SELECT sma.hospital_id, sma.supplier_id
         FROM scm_supplier_menu_auth sma
+        INNER JOIN scm_hospital_menu_auth hma ON hma.hospital_id = sma.hospital_id AND hma.menu_id = sma.menu_id
         INNER JOIN scm_hospital_supplier hs ON hs.hospital_id = sma.hospital_id AND hs.supplier_id = sma.supplier_id AND hs.bind_status = '1'
         WHERE sma.menu_id = #{menuId} AND sma.supplier_id = #{supplierId} AND sma.hospital_id IS NOT NULL
     </select>
@@ -32,6 +35,7 @@
         SELECT hs.hospital_id, hs.supplier_id
         FROM scm_hospital_supplier hs
         INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = hs.supplier_id AND sma.menu_id = #{menuId} AND sma.hospital_id IS NULL
+        INNER JOIN scm_hospital_menu_auth hma ON hma.hospital_id = hs.hospital_id AND hma.menu_id = sma.menu_id
         WHERE hs.supplier_id = #{supplierId} AND hs.bind_status = '1'
     </select>
 </mapper>

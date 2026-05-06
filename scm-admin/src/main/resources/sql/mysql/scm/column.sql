@@ -1,104 +1,6 @@
--- ========== SCM 模块 增量字段（含 add_table_column 存储过程） ==========
--- 建议在 table.sql 之后执行；按「/」分段执行。新环境若已执行 table.sql 完整建表，本脚本中与 table 中已存在字段的 CALL 会跳过。
--- 本脚本已包含：add_*.sql 中的新增列、常见系统表扩展列，以及 UUID 主键列宽升级（存储过程 upgrade_uuid_column_if_varchar32：列类型非 varchar，或 varchar 长度小于 36 时改为 varchar(36)；已为 varchar 且长度不小于 36 则跳过）。订单/条码四表建表定义在 scm/table.sql 末尾；scminterface 侧副本见 scminterface-admin/src/main/resources/sql/mysql/scm/table.sql。scm_hospital_menu_auth / scm_supplier_menu_auth / scm_hospital_supplier_permission 全量建表在 spd/spd-admin/src/main/resources/sql/mysql/material/table.sql。
--- 先删除再创建，保证可重复执行（MySQL 无 CREATE PROCEDURE IF NOT EXISTS）
-/
-DROP PROCEDURE IF EXISTS `add_table_column`;
-/
-/*
- * 存储过程：add_table_column
- * 功能：安全地为指定数据表添加新字段，避免重复添加
- */
-CREATE PROCEDURE `add_table_column`(
-    IN p_table_name VARCHAR(64),
-    IN p_column_name VARCHAR(64),
-    IN p_column_type VARCHAR(64),
-    IN p_column_comment VARCHAR(256),
-    IN p_default_value VARCHAR(256)
-)
-add_column_block:
-BEGIN
-    DECLARE v_column_exists INT DEFAULT 0;
-    SET p_default_value = IFNULL(p_default_value, NULL);
-    SET @dynamic_sql = '';
-    IF p_table_name IS NULL OR p_table_name = ''
-        OR p_column_name IS NULL OR p_column_name = ''
-        OR p_column_type IS NULL OR p_column_type = ''
-        OR p_column_comment IS NULL OR p_column_comment = '' THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = '错误：表名、字段名、字段类型、字段注释为必填参数，不能为空！';
-    END IF;
-    SELECT COUNT(*) INTO v_column_exists
-    FROM information_schema.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE()
-      AND TABLE_NAME = p_table_name
-      AND COLUMN_NAME = p_column_name;
-    IF v_column_exists > 0 THEN
-        SELECT CONCAT('提示：字段【', p_column_name, '】已存在于表【', p_table_name, '】，无需重复添加') AS 执行结果;
-        LEAVE add_column_block;
-    END IF;
-    SET @dynamic_sql = CONCAT(
-        'ALTER TABLE `', p_table_name, '` ADD COLUMN `', p_column_name, '` ', p_column_type, ' '
-    );
-    IF p_default_value IS NOT NULL AND p_default_value != '' THEN
-        SET @dynamic_sql = CONCAT(@dynamic_sql, 'DEFAULT ', QUOTE(p_default_value), ' ');
-    END IF;
-    SET @dynamic_sql = CONCAT(@dynamic_sql, 'COMMENT ', QUOTE(p_column_comment));
-    PREPARE stmt FROM @dynamic_sql;
-    EXECUTE stmt;
-    DEALLOCATE PREPARE stmt;
-    SELECT CONCAT('成功：字段【', p_column_name, '】已成功添加到表【', p_table_name, '】') AS 执行结果;
-    SET @dynamic_sql = '';
-END;
-/
-DROP PROCEDURE IF EXISTS `upgrade_uuid_column_if_varchar32`;
-/
-CREATE PROCEDURE `upgrade_uuid_column_if_varchar32`(
-    IN p_table_name VARCHAR(64),
-    IN p_column_name VARCHAR(64),
-    IN p_column_comment VARCHAR(256)
-)
-upgrade_uuid_block:
-BEGIN
-    DECLARE v_data_type VARCHAR(64) DEFAULT NULL;
-    DECLARE v_len INT DEFAULT NULL;
-    DECLARE v_table_exists INT DEFAULT 0;
-    IF p_table_name IS NULL OR p_table_name = ''
-        OR p_column_name IS NULL OR p_column_name = ''
-        OR p_column_comment IS NULL OR p_column_comment = '' THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = '错误：表名、字段名、字段注释为必填参数，不能为空！';
-    END IF;
-    SELECT COUNT(*) INTO v_table_exists
-    FROM information_schema.TABLES
-    WHERE TABLE_SCHEMA = DATABASE()
-      AND TABLE_NAME = p_table_name;
-    IF v_table_exists = 0 THEN
-        SELECT CONCAT('跳过：表【', p_table_name, '】不存在') AS upgrade_uuid_column_result;
-        LEAVE upgrade_uuid_block;
-    END IF;
-    SELECT DATA_TYPE, CHARACTER_MAXIMUM_LENGTH INTO v_data_type, v_len
-    FROM information_schema.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE()
-      AND TABLE_NAME = p_table_name
-      AND COLUMN_NAME = p_column_name;
-    IF v_data_type IS NULL THEN
-        SELECT CONCAT('跳过：列【', p_table_name, '】.【', p_column_name, '】不存在') AS upgrade_uuid_column_result;
-        LEAVE upgrade_uuid_block;
-    END IF;
-    IF v_data_type = 'varchar' AND v_len IS NOT NULL AND v_len >= 36 THEN
-        SELECT CONCAT('跳过：【', p_table_name, '】.【', p_column_name, '】已为 varchar(', v_len, ')，无需变更') AS upgrade_uuid_column_result;
-        LEAVE upgrade_uuid_block;
-    END IF;
-    SET @dynamic_sql = CONCAT(
-        'ALTER TABLE `', p_table_name, '` MODIFY COLUMN `', p_column_name, '` varchar(36) NOT NULL COMMENT ', QUOTE(p_column_comment)
-    );
-    PREPARE stmt FROM @dynamic_sql;
-    EXECUTE stmt;
-    DEALLOCATE PREPARE stmt;
-    SET @dynamic_sql = NULL;
-    SELECT CONCAT('成功：【', p_table_name, '】.【', p_column_name, '】已调整为 varchar(36)（原类型=', v_data_type, IF(v_len IS NULL, '', CONCAT(' 长度=', v_len)), '）') AS upgrade_uuid_column_result;
-END;
+-- ========== SCM 模块 增量字段（仅 CALL；存储过程定义见 procedure.sql，须先执行） ==========
+-- 建议在 table.sql、procedure.sql 之后执行；按「/」分段执行。新环境若已执行 table.sql 完整建表，本脚本中与 table 中已存在字段的 CALL 会跳过。
+-- UUID 列宽升级见 procedure.sql 中 upgrade_uuid_column_if_varchar32。订单/条码四表建表定义在 scm/table.sql 末尾；scminterface 侧副本见 scminterface-admin/src/main/resources/sql/mysql/scm/table.sql。scm_hospital_menu_auth / scm_supplier_menu_auth / scm_hospital_supplier_permission 全量建表在 spd/spd-admin/src/main/resources/sql/mysql/material/table.sql。
 /
 -- ========== 供应商表新增字段 ==========
 CALL add_table_column('scm_supplier', 'tax_number', 'varchar(50)', '税号', NULL);
@@ -121,6 +23,8 @@ CALL add_table_column('scm_product_certificate', 'bid_price', 'decimal(18,2)', '
 CALL add_table_column('scm_product_certificate', 'sale_price', 'decimal(18,2)', '销售价格', '0');
 /
 CALL add_table_column('scm_product_certificate', 'hospital_code', 'varchar(50)', '医院编码', NULL);
+/
+CALL add_table_column('scm_product_certificate', 'hospital_id', 'varchar(64)', '医院主键ID字符串(scm_hospital.hospital_id)', NULL);
 /
 CALL add_table_column('scm_product_certificate', 'sale_customer', 'varchar(200)', '销售客户', NULL);
 /
@@ -542,6 +446,14 @@ CALL add_table_column('scm_order', 'spd_snapshot_hospital_code', 'varchar(64)', 
 /
 CALL add_table_column('scm_order', 'spd_snapshot_supplier_code', 'varchar(64)', '推送时快照：平台供应商编码', NULL);
 /
+CALL add_table_column('scm_order', 'hs_bind_snapshot', 'varchar(32)', '下单/推送时医院-供应商绑定关系快照（中文：已绑定、未绑定、申请审核中等）', NULL);
+/
+CALL add_table_column('zs_tp_order', 'hospital_id', 'bigint(20)', '平台医院主键 scm_hospital.hospital_id', NULL);
+/
+CALL add_table_column('zs_tp_order', 'supplier_id', 'bigint(20)', '平台供应商主键 scm_supplier.supplier_id', NULL);
+/
+CALL add_table_column('zs_tp_order', 'hs_bind_snapshot', 'varchar(32)', '落库时医院-供应商绑定关系快照（中文：已绑定、未绑定、申请审核中等）', NULL);
+/
 -- ========== UUID 主键列统一为 varchar(36)（列非 varchar，或 varchar 长度小于 36 时 MODIFY；已为 varchar 且长度≥36 则跳过） ==========
 CALL upgrade_uuid_column_if_varchar32('scm_order_detail_delivery_rel', 'id', '主键UUID7');
 /
@@ -657,4 +569,124 @@ CREATE TABLE IF NOT EXISTS `scm_supplier_export_log` (
   KEY `idx_scm_supplier_export_supplier` (`supplier_code`),
   KEY `idx_scm_supplier_export_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医院侧经前置机拉取平台供应商信息审计日志';
+/
+CREATE TABLE IF NOT EXISTS `scm_supplier_cert_apply_bundle` (
+  `id` varchar(36) NOT NULL COMMENT '主键UUID7',
+  `apply_id` varchar(36) NOT NULL COMMENT '医院关联申请单ID',
+  `hospital_id` varchar(36) NOT NULL COMMENT '目标医院',
+  `supplier_id` varchar(36) NOT NULL COMMENT '供应商',
+  `cert_bundle_json` longtext NOT NULL COMMENT '申请时点供应商全部资质证照JSON快照',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_cert_apply_bundle` (`apply_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='提交医院关联申请时资质证照抄送快照';
+/
+CREATE TABLE IF NOT EXISTS `scm_supplier_cert_change_log` (
+  `log_id` varchar(36) NOT NULL COMMENT '主键UUID7',
+  `supplier_id` bigint(20) NOT NULL COMMENT '供应商',
+  `hospital_id` bigint(20) NOT NULL COMMENT '抄送目标医院',
+  `certificate_id` bigint(20) NOT NULL COMMENT '证件ID',
+  `change_type` varchar(16) NOT NULL COMMENT 'INSERT/UPDATE/DELETE/AUDIT',
+  `before_json` longtext COMMENT '变更前JSON',
+  `after_json` longtext COMMENT '变更后JSON',
+  `create_by` varchar(64) DEFAULT NULL,
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`log_id`),
+  KEY `idx_scc_hospital` (`hospital_id`),
+  KEY `idx_scc_supplier` (`supplier_id`),
+  KEY `idx_scc_cert` (`certificate_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='供应商资质变更抄送记录';
+/
+-- 产品证件：可选 varchar(36) 批次号，与扩展表 scm_product_certificate_aux 逻辑分组（无物理外键）
+CALL add_table_column('scm_product_certificate', 'aux_batch_id', 'varchar(36)', '扩展资料批次UUID7（逻辑关联多行扩展记录，可空）', NULL);
+/
+CREATE TABLE IF NOT EXISTS `scm_product_certificate_aux` (
+  `aux_id` varchar(36) NOT NULL COMMENT '主键 UUID7（36位带横线）',
+  `certificate_id` varchar(32) NOT NULL COMMENT '逻辑关联 scm_product_certificate.certificate_id（存数字字符串）',
+  `material_id` varchar(32) DEFAULT NULL COMMENT '逻辑关联 scm_material_dict.material_id（存数字字符串，可空）',
+  `supplier_id` varchar(32) DEFAULT NULL COMMENT '逻辑关联 scm_supplier.supplier_id（存数字字符串，可空）',
+  `hospital_code` varchar(64) DEFAULT NULL COMMENT '医院编码（逻辑关联，varchar兼容）',
+  `item_type` varchar(32) NOT NULL DEFAULT 'ATTACH' COMMENT '扩展项类型 ATTACH/NOTE/LINK 等',
+  `title` varchar(200) DEFAULT '' COMMENT '标题',
+  `file_url` varchar(500) DEFAULT '' COMMENT '附件路径或URL',
+  `content` varchar(2000) DEFAULT NULL COMMENT '文本备注',
+  `sort_num` int(11) NOT NULL DEFAULT '0' COMMENT '排序',
+  `del_flag` char(1) NOT NULL DEFAULT '0' COMMENT '删除标志（0存在 2删除）',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`aux_id`),
+  KEY `idx_spca_certificate` (`certificate_id`),
+  KEY `idx_spca_hospital_material` (`hospital_code`,`material_id`),
+  KEY `idx_spca_supplier` (`supplier_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品证件扩展行（UUID7主键，varchar逻辑外键）';
+/
+-- ========== 医院产品档案：菜单归入供应商域 + 子按钮 + 白名单与角色自动补齐（解决页面上看不到「新增/维护」） ==========
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('23071', '档案内-证件查询', '2307', '1', '#', '', 'F', '0', '1', 'certificate:product:list', '#', 'admin', sysdate(), '', null, '', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('23072', '档案内-证件新增', '2307', '2', '#', '', 'F', '0', '1', 'certificate:product:add', '#', 'admin', sysdate(), '', null, '', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('23073', '档案内-证件修改', '2307', '3', '#', '', 'F', '0', '1', 'certificate:product:edit', '#', 'admin', sysdate(), '', null, '', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('23074', '档案内-证件删除', '2307', '4', '#', '', 'F', '0', '1', 'certificate:product:remove', '#', 'admin', sysdate(), '', null, '', '0');
+/
+UPDATE sys_menu SET auth_type = 'supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all_supplier',
+  default_open_hospital = '0', hospital_admin_only = '0', default_open_supplier = '1', supplier_admin_only = '0', menu_biz_category = 'certificate'
+WHERE del_flag = '0' AND menu_id IN ('2307','23071','23072','23073','23074');
+/
+INSERT IGNORE INTO scm_supplier_menu_auth (id, supplier_id, hospital_id, menu_id, create_by, create_time)
+SELECT REPLACE(UUID(), '-', ''), CAST(su.supplier_id AS CHAR), NULL, m.menu_id, 'migration', NOW()
+FROM scm_supplier_user su
+CROSS JOIN (
+  SELECT '2307' AS menu_id UNION ALL SELECT '23071' UNION ALL SELECT '23072' UNION ALL SELECT '23073' UNION ALL SELECT '23074'
+) m
+WHERE (su.del_flag = '0' OR su.del_flag IS NULL);
+/
+INSERT IGNORE INTO sys_role_menu (id, role_id, menu_id, hospital_id, supplier_id)
+SELECT REPLACE(UUID(), '-', ''), rm.role_id, CAST(x.mid AS UNSIGNED), rm.hospital_id, rm.supplier_id
+FROM sys_role_menu rm
+CROSS JOIN (
+  SELECT '23071' AS mid UNION ALL SELECT '23072' UNION ALL SELECT '23073' UNION ALL SELECT '23074'
+) x
+WHERE rm.menu_id = 2307
+  AND NOT EXISTS (
+    SELECT 1 FROM sys_role_menu r2
+    WHERE r2.role_id = rm.role_id
+      AND r2.menu_id = CAST(x.mid AS UNSIGNED)
+      AND r2.hospital_id = rm.hospital_id
+      AND r2.supplier_id = rm.supplier_id
+  );
+/
+CREATE TABLE IF NOT EXISTS `scm_product_cert_license_snap` (
+  `license_id` varchar(36) NOT NULL COMMENT '主键 UUID7（36位带横线）',
+  `certificate_id` varchar(32) NOT NULL COMMENT '逻辑关联 scm_product_certificate.certificate_id',
+  `material_id` varchar(32) DEFAULT NULL COMMENT '物资ID快照',
+  `supplier_id` varchar(32) DEFAULT NULL COMMENT '供应商ID快照',
+  `hospital_id` varchar(64) DEFAULT NULL,
+  `hospital_code` varchar(64) DEFAULT NULL,
+  `license_kind_code` varchar(64) NOT NULL,
+  `license_kind_name` varchar(128) DEFAULT NULL,
+  `license_title` varchar(200) DEFAULT NULL,
+  `license_no` varchar(128) DEFAULT NULL,
+  `issuing_body_snap` varchar(200) DEFAULT NULL,
+  `issue_date` date DEFAULT NULL,
+  `expire_date` date DEFAULT NULL,
+  `product_name_snap` varchar(200) DEFAULT NULL,
+  `manufacturer_name_snap` varchar(200) DEFAULT NULL,
+  `supplier_company_name_snap` varchar(200) DEFAULT NULL,
+  `register_no_snap` varchar(100) DEFAULT NULL,
+  `certificate_file` varchar(2000) DEFAULT NULL,
+  `del_flag` char(1) NOT NULL DEFAULT '0',
+  `remark` varchar(500) DEFAULT NULL,
+  `create_by` varchar(64) DEFAULT '',
+  `create_time` datetime DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT '',
+  `update_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`license_id`),
+  UNIQUE KEY `uk_spcls_cert_kind` (`certificate_id`,`license_kind_code`),
+  KEY `idx_spcls_certificate` (`certificate_id`),
+  KEY `idx_spcls_material_supplier` (`material_id`,`supplier_id`,`del_flag`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品证件扩展证照快照';
 /

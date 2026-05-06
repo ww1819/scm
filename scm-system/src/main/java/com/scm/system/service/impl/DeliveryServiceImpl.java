@@ -3,9 +3,11 @@ package com.scm.system.service.impl;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +22,7 @@ import com.scm.system.domain.DeliveryDetail;
 import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.Order;
 import com.scm.system.domain.OrderDetail;
+import com.scm.common.core.domain.entity.SysRole;
 import com.scm.system.domain.ScmOrderDetailDeliveryRel;
 import com.scm.system.domain.ZsTpOrder;
 import com.scm.system.domain.ZsTpOrderDetail;
@@ -34,6 +37,7 @@ import com.scm.system.mapper.OrderDeliveryTraceMapper;
 import com.scm.system.mapper.OrderDetailMapper;
 import com.scm.system.mapper.OrderMapper;
 import com.scm.system.mapper.ScmOrderDetailDeliveryRelMapper;
+import com.scm.system.mapper.SysRoleMapper;
 import com.scm.system.mapper.ZsTpOrderDetailDeliveryRelMapper;
 import com.scm.system.mapper.ZsTpOrderMapper;
 import com.scm.system.service.IDeliveryService;
@@ -89,6 +93,8 @@ public class DeliveryServiceImpl implements IDeliveryService
     private IScmHospitalSupplierMenuScopeService scmHospitalSupplierMenuScopeService;
     @Autowired
     private HospitalSupplierMapper hospitalSupplierMapper;
+    @Autowired
+    private SysRoleMapper sysRoleMapper;
 
     /**
      * 查询配送单信息
@@ -102,12 +108,27 @@ public class DeliveryServiceImpl implements IDeliveryService
         Delivery delivery = deliveryMapper.selectDeliveryById(deliveryId);
         if (delivery != null)
         {
+            assertDeliveryViewScope(delivery);
             List<DeliveryDetail> details = deliveryDetailMapper.selectDeliveryDetailListByDeliveryId(deliveryId);
             enrichDetailLineApplyQty(details);
             scmBarcodeSeedService.attachDetailBarcodes(details, deliveryId);
             delivery.setDeliveryDetails(details);
         }
         return delivery;
+    }
+
+    private void assertDeliveryViewScope(Delivery delivery)
+    {
+        Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());
+        if (hospitalCtx != null && delivery.getHospitalId() != null && !hospitalCtx.equals(delivery.getHospitalId()))
+        {
+            throw new ServiceException("无权查看其他医院配送单");
+        }
+        Long supplierCtx = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (supplierCtx != null && delivery.getSupplierId() != null && !supplierCtx.equals(delivery.getSupplierId()))
+        {
+            throw new ServiceException("无权查看其他供应商配送单");
+        }
     }
 
     /**
@@ -128,6 +149,7 @@ public class DeliveryServiceImpl implements IDeliveryService
      */
     private void applySupplierHospitalDataScope(Delivery delivery)
     {
+        Long userId = ShiroUtils.getUserId();
         Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());
         if (hospitalCtx != null)
         {
@@ -137,6 +159,16 @@ public class DeliveryServiceImpl implements IDeliveryService
         if (supplierCtx == null)
         {
             return;
+        }
+        List<Long> roleSupplierIds = resolveUserRoleSupplierIds(userId);
+        if (!roleSupplierIds.isEmpty())
+        {
+            if (!roleSupplierIds.contains(supplierCtx))
+            {
+                delivery.getParams().put("scopePairBlock", Boolean.TRUE);
+                return;
+            }
+            delivery.getParams().put("roleSupplierIds", roleSupplierIds);
         }
         delivery.setSupplierId(supplierCtx);
         java.util.List<Long> forbid = hospitalSupplierPermissionService.listForbidSubmitHospitalIds(supplierCtx);
@@ -167,6 +199,11 @@ public class DeliveryServiceImpl implements IDeliveryService
         {
             return;
         }
+        List<Long> roleSupplierIds = resolveUserRoleSupplierIds(ShiroUtils.getUserId());
+        if (!roleSupplierIds.isEmpty() && !roleSupplierIds.contains(supplierCtx))
+        {
+            throw new ServiceException("当前角色无供应商数据权限");
+        }
         Long hid = delivery.getHospitalId();
         if (hid == null)
         {
@@ -177,8 +214,34 @@ public class DeliveryServiceImpl implements IDeliveryService
         {
             throw new ServiceException("无权代其他供应商提交配送数据");
         }
+        if (!roleSupplierIds.isEmpty() && !roleSupplierIds.contains(sid))
+        {
+            throw new ServiceException("当前角色无该供应商数据权限");
+        }
         hospitalSupplierPermissionService.assertSubmitAllowed(hid, sid);
         assertHospitalSupplierBound(hid, sid);
+    }
+
+    private List<Long> resolveUserRoleSupplierIds(Long userId)
+    {
+        if (userId == null)
+        {
+            return new ArrayList<>();
+        }
+        List<SysRole> roles = sysRoleMapper.selectRolesByUserId(userId);
+        if (roles == null || roles.isEmpty())
+        {
+            return new ArrayList<>();
+        }
+        Set<Long> out = new HashSet<>();
+        for (SysRole role : roles)
+        {
+            if (role != null && role.getSupplierId() != null)
+            {
+                out.add(role.getSupplierId());
+            }
+        }
+        return new ArrayList<>(out);
     }
 
     private void assertHospitalSupplierBound(Long hospitalId, Long supplierId)

@@ -61,6 +61,11 @@ public interface SupplierCertificateMapper
     public int updateSupplierCertificate(SupplierCertificate supplierCertificate);
 
     /**
+     * 仅更新证照图片路径（允许置空）
+     */
+    public int updateSupplierCertificateFile(SupplierCertificate supplierCertificate);
+
+    /**
      * 删除供应商证件信息
      * 
      * @param certificateId 证件主键
@@ -75,5 +80,7 @@ public interface SupplierCertificateMapper
      * @return 结果
      */
     public int deleteSupplierCertificateByIds(String[] certificateIds);
+
+    int countBySupplierIdAndCertificateType(@Param("supplierId") Long supplierId, @Param("certificateType") String certificateType);
 }
 

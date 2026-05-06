@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh" xmlns:th="http://www.thymeleaf.org">
 <head>
-	<th:block th:include="include :: header('修改产品证件')" />
+	<th:block th:include="include :: header('修改产品信息')" />
 	<link rel="stylesheet" href="../../../static/layui/css/layui.css">
 </head>
 <body>
@@ -29,7 +29,18 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <div class="row" th:if="${supplierSelfService}">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">供应商：</label>
+                        <div class="col-sm-8">
+                            <input type="hidden" name="supplierId" id="supplierId" th:value="${productCertificate.supplierId}"/>
+                            <input type="text" class="form-control" readonly th:value="${bindSupplierCompanyName}"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row" th:unless="${supplierSelfService}">
                 <div class="col-sm-6">
                     <div class="form-group">
                         <label class="col-sm-4 control-label">供应商：</label>
@@ -178,12 +189,14 @@
                 </div>
             </div>
             <h4 class="form-header h4">其他信息</h4>
-            <div class="row">
+            <div class="row" th:if="${supplierSelfService}">
                 <div class="col-sm-6">
                     <div class="form-group">
-                        <label class="col-sm-4 control-label">医院编码：</label>
+                        <label class="col-sm-4 control-label">医院：</label>
                         <div class="col-sm-8">
-                            <input name="hospitalCode" placeholder="请输入医院编码" class="form-control" type="text" maxlength="50" th:value="${productCertificate.hospitalCode}">
+                            <input type="text" class="form-control" readonly th:value="${hospitalReadonlyLabel != null ? hospitalReadonlyLabel : '—'}"/>
+                            <input type="hidden" name="hospitalCode" th:value="${productCertificate.hospitalCode}"/>
+                            <input type="hidden" name="hospitalId" th:value="${productCertificate.hospitalId}"/>
                         </div>
                     </div>
                 </div>
@@ -194,6 +207,36 @@
                             <input name="saleCustomer" placeholder="请输入销售客户" class="form-control" type="text" maxlength="200" th:value="${productCertificate.saleCustomer}">
                         </div>
                     </div>
+                </div>
+            </div>
+            <div class="row" th:unless="${supplierSelfService}">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">医院编码：</label>
+                        <div class="col-sm-8">
+                            <input name="hospitalCode" id="hospitalCodePlatform" class="form-control" type="text" maxlength="50" readonly th:value="${productCertificate.hospitalCode}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">医院ID：</label>
+                        <div class="col-sm-8">
+                            <input name="hospitalId" id="hospitalIdPlatform" class="form-control" type="text" maxlength="64" readonly th:value="${productCertificate.hospitalId}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row" th:unless="${supplierSelfService}">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">销售客户：</label>
+                        <div class="col-sm-8">
+                            <input name="saleCustomer" placeholder="请输入销售客户" class="form-control" type="text" maxlength="200" th:value="${productCertificate.saleCustomer}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
                 </div>
             </div>
             <div class="row">
@@ -220,7 +263,7 @@
             </div>
         </form>
     </div>
-      
+
     <div class="row" style="position: fixed; bottom: 0; left: 0; right: 0; background-color: #fff; padding: 15px 20px; border-top: 1px solid #ddd; z-index: 1000; box-shadow: 0 -2px 8px rgba(0,0,0,0.1);">
         <div class="col-sm-offset-5 col-sm-10">
             <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
@@ -233,29 +276,30 @@
 	<script>
 	    var prefix = ctx + "certificate/product";
 	    var laydate;
-	    
+
+
 	    layui.use('laydate', function(){
 	        laydate = layui.laydate;
-	        
+
 	        // 注册证发证日期
 	        laydate.render({
 	            elem: '#registerIssueDate',
 	            type: 'date'
 	        });
-	        
+
 	        // 注册有效期
 	        laydate.render({
 	            elem: '#registerValidDate',
 	            type: 'date'
 	        });
-	        
+
 	        // 有效期至
 	        laydate.render({
 	            elem: '#expireDate',
 	            type: 'date'
 	        });
 	    });
-	
+
         $("#form-product-certificate-edit").validate({
         	onkeyup: false,
         	rules:{
@@ -269,16 +313,16 @@
         	},
             focusCleanup: true
         });
-        
+
         function submitHandler() {
 	        if ($.validate.form()) {
 	        	$.operate.saveTab(prefix + "/edit", $("#form-product-certificate-edit").serializeArray());
 	        }
 	    }
-	    
+
 	    function closeItem() {
 	        console.log("closeItem 被调用");
-	        
+
 	        // 如果在iframe中，使用父窗口的closeItem函数（来自common.js）
 	        if (window.parent && window.parent !== window) {
 	            try {
@@ -290,29 +334,29 @@
 	            } catch(e) {
 	                console.log("调用父窗口closeItem失败:", e);
 	            }
-	            
+
 	            try {
 	                // 如果closeItem不可用，尝试直接使用common.js中的逻辑
 	                var topWindow = $(window.parent.document);
 	                var panelUrl = null;
-	                
+
 	                // 获取当前iframe的data-panel属性
 	                if (window.frameElement) {
 	                    panelUrl = window.frameElement.getAttribute('data-panel');
 	                }
-	                
+
 	                // 点击当前活动标签页的关闭按钮（X图标）
 	                var closeBtn = $('.page-tabs-content .active i', topWindow);
 	                if (closeBtn.length > 0) {
 	                    closeBtn.click();
 	                    return;
 	                }
-	                
+
 	                // 如果找不到关闭按钮，尝试直接移除标签页
 	                if (panelUrl) {
 	                    $('.menuTab[data-id="' + panelUrl + '"]', topWindow).remove();
 	                    $('.mainContent .Scm_iframe[data-id="' + panelUrl + '"]', topWindow).remove();
-	                    
+
 	                    // 激活上一个标签页
 	                    var prevTab = $('.menuTab', topWindow).last();
 	                    if (prevTab.length > 0) {
@@ -326,7 +370,7 @@
 	                console.error("关闭标签页失败:", e);
 	            }
 	        }
-	        
+
 	        // 如果不在iframe中，尝试使用$.modal.closeTab()
 	        try {
 	            if (typeof $.modal !== 'undefined' && typeof $.modal.closeTab === 'function') {
@@ -336,7 +380,7 @@
 	        } catch(e) {
 	            console.log("使用$.modal.closeTab失败:", e);
 	        }
-	        
+
 	        console.warn("无法关闭页面，请手动关闭标签页");
 	    }
     </script>

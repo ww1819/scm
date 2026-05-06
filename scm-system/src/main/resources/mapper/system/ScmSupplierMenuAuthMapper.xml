@@ -10,6 +10,15 @@
         DELETE FROM scm_supplier_menu_auth WHERE supplier_id = #{supplierId} AND hospital_id = #{hospitalId}
     </delete>
 
+    <delete id="deleteByHospitalAndMenuIds">
+        DELETE FROM scm_supplier_menu_auth
+        WHERE hospital_id = #{hospitalId}
+          AND menu_id IN
+          <foreach collection="menuIds" item="menuId" open="(" separator="," close=")">
+              #{menuId}
+          </foreach>
+    </delete>
+
     <insert id="batchInsert">
         INSERT INTO scm_supplier_menu_auth (id, supplier_id, hospital_id, menu_id, create_by, create_time)
         VALUES

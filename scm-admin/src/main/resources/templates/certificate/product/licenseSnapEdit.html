@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('修改扩展证照')" />
+	<link rel="stylesheet" href="../../../static/layui/css/layui.css">
+</head>
+<body>
+	<div class="main-content" style="padding-bottom: 80px;" th:if="${loadError != null}">
+		<div class="alert alert-warning" th:text="${loadError}">错误</div>
+	</div>
+	<div class="main-content" style="padding-bottom: 80px;" th:unless="${loadError != null}">
+		<form id="form-license-snap-edit" class="form-horizontal" th:object="${licenseSnap}">
+			<input type="hidden" th:field="*{licenseId}"/>
+			<input type="hidden" th:field="*{certificateId}"/>
+			<h4 class="form-header h4">证照信息</h4>
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="col-sm-4 control-label is-required">证照类别：</label>
+						<div class="col-sm-8">
+							<select class="form-control" required th:field="*{licenseKindCode}">
+								<option value="">请选择</option>
+								<option value="PRODUCTION_LICENSE">生产许可证</option>
+								<option value="MANUFACTURER_BIZ_LICENSE">生产企业营业执照</option>
+								<option value="OTHER">其他</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="col-sm-4 control-label">标题：</label>
+						<div class="col-sm-8">
+							<input class="form-control" type="text" maxlength="200" th:field="*{licenseTitle}"/>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="col-sm-4 control-label">证号：</label>
+						<div class="col-sm-8">
+							<input class="form-control" type="text" maxlength="128" th:field="*{licenseNo}"/>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="col-sm-4 control-label">发证机关：</label>
+						<div class="col-sm-8">
+							<input class="form-control" type="text" maxlength="200" th:field="*{issuingBodySnap}"/>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="col-sm-4 control-label">发证日期：</label>
+						<div class="col-sm-8">
+							<input name="issueDate" id="licenseIssueDateEdit" class="form-control" type="text" readonly
+								th:value="${licenseSnap.issueDate != null ? #dates.format(licenseSnap.issueDate, 'yyyy-MM-dd') : ''}"/>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="col-sm-4 control-label">有效期至：</label>
+						<div class="col-sm-8">
+							<input name="expireDate" id="licenseExpireDateEdit" class="form-control" type="text" readonly
+								th:value="${licenseSnap.expireDate != null ? #dates.format(licenseSnap.expireDate, 'yyyy-MM-dd') : ''}"/>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<label class="col-sm-2 control-label">证照影像：</label>
+						<div class="col-sm-10">
+							<textarea class="form-control" rows="2" maxlength="2000" th:field="*{certificateFile}"></textarea>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="form-group">
+						<label class="col-sm-2 control-label">备注：</label>
+						<div class="col-sm-10">
+							<textarea class="form-control" rows="2" maxlength="500" th:field="*{remark}"></textarea>
+						</div>
+					</div>
+				</div>
+			</div>
+			<h4 class="form-header h4">冗余快照（保存时按当前主证件刷新）</h4>
+			<div class="row">
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="col-sm-4 control-label">产品名称：</label>
+						<div class="col-sm-8">
+							<input class="form-control" type="text" readonly th:value="${licenseSnap.productNameSnap}"/>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-6">
+					<div class="form-group">
+						<label class="col-sm-4 control-label">注册证号：</label>
+						<div class="col-sm-8">
+							<input class="form-control" type="text" readonly th:value="${licenseSnap.registerNoSnap}"/>
+						</div>
+					</div>
+				</div>
+			</div>
+		</form>
+	</div>
+
+	<div class="row" th:unless="${loadError != null}" style="position: fixed; bottom: 0; left: 0; right: 0; background-color: #fff; padding: 12px 20px; border-top: 1px solid #ddd; z-index: 1000;">
+		<div class="col-sm-offset-5 col-sm-10">
+			<button type="button" class="btn btn-sm btn-primary" onclick="submitLicenseSnapEdit()"><i class="fa fa-check"></i> 保 存</button>
+			<button type="button" class="btn btn-sm btn-danger" onclick="$.modal.closeTab()"><i class="fa fa-reply-all"></i> 关 闭</button>
+		</div>
+	</div>
+	<div style="height: 60px;" th:unless="${loadError != null}"></div>
+
+	<th:block th:include="include :: footer" />
+	<script src="../../../static/layui/layui.js"></script>
+	<script th:inline="javascript">
+		var prefix = ctx + "certificate/product";
+		var hasError = /*[[${loadError != null}]]*/ false;
+		if (!hasError) {
+			layui.use('laydate', function () {
+				var laydate = layui.laydate;
+				laydate.render({ elem: '#licenseIssueDateEdit', type: 'date' });
+				laydate.render({ elem: '#licenseExpireDateEdit', type: 'date' });
+			});
+		}
+		function submitLicenseSnapEdit() {
+			if (hasError) {
+				return;
+			}
+			if (!$("#form-license-snap-edit").valid()) {
+				return;
+			}
+			$.operate.saveTab(prefix + "/licenseSnap/edit", $("#form-license-snap-edit").serializeArray());
+		}
+		$(function () {
+			if (!hasError) {
+				$("#form-license-snap-edit").validate({
+					rules: { licenseKindCode: { required: true } },
+					focusCleanup: true
+				});
+			}
+		});
+	</script>
+</body>
+</html>

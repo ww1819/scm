@@ -2,6 +2,7 @@ package com.scm.system.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.scm.common.utils.PageUtils;
 import com.scm.system.domain.SupplierUser;
 import com.scm.system.mapper.SupplierUserMapper;
 import com.scm.system.service.IScmSupplierContextService;
@@ -19,7 +20,9 @@ public class ScmSupplierContextServiceImpl implements IScmSupplierContextService
         {
             return null;
         }
-        SupplierUser su = supplierUserMapper.selectSupplierUserByUserId(userId);
-        return su != null ? su.getSupplierId() : null;
+        return PageUtils.callWithoutPaging(() -> {
+            SupplierUser su = supplierUserMapper.selectSupplierUserByUserId(userId);
+            return su != null ? su.getSupplierId() : null;
+        });
     }
 }
