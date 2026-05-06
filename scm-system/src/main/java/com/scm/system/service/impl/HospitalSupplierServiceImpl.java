@@ -34,6 +34,7 @@ import com.scm.system.mapper.SupplierCertificateMapper;
 import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.IHospitalService;
 import com.scm.system.service.IScmHospitalSupplierPermissionService;
+import com.scm.system.service.IScmScopeBootstrapService;
 import com.scm.system.service.IScmSupplierContextService;
 import com.scm.system.service.ISysNoticeService;
 import com.scm.system.service.ISupplierService;
@@ -85,6 +86,9 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
 
     @Autowired
     private ScmSupplierCertApplyBundleMapper scmSupplierCertApplyBundleMapper;
+
+    @Autowired
+    private IScmScopeBootstrapService scmScopeBootstrapService;
 
     /**
      * 查询医院供应商关联信息
@@ -180,6 +184,12 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
         if (rows > 0)
         {
             insertChangeLog(hospitalSupplier, "CREATE", hospitalSupplier.getCreateBy(), null, hospitalSupplier);
+            if ("1".equals(StringUtils.trimToEmpty(hospitalSupplier.getAuditStatus()))
+                && hospitalSupplier.getHospitalId() != null && hospitalSupplier.getSupplierId() != null)
+            {
+                scmScopeBootstrapService.applyDefaultHospitalGrantedSupplierMenus(hospitalSupplier.getHospitalId(),
+                    hospitalSupplier.getSupplierId(), hospitalSupplier.getCreateBy());
+            }
         }
         return rows;
     }
@@ -200,6 +210,16 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
         {
             HospitalSupplier after = hospitalSupplierMapper.selectHospitalSupplierById(hospitalSupplier.getRelationId());
             insertChangeLog(after, "UPDATE", hospitalSupplier.getUpdateBy(), before, after);
+            if (after != null && after.getHospitalId() != null && after.getSupplierId() != null
+                && "1".equals(StringUtils.trimToEmpty(after.getAuditStatus())))
+            {
+                String beforeAudit = before == null ? "" : StringUtils.trimToEmpty(before.getAuditStatus());
+                if (!"1".equals(beforeAudit))
+                {
+                    scmScopeBootstrapService.applyDefaultHospitalGrantedSupplierMenus(after.getHospitalId(),
+                        after.getSupplierId(), hospitalSupplier.getUpdateBy());
+                }
+            }
         }
         return rows;
     }
@@ -555,6 +575,7 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
         relation.setCreateBy(operBy);
         hospitalSupplierMapper.insertHospitalSupplier(relation);
         insertChangeLog(relation, "CREATE_FROM_APPLY", operBy, null, relation);
+        scmScopeBootstrapService.applyDefaultHospitalGrantedSupplierMenus(hospitalId, supplierId, operBy);
     }
 
     private void validateSupplyDateRange(Date supplyStartDate, Date supplyEndDate)

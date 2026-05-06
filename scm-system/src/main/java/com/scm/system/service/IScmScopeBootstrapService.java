@@ -45,6 +45,12 @@ public interface IScmScopeBootstrapService
     void replaceSupplierMenuAuth(Long supplierId, List<Long> menuIds, String operBy);
 
     /**
+     * 医院-供应商关联生效且关联已审核通过时：将本院菜单白名单内、且标记为「需医院授予供应商」的医院-供应商类菜单
+     * 默认写入供应商对该医院的菜单授权表，并为供应商管理员角色补齐缺失的角色菜单行（仅增量，不删既有、不调整业务员角色）。
+     */
+    void applyDefaultHospitalGrantedSupplierMenus(Long hospitalId, Long supplierId, String operBy);
+
+    /**
      * 升级维护：为老医院/老供应商补齐管理员/职工/业务员角色，并补齐管理员角色菜单与白名单（仅补充缺失，不删除既有授权）。
      * @return 统计信息（createdHospitalAdminRole/createdHospitalStaffRole/createdSupplierAdminRole/createdSupplierSalesRole/addedHospitalMenuAuth/addedSupplierMenuAuth/addedHospitalRoleMenu/addedSupplierRoleMenu）
      */
