@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.scm.common.exception.ServiceException;
+import com.scm.common.profiler.OperationProfiler;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.uuid.IdUtils;
 import com.scm.system.domain.CertificateType;
@@ -21,6 +24,8 @@ import com.scm.system.service.IProductCertLicenseSnapService;
 @Service
 public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSnapService
 {
+    private static final Logger log = LoggerFactory.getLogger(ProductCertLicenseSnapServiceImpl.class);
+
     @Autowired
     private ProductCertLicenseSnapMapper productCertLicenseSnapMapper;
 
@@ -148,9 +153,14 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
     @Override
     public List<ProductCertLicenseSnap> listMergedForCertificate(Long certificateId, String loginName)
     {
+        OperationProfiler perf = OperationProfiler.start(log, "product-cert-license-merged",
+            "certificateId=" + certificateId);
         ensureProductSnapStubsForCertificate(certificateId, loginName);
+        perf.mark("ensureSnapStubs");
         List<CertificateType> types = certificateTypeService.selectProductExtensionTypesForSnap();
+        perf.mark("selectExtensionTypes");
         List<ProductCertLicenseSnap> dbSnaps = productCertLicenseSnapMapper.selectListByCertificateId(String.valueOf(certificateId));
+        perf.mark("selectSnapsByCertificateId");
         Map<String, ProductCertLicenseSnap> byCode = new LinkedHashMap<>();
         if (dbSnaps != null)
         {
@@ -182,6 +192,8 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
         {
             ordered.add(orphan);
         }
+        perf.mark("mergeOrderInMemory");
+        perf.finish(350);
         return ordered;
     }
 

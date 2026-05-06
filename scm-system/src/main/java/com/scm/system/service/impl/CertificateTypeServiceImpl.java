@@ -2,8 +2,10 @@ package com.scm.system.service.impl;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -152,41 +154,71 @@ public class CertificateTypeServiceImpl implements ICertificateTypeService
         return certificateTypeMapper.checkTypeCodeUnique(typeCode.trim());
     }
 
+    /**
+     * 展示用：以 scm_certificate_type 中该分类下全部启用类型为主；scm_certificate_config 仅用于把已配置的类型排到前面（兼容历史 PRODUCT_001 等编码）。
+     */
     private List<CertificateType> selectExtensionTypesForConfig(String configType, String typeCategoryFallback)
     {
+        List<CertificateType> all = certificateTypeMapper.selectActiveByTypeCategoryForSnap(typeCategoryFallback);
+        if (all == null)
+        {
+            all = new ArrayList<>();
+        }
+        Map<String, CertificateType> byCode = new LinkedHashMap<>();
+        for (CertificateType t : all)
+        {
+            if (t == null || StringUtils.isEmpty(t.getTypeCode()))
+            {
+                continue;
+            }
+            byCode.putIfAbsent(t.getTypeCode().trim(), t);
+        }
         CertificateConfig q = new CertificateConfig();
         q.setConfigType(configType);
         q.setStatus("0");
         List<CertificateConfig> cfgs = certificateConfigMapper.selectCertificateConfigList(q);
-        Set<String> codes = new LinkedHashSet<>();
+        List<CertificateType> ordered = new ArrayList<>();
+        Set<String> used = new HashSet<>();
         if (cfgs != null)
         {
             for (CertificateConfig c : cfgs)
             {
-                if (StringUtils.isNotEmpty(c.getCertificateType()))
+                if (c == null || StringUtils.isEmpty(c.getCertificateType()))
                 {
-                    codes.add(c.getCertificateType().trim());
+                    continue;
                 }
-            }
-        }
-        List<CertificateType> ordered = new ArrayList<>();
-        if (!codes.isEmpty())
-        {
-            for (String code : codes)
-            {
-                CertificateType t = certificateTypeMapper.checkTypeCodeUnique(code);
+                String code = c.getCertificateType().trim();
+                CertificateType t = byCode.get(code);
+                if (t == null)
+                {
+                    t = certificateTypeMapper.checkTypeCodeUnique(code);
+                }
                 if (t != null && (t.getStatus() == null || "0".equals(t.getStatus())))
                 {
-                    ordered.add(t);
+                    if (!used.contains(t.getTypeCode().trim()))
+                    {
+                        ordered.add(t);
+                        used.add(t.getTypeCode().trim());
+                    }
                 }
             }
-            ordered.sort(Comparator.comparingInt(o -> o.getOrderNum() != null ? o.getOrderNum() : 0));
-            return ordered;
         }
-        CertificateType tq = new CertificateType();
-        tq.setTypeCategory(typeCategoryFallback);
-        tq.setStatus("0");
-        return certificateTypeMapper.selectCertificateTypeList(tq);
+        List<CertificateType> rest = new ArrayList<>();
+        for (CertificateType t : all)
+        {
+            if (t == null || StringUtils.isEmpty(t.getTypeCode()))
+            {
+                continue;
+            }
+            String c = t.getTypeCode().trim();
+            if (!used.contains(c))
+            {
+                rest.add(t);
+            }
+        }
+        rest.sort(Comparator.comparingInt(o -> o.getOrderNum() != null ? o.getOrderNum() : 0));
+        ordered.addAll(rest);
+        return ordered;
     }
 }
 

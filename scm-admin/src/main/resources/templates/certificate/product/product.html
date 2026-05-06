@@ -43,6 +43,27 @@
 			overflow: hidden !important;
 			text-overflow: ellipsis !important;
 		}
+		.license-snap-img-box {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: flex-start;
+			gap: 10px;
+			max-width: 100%;
+		}
+		.license-snap-thumb {
+			border: 1px solid #e7eaec;
+			padding: 8px;
+			border-radius: 4px;
+			text-align: center;
+			background: #fafafa;
+			min-width: 100px;
+		}
+		.license-snap-thumb img {
+			max-height: 120px;
+			max-width: 160px;
+			vertical-align: middle;
+			cursor: pointer;
+		}
 	</style>
 </head>
 <body class="gray-bg">
@@ -117,11 +138,13 @@
 				<div id="product-license-panel" class="panel panel-default" style="flex-shrink: 0; margin-bottom: 10px; border-color: #e7eaec;">
 					<div class="panel-heading" style="padding: 6px 10px;">
 						<strong>当前证件关联证照</strong>
-						<span class="text-muted" style="font-weight: normal; font-size: 12px;">（类型来自「证件配置 product_certificate」与「证件类型」；点击上表一行加载）</span>
+						<span class="text-muted" style="font-weight: normal; font-size: 12px;">（列出 scm_certificate_type 中分类为 product 的全部启用类型；证件配置中的 product_certificate 仅影响排序靠前；点击上表一行加载）</span>
 					</div>
-					<div class="panel-body" id="product-license-panel-body" style="max-height: 280px; overflow: auto; padding: 8px 10px;">
+					<div class="panel-body" id="product-license-panel-body" style="max-height: 360px; overflow: auto; padding: 8px 10px;">
 						<p class="text-muted" id="product-license-empty-tip" style="margin: 0;">请在上方列表单击选择一条产品证件。</p>
 						<div id="product-license-rows-wrap" style="display: none;"></div>
+						<input type="file" id="licenseSnapUploadProxy" accept="image/jpeg,image/png,image/gif,image/bmp,image/webp" tabindex="-1" title=""
+							style="position:fixed;left:-120px;top:0;width:1px;height:1px;opacity:0.01;"/>
 					</div>
 				</div>
 			</div>
@@ -140,6 +163,7 @@
 		var supplierSelfService = /*[[${supplierSelfService}]]*/ false;
 
 		$(function() {
+		    initLicenseSnapImageUploadOnce();
 		    queryProductCertificateList();
 		    if (supplierSelfService) {
 		        setTimeout(function () { initProductHospitalTree(); }, 0);
@@ -208,69 +232,151 @@
 		    return v;
 		}
 
-		function clearProductLicensePanel() {
-		    $('#product-license-empty-tip').show();
-		    $('#product-license-rows-wrap').hide().empty();
+		function parseCertFileUrls(raw) {
+		    if (!raw || typeof raw !== 'string') {
+		        return [];
+		    }
+		    return raw.split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
 		}
 
-		function loadProductLicenseDetail(certificateId) {
-		    if (!certificateId) {
-		        clearProductLicensePanel();
+		function toLicensePreviewUrl(fileUrl) {
+		    if (!fileUrl) {
+		        return '';
+		    }
+		    var u = String(fileUrl).trim();
+		    if (u.indexOf('http://') === 0 || u.indexOf('https://') === 0) {
+		        return u;
+		    }
+		    var ctxPath = (typeof ctx !== 'undefined' && ctx) ? ctx : '/';
+		    if (ctxPath.endsWith('/')) {
+		        ctxPath = ctxPath.substring(0, ctxPath.length - 1);
+		    }
+		    if (u.indexOf('/') === 0) {
+		        return ctxPath + u;
+		    }
+		    return ctxPath + '/' + u;
+		}
+
+		function closeLicenseSnapImageModalIfOpen() {
+		    if (window._licenseSnapModalLayerIdx != null) {
+		        try {
+		            top.layer.close(window._licenseSnapModalLayerIdx);
+		        } catch (e0) {
+		        }
+		        window._licenseSnapModalLayerIdx = null;
+		        window._licenseSnapModalLayero = null;
+		        window._licenseSnapModalTr = null;
+		    }
+		}
+
+		function refreshLicenseSnapModalList(layero) {
+		    layero = $(layero);
+		    var $list = layero.find('#lsmImgList');
+		    if (!$list.length) {
 		        return;
 		    }
-		    $('#product-license-empty-tip').hide();
-		    $('#product-license-rows-wrap').show().html('<p class="text-muted" style="margin:0;">加载中…</p>');
-		    $.post(prefix + '/licenseSnap/mergedRows', { certificateId: certificateId }, function (res) {
-		        if (!res || res.code !== 0) {
-		            $('#product-license-rows-wrap').html('<p class="text-danger">' + escapeHtml(res && res.msg ? res.msg : '加载失败') + '</p>');
-		            return;
+		    var tr = window._licenseSnapModalTr;
+		    if (!tr || !tr.length) {
+		        return;
+		    }
+		    var urls = parseCertFileUrls(tr.find('.fld-certificateFile').val());
+		    var canSave = (editFlag !== 'hidden');
+		    $list.empty();
+		    for (var i = 0; i < urls.length; i++) {
+		        var raw = urls[i];
+		        var full = toLicensePreviewUrl(raw);
+		        var enc = encodeURIComponent(raw);
+		        var cap = raw.indexOf('/') >= 0 ? raw.substring(raw.lastIndexOf('/') + 1) : raw;
+		        var $w = $('<div class="license-snap-thumb"/>');
+		        var $aImg = $('<a target="_blank" rel="noopener" title="查看原图"></a>').attr('href', full);
+		        $aImg.append($('<img alt=""/>').attr('src', full));
+		        $w.append($aImg);
+		        var $btns = $('<div style="margin-top:6px;white-space:nowrap;"></div>');
+		        $btns.append($('<a class="btn btn-xs btn-default" target="_blank" rel="noopener">新窗口</a>').attr('href', full));
+		        if (canSave) {
+		            $btns.append(' ');
+		            $btns.append($('<button type="button" class="btn btn-xs btn-danger ls-snap-modal-remove">删除</button>').attr('data-raw', enc));
 		        }
-		        renderProductLicenseRows(certificateId, res.data || []);
+		        $w.append($btns);
+		        $w.append($('<div class="text-muted"/>').css({ fontSize: '11px', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }).attr('title', cap).text(cap));
+		        $list.append($w);
+		    }
+		    if (!urls.length) {
+		        $list.append('<span class="text-muted" style="font-size:12px;">暂无图片</span>');
+		    }
+		}
+
+		function openLicenseSnapImageLayer(tr, focusUpload) {
+		    window._licenseSnapModalTr = tr;
+		    var typeName = $.trim(tr.find('td').first().find('.label').text()) || '证照';
+		    var canSave = (editFlag !== 'hidden');
+		    var uploadArea = canSave
+		        ? '<div class="form-group" style="margin:14px 0 0;border-top:1px solid #eee;padding-top:12px;">'
+		        + '<label class="control-label" style="display:block;margin-bottom:6px;">添加图片</label>'
+		        + '<button type="button" id="lsmBtnPick" class="btn btn-sm btn-success"><i class="fa fa-upload"></i> 选择并上传</button> '
+		        + '<span class="text-muted" style="font-size:12px;">单张不超过 5MB，上传后自动保存</span></div>'
+		        : '';
+		    var uploadHint = (focusUpload && canSave)
+		        ? '<p class="text-info" style="margin:0 0 8px;font-size:12px;"><i class="fa fa-info-circle"></i> 请在下方点击「选择并上传」添加图片。</p>'
+		        : '';
+		    var html = '<div style="padding:10px 14px 6px;">'
+		        + uploadHint
+		        + '<p class="text-muted" style="margin:0 0 10px;font-size:12px;">点击缩略图或「新窗口」查看原图。'
+		        + (canSave ? '有编辑权限时可删除或上传；保存后下方列表会刷新，本弹窗保持打开。' : '') + '</p>'
+		        + '<div id="lsmImgList" class="license-snap-img-box"></div>'
+		        + uploadArea
+		        + '</div>';
+		    top.layer.open({
+		        type: 1,
+		        title: '证照图片 — ' + typeName,
+		        area: ['700px', '540px'],
+		        shadeClose: true,
+		        maxmin: true,
+		        content: html,
+		        btn: ['关闭'],
+		        yes: function (index) {
+		            top.layer.close(index);
+		        },
+		        success: function (layero, index) {
+		            window._licenseSnapModalLayerIdx = index;
+		            window._licenseSnapModalLayero = $(layero);
+		            refreshLicenseSnapModalList(window._licenseSnapModalLayero);
+		            window._licenseSnapModalLayero.find('#lsmBtnPick').on('click', function () {
+		                window._licenseSnapUploadTargetTr = window._licenseSnapModalTr;
+		                $('#licenseSnapUploadProxy').val('');
+		                var el = document.getElementById('licenseSnapUploadProxy');
+		                if (el) {
+		                    el.click();
+		                }
+		            });
+		            window._licenseSnapModalLayero.on('click', '.ls-snap-modal-remove', function (e) {
+		                e.preventDefault();
+		                var rawEnc = $(this).attr('data-raw');
+		                var raw = rawEnc ? decodeURIComponent(rawEnc) : '';
+		                var tr2 = window._licenseSnapModalTr;
+		                if (!tr2 || !tr2.length) {
+		                    return;
+		                }
+		                var parts = parseCertFileUrls(tr2.find('.fld-certificateFile').val());
+		                var next = parts.filter(function (u) { return u !== raw; });
+		                tr2.find('.fld-certificateFile').val(next.join(','));
+		                refreshLicenseSnapModalList(window._licenseSnapModalLayero);
+		                $.modal.msgSuccess('已删除图片');
+		                postLicenseSnapSave(tr2, true, true);
+		            });
+		        },
+		        end: function () {
+		            window._licenseSnapModalLayerIdx = null;
+		            window._licenseSnapModalLayero = null;
+		            window._licenseSnapModalTr = null;
+		        }
 		    });
 		}
 
-		function renderProductLicenseRows(certificateId, rows) {
-		    var wrap = $('#product-license-rows-wrap').empty();
-		    if (!rows.length) {
-		        wrap.append('<p class="text-muted" style="margin:0;">当前未配置产品扩展证照类型。请在「资质证件管理 → 证件类型/证件配置」中维护 <code>product_certificate</code> 与 <code>scm_certificate_type</code>（分类 product）。</p>');
-		        return;
-		    }
-		    var canSave = (editFlag === true || editFlag === 'true');
-		    var sb = [];
-		    sb.push('<table class="table table-bordered table-condensed" style="margin-bottom:0;font-size:12px;">');
-		    sb.push('<thead><tr>');
-		    sb.push('<th style="width:160px;">证照类型</th><th style="width:120px;">标题</th><th style="width:140px;">证号</th><th style="width:120px;">发证机关</th>');
-		    sb.push('<th style="width:110px;">发证日期</th><th style="width:110px;">有效期至</th><th>证照影像</th><th style="width:160px;">备注</th>');
-		    if (canSave) {
-		        sb.push('<th style="width:70px;">操作</th>');
-		    }
-		    sb.push('</tr></thead><tbody>');
-		    for (var i = 0; i < rows.length; i++) {
-		        var r = rows[i];
-		        var lid = r.licenseId || '';
-		        sb.push('<tr data-license-id="' + escapeHtml(lid) + '" data-certificate-id="' + certificateId + '">');
-		        sb.push('<td><span class="label label-primary">' + escapeHtml(r.licenseKindName || '-') + '</span><br/><span class="text-muted">' + escapeHtml(r.licenseKindCode || '') + '</span></td>');
-		        sb.push('<td><input type="text" class="form-control input-sm fld-licenseTitle" value="' + escapeHtml(r.licenseTitle || '') + '" ' + (canSave ? '' : 'disabled') + '/></td>');
-		        sb.push('<td><input type="text" class="form-control input-sm fld-licenseNo" value="' + escapeHtml(r.licenseNo || '') + '" ' + (canSave ? '' : 'disabled') + '/></td>');
-		        sb.push('<td><input type="text" class="form-control input-sm fld-issuingBodySnap" value="' + escapeHtml(r.issuingBodySnap || '') + '" ' + (canSave ? '' : 'disabled') + '/></td>');
-		        sb.push('<td><input type="date" class="form-control input-sm fld-issueDate" value="' + escapeHtml(formatDateVal(r.issueDate)) + '" ' + (canSave ? '' : 'disabled') + '/></td>');
-		        sb.push('<td><input type="date" class="form-control input-sm fld-expireDate" value="' + escapeHtml(formatDateVal(r.expireDate)) + '" ' + (canSave ? '' : 'disabled') + '/></td>');
-		        sb.push('<td><textarea class="form-control input-sm fld-certificateFile" rows="2" ' + (canSave ? '' : 'disabled') + '>' + escapeHtml(r.certificateFile || '') + '</textarea></td>');
-		        sb.push('<td><textarea class="form-control input-sm fld-remark" rows="2" ' + (canSave ? '' : 'disabled') + '>' + escapeHtml(r.remark || '') + '</textarea></td>');
-		        if (canSave) {
-		            sb.push('<td><a href="javascript:void(0)" class="btn btn-xs btn-primary" onclick="saveProductLicenseRow(this)">保存</a></td>');
-		        }
-		        sb.push('</tr>');
-		    }
-		    sb.push('</tbody></table>');
-		    wrap.html(sb.join(''));
-		}
-
-		function saveProductLicenseRow(btn) {
-		    var tr = $(btn).closest('tr');
+		function postLicenseSnapSave(tr, silent, keepImageModal) {
 		    var licenseId = tr.data('license-id');
+		    var certificateId = tr.data('certificate-id');
 		    if (!licenseId) {
-		        $.modal.msgWarning('缺少证照行ID');
 		        return;
 		    }
 		    var data = {
@@ -285,11 +391,180 @@
 		    };
 		    $.post(prefix + '/licenseSnap/saveRow', data, function (res) {
 		        if (res && res.code === 0) {
-		            $.modal.msgSuccess('保存成功');
-		            loadProductLicenseDetail(tr.data('certificate-id'));
+		            if (!silent) {
+		                $.modal.msgSuccess('保存成功');
+		            }
+		            if (!keepImageModal) {
+		                closeLicenseSnapImageModalIfOpen();
+		            }
+		            var afterRows = (keepImageModal && window._licenseSnapModalLayerIdx != null)
+		                ? function () {
+		                    if (!window._licenseSnapModalLayero || !window._licenseSnapModalLayero.length) {
+		                        return;
+		                    }
+		                    var $newTr = $('#product-license-rows-wrap tr').filter(function () {
+		                        return String($(this).attr('data-license-id')) === String(licenseId);
+		                    }).first();
+		                    if ($newTr.length) {
+		                        window._licenseSnapModalTr = $newTr;
+		                        refreshLicenseSnapModalList(window._licenseSnapModalLayero);
+		                    }
+		                }
+		                : undefined;
+		            loadProductLicenseDetail(certificateId, afterRows);
 		        } else {
 		            $.modal.msgError(res && res.msg ? res.msg : '保存失败');
 		        }
+		    });
+		}
+
+		function clearProductLicensePanel() {
+		    $('#product-license-empty-tip').show();
+		    $('#product-license-rows-wrap').hide().empty();
+		}
+
+		function loadProductLicenseDetail(certificateId, afterRenderCallback) {
+		    if (!certificateId) {
+		        clearProductLicensePanel();
+		        return;
+		    }
+		    $('#product-license-empty-tip').hide();
+		    $('#product-license-rows-wrap').show().html('<p class="text-muted" style="margin:0;">加载中…</p>');
+		    $.post(prefix + '/licenseSnap/mergedRows', { certificateId: certificateId }, function (res) {
+		        if (!res || res.code !== 0) {
+		            $('#product-license-rows-wrap').html('<p class="text-danger">' + escapeHtml(res && res.msg ? res.msg : '加载失败') + '</p>');
+		            return;
+		        }
+		        renderProductLicenseRows(certificateId, res.data || []);
+		        if (typeof afterRenderCallback === 'function') {
+		            afterRenderCallback();
+		        }
+		    });
+		}
+
+		function renderProductLicenseRows(certificateId, rows) {
+		    var wrap = $('#product-license-rows-wrap').empty();
+		    if (!rows.length) {
+		        wrap.append('<p class="text-muted" style="margin:0;">当前未配置产品扩展证照类型。请在「资质证件管理 → 证件类型/证件配置」中维护 <code>product_certificate</code> 与 <code>scm_certificate_type</code>（分类 product）。</p>');
+		        return;
+		    }
+		    var canSave = (editFlag !== 'hidden');
+		    var sb = [];
+		    sb.push('<table class="table table-bordered table-condensed" style="margin-bottom:0;font-size:12px;">');
+		    sb.push('<thead><tr>');
+		    sb.push('<th style="width:140px;">证照类型</th><th style="width:120px;">证号</th>');
+		    sb.push('<th style="width:110px;">发证日期</th><th style="width:110px;">有效期至</th><th style="min-width:150px;">证照图片</th><th style="width:140px;">备注</th>');
+		    if (canSave) {
+		        sb.push('<th style="width:88px;">操作</th>');
+		    }
+		    sb.push('</tr></thead><tbody>');
+		    for (var i = 0; i < rows.length; i++) {
+		        var r = rows[i];
+		        var lid = r.licenseId || '';
+		        sb.push('<tr data-license-id="' + escapeHtml(lid) + '" data-certificate-id="' + certificateId + '">');
+		        sb.push('<td><span class="label label-primary">' + escapeHtml(r.licenseKindName || '-') + '</span>');
+		        sb.push('<input type="hidden" class="fld-licenseTitle" value="' + escapeHtml(r.licenseTitle || '') + '"/>');
+		        sb.push('<input type="hidden" class="fld-issuingBodySnap" value="' + escapeHtml(r.issuingBodySnap || '') + '"/>');
+		        sb.push('</td>');
+		        sb.push('<td><input type="text" class="form-control input-sm fld-licenseNo" value="' + escapeHtml(r.licenseNo || '') + '" ' + (canSave ? '' : 'disabled') + '/></td>');
+		        sb.push('<td><input type="date" class="form-control input-sm fld-issueDate" value="' + escapeHtml(formatDateVal(r.issueDate)) + '" ' + (canSave ? '' : 'disabled') + '/></td>');
+		        sb.push('<td><input type="date" class="form-control input-sm fld-expireDate" value="' + escapeHtml(formatDateVal(r.expireDate)) + '" ' + (canSave ? '' : 'disabled') + '/></td>');
+		        sb.push('<td style="white-space: nowrap !important;">');
+		        sb.push('<input type="hidden" class="fld-certificateFile" value="' + escapeHtml(r.certificateFile || '') + '"/>');
+		        sb.push('<button type="button" class="btn btn-xs btn-default ls-snap-open-view" title="查看/删除图片"><i class="fa fa-eye"></i> 查看</button> ');
+		        if (canSave) {
+		            sb.push('<button type="button" class="btn btn-xs btn-success ls-snap-open-upload" title="上传图片"><i class="fa fa-upload"></i> 上传</button>');
+		        }
+		        sb.push('</td>');
+		        sb.push('<td><textarea class="form-control input-sm fld-remark" rows="3" ' + (canSave ? '' : 'disabled') + '>' + escapeHtml(r.remark || '') + '</textarea></td>');
+		        if (canSave) {
+		            sb.push('<td><a href="javascript:void(0)" class="btn btn-xs btn-primary" onclick="saveProductLicenseRow(this)">保存</a></td>');
+		        }
+		        sb.push('</tr>');
+		    }
+		    sb.push('</tbody></table>');
+		    wrap.html(sb.join(''));
+		}
+
+		function saveProductLicenseRow(btn) {
+		    var tr = $(btn).closest('tr');
+		    postLicenseSnapSave(tr, false);
+		}
+
+		function initLicenseSnapImageUploadOnce() {
+		    if (window._licenseSnapUploadInit) {
+		        return;
+		    }
+		    window._licenseSnapUploadInit = true;
+		    $('#licenseSnapUploadProxy').on('change', function () {
+		        var file = this.files && this.files[0];
+		        var tr = window._licenseSnapUploadTargetTr;
+		        this.value = '';
+		        if (!file || !tr || !tr.length) {
+		            return;
+		        }
+		        if (file.size > 5 * 1024 * 1024) {
+		            $.modal.msgWarning('单张图片请勿超过 5MB');
+		            return;
+		        }
+		        var fd = new FormData();
+		        fd.append('file', file);
+		        $.ajax({
+		            url: (typeof ctx !== 'undefined' ? ctx : '/') + 'common/upload',
+		            type: 'POST',
+		            data: fd,
+		            processData: false,
+		            contentType: false,
+		            xhrFields: { withCredentials: true },
+		            beforeSend: function (xhr) {
+		                var tok = $('meta[name="csrf-token"]').attr('content');
+		                if (tok) {
+		                    xhr.setRequestHeader('X-CSRF-Token', tok);
+		                }
+		            },
+		            success: function (rsp) {
+		                if (typeof rsp === 'string') {
+		                    try { rsp = JSON.parse(rsp); } catch (e1) { rsp = null; }
+		                }
+		                var ok = rsp && (rsp.code === 0 || rsp.code === '0' || rsp.code == 0);
+		                var uploadedUrl = ok ? (rsp.url || rsp.fileName) : '';
+		                if (ok && rsp.data) {
+		                    if (typeof rsp.data === 'string') {
+		                        uploadedUrl = rsp.data;
+		                    } else if (rsp.data.url) {
+		                        uploadedUrl = rsp.data.url;
+		                    } else if (rsp.data.fileName) {
+		                        uploadedUrl = rsp.data.fileName;
+		                    }
+		                }
+		                if (!ok || !uploadedUrl) {
+		                    $.modal.msgError(rsp && rsp.msg ? rsp.msg : '上传失败');
+		                    return;
+		                }
+		                var $hid = tr.find('.fld-certificateFile');
+		                var parts = parseCertFileUrls($hid.val());
+		                if (parts.indexOf(uploadedUrl) === -1) {
+		                    parts.push(uploadedUrl);
+		                }
+		                $hid.val(parts.join(','));
+		                if (window._licenseSnapModalLayero && window._licenseSnapModalLayero.length) {
+		                    refreshLicenseSnapModalList(window._licenseSnapModalLayero);
+		                }
+		                $.modal.msgSuccess('上传成功，已写入');
+		                postLicenseSnapSave(tr, true, true);
+		            },
+		            error: function (xhr) {
+		                $.modal.msgError(xhr && xhr.responseText ? '上传失败' : '上传失败');
+		            }
+		        });
+		    });
+		    $(document).on('click', '#product-license-rows-wrap .ls-snap-open-view', function (e) {
+		        e.preventDefault();
+		        openLicenseSnapImageLayer($(this).closest('tr'), false);
+		    });
+		    $(document).on('click', '#product-license-rows-wrap .ls-snap-open-upload', function (e) {
+		        e.preventDefault();
+		        openLicenseSnapImageLayer($(this).closest('tr'), true);
 		    });
 		}
 
@@ -298,7 +573,7 @@
 		        var windowHeight = $(window).height();
 		        var searchHeight = $('.search-collapse').outerHeight() || 60;
 		        var toolbarHeight = $('#toolbar').outerHeight() || 40;
-		        var licensePanel = 300;
+		        var licensePanel = 360;
 		        var padding = 36;
 		        return Math.max(windowHeight - searchHeight - toolbarHeight - licensePanel - padding, 200);
 		    };

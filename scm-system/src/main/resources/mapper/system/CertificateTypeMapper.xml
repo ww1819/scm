@@ -43,6 +43,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </where>
         order by order_num asc, create_time desc
     </select>
+
+    <select id="selectActiveByTypeCategoryForSnap" resultMap="CertificateTypeResult">
+        <include refid="selectCertificateTypeVo"/>
+        where (status = '0' or status is null)
+          and lower(trim(ifnull(type_category, ''))) = lower(trim(#{typeCategory}))
+        order by order_num asc, type_id asc
+    </select>
     
     <select id="selectCertificateTypeById" parameterType="Long" resultMap="CertificateTypeResult">
         <include refid="selectCertificateTypeVo"/>

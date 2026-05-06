@@ -1,6 +1,7 @@
 package com.scm.system.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.scm.system.domain.CertificateType;
 
 /**
@@ -25,6 +26,11 @@ public interface CertificateTypeMapper
      * @return 类型集合
      */
     public List<CertificateType> selectCertificateTypeList(CertificateType certificateType);
+
+    /**
+     * 扩展证照用：某分类下启用类型（不区分大小写），按 order_num、type_id 排序
+     */
+    public List<CertificateType> selectActiveByTypeCategoryForSnap(@Param("typeCategory") String typeCategory);
 
     /**
      * 根据类型编码查询类型

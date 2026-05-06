@@ -16,7 +16,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import com.scm.common.annotation.Log;
+import com.scm.common.profiler.OperationProfiler;
 import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.page.TableDataInfo;
@@ -48,6 +51,8 @@ import com.scm.system.service.IMaterialDictService;
 @RequestMapping("/certificate/product")
 public class ProductCertificateController extends BaseController
 {
+    private static final Logger log = LoggerFactory.getLogger(ProductCertificateController.class);
+
     private String prefix = "certificate/product";
 
     @Autowired
@@ -163,8 +168,13 @@ public class ProductCertificateController extends BaseController
         {
             return getDataTable(new ArrayList<ProductMaterialArchiveVo>());
         }
+        OperationProfiler perf = OperationProfiler.start(log, "product-cert-materialArchive",
+            "supplierId=" + bindSid + ",hospitalCode=" + hospitalCode.trim());
         startPage();
+        perf.mark("startPage");
         List<ProductMaterialArchiveVo> list = productCertificateService.selectMaterialArchiveSummaryData(bindSid, hospitalCode.trim());
+        perf.mark("selectMaterialArchiveSummaryData");
+        perf.finish(400);
         return getDataTable(list);
     }
 
@@ -207,8 +217,13 @@ public class ProductCertificateController extends BaseController
     @ResponseBody
     public TableDataInfo list(ProductCertificate productCertificate)
     {
+        OperationProfiler perf = OperationProfiler.start(log, "product-cert-list",
+            "materialId=" + productCertificate.getMaterialId() + ",hospitalCode=" + StringUtils.trimToEmpty(productCertificate.getHospitalCode()));
         startPage();
+        perf.mark("startPage");
         List<ProductCertificate> list = productCertificateService.selectProductCertificateList(productCertificate);
+        perf.mark("selectProductCertificateList");
+        perf.finish(400);
         return getDataTable(list);
     }
 

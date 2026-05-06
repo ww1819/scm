@@ -2,8 +2,11 @@ package com.scm.framework.shiro.service;
 
 import java.util.List;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import com.scm.common.profiler.OperationProfiler;
 import com.scm.common.constant.Constants;
 import com.scm.common.constant.ShiroConstants;
 import com.scm.common.constant.UserConstants;
@@ -36,6 +39,8 @@ import com.scm.system.service.ISysUserService;
 @Component
 public class SysLoginService
 {
+    private static final Logger log = LoggerFactory.getLogger(SysLoginService.class);
+
     @Autowired
     private SysPasswordService passwordService;
 
@@ -89,8 +94,10 @@ public class SysLoginService
             throw new BlackListException();
         }
 
+        OperationProfiler perf = OperationProfiler.start(log, "login", username);
         // 查询用户信息
         SysUser user = userService.selectUserByLoginName(username);
+        perf.mark("selectUserByLoginName");
 
         /**
         if (user == null && maybeMobilePhoneNumber(username))
@@ -123,10 +130,14 @@ public class SysLoginService
         }
 
         passwordService.validate(user, password);
+        perf.mark("passwordValidate");
 
         AsyncManager.me().execute(AsyncFactory.recordLogininfor(username, Constants.LOGIN_SUCCESS, MessageUtils.message("user.login.success")));
         setRolePermission(user);
+        perf.mark("setRolePermission");
         recordLoginInfo(user.getUserId());
+        perf.mark("recordLoginInfo");
+        perf.finish(400);
         return user;
     }
 

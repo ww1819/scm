@@ -33,223 +33,9 @@
 	</resultMap>
 
 	<!--
-	  白名单中的菜单 ID 视为「整棵子树」均放行：否则仅授权父菜单(如 2307)时，
-	  子按钮(23072)或挂在父下的权限行无法匹配 sma.menu_id = m.menu_id，导致 Shiro 无权限、按钮被隐藏。
+	  用户侧栏与 Shiro 权限串：仅按 sys_user_role + sys_role_menu + sys_menu 聚合，不再叠加
+	  scm_hospital_menu_auth / scm_supplier_menu_auth 或 sys_menu.auth_type 白名单遮罩。
 	-->
-	<sql id="supplierAuthMenuCoveredByWhitelistUser">
-		EXISTS (
-			SELECT 1 FROM scm_supplier_user su
-			INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id AND sma.hospital_id IS NULL
-			WHERE su.user_id = #{userId} AND (su.del_flag = '0' OR su.del_flag IS NULL)
-			AND EXISTS (
-				SELECT 1 FROM (
-					WITH RECURSIVE sup_sub AS (
-						SELECT CAST(sma.menu_id AS UNSIGNED) AS mid
-						UNION ALL
-						SELECT mm.menu_id FROM sys_menu mm INNER JOIN sup_sub s ON mm.parent_id = s.mid AND mm.del_flag = '0'
-					)
-					SELECT 1 FROM sup_sub s2 WHERE s2.mid = m.menu_id
-				) chk
-			)
-		)
-	</sql>
-	<sql id="supplierAuthMenuCoveredByWhitelistParams">
-		EXISTS (
-			SELECT 1 FROM scm_supplier_user su
-			INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id AND sma.hospital_id IS NULL
-			WHERE su.user_id = #{params.userId} AND (su.del_flag = '0' OR su.del_flag IS NULL)
-			AND EXISTS (
-				SELECT 1 FROM (
-					WITH RECURSIVE sup_sub AS (
-						SELECT CAST(sma.menu_id AS UNSIGNED) AS mid
-						UNION ALL
-						SELECT mm.menu_id FROM sys_menu mm INNER JOIN sup_sub s ON mm.parent_id = s.mid AND mm.del_flag = '0'
-					)
-					SELECT 1 FROM sup_sub s2 WHERE s2.mid = m.menu_id
-				) chk
-			)
-		)
-	</sql>
-	<sql id="hospitalAuthMenuCoveredByWhitelistUser">
-		EXISTS (
-			SELECT 1 FROM scm_hospital_user hu
-			INNER JOIN scm_hospital_menu_auth hma ON hma.hospital_id = hu.hospital_id
-			WHERE hu.user_id = #{userId} AND (hu.del_flag = '0' OR hu.del_flag IS NULL)
-			AND EXISTS (
-				SELECT 1 FROM (
-					WITH RECURSIVE hosp_sub AS (
-						SELECT CAST(hma.menu_id AS UNSIGNED) AS mid
-						UNION ALL
-						SELECT mm.menu_id FROM sys_menu mm INNER JOIN hosp_sub h ON mm.parent_id = h.mid AND mm.del_flag = '0'
-					)
-					SELECT 1 FROM hosp_sub h2 WHERE h2.mid = m.menu_id
-				) chk
-			)
-		)
-	</sql>
-	<sql id="hospitalAuthMenuCoveredByWhitelistParams">
-		EXISTS (
-			SELECT 1 FROM scm_hospital_user hu
-			INNER JOIN scm_hospital_menu_auth hma ON hma.hospital_id = hu.hospital_id
-			WHERE hu.user_id = #{params.userId} AND (hu.del_flag = '0' OR hu.del_flag IS NULL)
-			AND EXISTS (
-				SELECT 1 FROM (
-					WITH RECURSIVE hosp_sub AS (
-						SELECT CAST(hma.menu_id AS UNSIGNED) AS mid
-						UNION ALL
-						SELECT mm.menu_id FROM sys_menu mm INNER JOIN hosp_sub h ON mm.parent_id = h.mid AND mm.del_flag = '0'
-					)
-					SELECT 1 FROM hosp_sub h2 WHERE h2.mid = m.menu_id
-				) chk
-			)
-		)
-	</sql>
-	<sql id="supplierGrantHospitalMenuAuthUser">
-		EXISTS (
-			SELECT 1
-			FROM scm_supplier_user su
-			INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id
-			INNER JOIN scm_hospital_supplier hs ON hs.supplier_id = su.supplier_id AND hs.hospital_id = sma.hospital_id
-			WHERE su.user_id = #{userId}
-			  AND (su.del_flag = '0' OR su.del_flag IS NULL)
-			  AND hs.bind_status = '1'
-			AND EXISTS (
-				SELECT 1 FROM (
-					WITH RECURSIVE sup_sub AS (
-						SELECT CAST(sma.menu_id AS UNSIGNED) AS mid
-						UNION ALL
-						SELECT mm.menu_id FROM sys_menu mm INNER JOIN sup_sub s ON mm.parent_id = s.mid AND mm.del_flag = '0'
-					)
-					SELECT 1 FROM sup_sub s2 WHERE s2.mid = m.menu_id
-				) chk
-			)
-		)
-	</sql>
-	<sql id="supplierGrantHospitalMenuAuthParams">
-		EXISTS (
-			SELECT 1
-			FROM scm_supplier_user su
-			INNER JOIN scm_supplier_menu_auth sma ON sma.supplier_id = su.supplier_id
-			INNER JOIN scm_hospital_supplier hs ON hs.supplier_id = su.supplier_id AND hs.hospital_id = sma.hospital_id
-			WHERE su.user_id = #{params.userId}
-			  AND (su.del_flag = '0' OR su.del_flag IS NULL)
-			  AND hs.bind_status = '1'
-			AND EXISTS (
-				SELECT 1 FROM (
-					WITH RECURSIVE sup_sub AS (
-						SELECT CAST(sma.menu_id AS UNSIGNED) AS mid
-						UNION ALL
-						SELECT mm.menu_id FROM sys_menu mm INNER JOIN sup_sub s ON mm.parent_id = s.mid AND mm.del_flag = '0'
-					)
-					SELECT 1 FROM sup_sub s2 WHERE s2.mid = m.menu_id
-				) chk
-			)
-		)
-	</sql>
-
-	<!-- 医院/供应商类菜单需同时满足角色菜单与白名单 -->
-	<sql id="authScopeFilterUser">
-		AND (
-			COALESCE(NULLIF(TRIM(m.auth_type), ''), 'platform') = 'platform'
-			OR (
-				m.auth_type = 'hospital'
-				AND <include refid="hospitalAuthMenuCoveredByWhitelistUser"/>
-			)
-			OR (
-				m.auth_type = 'supplier'
-				AND <include refid="supplierAuthMenuCoveredByWhitelistUser"/>
-			)
-			OR (
-				m.auth_type = 'hospital_supplier'
-				AND COALESCE(m.hospital_grant_supplier_flag, '0') &lt;&gt; '1'
-				AND <include refid="supplierAuthMenuCoveredByWhitelistUser"/>
-			)
-			OR (
-				m.auth_type = 'hospital_supplier'
-				AND <include refid="hospitalAuthMenuCoveredByWhitelistUser"/>
-			)
-			OR (
-				m.auth_type = 'hospital_supplier'
-				AND COALESCE(m.hospital_grant_supplier_flag, '0') = '1'
-				AND <include refid="supplierGrantHospitalMenuAuthUser"/>
-			)
-		)
-	</sql>
-
-	<sql id="authScopeFilterParamsUser">
-		AND (
-			COALESCE(NULLIF(TRIM(m.auth_type), ''), 'platform') = 'platform'
-			OR (
-				m.auth_type = 'hospital'
-				AND <include refid="hospitalAuthMenuCoveredByWhitelistParams"/>
-			)
-			OR (
-				m.auth_type = 'supplier'
-				AND <include refid="supplierAuthMenuCoveredByWhitelistParams"/>
-			)
-			OR (
-				m.auth_type = 'hospital_supplier'
-				AND COALESCE(m.hospital_grant_supplier_flag, '0') &lt;&gt; '1'
-				AND <include refid="supplierAuthMenuCoveredByWhitelistParams"/>
-			)
-			OR (
-				m.auth_type = 'hospital_supplier'
-				AND <include refid="hospitalAuthMenuCoveredByWhitelistParams"/>
-			)
-			OR (
-				m.auth_type = 'hospital_supplier'
-				AND COALESCE(m.hospital_grant_supplier_flag, '0') = '1'
-				AND <include refid="supplierGrantHospitalMenuAuthParams"/>
-			)
-		)
-	</sql>
-
-	<!-- 角色-菜单行上 hospital_id/supplier_id（空串=不限制该维）：与当前用户院/商从属一致才计入可见菜单与权限 -->
-	<sql id="roleMenuScopeFilterUser">
-		AND (
-			(
-				COALESCE(NULLIF(TRIM(rm.hospital_id), ''), '') = ''
-				OR EXISTS (
-					SELECT 1 FROM scm_hospital_user hu
-					WHERE hu.user_id = #{userId}
-					  AND (hu.del_flag = '0' OR hu.del_flag IS NULL)
-					  AND CAST(hu.hospital_id AS CHAR) = TRIM(rm.hospital_id)
-				)
-			)
-			AND (
-				COALESCE(NULLIF(TRIM(rm.supplier_id), ''), '') = ''
-				OR EXISTS (
-					SELECT 1 FROM scm_supplier_user su
-					WHERE su.user_id = #{userId}
-					  AND (su.del_flag = '0' OR su.del_flag IS NULL)
-					  AND CAST(su.supplier_id AS CHAR) = TRIM(rm.supplier_id)
-				)
-			)
-		)
-	</sql>
-
-	<sql id="roleMenuScopeFilterParamsUser">
-		AND (
-			(
-				COALESCE(NULLIF(TRIM(rm.hospital_id), ''), '') = ''
-				OR EXISTS (
-					SELECT 1 FROM scm_hospital_user hu
-					WHERE hu.user_id = #{params.userId}
-					  AND (hu.del_flag = '0' OR hu.del_flag IS NULL)
-					  AND CAST(hu.hospital_id AS CHAR) = TRIM(rm.hospital_id)
-				)
-			)
-			AND (
-				COALESCE(NULLIF(TRIM(rm.supplier_id), ''), '') = ''
-				OR EXISTS (
-					SELECT 1 FROM scm_supplier_user su
-					WHERE su.user_id = #{params.userId}
-					  AND (su.del_flag = '0' OR su.del_flag IS NULL)
-					  AND CAST(su.supplier_id AS CHAR) = TRIM(rm.supplier_id)
-				)
-			)
-		)
-	</sql>
 
     <sql id="selectMenuVo">
         select menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, ifnull(perms,'') as perms, icon, create_by, create_time,
@@ -271,8 +57,6 @@
 			 left join sys_user_role ur on rm.role_id = ur.role_id
 			 LEFT JOIN sys_role ro on ur.role_id = ro.role_id
 		where ur.user_id = #{userId} and m.menu_type in ('M', 'C') and m.visible = 0 and m.del_flag = '0' AND ro.status = '0'
-		<include refid="roleMenuScopeFilterUser"/>
-		<include refid="authScopeFilterUser"/>
 		order by m.parent_id, m.order_num
 	</select>
 
@@ -300,8 +84,6 @@
 			 left join sys_user_role ur on rm.role_id = ur.role_id
 			 LEFT JOIN sys_role ro on ur.role_id = ro.role_id
 		where ur.user_id = #{userId} and m.del_flag = '0' AND ro.status = '0'
-		<include refid="roleMenuScopeFilterUser"/>
-		<include refid="authScopeFilterUser"/>
 		order by m.parent_id, m.order_num
 	</select>
 
@@ -312,8 +94,6 @@
 			 left join sys_user_role ur on rm.role_id = ur.role_id
 			 left join sys_role r on r.role_id = ur.role_id
 		where m.visible = '0' and m.del_flag = '0' and r.status = '0' and ur.user_id = #{userId}
-		<include refid="roleMenuScopeFilterUser"/>
-		<include refid="authScopeFilterUser"/>
 	</select>
 
 	<select id="selectPermsByRoleId" parameterType="Long" resultType="String">
@@ -364,8 +144,6 @@
 		left join sys_user_role ur on rm.role_id = ur.role_id
 		LEFT JOIN sys_role ro on ur.role_id = ro.role_id
 		where ur.user_id = #{params.userId} and m.del_flag = '0' AND ro.status = '0'
-		<include refid="roleMenuScopeFilterParamsUser"/>
-		<include refid="authScopeFilterParamsUser"/>
 		<if test="menuName != null and menuName != ''">
 			AND m.menu_name like concat('%', #{menuName}, '%')
 		</if>

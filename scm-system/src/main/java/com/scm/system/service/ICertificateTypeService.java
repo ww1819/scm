@@ -67,8 +67,8 @@ public interface ICertificateTypeService
     public boolean checkTypeCodeUnique(CertificateType certificateType);
 
     /**
-     * 产品证件扩展证照：按 scm_certificate_config(config_type=product_certificate) 与 scm_certificate_type 联动；
-     * 若配置为空则回退为 type_category=product 的全部启用类型。
+     * 产品证件扩展证照：列出 scm_certificate_type 中 type_category=product（不区分大小写）的启用类型；
+     * scm_certificate_config(product_certificate) 中已配置的类型排在前面，其余按 order_num 排序。
      */
     public List<CertificateType> selectProductExtensionTypesForSnap();
 
