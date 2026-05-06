@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('扩展证照')" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row" th:if="${loadError != null}">
+			<div class="col-sm-12">
+				<div class="alert alert-warning" th:text="${loadError}">无权或不存在</div>
+			</div>
+		</div>
+		<div class="row" th:if="${productCertificate != null}">
+			<div class="col-sm-12">
+				<div class="alert alert-info" style="margin-bottom: 10px;">
+					<strong>当前产品证件</strong>：
+					<span th:text="${productCertificate.materialName}">-</span>
+					&nbsp;|&nbsp;注册证号 <span th:text="${productCertificate.registerNo}">-</span>
+					&nbsp;|&nbsp;供应商 <span th:text="${productCertificate.supplierName}">-</span>
+				</div>
+			</div>
+		</div>
+		<div class="row" th:unless="${loadError != null}">
+			<div class="col-sm-12 search-collapse" style="display:none;">
+				<form id="license-snap-form">
+					<input type="hidden" name="certificateId" id="licenseSnapCertId" th:value="${certificateId}"/>
+				</form>
+			</div>
+			<div class="col-sm-12 select-table table-striped">
+				<div class="btn-group-sm" id="toolbar" role="group" style="margin-bottom: 8px;">
+					<a class="btn btn-primary single disabled" onclick="$.operate.editTab()" shiro:hasPermission="certificate:product:edit">
+						<i class="fa fa-edit"></i> 修改
+					</a>
+					<span class="text-muted" style="margin-left:8px;font-size:12px;">证照类型由系统配置生成，请在登记页下方直接维护各类型内容。</span>
+				</div>
+				<table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer" />
+	<script th:inline="javascript">
+		var prefix = ctx + "certificate/product";
+		var skipTable = /*[[${loadError != null}]]*/ false;
+		var certId = /*[[${certificateId}]]*/ '';
+
+		$(function () {
+			if (skipTable) {
+				return;
+			}
+			var options = {
+				formId: "license-snap-form",
+				url: prefix + "/licenseSnap/list",
+				updateUrl: prefix + "/licenseSnap/edit/{id}",
+				modalName: "扩展证照",
+				uniqueId: "licenseId",
+				showRefresh: false,
+				showColumns: false,
+				showToggle: false,
+				sortName: "createTime",
+				sortOrder: "desc",
+				columns: [{
+					checkbox: true
+				},
+				{
+					field: 'licenseId',
+					title: 'ID',
+					visible: false
+				},
+				{
+					field: 'licenseKindName',
+					title: '证照类别',
+					formatter: function (v, row) {
+						return v || row.licenseKindCode || '-';
+					}
+				},
+				{
+					field: 'licenseTitle',
+					title: '标题',
+					formatter: function (v) { return v || '-'; }
+				},
+				{
+					field: 'licenseNo',
+					title: '证号',
+					formatter: function (v) { return v || '-'; }
+				},
+				{
+					field: 'issuingBodySnap',
+					title: '发证机关',
+					formatter: function (v) { return v || '-'; }
+				},
+				{
+					field: 'issueDate',
+					title: '发证日期',
+					sortable: true
+				},
+				{
+					field: 'expireDate',
+					title: '有效期至',
+					sortable: true
+				},
+				{
+					field: 'productNameSnap',
+					title: '产品名称(快照)',
+					formatter: function (v) { return v || '-'; }
+				},
+				{
+					field: 'createTime',
+					title: '创建时间',
+					sortable: true
+				}]
+			};
+			$.table.init(options);
+		});
+	</script>
+</body>
+</html>

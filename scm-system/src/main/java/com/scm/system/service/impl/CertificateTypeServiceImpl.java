@@ -1,12 +1,18 @@
 package com.scm.system.service.impl;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.scm.common.core.text.Convert;
 import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.StringUtils;
+import com.scm.system.domain.CertificateConfig;
 import com.scm.system.domain.CertificateType;
+import com.scm.system.mapper.CertificateConfigMapper;
 import com.scm.system.mapper.CertificateTypeMapper;
 import com.scm.system.service.ICertificateTypeService;
 
@@ -20,6 +26,9 @@ public class CertificateTypeServiceImpl implements ICertificateTypeService
 {
     @Autowired
     private CertificateTypeMapper certificateTypeMapper;
+
+    @Autowired
+    private CertificateConfigMapper certificateConfigMapper;
 
     /**
      * 查询证件类型信息
@@ -119,6 +128,65 @@ public class CertificateTypeServiceImpl implements ICertificateTypeService
             return false;
         }
         return true;
+    }
+
+    @Override
+    public List<CertificateType> selectProductExtensionTypesForSnap()
+    {
+        return selectExtensionTypesForConfig("product_certificate", "product");
+    }
+
+    @Override
+    public List<CertificateType> selectSupplierExtensionTypesForSnap()
+    {
+        return selectExtensionTypesForConfig("supplier_certificate", "supplier");
+    }
+
+    @Override
+    public CertificateType selectByTypeCode(String typeCode)
+    {
+        if (StringUtils.isEmpty(typeCode))
+        {
+            return null;
+        }
+        return certificateTypeMapper.checkTypeCodeUnique(typeCode.trim());
+    }
+
+    private List<CertificateType> selectExtensionTypesForConfig(String configType, String typeCategoryFallback)
+    {
+        CertificateConfig q = new CertificateConfig();
+        q.setConfigType(configType);
+        q.setStatus("0");
+        List<CertificateConfig> cfgs = certificateConfigMapper.selectCertificateConfigList(q);
+        Set<String> codes = new LinkedHashSet<>();
+        if (cfgs != null)
+        {
+            for (CertificateConfig c : cfgs)
+            {
+                if (StringUtils.isNotEmpty(c.getCertificateType()))
+                {
+                    codes.add(c.getCertificateType().trim());
+                }
+            }
+        }
+        List<CertificateType> ordered = new ArrayList<>();
+        if (!codes.isEmpty())
+        {
+            for (String code : codes)
+            {
+                CertificateType t = certificateTypeMapper.checkTypeCodeUnique(code);
+                if (t != null && (t.getStatus() == null || "0".equals(t.getStatus())))
+                {
+                    ordered.add(t);
+                }
+            }
+            ordered.sort(Comparator.comparingInt(o -> o.getOrderNum() != null ? o.getOrderNum() : 0));
+            return ordered;
+        }
+        CertificateType tq = new CertificateType();
+        tq.setTypeCategory(typeCategoryFallback);
+        tq.setStatus("0");
+        return certificateTypeMapper.selectCertificateTypeList(tq);
     }
 }
 

@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import com.scm.common.core.text.Convert;
 import com.scm.common.exception.ServiceException;
@@ -17,6 +18,7 @@ import com.scm.system.domain.vo.ProductMaterialArchiveVo;
 import com.scm.system.mapper.ProductCertificateMapper;
 import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.IProductCertificateService;
+import com.scm.system.service.IProductCertLicenseSnapService;
 import com.scm.system.service.IScmSupplierContextService;
 
 /**
@@ -38,6 +40,27 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
 
     @Autowired
     private IHospitalSupplierService hospitalSupplierService;
+
+    @Autowired
+    @Lazy
+    private IProductCertLicenseSnapService productCertLicenseSnapService;
+
+    private void ensureSnapStubsAfterCertChange(Long certificateId, String createOrUpdateBy)
+    {
+        if (certificateId == null)
+        {
+            return;
+        }
+        try
+        {
+            productCertLicenseSnapService.ensureProductSnapStubsForCertificate(certificateId,
+                createOrUpdateBy != null ? createOrUpdateBy : "");
+        }
+        catch (Exception ignored)
+        {
+            // 权限或类型表未就绪时不阻断主流程
+        }
+    }
 
     private void assertProductCertificateSupplierScope(ProductCertificate c)
     {
@@ -246,7 +269,12 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
         productCertificate.setCreateTime(DateUtils.getNowDate());
         // 检查过期状态
         checkExpiredStatus(productCertificate);
-        return productCertificateMapper.insertProductCertificate(productCertificate);
+        int rows = productCertificateMapper.insertProductCertificate(productCertificate);
+        if (rows > 0 && productCertificate.getCertificateId() != null)
+        {
+            ensureSnapStubsAfterCertChange(productCertificate.getCertificateId(), productCertificate.getCreateBy());
+        }
+        return rows;
     }
     
     /**
@@ -343,7 +371,12 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
         productCertificate.setUpdateTime(DateUtils.getNowDate());
         // 检查过期状态
         checkExpiredStatus(productCertificate);
-        return productCertificateMapper.updateProductCertificate(productCertificate);
+        int rows = productCertificateMapper.updateProductCertificate(productCertificate);
+        if (rows > 0 && productCertificate.getCertificateId() != null)
+        {
+            ensureSnapStubsAfterCertChange(productCertificate.getCertificateId(), productCertificate.getUpdateBy());
+        }
+        return rows;
     }
     
     /**
@@ -430,7 +463,10 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
                 }
             }
         }
-        
+        if (result > 0 && productCertificate.getCertificateId() != null)
+        {
+            ensureSnapStubsAfterCertChange(productCertificate.getCertificateId(), productCertificate.getUpdateBy());
+        }
         return result;
     }
 

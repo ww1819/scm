@@ -110,8 +110,20 @@
 		        </a>
 	        </div>
 	        
-	        <div class="col-sm-12 select-table table-striped" style="flex: 1; overflow-x: auto; overflow-y: auto; min-height: 0; padding: 0 10px 10px 10px;">
-			    <table id="bootstrap-table"></table>
+	        <div class="col-sm-12" style="flex: 1; display: flex; flex-direction: column; min-height: 0; padding: 0 10px 0 10px;">
+				<div class="select-table table-striped" style="flex: 1; overflow-x: auto; overflow-y: auto; min-height: 120px; padding-bottom: 6px;">
+					<table id="bootstrap-table"></table>
+				</div>
+				<div id="product-license-panel" class="panel panel-default" style="flex-shrink: 0; margin-bottom: 10px; border-color: #e7eaec;">
+					<div class="panel-heading" style="padding: 6px 10px;">
+						<strong>当前证件关联证照</strong>
+						<span class="text-muted" style="font-weight: normal; font-size: 12px;">（类型来自「证件配置 product_certificate」与「证件类型」；点击上表一行加载）</span>
+					</div>
+					<div class="panel-body" id="product-license-panel-body" style="max-height: 280px; overflow: auto; padding: 8px 10px;">
+						<p class="text-muted" id="product-license-empty-tip" style="margin: 0;">请在上方列表单击选择一条产品证件。</p>
+						<div id="product-license-rows-wrap" style="display: none;"></div>
+					</div>
+				</div>
 			</div>
 			</div>
 		</div>
@@ -130,7 +142,7 @@
 		$(function() {
 		    queryProductCertificateList();
 		    if (supplierSelfService) {
-		        initProductHospitalTree();
+		        setTimeout(function () { initProductHospitalTree(); }, 0);
 		    }
 		});
 
@@ -176,13 +188,119 @@
 		    $.tree.init(options);
 		}
 
+		function escapeHtml(s) {
+		    if (s == null || s === '') {
+		        return '';
+		    }
+		    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+		}
+
+		function formatDateVal(v) {
+		    if (!v) {
+		        return '';
+		    }
+		    if (typeof v === 'string' && v.indexOf(' ') > 0) {
+		        return v.split(' ')[0];
+		    }
+		    if (typeof v === 'string' && v.indexOf('T') > 0) {
+		        return v.split('T')[0];
+		    }
+		    return v;
+		}
+
+		function clearProductLicensePanel() {
+		    $('#product-license-empty-tip').show();
+		    $('#product-license-rows-wrap').hide().empty();
+		}
+
+		function loadProductLicenseDetail(certificateId) {
+		    if (!certificateId) {
+		        clearProductLicensePanel();
+		        return;
+		    }
+		    $('#product-license-empty-tip').hide();
+		    $('#product-license-rows-wrap').show().html('<p class="text-muted" style="margin:0;">加载中…</p>');
+		    $.post(prefix + '/licenseSnap/mergedRows', { certificateId: certificateId }, function (res) {
+		        if (!res || res.code !== 0) {
+		            $('#product-license-rows-wrap').html('<p class="text-danger">' + escapeHtml(res && res.msg ? res.msg : '加载失败') + '</p>');
+		            return;
+		        }
+		        renderProductLicenseRows(certificateId, res.data || []);
+		    });
+		}
+
+		function renderProductLicenseRows(certificateId, rows) {
+		    var wrap = $('#product-license-rows-wrap').empty();
+		    if (!rows.length) {
+		        wrap.append('<p class="text-muted" style="margin:0;">当前未配置产品扩展证照类型。请在「资质证件管理 → 证件类型/证件配置」中维护 <code>product_certificate</code> 与 <code>scm_certificate_type</code>（分类 product）。</p>');
+		        return;
+		    }
+		    var canSave = (editFlag === true || editFlag === 'true');
+		    var sb = [];
+		    sb.push('<table class="table table-bordered table-condensed" style="margin-bottom:0;font-size:12px;">');
+		    sb.push('<thead><tr>');
+		    sb.push('<th style="width:160px;">证照类型</th><th style="width:120px;">标题</th><th style="width:140px;">证号</th><th style="width:120px;">发证机关</th>');
+		    sb.push('<th style="width:110px;">发证日期</th><th style="width:110px;">有效期至</th><th>证照影像</th><th style="width:160px;">备注</th>');
+		    if (canSave) {
+		        sb.push('<th style="width:70px;">操作</th>');
+		    }
+		    sb.push('</tr></thead><tbody>');
+		    for (var i = 0; i < rows.length; i++) {
+		        var r = rows[i];
+		        var lid = r.licenseId || '';
+		        sb.push('<tr data-license-id="' + escapeHtml(lid) + '" data-certificate-id="' + certificateId + '">');
+		        sb.push('<td><span class="label label-primary">' + escapeHtml(r.licenseKindName || '-') + '</span><br/><span class="text-muted">' + escapeHtml(r.licenseKindCode || '') + '</span></td>');
+		        sb.push('<td><input type="text" class="form-control input-sm fld-licenseTitle" value="' + escapeHtml(r.licenseTitle || '') + '" ' + (canSave ? '' : 'disabled') + '/></td>');
+		        sb.push('<td><input type="text" class="form-control input-sm fld-licenseNo" value="' + escapeHtml(r.licenseNo || '') + '" ' + (canSave ? '' : 'disabled') + '/></td>');
+		        sb.push('<td><input type="text" class="form-control input-sm fld-issuingBodySnap" value="' + escapeHtml(r.issuingBodySnap || '') + '" ' + (canSave ? '' : 'disabled') + '/></td>');
+		        sb.push('<td><input type="date" class="form-control input-sm fld-issueDate" value="' + escapeHtml(formatDateVal(r.issueDate)) + '" ' + (canSave ? '' : 'disabled') + '/></td>');
+		        sb.push('<td><input type="date" class="form-control input-sm fld-expireDate" value="' + escapeHtml(formatDateVal(r.expireDate)) + '" ' + (canSave ? '' : 'disabled') + '/></td>');
+		        sb.push('<td><textarea class="form-control input-sm fld-certificateFile" rows="2" ' + (canSave ? '' : 'disabled') + '>' + escapeHtml(r.certificateFile || '') + '</textarea></td>');
+		        sb.push('<td><textarea class="form-control input-sm fld-remark" rows="2" ' + (canSave ? '' : 'disabled') + '>' + escapeHtml(r.remark || '') + '</textarea></td>');
+		        if (canSave) {
+		            sb.push('<td><a href="javascript:void(0)" class="btn btn-xs btn-primary" onclick="saveProductLicenseRow(this)">保存</a></td>');
+		        }
+		        sb.push('</tr>');
+		    }
+		    sb.push('</tbody></table>');
+		    wrap.html(sb.join(''));
+		}
+
+		function saveProductLicenseRow(btn) {
+		    var tr = $(btn).closest('tr');
+		    var licenseId = tr.data('license-id');
+		    if (!licenseId) {
+		        $.modal.msgWarning('缺少证照行ID');
+		        return;
+		    }
+		    var data = {
+		        licenseId: licenseId,
+		        licenseTitle: tr.find('.fld-licenseTitle').val(),
+		        licenseNo: tr.find('.fld-licenseNo').val(),
+		        issuingBodySnap: tr.find('.fld-issuingBodySnap').val(),
+		        issueDate: tr.find('.fld-issueDate').val(),
+		        expireDate: tr.find('.fld-expireDate').val(),
+		        certificateFile: tr.find('.fld-certificateFile').val(),
+		        remark: tr.find('.fld-remark').val()
+		    };
+		    $.post(prefix + '/licenseSnap/saveRow', data, function (res) {
+		        if (res && res.code === 0) {
+		            $.modal.msgSuccess('保存成功');
+		            loadProductLicenseDetail(tr.data('certificate-id'));
+		        } else {
+		            $.modal.msgError(res && res.msg ? res.msg : '保存失败');
+		        }
+		    });
+		}
+
 		function queryProductCertificateList() {
 		    var calculateTableHeight = function() {
 		        var windowHeight = $(window).height();
 		        var searchHeight = $('.search-collapse').outerHeight() || 60;
 		        var toolbarHeight = $('#toolbar').outerHeight() || 40;
-		        var padding = 20;
-		        return Math.max(windowHeight - searchHeight - toolbarHeight - padding, 300);
+		        var licensePanel = 300;
+		        var padding = 36;
+		        return Math.max(windowHeight - searchHeight - toolbarHeight - licensePanel - padding, 200);
 		    };
 		    
 		    var options = {
@@ -198,6 +316,17 @@
 		        uniqueId: "certificateId",
 		        height: calculateTableHeight(),
 		        fixedColumns: false,
+		        showRefresh: false,
+		        showColumns: false,
+		        showToggle: false,
+		        onClickRow: function (row) {
+		            if (row && row.certificateId) {
+		                loadProductLicenseDetail(row.certificateId);
+		            }
+		        },
+		        onLoadSuccess: function () {
+		            clearProductLicensePanel();
+		        },
 		        columns: [{
 		            checkbox: true
 		        },
@@ -311,306 +440,6 @@
 				$.operate.post(prefix + "/checkExpired", {});
 		    })
 		}
-		
-		// 计算医院表格高度
-		function calculateSupplierTableHeight() {
-		    var windowHeight = $(window).height();
-		    var panelHeaderHeight = 35; // 面板标题高度
-		    var searchHeight = 46; // 搜索框高度
-		    var bodyPadding = 10; // panel-body的padding
-		    return windowHeight - panelHeaderHeight - searchHeight - bodyPadding - 20; // 额外减去20px作为边距
-		}
-		
-		// 初始化供应商表格
-		function initSupplierTable() {
-		    var $table = $('#bootstrap-table-supplier');
-		    console.log("查找供应商表格元素，找到:", $table.length, "个");
-		    
-		    if ($table.length === 0) {
-		        console.error("供应商表格元素不存在！3秒后重试...");
-		        setTimeout(function() {
-		            initSupplierTable();
-		        }, 3000);
-		        return;
-		    }
-		    
-		    // 检查表格是否已经初始化
-		    try {
-		        var existingOptions = $table.bootstrapTable('getOptions');
-		        if (existingOptions) {
-		            console.log("表格已初始化，直接加载数据");
-		            querySupplierList();
-		            return;
-		        }
-		    } catch(e) {
-		        console.log("表格未初始化，开始初始化");
-		    }
-		    
-		    var tableHeight = calculateSupplierTableHeight();
-		    console.log("初始化供应商表格，高度:", tableHeight, "表格元素:", $table.length);
-		    
-		    try {
-		        $table.bootstrapTable({
-		            data: [],
-		            pagination: false,
-		            search: false,
-		            showRefresh: false,
-		            showColumns: false,
-		            showToggle: false,
-		            height: tableHeight,
-		            striped: true,
-		            classes: 'table table-condensed',
-		            locale: 'zh-CN',
-		            showHeader: true,
-		            showEmptyRows: false,
-		            columns: [{
-		                field: 'serialNumber',
-		                title: '序号',
-		                align: 'center',
-		                width: 50,
-		                cellStyle: {fontSize: '12px', padding: '4px'},
-		                formatter: function(value, row, index) {
-		                    return index + 1;
-		                }
-		            },
-		            {
-		                field: 'supplierCode',
-		                title: '编码',
-		                sortable: true,
-		                width: 100,
-		                cellStyle: {fontSize: '12px', padding: '4px'},
-		                formatter: function(value, row, index) {
-		                    return value || '-';
-		                }
-		            },
-		            {
-		                field: 'companyName',
-		                title: '供应商名称',
-		                cellStyle: {fontSize: '12px', padding: '4px'},
-		                formatter: function(value, row, index) {
-		                    if (!value) return '-';
-		                    var name = value.length > 15 ? value.substring(0, 15) + '...' : value;
-		                    var supplierId = row.supplierId || '';
-		                    return '<a href="javascript:void(0)" onclick="selectSupplier(\'' + supplierId + '\')" title="' + value + '" style="font-size: 12px; cursor: pointer;">' + name + '</a>';
-		                }
-		            }],
-		            onClickRow: function(row, $element) {
-		                if (row.supplierId) {
-		                    selectSupplier(row.supplierId);
-		                }
-		            },
-		            rowStyle: function(row, index) {
-		                if (selectedSupplierId && row.supplierId == selectedSupplierId) {
-		                    return {classes: 'info'};
-		                }
-		                return {};
-		            }
-		        });
-		        console.log("供应商表格初始化完成！");
-		        // 初始化完成后延迟加载数据，确保表格完全初始化
-		        setTimeout(function() {
-		            querySupplierList();
-		        }, 300);
-		    } catch(e) {
-		        console.error("初始化供应商表格失败:", e);
-		        console.error("错误堆栈:", e.stack);
-		        setTimeout(function() {
-		            initSupplierTable();
-		        }, 1000);
-		    }
-		}
-		
-		// 查询所有供应商列表
-		function querySupplierList() {
-		    console.log("开始查询供应商列表，URL:", supplierPrefix + "/all");
-		    $.ajax({
-		        url: supplierPrefix + "/all",
-		        type: "GET",
-		        dataType: "json",
-		        cache: false,
-		        success: function(result) {
-		            console.log("供应商列表响应:", result);
-		            if (result && result.code == 0) {
-		                var suppliers = result.data || [];
-		                console.log("供应商数据数量:", suppliers.length);
-		                if (suppliers.length > 0) {
-		                    console.log("第一条供应商数据:", JSON.stringify(suppliers[0], null, 2));
-		                }
-		                updateSupplierTable(suppliers);
-		            } else {
-		                console.error("获取供应商列表失败:", result);
-		                updateSupplierTable([]);
-		            }
-		        },
-		        error: function(xhr, status, error) {
-		            console.error("获取供应商列表请求失败:", {
-		                status: status,
-		                error: error,
-		                statusText: xhr.statusText,
-		                statusCode: xhr.status
-		            });
-		            updateSupplierTable([]);
-		        }
-		    });
-		}
-		
-		// 更新供应商表格数据
-		function updateSupplierTable(suppliers) {
-		    console.log("========== 更新供应商表格 ==========");
-		    
-		    if (!Array.isArray(suppliers)) {
-		        console.warn("⚠️ suppliers不是数组，转换为数组");
-		        suppliers = [];
-		    }
-		    
-		    console.log("数据量:", suppliers.length);
-		    if (suppliers.length > 0) {
-		        console.log("第一条供应商数据:", JSON.stringify(suppliers[0], null, 2));
-		    }
-		    
-		    var $table = $('#bootstrap-table-supplier');
-		    console.log("表格元素查找结果:", $table.length, "个");
-		    
-		    if ($table.length === 0) {
-		        console.error("❌ 供应商表格元素不存在！");
-		        setTimeout(function() {
-		            updateSupplierTable(suppliers);
-		        }, 200);
-		        return;
-		    }
-		    
-		    console.log("表格元素位置:", $table.offset());
-		    console.log("表格元素可见性:", $table.is(':visible'));
-		    
-		    var tableHeight = calculateSupplierTableHeight();
-		    console.log("计算得到的表格高度:", tableHeight);
-		    
-		    try {
-		        var tableOptions = $table.bootstrapTable('getOptions');
-		        if (tableOptions) {
-		            console.log("✓ 表格已初始化");
-		            if (suppliers.length > 0) {
-		                var processedSuppliers = suppliers.map(function(s) {
-		                    return {
-		                        supplierId: s.supplierId || s.supplier_id,
-		                        supplierCode: s.supplierCode || s.supplier_code || '',
-		                        companyName: s.companyName || s.company_name || ''
-		                    };
-		                });
-		                console.log("处理后的第一条数据:", JSON.stringify(processedSuppliers[0], null, 2));
-		                
-		                console.log("开始加载数据到表格...");
-		                // 使用load方法加载数据，确保数据正确显示
-		                $table.bootstrapTable('load', processedSuppliers);
-		                $table.bootstrapTable('resetView', {height: tableHeight});
-		                
-		                setTimeout(function() {
-		                    var loadedData = $table.bootstrapTable('getData');
-		                    console.log("✓ 数据加载完成！");
-		                    console.log("加载后的数据量:", loadedData.length);
-		                    
-		                    if (loadedData.length > 0) {
-		                        console.log("✓ 加载后的第一条数据:", JSON.stringify(loadedData[0], null, 2));
-		                        
-		                        var $tbody = $table.find('tbody');
-		                        var rowCount = $tbody.find('tr').length;
-		                        console.log("表格DOM中的行数:", rowCount);
-		                        
-		                        if (rowCount === 0 && loadedData.length > 0) {
-		                            console.error("❌ 表格DOM中没有行，但数据已加载！尝试强制刷新...");
-		                            $table.bootstrapTable('refresh');
-		                        } else if (rowCount > 0) {
-		                            console.log("✓ 表格DOM已正确渲染，行数:", rowCount);
-		                        }
-		                    }
-		                }, 300);
-		            } else {
-		                console.warn("⚠️ 没有数据可加载");
-		                $table.bootstrapTable('load', []);
-		            }
-		        } else {
-		            console.warn("⚠️ 表格未初始化，重新初始化");
-		            // 先初始化表格，然后加载数据
-		            initSupplierTable();
-		            // 延迟加载数据，确保表格初始化完成
-		            setTimeout(function() {
-		                var tableOptions = $table.bootstrapTable('getOptions');
-		                if (tableOptions && suppliers.length > 0) {
-		                    var processedSuppliers = suppliers.map(function(s) {
-		                        return {
-		                            supplierId: s.supplierId || s.supplier_id,
-		                            supplierCode: s.supplierCode || s.supplier_code || '',
-		                            companyName: s.companyName || s.company_name || ''
-		                        };
-		                    });
-		                    $table.bootstrapTable('load', processedSuppliers);
-		                    console.log("延迟加载完成，数据量:", processedSuppliers.length);
-		                } else if (!tableOptions) {
-		                    console.error("表格初始化失败，重试加载数据");
-		                    setTimeout(function() {
-		                        updateSupplierTable(suppliers);
-		                    }, 1000);
-		                }
-		            }, 800);
-		        }
-		    } catch(e) {
-		        console.error("❌ 更新供应商表格时出错:", e);
-		        console.error("错误堆栈:", e.stack);
-		    }
-		    
-		    console.log("========== 更新表格函数结束 ==========");
-		}
-		
-		// 选择供应商
-		function selectSupplier(supplierId) {
-		    if (!supplierId) {
-		        selectedSupplierId = null;
-		        $('#bootstrap-table').bootstrapTable('refresh');
-		        return;
-		    }
-		    
-		    selectedSupplierId = supplierId;
-		    // 刷新产品证件列表，可以根据供应商过滤（如果需要的话）
-		    $('#bootstrap-table').bootstrapTable('refresh');
-		}
-		
-		// 搜索供应商
-		function searchSupplier() {
-		    var searchText = $('#supplier-search-input').val().trim();
-		    
-		    if (!searchText) {
-		        querySupplierList();
-		        return;
-		    }
-		    
-		    var $table = $('#bootstrap-table-supplier');
-		    if ($table.length === 0 || !$table.bootstrapTable('getOptions')) {
-		        return;
-		    }
-		    
-		    var allData = $table.bootstrapTable('getData');
-		    var filteredData = allData.filter(function(row) {
-		        var code = (row.supplierCode || '').toLowerCase();
-		        var name = (row.companyName || '').toLowerCase();
-		        var keyword = searchText.toLowerCase();
-		        return code.indexOf(keyword) !== -1 || name.indexOf(keyword) !== -1;
-		    });
-		    
-		    $table.bootstrapTable('load', filteredData);
-		}
-		
-		// 清空搜索
-		function clearSupplierSearch() {
-		    $('#supplier-search-input').val('');
-		    querySupplierList();
-		}
-		
-		// 搜索框回车事件
-		$(document).on('keypress', '#supplier-search-input', function(e) {
-		    if (e.which === 13) {
-		        searchSupplier();
-		    }
-		});
 	</script>
 </body>
 </html>

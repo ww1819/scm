@@ -1495,3 +1495,36 @@ CREATE TABLE IF NOT EXISTS `scm_product_certificate_aux` (
   KEY `idx_spca_supplier` (`supplier_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品证件扩展行（UUID7主键，varchar逻辑外键）';
 /
+
+-- 产品证件扩展证照快照（生产许可证、生产企业营业执照等）：主键 UUID7（36 位）；certificate_id/material_id/supplier_id 等 varchar 逻辑外键；冗余字段与主证件/物资/供应商展示一致便于历史查阅
+CREATE TABLE IF NOT EXISTS `scm_product_cert_license_snap` (
+  `license_id` varchar(36) NOT NULL COMMENT '主键 UUID7（36位带横线，应用侧 IdUtils.dashedUuid7）',
+  `certificate_id` varchar(32) NOT NULL COMMENT '逻辑关联 scm_product_certificate.certificate_id（数字字符串）',
+  `material_id` varchar(32) DEFAULT NULL COMMENT '物资ID快照（逻辑外键）',
+  `supplier_id` varchar(32) DEFAULT NULL COMMENT '供应商ID快照（逻辑外键）',
+  `hospital_id` varchar(64) DEFAULT NULL COMMENT '医院主键快照',
+  `hospital_code` varchar(64) DEFAULT NULL COMMENT '医院编码快照',
+  `license_kind_code` varchar(64) NOT NULL COMMENT '证照类别编码，如 PRODUCTION_LICENSE、MANUFACTURER_BIZ_LICENSE',
+  `license_kind_name` varchar(128) DEFAULT NULL COMMENT '证照类别名称快照',
+  `license_title` varchar(200) DEFAULT NULL COMMENT '证照标题/自定义名称',
+  `license_no` varchar(128) DEFAULT NULL COMMENT '证号',
+  `issuing_body_snap` varchar(200) DEFAULT NULL COMMENT '发证机关快照',
+  `issue_date` date DEFAULT NULL COMMENT '发证日期',
+  `expire_date` date DEFAULT NULL COMMENT '有效期至',
+  `product_name_snap` varchar(200) DEFAULT NULL COMMENT '产品名称快照',
+  `manufacturer_name_snap` varchar(200) DEFAULT NULL COMMENT '生产厂家快照',
+  `supplier_company_name_snap` varchar(200) DEFAULT NULL COMMENT '供应商名称快照',
+  `register_no_snap` varchar(100) DEFAULT NULL COMMENT '注册证号快照',
+  `certificate_file` varchar(2000) DEFAULT NULL COMMENT '证照影像，多路径英文逗号分隔',
+  `del_flag` char(1) NOT NULL DEFAULT '0' COMMENT '删除标志（0存在 2删除）',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`license_id`),
+  UNIQUE KEY `uk_spcls_cert_kind` (`certificate_id`,`license_kind_code`),
+  KEY `idx_spcls_certificate` (`certificate_id`),
+  KEY `idx_spcls_material_supplier` (`material_id`,`supplier_id`,`del_flag`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品证件扩展证照快照（UUID7主键，varchar逻辑外键）';
+/

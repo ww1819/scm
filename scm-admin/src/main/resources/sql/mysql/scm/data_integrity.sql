@@ -96,6 +96,22 @@ INSERT IGNORE INTO scm_certificate_type(type_code, type_name, type_category, des
 /
 UPDATE scm_certificate_type SET status = '0' WHERE status IS NULL;
 /
+-- 证件配置：与 scm_certificate_type 联动，产品/供应商扩展证照按配置补行（无配置时按类型分类回退）
+INSERT IGNORE INTO scm_certificate_config(config_type, certificate_type, warning_days, recent_days, status, create_by, create_time, del_flag) VALUES
+('product_certificate', 'PRODUCT_001', 30, 7, '0', 'admin', sysdate(), '0');
+/
+INSERT IGNORE INTO scm_certificate_config(config_type, certificate_type, warning_days, recent_days, status, create_by, create_time, del_flag) VALUES
+('product_certificate', 'PRODUCT_002', 30, 7, '0', 'admin', sysdate(), '0');
+/
+INSERT IGNORE INTO scm_certificate_config(config_type, certificate_type, warning_days, recent_days, status, create_by, create_time, del_flag) VALUES
+('supplier_certificate', 'SUPPLIER_001', 30, 7, '0', 'admin', sysdate(), '0');
+/
+INSERT IGNORE INTO scm_certificate_config(config_type, certificate_type, warning_days, recent_days, status, create_by, create_time, del_flag) VALUES
+('supplier_certificate', 'SUPPLIER_002', 30, 7, '0', 'admin', sysdate(), '0');
+/
+INSERT IGNORE INTO scm_certificate_config(config_type, certificate_type, warning_days, recent_days, status, create_by, create_time, del_flag) VALUES
+('supplier_certificate', 'SUPPLIER_003', 30, 7, '0', 'admin', sysdate(), '0');
+/
 
 
 -- 注册用户角色（包含新增医院关联功能，没有才插入）

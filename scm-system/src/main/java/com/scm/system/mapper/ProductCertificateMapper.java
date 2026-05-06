@@ -102,5 +102,10 @@ public interface ProductCertificateMapper
      * @return 厂家ID
      */
     public Long getLastInsertManufacturerId();
+
+    /**
+     * 某物资下未删除的产品证件主键（用于同步扩展证照占位）
+     */
+    public List<Long> selectCertificateIdsByMaterialId(@Param("materialId") Long materialId);
 }
 

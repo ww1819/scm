@@ -80,5 +80,7 @@ public interface SupplierCertificateMapper
      * @return 结果
      */
     public int deleteSupplierCertificateByIds(String[] certificateIds);
+
+    int countBySupplierIdAndCertificateType(@Param("supplierId") Long supplierId, @Param("certificateType") String certificateType);
 }
 

@@ -27,12 +27,14 @@ import com.scm.common.utils.poi.ExcelUtil;
 import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.MaterialDict;
 import com.scm.system.domain.ProductCertificate;
+import com.scm.system.domain.ProductCertLicenseSnap;
 import com.scm.system.domain.Supplier;
 import com.scm.system.domain.SupplierUser;
 import com.scm.system.domain.vo.ProductMaterialArchiveVo;
 import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.ISupplierUserService;
 import com.scm.system.service.IProductCertificateService;
+import com.scm.system.service.IProductCertLicenseSnapService;
 import com.scm.system.service.IScmSupplierContextService;
 import com.scm.system.service.ISupplierService;
 import com.scm.system.service.IMaterialDictService;
@@ -65,6 +67,9 @@ public class ProductCertificateController extends BaseController
 
     @Autowired
     private IHospitalSupplierService hospitalSupplierService;
+
+    @Autowired
+    private IProductCertLicenseSnapService productCertLicenseSnapService;
 
     /** 进入登记页：有「登记」菜单(view)或「证件查询」(list)任一即可，避免只配子按钮未配父权限时无法打开页面 */
     @RequiresPermissions(value = { "certificate:product:view", "certificate:product:list" }, logical = Logical.OR)
@@ -469,6 +474,168 @@ public class ProductCertificateController extends BaseController
     public AjaxResult updateCertificateFile(Long certificateId, String certificateFile)
     {
         return toAjax(productCertificateService.updateProductCertificateFile(certificateId, certificateFile, getLoginName()));
+    }
+
+    /**
+     * 产品证件关联的扩展证照（生产许可证、生产企业营业执照等）维护页
+     */
+    @RequiresPermissions(value = { "certificate:product:edit", "certificate:product:view", "certificate:product:list" },
+        logical = Logical.OR)
+    @GetMapping("/licenseSnaps/{certificateId}")
+    public String licenseSnapsPage(@PathVariable("certificateId") Long certificateId, ModelMap mmap)
+    {
+        mmap.put("certificateId", certificateId);
+        try
+        {
+            ProductCertificate c = productCertificateService.selectProductCertificateById(certificateId);
+            mmap.put("productCertificate", c);
+        }
+        catch (ServiceException e)
+        {
+            mmap.put("loadError", e.getMessage());
+        }
+        return prefix + "/licenseSnap";
+    }
+
+    @RequiresPermissions(value = { "certificate:product:edit", "certificate:product:view", "certificate:product:list" },
+        logical = Logical.OR)
+    @PostMapping("/licenseSnap/list")
+    @ResponseBody
+    public TableDataInfo licenseSnapList(Long certificateId)
+    {
+        if (certificateId == null)
+        {
+            return getDataTable(new ArrayList<ProductCertLicenseSnap>());
+        }
+        try
+        {
+            List<ProductCertLicenseSnap> list = productCertLicenseSnapService.listMergedForCertificate(certificateId, getLoginName());
+            return getDataTable(list);
+        }
+        catch (ServiceException e)
+        {
+            return getDataTable(new ArrayList<ProductCertLicenseSnap>());
+        }
+    }
+
+    /**
+     * 登记页下方区域：按证件类型配置合并后的扩展证照行（含自动补占位）
+     */
+    @RequiresPermissions(value = { "certificate:product:edit", "certificate:product:view", "certificate:product:list" },
+        logical = Logical.OR)
+    @PostMapping("/licenseSnap/mergedRows")
+    @ResponseBody
+    public AjaxResult licenseSnapMergedRows(Long certificateId)
+    {
+        if (certificateId == null)
+        {
+            return success(new ArrayList<ProductCertLicenseSnap>());
+        }
+        try
+        {
+            List<ProductCertLicenseSnap> list = productCertLicenseSnapService.listMergedForCertificate(certificateId, getLoginName());
+            return success(list);
+        }
+        catch (ServiceException e)
+        {
+            return error(e.getMessage());
+        }
+    }
+
+    @RequiresPermissions("certificate:product:edit")
+    @Log(title = "产品证件扩展证照", businessType = BusinessType.UPDATE)
+    @PostMapping("/licenseSnap/saveRow")
+    @ResponseBody
+    public AjaxResult licenseSnapSaveRow(ProductCertLicenseSnap row)
+    {
+        try
+        {
+            return toAjax(productCertLicenseSnapService.saveSnapRow(row, getLoginName()));
+        }
+        catch (ServiceException e)
+        {
+            return error(e.getMessage());
+        }
+    }
+
+    @RequiresPermissions("certificate:product:edit")
+    @GetMapping("/licenseSnap/add/{certificateId}")
+    public String licenseSnapAdd(@PathVariable("certificateId") Long certificateId, ModelMap mmap)
+    {
+        mmap.put("certificateId", certificateId);
+        try
+        {
+            mmap.put("productCertificate", productCertificateService.selectProductCertificateById(certificateId));
+        }
+        catch (ServiceException e)
+        {
+            mmap.put("loadError", e.getMessage());
+        }
+        return prefix + "/licenseSnapAdd";
+    }
+
+    @RequiresPermissions("certificate:product:edit")
+    @Log(title = "产品证件扩展证照", businessType = BusinessType.INSERT)
+    @PostMapping("/licenseSnap/add")
+    @ResponseBody
+    public AjaxResult licenseSnapAddSave(ProductCertLicenseSnap row)
+    {
+        try
+        {
+            return toAjax(productCertLicenseSnapService.insertSnap(row, getLoginName()));
+        }
+        catch (ServiceException e)
+        {
+            return error(e.getMessage());
+        }
+    }
+
+    @RequiresPermissions("certificate:product:edit")
+    @GetMapping("/licenseSnap/edit/{licenseId}")
+    public String licenseSnapEdit(@PathVariable("licenseId") String licenseId, ModelMap mmap)
+    {
+        ProductCertLicenseSnap snap = productCertLicenseSnapService.selectByLicenseId(licenseId);
+        if (snap == null)
+        {
+            mmap.put("loadError", "记录不存在或无权查看");
+        }
+        else
+        {
+            mmap.put("licenseSnap", snap);
+        }
+        return prefix + "/licenseSnapEdit";
+    }
+
+    @RequiresPermissions("certificate:product:edit")
+    @Log(title = "产品证件扩展证照", businessType = BusinessType.UPDATE)
+    @PostMapping("/licenseSnap/edit")
+    @ResponseBody
+    public AjaxResult licenseSnapEditSave(ProductCertLicenseSnap row)
+    {
+        try
+        {
+            return toAjax(productCertLicenseSnapService.updateSnap(row, getLoginName()));
+        }
+        catch (ServiceException e)
+        {
+            return error(e.getMessage());
+        }
+    }
+
+    @RequiresPermissions("certificate:product:edit")
+    @Log(title = "产品证件扩展证照", businessType = BusinessType.DELETE)
+    @PostMapping("/licenseSnap/remove")
+    @ResponseBody
+    public AjaxResult licenseSnapRemove(String ids)
+    {
+        try
+        {
+            return toAjax(productCertLicenseSnapService.deleteByIds(ids, getLoginName()));
+        }
+        catch (ServiceException e)
+        {
+            return error(e.getMessage());
+        }
     }
 
     /** 修改页展示用：医院名称（编码）或编码+ID。 */

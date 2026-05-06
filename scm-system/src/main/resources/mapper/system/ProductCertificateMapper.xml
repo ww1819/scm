@@ -92,6 +92,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="hospitalId != null and hospitalId != ''">
                 AND c.hospital_id = #{hospitalId}
             </if>
+            <if test="materialName != null and materialName != ''">
+                AND m.material_name like concat('%', #{materialName}, '%')
+            </if>
         </where>
         order by c.expire_date asc
     </select>
@@ -112,6 +115,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </if>
             <if test="hospitalId != null and hospitalId != ''">
                 AND c.hospital_id = #{hospitalId}
+            </if>
+            <if test="materialName != null and materialName != ''">
+                AND m.material_name like concat('%', #{materialName}, '%')
             </if>
         </where>
         order by c.expire_date asc
@@ -271,6 +277,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <!-- 获取最后插入的厂家ID -->
     <select id="getLastInsertManufacturerId" resultType="Long">
         SELECT LAST_INSERT_ID()
+    </select>
+
+    <select id="selectCertificateIdsByMaterialId" resultType="long">
+        select certificate_id from scm_product_certificate
+        where material_id = #{materialId} and (status is null or status != '1')
     </select>
 </mapper>
 

@@ -14,11 +14,13 @@ import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.uuid.IdUtils;
+import com.scm.system.domain.CertificateType;
 import com.scm.system.domain.ScmSupplierCertChangeLog;
 import com.scm.system.domain.SupplierCertificate;
 import com.scm.system.mapper.HospitalSupplierMapper;
 import com.scm.system.mapper.ScmSupplierCertChangeLogMapper;
 import com.scm.system.mapper.SupplierCertificateMapper;
+import com.scm.system.service.ICertificateTypeService;
 import com.scm.system.service.IScmSupplierContextService;
 import com.scm.system.service.ISupplierCertificateService;
 
@@ -41,6 +43,9 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
 
     @Autowired
     private IScmSupplierContextService scmSupplierContextService;
+
+    @Autowired
+    private ICertificateTypeService certificateTypeService;
 
     /**
      * 查询供应商证件信息
@@ -417,6 +422,47 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
             log.setAfterJson(aj);
             log.setCreateBy(operBy);
             scmSupplierCertChangeLogMapper.insertChangeLog(log);
+        }
+    }
+
+    @Override
+    public void ensureMissingCertificatesForSupplier(Long supplierId, String createBy)
+    {
+        if (supplierId == null)
+        {
+            return;
+        }
+        List<CertificateType> types = certificateTypeService.selectSupplierExtensionTypesForSnap();
+        if (types == null || types.isEmpty())
+        {
+            return;
+        }
+        String oper = StringUtils.isNotEmpty(createBy) ? createBy : "system";
+        for (CertificateType t : types)
+        {
+            if (t == null || StringUtils.isEmpty(t.getTypeCode()))
+            {
+                continue;
+            }
+            String code = t.getTypeCode().trim();
+            int cnt = supplierCertificateMapper.countBySupplierIdAndCertificateType(supplierId, code);
+            if (cnt > 0)
+            {
+                continue;
+            }
+            SupplierCertificate row = new SupplierCertificate();
+            row.setSupplierId(supplierId);
+            row.setCertificateType(code);
+            row.setCertificateName(StringUtils.isNotEmpty(t.getTypeName()) ? t.getTypeName() : code);
+            row.setCreateBy(oper);
+            try
+            {
+                insertSupplierCertificate(row);
+            }
+            catch (Exception ignored)
+            {
+                // 单条失败不影响其它类型
+            }
         }
     }
 }

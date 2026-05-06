@@ -659,3 +659,34 @@ WHERE rm.menu_id = 2307
       AND r2.supplier_id = rm.supplier_id
   );
 /
+CREATE TABLE IF NOT EXISTS `scm_product_cert_license_snap` (
+  `license_id` varchar(36) NOT NULL COMMENT '主键 UUID7（36位带横线）',
+  `certificate_id` varchar(32) NOT NULL COMMENT '逻辑关联 scm_product_certificate.certificate_id',
+  `material_id` varchar(32) DEFAULT NULL COMMENT '物资ID快照',
+  `supplier_id` varchar(32) DEFAULT NULL COMMENT '供应商ID快照',
+  `hospital_id` varchar(64) DEFAULT NULL,
+  `hospital_code` varchar(64) DEFAULT NULL,
+  `license_kind_code` varchar(64) NOT NULL,
+  `license_kind_name` varchar(128) DEFAULT NULL,
+  `license_title` varchar(200) DEFAULT NULL,
+  `license_no` varchar(128) DEFAULT NULL,
+  `issuing_body_snap` varchar(200) DEFAULT NULL,
+  `issue_date` date DEFAULT NULL,
+  `expire_date` date DEFAULT NULL,
+  `product_name_snap` varchar(200) DEFAULT NULL,
+  `manufacturer_name_snap` varchar(200) DEFAULT NULL,
+  `supplier_company_name_snap` varchar(200) DEFAULT NULL,
+  `register_no_snap` varchar(100) DEFAULT NULL,
+  `certificate_file` varchar(2000) DEFAULT NULL,
+  `del_flag` char(1) NOT NULL DEFAULT '0',
+  `remark` varchar(500) DEFAULT NULL,
+  `create_by` varchar(64) DEFAULT '',
+  `create_time` datetime DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT '',
+  `update_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`license_id`),
+  UNIQUE KEY `uk_spcls_cert_kind` (`certificate_id`,`license_kind_code`),
+  KEY `idx_spcls_certificate` (`certificate_id`),
+  KEY `idx_spcls_material_supplier` (`material_id`,`supplier_id`,`del_flag`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品证件扩展证照快照';
+/
