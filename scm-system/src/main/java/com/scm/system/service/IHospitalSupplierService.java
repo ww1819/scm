@@ -36,6 +36,11 @@ public interface IHospitalSupplierService
     public List<HospitalSupplier> selectHospitalSupplierBySupplierId(Long supplierId);
 
     /**
+     * 供应商产品档案场景：已审核、未停用、正常状态下的关联医院列表（含医院编码）
+     */
+    public List<HospitalSupplier> selectSupplierLinkedHospitalsForProduct(Long supplierId);
+
+    /**
      * 新增医院供应商关联
      * 
      * @param hospitalSupplier 关联信息

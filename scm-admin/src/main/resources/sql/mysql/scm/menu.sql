@@ -49,6 +49,8 @@ INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, targ
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2306', '供应商资质变更记录', '2300', '6', '/certificate/supplier/changeLog', '', 'C', '0', '1', 'certificate:supplierChange:view', 'fa fa-history', 'admin', sysdate(), '', null, '医院与供应商查看绑定范围内的资质变更抄送', '0');
 /
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2307', '医院产品档案', '2300', '7', '/certificate/product/supplierHospital', '', 'C', '0', '1', 'certificate:product:view', 'fa fa-hospital-o', 'admin', sysdate(), '', null, '按关联医院查看产品档案与证件', '0');
+/
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('23061', '变更记录查询', '2306', '1', '#', '', 'F', '0', '1', 'certificate:supplierChange:list', '#', 'admin', sysdate(), '', null, '', '0');
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2400', '订单管理', '0', '9', '#', '', 'M', '0', '1', '', 'fa fa-shopping-cart', 'admin', sysdate(), '', null, '订单管理目录', '0');

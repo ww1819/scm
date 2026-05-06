@@ -22,7 +22,7 @@ import com.alibaba.druid.pool.DruidDataSource;
 import com.scm.framework.config.properties.SqlInitProperties;
 
 /**
- * 启动时按顺序执行 SCM SQL 脚本：table → column → view → trigger → procedure → function → menu → data_integrity。
+ * 启动时按顺序执行 SCM SQL 脚本：table → procedure（含 add_table_column）→ column → view → trigger → function → menu → data_integrity。
  * 仿照 SPD 后端，脚本内用单独一行的「/」分隔每条要执行的语句，按「/」分次执行。
  *
  * @author scm
@@ -33,7 +33,7 @@ public class SqlInitRunner implements ApplicationRunner
 {
     private static final Logger log = LoggerFactory.getLogger(SqlInitRunner.class);
 
-    private static final String[] SCRIPT_ORDER = { "table.sql", "column.sql", "view.sql", "trigger.sql", "procedure.sql", "function.sql", "menu.sql", "data_integrity.sql" };
+    private static final String[] SCRIPT_ORDER = { "table.sql", "procedure.sql", "column.sql", "view.sql", "trigger.sql", "function.sql", "menu.sql", "data_integrity.sql" };
 
     private static final String MODULE = "scm";
 

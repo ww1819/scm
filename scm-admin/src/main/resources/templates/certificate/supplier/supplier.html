@@ -7,8 +7,8 @@
 <body class="gray-bg">
 	<div class="container-div" style="position: relative;">
 		<div class="row">
-			<!-- 左侧：供应商列表 -->
-			<div class="col-sm-3" style="border-right: 1px solid #e7eaec; padding-right: 10px; position: fixed; left: 0; top: 0; bottom: 0; width: 25%; overflow: hidden; z-index: 100;">
+			<!-- 左侧：供应商列表（平台账号；供应商登录时隐藏，仅看本企业资质） -->
+			<div class="col-sm-3" th:unless="${supplierSelfService}" style="border-right: 1px solid #e7eaec; padding-right: 10px; position: fixed; left: 0; top: 0; bottom: 0; width: 25%; overflow: hidden; z-index: 100;">
 				<div class="panel panel-default" style="margin-bottom: 0; display: flex; flex-direction: column; height: 100%;">
 					<div class="panel-heading" style="padding: 5px 10px; flex-shrink: 0;">
 						<h5 class="panel-title" style="margin: 0; font-size: 14px;">
@@ -38,7 +38,7 @@
 			</div>
 			
 			<!-- 右侧：供应商证件列表 -->
-			<div class="col-sm-9" style="position: fixed; left: 25%; top: 0; bottom: 0; right: 0; width: 75%; overflow: hidden; z-index: 99; display: flex; flex-direction: column; background: #fff;">
+			<div class="col-sm-9" th:style="${supplierSelfService} ? 'position: fixed; left: 0; top: 0; bottom: 0; right: 0; width: 100%; overflow: hidden; z-index: 99; display: flex; flex-direction: column; background: #fff;' : 'position: fixed; left: 25%; top: 0; bottom: 0; right: 0; width: 75%; overflow: hidden; z-index: 99; display: flex; flex-direction: column; background: #fff;'">
 				<div class="col-sm-12 search-collapse" style="flex-shrink: 0;">
 					<form id="supplier-certificate-form">
 						<div class="select-list">
@@ -94,7 +94,9 @@
 		var removeFlag = [[${@permission.hasPermi('certificate:supplier:remove')}]];
 		var prefix = ctx + "certificate/supplier";
 		var supplierPrefix = ctx + "supplier/supplier";
-		var selectedSupplierId = null; // 当前选中的供应商ID
+		var supplierSelfService = /*[[${supplierSelfService}]]*/ false;
+		var bindSupplierId = /*[[${bindSupplierId}]]*/ null;
+		var selectedSupplierId = null; // 当前选中的供应商ID（平台筛选）；供应商登录时等于 bindSupplierId
 		
 		// 日期格式化函数
 		function formatDate(value, format) {
@@ -143,21 +145,26 @@
 		}
 
 		$(function() {
-		    // 先初始化供应商列表
-		    initSupplierTable();
-		    
-		    // 然后初始化供应商证件列表
+		    if (!supplierSelfService) {
+		        initSupplierTable();
+		    } else if (bindSupplierId != null) {
+		        selectedSupplierId = String(bindSupplierId);
+		    }
 		    querySupplierCertificateList();
 		    
 		    // 监听窗口大小改变事件，调整表格高度
 		    $(window).resize(function() {
-		        adjustSupplierTableHeight();
+		        if (!supplierSelfService) {
+		            adjustSupplierTableHeight();
+		        }
 		        adjustCertificateTableHeight();
 		    });
 		    
 		    // 初始化时调整表格高度
 		    setTimeout(function() {
-		        adjustSupplierTableHeight();
+		        if (!supplierSelfService) {
+		            adjustSupplierTableHeight();
+		        }
 		        adjustCertificateTableHeight();
 		    }, 300);
 		});
@@ -426,8 +433,7 @@
 		        uniqueId: "certificateId",
 		        height: calculateTableHeight(),
 		        queryParams: function(params) {
-		            // 如果有选中的供应商，添加供应商ID过滤
-		            if (selectedSupplierId) {
+		            if (!supplierSelfService && selectedSupplierId) {
 		                params.supplierIds = selectedSupplierId;
 		            }
 		            return params;
@@ -513,20 +519,28 @@
 		            }
 		        },
 		        {
-		            title: '预览证件',
+		            title: '查看',
 		            align: 'center',
-		            width: 120,
+		            width: 80,
 		            formatter: function(value, row, index) {
 		                if (row.certificateFile && row.certificateFile.trim() !== '') {
-		                    // 支持多文件：将certificateFile（可能包含逗号分隔的多个URL）传递给预览函数
 		                    var fileUrls = row.certificateFile.trim();
-		                    // 转义单引号，防止JavaScript错误
 		                    var escapedUrls = fileUrls.replace(/'/g, "\\'");
-		                    return '<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="previewCertificateImage(\'' + escapedUrls + '\')" title="预览证件图片"><i class="fa fa-eye"></i> 预览</a>';
-		                } else {
-		                    // 未上传图片，显示提示信息
-		                    return '<span class="text-warning" title="请点击修改按钮上传相关证件"><i class="fa fa-exclamation-triangle"></i> 上传相关证件</span>';
+		                    return '<a class="btn btn-default btn-xs" href="javascript:void(0)" onclick="previewCertificateImage(\'' + escapedUrls + '\')" title="查看证照图片"><i class="fa fa-eye"></i> 查看</a>';
 		                }
+		                return '<span class="text-muted">-</span>';
+		            }
+		        },
+		        {
+		            title: '上传',
+		            align: 'center',
+		            width: 90,
+		            formatter: function(value, row, index) {
+		                if (editFlag === 'hidden') {
+		                    return '<span class="text-muted">-</span>';
+		                }
+		                var cid = row.certificateId;
+		                return '<a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="openUploadImagesTab(' + cid + ')" title="上传或删除证照图片"><i class="fa fa-cloud-upload"></i> 上传</a>';
 		            }
 		        }]
 		    };
@@ -535,11 +549,12 @@
 		
 		function resetPre() {
 			$("#supplier-certificate-form")[0].reset();
-			// 清除供应商选择
-			selectedSupplierId = null;
-			// 刷新供应商表格以取消高亮
-			querySupplierList();
-			// 刷新证件表格，显示所有证件
+			if (!supplierSelfService) {
+			    selectedSupplierId = null;
+			    querySupplierList();
+			} else if (bindSupplierId != null) {
+			    selectedSupplierId = String(bindSupplierId);
+			}
 			$.table.search();
 		}
 
@@ -552,11 +567,19 @@
 		// 处理新增按钮点击
 		function handleAdd() {
 			var addUrl = prefix + "/add";
-			// 如果选中了供应商，传递supplierId参数
-			if (selectedSupplierId) {
+			if (!supplierSelfService && selectedSupplierId) {
 				addUrl += "?supplierId=" + selectedSupplierId;
 			}
-			$.operate.addTab(addUrl, '新增供应商证件');
+			// 勿用 $.operate.addTab(完整URL)：其内部固定走 createUrl（/add），会忽略自定义路径
+			$.modal.openTab("新增供应商证件", addUrl);
+		}
+
+		function openUploadImagesTab(certificateId) {
+			if (certificateId == null || certificateId === "") {
+				$.modal.alertWarning("无法打开上传页：缺少证件ID");
+				return;
+			}
+			$.modal.openTab("上传证照", prefix + "/upload/" + certificateId);
 		}
 		
 		// 预览证件图片（支持多图片切换）

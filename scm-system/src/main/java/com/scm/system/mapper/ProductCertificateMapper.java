@@ -3,6 +3,7 @@ package com.scm.system.mapper;
 import java.util.List;
 import org.apache.ibatis.annotations.Param;
 import com.scm.system.domain.ProductCertificate;
+import com.scm.system.domain.vo.ProductMaterialArchiveVo;
 
 /**
  * 产品证件 数据层
@@ -28,6 +29,12 @@ public interface ProductCertificateMapper
     public List<ProductCertificate> selectProductCertificateList(ProductCertificate productCertificate);
 
     /**
+     * 某供应商在某医院下，按物资聚合的产品档案摘要
+     */
+    public List<ProductMaterialArchiveVo> selectMaterialArchiveSummaryList(@Param("supplierId") Long supplierId,
+        @Param("hospitalCode") String hospitalCode);
+
+    /**
      * 查询过期预警的产品证件列表
      * 
      * @param productCertificate 证件信息
@@ -50,6 +57,11 @@ public interface ProductCertificateMapper
      * @return 结果
      */
     public int updateProductCertificate(ProductCertificate productCertificate);
+
+    /**
+     * 仅更新证照图片字段
+     */
+    public int updateProductCertificateFile(ProductCertificate productCertificate);
 
     /**
      * 删除产品证件信息

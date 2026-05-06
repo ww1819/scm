@@ -1,5 +1,5 @@
 -- ========== SCM 供应商管理平台 建表脚本 ==========
--- 执行顺序：1.table.sql 2.column.sql 3.view.sql 4.trigger.sql 5.procedure.sql 6.function.sql 7.menu.sql 8.data_integrity.sql
+-- 执行顺序：1.table.sql 2.procedure.sql（增量列存储过程）3.column.sql 4.view.sql 5.trigger.sql 6.function.sql 7.menu.sql 8.data_integrity.sql
 -- 按「/」分段，每段一条语句执行
 /
 CREATE TABLE IF NOT EXISTS `scm_supplier` (
@@ -1468,4 +1468,29 @@ CREATE TABLE IF NOT EXISTS `scm_supplier_export_log` (
   KEY `idx_scm_supplier_export_supplier` (`supplier_code`),
   KEY `idx_scm_supplier_export_time` (`create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医院侧经前置机拉取平台供应商信息审计日志';
+/
+
+-- 产品证件扩展行：主键 UUID7（36 位，应用侧 IdUtils.dashedUuid7）；关联列一律 varchar，存数字字符串或编码，与现有 bigint 主键表逻辑关联、不设 InnoDB 物理外键，便于多源 ID 兼容
+CREATE TABLE IF NOT EXISTS `scm_product_certificate_aux` (
+  `aux_id` varchar(36) NOT NULL COMMENT '主键 UUID7（36位带横线）',
+  `certificate_id` varchar(32) NOT NULL COMMENT '逻辑关联 scm_product_certificate.certificate_id（存数字字符串）',
+  `material_id` varchar(32) DEFAULT NULL COMMENT '逻辑关联 scm_material_dict.material_id（存数字字符串，可空）',
+  `supplier_id` varchar(32) DEFAULT NULL COMMENT '逻辑关联 scm_supplier.supplier_id（存数字字符串，可空）',
+  `hospital_code` varchar(64) DEFAULT NULL COMMENT '医院编码（与 scm_hospital.hospital_code 等逻辑关联）',
+  `item_type` varchar(32) NOT NULL DEFAULT 'ATTACH' COMMENT '扩展项类型 ATTACH/NOTE/LINK 等',
+  `title` varchar(200) DEFAULT '' COMMENT '标题',
+  `file_url` varchar(500) DEFAULT '' COMMENT '附件路径或URL',
+  `content` varchar(2000) DEFAULT NULL COMMENT '文本备注',
+  `sort_num` int(11) NOT NULL DEFAULT '0' COMMENT '排序',
+  `del_flag` char(1) NOT NULL DEFAULT '0' COMMENT '删除标志（0存在 2删除）',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`aux_id`),
+  KEY `idx_spca_certificate` (`certificate_id`),
+  KEY `idx_spca_hospital_material` (`hospital_code`,`material_id`),
+  KEY `idx_spca_supplier` (`supplier_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品证件扩展行（UUID7主键，varchar逻辑外键）';
 /

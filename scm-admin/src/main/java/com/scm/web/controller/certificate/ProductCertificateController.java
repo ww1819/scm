@@ -1,6 +1,9 @@
 package com.scm.web.controller.certificate;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.shiro.authz.annotation.Logical;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,18 +14,26 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.scm.common.annotation.Log;
 import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.enums.BusinessType;
+import com.scm.common.exception.ServiceException;
+import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.poi.ExcelUtil;
+import com.scm.system.domain.HospitalSupplier;
+import com.scm.system.domain.MaterialDict;
 import com.scm.system.domain.ProductCertificate;
 import com.scm.system.domain.Supplier;
 import com.scm.system.domain.SupplierUser;
+import com.scm.system.domain.vo.ProductMaterialArchiveVo;
+import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.ISupplierUserService;
 import com.scm.system.service.IProductCertificateService;
+import com.scm.system.service.IScmSupplierContextService;
 import com.scm.system.service.ISupplierService;
 import com.scm.system.service.IMaterialDictService;
 
@@ -49,12 +60,122 @@ public class ProductCertificateController extends BaseController
     @Autowired
     private ISupplierUserService supplierUserService;
 
+    @Autowired
+    private IScmSupplierContextService scmSupplierContextService;
+
+    @Autowired
+    private IHospitalSupplierService hospitalSupplierService;
+
     /** 进入登记页：有「登记」菜单(view)或「证件查询」(list)任一即可，避免只配子按钮未配父权限时无法打开页面 */
     @RequiresPermissions(value = { "certificate:product:view", "certificate:product:list" }, logical = Logical.OR)
     @GetMapping()
     public String productCertificate()
     {
         return prefix + "/product";
+    }
+
+    /**
+     * 供应商视角：按关联医院树维护该院下的产品档案及证件
+     */
+    @RequiresPermissions(value = { "certificate:product:view", "certificate:product:list" }, logical = Logical.OR)
+    @GetMapping("/supplierHospital")
+    public String supplierHospital(ModelMap mmap)
+    {
+        Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
+        mmap.put("supplierSelfService", bindSid != null);
+        mmap.put("bindSupplierId", bindSid);
+        return prefix + "/supplierHospital";
+    }
+
+    /**
+     * 左侧医院树（根节点 + 当前供应商已关联且有效的医院）
+     */
+    @RequiresPermissions(value = { "certificate:product:view", "certificate:product:list" }, logical = Logical.OR)
+    @GetMapping("/hospitalTreeData")
+    @ResponseBody
+    public List<Map<String, Object>> hospitalTreeData()
+    {
+        List<Map<String, Object>> nodes = new ArrayList<>();
+        Map<String, Object> root = new LinkedHashMap<>();
+        root.put("id", 0L);
+        root.put("pId", 0L);
+        root.put("name", "关联医院");
+        root.put("open", true);
+        root.put("hospitalCode", "");
+        root.put("nocheck", true);
+        nodes.add(root);
+        Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
+        if (bindSid == null)
+        {
+            return nodes;
+        }
+        List<HospitalSupplier> list = hospitalSupplierService.selectSupplierLinkedHospitalsForProduct(bindSid);
+        if (list != null)
+        {
+            for (HospitalSupplier hs : list)
+            {
+                if (hs.getHospitalId() == null)
+                {
+                    continue;
+                }
+                Map<String, Object> n = new LinkedHashMap<>();
+                n.put("id", hs.getHospitalId());
+                n.put("pId", 0L);
+                String code = hs.getHospitalCode();
+                String name = hs.getHospitalName() != null ? hs.getHospitalName() : "医院";
+                n.put("name", name + (StringUtils.isNotEmpty(code) ? " (" + code + ")" : ""));
+                n.put("title", name);
+                n.put("hospitalCode", code != null ? code : "");
+                n.put("open", false);
+                nodes.add(n);
+            }
+        }
+        return nodes;
+    }
+
+    /**
+     * 某医院下已存在产品证件的物资聚合列表（分页）
+     */
+    @RequiresPermissions(value = { "certificate:product:view", "certificate:product:list" }, logical = Logical.OR)
+    @PostMapping("/materialArchiveList")
+    @ResponseBody
+    public TableDataInfo materialArchiveList(String hospitalCode)
+    {
+        Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
+        if (bindSid == null || StringUtils.isEmpty(hospitalCode))
+        {
+            return getDataTable(new ArrayList<ProductMaterialArchiveVo>());
+        }
+        try
+        {
+            productCertificateService.ensureProductMaterialArchiveAccess(hospitalCode.trim());
+        }
+        catch (ServiceException e)
+        {
+            return getDataTable(new ArrayList<ProductMaterialArchiveVo>());
+        }
+        startPage();
+        List<ProductMaterialArchiveVo> list = productCertificateService.selectMaterialArchiveSummaryData(bindSid, hospitalCode.trim());
+        return getDataTable(list);
+    }
+
+    /**
+     * 医院 + 产品（物资）维度下的证件列表；未选产品时返回空表
+     */
+    @RequiresPermissions(value = { "certificate:product:view", "certificate:product:list" }, logical = Logical.OR)
+    @PostMapping("/listForSelectedArchive")
+    @ResponseBody
+    public TableDataInfo listForSelectedArchive(ProductCertificate productCertificate)
+    {
+        Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
+        if (bindSid == null || productCertificate.getMaterialId() == null
+            || StringUtils.isEmpty(productCertificate.getHospitalCode()))
+        {
+            return getDataTable(new ArrayList<ProductCertificate>());
+        }
+        startPage();
+        List<ProductCertificate> list = productCertificateService.selectProductCertificateList(productCertificate);
+        return getDataTable(list);
     }
 
     /**
@@ -132,8 +253,17 @@ public class ProductCertificateController extends BaseController
      */
     @RequiresPermissions("certificate:product:add")
     @GetMapping("/add")
-    public String add(ModelMap mmap)
+    public String add(@RequestParam(value = "hospitalCode", required = false) String hospitalCode,
+        @RequestParam(value = "materialId", required = false) Long materialId,
+        ModelMap mmap)
     {
+        mmap.put("preHospitalCode", hospitalCode != null ? hospitalCode : "");
+        mmap.put("preMaterialDict", null);
+        if (materialId != null)
+        {
+            MaterialDict d = materialDictService.selectMaterialDictById(materialId);
+            mmap.put("preMaterialDict", d);
+        }
         // 查询所有供应商列表
         Supplier supplier = new Supplier();
         supplier.setStatus("0"); // 只查询启用状态的供应商
@@ -273,6 +403,42 @@ public class ProductCertificateController extends BaseController
     {
         productCertificateService.checkAndUpdateExpiredStatus();
         return success("证件过期状态检查完成");
+    }
+
+    /**
+     * 上传 / 维护产品证照图片（仅更新 certificate_file）
+     */
+    @RequiresPermissions("certificate:product:edit")
+    @GetMapping("/upload/{certificateId}")
+    public String uploadImages(@PathVariable("certificateId") Long certificateId, ModelMap mmap)
+    {
+        ProductCertificate productCertificate = null;
+        try
+        {
+            productCertificate = productCertificateService.selectProductCertificateById(certificateId);
+        }
+        catch (ServiceException e)
+        {
+            mmap.put("uploadLoadError", e.getMessage());
+        }
+        if (productCertificate == null && !mmap.containsKey("uploadLoadError"))
+        {
+            mmap.put("uploadLoadError", "证件不存在。");
+        }
+        mmap.put("productCertificate", productCertificate);
+        return prefix + "/productUploadImages";
+    }
+
+    /**
+     * 保存产品证照图片
+     */
+    @RequiresPermissions("certificate:product:edit")
+    @Log(title = "产品证件管理", businessType = BusinessType.UPDATE)
+    @PostMapping("/updateCertificateFile")
+    @ResponseBody
+    public AjaxResult updateCertificateFile(Long certificateId, String certificateFile)
+    {
+        return toAjax(productCertificateService.updateProductCertificateFile(certificateId, certificateFile, getLoginName()));
     }
 }
 

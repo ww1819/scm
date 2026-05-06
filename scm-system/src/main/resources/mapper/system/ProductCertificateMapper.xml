@@ -85,6 +85,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="isWarning != null and isWarning != ''">
                 AND c.is_warning = #{isWarning}
             </if>
+            <if test="hospitalCode != null and hospitalCode != ''">
+                AND c.hospital_code = #{hospitalCode}
+            </if>
         </where>
         order by c.expire_date asc
     </select>
@@ -100,8 +103,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="supplierId != null">
                 AND c.supplier_id = #{supplierId}
             </if>
+            <if test="hospitalCode != null and hospitalCode != ''">
+                AND c.hospital_code = #{hospitalCode}
+            </if>
         </where>
         order by c.expire_date asc
+    </select>
+
+    <select id="selectMaterialArchiveSummaryList" resultType="com.scm.system.domain.vo.ProductMaterialArchiveVo">
+        select c.material_id as materialId,
+               max(m.material_name) as materialName,
+               max(m.material_code) as materialCode,
+               count(1) as certCount
+        from scm_product_certificate c
+        left join scm_material_dict m on c.material_id = m.material_id and m.del_flag = '0'
+        where c.status != '1'
+          and c.supplier_id = #{supplierId}
+          and c.hospital_code = #{hospitalCode}
+        group by c.material_id
+        order by max(m.material_name)
     </select>
     
     <select id="selectProductCertificateById" parameterType="Long" resultMap="ProductCertificateResult">
@@ -203,6 +223,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
             update_time = sysdate()
         </set>
+        where certificate_id = #{certificateId}
+    </update>
+
+    <update id="updateProductCertificateFile" parameterType="ProductCertificate">
+        update scm_product_certificate
+        set certificate_file = #{certificateFile, jdbcType=VARCHAR},
+            update_by = #{updateBy},
+            update_time = sysdate()
         where certificate_id = #{certificateId}
     </update>
     

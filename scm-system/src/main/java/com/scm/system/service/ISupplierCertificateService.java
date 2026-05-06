@@ -61,6 +61,11 @@ public interface ISupplierCertificateService
     public int updateSupplierCertificate(SupplierCertificate supplierCertificate);
 
     /**
+     * 仅更新证照图片（可清空）
+     */
+    public int updateCertificateFile(Long certificateId, String certificateFile, String updateBy);
+
+    /**
      * 批量删除供应商证件信息
      * 
      * @param ids 需要删除的数据ID

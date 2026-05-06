@@ -12,8 +12,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.scm.common.annotation.Log;
+import com.scm.common.exception.ServiceException;
 import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.page.TableDataInfo;
@@ -22,6 +24,7 @@ import com.scm.common.utils.poi.ExcelUtil;
 import com.scm.system.domain.Supplier;
 import com.scm.system.domain.SupplierCertificate;
 import com.scm.system.domain.CertificateType;
+import com.scm.system.service.IScmSupplierContextService;
 import com.scm.system.service.ISupplierCertificateService;
 import com.scm.system.service.ICertificateTypeService;
 import com.scm.system.service.ISupplierService;
@@ -46,11 +49,17 @@ public class SupplierCertificateController extends BaseController
     @Autowired
     private ICertificateTypeService certificateTypeService;
 
+    @Autowired
+    private IScmSupplierContextService scmSupplierContextService;
+
     /** 登记页：view 或 list 任一即可（与产品证件登记页策略一致） */
     @RequiresPermissions(value = { "certificate:supplier:view", "certificate:supplier:list" }, logical = Logical.OR)
     @GetMapping()
-    public String supplierCertificate()
+    public String supplierCertificate(ModelMap mmap)
     {
+        Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
+        mmap.put("supplierSelfService", bindSid != null);
+        mmap.put("bindSupplierId", bindSid);
         return prefix + "/supplier";
     }
 
@@ -74,6 +83,13 @@ public class SupplierCertificateController extends BaseController
     public TableDataInfo list(SupplierCertificate supplierCertificate, String supplierIds, Long hospitalId)
     {
         startPage();
+        Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
+        if (bindSid != null)
+        {
+            supplierCertificate.setSupplierId(bindSid);
+            List<SupplierCertificate> scoped = supplierCertificateService.selectSupplierCertificateList(supplierCertificate);
+            return getDataTable(scoped);
+        }
         // 如果传入了供应商ID列表（逗号分隔），则只查询这些供应商的证件
         if (supplierIds != null && !supplierIds.isEmpty())
         {
@@ -124,6 +140,11 @@ public class SupplierCertificateController extends BaseController
     public TableDataInfo expiringList(SupplierCertificate supplierCertificate)
     {
         startPage();
+        Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
+        if (bindSid != null)
+        {
+            supplierCertificate.setSupplierId(bindSid);
+        }
         List<SupplierCertificate> list = supplierCertificateService.selectExpiringCertificateList(supplierCertificate);
         return getDataTable(list);
     }
@@ -137,6 +158,11 @@ public class SupplierCertificateController extends BaseController
     @ResponseBody
     public AjaxResult export(SupplierCertificate supplierCertificate)
     {
+        Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
+        if (bindSid != null)
+        {
+            supplierCertificate.setSupplierId(bindSid);
+        }
         List<SupplierCertificate> list = supplierCertificateService.selectSupplierCertificateList(supplierCertificate);
         ExcelUtil<SupplierCertificate> util = new ExcelUtil<SupplierCertificate>(SupplierCertificate.class);
         return util.exportExcel(list, "供应商证件数据");
@@ -147,19 +173,9 @@ public class SupplierCertificateController extends BaseController
      */
     @RequiresPermissions("certificate:supplier:add")
     @GetMapping("/add")
-    public String add(ModelMap mmap)
+    public String add(@RequestParam(value = "supplierId", required = false) Long preSupplierId, ModelMap mmap)
     {
-        // 查询所有供应商列表
-        List<Supplier> supplierList = supplierService.selectSupplierList(new Supplier());
-        mmap.put("supplierList", supplierList);
-        
-        // 查询企业证件类型列表（类型分类为supplier）
-        CertificateType certificateType = new CertificateType();
-        certificateType.setTypeCategory("supplier");
-        certificateType.setStatus("0"); // 只查询启用状态的
-        List<CertificateType> certificateTypeList = certificateTypeService.selectCertificateTypeList(certificateType);
-        mmap.put("certificateTypeList", certificateTypeList);
-        
+        fillSupplierCertificateFormModel(mmap, preSupplierId);
         return prefix + "/add";
     }
 
@@ -185,18 +201,73 @@ public class SupplierCertificateController extends BaseController
     {
         SupplierCertificate supplierCertificate = supplierCertificateService.selectSupplierCertificateById(certificateId);
         mmap.put("supplierCertificate", supplierCertificate);
-        // 查询所有供应商列表
-        List<Supplier> supplierList = supplierService.selectSupplierList(new Supplier());
-        mmap.put("supplierList", supplierList);
-        
-        // 查询企业证件类型列表（类型分类为supplier）
+        fillSupplierCertificateFormModel(mmap, supplierCertificate != null ? supplierCertificate.getSupplierId() : null);
+        return prefix + "/edit";
+    }
+
+    /**
+     * 列表页「上传证照」：仅维护证件图片
+     */
+    @RequiresPermissions("certificate:supplier:edit")
+    @GetMapping("/upload/{certificateId}")
+    public String uploadImages(@PathVariable("certificateId") Long certificateId, ModelMap mmap)
+    {
+        SupplierCertificate supplierCertificate = null;
+        try
+        {
+            supplierCertificate = supplierCertificateService.selectSupplierCertificateById(certificateId);
+        }
+        catch (ServiceException e)
+        {
+            mmap.put("uploadLoadError", e.getMessage());
+        }
+        if (supplierCertificate == null && !mmap.containsKey("uploadLoadError"))
+        {
+            mmap.put("uploadLoadError", "证件不存在。");
+        }
+        mmap.put("supplierCertificate", supplierCertificate);
+        return prefix + "/uploadImages";
+    }
+
+    /**
+     * 保存证照图片（可清空）
+     */
+    @RequiresPermissions("certificate:supplier:edit")
+    @Log(title = "供应商证件管理", businessType = BusinessType.UPDATE)
+    @PostMapping("/updateCertificateFile")
+    @ResponseBody
+    public AjaxResult updateCertificateFile(Long certificateId, String certificateFile)
+    {
+        return toAjax(supplierCertificateService.updateCertificateFile(certificateId, certificateFile, getLoginName()));
+    }
+
+    private void fillSupplierCertificateFormModel(ModelMap mmap, Long preSupplierId)
+    {
+        Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
+        boolean selfService = bindSid != null;
+        mmap.put("supplierSelfService", selfService);
+        mmap.put("bindSupplierId", bindSid);
+        if (selfService)
+        {
+            Supplier s = supplierService.selectSupplierById(bindSid);
+            mmap.put("bindSupplierCompanyName", s != null ? s.getCompanyName() : "");
+            mmap.put("preSupplierId", bindSid);
+        }
+        else
+        {
+            List<Supplier> supplierList = supplierService.selectSupplierList(new Supplier());
+            mmap.put("supplierList", supplierList);
+            if (preSupplierId == null && supplierList != null && supplierList.size() == 1)
+            {
+                preSupplierId = supplierList.get(0).getSupplierId();
+            }
+            mmap.put("preSupplierId", preSupplierId);
+        }
         CertificateType certificateType = new CertificateType();
         certificateType.setTypeCategory("supplier");
-        certificateType.setStatus("0"); // 只查询启用状态的
+        certificateType.setStatus("0");
         List<CertificateType> certificateTypeList = certificateTypeService.selectCertificateTypeList(certificateType);
         mmap.put("certificateTypeList", certificateTypeList);
-        
-        return prefix + "/edit";
     }
 
     /**

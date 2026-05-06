@@ -71,6 +71,9 @@ public class HospitalSupplier extends BaseEntity
     /** 供应商名称 */
     private String supplierName;
 
+    /** 医院编码（关联 scm_hospital，列表展示用） */
+    private String hospitalCode;
+
     public Long getRelationId()
     {
         return relationId;
@@ -261,6 +264,16 @@ public class HospitalSupplier extends BaseEntity
         this.supplierName = supplierName;
     }
 
+    public String getHospitalCode()
+    {
+        return hospitalCode;
+    }
+
+    public void setHospitalCode(String hospitalCode)
+    {
+        this.hospitalCode = hospitalCode;
+    }
+
     @Override
     public String toString()
     {
@@ -283,6 +296,7 @@ public class HospitalSupplier extends BaseEntity
             .append("supplyStartDate", getSupplyStartDate())
             .append("supplyEndDate", getSupplyEndDate())
             .append("hospitalName", getHospitalName())
+            .append("hospitalCode", getHospitalCode())
             .append("supplierName", getSupplierName())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())

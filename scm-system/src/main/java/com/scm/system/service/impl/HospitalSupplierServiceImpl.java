@@ -121,6 +121,17 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
         return hospitalSupplierMapper.selectHospitalSupplierBySupplierId(supplierId);
     }
 
+    @Override
+    public List<HospitalSupplier> selectSupplierLinkedHospitalsForProduct(Long supplierId)
+    {
+        HospitalSupplier q = new HospitalSupplier();
+        q.setSupplierId(supplierId);
+        q.setStatus("0");
+        q.setAuditStatus("1");
+        q.setDisableStatus("0");
+        return hospitalSupplierMapper.selectHospitalSupplierList(q);
+    }
+
     /**
      * 新增医院供应商关联
      * 

@@ -1,6 +1,8 @@
 package com.scm.system.service.impl;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,6 +100,12 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
     @Override
     public List<SupplierCertificate> selectSupplierCertificateListBySupplierIds(SupplierCertificate supplierCertificate, List<Long> supplierIds, Long hospitalId)
     {
+        Long ctx = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (ctx != null)
+        {
+            supplierIds = new ArrayList<>(Collections.singletonList(ctx));
+            hospitalId = null;
+        }
         return supplierCertificateMapper.selectSupplierCertificateListBySupplierIds(supplierCertificate, supplierIds, hospitalId);
     }
 
@@ -123,6 +131,11 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
     @Override
     public int insertSupplierCertificate(SupplierCertificate supplierCertificate)
     {
+        Long sid = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (sid != null)
+        {
+            supplierCertificate.setSupplierId(sid);
+        }
         if (StringUtils.isEmpty(supplierCertificate.getAuditStatus()))
         {
             supplierCertificate.setAuditStatus("0"); // 默认待审核
@@ -157,6 +170,11 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         {
             assertSupplierCertificateViewScope(before);
         }
+        Long sid = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (sid != null)
+        {
+            supplierCertificate.setSupplierId(sid);
+        }
         supplierCertificate.setUpdateTime(DateUtils.getNowDate());
         // 检查过期状态
         checkExpiredStatus(supplierCertificate);
@@ -165,6 +183,28 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         {
             SupplierCertificate after = supplierCertificateMapper.selectSupplierCertificateById(supplierCertificate.getCertificateId());
             writeCertChangeLogs("UPDATE", before, after, supplierCertificate.getUpdateBy());
+        }
+        return rows;
+    }
+
+    @Override
+    public int updateCertificateFile(Long certificateId, String certificateFile, String updateBy)
+    {
+        SupplierCertificate before = supplierCertificateMapper.selectSupplierCertificateById(certificateId);
+        if (before == null)
+        {
+            throw new ServiceException("证件不存在");
+        }
+        assertSupplierCertificateViewScope(before);
+        SupplierCertificate row = new SupplierCertificate();
+        row.setCertificateId(certificateId);
+        row.setCertificateFile(certificateFile != null ? certificateFile : "");
+        row.setUpdateBy(updateBy);
+        int rows = supplierCertificateMapper.updateSupplierCertificateFile(row);
+        if (rows > 0)
+        {
+            SupplierCertificate after = supplierCertificateMapper.selectSupplierCertificateById(certificateId);
+            writeCertChangeLogs("UPDATE", before, after, updateBy);
         }
         return rows;
     }
@@ -229,6 +269,10 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
             throw new RuntimeException("审核状态不能为空");
         }
         SupplierCertificate before = supplierCertificateMapper.selectSupplierCertificateById(supplierCertificate.getCertificateId());
+        if (before != null)
+        {
+            assertSupplierCertificateViewScope(before);
+        }
         supplierCertificate.setAuditTime(DateUtils.getNowDate());
         supplierCertificate.setUpdateTime(DateUtils.getNowDate());
         supplierCertificate.setUpdateBy(supplierCertificate.getAuditBy()); // 确保更新人也被设置
@@ -247,7 +291,13 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
     @Override
     public void checkAndUpdateExpiredStatus()
     {
-        List<SupplierCertificate> certificates = supplierCertificateMapper.selectSupplierCertificateList(new SupplierCertificate());
+        SupplierCertificate query = new SupplierCertificate();
+        Long sid = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (sid != null)
+        {
+            query.setSupplierId(sid);
+        }
+        List<SupplierCertificate> certificates = supplierCertificateMapper.selectSupplierCertificateList(query);
         Date now = DateUtils.getNowDate();
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(now);
