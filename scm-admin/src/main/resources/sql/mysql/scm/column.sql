@@ -452,6 +452,12 @@ CALL add_table_column('scm_order', 'spd_snapshot_supplier_code', 'varchar(64)', 
 /
 CALL add_table_column('scm_order', 'hs_bind_snapshot', 'varchar(32)', '下单/推送时医院-供应商绑定关系快照（中文：已绑定、未绑定、申请审核中等）', NULL);
 /
+CALL add_table_column('scm_order', 'spd_supplier_id', 'varchar(64)', 'SPD采购订单 purchase_order.supplier_id（字符串；与 scm_order.supplier_id 平台主键区分）', NULL);
+/
+ALTER TABLE scm_order MODIFY COLUMN spd_supplier_id varchar(64) DEFAULT NULL COMMENT 'SPD采购订单 purchase_order.supplier_id（字符串；supplier_id 为平台主键）';
+/
+CALL add_table_column('scm_delivery', 'spd_supplier_id', 'varchar(64)', 'SPD采购订单 purchase_order.supplier_id 快照（与 scm_order.spd_supplier_id 一致）', NULL);
+/
 CALL add_table_column('zs_tp_order', 'hospital_id', 'bigint(20)', '平台医院主键 scm_hospital.hospital_id', NULL);
 /
 CALL add_table_column('zs_tp_order', 'supplier_id', 'bigint(20)', '平台供应商主键 scm_supplier.supplier_id', NULL);

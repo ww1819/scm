@@ -806,6 +806,10 @@ public class DeliveryServiceImpl implements IDeliveryService
                 {
                     d.setWarehouse(StringUtils.trimToEmpty(o.getWarehouse()));
                 }
+                if (StringUtils.isEmpty(d.getSpdSupplierId()) && StringUtils.isNotEmpty(o.getSpdSupplierId()))
+                {
+                    d.setSpdSupplierId(StringUtils.trimToEmpty(o.getSpdSupplierId()));
+                }
                 fillSupplierIdFromPlatformOrderIfBlank(d, o.getSupplierId());
             }
         }

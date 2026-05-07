@@ -75,6 +75,9 @@ public class Delivery extends BaseEntity
     /** 供应商ID */
     private Long supplierId;
 
+    /** SPD 采购订单供应商主键 purchase_order.supplier_id（varchar，与 scm_order.spd_supplier_id 一致） */
+    private String spdSupplierId;
+
     /** 供应商名称 */
     @Excel(name = "供应商名称")
     private String supplierName;
@@ -295,6 +298,16 @@ public class Delivery extends BaseEntity
         this.supplierId = supplierId;
     }
 
+    public String getSpdSupplierId()
+    {
+        return spdSupplierId;
+    }
+
+    public void setSpdSupplierId(String spdSupplierId)
+    {
+        this.spdSupplierId = spdSupplierId;
+    }
+
     public String getSupplierName()
     {
         return supplierName;
@@ -478,6 +491,7 @@ public class Delivery extends BaseEntity
             .append("zsCustomerId", getZsCustomerId())
             .append("zsJsfs", getZsJsfs())
             .append("supplierId", getSupplierId())
+            .append("spdSupplierId", getSpdSupplierId())
             .append("supplierName", getSupplierName())
             .append("deliveryAmount", getDeliveryAmount())
             .append("deliveryStatus", getDeliveryStatus())

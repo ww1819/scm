@@ -10,6 +10,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="hospitalId"      column="hospital_id"      />
         <result property="hospitalName"    column="hospital_name"    />
         <result property="supplierId"      column="supplier_id"      />
+        <result property="spdSupplierId"   column="spd_supplier_id"  />
         <result property="supplierName"    column="supplier_name"    />
         <result property="orderSupplierName" column="order_supplier_name" />
         <result property="warehouseId"    column="warehouse_id"     />
@@ -29,7 +30,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
     
     <sql id="selectOrderVo">
-        select o.order_id, o.order_no, o.hospital_id, o.supplier_id, o.order_supplier_name, o.warehouse_id,
+        select o.order_id, o.order_no, o.hospital_id, o.supplier_id, o.spd_supplier_id, o.order_supplier_name, o.warehouse_id,
                o.order_amount, o.warehouse_name, o.order_date, o.order_status,
                o.order_dept_id, o.order_dept_name, o.apply_dept, o.tenant_id, o.remark,
                o.create_by, o.create_time, o.update_by, o.update_time,
@@ -153,6 +154,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="orderNo != null and orderNo != ''">order_no,</if>
             hospital_id,
             supplier_id,
+            <if test="spdSupplierId != null and spdSupplierId != ''">spd_supplier_id,</if>
             <if test="orderSupplierName != null and orderSupplierName != ''">order_supplier_name,</if>
             <if test="warehouseId != null">warehouse_id,</if>
             <if test="orderAmount != null">order_amount,</if>
@@ -170,6 +172,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="orderNo != null and orderNo != ''">#{orderNo},</if>
             #{hospitalId},
             #{supplierId},
+            <if test="spdSupplierId != null and spdSupplierId != ''">#{spdSupplierId},</if>
             <if test="orderSupplierName != null and orderSupplierName != ''">#{orderSupplierName},</if>
             <if test="warehouseId != null">#{warehouseId},</if>
             <if test="orderAmount != null">#{orderAmount},</if>
@@ -195,6 +198,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="orderNo != null and orderNo != ''">order_no = #{orderNo},</if>
             <if test="hospitalId != null">hospital_id = #{hospitalId},</if>
             <if test="supplierId != null">supplier_id = #{supplierId},</if>
+            <if test="spdSupplierId != null and spdSupplierId != ''">spd_supplier_id = #{spdSupplierId},</if>
             <if test="orderSupplierName != null">order_supplier_name = #{orderSupplierName},</if>
             <if test="warehouseId != null">warehouse_id = #{warehouseId},</if>
             <if test="orderAmount != null">order_amount = #{orderAmount},</if>

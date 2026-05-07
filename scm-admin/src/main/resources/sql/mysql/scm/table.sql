@@ -428,6 +428,7 @@ CREATE TABLE IF NOT EXISTS `scm_order` (
   `spd_snapshot_hospital_code` varchar(64) DEFAULT NULL COMMENT '推送时快照：平台医院编码(scm_hospital.hospital_code)',
   `spd_snapshot_supplier_code` varchar(64) DEFAULT NULL COMMENT '推送时快照：平台供应商编码(scm_supplier.supplier_code)',
   `hs_bind_snapshot` varchar(32) DEFAULT NULL COMMENT '下单/推送时医院-供应商绑定关系快照（中文：已绑定、未绑定、申请审核中等）',
+  `spd_supplier_id` varchar(64) DEFAULT NULL COMMENT 'SPD采购订单 purchase_order.supplier_id（字符串；supplier_id 列为平台 scm_supplier.supplier_id）',
   PRIMARY KEY (`order_id`),
   UNIQUE KEY `uk_order_no` (`order_no`),
   KEY `idx_hospital_id` (`hospital_id`),
@@ -435,7 +436,8 @@ CREATE TABLE IF NOT EXISTS `scm_order` (
   KEY `idx_warehouse_id` (`warehouse_id`),
   KEY `idx_order_date` (`order_date`),
   KEY `idx_tenant_id` (`tenant_id`),
-  KEY `idx_scm_order_spd_order_id` (`spd_order_id`)
+  KEY `idx_scm_order_spd_order_id` (`spd_order_id`),
+  KEY `idx_scm_order_spd_supplier_id` (`spd_supplier_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='订单主表';
 /
 CREATE TABLE IF NOT EXISTS `scm_order_detail` (
@@ -504,13 +506,15 @@ CREATE TABLE IF NOT EXISTS `scm_delivery` (
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `spd_tenant_id` varchar(64) DEFAULT NULL COMMENT 'SPD租户ID（同 sb_customer.customer_id，院内第一方对账）',
   `spd_ref_no` varchar(128) DEFAULT '' COMMENT 'SPD侧引用/业务流水号（审计、与院内单号对照）',
+  `spd_supplier_id` varchar(64) DEFAULT NULL COMMENT 'SPD采购订单 purchase_order.supplier_id（与 scm_order.spd_supplier_id 一致）',
   PRIMARY KEY (`delivery_id`),
   UNIQUE KEY `uk_delivery_no` (`delivery_no`),
   KEY `idx_hospital_id` (`hospital_id`),
   KEY `idx_supplier_id` (`supplier_id`),
   KEY `idx_order_id` (`order_id`),
   KEY `idx_zs_order_id` (`zs_order_id`),
-  KEY `idx_scm_delivery_spd_tenant` (`spd_tenant_id`)
+  KEY `idx_scm_delivery_spd_tenant` (`spd_tenant_id`),
+  KEY `idx_scm_delivery_spd_supplier_id` (`spd_supplier_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='配送单主表';
 /
 CREATE TABLE IF NOT EXISTS `scm_delivery_detail` (
