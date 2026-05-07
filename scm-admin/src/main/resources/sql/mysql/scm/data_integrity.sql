@@ -72,6 +72,16 @@ UPDATE scm_order SET order_status = '0' WHERE order_status IS NULL;
 /
 UPDATE scm_delivery SET delivery_status = '0' WHERE delivery_status IS NULL;
 /
+-- 配送单关联订单来源（与 zs_order_id / order_id 对齐；第三方优先）
+UPDATE scm_delivery SET ref_order_source = 'ZS'
+WHERE (ref_order_source IS NULL OR ref_order_source = '')
+  AND zs_order_id IS NOT NULL AND TRIM(zs_order_id) <> '';
+/
+UPDATE scm_delivery SET ref_order_source = 'SCM'
+WHERE (ref_order_source IS NULL OR ref_order_source = '')
+  AND order_id IS NOT NULL
+  AND (zs_order_id IS NULL OR TRIM(zs_order_id) = '');
+/
 UPDATE scm_settlement SET audit_status = '0' WHERE audit_status IS NULL;
 /
 UPDATE scm_settlement SET customer_status = '0' WHERE customer_status IS NULL;

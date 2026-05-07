@@ -11,6 +11,7 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.scm.common.constant.DeliveryRefOrderSource;
 import com.scm.common.core.text.Convert;
 import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.ShiroUtils;
@@ -843,6 +844,30 @@ public class DeliveryServiceImpl implements IDeliveryService
                 }
                 fillSupplierIdFromPlatformOrderIfBlank(d, o.getSupplierId());
             }
+        }
+        fillRefOrderSource(d);
+    }
+
+    /**
+     * 按 zs_order_id / order_id 写入 ref_order_source；第三方优先于第一方。
+     */
+    private static void fillRefOrderSource(Delivery d)
+    {
+        if (d == null)
+        {
+            return;
+        }
+        if (StringUtils.isNotEmpty(d.getZsOrderId()))
+        {
+            d.setRefOrderSource(DeliveryRefOrderSource.ZS);
+        }
+        else if (d.getOrderId() != null)
+        {
+            d.setRefOrderSource(DeliveryRefOrderSource.SCM);
+        }
+        else
+        {
+            d.setRefOrderSource(null);
         }
     }
 

@@ -487,6 +487,7 @@ CREATE TABLE IF NOT EXISTS `scm_delivery` (
   `invoice_date` date DEFAULT NULL COMMENT '发票日期',
   `order_date` date DEFAULT NULL COMMENT '订单日期',
   `zs_order_id` varchar(36) DEFAULT NULL COMMENT '第三方订单主键 zs_tp_order.id',
+  `ref_order_source` varchar(16) DEFAULT NULL COMMENT '关联订单来源：SCM第一方 zs第三方',
   `src_order_supplier_id` varchar(128) DEFAULT '' COMMENT '订单供应商ID(字符串快照)',
   `src_order_supplier_name` varchar(256) DEFAULT '' COMMENT '订单供应商名称',
   `src_order_warehouse_id` varchar(128) DEFAULT '' COMMENT '订单仓库ID(字符串快照)',
@@ -513,6 +514,7 @@ CREATE TABLE IF NOT EXISTS `scm_delivery` (
   KEY `idx_supplier_id` (`supplier_id`),
   KEY `idx_order_id` (`order_id`),
   KEY `idx_zs_order_id` (`zs_order_id`),
+  KEY `idx_ref_order_source` (`ref_order_source`),
   KEY `idx_scm_delivery_spd_tenant` (`spd_tenant_id`),
   KEY `idx_scm_delivery_spd_supplier_id` (`spd_supplier_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='配送单主表';

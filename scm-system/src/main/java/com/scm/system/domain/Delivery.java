@@ -48,6 +48,11 @@ public class Delivery extends BaseEntity
     /** 第三方订单主键 zs_tp_order.id（引用第三方订单生成配送单时写入） */
     private String zsOrderId;
 
+    /**
+     * 关联订单来源（scm_delivery.ref_order_source）：{@code SCM} 第一方 scm_order；{@code ZS} 第三方 zs_tp_order
+     */
+    private String refOrderSource;
+
     /** 订单供应商ID（字符串快照，入库引用） */
     private String srcOrderSupplierId;
 
@@ -212,6 +217,16 @@ public class Delivery extends BaseEntity
     public void setZsOrderId(String zsOrderId)
     {
         this.zsOrderId = zsOrderId;
+    }
+
+    public String getRefOrderSource()
+    {
+        return refOrderSource;
+    }
+
+    public void setRefOrderSource(String refOrderSource)
+    {
+        this.refOrderSource = refOrderSource;
     }
 
     public String getSrcOrderSupplierId()
@@ -508,6 +523,7 @@ public class Delivery extends BaseEntity
             .append("orderId", getOrderId())
             .append("orderNo", getOrderNo())
             .append("zsOrderId", getZsOrderId())
+            .append("refOrderSource", getRefOrderSource())
             .append("srcOrderSupplierId", getSrcOrderSupplierId())
             .append("srcOrderSupplierName", getSrcOrderSupplierName())
             .append("srcOrderWarehouseId", getSrcOrderWarehouseId())

@@ -27,6 +27,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="invoiceDate"     column="invoice_date"        />
         <result property="orderDate"       column="order_date"           />
         <result property="zsOrderId"       column="zs_order_id"          />
+        <result property="refOrderSource" column="ref_order_source"     />
         <result property="srcOrderSupplierId"   column="src_order_supplier_id"   />
         <result property="srcOrderSupplierName" column="src_order_supplier_name" />
         <result property="srcOrderWarehouseId" column="src_order_warehouse_id"  />
@@ -48,7 +49,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     
     <sql id="selectDeliveryVo">
         select d.delivery_id, d.delivery_no, d.hospital_id, d.warehouse_name, d.order_id,
-               d.order_no, d.zs_order_id,
+               d.order_no, d.zs_order_id, d.ref_order_source,
                d.src_order_supplier_id, d.src_order_supplier_name, d.src_order_warehouse_id, d.src_order_warehouse_name,
                d.src_order_dept_id, d.src_order_dept_name, d.zs_customer_id, d.zs_jsfs,
                d.supplier_id, d.spd_supplier_id, d.spd_tenant_id, d.spd_ref_no, d.delivery_amount, d.delivery_status, d.delivery_person,
@@ -90,6 +91,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </if>
             <if test="zsOrderId != null and zsOrderId != ''">
                 AND d.zs_order_id = #{zsOrderId}
+            </if>
+            <if test="refOrderSource != null and refOrderSource != ''">
+                AND d.ref_order_source = #{refOrderSource}
             </if>
             <if test="deliveryStatus != null and deliveryStatus != ''">
                 AND d.delivery_status = #{deliveryStatus}
@@ -154,6 +158,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="orderId != null">order_id,</if>
             <if test="orderNo != null and orderNo != ''">order_no,</if>
             <if test="zsOrderId != null and zsOrderId != ''">zs_order_id,</if>
+            <if test="refOrderSource != null and refOrderSource != ''">ref_order_source,</if>
             <if test="srcOrderSupplierId != null">src_order_supplier_id,</if>
             <if test="srcOrderSupplierName != null">src_order_supplier_name,</if>
             <if test="srcOrderWarehouseId != null">src_order_warehouse_id,</if>
@@ -189,6 +194,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="orderId != null">#{orderId},</if>
             <if test="orderNo != null and orderNo != ''">#{orderNo},</if>
             <if test="zsOrderId != null and zsOrderId != ''">#{zsOrderId},</if>
+            <if test="refOrderSource != null and refOrderSource != ''">#{refOrderSource},</if>
             <if test="srcOrderSupplierId != null">#{srcOrderSupplierId},</if>
             <if test="srcOrderSupplierName != null">#{srcOrderSupplierName},</if>
             <if test="srcOrderWarehouseId != null">#{srcOrderWarehouseId},</if>
@@ -236,6 +242,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="orderId != null">order_id = #{orderId},</if>
             <if test="orderNo != null and orderNo != ''">order_no = #{orderNo},</if>
             <if test="zsOrderId != null">zs_order_id = #{zsOrderId},</if>
+            <choose>
+                <when test="refOrderSource != null and refOrderSource != ''">
+                    ref_order_source = #{refOrderSource},
+                </when>
+                <otherwise>
+                    ref_order_source = NULL,
+                </otherwise>
+            </choose>
             <if test="srcOrderSupplierId != null">src_order_supplier_id = #{srcOrderSupplierId},</if>
             <if test="srcOrderSupplierName != null">src_order_supplier_name = #{srcOrderSupplierName},</if>
             <if test="srcOrderWarehouseId != null">src_order_warehouse_id = #{srcOrderWarehouseId},</if>

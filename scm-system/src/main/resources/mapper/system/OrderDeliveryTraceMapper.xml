@@ -24,6 +24,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="invoiceDate"     column="invoice_date"/>
         <result property="orderDate"       column="order_date"/>
         <result property="zsOrderId"       column="zs_order_id"/>
+        <result property="refOrderSource" column="ref_order_source"/>
         <result property="auditStatus"     column="audit_status"/>
         <result property="auditBy"         column="audit_by"/>
         <result property="auditTime"       column="audit_time"/>
@@ -53,7 +54,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <sql id="selectDeliveryVoTrace">
         select d.delivery_id, d.delivery_no, d.hospital_id, d.warehouse_name, d.order_id,
-               d.order_no, d.zs_order_id,
+               d.order_no, d.zs_order_id, d.ref_order_source,
                d.supplier_id, d.delivery_amount, d.delivery_status, d.delivery_person,
                d.delivery_address, d.expected_delivery_date, d.invoice_no, d.invoice_amount,
                d.invoice_date, d.order_date,
