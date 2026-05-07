@@ -552,6 +552,7 @@
             <input type="hidden" name="srcOrderDeptId" id="srcOrderDeptId" value="">
             <input type="hidden" name="srcOrderDeptName" id="srcOrderDeptName" value="">
             <input type="hidden" name="zsCustomerId" id="zsCustomerId" value="">
+            <input type="hidden" name="spdSupplierId" id="spdSupplierId" value="">
             <input type="hidden" name="orderDate" id="orderDateField" value="">
             <input type="hidden" name="warehouse" id="warehouseField" value="">
             <div class="form-card">
@@ -1752,7 +1753,7 @@
 	        $("#form-delivery-add")[0].reset();
 	        $("#orderId").val('');
 	        $("#zsOrderId").val('');
-	        $("#srcOrderSupplierId,#srcOrderSupplierName,#srcOrderWarehouseId,#srcOrderWarehouseName,#srcOrderDeptId,#srcOrderDeptName,#zsCustomerId").val('');
+	        $("#srcOrderSupplierId,#srcOrderSupplierName,#srcOrderWarehouseId,#srcOrderWarehouseName,#srcOrderDeptId,#srcOrderDeptName,#zsCustomerId,#spdSupplierId").val('');
 	        $("#orderDateField,#warehouseField").val('');
 	        // 清空日期字段
 	        $("#expectedDeliveryDate").val('');
@@ -1797,6 +1798,10 @@
 	                            if (data.scmSupplierId != null && data.scmSupplierId !== '') {
 	                                $("#supplierId").val(String(data.scmSupplierId));
 	                            }
+	                            if (data.hospitalId != null && data.hospitalId !== '') {
+	                                $("#hospitalId").val(String(data.hospitalId));
+	                            }
+	                            $("#spdSupplierId").val(data.spdSupplierId || '');
 	                            $("#srcOrderSupplierId").val(data.srcOrderSupplierId || '');
 	                            $("#srcOrderSupplierName").val(data.srcOrderSupplierName || '');
 	                            $("#srcOrderWarehouseId").val(data.srcOrderWarehouseId || '');
@@ -1891,6 +1896,7 @@
 	                            var order = result.data;
 	                            $("#zsOrderId").val('');
 	                            $("#zsCustomerId").val('');
+	                            $("#spdSupplierId").val(order.spdSupplierId || '');
 	                            if (order.orderId) {
 	                                $("#orderId").val(order.orderId);
 	                            } else {

@@ -45,6 +45,12 @@ public class ZsTpOrderForDeliveryVo
     /** SCM 平台供应商主键（zs_tp_order.scm_supplier_id，与 scm_supplier.supplier_id 一致） */
     private Long scmSupplierId;
 
+    /** SCM 平台医院主键（zs_tp_order.scm_hospital_id，与 scm_hospital.hospital_id 一致） */
+    private Long hospitalId;
+
+    /** SPD 采购侧供应商主键快照（zs_tp_order.supno → scm_delivery.spd_supplier_id） */
+    private String spdSupplierId;
+
     private String srcOrderSupplierName;
 
     private String srcOrderWarehouseId;
@@ -163,6 +169,26 @@ public class ZsTpOrderForDeliveryVo
     public void setScmSupplierId(Long scmSupplierId)
     {
         this.scmSupplierId = scmSupplierId;
+    }
+
+    public Long getHospitalId()
+    {
+        return hospitalId;
+    }
+
+    public void setHospitalId(Long hospitalId)
+    {
+        this.hospitalId = hospitalId;
+    }
+
+    public String getSpdSupplierId()
+    {
+        return spdSupplierId;
+    }
+
+    public void setSpdSupplierId(String spdSupplierId)
+    {
+        this.spdSupplierId = spdSupplierId;
     }
 
     public String getSrcOrderSupplierName()

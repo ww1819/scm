@@ -270,8 +270,8 @@ public class DeliveryServiceImpl implements IDeliveryService
     @Transactional
     public int insertDelivery(Delivery delivery)
     {
-        assertSupplierHospitalSubmit(delivery);
         enrichDeliverySnapshot(delivery);
+        assertSupplierHospitalSubmit(delivery);
         enrichDeliveryDetailPackCoefficients(delivery);
         validateDeliveryDetailPackQuantities(delivery.getDeliveryDetails());
         if (StringUtils.isEmpty(delivery.getDeliveryStatus()))
@@ -351,10 +351,10 @@ public class DeliveryServiceImpl implements IDeliveryService
     public int updateDelivery(Delivery delivery)
     {
         assertDeliveryEditable(delivery.getDeliveryId());
-        assertSupplierHospitalSubmit(delivery);
 
         delivery.setUpdateTime(DateUtils.getNowDate());
         enrichDeliverySnapshot(delivery);
+        assertSupplierHospitalSubmit(delivery);
         enrichDeliveryDetailPackCoefficients(delivery);
         validateDeliveryDetailPackQuantities(delivery.getDeliveryDetails());
 
@@ -551,6 +551,8 @@ public class DeliveryServiceImpl implements IDeliveryService
         vo.setSrcOrderDeptId(StringUtils.trimToEmpty(head.getKsbh()));
         vo.setSrcOrderDeptName(StringUtils.trimToEmpty(head.getKsmc()));
         vo.setScmSupplierId(parseLongOrNull(head.getScmSupplierId()));
+        vo.setHospitalId(parseLongOrNull(head.getScmHospitalId()));
+        vo.setSpdSupplierId(StringUtils.trimToEmpty(head.getSupno()));
 
         List<DeliveryDetail> details = new ArrayList<>();
         if (lines != null)
@@ -720,6 +722,10 @@ public class DeliveryServiceImpl implements IDeliveryService
             ZsTpOrder z = zsTpOrderMapper.selectZsTpOrderById(d.getZsOrderId());
             if (z != null)
             {
+                if (d.getHospitalId() == null)
+                {
+                    d.setHospitalId(parseLongOrNull(z.getScmHospitalId()));
+                }
                 if (StringUtils.isEmpty(d.getZsCustomerId()))
                 {
                     d.setZsCustomerId(StringUtils.trimToEmpty(z.getCustomer()));
@@ -731,6 +737,10 @@ public class DeliveryServiceImpl implements IDeliveryService
                 if (StringUtils.isEmpty(d.getSrcOrderSupplierName()))
                 {
                     d.setSrcOrderSupplierName(StringUtils.trimToEmpty(z.getSup()));
+                }
+                if (StringUtils.isEmpty(d.getSpdSupplierId()) && StringUtils.isNotEmpty(z.getSupno()))
+                {
+                    d.setSpdSupplierId(StringUtils.trimToEmpty(z.getSupno()));
                 }
                 if (StringUtils.isEmpty(d.getSrcOrderWarehouseId()))
                 {
