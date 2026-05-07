@@ -3,7 +3,7 @@ scm:
   name: Scm
   version: 4.8.0
   copyrightYear: 2025
-  demoEnabled: true
+  demoEnabled: false
   profile: D:/scm/uploadPath
   addressEnabled: false
   legacy:
