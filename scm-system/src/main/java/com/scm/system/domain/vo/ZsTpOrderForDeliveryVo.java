@@ -42,6 +42,9 @@ public class ZsTpOrderForDeliveryVo
     /** SCM 平台供应商编码（接口 SCMSUPCODE，与第三方 supno 区分） */
     private String scmSupCode;
 
+    /** SCM 平台供应商主键（zs_tp_order.scm_supplier_id，与 scm_supplier.supplier_id 一致） */
+    private Long scmSupplierId;
+
     private String srcOrderSupplierName;
 
     private String srcOrderWarehouseId;
@@ -150,6 +153,16 @@ public class ZsTpOrderForDeliveryVo
     public void setScmSupCode(String scmSupCode)
     {
         this.scmSupCode = scmSupCode;
+    }
+
+    public Long getScmSupplierId()
+    {
+        return scmSupplierId;
+    }
+
+    public void setScmSupplierId(Long scmSupplierId)
+    {
+        this.scmSupplierId = scmSupplierId;
     }
 
     public String getSrcOrderSupplierName()

@@ -95,6 +95,27 @@
 		            }
 		        },
 		        {
+		            field: 'srcOrderSupplierName',
+		            title: '订单供应商',
+		            formatter: function(value, row, index) {
+		                return value || '-';
+		            }
+		        },
+		        {
+		            field: 'srcOrderWarehouseName',
+		            title: '订单仓库',
+		            formatter: function(value, row, index) {
+		                return value || '-';
+		            }
+		        },
+		        {
+		            field: 'srcOrderDeptName',
+		            title: '订单申请科室',
+		            formatter: function(value, row, index) {
+		                return value || '-';
+		            }
+		        },
+		        {
 		            field: 'deliveryAmount',
 		            title: '配送金额',
 		            sortable: true,

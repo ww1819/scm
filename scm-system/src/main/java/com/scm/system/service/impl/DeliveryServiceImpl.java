@@ -550,6 +550,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         vo.setSrcOrderWarehouseName(StringUtils.trimToEmpty(head.getCk()));
         vo.setSrcOrderDeptId(StringUtils.trimToEmpty(head.getKsbh()));
         vo.setSrcOrderDeptName(StringUtils.trimToEmpty(head.getKsmc()));
+        vo.setScmSupplierId(parseLongOrNull(head.getScmSupplierId()));
 
         List<DeliveryDetail> details = new ArrayList<>();
         if (lines != null)
@@ -756,6 +757,7 @@ public class DeliveryServiceImpl implements IDeliveryService
                     d.setWarehouse(StringUtils.trimToEmpty(z.getCk()));
                 }
                 d.setZsJsfs(StringUtils.trimToEmpty(z.getJsfs()));
+                fillSupplierIdFromPlatformOrderIfBlank(d, parseLongOrNull(z.getScmSupplierId()));
             }
         }
         else if (d.getOrderId() != null)
@@ -804,7 +806,45 @@ public class DeliveryServiceImpl implements IDeliveryService
                 {
                     d.setWarehouse(StringUtils.trimToEmpty(o.getWarehouse()));
                 }
+                fillSupplierIdFromPlatformOrderIfBlank(d, o.getSupplierId());
             }
+        }
+    }
+
+    /** 从订单侧平台供应商主键（bigint）解析，非法则忽略 */
+    private static Long parseLongOrNull(String raw)
+    {
+        if (StringUtils.isEmpty(raw))
+        {
+            return null;
+        }
+        String t = raw.trim();
+        if (t.isEmpty())
+        {
+            return null;
+        }
+        try
+        {
+            return Long.parseLong(t);
+        }
+        catch (NumberFormatException ex)
+        {
+            return null;
+        }
+    }
+
+    /**
+     * 供应商端列表/审核按 {@code scm_delivery.supplier_id} 过滤；引用订单生成配送单时若未带主键则按订单平台供应商补全。
+     */
+    private static void fillSupplierIdFromPlatformOrderIfBlank(Delivery d, Long platformSupplierId)
+    {
+        if (d == null || platformSupplierId == null)
+        {
+            return;
+        }
+        if (d.getSupplierId() == null)
+        {
+            d.setSupplierId(platformSupplierId);
         }
     }
 

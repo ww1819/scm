@@ -1794,6 +1794,9 @@
 	                            $("#orderId").val('');
 	                            $("#zsOrderId").val(data.zsOrderId || '');
 	                            $("#zsCustomerId").val(data.zsCustomerId || '');
+	                            if (data.scmSupplierId != null && data.scmSupplierId !== '') {
+	                                $("#supplierId").val(String(data.scmSupplierId));
+	                            }
 	                            $("#srcOrderSupplierId").val(data.srcOrderSupplierId || '');
 	                            $("#srcOrderSupplierName").val(data.srcOrderSupplierName || '');
 	                            $("#srcOrderWarehouseId").val(data.srcOrderWarehouseId || '');
