@@ -78,6 +78,12 @@ public class Delivery extends BaseEntity
     /** SPD 采购订单供应商主键 purchase_order.supplier_id（varchar，与 scm_order.spd_supplier_id 一致） */
     private String spdSupplierId;
 
+    /** SPD 租户ID（sb_customer.customer_id） */
+    private String spdTenantId;
+
+    /** SPD 侧引用号（通常为 SPD 单号） */
+    private String spdRefNo;
+
     /** 供应商名称 */
     @Excel(name = "供应商名称")
     private String supplierName;
@@ -308,6 +314,26 @@ public class Delivery extends BaseEntity
         this.spdSupplierId = spdSupplierId;
     }
 
+    public String getSpdTenantId()
+    {
+        return spdTenantId;
+    }
+
+    public void setSpdTenantId(String spdTenantId)
+    {
+        this.spdTenantId = spdTenantId;
+    }
+
+    public String getSpdRefNo()
+    {
+        return spdRefNo;
+    }
+
+    public void setSpdRefNo(String spdRefNo)
+    {
+        this.spdRefNo = spdRefNo;
+    }
+
     public String getSupplierName()
     {
         return supplierName;
@@ -492,6 +518,8 @@ public class Delivery extends BaseEntity
             .append("zsJsfs", getZsJsfs())
             .append("supplierId", getSupplierId())
             .append("spdSupplierId", getSpdSupplierId())
+            .append("spdTenantId", getSpdTenantId())
+            .append("spdRefNo", getSpdRefNo())
             .append("supplierName", getSupplierName())
             .append("deliveryAmount", getDeliveryAmount())
             .append("deliveryStatus", getDeliveryStatus())

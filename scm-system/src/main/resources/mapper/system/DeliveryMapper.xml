@@ -14,6 +14,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="orderNo"         column="order_no"             />
         <result property="supplierId"       column="supplier_id"         />
         <result property="spdSupplierId"    column="spd_supplier_id"      />
+        <result property="spdTenantId"      column="spd_tenant_id"        />
+        <result property="spdRefNo"         column="spd_ref_no"           />
         <result property="supplierName"     column="supplier_name"       />
         <result property="deliveryAmount"   column="delivery_amount"     />
         <result property="deliveryStatus"   column="delivery_status"     />
@@ -49,7 +51,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                d.order_no, d.zs_order_id,
                d.src_order_supplier_id, d.src_order_supplier_name, d.src_order_warehouse_id, d.src_order_warehouse_name,
                d.src_order_dept_id, d.src_order_dept_name, d.zs_customer_id, d.zs_jsfs,
-               d.supplier_id, d.spd_supplier_id, d.delivery_amount, d.delivery_status, d.delivery_person,
+               d.supplier_id, d.spd_supplier_id, d.spd_tenant_id, d.spd_ref_no, d.delivery_amount, d.delivery_status, d.delivery_person,
                d.delivery_address, d.expected_delivery_date, d.invoice_no, d.invoice_amount,
                d.invoice_date, d.order_date,
                d.audit_status, d.audit_by, d.audit_time, d.audit_remark,
@@ -161,6 +163,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="zsCustomerId != null">zs_customer_id,</if>
             <if test="zsJsfs != null">zs_jsfs,</if>
             <if test="spdSupplierId != null and spdSupplierId != ''">spd_supplier_id,</if>
+            <if test="spdTenantId != null and spdTenantId != ''">spd_tenant_id,</if>
+            <if test="spdRefNo != null and spdRefNo != ''">spd_ref_no,</if>
             <if test="supplierId != null and supplierId != ''">supplier_id,</if>
             <if test="deliveryAmount != null">delivery_amount,</if>
             <if test="deliveryStatus != null and deliveryStatus != ''">delivery_status,</if>
@@ -194,6 +198,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="zsCustomerId != null">#{zsCustomerId},</if>
             <if test="zsJsfs != null">#{zsJsfs},</if>
             <if test="spdSupplierId != null and spdSupplierId != ''">#{spdSupplierId},</if>
+            <if test="spdTenantId != null and spdTenantId != ''">#{spdTenantId},</if>
+            <if test="spdRefNo != null and spdRefNo != ''">#{spdRefNo},</if>
             <if test="supplierId != null and supplierId != ''">#{supplierId},</if>
             <if test="deliveryAmount != null">#{deliveryAmount},</if>
             <if test="deliveryStatus != null and deliveryStatus != ''">#{deliveryStatus},</if>
@@ -239,6 +245,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="zsCustomerId != null">zs_customer_id = #{zsCustomerId},</if>
             <if test="zsJsfs != null">zs_jsfs = #{zsJsfs},</if>
             <if test="spdSupplierId != null and spdSupplierId != ''">spd_supplier_id = #{spdSupplierId},</if>
+            <if test="spdTenantId != null and spdTenantId != ''">spd_tenant_id = #{spdTenantId},</if>
+            <if test="spdRefNo != null and spdRefNo != ''">spd_ref_no = #{spdRefNo},</if>
             <choose>
                 <when test="supplierId != null and supplierId != ''">
                     supplier_id = #{supplierId},

@@ -756,6 +756,15 @@ public class DeliveryServiceImpl implements IDeliveryService
                 {
                     d.setWarehouse(StringUtils.trimToEmpty(z.getCk()));
                 }
+                if (StringUtils.isEmpty(d.getSpdTenantId()) && StringUtils.isNotEmpty(z.getCustomer()))
+                {
+                    // 第三方订单场景下，customer 可作为租户侧标识快照保留
+                    d.setSpdTenantId(StringUtils.trimToEmpty(z.getCustomer()));
+                }
+                if (StringUtils.isEmpty(d.getSpdRefNo()) && StringUtils.isNotEmpty(z.getDh()))
+                {
+                    d.setSpdRefNo(StringUtils.trimToEmpty(z.getDh()));
+                }
                 d.setZsJsfs(StringUtils.trimToEmpty(z.getJsfs()));
                 fillSupplierIdFromPlatformOrderIfBlank(d, parseLongOrNull(z.getScmSupplierId()));
             }
@@ -809,6 +818,18 @@ public class DeliveryServiceImpl implements IDeliveryService
                 if (StringUtils.isEmpty(d.getSpdSupplierId()) && StringUtils.isNotEmpty(o.getSpdSupplierId()))
                 {
                     d.setSpdSupplierId(StringUtils.trimToEmpty(o.getSpdSupplierId()));
+                }
+                if (StringUtils.isEmpty(d.getSpdTenantId()) && StringUtils.isNotEmpty(o.getTenantId()))
+                {
+                    d.setSpdTenantId(StringUtils.trimToEmpty(o.getTenantId()));
+                }
+                if (StringUtils.isEmpty(d.getSpdRefNo()))
+                {
+                    String refNo = StringUtils.isNotEmpty(d.getOrderNo()) ? d.getOrderNo() : o.getOrderNo();
+                    if (StringUtils.isNotEmpty(refNo))
+                    {
+                        d.setSpdRefNo(StringUtils.trimToEmpty(refNo));
+                    }
                 }
                 fillSupplierIdFromPlatformOrderIfBlank(d, o.getSupplierId());
             }
