@@ -54,6 +54,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="auditStatus != null and auditStatus != ''">
                 AND s.audit_status = #{auditStatus}
             </if>
+            <if test="customerName != null and customerName != ''">
+                AND h.hospital_name like concat('%', #{customerName}, '%')
+            </if>
+            <if test="supplierName != null and supplierName != ''">
+                AND sup.company_name like concat('%', #{supplierName}, '%')
+            </if>
             <if test="customerSettlementStatus != null and customerSettlementStatus != ''">
                 AND s.customer_settlement_status = #{customerSettlementStatus}
             </if>

@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro" class="delivery-query-root">
+<head>
+	<th:block th:include="include :: header('结算信息查询')" />
+	<th:block th:include="include :: layout-latest-css" />
+	<style>
+		/* 在首页 iframe 内：100vh 常大于 iframe 可视高度，底部会被 #content-main{overflow:hidden} 裁掉；改为占满 iframe 文档高度 */
+		html.delivery-query-root,
+		html.delivery-query-root body.delivery-query-body {
+			height: 100%;
+			margin: 0;
+			overflow: hidden;
+			box-sizing: border-box;
+		}
+		body.delivery-query-body {
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+		}
+		.barcode-cell-wrap {
+			white-space: normal;
+			word-break: break-all;
+			line-height: 1.35;
+		}
+		.tab-pane {
+			display: none;
+		}
+		.tab-pane.active {
+			display: block;
+		}
+		.container-div {
+			display: flex;
+			flex-direction: column;
+			height: calc(100vh - 84px);
+			min-height: 0;
+		}
+		/* 覆盖上一段：本页在 iframe 内不用 vh，避免底部被最外层内容区裁切 */
+		.delivery-query-page.container-div {
+			flex: 1 1 0%;
+			min-height: 0;
+			height: auto !important;
+			max-height: none !important;
+			padding-left: 10px !important;
+			padding-right: 18px !important;
+		}
+		.nav-tabs {
+			flex-shrink: 0;
+			margin-left: -12px;
+		}
+		.nav-tabs > li > a {
+			color: #555;
+			background: #f5f5f5;
+		}
+		.nav-tabs > li > a:hover {
+			color: #2f4050;
+			background: #e2e8f0;
+			border-color: #d0d7e2;
+		}
+		.nav-tabs > li.active > a,
+		.nav-tabs > li.active > a:focus,
+		.nav-tabs > li.active > a:hover {
+			color: #fff;
+			background: #2d8cf0;
+			border-color: #2d8cf0;
+		}
+		.tab-content {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+			min-height: 0;
+		}
+		.tab-pane {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+		}
+		/* 本页：不在竖向裁切 tab 区域，避免表格外包层被算高后底部分页落在 overflow:hidden 外 */
+		.delivery-query-page.container-div > .tab-content,
+		.delivery-query-page.container-div .tab-pane {
+			overflow-x: hidden;
+			overflow-y: visible;
+		}
+		.tab-pane.active {
+			display: flex;
+		}
+		.tab-pane > .row {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			overflow: visible;
+			margin: 0;
+			min-height: 0;
+		}
+		.select-table {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+			min-height: 0;
+		}
+		/* 有 height 时由 bootstrap-table 自己管理表头，勿再加 position:sticky，否则会与表头/表体列宽同步冲突导致错位 */
+		.bootstrap-table .fixed-table-header {
+			background-color: #fff !important;
+		}
+		.bootstrap-table .fixed-table-header th {
+			background-color: #f5f5f5 !important;
+			border-bottom: 2px solid #ddd !important;
+		}
+		/* 表格容器布局 */
+		.select-table .bootstrap-table {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			overflow: hidden;
+		}
+		.select-table .fixed-table-container {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+			min-height: 0;
+		}
+		.select-table .fixed-table-body {
+			flex: 1;
+			overflow-x: auto;
+			overflow-y: auto;
+			min-height: 0;
+		}
+		/* 分页控件固定在底部 */
+		.select-table .fixed-table-pagination {
+			flex-shrink: 0;
+			padding: 10px;
+			border-top: 1px solid #ddd;
+			background-color: #fff;
+			position: sticky;
+			bottom: 0;
+			z-index: 50;
+			margin-top: auto;
+		}
+		/* 确保表格主体内容区域可以滚动 */
+		.select-table .fixed-table-container .fixed-table-body {
+			flex: 1;
+			overflow-x: auto;
+			overflow-y: auto;
+			min-height: 0;
+		}
+		/* 搜索区域不收缩 */
+		.search-collapse {
+			flex-shrink: 0;
+		}
+		.query-table-wrap {
+			flex: 1;
+			min-height: 0;
+			position: relative;
+			padding-bottom: 0;
+			/* 横向只让 .fixed-table-body 滚动，避免外包层与表体双滚动条导致表头列宽不同步 */
+			overflow-x: hidden;
+			overflow-y: visible;
+			display: flex;
+			flex-direction: column;
+		}
+		.query-table-wrap.select-table {
+			overflow-x: hidden !important;
+			overflow-y: visible !important;
+		}
+		.query-table-wrap > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
+			width: 100%;
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+		}
+		.query-table-wrap .fixed-table-container {
+			display: flex;
+			flex-direction: column;
+			flex: 1;
+			min-height: 0;
+			padding-bottom: 0;
+		}
+		.query-table-wrap .fixed-table-body {
+			overflow-x: auto !important;
+			overflow-y: auto !important;
+			flex: 1;
+			min-height: 0;
+		}
+		.query-table-wrap .fixed-table-pagination {
+			position: relative;
+			bottom: auto;
+			display: block !important;
+			background: #fff;
+			z-index: 6;
+			border-top: 1px solid #eee;
+			margin: 0 !important;
+			margin-top: 0 !important;
+			padding: 8px 10px;
+			flex-shrink: 0;
+		}
+		/* 明细：分页与表体拉开一点，整体略下移、不贴底栏 */
+		#detail-tab .query-table-wrap .fixed-table-pagination {
+			margin-top: 12px !important;
+			padding-top: 10px !important;
+			padding-bottom: 14px !important;
+		}
+		.query-table-wrap .fixed-table-pagination .pagination {
+			margin-right: 28px;
+		}
+		.query-table-wrap .fixed-table-header {
+			background: #fff !important;
+		}
+		/* 明细列显示：加宽间距 + 默认单行；表头/表体须用同一套规则，否则易出现列整体偏移 */
+		/* 内层 table 的 width 由 bootstrap-table 的 fitHeader 设为与主表一致的像素宽；勿写 width:100%，否则表头容器与表体容器的「百分比基准」不一致会逐列错位 */
+		#detail-tab .fixed-table-header table.table,
+		#detail-tab .fixed-table-body table.table {
+			border-collapse: collapse;
+		}
+		#detail-tab #bootstrap-table-detail.delivery-detail-fixed-table {
+			table-layout: fixed !important;
+		}
+		#detail-tab .fixed-table-header th,
+		#detail-tab .fixed-table-body td {
+			box-sizing: border-box !important;
+			padding: 8px 14px !important;
+			white-space: nowrap !important;
+			word-break: keep-all !important;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		#detail-tab .fixed-table-header th[data-field="batchNo"],
+		#detail-tab .fixed-table-body td[data-field="batchNo"],
+		#detail-tab .fixed-table-header th[data-field="mainBarcode"],
+		#detail-tab .fixed-table-body td[data-field="mainBarcode"],
+		#detail-tab .fixed-table-header th[data-field="auxBarcode"],
+		#detail-tab .fixed-table-body td[data-field="auxBarcode"] {
+			white-space: normal !important;
+			word-break: break-all !important;
+			overflow: visible;
+			text-overflow: clip;
+			vertical-align: top;
+		}
+		#detail-tab .fixed-table-header th[data-field="expireDate"],
+		#detail-tab .fixed-table-body td[data-field="expireDate"],
+		#detail-tab .fixed-table-header th[data-field="productionDate"],
+		#detail-tab .fixed-table-body td[data-field="productionDate"] {
+			white-space: normal !important;
+			word-break: normal !important;
+			overflow: visible;
+			text-overflow: clip;
+		}
+		#detail-tab .barcode-cell-wrap {
+			white-space: normal !important;
+			word-break: break-all !important;
+			line-height: 1.4;
+		}
+		/*
+		 * 必须与 bootstrap-table fitHeader 一致：仅在有竖向滚动时表头才加 margin-right 补偿。
+		 * 若强制 overflow-y:scroll 或 scrollbar-gutter:stable，会在「无滚动条」时仍占滚动条宽度，
+		 * 但 fitHeader 认为 i=0 不补偿表头 → 表体比表头窄/列宽累加错位（从「单位」后逐渐漂移）。
+		 */
+		#detail-tab .fixed-table-body {
+			overflow-y: auto !important;
+			overflow-x: auto !important;
+		}
+		/* 明细表左侧操作按钮与右侧工具栏同一行 */
+		#toolbar-detail.detail-action-bar {
+			display: block !important;
+			float: none;
+			margin: 0 8px 0 0;
+			padding: 0;
+			background: #fff;
+		}
+		#toolbar-detail.detail-action-bar .btn {
+			margin-right: 6px;
+		}
+		#detail-tab .fixed-table-toolbar {
+			display: flex;
+			align-items: center;
+		}
+		#detail-tab .fixed-table-toolbar .columns {
+			float: none;
+			margin-left: auto;
+		}
+		#toolbar-summary.summary-action-bar {
+			display: block !important;
+			float: none;
+			margin: 0 8px 0 0;
+			padding: 0;
+			background: #fff;
+		}
+		#toolbar-summary.summary-action-bar .btn {
+			margin-right: 6px;
+		}
+		#summary-tab .fixed-table-toolbar {
+			display: flex;
+			align-items: center;
+		}
+		#summary-tab .fixed-table-toolbar .columns {
+			float: none;
+			margin-left: auto;
+		}
+		#detail-tab .search-collapse,
+		#summary-tab .search-collapse {
+			padding-left: 12px !important;
+			padding-right: 10px !important;
+			margin-left: 0 !important;
+			margin-right: 0 !important;
+			width: 100% !important;
+			box-sizing: border-box;
+		}
+		#detail-tab #settlement-detail-form,
+		#summary-tab #settlement-summary-form {
+			margin: 0 !important;
+			width: 100% !important;
+		}
+		#detail-tab #settlement-detail-form .select-list,
+		#summary-tab #settlement-summary-form .select-list {
+			width: 100% !important;
+			max-width: none !important;
+			margin: 0 !important;
+			padding-left: 0 !important;
+			padding-right: 0 !important;
+			box-sizing: border-box;
+		}
+		#detail-tab .select-list li input,
+		#summary-tab .select-list li input,
+		#detail-tab .select-list li select,
+		#summary-tab .select-list li select {
+			width: 260px !important;
+			max-width: 100%;
+		}
+	</style>
+</head>
+<body class="gray-bg delivery-query-body">
+	<div class="container-div delivery-query-page">
+		<!-- 标签页切换 -->
+		<ul class="nav nav-tabs" role="tablist" style="margin-bottom: 0;">
+			<li role="presentation" class="active">
+				<a href="#detail-tab" aria-controls="detail-tab" role="tab" data-toggle="tab" onclick="switchTab('detail')">
+					<i class="fa fa-list"></i> 结算明细表
+				</a>
+			</li>
+			<li role="presentation">
+				<a href="#summary-tab" aria-controls="summary-tab" role="tab" data-toggle="tab" onclick="switchTab('summary')">
+					<i class="fa fa-table"></i> 结算汇总表
+				</a>
+			</li>
+		</ul>
+		
+		<!-- 标签页内容 -->
+		<div class="tab-content">
+			<!-- 明细表 -->
+			<div role="tabpanel" class="tab-pane active" id="detail-tab">
+				<div class="row" style="margin: 0; display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%;">
+					<div class="col-sm-12 search-collapse">
+						<form id="settlement-detail-form">
+							<div class="select-list">
+								<ul>
+									<li>
+										结算单号：<input type="text" name="settlementNo"/>
+									</li>
+									<li>
+										发票号：<input type="text" name="invoiceNo"/>
+									</li>
+									<li>
+										审核状态：<select name="auditStatus">
+											<option value="">所有</option>
+											<option value="0">待审核</option>
+											<option value="1">已审核</option>
+											<option value="2">已拒绝</option>
+										</select>
+									</li>
+									<li>
+										配送单号：<input type="text" name="deliveryNo"/>
+									</li>
+									<li>
+										产品编码：<input type="text" name="materialCode"/>
+									</li>
+									<li>
+										产品名称：<input type="text" name="materialName"/>
+									</li>
+									<li>
+										<a class="btn btn-primary btn-rounded btn-sm" onclick="searchDetail()" style="display: none;"><i class="fa fa-search"></i>&nbsp;搜索</a>
+										<a class="btn btn-warning btn-rounded btn-sm" onclick="resetDetail()" style="display: none;"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+										<a class="btn btn-warning btn-rounded btn-sm" onclick="exportDetail()" shiro:hasPermission="settlement:settlement:export" style="display: none;"><i class="fa fa-download"></i>&nbsp;导出</a>
+									</li>
+								</ul>
+							</div>
+						</form>
+					</div>
+			        <div class="btn-group-sm" id="toolbar-detail" role="group" style="display: none;">
+			            <a class="btn btn-success btn-sm" onclick="searchDetail()"><i class="fa fa-search"></i> 搜索</a>
+			            <a class="btn btn-warning btn-sm" onclick="resetDetail()"><i class="fa fa-refresh"></i> 重置</a>
+			            <a class="btn btn-primary btn-sm" onclick="exportDetail()" shiro:hasPermission="settlement:settlement:export"><i class="fa fa-download"></i> 导出</a>
+			        </div>
+			        
+			        <div class="col-sm-12 select-table table-striped query-table-wrap">
+					    <table id="bootstrap-table-detail" class="delivery-detail-fixed-table"></table>
+					</div>
+				</div>
+			</div>
+			
+			<!-- 汇总表 -->
+			<div role="tabpanel" class="tab-pane" id="summary-tab">
+				<div class="row" style="margin: 0; display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%;">
+					<div class="col-sm-12 search-collapse" style="flex-shrink: 0;">
+						<form id="settlement-summary-form">
+							<div class="select-list">
+								<ul>
+									<li>
+										结算单号：<input type="text" name="settlementNo"/>
+									</li>
+									<li>
+										发票号：<input type="text" name="invoiceNo"/>
+									</li>
+									<li>
+										审核状态：<select name="auditStatus">
+											<option value="">所有</option>
+											<option value="0">待审核</option>
+											<option value="1">已审核</option>
+											<option value="2">已拒绝</option>
+										</select>
+									</li>
+									<li>
+										客户名称：<input type="text" name="customerName"/>
+									</li>
+									<li>
+										供应商名称：<input type="text" name="supplierName"/>
+									</li>
+									<li>
+										<a class="btn btn-primary btn-rounded btn-sm" onclick="searchSummary()" style="display: none;"><i class="fa fa-search"></i>&nbsp;搜索</a>
+										<a class="btn btn-warning btn-rounded btn-sm" onclick="resetSummary()" style="display: none;"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+										<a class="btn btn-warning btn-rounded btn-sm" onclick="exportSummary()" shiro:hasPermission="settlement:settlement:export" style="display: none;"><i class="fa fa-download"></i>&nbsp;导出</a>
+									</li>
+								</ul>
+							</div>
+						</form>
+					</div>
+			        <div class="btn-group-sm" id="toolbar-summary" role="group" style="display: none;">
+			            <a class="btn btn-success btn-sm" onclick="searchSummary()"><i class="fa fa-search"></i> 搜索</a>
+			            <a class="btn btn-warning btn-sm" onclick="resetSummary()"><i class="fa fa-refresh"></i> 重置</a>
+			            <a class="btn btn-primary btn-sm" onclick="exportSummary()" shiro:hasPermission="settlement:settlement:export"><i class="fa fa-download"></i> 导出</a>
+			        </div>
+			        
+			        <div class="col-sm-12 select-table table-striped query-table-wrap">
+					    <table id="bootstrap-table-summary"></table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script th:inline="javascript">
+		var detailPrefix = ctx + "settlement/settlement/query/detail";
+		var summaryPrefix = ctx + "settlement/settlement/query/summary";
+		var detailTableInitialized = false;
+		var summaryTableInitialized = false;
+		
+		// 日期格式化函数
+		function formatDate(value, format) {
+		    if (!value) return '-';
+		    
+		    // 如果已经是格式化的字符串，直接返回
+		    if (typeof value === 'string') {
+		        if (value.indexOf('-') > -1) {
+		            // 如果已经是日期格式，根据需要的格式返回
+		            if (format === 'yyyy-MM-dd HH:mm:ss') {
+		                // 如果字符串只有日期部分，添加时间部分
+		                if (value.length <= 10) {
+		                    return value + ' 00:00:00';
+		                }
+		                return value;
+		            } else {
+		                // 只返回日期部分
+		                return value.split(' ')[0];
+		            }
+		        }
+		    }
+		    
+		    // 尝试使用若依框架的dateFormat方法
+		    if (typeof $.common !== 'undefined' && typeof $.common.dateFormat === 'function') {
+		        var formatted = $.common.dateFormat(value, format || 'yyyy-MM-dd');
+		        return formatted || '-';
+		    }
+		    
+		    // 备用方案：使用原生JavaScript格式化
+		    try {
+		        var date = new Date(value);
+		        if (isNaN(date.getTime())) return '-';
+		        
+		        var year = date.getFullYear();
+		        var month = String(date.getMonth() + 1).padStart(2, '0');
+		        var day = String(date.getDate()).padStart(2, '0');
+		        
+		        if (format === 'yyyy-MM-dd HH:mm:ss') {
+		            var hours = String(date.getHours()).padStart(2, '0');
+		            var minutes = String(date.getMinutes()).padStart(2, '0');
+		            var seconds = String(date.getSeconds()).padStart(2, '0');
+		            return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ':' + seconds;
+		        } else {
+		            return year + '-' + month + '-' + day;
+		        }
+		    } catch(e) {
+		        return '-';
+		    }
+		}
+
+		$(function() {
+		    // 初始化明细表
+		    initDetailTable();
+		    $(window).on('resize', function() {
+		    	relayoutDeliveryQueryTables();
+		    });
+		    $('a[data-toggle="tab"]').on('shown.bs.tab', function() {
+		    	setTimeout(relayoutDeliveryQueryTables, 0);
+		    });
+		    setTimeout(relayoutDeliveryQueryTables, 300);
+		});
+
+		/**
+		 * 表格外包层高度 = 从外包层顶边到「本页主容器 / tab-content / tab-pane」三者底边中的最小值，
+		 * 不得再用视口底边去撑高：否则外包层会高于父级 .tab-pane 的 overflow:hidden，分页整块被裁掉看不见。
+		 */
+		function layoutDeliveryQueryWrapHeights() {
+			var $page = $('.delivery-query-page.container-div');
+			if (!$page.length) {
+				return;
+			}
+			var pageEl = $page[0];
+			var pageBottom = pageEl.getBoundingClientRect().bottom;
+			function applyWrap(selector) {
+				var $w = $(selector);
+				if (!$w.length) {
+					return;
+				}
+				if (!$w.closest('.tab-pane').is(':visible')) {
+					return;
+				}
+				var el = $w[0];
+				var top = el.getBoundingClientRect().top;
+				var bottom = pageBottom;
+				var $tc = $w.closest('.tab-content');
+				if ($tc.length) {
+					bottom = Math.min(bottom, $tc[0].getBoundingClientRect().bottom - 4);
+				}
+				var $pane = $w.closest('.tab-pane');
+				if ($pane.length) {
+					bottom = Math.min(bottom, $pane[0].getBoundingClientRect().bottom - 4);
+				}
+				var base = Math.floor(bottom - top - 6);
+				var h = base;
+				if (selector === '#detail-tab .query-table-wrap' || selector === '#summary-tab .query-table-wrap') {
+					var docEl = document.documentElement;
+					var viewH = (docEl && docEl.clientHeight) ? docEl.clientHeight : (window.innerHeight || 0);
+					var maxByViewport = Math.floor(viewH - top - 10);
+					var boosted = Math.min(base + 56, maxByViewport);
+					h = Math.max(base, boosted);
+				}
+				if (h < 260) {
+					h = 260;
+				}
+				el.style.setProperty('flex', '0 0 auto', 'important');
+				el.style.setProperty('height', h + 'px', 'important');
+				el.style.setProperty('min-height', h + 'px', 'important');
+				/* 不设 max-height：与内部表格总高略超时会裁掉分页 */
+				el.style.removeProperty('max-height');
+				el.style.setProperty('box-sizing', 'border-box', 'important');
+			}
+			applyWrap('#detail-tab .query-table-wrap');
+			applyWrap('#summary-tab .query-table-wrap');
+		}
+
+		function relayoutDeliveryQueryTables() {
+			layoutDeliveryQueryWrapHeights();
+			resetQueryTableHeights();
+		}
+
+		function calculateQueryTableHeight(tableSelector) {
+			var $table = $(tableSelector);
+			var $wrap = $table.closest('.query-table-wrap');
+			if ($wrap.length === 0) {
+				return 600;
+			}
+			var el = $wrap[0];
+			/* 略小于外包层，给工具栏/表头/分页和边框留余量，避免被外包层 overflow 裁掉 */
+			var h = el ? el.clientHeight : Math.floor($wrap.innerHeight());
+			if (!h || h < 1) {
+				h = Math.floor($wrap.innerHeight());
+			}
+			h = Math.floor(h - 12);
+			return Math.max(h, 280);
+		}
+
+		function resetQueryTableHeights() {
+			var $detail = $('#bootstrap-table-detail');
+			if ($detail.length > 0 && $detail.bootstrapTable('getOptions')) {
+				var hd = calculateQueryTableHeight('#bootstrap-table-detail');
+				$detail.bootstrapTable('resetView', { height: hd });
+				$detail.closest('.bootstrap-table').find('.fixed-table-body').scrollLeft(0);
+			}
+			var $summary = $('#bootstrap-table-summary');
+			if ($summary.length > 0 && $summary.bootstrapTable('getOptions')) {
+				$summary.bootstrapTable('resetView', { height: calculateQueryTableHeight('#bootstrap-table-summary') });
+				$summary.closest('.bootstrap-table').find('.fixed-table-body').scrollLeft(0);
+			}
+			setTimeout(function() {
+				var $d = $('#bootstrap-table-detail');
+				if ($d.length > 0 && $d.bootstrapTable('getOptions')) {
+					$d.bootstrapTable('resetView', { height: calculateQueryTableHeight('#bootstrap-table-detail') });
+				}
+				var $s = $('#bootstrap-table-summary');
+				if ($s.length > 0 && $s.bootstrapTable('getOptions')) {
+					$s.bootstrapTable('resetView', { height: calculateQueryTableHeight('#bootstrap-table-summary') });
+				}
+			}, 80);
+		}
+
+		// 切换标签页
+		function switchTab(tabType) {
+		    if (tabType === 'detail') {
+		        if (!detailTableInitialized) {
+		            initDetailTable();
+		        }
+		    } else if (tabType === 'summary') {
+		        if (!summaryTableInitialized) {
+		            initSummaryTable();
+		        }
+		    }
+		    setTimeout(relayoutDeliveryQueryTables, 0);
+		}
+
+		// 初始化明细表
+		function initDetailTable() {
+		    if (detailTableInitialized) {
+		        return;
+		    }
+		    layoutDeliveryQueryWrapHeights();
+
+		    var mountDetailToolbar = function() {
+		    	var $table = $('#bootstrap-table-detail');
+		    	var $bootstrapTable = $table.closest('.bootstrap-table');
+		    	var $toolbar = $bootstrapTable.find('.fixed-table-toolbar');
+		    	var $actions = $('#toolbar-detail');
+		    	if ($toolbar.length && $actions.length) {
+		    		if ($actions.parent()[0] !== $toolbar[0]) {
+		    			$actions.prependTo($toolbar);
+		    		}
+		    		$actions.addClass('detail-action-bar').show();
+		    	}
+		    };
+		    
+		    var options = {
+		        id: "bootstrap-table-detail",
+		        url: detailPrefix + "/list",
+		        exportUrl: detailPrefix + "/export",
+		        sortName: "detailId",
+		        sortOrder: "desc",
+		        modalName: "结算明细",
+		        formId: "settlement-detail-form",
+		        /* 若依默认 toolbar 为 #toolbar，本页不存在会干扰表格；指定为实际工具栏容器 */
+		        toolbar: 'toolbar-detail',
+		        mobileResponsive: false,
+		        height: calculateQueryTableHeight('#bootstrap-table-detail'),
+		        showRefresh: true,
+		        showColumns: true,
+		        showToggle: true,
+		        columns: [{
+		            field: 'serialNumber',
+		            title: '序号',
+		            align: 'center',
+		            width: 60,
+		            formatter: function (value, row, index) {
+		                var $table = $('#bootstrap-table-detail');
+		                var options = $table.bootstrapTable('getOptions');
+		                if (!options) return index + 1;
+		                var pageSize = options.pageSize || 10;
+		                var pageNumber = options.pageNumber || $table.data('currentPage') || 1;
+		                return (pageNumber - 1) * pageSize + index + 1;
+		            }
+		        },
+		        {
+		            field: 'settlementNo',
+		            title: '结算单号',
+		            width: 150,
+		            sortable: true
+		        },
+		        {
+		            field: 'invoiceNo',
+		            title: '发票号',
+		            width: 130
+		        },
+		        {
+		            field: 'deliveryNo',
+		            title: '配送单号',
+		            width: 150,
+		            sortable: true
+		        },
+		        {
+		            field: 'materialCode',
+		            title: '产品编码',
+		            width: 120,
+		            sortable: true
+		        },
+		        {
+		            field: 'materialName',
+		            title: '产品名称',
+		            width: 200,
+		            sortable: true
+		        },
+		        {
+		            field: 'specification',
+		            title: '规格',
+		            width: 110
+		        },
+		        {
+		            field: 'model',
+		            title: '型号',
+		            width: 100
+		        },
+		        {
+		            field: 'unit',
+		            title: '单位',
+		            width: 72,
+		            align: 'center'
+		        },
+		        {
+		            field: 'quantity',
+		            title: '数量',
+		            width: 100,
+		            sortable: true,
+		            formatter: function(value) {
+		                if (value != null) {
+		                    return parseFloat(value).toFixed(2);
+		                }
+		                return '-';
+		            }
+		        },
+		        {
+		            field: 'price',
+		            title: '单价',
+		            width: 100,
+		            sortable: true,
+		            formatter: function(value) {
+		                if (value != null) {
+		                    return parseFloat(value).toFixed(2);
+		                }
+		                return '-';
+		            }
+		        },
+		        {
+		            field: 'amount',
+		            title: '金额',
+		            width: 110,
+		            sortable: true,
+		            formatter: function(value) {
+		                if (value != null) {
+		                    return parseFloat(value).toFixed(2);
+		                }
+		                return '-';
+		            }
+		        }]
+		    };
+		    
+		    // 使用若依框架的表格初始化方法
+		    var $table = $('#bootstrap-table-detail');
+		    if ($table.length > 0) {
+		        // 保存当前页码用于序号计算
+		        options.onPageChange = function(number, size) {
+		            $table.data('currentPage', number);
+		        };
+		        // 添加加载成功回调
+		        options.onLoadSuccess = function(data) {
+		            console.log("明细表加载成功，数据量:", data ? (data.rows ? data.rows.length : (Array.isArray(data) ? data.length : 0)) : 0);
+		            var $table = $('#bootstrap-table-detail');
+		            mountDetailToolbar();
+		            // 确保加载完成后更新页码
+		            if ($table && $table.bootstrapTable) {
+		                var options = $table.bootstrapTable('getOptions');
+		                if (options) {
+		                    $table.data('currentPage', options.pageNumber || 1);
+		                }
+		            }
+		            setTimeout(relayoutDeliveryQueryTables, 0);
+		            setTimeout(relayoutDeliveryQueryTables, 150);
+		        };
+		        // 添加加载错误回调
+		        options.onLoadError = function(status, res) {
+		            console.error("明细表加载失败，状态码:", status);
+		            console.error("响应内容:", res);
+		            if (status === 401 || status === 403) {
+		                $.modal.msgError("登录已过期，请重新登录");
+		                setTimeout(function() {
+		                    window.location.href = ctx + "login";
+		                }, 1500);
+		            } else {
+		                $.modal.msgError("数据加载失败，请刷新页面重试");
+		            }
+		        };
+		        $.table.init(options);
+		        $table.data('currentPage', 1);
+		        setTimeout(mountDetailToolbar, 0);
+		        setTimeout(relayoutDeliveryQueryTables, 0);
+		        setTimeout(relayoutDeliveryQueryTables, 120);
+		        detailTableInitialized = true;
+		    }
+		}
+
+		// 初始化汇总表
+		function initSummaryTable() {
+		    if (summaryTableInitialized) {
+		        return;
+		    }
+		    layoutDeliveryQueryWrapHeights();
+
+		    var mountSummaryToolbar = function() {
+		    	var $table = $('#bootstrap-table-summary');
+		    	var $bootstrapTable = $table.closest('.bootstrap-table');
+		    	var $toolbar = $bootstrapTable.find('.fixed-table-toolbar');
+		    	var $actions = $('#toolbar-summary');
+		    	if ($toolbar.length && $actions.length) {
+		    		if ($actions.parent()[0] !== $toolbar[0]) {
+		    			$actions.prependTo($toolbar);
+		    		}
+		    		$actions.addClass('summary-action-bar').show();
+		    	}
+		    };
+		    
+		    var options = {
+		        id: "bootstrap-table-summary",
+		        url: summaryPrefix + "/list",
+		        exportUrl: summaryPrefix + "/export",
+		        sortName: "createTime",
+		        sortOrder: "desc",
+		        modalName: "结算单",
+		        formId: "settlement-summary-form",
+		        toolbar: 'toolbar-summary',
+		        mobileResponsive: false,
+		        height: calculateQueryTableHeight('#bootstrap-table-summary'),
+		        showRefresh: true,
+		        showColumns: true,
+		        showToggle: true,
+		        columns: [{
+		            field: 'serialNumber',
+		            title: '序号',
+		            align: 'center',
+		            width: 60,
+		            formatter: function(value, row, index) {
+		                var $table = $('#bootstrap-table-summary');
+		                var options = $table.bootstrapTable('getOptions');
+		                if (!options) return index + 1;
+		                var pageSize = options.pageSize || 10;
+		                var pageNumber = options.pageNumber || $table.data('currentPage') || 1;
+		                return (pageNumber - 1) * pageSize + index + 1;
+		            }
+		        },
+		        {
+		            field: 'settlementNo',
+		            title: '结算单号',
+		            width: 150,
+		            sortable: true
+		        },
+		        {
+		            field: 'invoiceNo',
+		            title: '发票号',
+		            width: 130
+		        },
+		        {
+		            field: 'invoiceDate',
+		            title: '发票日期',
+		            width: 120,
+		            sortable: true,
+		            formatter: function(value) {
+		                return formatDate(value, "yyyy-MM-dd");
+		            }
+		        },
+		        {
+		            field: 'customerName',
+		            title: '客户名称',
+		            width: 160,
+		            formatter: function(value) {
+		                return value || '-';
+		            }
+		        },
+		        {
+		            field: 'supplierName',
+		            title: '供应商名称',
+		            width: 160,
+		            formatter: function(value) {
+		                return value || '-';
+		            }
+		        },
+		        {
+		            field: 'totalAmount',
+		            title: '总金额',
+		            width: 120,
+		            sortable: true,
+		            formatter: function(value) {
+		                if (value != null) {
+		                    return parseFloat(value).toFixed(2);
+		                }
+		                return '-';
+		            }
+		        },
+		        {
+		            field: 'auditStatus',
+		            title: '审核状态',
+		            width: 100,
+		            formatter: function(value) {
+		            	var statusMap = {'0': '待审核', '1': '已审核', '2': '已拒绝'};
+		            	return statusMap[value] || '';
+		            }
+		        },
+		        {
+		            field: 'createTime',
+		            title: '创建时间',
+		            width: 168,
+		            sortable: true,
+		            formatter: function(value) {
+		                return formatDate(value, "yyyy-MM-dd HH:mm:ss");
+		            }
+		        },
+		        {
+		            field: 'remark',
+		            title: '备注',
+		            width: 160
+		        }]
+		    };
+		    
+		        // 使用若依框架的表格初始化方法
+		    var $table = $('#bootstrap-table-summary');
+		    if ($table.length > 0) {
+		        // 保存当前页码用于序号计算
+		        options.onPageChange = function(number, size) {
+		            $table.data('currentPage', number);
+		        };
+		        // 添加加载成功回调
+		        options.onLoadSuccess = function(data) {
+		            console.log("汇总表加载成功，数据量:", data ? (data.rows ? data.rows.length : (Array.isArray(data) ? data.length : 0)) : 0);
+		            var $table = $('#bootstrap-table-summary');
+		            mountSummaryToolbar();
+		            // 确保加载完成后更新页码
+		            if ($table && $table.bootstrapTable) {
+		                var options = $table.bootstrapTable('getOptions');
+		                if (options) {
+		                    $table.data('currentPage', options.pageNumber || 1);
+		                }
+		            }
+		            setTimeout(relayoutDeliveryQueryTables, 0);
+		            setTimeout(relayoutDeliveryQueryTables, 150);
+		        };
+		        // 添加加载错误回调
+		        options.onLoadError = function(status, res) {
+		            console.error("汇总表加载失败，状态码:", status);
+		            console.error("响应内容:", res);
+		            if (status === 401 || status === 403) {
+		                $.modal.msgError("登录已过期，请重新登录");
+		                setTimeout(function() {
+		                    window.location.href = ctx + "login";
+		                }, 1500);
+		            } else {
+		                $.modal.msgError("数据加载失败，请刷新页面重试");
+		            }
+		        };
+		        $.table.init(options);
+		        $table.data('currentPage', 1);
+		        summaryTableInitialized = true;
+		        setTimeout(mountSummaryToolbar, 0);
+		        setTimeout(relayoutDeliveryQueryTables, 0);
+		        setTimeout(relayoutDeliveryQueryTables, 120);
+		        
+		        // 延迟刷新一次，确保数据正确加载
+		        setTimeout(function() {
+		            if ($table.bootstrapTable('getOptions')) {
+		                $table.bootstrapTable('refresh');
+		                relayoutDeliveryQueryTables();
+		            }
+		        }, 500);
+		    }
+		}
+
+		// 明细表搜索
+		function searchDetail() {
+		    $.table.search("settlement-detail-form", "bootstrap-table-detail");
+		}
+
+		// 明细表重置
+		function resetDetail() {
+		    $("#settlement-detail-form")[0].reset();
+		    $.table.search("settlement-detail-form", "bootstrap-table-detail");
+		}
+
+		// 明细表导出
+		function exportDetail() {
+		    var $f = $('#settlement-detail-form');
+		    var params = {
+		        settlementNo: $('input[name="settlementNo"]', $f).val(),
+		        invoiceNo: $('input[name="invoiceNo"]', $f).val(),
+		        auditStatus: $('select[name="auditStatus"]', $f).val(),
+		        deliveryNo: $('input[name="deliveryNo"]', $f).val(),
+		        materialCode: $('input[name="materialCode"]', $f).val(),
+		        materialName: $('input[name="materialName"]', $f).val()
+		    };
+		    var form = $('<form></form>');
+		    form.attr('method', 'post');
+		    form.attr('action', detailPrefix + "/export");
+		    $.each(params, function(key, value) {
+		        if (value) {
+		            var input = $('<input></input>');
+		            input.attr('type', 'hidden');
+		            input.attr('name', key);
+		            input.attr('value', value);
+		            form.append(input);
+		        }
+		    });
+		    form.appendTo('body');
+		    form.submit();
+		    form.remove();
+		}
+
+		// 汇总表搜索
+		function searchSummary() {
+		    $.table.search("settlement-summary-form", "bootstrap-table-summary");
+		}
+
+		// 汇总表重置
+		function resetSummary() {
+		    $("#settlement-summary-form")[0].reset();
+		    $.table.search("settlement-summary-form", "bootstrap-table-summary");
+		}
+
+		// 汇总表导出
+		function exportSummary() {
+		    var $f = $('#settlement-summary-form');
+		    var params = {
+		        settlementNo: $('input[name="settlementNo"]', $f).val(),
+		        invoiceNo: $('input[name="invoiceNo"]', $f).val(),
+		        auditStatus: $('select[name="auditStatus"]', $f).val(),
+		        customerName: $('input[name="customerName"]', $f).val(),
+		        supplierName: $('input[name="supplierName"]', $f).val()
+		    };
+		    var form = $('<form></form>');
+		    form.attr('method', 'post');
+		    form.attr('action', summaryPrefix + "/export");
+		    $.each(params, function(key, value) {
+		        if (value) {
+		            var input = $('<input></input>');
+		            input.attr('type', 'hidden');
+		            input.attr('name', key);
+		            input.attr('value', value);
+		            form.append(input);
+		        }
+		    });
+		    form.appendTo('body');
+		    form.submit();
+		    form.remove();
+		}
+	</script>
+</body>
+</html>
+

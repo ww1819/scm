@@ -415,7 +415,7 @@ CREATE TABLE IF NOT EXISTS `scm_order` (
   `order_date` date DEFAULT NULL COMMENT '订单日期',
   `order_amount` decimal(18,2) DEFAULT 0 COMMENT '订单金额',
   `order_status` char(1) DEFAULT '0' COMMENT '订单状态（0待处理 1已确认 2配送中 3已完成 4已取消）',
-  `apply_dept` varchar(100) DEFAULT '' COMMENT '申请科室',
+  `apply_dept` varchar(100) DEFAULT '' COMMENT '申请科室名称（SPD第一方推送等；可与 order_dept_name 同源）',
   `delivery_company` varchar(200) DEFAULT '' COMMENT '配送公司',
   `remark` varchar(500) DEFAULT '' COMMENT '备注',
   `create_by` varchar(64) DEFAULT '' COMMENT '创建者',

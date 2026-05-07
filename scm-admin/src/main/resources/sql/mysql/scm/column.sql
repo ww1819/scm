@@ -37,6 +37,8 @@ ALTER TABLE scm_order MODIFY COLUMN hospital_id bigint(20) DEFAULT NULL COMMENT 
 /
 ALTER TABLE scm_order MODIFY COLUMN supplier_id bigint(20) DEFAULT NULL COMMENT '供应商ID';
 /
+ALTER TABLE scm_order MODIFY COLUMN apply_dept varchar(100) DEFAULT '' COMMENT '申请科室名称（SPD第一方推送等；与 order_dept_name 语义一致时可同源）';
+/
 ALTER TABLE scm_delivery MODIFY COLUMN hospital_id bigint(20) DEFAULT NULL COMMENT '医院ID';
 /
 ALTER TABLE scm_delivery MODIFY COLUMN supplier_id bigint(20) DEFAULT NULL COMMENT '供应商ID';
@@ -284,6 +286,8 @@ CALL add_table_column('scm_order', 'tenant_id', 'varchar(64)', '租户ID', NULL)
 CALL add_table_column('scm_order', 'order_supplier_name', 'varchar(256)', '订单供应商名称', NULL);
 /
 CALL add_table_column('scm_order', 'warehouse_id', 'bigint(20)', '订单仓库ID', NULL);
+/
+CALL add_table_column('scm_order', 'warehouse_name', 'varchar(200)', '订单仓库名称', NULL);
 /
 CALL add_table_column('scm_order', 'order_dept_id', 'bigint(20)', '订单科室ID', NULL);
 /

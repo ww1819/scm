@@ -35,6 +35,14 @@ public interface SettlementDetailMapper
     public List<SettlementDetail> selectSettlementDetailListBySettlementId(Long settlementId);
 
     /**
+     * 结算查询：明细分页（联主表条件）
+     *
+     * @param settlementDetail 查询条件（含主表 settlementNo、invoiceNo、auditStatus 及明细字段）
+     * @return 明细集合
+     */
+    public List<SettlementDetail> selectSettlementDetailQueryList(SettlementDetail settlementDetail);
+
+    /**
      * 新增结算明细信息
      * 
      * @param settlementDetail 明细信息

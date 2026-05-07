@@ -66,6 +66,17 @@ public class SettlementDetail extends BaseEntity
     @Excel(name = "金额", cellType = ColumnType.NUMERIC)
     private BigDecimal amount;
 
+    /** 主表结算单号（联查展示；查询条件） */
+    @Excel(name = "结算单号")
+    private String settlementNo;
+
+    /** 主表发票号（联查展示；查询条件） */
+    @Excel(name = "发票号")
+    private String invoiceNo;
+
+    /** 主表审核状态（查询条件：0待审核 1已审核 2已拒绝） */
+    private String auditStatus;
+
     @NotNull(message = "结算单ID不能为空")
     public Long getSettlementId()
     {
@@ -187,6 +198,36 @@ public class SettlementDetail extends BaseEntity
         this.amount = amount;
     }
 
+    public String getSettlementNo()
+    {
+        return settlementNo;
+    }
+
+    public void setSettlementNo(String settlementNo)
+    {
+        this.settlementNo = settlementNo;
+    }
+
+    public String getInvoiceNo()
+    {
+        return invoiceNo;
+    }
+
+    public void setInvoiceNo(String invoiceNo)
+    {
+        this.invoiceNo = invoiceNo;
+    }
+
+    public String getAuditStatus()
+    {
+        return auditStatus;
+    }
+
+    public void setAuditStatus(String auditStatus)
+    {
+        this.auditStatus = auditStatus;
+    }
+
     public Long getDetailId()
     {
         return detailId;
@@ -202,6 +243,8 @@ public class SettlementDetail extends BaseEntity
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
             .append("detailId", getDetailId())
             .append("settlementId", getSettlementId())
+            .append("settlementNo", getSettlementNo())
+            .append("invoiceNo", getInvoiceNo())
             .append("deliveryId", getDeliveryId())
             .append("deliveryNo", getDeliveryNo())
             .append("materialId", getMaterialId())
