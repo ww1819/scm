@@ -33,16 +33,39 @@
             background: #fff;
         }
         
-        /* 标题区域 */
+        /* 标题区域：左条码、中标题、右输入码，左右对称 */
         .header {
-            position: relative;
-            text-align: center;
             margin-bottom: 15px;
-            border-bottom: 2px solid #000;
-            padding-bottom: 10px;
+            padding-bottom: 0;
         }
         
-        .header h1 {
+        .header-inner {
+            display: grid;
+            grid-template-columns: minmax(100px, 1fr) auto minmax(100px, 1fr);
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+        }
+        
+        .header-barcode {
+            justify-self: start;
+            text-align: left;
+            max-width: 100%;
+        }
+        
+        .header-barcode svg {
+            display: block;
+            margin-right: auto;
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .header-title {
+            justify-self: center;
+            text-align: center;
+        }
+        
+        .header-title h1 {
             font-size: 24px;
             font-weight: bold;
             margin: 0;
@@ -50,10 +73,11 @@
         }
         
         .input-code {
-            position: absolute;
-            top: 0;
-            right: 0;
+            justify-self: end;
+            align-self: center;
+            text-align: right;
             font-size: 14px;
+            white-space: nowrap;
         }
         
         .input-code-label {
@@ -103,6 +127,8 @@
         .table-section {
             margin-top: 5px;
             margin-bottom: 5px;
+            width: 100%;
+            box-sizing: border-box;
         }
         
         .detail-table {
@@ -148,26 +174,39 @@
             height: auto;
         }
         
-        /* 表格底部信息行样式 */
-        .detail-table tbody tr:last-child,
-        .detail-table tbody tr:nth-last-child(2),
-        .detail-table tbody tr:nth-last-child(3) {
-            border-top: 2px solid #000;
-        }
-        
-        .detail-table tbody tr:last-child td,
-        .detail-table tbody tr:nth-last-child(2) td,
-        .detail-table tbody tr:nth-last-child(3) td {
-            text-align: left;
+        /* 表格底部：合计行、签名行（与明细相同 1px 边框，不加粗） */
+        .detail-table tbody tr.total-row-qty-amt td,
+        .detail-table tbody tr.print-signature-row td {
             padding: 4px 6px;
             vertical-align: top;
         }
         
-        /* 验收内容区域 */
+        .detail-table tbody tr.print-signature-row td {
+            text-align: left;
+        }
+        
+        /* 验收内容区域（与明细表同宽） */
         .acceptance-section {
             margin-bottom: 15px;
             border: 1px solid #000;
             padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .detail-table tbody tr.total-row-qty-amt td:nth-child(1) {
+            text-align: left;
+        }
+        
+        .detail-table tbody tr.total-row-qty-amt td:nth-child(2),
+        .detail-table tbody tr.total-row-qty-amt td:nth-child(3) {
+            text-align: center;
+        }
+        
+        .detail-table tbody tr.total-row-qty-amt td.total-uppercase-summary {
+            text-align: left;
+            white-space: normal;
+            word-break: break-all;
         }
         
         .acceptance-title {
@@ -261,18 +300,6 @@
             margin-right: 5px;
         }
         
-        .page-info {
-            text-align: right;
-            margin-top: 10px;
-            font-size: 11px;
-        }
-        
-        .website {
-            text-align: right;
-            margin-top: 5px;
-            font-size: 11px;
-        }
-        
         /* 打印按钮 */
         .print-actions {
             text-align: center;
@@ -301,14 +328,20 @@
             </button>
         </div>
         
-        <!-- 标题区域 -->
+        <!-- 标题区域：左一维码（内容同输入码）、中标题、右输入码 -->
         <div class="header">
-            <div class="input-code">
-                <span class="input-code-label">输入码：</span>
-                <span th:if="${delivery.deliveryNo != null and delivery.deliveryNo.length() > 4}" th:text="${delivery.deliveryNo.substring(delivery.deliveryNo.length() - 4)}">9527</span>
-                <span th:if="${delivery.deliveryNo == null or delivery.deliveryNo.length() <= 4}" th:text="${delivery.deliveryNo ?: ''}">9527</span>
+            <div class="header-inner">
+                <div class="header-barcode">
+                    <svg id="headerBarcode" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"></svg>
+                </div>
+                <div class="header-title">
+                    <h1>物资配送单</h1>
+                </div>
+                <div class="input-code">
+                    <span class="input-code-label">输入码：</span>
+                    <span th:text="${printInputCode}">9527</span>
+                </div>
             </div>
-            <h1>物资配送单</h1>
         </div>
         
         <!-- 基本信息区域 -->
@@ -333,7 +366,7 @@
             </div>
             <div class="info-row">
                 <div class="info-item">
-                    <span class="info-label">代理商：</span>
+                    <span class="info-label">供应商：</span>
                     <span class="info-value" th:text="${delivery.supplierName ?: '-'}">国药乐仁堂集团有限公司</span>
                 </div>
                 <div class="info-item">
@@ -342,7 +375,7 @@
                 </div>
                 <div class="info-item">
                     <span class="info-label">金额：</span>
-                    <span class="info-value" th:text="${delivery.deliveryAmount != null ? #numbers.formatDecimal(delivery.deliveryAmount, 0, 0) : '0'}">3110</span>
+                    <span class="info-value" th:text="${printTotalAmount != null ? #numbers.formatDecimal(printTotalAmount, 1, 2) : '0'}">3110</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">发票：</span>
@@ -369,20 +402,16 @@
                         <th style="width: 60px;">单价</th>
                         <th style="width: 60px;">数量</th>
                         <th style="width: 70px;">金额</th>
-                        <th style="width: 64px;">打包系数</th>
                         <th class="barcode-col" style="width: 110px;">批号</th>
                         <th style="width: 88px;">有效期</th>
                         <th style="width: 88px;">生产日期</th>
-                        <th class="barcode-col" style="width: 120px;">主条码</th>
-                        <th class="barcode-col" style="width: 120px;">辅条码</th>
                         <th style="width: 120px;">注册证号</th>
-                        <th style="width: 120px;">厂家</th>
-                        <th style="width: 100px;">订单号</th>
+                        <th style="width: 140px;">厂家</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr th:if="${deliveryDetails == null or #lists.isEmpty(deliveryDetails)}">
-                        <td colspan="16" style="text-align: center; padding: 20px;">暂无明细数据</td>
+                        <td colspan="12" style="text-align: center; padding: 20px;">暂无明细数据</td>
                     </tr>
                     <tr th:each="detail, iterStat : ${deliveryDetails}">
                         <td th:text="${iterStat.count}">1</td>
@@ -392,26 +421,23 @@
                         <td th:text="${detail.price != null ? #numbers.formatDecimal(detail.price, 1, 2) : '-'}">30</td>
                         <td th:text="${detail.deliveryQuantity != null ? #numbers.formatDecimal(detail.deliveryQuantity, 0, 0) : '-'}">200</td>
                         <td th:text="${detail.amount != null ? #numbers.formatDecimal(detail.amount, 1, 2) : '-'}">6000</td>
-                        <td th:text="${detail.packCoefficient != null ? #numbers.formatDecimal(detail.packCoefficient, 1, 6) : '-'}">-</td>
                         <td class="barcode-col" th:text="${detail.batchNo ?: '-'}">E7LK0610</td>
                         <td th:text="${detail.expireDate != null ? #dates.format(detail.expireDate, 'yyyy/MM/dd') : '-'}">2024/10/5</td>
                         <td th:text="${detail.productionDate != null ? #dates.format(detail.productionDate, 'yyyy/MM/dd') : '-'}">2024/10/5</td>
-                        <td class="barcode-col" th:text="${detail.mainBarcode ?: '-'}">-</td>
-                        <td class="barcode-col" th:text="${detail.auxBarcode ?: '-'}">-</td>
                         <td th:text="${detail.registerNo ?: '-'}">国械注准20193101882</td>
                         <td th:text="${detail.manufacturer ?: '-'}">北京费森尤斯医疗器械有限公司</td>
-                        <td th:text="${delivery.orderNo ?: '-'}">DH020205</td>
                     </tr>
-                    <!-- 合计行 -->
-                    <tr>
-                        <td colspan="4" style="text-align: left; font-weight: bold;">合计：</td>
-                        <td colspan="12" style="text-align: left;">
-                            大写：<span th:text="${delivery.deliveryAmount != null ? T(com.scm.common.core.text.Convert).digitUppercase(delivery.deliveryAmount.doubleValue()) : '零元整'}">零元整</span><br/>
-                            合计数量：<span th:text="${totalQuantity}">0</span>
+                    <!-- 合计：数量、金额为数字；其后合并为汇总列显示大写 -->
+                    <tr class="total-row-qty-amt">
+                        <td colspan="5" style="font-weight: bold;">合计</td>
+                        <td th:text="${totalQuantity}">0</td>
+                        <td th:text="${printTotalAmount != null ? #numbers.formatDecimal(printTotalAmount, 1, 2) : '0'}">0</td>
+                        <td colspan="5" class="total-uppercase-summary">
+                            合计大写金额：<span th:text="${printTotalAmount != null ? T(com.scm.common.core.text.Convert).digitUppercase(printTotalAmount.doubleValue()) : '零元整'}">零元整</span>
                         </td>
                     </tr>
                     <!-- 签名行 -->
-                    <tr>
+                    <tr class="print-signature-row">
                         <td colspan="3" style="text-align: left;">
                             制单日期：<span th:text="${delivery.createTime != null ? #dates.format(delivery.createTime, 'yyyy/MM/dd') : ''}">2023/1/2</span>
                         </td>
@@ -421,7 +447,7 @@
                         <td colspan="3" style="text-align: left;">
                             签收人：________________
                         </td>
-                        <td colspan="7" style="text-align: left;">
+                        <td colspan="3" style="text-align: left;">
                             签收日期：________________
                         </td>
                     </tr>
@@ -468,96 +494,51 @@
                 </span>
             </div>
         </div>
-        
-        <!-- 网址和页码 - 页面最底部 -->
-        <div style="text-align: right; margin-top: 20px; padding-right: 20px;">
-            网址：http://baidu.do&nbsp;&nbsp;&nbsp;&nbsp;第<span id="currentPage">1</span>页 共<span id="totalPages">1</span>页
-        </div>
     </div>
     
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
     <script th:inline="javascript">
-        // 数字转中文大写
-        function numberToChinese(num) {
-            if (num == null || num == 0) {
-                return '零';
-            }
-            
-            var chineseNums = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
-            var chineseUnits = ['', '拾', '佰', '仟'];
-            var chineseBigUnits = ['', '万', '亿'];
-            
-            var numStr = Math.floor(num).toString();
-            var result = '';
-            
-            if (numStr.length > 8) {
-                // 处理亿位
-                var yiPart = numStr.substring(0, numStr.length - 8);
-                result += convertPart(yiPart, chineseNums, chineseUnits) + '亿';
-                numStr = numStr.substring(numStr.length - 8);
-            }
-            
-            if (numStr.length > 4) {
-                // 处理万位
-                var wanPart = numStr.substring(0, numStr.length - 4);
-                result += convertPart(wanPart, chineseNums, chineseUnits) + '万';
-                numStr = numStr.substring(numStr.length - 4);
-            }
-            
-            // 处理个位
-            result += convertPart(numStr, chineseNums, chineseUnits);
-            
-            // 清理多余的零
-            result = result.replace(/零+/g, '零').replace(/零$/, '');
-            
-            return result || '零';
-        }
+        var printInputCode = /*[[${printInputCode}]]*/ '';
         
-        function convertPart(part, chineseNums, chineseUnits) {
-            var result = '';
-            var hasValue = false;
-            
-            for (var i = 0; i < part.length; i++) {
-                var digit = parseInt(part[i]);
-                var unitIndex = part.length - i - 1;
-                
-                if (digit != 0) {
-                    if (hasValue && i > 0 && part[i-1] == '0') {
-                        result += '零';
-                    }
-                    result += chineseNums[digit] + chineseUnits[unitIndex];
-                    hasValue = true;
+        function renderHeaderBarcode() {
+            if (!printInputCode || typeof JsBarcode === 'undefined') {
+                var el = document.getElementById('headerBarcode');
+                if (el) {
+                    el.style.display = 'none';
+                }
+                return;
+            }
+            try {
+                JsBarcode('#headerBarcode', printInputCode, {
+                    format: 'CODE128',
+                    width: 1.8,
+                    height: 44,
+                    displayValue: false,
+                    margin: 6
+                });
+            } catch (e) {
+                var svg = document.getElementById('headerBarcode');
+                if (svg) {
+                    svg.style.display = 'none';
                 }
             }
-            
-            return result;
         }
         
-        // 页面加载时转换金额大写
-        $(function() {
-            var totalAmount = /*[[${delivery.deliveryAmount != null ? delivery.deliveryAmount : 0}]]*/ 0;
-            if (totalAmount > 0) {
-                var chineseAmount = numberToChinese(Math.floor(totalAmount));
-                $('#totalAmountChinese').text(chineseAmount);
-            }
-            
-            // 页面加载完成后自动打开打印预览
-            // 延迟一点时间确保页面内容完全渲染
+        function schedulePrintPreview() {
             setTimeout(function() {
                 window.print();
             }, 500);
-        });
+        }
         
-        // 如果页面已经加载完成，也尝试打印（防止jQuery未加载的情况）
-        if (document.readyState === 'complete') {
-            setTimeout(function() {
-                window.print();
-            }, 500);
+        function initPrintPage() {
+            renderHeaderBarcode();
+            schedulePrintPreview();
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initPrintPage);
         } else {
-            window.addEventListener('load', function() {
-                setTimeout(function() {
-                    window.print();
-                }, 500);
-            });
+            initPrintPage();
         }
     </script>
 </body>

@@ -1,5 +1,6 @@
 package com.scm.web.controller.delivery;
 
+import java.math.BigDecimal;
 import java.util.List;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -356,8 +357,9 @@ public class DeliveryController extends BaseController
         mmap.put("delivery", delivery);
         mmap.put("deliveryDetails", details);
 
-        // 计算合计数量
+        // 计算合计数量、明细金额汇总（打印页与表头金额一致）
         int totalQuantity = 0;
+        BigDecimal printTotalAmount = BigDecimal.ZERO;
         if (details != null && !details.isEmpty())
         {
             for (DeliveryDetail detail : details)
@@ -366,9 +368,23 @@ public class DeliveryController extends BaseController
                 {
                     totalQuantity += detail.getDeliveryQuantity().intValue();
                 }
+                if (detail.getAmount() != null)
+                {
+                    printTotalAmount = printTotalAmount.add(detail.getAmount());
+                }
             }
         }
         mmap.put("totalQuantity", totalQuantity);
+        mmap.put("printTotalAmount", printTotalAmount);
+
+        // 打印页「输入码」与一维码内容（与模板原逻辑一致：单号长度>4 取末四位，否则整段）
+        String printInputCode = "";
+        String deliveryNo = delivery.getDeliveryNo();
+        if (deliveryNo != null && !deliveryNo.isEmpty())
+        {
+            printInputCode = deliveryNo.length() > 4 ? deliveryNo.substring(deliveryNo.length() - 4) : deliveryNo;
+        }
+        mmap.put("printInputCode", printInputCode);
 
         return prefix + "/print";
     }
