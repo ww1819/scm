@@ -105,6 +105,7 @@ CALL add_table_column('scm_delivery', 'del_by', 'varchar(64)', '删除人', NULL
 CALL add_table_column('scm_delivery', 'tenant_id', 'varchar(64)', '租户ID', NULL);
 /
 CALL add_table_column('scm_delivery', 'zs_order_id', 'varchar(36)', '第三方订单主键 zs_tp_order.id', NULL);
+/
 CALL add_table_column('scm_delivery', 'ref_order_source', 'varchar(16)', '关联订单来源：SCM第一方 zs第三方', NULL);
 /
 CALL add_table_column('scm_delivery', 'src_order_supplier_id', 'varchar(128)', '订单供应商ID(字符串快照)', NULL);
