@@ -16,6 +16,7 @@ import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.domain.entity.SysDept;
 import com.scm.common.core.domain.entity.SysUser;
+import com.scm.common.utils.LoginNameUtils;
 import com.scm.common.utils.PinyinUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.Supplier;
@@ -30,6 +31,9 @@ import com.scm.system.service.ISysDeptService;
 @Controller
 @RequestMapping("/supplier/register")
 public class SupplierRegisterController extends BaseController {
+
+    /** 供应商/业务员注册页登录账号最大长度（与页面 maxlength 一致） */
+    private static final int SUPPLIER_REGISTER_LOGIN_NAME_MAX = 30;
 
     @Autowired
     private ISysConfigService configService;
@@ -113,6 +117,10 @@ public class SupplierRegisterController extends BaseController {
         if (StringUtils.isEmpty(user.getLoginName())) {
             return error("登录账号不能为空");
         }
+        String loginNameErr = LoginNameUtils.validateLoginName(user.getLoginName(), SUPPLIER_REGISTER_LOGIN_NAME_MAX);
+        if (loginNameErr != null) {
+            return error(loginNameErr);
+        }
         if (StringUtils.isEmpty(user.getPassword())) {
             return error("密码不能为空");
         }
@@ -152,6 +160,10 @@ public class SupplierRegisterController extends BaseController {
         }
         if (StringUtils.isEmpty(user.getLoginName())) {
             return error("登录账号不能为空");
+        }
+        String loginNameErr = LoginNameUtils.validateLoginName(user.getLoginName(), SUPPLIER_REGISTER_LOGIN_NAME_MAX);
+        if (loginNameErr != null) {
+            return error(loginNameErr);
         }
         if (StringUtils.isEmpty(user.getPassword())) {
             return error("密码不能为空");
