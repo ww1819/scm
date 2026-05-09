@@ -196,10 +196,12 @@
                     </div>
                     <div class="row form-tight-row">
                         <div class="col-sm-6">
-                            <input type="text" name="legalPerson" class="form-control" placeholder="法人" maxlength="50"/>
+                            <label class="register-field-label" for="legalPerson">法人</label>
+                            <input type="text" name="legalPerson" id="legalPerson" class="form-control" placeholder="选填，50字以内" maxlength="50"/>
                         </div>
                         <div class="col-sm-6">
-                            <input type="text" name="registeredCapital" class="form-control" placeholder="注册资金（万元）" maxlength="20"/>
+                            <label class="register-field-label" for="registeredCapital">注册资金（万元）</label>
+                            <input type="text" name="registeredCapital" id="registeredCapital" class="form-control" placeholder="选填，非负数字，可含小数" maxlength="20" inputmode="decimal" autocomplete="off"/>
                         </div>
                     </div>
                     <h5>联系信息</h5>
@@ -225,28 +227,34 @@
                     </div>
                     <div class="row form-tight-row">
                         <div class="col-xs-12">
-                            <input type="text" name="address" class="form-control" placeholder="详细地址" maxlength="500"/>
+                            <label class="register-field-label" for="address">详细地址</label>
+                            <input type="text" name="address" id="address" class="form-control" placeholder="选填，500字以内" maxlength="500"/>
                         </div>
                     </div>
                     <div class="row form-tight-row">
                         <div class="col-sm-6">
-                            <input type="text" name="contactPerson" class="form-control" placeholder="联系人" maxlength="50"/>
+                            <label class="register-field-label" for="contactPerson">联系人</label>
+                            <input type="text" name="contactPerson" id="contactPerson" class="form-control" placeholder="选填" maxlength="50"/>
                         </div>
                         <div class="col-sm-6">
-                            <input type="text" name="contactPhone" class="form-control" placeholder="联系电话" maxlength="20"/>
+                            <label class="register-field-label" for="contactPhone">联系电话</label>
+                            <input type="text" name="contactPhone" id="contactPhone" class="form-control" placeholder="选填，手机或座机" maxlength="20"/>
                         </div>
                     </div>
                     <div class="row form-tight-row">
                         <div class="col-sm-6">
-                            <input type="text" name="email" class="form-control" placeholder="邮箱" maxlength="100"/>
+                            <label class="register-field-label" for="supplierEmail">邮箱</label>
+                            <input type="text" name="email" id="supplierEmail" class="form-control" placeholder="选填" maxlength="100" autocomplete="email"/>
                         </div>
                         <div class="col-sm-6">
-                            <input type="text" name="website" class="form-control" placeholder="网址" maxlength="200"/>
+                            <label class="register-field-label" for="website">网址</label>
+                            <input type="text" name="website" id="website" class="form-control" placeholder="选填，http(s):// 或域名" maxlength="200"/>
                         </div>
                     </div>
                     <div class="row form-tight-row">
                         <div class="col-xs-12">
-                            <textarea name="businessScope" class="form-control" rows="2" placeholder="经营范围" maxlength="1000"></textarea>
+                            <label class="register-field-label" for="businessScope">经营范围</label>
+                            <textarea name="businessScope" id="businessScope" class="form-control" rows="2" placeholder="选填，1000字以内" maxlength="1000"></textarea>
                         </div>
                     </div>
                     <div class="register-footer-actions">
@@ -283,9 +291,15 @@
                     <span class="field-error" id="err-salesperson-password" aria-live="polite"></span>
                     <label class="register-field-label m-t" for="salespersonConfirmPassword"><span class="req-star">*</span>确认密码</label>
                     <input type="password" name="confirmPassword" id="salespersonConfirmPassword" class="form-control pword" placeholder="再次输入密码" maxlength="20"/>
-                    <input type="text" name="userName" class="form-control m-t" placeholder="姓名" maxlength="30"/>
-                    <input type="text" name="phonenumber" class="form-control m-t" placeholder="手机号" maxlength="20"/>
-                    <input type="text" name="email" class="form-control m-t" placeholder="邮箱" maxlength="100"/>
+                    <label class="register-field-label m-t" for="salespersonUserName">姓名</label>
+                    <input type="text" name="userName" id="salespersonUserName" class="form-control" placeholder="选填，30字以内" maxlength="30"/>
+                    <span class="field-error" id="err-salesperson-userName" aria-live="polite"></span>
+                    <label class="register-field-label m-t" for="salespersonPhonenumber">手机号</label>
+                    <input type="text" name="phonenumber" id="salespersonPhonenumber" class="form-control" placeholder="选填，11位手机号或座机" maxlength="20"/>
+                    <span class="field-error" id="err-salesperson-phonenumber" aria-live="polite"></span>
+                    <label class="register-field-label m-t" for="salespersonEmail">邮箱</label>
+                    <input type="text" name="email" id="salespersonEmail" class="form-control" placeholder="选填" maxlength="100" autocomplete="email"/>
+                    <span class="field-error" id="err-salesperson-email" aria-live="polite"></span>
                     <div class="checkbox-custom m-t"><input type="checkbox" id="acceptTerm2" name="acceptTerm2"/> <label for="acceptTerm2"><span class="req-star">*</span>我已阅读并同意</label> <a href="javascript:void(0);" class="link-terms-of-service">使用条款</a></div>
                     <button type="button" class="btn btn-success btn-block m-t" id="btnSubmitSalesperson" data-loading="正在提交...">提交申请</button>
                 </form>
@@ -354,8 +368,9 @@ function clearFormErrors(formId) {
         $("#registerFormSupplier label.error").remove();
         return;
     }
+    $("#registerFormSalesperson label.error").remove();
     var prefix = "err-salesperson-";
-    var ids = ["supplierId", "loginName", "password"];
+    var ids = ["supplierId", "loginName", "password", "email", "phonenumber", "userName"];
     ids.forEach(function (name) {
         var $e = $("#" + prefix + name);
         if ($e.length) $e.text("").hide();
@@ -369,6 +384,10 @@ function showFieldError(formId, msg) {
         if (/登录账号|注册账号|用户名|账号已存在/i.test(msg)) $inp = $("#supplierLoginName");
         else if (/密码|数字和字母/i.test(msg)) $inp = $("#supplierPassword");
         else if (/公司名称|供应商名称|归属名称|该公司|公司.*存在/i.test(msg)) $inp = $("#companyName");
+        else if (/注册资金|万元|registeredCapital/i.test(msg)) $inp = $("#registeredCapital");
+        else if (/邮箱|email/i.test(msg)) $inp = $("#supplierEmail");
+        else if (/网址|website|域名/i.test(msg)) $inp = $("#website");
+        else if (/电话|手机|座机|contactPhone/i.test(msg)) $inp = $("#contactPhone");
         if ($inp && $inp.length) {
             if ($inp.data("origPh") === undefined) $inp.data("origPh", $inp.attr("placeholder") || "");
             $inp.attr("placeholder", msg).addClass("input-error-tip");
@@ -381,7 +400,10 @@ function showFieldError(formId, msg) {
     if (/登录账号|注册账号|用户名|账号已存在/i.test(msg)) fieldId = prefix + "loginName";
     else if (/密码|数字和字母/i.test(msg)) fieldId = prefix + "password";
     else if (/公司名称|该公司|公司.*存在/i.test(msg)) fieldId = prefix + "companyName";
-    else if (/供应商/i.test(msg)) fieldId = prefix + "supplierId";
+    else if (/供应商|supplierId|类型不匹配.*supplierId/i.test(msg)) fieldId = prefix + "supplierId";
+    else if (/邮箱|email/i.test(msg)) fieldId = prefix + "email";
+    else if (/手机|电话|座机|phonenumber/i.test(msg)) fieldId = prefix + "phonenumber";
+    else if (/姓名|userName|名称.*过长/i.test(msg)) fieldId = prefix + "userName";
     if (fieldId && $("#" + fieldId).length) {
         $("#" + fieldId).text(msg).show();
     }
@@ -480,6 +502,29 @@ $(function() {
         if (/[\u4E00-\u9FFF\u3400-\u4DBF]/.test(t)) return false;
         return /^[a-zA-Z0-9_-]+$/.test(t);
     }, "不能含汉字，仅允许字母、数字、下划线（_）与连字符（-）");
+    /* 注册资金（万元）：选填；填写则须为非负数字，至多一个小数点、6位小数（与后端 BigDecimal 一致） */
+    $.validator.addMethod("scmRegisteredCapital", function(value, element) {
+        if (this.optional(element)) return true;
+        var t = $.trim(String(value)).replace(/,/g, "").replace(/，/g, "");
+        if (t === "") return true;
+        if (!/^\d+(\.\d{1,6})?$/.test(t)) return false;
+        return t.length <= 20;
+    }, "请填写非负数字（万元），仅数字和一个小数点，最多6位小数");
+    /* 电话：选填；手机 11 位或常见座机，或仅含数字与横线、空格、括号 */
+    $.validator.addMethod("scmOptionalPhone", function(value, element) {
+        if (this.optional(element)) return true;
+        var t = $.trim(value);
+        if (/^1[3-9]\d{9}$/.test(t)) return true;
+        if (/^(0\d{2,3}-?)?\d{7,8}$/.test(t)) return true;
+        return /^[\d\s\-+（）()]{5,25}$/.test(t);
+    }, "请填写正确的手机号或带区号的座机（仅数字、横线、空格、括号）");
+    /* 网址：选填；http(s):// 或常见域名 */
+    $.validator.addMethod("scmOptionalUrl", function(value, element) {
+        if (this.optional(element)) return true;
+        var t = $.trim(value);
+        if (/^https?:\/\/\S+/i.test(t)) return true;
+        return /^[a-zA-Z0-9]([a-zA-Z0-9\-._]*[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+(\/\S*)?$/.test(t);
+    }, "网址请以 http:// 或 https:// 开头，或填写有效域名（如 example.com）");
 
     // 用户重新输入时清除该表单的提示与字段错误（下拉框 change 仅清自身，避免级联时误清其它项）
     $("#registerFormSupplier input, #registerFormSupplier textarea").on("input focus", function() {
@@ -504,13 +549,29 @@ $(function() {
             loginName: { required: true, minlength: 2, maxlength: 30, loginNameScm: true },
             password: { required: true, minlength: 6, maxlength: 20, checkPassword: true },
             confirmPassword: { required: true, equalTo: "#registerFormSupplier input[name='password']" },
-            companyName: { required: true, maxlength: 200 }
+            companyName: { required: true, maxlength: 200, specialSign: true },
+            legalPerson: { maxlength: 50, specialSign: true },
+            registeredCapital: { scmRegisteredCapital: true },
+            address: { maxlength: 500, specialSign: true },
+            contactPerson: { maxlength: 50, specialSign: true },
+            contactPhone: { maxlength: 20, scmOptionalPhone: true },
+            email: { maxlength: 100, email: true },
+            website: { maxlength: 200, scmOptionalUrl: true },
+            businessScope: { maxlength: 1000, specialSign: true }
         },
         messages: {
             loginName: { required: "请输入登录账号", minlength: "至少2个字符", maxlength: "最多30个字符", loginNameScm: "不能含汉字，仅允许字母、数字、_、-" },
             password: { required: "请输入密码", minlength: "至少6位", checkPassword: "密码必须包含数字和字母" },
             confirmPassword: { required: "请确认密码", equalTo: "两次密码不一致" },
-            companyName: { required: "请输入供应商名称", maxlength: "名称过长" }
+            companyName: { required: "请输入供应商名称", maxlength: "名称过长", specialSign: "不能含 < > \" ' \\ | 等字符" },
+            legalPerson: { maxlength: "最多50个字符", specialSign: "不能含 < > \" ' \\ | 等字符" },
+            registeredCapital: { scmRegisteredCapital: "请填写非负数字（万元），仅数字和一个小数点" },
+            address: { maxlength: "最多500个字符", specialSign: "不能含 < > \" ' \\ | 等字符" },
+            contactPerson: { maxlength: "最多50个字符", specialSign: "不能含 < > \" ' \\ | 等字符" },
+            contactPhone: { maxlength: "最多20个字符", scmOptionalPhone: "电话格式不正确" },
+            email: { maxlength: "邮箱过长", email: "邮箱格式不正确" },
+            website: { maxlength: "网址过长", scmOptionalUrl: "网址格式不正确" },
+            businessScope: { maxlength: "最多1000个字符", specialSign: "不能含 < > \" ' \\ | 等字符" }
         },
         errorPlacement: function (error, element) {
             if (!$(element).closest("#registerFormSupplier").length) return;
