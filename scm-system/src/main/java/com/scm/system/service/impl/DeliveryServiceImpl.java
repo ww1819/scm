@@ -544,7 +544,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         }
         vo.setRemark(remark.toString());
         vo.setZsCustomerId(StringUtils.trimToEmpty(head.getCustomer()));
-        vo.setSrcOrderSupplierId(StringUtils.trimToEmpty(head.getSupno()));
+        vo.setSrcOrderSupplierId(resolveSrcOrderSupplierId(head));
         vo.setScmSupCode(StringUtils.trimToEmpty(head.getScmSupCode()));
         vo.setSrcOrderSupplierName(StringUtils.trimToEmpty(head.getSup()));
         vo.setSrcOrderWarehouseId(StringUtils.trimToEmpty(head.getCkno()));
@@ -733,7 +733,7 @@ public class DeliveryServiceImpl implements IDeliveryService
                 }
                 if (StringUtils.isEmpty(d.getSrcOrderSupplierId()))
                 {
-                    d.setSrcOrderSupplierId(StringUtils.trimToEmpty(z.getSupno()));
+                    d.setSrcOrderSupplierId(resolveSrcOrderSupplierId(z));
                 }
                 if (StringUtils.isEmpty(d.getSrcOrderSupplierName()))
                 {
@@ -891,6 +891,24 @@ public class DeliveryServiceImpl implements IDeliveryService
         {
             return null;
         }
+    }
+
+    /**
+     * 第三方订单场景下，src_order_supplier_id 优先写平台供应商主键（scm_supplier_id），
+     * 保持与本系统订单场景（supplier_id）语义一致；若映射缺失则兼容回退 supno。
+     */
+    private static String resolveSrcOrderSupplierId(ZsTpOrder order)
+    {
+        if (order == null)
+        {
+            return "";
+        }
+        Long scmSupplierId = parseLongOrNull(order.getScmSupplierId());
+        if (scmSupplierId != null)
+        {
+            return String.valueOf(scmSupplierId);
+        }
+        return StringUtils.trimToEmpty(order.getSupno());
     }
 
     /**

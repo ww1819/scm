@@ -1,5 +1,7 @@
 package com.scm.web.controller.supplier;
 
+import java.beans.PropertyEditorSupport;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -7,7 +9,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -16,6 +20,7 @@ import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.domain.entity.SysDept;
 import com.scm.common.core.domain.entity.SysUser;
+import com.scm.common.utils.LoginNameUtils;
 import com.scm.common.utils.PinyinUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.Supplier;
@@ -31,6 +36,9 @@ import com.scm.system.service.ISysDeptService;
 @RequestMapping("/supplier/register")
 public class SupplierRegisterController extends BaseController {
 
+    /** 供应商/业务员注册页登录账号最大长度（与页面 maxlength 一致） */
+    private static final int SUPPLIER_REGISTER_LOGIN_NAME_MAX = 30;
+
     @Autowired
     private ISysConfigService configService;
     @Autowired
@@ -39,6 +47,32 @@ public class SupplierRegisterController extends BaseController {
     private ISupplierRegisterService supplierRegisterService;
     @Autowired
     private ISysDeptService deptService;
+
+    /**
+     * 注册资金：空串按 null；去除千分位逗号；非法数字给出明确绑定错误，避免默认类型转换异常信息难懂
+     */
+    @InitBinder("supplier")
+    public void initSupplierBinder(WebDataBinder binder) {
+        binder.registerCustomEditor(BigDecimal.class, "registeredCapital", new PropertyEditorSupport() {
+            @Override
+            public void setAsText(String text) throws IllegalArgumentException {
+                if (text == null || text.trim().isEmpty()) {
+                    setValue(null);
+                    return;
+                }
+                String s = text.trim().replace(",", "").replace("，", "");
+                try {
+                    BigDecimal bd = new BigDecimal(s);
+                    if (bd.compareTo(BigDecimal.ZERO) < 0) {
+                        throw new IllegalArgumentException("注册资金不能为负数");
+                    }
+                    setValue(bd);
+                } catch (NumberFormatException ex) {
+                    throw new IllegalArgumentException("注册资金格式不正确，请填写数字（万元）");
+                }
+            }
+        });
+    }
 
     @GetMapping()
     public String register() {
@@ -113,6 +147,10 @@ public class SupplierRegisterController extends BaseController {
         if (StringUtils.isEmpty(user.getLoginName())) {
             return error("登录账号不能为空");
         }
+        String loginNameErr = LoginNameUtils.validateLoginName(user.getLoginName(), SUPPLIER_REGISTER_LOGIN_NAME_MAX);
+        if (loginNameErr != null) {
+            return error(loginNameErr);
+        }
         if (StringUtils.isEmpty(user.getPassword())) {
             return error("密码不能为空");
         }
@@ -152,6 +190,10 @@ public class SupplierRegisterController extends BaseController {
         }
         if (StringUtils.isEmpty(user.getLoginName())) {
             return error("登录账号不能为空");
+        }
+        String loginNameErr = LoginNameUtils.validateLoginName(user.getLoginName(), SUPPLIER_REGISTER_LOGIN_NAME_MAX);
+        if (loginNameErr != null) {
+            return error(loginNameErr);
         }
         if (StringUtils.isEmpty(user.getPassword())) {
             return error("密码不能为空");

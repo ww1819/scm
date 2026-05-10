@@ -49,11 +49,19 @@ function register() {
 
 function validateRule() {
     var icon = "<i class='fa fa-times-circle'></i> ";
+    $.validator.addMethod("loginNameScm", function(value, element) {
+        if (!value || !$.trim(value)) return true;
+        var t = $.trim(value);
+        if (/[\u4E00-\u9FFF\u3400-\u4DBF]/.test(t)) return false;
+        return /^[a-zA-Z0-9_-]+$/.test(t);
+    }, icon + "不能含汉字，仅允许字母、数字、下划线（_）与连字符（-）");
     $("#registerForm").validate({
         rules: {
             username: {
                 required: true,
-                minlength: 2
+                minlength: 2,
+                maxlength: 20,
+                loginNameScm: true
             },
             password: {
                 required: true,
@@ -68,7 +76,9 @@ function validateRule() {
         messages: {
             username: {
                 required: icon + "请输入您的用户名",
-                minlength: icon + "用户名不能小于2个字符"
+                minlength: icon + "用户名不能小于2个字符",
+                maxlength: icon + "用户名不能超过20个字符",
+                loginNameScm: icon + "不能含汉字，仅允许字母、数字、_、-"
             },
             password: {
             	required: icon + "请输入您的密码",
