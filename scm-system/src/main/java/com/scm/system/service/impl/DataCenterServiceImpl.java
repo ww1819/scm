@@ -7,9 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.ShiroUtils;
 import com.scm.system.domain.PurchaseStatistics;
 import com.scm.system.mapper.PurchaseStatisticsMapper;
 import com.scm.system.service.IDataCenterService;
+import com.scm.system.service.IScmHospitalContextService;
+import com.scm.system.service.IScmSupplierContextService;
 
 /**
  * 数据中心 服务层实现
@@ -21,6 +24,34 @@ public class DataCenterServiceImpl implements IDataCenterService
 {
     @Autowired
     private PurchaseStatisticsMapper purchaseStatisticsMapper;
+
+    @Autowired
+    private IScmHospitalContextService scmHospitalContextService;
+
+    @Autowired
+    private IScmSupplierContextService scmSupplierContextService;
+
+    /**
+     * 院端/商端登录时强制按本院、本商过滤，忽略前端传入的医院/供应商条件，避免越权。
+     */
+    private void applyTenantDataScope(Map<String, Object> params)
+    {
+        if (params == null)
+        {
+            return;
+        }
+        Long userId = ShiroUtils.getUserId();
+        Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(userId);
+        if (hospitalCtx != null)
+        {
+            params.put("hospitalId", hospitalCtx);
+        }
+        Long supplierCtx = scmSupplierContextService.resolveSupplierIdForUser(userId);
+        if (supplierCtx != null)
+        {
+            params.put("supplierId", supplierCtx);
+        }
+    }
 
     /**
      * 查询采购统计信息
@@ -55,6 +86,7 @@ public class DataCenterServiceImpl implements IDataCenterService
     @Override
     public List<Map<String, Object>> selectMonthlyPurchaseStatistics(Map<String, Object> params)
     {
+        applyTenantDataScope(params);
         return purchaseStatisticsMapper.selectMonthlyPurchaseStatistics(params);
     }
 
@@ -67,6 +99,7 @@ public class DataCenterServiceImpl implements IDataCenterService
     @Override
     public List<Map<String, Object>> selectYearlyPurchaseStatistics(Map<String, Object> params)
     {
+        applyTenantDataScope(params);
         return purchaseStatisticsMapper.selectYearlyPurchaseStatistics(params);
     }
 
@@ -79,6 +112,7 @@ public class DataCenterServiceImpl implements IDataCenterService
     @Override
     public List<Map<String, Object>> selectPurchaseAnalysisReport(Map<String, Object> params)
     {
+        applyTenantDataScope(params);
         return purchaseStatisticsMapper.selectPurchaseAnalysisReport(params);
     }
 
