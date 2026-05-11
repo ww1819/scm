@@ -11,10 +11,11 @@ public class ScmHospitalSupplierApply extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
 
-    @Excel(name = "申请编号", sort = 1)
     private String applyId;
     private String supplierId;
     private String hospitalId;
+    @Excel(name = "供应商编码", sort = 5)
+    private String supplierCode;
     @Excel(name = "供应商", sort = 10)
     private String supplierName;
     @Excel(name = "医院", sort = 20)
@@ -49,6 +50,8 @@ public class ScmHospitalSupplierApply extends BaseEntity
     public void setSupplierId(String supplierId) { this.supplierId = supplierId; }
     public String getHospitalId() { return hospitalId; }
     public void setHospitalId(String hospitalId) { this.hospitalId = hospitalId; }
+    public String getSupplierCode() { return supplierCode; }
+    public void setSupplierCode(String supplierCode) { this.supplierCode = supplierCode; }
     public String getSupplierName() { return supplierName; }
     public void setSupplierName(String supplierName) { this.supplierName = supplierName; }
     public String getHospitalName() { return hospitalName; }

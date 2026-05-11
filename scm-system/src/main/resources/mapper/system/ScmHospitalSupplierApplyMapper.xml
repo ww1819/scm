@@ -7,6 +7,7 @@
         <result property="supplierId" column="supplier_id"/>
         <result property="hospitalId" column="hospital_id"/>
         <result property="supplierName" column="supplier_name"/>
+        <result property="supplierCode" column="supplier_code"/>
         <result property="hospitalName" column="hospital_name"/>
         <result property="supplyStartDate" column="supply_start_date"/>
         <result property="supplyEndDate" column="supply_end_date"/>
@@ -32,8 +33,10 @@
         select a.apply_id, a.supplier_id, a.hospital_id, a.supplier_name, a.hospital_name,
                a.supply_start_date, a.supply_end_date, a.contract_no, a.apply_reason, a.contact_person, a.contact_phone,
                a.audit_status, a.audit_by, a.audit_time, a.audit_remark,
-               a.del_flag, a.del_by, a.del_time, a.create_by, a.create_time, a.update_by, a.update_time, a.remark
+               a.del_flag, a.del_by, a.del_time, a.create_by, a.create_time, a.update_by, a.update_time, a.remark,
+               s.supplier_code as supplier_code
         from scm_hospital_supplier_apply a
+        left join scm_supplier s on s.supplier_id = a.supplier_id
     </sql>
 
     <insert id="insertApply" parameterType="com.scm.system.domain.ScmHospitalSupplierApply">
