@@ -10,10 +10,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import com.scm.common.annotation.Log;
 import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.page.TableDataInfo;
+import com.scm.common.enums.BusinessType;
 import com.scm.common.utils.ShiroUtils;
+import com.scm.common.utils.poi.ExcelUtil;
 import com.scm.system.domain.ScmHospitalSupplierApply;
 import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.IScmHospitalContextService;
@@ -57,6 +60,31 @@ public class HospitalSupplierAssociateAuditController extends BaseController
         startPage();
         List<ScmHospitalSupplierApply> list = hospitalSupplierService.selectAssociationApplyList(q);
         return getDataTable(list);
+    }
+
+    /**
+     * 导出医院关联申请（与当前筛选条件一致，用于通知供应商等）
+     */
+    @RequiresPermissions("hospital:associateAudit:export")
+    @Log(title = "医院关联申请审核", businessType = BusinessType.EXPORT)
+    @PostMapping("/export")
+    @ResponseBody
+    public AjaxResult export(@RequestParam(value = "auditStatus", required = false) String auditStatus)
+    {
+        Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());
+        if (hospitalCtx == null)
+        {
+            return error("未绑定医院，无法导出");
+        }
+        ScmHospitalSupplierApply q = new ScmHospitalSupplierApply();
+        q.setHospitalId(String.valueOf(hospitalCtx));
+        if (auditStatus != null && auditStatus.length() > 0)
+        {
+            q.setAuditStatus(auditStatus);
+        }
+        List<ScmHospitalSupplierApply> list = hospitalSupplierService.selectAssociationApplyList(q);
+        ExcelUtil<ScmHospitalSupplierApply> util = new ExcelUtil<ScmHospitalSupplierApply>(ScmHospitalSupplierApply.class);
+        return util.exportExcel(list, "医院关联申请");
     }
 
     @RequiresPermissions("hospital:associateAudit:audit")

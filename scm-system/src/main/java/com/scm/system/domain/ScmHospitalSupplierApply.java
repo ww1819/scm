@@ -1,6 +1,7 @@
 package com.scm.system.domain;
 
 import java.util.Date;
+import com.scm.common.annotation.Excel;
 import com.scm.common.core.domain.BaseEntity;
 
 /**
@@ -10,20 +11,33 @@ public class ScmHospitalSupplierApply extends BaseEntity
 {
     private static final long serialVersionUID = 1L;
 
+    @Excel(name = "申请编号", sort = 1)
     private String applyId;
     private String supplierId;
     private String hospitalId;
+    @Excel(name = "供应商", sort = 10)
     private String supplierName;
+    @Excel(name = "医院", sort = 20)
     private String hospitalName;
+    @Excel(name = "供货开始", width = 20, dateFormat = "yyyy-MM-dd HH:mm:ss", sort = 30)
     private Date supplyStartDate;
+    @Excel(name = "供货结束", width = 20, dateFormat = "yyyy-MM-dd HH:mm:ss", sort = 40)
     private Date supplyEndDate;
+    @Excel(name = "合同编号", sort = 50)
     private String contractNo;
+    @Excel(name = "申请说明", width = 30, sort = 60)
     private String applyReason;
+    @Excel(name = "联系人", sort = 70)
     private String contactPerson;
+    @Excel(name = "联系电话", sort = 80)
     private String contactPhone;
+    @Excel(name = "审核状态", readConverterExp = "0=待审核,1=已通过,2=已拒绝", sort = 90)
     private String auditStatus;
+    @Excel(name = "审核人", sort = 100)
     private String auditBy;
+    @Excel(name = "审核时间", width = 20, dateFormat = "yyyy-MM-dd HH:mm:ss", sort = 110)
     private Date auditTime;
+    @Excel(name = "审核备注", width = 30, sort = 120)
     private String auditRemark;
     private String delFlag;
     private String delBy;

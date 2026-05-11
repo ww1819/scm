@@ -26,6 +26,11 @@
 					</div>
 				</form>
 			</div>
+			<div class="btn-group-sm" id="toolbar" role="group">
+				<a class="btn btn-warning" onclick="$.table.exportExcel('audit-form')" shiro:hasPermission="hospital:associateAudit:export">
+					<i class="fa fa-download"></i> 导出
+				</a>
+			</div>
 			<div class="col-sm-12 select-table table-striped">
 				<table id="bootstrap-table"></table>
 			</div>
@@ -40,8 +45,17 @@
 		$(function() {
 			var options = {
 				url: prefix + "/list",
+				exportUrl: prefix + "/export",
+				formId: "audit-form",
 				queryParams: function(params) {
-					return { auditStatus: $("#audit-form select[name='auditStatus']").val() };
+					var curParams = {
+						pageSize: params.limit,
+						pageNum: params.offset / params.limit + 1,
+						searchValue: params.search,
+						orderByColumn: params.sort,
+						isAsc: params.order
+					};
+					return $.extend(curParams, $.common.formToJSON("audit-form"));
 				},
 				sortName: "createTime",
 				sortOrder: "desc",
