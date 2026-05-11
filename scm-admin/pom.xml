@@ -85,12 +85,23 @@
 
     <build>
         <plugins>
+            <!-- 2.4 在部分环境下对含 @ 等资源路径组装异常，固定到 3.x -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+            </plugin>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>2.5.15</version>
                 <configuration>
-                    <fork>true</fork> <!-- 如果没有该配置，devtools不会生效 -->
+                    <!-- 显式指定入口，避免多模块/IDE 下自动探测 main 类偶发失败 -->
+                    <mainClass>com.scm.ScmApplication</mainClass>
+                    <!-- 关闭分层索引，减少 fat jar 写入步骤，利于部分 Windows/杀软环境下的 repackage 稳定性 -->
+                    <layers>
+                        <enabled>false</enabled>
+                    </layers>
                 </configuration>
                 <executions>
                     <execution>
