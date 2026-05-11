@@ -1,5 +1,6 @@
 package com.scm.web.controller.common;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
@@ -56,7 +57,7 @@ public class CommonController
                 throw new Exception(StringUtils.format("文件名称({})非法，不允许下载。 ", fileName));
             }
             String realFileName = System.currentTimeMillis() + fileName.substring(fileName.indexOf("_") + 1);
-            String filePath = ScmConfig.getDownloadPath() + fileName;
+            String filePath = resolveExportDownloadFile(fileName);
 
             response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
             FileUtils.setAttachmentResponseHeader(response, realFileName);
@@ -70,6 +71,22 @@ public class CommonController
         {
             log.error("下载文件失败", e);
         }
+    }
+
+    /**
+     * 解析导出文件实际路径（与 {@link com.scm.common.utils.poi.ExcelUtil#exportExcel()} 落盘逻辑一致，支持主目录失败时的临时目录回退）。
+     */
+    private static String resolveExportDownloadFile(String fileName)
+    {
+        for (String base : ScmConfig.getExportDownloadDirectoryCandidates())
+        {
+            String candidate = base + fileName;
+            if (new File(candidate).isFile())
+            {
+                return candidate;
+            }
+        }
+        return ScmConfig.getDownloadPath() + fileName;
     }
 
     /**

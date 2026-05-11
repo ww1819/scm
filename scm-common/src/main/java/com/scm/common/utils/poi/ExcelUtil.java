@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -578,6 +579,14 @@ public class ExcelUtil<T>
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding("utf-8");
         this.init(list, sheetName, title, Type.EXPORT);
+        try
+        {
+            FileUtils.setAttachmentResponseHeader(response, sheetName + ".xlsx");
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            throw new UtilException("导出Excel失败：文件名编码异常");
+        }
         exportExcel(response);
     }
 
@@ -628,6 +637,14 @@ public class ExcelUtil<T>
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         response.setCharacterEncoding("utf-8");
         this.init(null, sheetName, title, Type.IMPORT);
+        try
+        {
+            FileUtils.setAttachmentResponseHeader(response, sheetName + ".xlsx");
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            throw new UtilException("导出模板失败：文件名编码异常");
+        }
         exportExcel(response);
     }
 
@@ -665,13 +682,51 @@ public class ExcelUtil<T>
         {
             writeSheet();
             String filename = encodingFilename(sheetName);
-            out = new FileOutputStream(getAbsoluteFile(filename));
-            wb.write(out);
-            return AjaxResult.success(filename);
+            IOException lastIo = null;
+            for (String baseDir : ScmConfig.getExportDownloadDirectoryCandidates())
+            {
+                String downloadPath = baseDir + filename;
+                try
+                {
+                    File desc = new File(downloadPath);
+                    File parentFile = desc.getParentFile();
+                    if (parentFile != null && !parentFile.exists())
+                    {
+                        if (!parentFile.mkdirs() && !parentFile.exists())
+                        {
+                            continue;
+                        }
+                    }
+                    out = new FileOutputStream(desc);
+                    wb.write(out);
+                    out.flush();
+                    IOUtils.closeQuietly(out);
+                    out = null;
+                    return AjaxResult.success(filename);
+                }
+                catch (IOException e)
+                {
+                    lastIo = e;
+                    IOUtils.closeQuietly(out);
+                    out = null;
+                    log.warn("Excel导出写入失败，将尝试其它目录。path={}", downloadPath, e);
+                }
+            }
+            if (lastIo != null)
+            {
+                log.error("导出Excel失败，已无可用写入目录", lastIo);
+                String msg = lastIo.getMessage();
+                throw new UtilException("导出Excel失败：" + (StringUtils.isNotEmpty(msg) ? msg : "无可写目录"));
+            }
+            throw new UtilException("导出Excel失败：未配置可用导出目录");
+        }
+        catch (UtilException e)
+        {
+            throw e;
         }
         catch (Exception e)
         {
-            log.error("导出Excel异常{}", e.getMessage());
+            log.error("导出Excel异常{}", e.getMessage(), e);
             throw new UtilException("导出Excel失败，请联系网站管理员！");
         }
         finally

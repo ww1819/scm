@@ -1,6 +1,7 @@
 package com.scm.web.controller.supplier;
 
 import java.util.List;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -74,13 +75,12 @@ public class SupplierUserController extends BaseController
     @RequiresPermissions("supplier:user:export")
     @Log(title = "企业用户管理", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
-    @ResponseBody
-    public AjaxResult export(SupplierUser supplierUser)
+    public void export(SupplierUser supplierUser, HttpServletResponse response)
     {
         applyCurrentUserSupplierScope(supplierUser);
         List<SupplierUser> list = supplierUserService.selectSupplierUserList(supplierUser);
         ExcelUtil<SupplierUser> util = new ExcelUtil<SupplierUser>(SupplierUser.class);
-        return util.exportExcel(list, "企业用户数据");
+        util.exportExcel(response, list, "企业用户数据");
     }
 
     /**

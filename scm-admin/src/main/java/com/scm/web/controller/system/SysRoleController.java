@@ -1,6 +1,7 @@
 package com.scm.web.controller.system;
 
 import java.util.List;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -82,12 +83,11 @@ public class SysRoleController extends BaseController
     @Log(title = "角色管理", businessType = BusinessType.EXPORT)
     @RequiresPermissions("system:role:export")
     @PostMapping("/export")
-    @ResponseBody
-    public AjaxResult export(SysRole role)
+    public void export(SysRole role, HttpServletResponse response)
     {
         List<SysRole> list = roleService.selectRoleList(role);
         ExcelUtil<SysRole> util = new ExcelUtil<SysRole>(SysRole.class);
-        return util.exportExcel(list, "角色数据");
+        util.exportExcel(response, list, "角色数据");
     }
 
     /**

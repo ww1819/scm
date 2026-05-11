@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.shiro.authz.annotation.Logical;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -106,12 +107,11 @@ public class SysUserController extends BaseController
     @Log(title = "用户管理", businessType = BusinessType.EXPORT)
     @RequiresPermissions("system:user:export")
     @PostMapping("/export")
-    @ResponseBody
-    public AjaxResult export(SysUser user)
+    public void export(SysUser user, HttpServletResponse response)
     {
         List<SysUser> list = userService.selectUserList(user);
         ExcelUtil<SysUser> util = new ExcelUtil<SysUser>(SysUser.class);
-        return util.exportExcel(list, "用户数据");
+        util.exportExcel(response, list, "用户数据");
     }
 
     @Log(title = "用户管理", businessType = BusinessType.IMPORT)

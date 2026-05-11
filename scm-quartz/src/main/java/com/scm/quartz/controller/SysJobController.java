@@ -1,6 +1,7 @@
 package com.scm.quartz.controller;
 
 import java.util.List;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.quartz.SchedulerException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,12 +62,11 @@ public class SysJobController extends BaseController
     @Log(title = "定时任务", businessType = BusinessType.EXPORT)
     @RequiresPermissions("monitor:job:export")
     @PostMapping("/export")
-    @ResponseBody
-    public AjaxResult export(SysJob job)
+    public void export(SysJob job, HttpServletResponse response)
     {
         List<SysJob> list = jobService.selectJobList(job);
         ExcelUtil<SysJob> util = new ExcelUtil<SysJob>(SysJob.class);
-        return util.exportExcel(list, "定时任务");
+        util.exportExcel(response, list, "定时任务");
     }
 
     @Log(title = "定时任务", businessType = BusinessType.DELETE)

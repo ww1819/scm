@@ -1,6 +1,7 @@
 package com.scm.web.controller.monitor;
 
 import java.util.List;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -53,12 +54,11 @@ public class SysOperlogController extends BaseController
     @Log(title = "操作日志", businessType = BusinessType.EXPORT)
     @RequiresPermissions("monitor:operlog:export")
     @PostMapping("/export")
-    @ResponseBody
-    public AjaxResult export(SysOperLog operLog)
+    public void export(SysOperLog operLog, HttpServletResponse response)
     {
         List<SysOperLog> list = operLogService.selectOperLogList(operLog);
         ExcelUtil<SysOperLog> util = new ExcelUtil<SysOperLog>(SysOperLog.class);
-        return util.exportExcel(list, "操作日志");
+        util.exportExcel(response, list, "操作日志");
     }
 
     @Log(title = "操作日志", businessType = BusinessType.DELETE)

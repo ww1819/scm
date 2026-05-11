@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -96,8 +97,7 @@ public class HospitalController extends BaseController
     @RequiresPermissions("hospital:hospital:export")
     @Log(title = "医院管理", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
-    @ResponseBody
-    public AjaxResult export(Hospital hospital)
+    public void export(Hospital hospital, HttpServletResponse response)
     {
         Set<Long> permittedHospitalIds = getCurrentUserPermittedHospitalIds();
         List<Hospital> list;
@@ -122,7 +122,7 @@ public class HospitalController extends BaseController
             list = hospitalService.selectHospitalList(hospital);
         }
         ExcelUtil<Hospital> util = new ExcelUtil<Hospital>(Hospital.class);
-        return util.exportExcel(list, "医院数据");
+        util.exportExcel(response, list, "医院数据");
     }
 
     /**

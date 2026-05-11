@@ -1,6 +1,7 @@
 package com.scm.web.controller.tenant;
 
 import java.util.List;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -63,12 +64,11 @@ public class ScmTenantController extends BaseController
     @RequiresPermissions("tenant:tenant:export")
     @Log(title = "客户管理", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
-    @ResponseBody
-    public AjaxResult export(ScmTenant query)
+    public void export(ScmTenant query, HttpServletResponse response)
     {
         List<ScmTenant> list = scmTenantService.selectScmTenantList(query);
         ExcelUtil<ScmTenant> util = new ExcelUtil<>(ScmTenant.class);
-        return util.exportExcel(list, "客户数据");
+        util.exportExcel(response, list, "客户数据");
     }
 
     @RequiresPermissions("tenant:tenant:add")

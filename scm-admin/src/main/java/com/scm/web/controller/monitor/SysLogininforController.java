@@ -1,6 +1,7 @@
 package com.scm.web.controller.monitor;
 
 import java.util.List;
+import javax.servlet.http.HttpServletResponse;
 import com.scm.framework.shiro.service.SysPasswordService;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,12 +56,11 @@ public class SysLogininforController extends BaseController
     @Log(title = "登录日志", businessType = BusinessType.EXPORT)
     @RequiresPermissions("monitor:logininfor:export")
     @PostMapping("/export")
-    @ResponseBody
-    public AjaxResult export(SysLogininfor logininfor)
+    public void export(SysLogininfor logininfor, HttpServletResponse response)
     {
         List<SysLogininfor> list = logininforService.selectLogininforList(logininfor);
         ExcelUtil<SysLogininfor> util = new ExcelUtil<SysLogininfor>(SysLogininfor.class);
-        return util.exportExcel(list, "登录日志");
+        util.exportExcel(response, list, "登录日志");
     }
 
     @RequiresPermissions("monitor:logininfor:remove")

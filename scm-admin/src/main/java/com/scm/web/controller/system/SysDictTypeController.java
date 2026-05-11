@@ -1,6 +1,7 @@
 package com.scm.web.controller.system;
 
 import java.util.List;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -55,13 +56,12 @@ public class SysDictTypeController extends BaseController
     @Log(title = "字典类型", businessType = BusinessType.EXPORT)
     @RequiresPermissions("system:dict:export")
     @PostMapping("/export")
-    @ResponseBody
-    public AjaxResult export(SysDictType dictType)
+    public void export(SysDictType dictType, HttpServletResponse response)
     {
 
         List<SysDictType> list = dictTypeService.selectDictTypeList(dictType);
         ExcelUtil<SysDictType> util = new ExcelUtil<SysDictType>(SysDictType.class);
-        return util.exportExcel(list, "字典类型");
+        util.exportExcel(response, list, "字典类型");
     }
 
     /**

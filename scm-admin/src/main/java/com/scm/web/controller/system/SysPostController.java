@@ -1,6 +1,7 @@
 package com.scm.web.controller.system;
 
 import java.util.List;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -54,12 +55,11 @@ public class SysPostController extends BaseController
     @Log(title = "岗位管理", businessType = BusinessType.EXPORT)
     @RequiresPermissions("system:post:export")
     @PostMapping("/export")
-    @ResponseBody
-    public AjaxResult export(SysPost post)
+    public void export(SysPost post, HttpServletResponse response)
     {
         List<SysPost> list = postService.selectPostList(post);
         ExcelUtil<SysPost> util = new ExcelUtil<SysPost>(SysPost.class);
-        return util.exportExcel(list, "岗位数据");
+        util.exportExcel(response, list, "岗位数据");
     }
 
     @RequiresPermissions("system:post:remove")

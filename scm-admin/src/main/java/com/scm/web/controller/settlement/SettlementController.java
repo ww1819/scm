@@ -1,6 +1,7 @@
 package com.scm.web.controller.settlement;
 
 import java.util.List;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -71,12 +72,11 @@ public class SettlementController extends BaseController
     @RequiresPermissions("settlement:settlement:export")
     @Log(title = "结算明细表", businessType = BusinessType.EXPORT)
     @PostMapping("/query/detail/export")
-    @ResponseBody
-    public AjaxResult exportQueryDetail(SettlementDetail settlementDetail)
+    public void exportQueryDetail(SettlementDetail settlementDetail, HttpServletResponse response)
     {
         List<SettlementDetail> list = settlementService.selectSettlementDetailQueryList(settlementDetail);
         ExcelUtil<SettlementDetail> util = new ExcelUtil<SettlementDetail>(SettlementDetail.class);
-        return util.exportExcel(list, "结算明细表");
+        util.exportExcel(response, list, "结算明细表");
     }
 
     /**
@@ -98,12 +98,11 @@ public class SettlementController extends BaseController
     @RequiresPermissions("settlement:settlement:export")
     @Log(title = "结算汇总表", businessType = BusinessType.EXPORT)
     @PostMapping("/query/summary/export")
-    @ResponseBody
-    public AjaxResult exportQuerySummary(Settlement settlement)
+    public void exportQuerySummary(Settlement settlement, HttpServletResponse response)
     {
         List<Settlement> list = settlementService.selectSettlementList(settlement);
         ExcelUtil<Settlement> util = new ExcelUtil<Settlement>(Settlement.class);
-        return util.exportExcel(list, "结算汇总表");
+        util.exportExcel(response, list, "结算汇总表");
     }
 
     /**
@@ -125,12 +124,11 @@ public class SettlementController extends BaseController
     @RequiresPermissions("settlement:settlement:export")
     @Log(title = "结算单管理", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
-    @ResponseBody
-    public AjaxResult export(Settlement settlement)
+    public void export(Settlement settlement, HttpServletResponse response)
     {
         List<Settlement> list = settlementService.selectSettlementList(settlement);
         ExcelUtil<Settlement> util = new ExcelUtil<Settlement>(Settlement.class);
-        return util.exportExcel(list, "结算单数据");
+        util.exportExcel(response, list, "结算单数据");
     }
 
     /**

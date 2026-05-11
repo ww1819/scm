@@ -1,6 +1,7 @@
 package com.scm.web.controller.order;
 
 import java.util.List;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -98,12 +99,11 @@ public class OrderController extends BaseController
     @RequiresPermissions("order:order:export")
     @Log(title = "订单管理", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
-    @ResponseBody
-    public AjaxResult export(Order order)
+    public void export(Order order, HttpServletResponse response)
     {
         List<Order> list = orderService.selectOrderList(order);
         ExcelUtil<Order> util = new ExcelUtil<Order>(Order.class);
-        return util.exportExcel(list, "订单数据");
+        util.exportExcel(response, list, "订单数据");
     }
 
     /**

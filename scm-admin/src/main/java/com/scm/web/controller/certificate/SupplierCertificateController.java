@@ -2,6 +2,7 @@ package com.scm.web.controller.certificate;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.Logical;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -155,8 +156,7 @@ public class SupplierCertificateController extends BaseController
     @RequiresPermissions("certificate:supplier:export")
     @Log(title = "供应商证件管理", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
-    @ResponseBody
-    public AjaxResult export(SupplierCertificate supplierCertificate)
+    public void export(SupplierCertificate supplierCertificate, HttpServletResponse response)
     {
         Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
         if (bindSid != null)
@@ -165,7 +165,7 @@ public class SupplierCertificateController extends BaseController
         }
         List<SupplierCertificate> list = supplierCertificateService.selectSupplierCertificateList(supplierCertificate);
         ExcelUtil<SupplierCertificate> util = new ExcelUtil<SupplierCertificate>(SupplierCertificate.class);
-        return util.exportExcel(list, "供应商证件数据");
+        util.exportExcel(response, list, "供应商证件数据");
     }
 
     /**

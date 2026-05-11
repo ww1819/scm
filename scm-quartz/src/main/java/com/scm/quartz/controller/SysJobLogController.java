@@ -1,6 +1,7 @@
 package com.scm.quartz.controller;
 
 import java.util.List;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -65,12 +66,11 @@ public class SysJobLogController extends BaseController
     @Log(title = "调度日志", businessType = BusinessType.EXPORT)
     @RequiresPermissions("monitor:job:export")
     @PostMapping("/export")
-    @ResponseBody
-    public AjaxResult export(SysJobLog jobLog)
+    public void export(SysJobLog jobLog, HttpServletResponse response)
     {
         List<SysJobLog> list = jobLogService.selectJobLogList(jobLog);
         ExcelUtil<SysJobLog> util = new ExcelUtil<SysJobLog>(SysJobLog.class);
-        return util.exportExcel(list, "调度日志");
+        util.exportExcel(response, list, "调度日志");
     }
 
     @Log(title = "调度日志", businessType = BusinessType.DELETE)

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.Logical;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -264,12 +265,11 @@ public class ProductCertificateController extends BaseController
     @RequiresPermissions("certificate:product:export")
     @Log(title = "产品证件管理", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
-    @ResponseBody
-    public AjaxResult export(ProductCertificate productCertificate)
+    public void export(ProductCertificate productCertificate, HttpServletResponse response)
     {
         List<ProductCertificate> list = productCertificateService.selectProductCertificateList(productCertificate);
         ExcelUtil<ProductCertificate> util = new ExcelUtil<ProductCertificate>(ProductCertificate.class);
-        return util.exportExcel(list, "产品证件数据");
+        util.exportExcel(response, list, "产品证件数据");
     }
 
     /**

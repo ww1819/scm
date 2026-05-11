@@ -2,6 +2,7 @@ package com.scm.web.controller.delivery;
 
 import java.math.BigDecimal;
 import java.util.List;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -87,12 +88,11 @@ public class DeliveryController extends BaseController
     @RequiresPermissions("delivery:delivery:export")
     @Log(title = "配送单管理", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
-    @ResponseBody
-    public AjaxResult export(Delivery delivery)
+    public void export(Delivery delivery, HttpServletResponse response)
     {
         List<Delivery> list = deliveryService.selectDeliveryList(delivery);
         ExcelUtil<Delivery> util = new ExcelUtil<Delivery>(Delivery.class);
-        return util.exportExcel(list, "配送单数据");
+        util.exportExcel(response, list, "配送单数据");
     }
 
     /**
@@ -440,12 +440,11 @@ public class DeliveryController extends BaseController
     @RequiresPermissions("delivery:delivery:export")
     @Log(title = "配送明细表", businessType = BusinessType.EXPORT)
     @PostMapping("/query/detail/export")
-    @ResponseBody
-    public AjaxResult exportDetail(DeliveryDetail deliveryDetail)
+    public void exportDetail(DeliveryDetail deliveryDetail, HttpServletResponse response)
     {
         List<DeliveryDetail> list = deliveryService.selectDeliveryDetailList(deliveryDetail);
         ExcelUtil<DeliveryDetail> util = new ExcelUtil<DeliveryDetail>(DeliveryDetail.class);
-        return util.exportExcel(list, "配送明细表");
+        util.exportExcel(response, list, "配送明细表");
     }
 
     /**
@@ -477,12 +476,11 @@ public class DeliveryController extends BaseController
     @RequiresPermissions("delivery:delivery:export")
     @Log(title = "配送汇总表", businessType = BusinessType.EXPORT)
     @PostMapping("/query/summary/export")
-    @ResponseBody
-    public AjaxResult exportSummary(Delivery delivery)
+    public void exportSummary(Delivery delivery, HttpServletResponse response)
     {
         List<Delivery> list = deliveryService.selectDeliveryList(delivery);
         ExcelUtil<Delivery> util = new ExcelUtil<Delivery>(Delivery.class);
-        return util.exportExcel(list, "配送汇总表");
+        util.exportExcel(response, list, "配送汇总表");
     }
 }
 

@@ -373,7 +373,7 @@ var table = {
                     $("#" + table.options.id).bootstrapTable('refresh', params);
                 }
             },
-            // 导出数据
+            // 导出数据（服务端流式输出，由浏览器/用户本机下载设置决定保存位置，不落盘服务端固定目录）
             exportExcel: function(formId) {
                 table.set();
                 $.modal.confirm("确定导出所有" + table.options.modalName + "吗？", function() {
@@ -383,15 +383,78 @@ var table = {
                     dataParam.push({ "name": "orderByColumn", "value": params.sortName });
                     dataParam.push({ "name": "isAsc", "value": params.sortOrder });
                     $.modal.loading("正在导出数据，请稍候...");
-                    $.post(table.options.exportUrl, dataParam, function(result) {
-                        if (result.code == web_status.SUCCESS) {
-                            window.location.href = ctx + "common/download?fileName=" + encodeURI(result.msg) + "&delete=" + true;
-                        } else if (result.code == web_status.WARNING) {
-                            $.modal.alertWarning(result.msg)
-                        } else {
-                            $.modal.alertError(result.msg);
+                    var body = new URLSearchParams();
+                    $.each(dataParam, function(i, item) {
+                        body.append(item.name, item.value == null ? '' : item.value);
+                    });
+                    var headers = {};
+                    var csrftoken = $('meta[name=csrf-token]').attr('content');
+                    if ($.common.isNotEmpty(csrftoken)) {
+                        headers['X-CSRF-Token'] = csrftoken;
+                    }
+                    fetch(table.options.exportUrl, {
+                        method: 'POST',
+                        headers: headers,
+                        body: body,
+                        credentials: 'same-origin'
+                    }).then(function(response) {
+                        var ctype = (response.headers.get('Content-Type') || '').toLowerCase();
+                        if (ctype.indexOf('application/json') !== -1) {
+                            return response.json().then(function(result) {
+                                $.modal.closeLoading();
+                                if (result.code == web_status.SUCCESS && result.msg) {
+                                    window.location.href = ctx + "common/download?fileName=" + encodeURIComponent(result.msg) + "&delete=" + true;
+                                } else if (result.code == web_status.WARNING) {
+                                    $.modal.alertWarning(result.msg);
+                                } else {
+                                    $.modal.alertError(result.msg || '导出失败');
+                                }
+                            });
                         }
+                        if (!response.ok) {
+                            return response.text().then(function(text) {
+                                $.modal.closeLoading();
+                                try {
+                                    var err = JSON.parse(text);
+                                    $.modal.alertError(err.msg || '导出失败');
+                                } catch (e2) {
+                                    $.modal.alertError('导出失败（HTTP ' + response.status + '）');
+                                }
+                            });
+                        }
+                        return response.blob().then(function(blob) {
+                            $.modal.closeLoading();
+                            var fileName = ($.common.isNotEmpty(table.options.modalName) ? table.options.modalName : 'export') + '.xlsx';
+                            var cd = response.headers.get('Content-Disposition');
+                            if ($.common.isNotEmpty(cd)) {
+                                var m = cd.match(/filename\*=utf-8''([^;]+)/i);
+                                if (m && m[1]) {
+                                    try { fileName = decodeURIComponent(m[1].trim()); } catch (e3) {}
+                                } else {
+                                    m = cd.match(/filename="([^"]+)"/i);
+                                    if (m && m[1]) {
+                                        fileName = m[1];
+                                    } else {
+                                        m = cd.match(/filename=([^;]+)/i);
+                                        if (m && m[1]) {
+                                            fileName = m[1].replace(/"/g, '').trim();
+                                        }
+                                    }
+                                }
+                            }
+                            var url = window.URL.createObjectURL(blob);
+                            var a = document.createElement('a');
+                            a.href = url;
+                            a.download = fileName;
+                            a.style.display = 'none';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            window.URL.revokeObjectURL(url);
+                        });
+                    }).catch(function() {
                         $.modal.closeLoading();
+                        $.modal.alertError('导出失败');
                     });
                 });
             },

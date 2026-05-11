@@ -1,5 +1,9 @@
 package com.scm.common.config;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -112,6 +116,27 @@ public class ScmConfig
     public static String getDownloadPath()
     {
         return getProfile() + "/download/";
+    }
+
+    /**
+     * Excel 等导出文件的落盘目录（按优先级依次尝试）。
+     * 首选为 {@link #getDownloadPath()}；若配置路径所在卷不可用（例如 Windows「设备未就绪」），
+     * 可回退到系统临时目录下的 {@code scm-download}。
+     */
+    public static List<String> getExportDownloadDirectoryCandidates()
+    {
+        LinkedHashSet<String> ordered = new LinkedHashSet<>();
+        String primary = getDownloadPath();
+        if (primary != null && !primary.isEmpty())
+        {
+            ordered.add(primary);
+        }
+        String tmp = System.getProperty("java.io.tmpdir");
+        if (tmp != null && !tmp.isEmpty())
+        {
+            ordered.add(new File(tmp, "scm-download").getAbsolutePath() + File.separator);
+        }
+        return new ArrayList<>(ordered);
     }
 
     /**

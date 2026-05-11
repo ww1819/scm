@@ -1,6 +1,7 @@
 package com.scm.web.controller.material;
 
 import java.util.List;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -69,12 +70,11 @@ public class MaterialDictController extends BaseController
     @RequiresPermissions("material:dict:export")
     @Log(title = "物资字典管理", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
-    @ResponseBody
-    public AjaxResult export(MaterialDict materialDict)
+    public void export(MaterialDict materialDict, HttpServletResponse response)
     {
         List<MaterialDict> list = materialDictService.selectMaterialDictList(materialDict);
         ExcelUtil<MaterialDict> util = new ExcelUtil<MaterialDict>(MaterialDict.class);
-        return util.exportExcel(list, "物资字典数据");
+        util.exportExcel(response, list, "物资字典数据");
     }
 
     /**

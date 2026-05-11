@@ -1,6 +1,7 @@
 package com.scm.web.controller.certificate;
 
 import java.util.List;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -65,12 +66,11 @@ public class CertificateTypeController extends BaseController
     @RequiresPermissions("certificate:type:export")
     @Log(title = "证件类型管理", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
-    @ResponseBody
-    public AjaxResult export(CertificateType certificateType)
+    public void export(CertificateType certificateType, HttpServletResponse response)
     {
         List<CertificateType> list = certificateTypeService.selectCertificateTypeList(certificateType);
         ExcelUtil<CertificateType> util = new ExcelUtil<CertificateType>(CertificateType.class);
-        return util.exportExcel(list, "证件类型数据");
+        util.exportExcel(response, list, "证件类型数据");
     }
 
     /**

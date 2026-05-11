@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import javax.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -192,8 +193,7 @@ public class DemoTableController extends BaseController
      * 导出数据
      */
     @PostMapping("/exportData")
-    @ResponseBody
-    public AjaxResult exportSelected(UserTableModel userModel, String userIds)
+    public void exportSelected(UserTableModel userModel, String userIds, HttpServletResponse response)
     {
         List<UserTableModel> userList = new ArrayList<UserTableModel>(Arrays.asList(new UserTableModel[users.size()]));
         Collections.copy(userList, users);
@@ -214,7 +214,7 @@ public class DemoTableController extends BaseController
             }
         }
         ExcelUtil<UserTableModel> util = new ExcelUtil<UserTableModel>(UserTableModel.class);
-        return util.exportExcel(userList, "用户数据");
+        util.exportExcel(response, userList, "用户数据");
     }
 
     /**

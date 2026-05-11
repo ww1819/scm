@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -189,12 +190,11 @@ public class DemoOperateController extends BaseController
      * 导出
      */
     @PostMapping("/export")
-    @ResponseBody
-    public AjaxResult export(UserOperateModel user)
+    public void export(UserOperateModel user, HttpServletResponse response)
     {
         List<UserOperateModel> list = new ArrayList<UserOperateModel>(users.values());
         ExcelUtil<UserOperateModel> util = new ExcelUtil<UserOperateModel>(UserOperateModel.class);
-        return util.exportExcel(list, "用户数据");
+        util.exportExcel(response, list, "用户数据");
     }
 
     /**
