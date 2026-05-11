@@ -92,7 +92,9 @@ shiro:
     path: /
     httpOnly: true
     maxAge: 30
-    cipherKey:
+    # RememberMe 加解密密钥（须为 Base64 的 16 字节 AES-128）。勿留空：留空则每次启动随机生成，旧 Cookie 无法解密并报 CryptoException。
+    # 生产环境建议改为独立密钥或环境变量注入，勿直接复用仓库默认值。
+    cipherKey: 2jHQZbfMakjp7wszmXQfRw==
   session:
     # ??????-1 ??????
     expireTime: 30

@@ -13,7 +13,32 @@
     <meta name="renderer" content="webkit">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <style type="text/css">
-        label.error { position:inherit; }
+        /* 覆盖 ry-ui.css：错误提示放在控件下方，勿用 absolute 叠在输入框上 */
+        #registerFormSupplier label.error,
+        #registerFormSalesperson label.error {
+            position: static !important;
+            right: auto !important;
+            top: auto !important;
+            left: auto !important;
+            z-index: auto !important;
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            margin: 6px 0 0 0;
+            padding: 0;
+            font-size: 12px;
+            font-weight: normal;
+            color: #c62828;
+            text-align: left;
+            line-height: 1.35;
+        }
+        #registerFormSupplier .form-control.error,
+        #registerFormSupplier select.error,
+        #registerFormSalesperson .form-control.error,
+        #registerFormSalesperson select.error {
+            border-color: #c62828 !important;
+            box-shadow: 0 0 0 1px rgba(198, 40, 40, 0.2);
+        }
         body.signin {
             min-height: 100vh;
             display: flex;
@@ -543,6 +568,21 @@ $(function() {
         clearFormErrors("registerFormSalesperson");
     });
 
+    function stripValidateMsg(text) {
+        return $("<div>").html(text).text().replace(/\s+/g, " ").trim();
+    }
+    function alertValidationErrors(title, validator) {
+        if (!validator || !validator.errorList || !validator.errorList.length) return;
+        var lines = $.map(validator.errorList, function (e) {
+            return stripValidateMsg(e.message);
+        });
+        if (typeof layer !== "undefined") {
+            layer.alert(lines.join("<br/>"), { title: title, icon: 0, shadeClose: true });
+        } else {
+            alert(lines.join("\n"));
+        }
+    }
+
     // 初始化校验规则（不接管 submit，由按钮 click 主动触发）
     $("#registerFormSupplier").validate({
         rules: {
@@ -573,23 +613,22 @@ $(function() {
             website: { maxlength: "网址过长", scmOptionalUrl: "网址格式不正确" },
             businessScope: { maxlength: "最多1000个字符", specialSign: "不能含 < > \" ' \\ | 等字符" }
         },
+        errorElement: "label",
+        errorClass: "error",
         errorPlacement: function (error, element) {
             if (!$(element).closest("#registerFormSupplier").length) return;
-            var $e = $(element);
-            if ($e.is("select")) {
-                $e.addClass("input-error-tip");
-                error.insertAfter($e).addClass("validator-sr-only").hide();
-                return;
-            }
-            if ($e.data("origPh") === undefined) $e.data("origPh", $e.attr("placeholder") || "");
-            $e.attr("placeholder", $.trim(error.text()));
-            $e.addClass("input-error-tip");
-            error.insertAfter($e).addClass("validator-sr-only").hide();
+            error.insertAfter(element);
+        },
+        highlight: function (element) {
+            $(element).addClass("error");
+        },
+        unhighlight: function (element) {
+            $(element).removeClass("error");
         },
         success: function (label, element) {
             var $el = $(element);
             if (!$el.closest("#registerFormSupplier").length) return;
-            restoreSupplierFieldPlaceholder($el);
+            $el.removeClass("input-error-tip");
             $(label).remove();
         }
     });
@@ -608,23 +647,51 @@ $(function() {
             password: { required: "请输入密码", minlength: "至少6位", checkPassword: "密码必须包含数字和字母" },
             confirmPassword: { required: "请确认密码", equalTo: "两次密码不一致" },
             acceptTerm2: { required: "请同意使用条款" }
+        },
+        errorElement: "label",
+        errorClass: "error",
+        errorPlacement: function (error, element) {
+            var $e = $(element);
+            if ($e.attr("name") === "acceptTerm2") {
+                error.insertAfter($e.closest(".checkbox-custom"));
+                return;
+            }
+            error.insertAfter(element);
+        },
+        highlight: function (element) {
+            $(element).addClass("error");
+        },
+        unhighlight: function (element) {
+            $(element).removeClass("error");
+        },
+        success: function (label) {
+            $(label).remove();
         }
     });
 
     // 供应商注册：点击按钮时触发校验和 Ajax 提交
     $("#btnSubmitSupplier").on("click", function (e) {
         e.preventDefault();
-        if (!$("#registerFormSupplier").valid()) {
+        var $f = $("#registerFormSupplier");
+        if (!$f.valid()) {
+            var v = $f.data("validator");
+            alertValidationErrors("请修正以下填写", v);
             return;
         }
         if (!$("#acceptTerm1").is(":checked")) {
             showFormMessage("registerFormSupplier", "请先同意使用条款", false);
+            if (typeof layer !== "undefined") {
+                layer.alert("请先阅读并勾选同意使用条款", { title: "提示", icon: 0, shadeClose: true });
+            }
             return;
         }
         var pwd = $("#registerFormSupplier input[name='password']").val();
         if (!/\d/.test(pwd) || !/[a-zA-Z]/.test(pwd)) {
             showFormMessage("registerFormSupplier", "密码必须包含数字和字母", false);
             showFieldError("registerFormSupplier", "密码必须包含数字和字母");
+            if (typeof layer !== "undefined") {
+                layer.alert("密码必须同时包含数字和字母", { title: "提示", icon: 0, shadeClose: true });
+            }
             return;
         }
         clearFormErrors("registerFormSupplier");
@@ -682,17 +749,26 @@ $(function() {
     // 业务员注册：点击按钮时触发校验和 Ajax 提交
     $("#btnSubmitSalesperson").on("click", function (e) {
         e.preventDefault();
-        if (!$("#registerFormSalesperson").valid()) {
+        var $f = $("#registerFormSalesperson");
+        if (!$f.valid()) {
+            var v = $f.data("validator");
+            alertValidationErrors("请修正以下填写", v);
             return;
         }
         if (!$("#acceptTerm2").is(":checked")) {
             showFormMessage("registerFormSalesperson", "请先同意使用条款", false);
+            if (typeof layer !== "undefined") {
+                layer.alert("请先阅读并勾选同意使用条款", { title: "提示", icon: 0, shadeClose: true });
+            }
             return;
         }
         var pwd = $("#registerFormSalesperson input[name='password']").val();
         if (!/\d/.test(pwd) || !/[a-zA-Z]/.test(pwd)) {
             showFormMessage("registerFormSalesperson", "密码必须包含数字和字母", false);
             showFieldError("registerFormSalesperson", "密码必须包含数字和字母");
+            if (typeof layer !== "undefined") {
+                layer.alert("密码必须同时包含数字和字母", { title: "提示", icon: 0, shadeClose: true });
+            }
             return;
         }
         clearFormErrors("registerFormSalesperson");

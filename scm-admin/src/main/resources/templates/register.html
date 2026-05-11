@@ -13,7 +13,28 @@
     <meta name="renderer" content="webkit">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <style type="text/css">
-        label.error { position: inherit; }
+        /* 校验提示：显示在输入框下方（覆盖 ry-ui.css 中 label.error 的 absolute 定位） */
+        .register-form-sheet label.error {
+            position: static !important;
+            right: auto !important;
+            top: auto !important;
+            left: auto !important;
+            z-index: auto !important;
+            display: block;
+            width: 100%;
+            margin: 8px 0 0 0;
+            padding: 0;
+            font-size: 13px;
+            font-weight: normal;
+            color: #dc3545;
+            text-align: left;
+            line-height: 1.4;
+        }
+        .register-form-sheet .form-control.input-validation-error,
+        .register-form-sheet .form-control.error {
+            border-color: #dc3545 !important;
+            box-shadow: 0 0 0 1px rgba(220, 53, 69, 0.2);
+        }
         body.signin {
             min-height: 100vh;
             display: flex;
