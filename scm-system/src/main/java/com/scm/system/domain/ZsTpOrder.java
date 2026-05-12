@@ -57,6 +57,12 @@ public class ZsTpOrder extends BaseEntity
     /** 展示用：供应商名称 */
     private String supplierName;
 
+    /** 列表查询：医院编码/名称/首拼简码合一关键字 */
+    private String hospitalKeyword;
+
+    /** 列表查询：供应商编码/名称/首拼简码合一关键字 */
+    private String supplierKeyword;
+
     /** 资金来源 ZJLY */
     private String zjly;
 
@@ -298,6 +304,26 @@ public class ZsTpOrder extends BaseEntity
     public void setSupplierName(String supplierName)
     {
         this.supplierName = supplierName;
+    }
+
+    public String getHospitalKeyword()
+    {
+        return hospitalKeyword;
+    }
+
+    public void setHospitalKeyword(String hospitalKeyword)
+    {
+        this.hospitalKeyword = hospitalKeyword;
+    }
+
+    public String getSupplierKeyword()
+    {
+        return supplierKeyword;
+    }
+
+    public void setSupplierKeyword(String supplierKeyword)
+    {
+        this.supplierKeyword = supplierKeyword;
     }
 
     public String getZjly()

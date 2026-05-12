@@ -45,7 +45,7 @@
             <div class="row">
                 <div class="col-sm-3">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">医院编码：</label>
+                        <label class="col-sm-5 control-label">平台医院编码：</label>
                         <div class="col-sm-7">
                             <input class="form-control" type="text" th:value="${head != null ? head.hospitalCode : ''}" readonly>
                         </div>
@@ -53,7 +53,7 @@
                 </div>
                 <div class="col-sm-3">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">医院名称：</label>
+                        <label class="col-sm-5 control-label">平台医院名称：</label>
                         <div class="col-sm-7">
                             <input class="form-control" type="text" th:value="${head != null ? head.hospitalName : ''}" readonly>
                         </div>
@@ -61,7 +61,7 @@
                 </div>
                 <div class="col-sm-3">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">供应商编码：</label>
+                        <label class="col-sm-5 control-label">平台供应商编码：</label>
                         <div class="col-sm-7">
                             <input class="form-control" type="text" th:value="${head != null ? head.supplierCode : ''}" readonly>
                         </div>
@@ -69,7 +69,7 @@
                 </div>
                 <div class="col-sm-3">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">供应商名称：</label>
+                        <label class="col-sm-5 control-label">平台供应商名称：</label>
                         <div class="col-sm-7">
                             <input class="form-control" type="text" th:value="${head != null ? head.supplierName : ''}" readonly>
                         </div>
@@ -77,6 +77,22 @@
                 </div>
             </div>
             <div class="row">
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">订单仓库编码：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${head != null ? head.ckno : ''}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">订单仓库名称：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${head != null ? head.ck : ''}" readonly>
+                        </div>
+                    </div>
+                </div>
                 <div class="col-sm-3">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">订单供应商编码：</label>
@@ -93,19 +109,21 @@
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class="row">
                 <div class="col-sm-3">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">订单仓库编码：</label>
+                        <label class="col-sm-5 control-label">订单科室编码：</label>
                         <div class="col-sm-7">
-                            <input class="form-control" type="text" th:value="${head != null ? head.ckno : ''}" readonly>
+                            <input class="form-control" type="text" th:value="${head != null ? head.ksbh : ''}" readonly>
                         </div>
                     </div>
                 </div>
                 <div class="col-sm-3">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">订单仓库名称：</label>
+                        <label class="col-sm-5 control-label">订单科室名称：</label>
                         <div class="col-sm-7">
-                            <input class="form-control" type="text" th:value="${head != null ? head.ck : ''}" readonly>
+                            <input class="form-control" type="text" th:value="${head != null ? head.ksmc : ''}" readonly>
                         </div>
                     </div>
                 </div>

@@ -495,6 +495,7 @@ public class DeliveryServiceImpl implements IDeliveryService
     @Override
     public List<ZsTpOrder> selectZsTpOrderList(ZsTpOrder query)
     {
+        normalizeZsTpOrderSearchParams(query);
         applyZsTpOrderQueryDataScope(query);
         return zsTpOrderMapper.selectZsTpOrderList(query);
     }
@@ -508,6 +509,7 @@ public class DeliveryServiceImpl implements IDeliveryService
     @Override
     public List<ZsTpOrder> selectZsTpOrderQueryList(ZsTpOrder query)
     {
+        normalizeZsTpOrderSearchParams(query);
         applyZsTpOrderQueryDataScope(query);
         return zsTpOrderMapper.selectZsTpOrderQueryList(query);
     }
@@ -593,6 +595,36 @@ public class DeliveryServiceImpl implements IDeliveryService
             query.getParams().put("excludeHospitalIds", forbid);
         }
         scmHospitalSupplierMenuScopeService.applyMenuPairScopeToParams(query.getParams(), userId);
+    }
+
+    /**
+     * 推送时间：若前端仅传 yyyy-MM-dd，补全开始 00:00:00、结束 23:59:59（已含时分秒则不处理）
+     */
+    private void normalizeZsTpOrderSearchParams(ZsTpOrder query)
+    {
+        if (query == null)
+        {
+            return;
+        }
+        Map<String, Object> p = query.getParams();
+        Object pb = p.get("pushBegin");
+        if (pb instanceof String)
+        {
+            String s = StringUtils.trim((String) pb);
+            if (StringUtils.isNotEmpty(s) && !s.contains(":") && s.length() <= 10)
+            {
+                p.put("pushBegin", s + " 00:00:00");
+            }
+        }
+        Object pe = p.get("pushEnd");
+        if (pe instanceof String)
+        {
+            String s = StringUtils.trim((String) pe);
+            if (StringUtils.isNotEmpty(s) && !s.contains(":") && s.length() <= 10)
+            {
+                p.put("pushEnd", s + " 23:59:59");
+            }
+        }
     }
 
     @Override

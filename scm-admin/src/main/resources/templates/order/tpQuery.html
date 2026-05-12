@@ -3,6 +3,9 @@
 <head>
 	<th:block th:include="include :: header('第三方订单查询')" />
 	<th:block th:include="include :: layout-latest-css" />
+	<style>
+		.select-list .select-time .scm-push-datetime { min-width: 172px; width: 172px; display: inline-block; vertical-align: middle; padding-left: 8px; height: 30px; line-height: 30px; border: 1px solid #e5e6e7; border-radius: 4px; }
+	</style>
 </head>
 <body class="gray-bg">
 	<div class="container-div">
@@ -12,13 +15,19 @@
 					<div class="select-list">
 						<ul>
 							<li>
-								订单编号：<input type="text" name="dh"/>
+								订单编号：<input type="text" name="dh" placeholder="模糊"/>
 							</li>
 							<li>
-								医院名称：<input type="text" name="hospitalName"/>
+								医院：<input type="text" name="hospitalKeyword" placeholder="编码/名称/首拼简码"/>
 							</li>
 							<li>
-								供应商名称：<input type="text" name="supplierName"/>
+								供应商：<input type="text" name="supplierKeyword" placeholder="编码/名称/首拼简码"/>
+							</li>
+							<li class="select-time">
+								<label>推送时间范围：</label>
+								<input type="text" class="scm-push-datetime" id="tpPushBegin" placeholder="开始 yyyy-MM-dd HH:mm:ss" name="params[pushBegin]" autocomplete="off"/>
+								<span>-</span>
+								<input type="text" class="scm-push-datetime" id="tpPushEnd" placeholder="结束 yyyy-MM-dd HH:mm:ss" name="params[pushEnd]" autocomplete="off"/>
 							</li>
 							<li>
 								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()" style="display: none;"><i class="fa fa-search"></i>&nbsp;搜索</a>
@@ -49,16 +58,96 @@
 	<script th:inline="javascript">
 		var detailFlag = [[${@permission.hasPermi('order:tpOrder:detail')}]];
 		var prefix = ctx + "order/tpQuery";
+		var tableId = "bootstrap-table";
+
+		function normalizePushRangeParams(obj, beginSel, endSel) {
+			if (!obj || typeof obj !== 'object') {
+				return;
+			}
+			var beginKey = 'params[pushBegin]';
+			var endKey = 'params[pushEnd]';
+			function fix(key, endOfDay) {
+				var v = obj[key];
+				if (v == null || v === '') {
+					return;
+				}
+				var s = String(v).replace(/^\s+|\s+$/g, '');
+				if (!s) {
+					return;
+				}
+				if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+					obj[key] = endOfDay ? (s + ' 23:59:59') : (s + ' 00:00:00');
+				}
+			}
+			fix(beginKey, false);
+			fix(endKey, true);
+			if (beginSel && obj[beginKey]) {
+				$(beginSel).val(obj[beginKey]);
+			}
+			if (endSel && obj[endKey]) {
+				$(endSel).val(obj[endKey]);
+			}
+		}
+
+		function initTpPushRangeLaydate() {
+			if (typeof layui === 'undefined') {
+				return;
+			}
+			layui.use('laydate', function () {
+				var laydate = layui.laydate;
+				laydate.render({
+					elem: '#tpPushBegin',
+					type: 'datetime',
+					format: 'yyyy-MM-dd HH:mm:ss',
+					theme: 'molv',
+					trigger: 'click',
+					btns: ['clear', 'now', 'confirm']
+				});
+				laydate.render({
+					elem: '#tpPushEnd',
+					type: 'datetime',
+					format: 'yyyy-MM-dd HH:mm:ss',
+					theme: 'molv',
+					trigger: 'click',
+					btns: ['clear', 'now', 'confirm']
+				});
+			});
+		}
 
 		$(function() {
+			initTpPushRangeLaydate();
 		    queryList();
 		});
 
+		function tpQueryParams(params) {
+			table.set(tableId);
+			var formParams = $.common.formToJSON("tp-query-form");
+			normalizePushRangeParams(formParams, '#tpPushBegin', '#tpPushEnd');
+			return $.extend({}, formParams, {
+				pageNum: Math.floor(params.offset / params.limit) + 1,
+				pageSize: params.limit,
+				orderByColumn: params.sort,
+				isAsc: params.order,
+				searchValue: params.search
+			});
+		}
+
+		function fmtPushTime(v) {
+			if (v == null || v === '') {
+				return '-';
+			}
+			if (typeof v === 'string') {
+				return v.length >= 19 ? v.substring(0, 19) : v;
+			}
+			return v;
+		}
+
 		function queryList() {
 		    var options = {
+		        id: tableId,
+		        formId: "tp-query-form",
 		        url: prefix + "/list",
-		        sortName: "createTime",
-		        sortOrder: "desc",
+		        queryParams: tpQueryParams,
 		        modalName: "第三方订单",
 		        uniqueId: "id",
 		        columns: [{
@@ -67,13 +156,15 @@
 		            align: 'center',
 		            width: 60,
 		            formatter: function(value, row, index) {
-		                return index + 1;
+		                var opt = $("#" + tableId).bootstrapTable("getOptions");
+		                var pn = opt.pageNumber || 1;
+		                var ps = opt.pageSize || 10;
+		                return (pn - 1) * ps + index + 1;
 		            }
 		        },
 		        {
 		            field: 'dh',
 		            title: '订单编号',
-		            sortable: true,
 		            formatter: function (value, row) {
 		                var v = value || '';
 		                if (detailFlag !== 'hidden') {
@@ -84,23 +175,33 @@
 		        },
 		        {
 		            field: 'hospitalCode',
-		            title: '医院编码',
+		            title: '平台医院编码',
 		            formatter: function (value) { return value || '-'; }
 		        },
 		        {
 		            field: 'hospitalName',
-		            title: '医院名称',
+		            title: '平台医院名称',
 		            formatter: function (value) { return value || '-'; }
 		        },
 		        {
 		            field: 'supplierCode',
-		            title: '供应商编码',
+		            title: '平台供应商编码',
 		            formatter: function (value) { return value || '-'; }
 		        },
 		        {
 		            field: 'supplierName',
-		            title: '供应商名称',
+		            title: '平台供应商名称',
 		            formatter: function (value) { return value || '-'; }
+		        },
+		        {
+		            field: 'ckno',
+		            title: '订单仓库编码',
+		            formatter: function (v) { return v || '-'; }
+		        },
+		        {
+		            field: 'ck',
+		            title: '订单仓库名称',
+		            formatter: function (v) { return v || '-'; }
 		        },
 		        {
 		            field: 'supno',
@@ -113,14 +214,19 @@
 		            formatter: function (v) { return v || '-'; }
 		        },
 		        {
-		            field: 'ckno',
-		            title: '订单仓库编码',
+		            field: 'ksbh',
+		            title: '订单科室编码',
 		            formatter: function (v) { return v || '-'; }
 		        },
 		        {
-		            field: 'ck',
-		            title: '订单仓库名称',
+		            field: 'ksmc',
+		            title: '订单科室名称',
 		            formatter: function (v) { return v || '-'; }
+		        },
+		        {
+		            field: 'createTime',
+		            title: '推送时间',
+		            formatter: function (v) { return fmtPushTime(v); }
 		        },
 		        {
 		            title: '操作',
@@ -138,6 +244,9 @@
 		}
 
 		function resetPre() {
+			if (typeof resetDate === 'function') {
+				resetDate();
+			}
 			$("#tp-query-form")[0].reset();
 			$.table.search();
 		}

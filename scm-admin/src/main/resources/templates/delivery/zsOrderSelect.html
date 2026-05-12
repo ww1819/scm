@@ -3,6 +3,9 @@
 <head>
 	<th:block th:include="include :: header('选择第三方订单')" />
 	<th:block th:include="include :: layout-latest-css" />
+	<style>
+		.select-list .select-time .scm-push-datetime { min-width: 172px; width: 172px; display: inline-block; vertical-align: middle; padding-left: 8px; height: 30px; line-height: 30px; border: 1px solid #e5e6e7; border-radius: 4px; }
+	</style>
 </head>
 <body class="gray-bg">
 	<div class="container-div">
@@ -12,19 +15,25 @@
 					<div class="select-list">
 						<ul>
 							<li>
-								单号(DH)：<input type="text" name="dh"/>
+								单号(DH)：<input type="text" name="dh" placeholder="模糊"/>
+							</li>
+							<li>
+								医院：<input type="text" name="hospitalKeyword" placeholder="编码/名称/首拼简码"/>
+							</li>
+							<li>
+								供应商：<input type="text" name="supplierKeyword" placeholder="编码/名称/首拼简码"/>
+							</li>
+							<li class="select-time">
+								<label>推送时间范围：</label>
+								<input type="text" class="scm-push-datetime" id="zsPushBegin" placeholder="开始 yyyy-MM-dd HH:mm:ss" name="params[pushBegin]" autocomplete="off"/>
+								<span>-</span>
+								<input type="text" class="scm-push-datetime" id="zsPushEnd" placeholder="结束 yyyy-MM-dd HH:mm:ss" name="params[pushEnd]" autocomplete="off"/>
 							</li>
 							<li>
 								服务标识：<input type="text" name="customer"/>
 							</li>
 							<li>
 								科室名称：<input type="text" name="ksmc"/>
-							</li>
-							<li>
-								医院名称：<input type="text" name="hospitalName"/>
-							</li>
-							<li>
-								供应商名称：<input type="text" name="supplierName"/>
 							</li>
 							<li>
 								配送进度：<select name="params[deliveryFilter]">
@@ -55,14 +64,86 @@
 	<th:block th:include="include :: layout-latest-js" />
 	<script th:inline="javascript">
 		var prefix = ctx + "delivery/delivery";
+		var zsTableId = "bootstrap-table";
+
+		function normalizePushRangeParams(obj, beginSel, endSel) {
+			if (!obj || typeof obj !== 'object') {
+				return;
+			}
+			var beginKey = 'params[pushBegin]';
+			var endKey = 'params[pushEnd]';
+			function fix(key, endOfDay) {
+				var v = obj[key];
+				if (v == null || v === '') {
+					return;
+				}
+				var s = String(v).replace(/^\s+|\s+$/g, '');
+				if (!s) {
+					return;
+				}
+				if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+					obj[key] = endOfDay ? (s + ' 23:59:59') : (s + ' 00:00:00');
+				}
+			}
+			fix(beginKey, false);
+			fix(endKey, true);
+			if (beginSel && obj[beginKey]) {
+				$(beginSel).val(obj[beginKey]);
+			}
+			if (endSel && obj[endKey]) {
+				$(endSel).val(obj[endKey]);
+			}
+		}
+
+		function initZsPushRangeLaydate() {
+			if (typeof layui === 'undefined') {
+				return;
+			}
+			layui.use('laydate', function () {
+				var laydate = layui.laydate;
+				laydate.render({
+					elem: '#zsPushBegin',
+					type: 'datetime',
+					format: 'yyyy-MM-dd HH:mm:ss',
+					theme: 'molv',
+					trigger: 'click',
+					btns: ['clear', 'now', 'confirm']
+				});
+				laydate.render({
+					elem: '#zsPushEnd',
+					type: 'datetime',
+					format: 'yyyy-MM-dd HH:mm:ss',
+					theme: 'molv',
+					trigger: 'click',
+					btns: ['clear', 'now', 'confirm']
+				});
+			});
+		}
 
 		$(function() {
+			initZsPushRangeLaydate();
 		    initZsTable();
 		});
 
+		function zsOrderQueryParams(params) {
+			table.set(zsTableId);
+			var formParams = $.common.formToJSON("zs-order-form");
+			normalizePushRangeParams(formParams, '#zsPushBegin', '#zsPushEnd');
+			return $.extend({}, formParams, {
+				pageNum: Math.floor(params.offset / params.limit) + 1,
+				pageSize: params.limit,
+				orderByColumn: params.sort,
+				isAsc: params.order,
+				searchValue: params.search
+			});
+		}
+
 		function initZsTable() {
 		    var options = {
+		        id: zsTableId,
+		        formId: "zs-order-form",
 		        url: prefix + "/zsOrder/list",
+		        queryParams: zsOrderQueryParams,
 		        modalName: "第三方订单",
 		        idField: "id",
 		        columns: [{
@@ -79,32 +160,22 @@
 		        },
 		        {
 		            field: 'hospitalCode',
-		            title: '医院编码',
+		            title: '平台医院编码',
 		            formatter: function (v) { return v || '-'; }
 		        },
 		        {
 		            field: 'hospitalName',
-		            title: '医院名称',
+		            title: '平台医院名称',
 		            formatter: function (v) { return v || '-'; }
 		        },
 		        {
 		            field: 'supplierCode',
-		            title: '供应商编码',
+		            title: '平台供应商编码',
 		            formatter: function (v) { return v || '-'; }
 		        },
 		        {
 		            field: 'supplierName',
-		            title: '供应商名称',
-		            formatter: function (v) { return v || '-'; }
-		        },
-		        {
-		            field: 'supno',
-		            title: '订单供应商编码',
-		            formatter: function (v) { return v || '-'; }
-		        },
-		        {
-		            field: 'sup',
-		            title: '订单供应商名称',
+		            title: '平台供应商名称',
 		            formatter: function (v) { return v || '-'; }
 		        },
 		        {
@@ -118,20 +189,40 @@
 		            formatter: function (v) { return v || '-'; }
 		        },
 		        {
+		            field: 'supno',
+		            title: '订单供应商编码',
+		            formatter: function (v) { return v || '-'; }
+		        },
+		        {
+		            field: 'sup',
+		            title: '订单供应商名称',
+		            formatter: function (v) { return v || '-'; }
+		        },
+		        {
+		            field: 'ksbh',
+		            title: '订单科室编码',
+		            formatter: function (v) { return v || '-'; }
+		        },
+		        {
+		            field: 'ksmc',
+		            title: '订单科室名称',
+		            formatter: function (v) { return v || '-'; }
+		        },
+		        {
+		            field: 'createTime',
+		            title: '推送时间',
+		            formatter: function (v) {
+		                if (v == null || v === '') return '-';
+		                return typeof v === 'string' && v.length >= 19 ? v.substring(0, 19) : v;
+		            }
+		        },
+		        {
 		            field: 'customer',
 		            title: '服务标识'
 		        },
 		        {
 		            field: 'scmSupCode',
 		            title: 'SCM供应商编码'
-		        },
-		        {
-		            field: 'ksmc',
-		            title: '科室名称'
-		        },
-		        {
-		            field: 'ck',
-		            title: '仓库'
 		        },
 		        {
 		            field: 'sheetJe',
@@ -142,15 +233,11 @@
 		                }
 		                return '';
 		            }
-		        },
-		        {
-		            field: 'createTime',
-		            title: '推送时间'
 		        }]
 		    };
 		    $.table.init(options);
 
-		    $("#bootstrap-table").on("check.bs.table check-all.bs.table uncheck.bs.table uncheck-all.bs.table", function (e, rowsAfter, rowsBefore) {
+		    $("#" + zsTableId).on("check.bs.table check-all.bs.table uncheck.bs.table uncheck-all.bs.table", function (e, rowsAfter, rowsBefore) {
 		        var rows = $.common.equals("uncheck-all", e.type) ? rowsBefore : rowsAfter;
 		        var rowIds = $.table.affectedRowIds(rows);
 		        $("#rowIds").val(rowIds.join(','));
@@ -158,6 +245,9 @@
 		}
 
 		function resetZs() {
+			if (typeof resetDate === 'function') {
+				resetDate();
+			}
 			$("#zs-order-form")[0].reset();
 			$.table.search();
 		}

@@ -118,6 +118,42 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </if>
     </sql>
 
+    <!-- 推送时间（含时分秒；仅日期时由服务层补全 00:00:00 / 23:59:59） -->
+    <sql id="zsTpOrderPushTimeFilters">
+            <if test="params != null and params.pushBegin != null and params.pushBegin != ''">
+                and z.create_time &gt;= #{params.pushBegin}
+            </if>
+            <if test="params != null and params.pushEnd != null and params.pushEnd != ''">
+                and z.create_time &lt;= #{params.pushEnd}
+            </if>
+    </sql>
+
+    <!-- 医院：平台档案编码/名称/简称/首拼 + 订单入参 scm_hospital_code -->
+    <sql id="zsTpOrderHospitalKeywordFilter">
+            <if test="hospitalKeyword != null and hospitalKeyword != ''">
+                and (
+                    IFNULL(h.hospital_code, '') like concat('%', #{hospitalKeyword}, '%')
+                    or IFNULL(h.hospital_name, '') like concat('%', #{hospitalKeyword}, '%')
+                    or IFNULL(h.hospital_short_name, '') like concat('%', #{hospitalKeyword}, '%')
+                    or LOWER(IFNULL(h.pinyin_code, '')) like concat('%', LOWER(#{hospitalKeyword}), '%')
+                    or IFNULL(z.scm_hospital_code, '') like concat('%', #{hospitalKeyword}, '%')
+                )
+            </if>
+    </sql>
+
+    <!-- 供应商：平台档案编码/名称/简称/首拼 + 订单入参 scm_sup_code -->
+    <sql id="zsTpOrderSupplierKeywordFilter">
+            <if test="supplierKeyword != null and supplierKeyword != ''">
+                and (
+                    IFNULL(s.supplier_code, '') like concat('%', #{supplierKeyword}, '%')
+                    or IFNULL(s.company_name, '') like concat('%', #{supplierKeyword}, '%')
+                    or IFNULL(s.company_short_name, '') like concat('%', #{supplierKeyword}, '%')
+                    or LOWER(IFNULL(s.pinyin_code, '')) like concat('%', LOWER(#{supplierKeyword}), '%')
+                    or IFNULL(z.scm_sup_code, '') like concat('%', #{supplierKeyword}, '%')
+                )
+            </if>
+    </sql>
+
     <select id="selectZsTpOrderList" parameterType="com.scm.system.domain.ZsTpOrder" resultMap="ZsTpOrderResult">
         select <include refid="zsTpOrderJoinColumns"/>
         <include refid="zsTpOrderJoinFrom"/>
@@ -132,12 +168,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="ksmc != null and ksmc != ''">
                 and z.ksmc like concat('%', #{ksmc}, '%')
             </if>
-            <if test="hospitalName != null and hospitalName != ''">
-                and h.hospital_name like concat('%', #{hospitalName}, '%')
-            </if>
-            <if test="supplierName != null and supplierName != ''">
-                and s.company_name like concat('%', #{supplierName}, '%')
-            </if>
+            <include refid="zsTpOrderPushTimeFilters"/>
+            <include refid="zsTpOrderHospitalKeywordFilter"/>
+            <include refid="zsTpOrderSupplierKeywordFilter"/>
             <include refid="zsTpOrderScopeFilters"/>
             <if test="params != null and params.deliveryFilter != null and params.deliveryFilter == 'none'">
                 and not exists (
@@ -210,12 +243,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="ksmc != null and ksmc != ''">
                 and z.ksmc like concat('%', #{ksmc}, '%')
             </if>
-            <if test="hospitalName != null and hospitalName != ''">
-                and h.hospital_name like concat('%', #{hospitalName}, '%')
-            </if>
-            <if test="supplierName != null and supplierName != ''">
-                and s.company_name like concat('%', #{supplierName}, '%')
-            </if>
+            <include refid="zsTpOrderPushTimeFilters"/>
+            <include refid="zsTpOrderHospitalKeywordFilter"/>
+            <include refid="zsTpOrderSupplierKeywordFilter"/>
             <include refid="zsTpOrderScopeFilters"/>
         </where>
         order by z.create_time desc
