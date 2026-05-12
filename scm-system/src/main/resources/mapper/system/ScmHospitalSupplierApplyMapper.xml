@@ -6,6 +6,7 @@
         <id property="applyId" column="apply_id"/>
         <result property="supplierId" column="supplier_id"/>
         <result property="hospitalId" column="hospital_id"/>
+        <result property="hospitalCode" column="hospital_code"/>
         <result property="supplierName" column="supplier_name"/>
         <result property="supplierCode" column="supplier_code"/>
         <result property="hospitalName" column="hospital_name"/>
@@ -30,13 +31,17 @@
     </resultMap>
 
     <sql id="selectApplyVo">
-        select a.apply_id, a.supplier_id, a.hospital_id, a.supplier_name, a.hospital_name,
+        select a.apply_id, a.supplier_id, a.hospital_id,
+               coalesce(nullif(trim(h.hospital_name), ''), a.hospital_name) as hospital_name,
+               coalesce(nullif(trim(s.company_name), ''), a.supplier_name) as supplier_name,
+               h.hospital_code as hospital_code,
+               s.supplier_code as supplier_code,
                a.supply_start_date, a.supply_end_date, a.contract_no, a.apply_reason, a.contact_person, a.contact_phone,
                a.audit_status, a.audit_by, a.audit_time, a.audit_remark,
-               a.del_flag, a.del_by, a.del_time, a.create_by, a.create_time, a.update_by, a.update_time, a.remark,
-               s.supplier_code as supplier_code
+               a.del_flag, a.del_by, a.del_time, a.create_by, a.create_time, a.update_by, a.update_time, a.remark
         from scm_hospital_supplier_apply a
-        left join scm_supplier s on s.supplier_id = a.supplier_id
+        left join scm_supplier s on s.supplier_id = cast(nullif(trim(a.supplier_id), '') as unsigned)
+        left join scm_hospital h on h.hospital_id = cast(nullif(trim(a.hospital_id), '') as unsigned)
     </sql>
 
     <insert id="insertApply" parameterType="com.scm.system.domain.ScmHospitalSupplierApply">
@@ -99,6 +104,22 @@
             <if test="hospitalId != null and hospitalId != ''">and a.hospital_id = #{hospitalId}</if>
             <if test="supplierId != null and supplierId != ''">and a.supplier_id = #{supplierId}</if>
             <if test="auditStatus != null and auditStatus != ''">and a.audit_status = #{auditStatus}</if>
+            <if test="hospitalKeyword != null and hospitalKeyword != ''">
+                and (
+                    ifnull(h.hospital_code, '') like concat('%', #{hospitalKeyword}, '%')
+                    or ifnull(h.hospital_name, '') like concat('%', #{hospitalKeyword}, '%')
+                    or ifnull(h.pinyin_code, '') like concat('%', #{hospitalKeyword}, '%')
+                    or ifnull(a.hospital_name, '') like concat('%', #{hospitalKeyword}, '%')
+                )
+            </if>
+            <if test="supplierKeyword != null and supplierKeyword != ''">
+                and (
+                    ifnull(s.supplier_code, '') like concat('%', #{supplierKeyword}, '%')
+                    or ifnull(s.company_name, '') like concat('%', #{supplierKeyword}, '%')
+                    or ifnull(s.pinyin_code, '') like concat('%', #{supplierKeyword}, '%')
+                    or ifnull(a.supplier_name, '') like concat('%', #{supplierKeyword}, '%')
+                )
+            </if>
         </where>
         order by a.create_time desc
     </select>

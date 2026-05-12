@@ -452,7 +452,8 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
     }
 
     @Override
-    public List<ScmHospitalSupplierApply> selectSupplierApplyList(Long supplierId, String auditStatus)
+    public List<ScmHospitalSupplierApply> selectSupplierApplyList(Long supplierId, String auditStatus,
+        String hospitalKeyword, String supplierKeyword)
     {
         if (supplierId == null)
         {
@@ -461,6 +462,8 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
         ScmHospitalSupplierApply q = new ScmHospitalSupplierApply();
         q.setSupplierId(String.valueOf(supplierId));
         q.setAuditStatus(auditStatus);
+        q.setHospitalKeyword(StringUtils.trimToNull(hospitalKeyword));
+        q.setSupplierKeyword(StringUtils.trimToNull(supplierKeyword));
         return hospitalSupplierApplyMapper.selectApplyList(q);
     }
 

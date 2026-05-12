@@ -15,6 +15,7 @@ import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.utils.ShiroUtils;
+import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.Hospital;
 import com.scm.system.domain.ScmHospitalSupplierApply;
 import com.scm.system.domain.SupplierUser;
@@ -95,14 +96,25 @@ public class SupplierAssociateController extends BaseController {
     @RequiresPermissions("supplier:associate:view")
     @PostMapping("/myList")
     @ResponseBody
-    public TableDataInfo myList(@RequestParam(value = "auditStatus", required = false) String auditStatus) {
+    public TableDataInfo myList(@RequestParam(value = "auditStatus", required = false) String auditStatus,
+        @RequestParam(value = "hospitalKeyword", required = false) String hospitalKeyword,
+        @RequestParam(value = "supplierKeyword", required = false) String supplierKeyword) {
         SupplierUser supplierUser = supplierUserService.selectSupplierUserByUserId(ShiroUtils.getUserId());
-        if (supplierUser == null || supplierUser.getSupplierId() == null) {
-            return getDataTable(new java.util.ArrayList<ScmHospitalSupplierApply>());
-        }
         startPage();
-        List<ScmHospitalSupplierApply> list =
-            hospitalSupplierService.selectSupplierApplyList(supplierUser.getSupplierId(), auditStatus);
+        List<ScmHospitalSupplierApply> list;
+        // 已绑定供应商：仅看本供应商申请；未绑定（平台管理员等）：查看全部关联申请
+        if (supplierUser != null && supplierUser.getSupplierId() != null) {
+            list = hospitalSupplierService.selectSupplierApplyList(supplierUser.getSupplierId(), auditStatus,
+                hospitalKeyword, supplierKeyword);
+        } else {
+            ScmHospitalSupplierApply q = new ScmHospitalSupplierApply();
+            if (auditStatus != null && auditStatus.length() > 0) {
+                q.setAuditStatus(auditStatus);
+            }
+            q.setHospitalKeyword(StringUtils.trimToNull(hospitalKeyword));
+            q.setSupplierKeyword(StringUtils.trimToNull(supplierKeyword));
+            list = hospitalSupplierService.selectAssociationApplyList(q);
+        }
         return getDataTable(list);
     }
 

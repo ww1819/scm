@@ -13,11 +13,17 @@
 						<ul>
 							<li>审核状态：
 								<select name="auditStatus">
-									<option value="">全部</option>
-									<option value="0" selected>待审核</option>
+									<option value="" selected>全部</option>
+									<option value="0">待审核</option>
 									<option value="1">已通过</option>
 									<option value="2">已拒绝</option>
 								</select>
+							</li>
+							<li>医院：
+								<input type="text" name="hospitalKeyword" placeholder="编码/名称/拼音简码"/>
+							</li>
+							<li>供应商：
+								<input type="text" name="supplierKeyword" placeholder="编码/名称/拼音简码"/>
 							</li>
 							<li>
 								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
@@ -69,11 +75,17 @@
 					align: 'center',
 					formatter: function (value, row, index) { return $.table.serialNumber(index); }
 				}, {
+					field: 'hospitalCode',
+					title: '医院编码'
+				}, {
+					field: 'hospitalName',
+					title: '医院名称'
+				}, {
 					field: 'supplierCode',
 					title: '供应商编码'
 				}, {
 					field: 'supplierName',
-					title: '供应商'
+					title: '供应商名称'
 				}, {
 					field: 'supplyStartDate',
 					title: '供货开始'

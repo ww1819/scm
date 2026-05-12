@@ -1,6 +1,5 @@
 package com.scm.web.controller.hospital;
 
-import java.util.ArrayList;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -15,10 +14,9 @@ import com.scm.common.annotation.Log;
 import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.page.TableDataInfo;
-import com.scm.common.json.JSON;
 import com.scm.common.enums.BusinessType;
-import com.scm.common.utils.ServletUtils;
 import com.scm.common.utils.ShiroUtils;
+import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.poi.ExcelUtil;
 import com.scm.system.domain.ScmHospitalSupplierApply;
 import com.scm.system.service.IHospitalSupplierService;
@@ -47,19 +45,23 @@ public class HospitalSupplierAssociateAuditController extends BaseController
     @RequiresPermissions("hospital:associateAudit:view")
     @PostMapping("/list")
     @ResponseBody
-    public TableDataInfo list(@RequestParam(value = "auditStatus", required = false) String auditStatus)
+    public TableDataInfo list(@RequestParam(value = "auditStatus", required = false) String auditStatus,
+        @RequestParam(value = "hospitalKeyword", required = false) String hospitalKeyword,
+        @RequestParam(value = "supplierKeyword", required = false) String supplierKeyword)
     {
         Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());
-        if (hospitalCtx == null)
-        {
-            return getDataTable(new ArrayList<>());
-        }
         ScmHospitalSupplierApply q = new ScmHospitalSupplierApply();
-        q.setHospitalId(String.valueOf(hospitalCtx));
+        // 已绑定医院：仅看本院申请；未绑定（平台管理员等）：查看全部医院-供应商关联申请
+        if (hospitalCtx != null)
+        {
+            q.setHospitalId(String.valueOf(hospitalCtx));
+        }
         if (auditStatus != null && auditStatus.length() > 0)
         {
             q.setAuditStatus(auditStatus);
         }
+        q.setHospitalKeyword(StringUtils.trimToNull(hospitalKeyword));
+        q.setSupplierKeyword(StringUtils.trimToNull(supplierKeyword));
         startPage();
         List<ScmHospitalSupplierApply> list = hospitalSupplierService.selectAssociationApplyList(q);
         return getDataTable(list);
@@ -71,27 +73,23 @@ public class HospitalSupplierAssociateAuditController extends BaseController
     @RequiresPermissions("hospital:associateAudit:export")
     @Log(title = "医院关联申请审核", businessType = BusinessType.EXPORT)
     @PostMapping("/export")
-    public void export(@RequestParam(value = "auditStatus", required = false) String auditStatus, HttpServletResponse response)
+    public void export(@RequestParam(value = "auditStatus", required = false) String auditStatus,
+        @RequestParam(value = "hospitalKeyword", required = false) String hospitalKeyword,
+        @RequestParam(value = "supplierKeyword", required = false) String supplierKeyword,
+        HttpServletResponse response)
     {
         Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());
-        if (hospitalCtx == null)
-        {
-            try
-            {
-                ServletUtils.renderString(response, JSON.marshal(AjaxResult.error("未绑定医院，无法导出")));
-            }
-            catch (Exception e)
-            {
-                logger.error("导出医院关联申请失败", e);
-            }
-            return;
-        }
         ScmHospitalSupplierApply q = new ScmHospitalSupplierApply();
-        q.setHospitalId(String.valueOf(hospitalCtx));
+        if (hospitalCtx != null)
+        {
+            q.setHospitalId(String.valueOf(hospitalCtx));
+        }
         if (auditStatus != null && auditStatus.length() > 0)
         {
             q.setAuditStatus(auditStatus);
         }
+        q.setHospitalKeyword(StringUtils.trimToNull(hospitalKeyword));
+        q.setSupplierKeyword(StringUtils.trimToNull(supplierKeyword));
         List<ScmHospitalSupplierApply> list = hospitalSupplierService.selectAssociationApplyList(q);
         ExcelUtil<ScmHospitalSupplierApply> util = new ExcelUtil<ScmHospitalSupplierApply>(ScmHospitalSupplierApply.class);
         util.exportExcel(response, list, "医院关联申请");

@@ -104,7 +104,8 @@ public interface IHospitalSupplierService
     /**
      * 供应商侧查看自己的关联申请
      */
-    public List<ScmHospitalSupplierApply> selectSupplierApplyList(Long supplierId, String auditStatus);
+    public List<ScmHospitalSupplierApply> selectSupplierApplyList(Long supplierId, String auditStatus,
+        String hospitalKeyword, String supplierKeyword);
 
     /**
      * 供应商撤回申请（仅待审核）
