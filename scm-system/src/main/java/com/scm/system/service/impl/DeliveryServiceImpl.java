@@ -1209,7 +1209,20 @@ public class DeliveryServiceImpl implements IDeliveryService
         {
             for (ZsTpOrderDetail line : lines)
             {
-                details.add(mapZsDetailLine(line, zsLineAgg));
+                if (line == null)
+                {
+                    continue;
+                }
+                if ("1".equals(StringUtils.trimToNull(line.getDelFlag())))
+                {
+                    continue;
+                }
+                DeliveryDetail d = mapZsDetailLine(line, zsLineAgg);
+                if (d.getDeliveryQuantity() == null || d.getDeliveryQuantity().compareTo(BigDecimal.ZERO) <= 0)
+                {
+                    continue;
+                }
+                details.add(d);
             }
         }
         vo.setDeliveryDetails(details);

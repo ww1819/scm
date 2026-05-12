@@ -83,20 +83,33 @@
 		.detail-table-scroll-outer .bootstrap-table .fixed-table-container {
 			min-width: 2600px;
 		}
-		.detail-table-scroll-outer #detail-table .fixed-table-header thead th[data-field="operation"] {
+		/* 序号、操作列冻结在左侧（位于产品编码前） */
+		.detail-table-scroll-outer #detail-table .fixed-table-header thead th[data-field="index"],
+		.detail-table-scroll-outer #detail-table .fixed-table-body tbody td[data-field="index"] {
 			position: sticky !important;
-			right: 0 !important;
-			top: 0 !important;
-			z-index: 105 !important;
-			background-color: #f5f5f5 !important;
-			box-shadow: -6px 0 10px rgba(0, 0, 0, 0.07);
+			left: 0 !important;
+			z-index: 32 !important;
+			background-color: #fff !important;
+			box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
 		}
+		.detail-table-scroll-outer #detail-table .fixed-table-header thead th[data-field="index"] {
+			background-color: #f5f5f5 !important;
+			z-index: 34 !important;
+		}
+		.detail-table-scroll-outer #detail-table.table-striped > tbody > tr:nth-child(odd) > td[data-field="index"] {
+			background-color: #f9f9f9 !important;
+		}
+		.detail-table-scroll-outer #detail-table .fixed-table-header thead th[data-field="operation"],
 		.detail-table-scroll-outer #detail-table .fixed-table-body tbody td[data-field="operation"] {
 			position: sticky !important;
-			right: 0 !important;
-			z-index: 25 !important;
+			left: 60px !important;
+			z-index: 31 !important;
 			background-color: #fff !important;
-			box-shadow: -6px 0 10px rgba(0, 0, 0, 0.06);
+			box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
+		}
+		.detail-table-scroll-outer #detail-table .fixed-table-header thead th[data-field="operation"] {
+			background-color: #f5f5f5 !important;
+			z-index: 33 !important;
 		}
 		.detail-table-scroll-outer #detail-table.table-striped > tbody > tr:nth-child(odd) > td[data-field="operation"] {
 			background-color: #f9f9f9 !important;
@@ -222,71 +235,8 @@
 			background-color: #fff !important;
 			margin-bottom: 0 !important;
 		}
-		/* 确保表格容器底部显示水平滚动条 */
-		#detail-table .fixed-table-body {
-			overflow-x: auto !important;
-			overflow-y: auto !important;
-			max-height: 450px;
-			position: relative !important;
-		}
-		/* 详细信息列表容器 - 作为滚动容器 */
-		.detail-table-wrapper {
-			overflow-x: auto !important;
-			overflow-y: auto !important;
-			width: 100%;
-			max-height: 500px;
-			position: relative !important;
-		}
-		/* 确保表头在滚动容器内固定 */
-		.detail-table-wrapper .fixed-table-header {
-			position: sticky !important;
-			top: 0 !important;
-			z-index: 100 !important;
-			background-color: #fff !important;
-		}
-		/* 确保表格底部滚动条可见 */
-		.bootstrap-table .fixed-table-container {
-			overflow-x: scroll !important;
-			overflow-y: scroll !important;
-		}
-		.bootstrap-table .fixed-table-body {
-			overflow-x: scroll !important;
-			overflow-y: scroll !important;
-		}
-		/* 固定列插件样式优化 */
-		/* 左侧固定列阴影 */
-		#detail-table .fixed-table-body .fixed-columns-left {
-			box-shadow: 2px 0 5px rgba(0,0,0,0.1) !important;
-		}
-		#detail-table .fixed-table-header .fixed-columns-left {
-			box-shadow: 2px 2px 5px rgba(0,0,0,0.1) !important;
-		}
-		/* 右侧固定列阴影 */
-		#detail-table .fixed-table-body .fixed-columns-right {
-			box-shadow: -2px 0 5px rgba(0,0,0,0.1) !important;
-		}
-		#detail-table .fixed-table-header .fixed-columns-right {
-			box-shadow: -2px 2px 5px rgba(0,0,0,0.1) !important;
-		}
-		/* 确保表格容器可以滚动 */
-		#detail-table .fixed-table-container {
-			position: relative !important;
-		}
-		/* 表体滚动区域 */
-		#detail-table .fixed-table-body {
-			overflow-y: auto !important;
-			overflow-x: auto !important;
-			max-height: 450px;
-		}
-		/* 表格容器在滚动容器内 */
-		.detail-table-wrapper .fixed-table-container {
-			overflow: visible !important;
-		}
-		.detail-table-wrapper .fixed-table-body {
-			overflow-x: auto !important;
-			overflow-y: auto !important;
-			max-height: 450px;
-		}
+		/* 横向滚动仅由 .detail-table-scroll-outer 承担，见文件末尾「明细表滚动覆盖」 */
+		/* 仅隐藏左侧固定列内的滚动条，避免双滚动条；主表区域保留滚动条 */
 		#detail-table .fixed-columns-left::-webkit-scrollbar,
 		.fixed-columns-left::-webkit-scrollbar {
 			display: none !important;
@@ -511,6 +461,19 @@
 			min-width: 100px;
 			padding: 8px 20px;
 		}
+		/* ========= 明细表滚动覆盖：横向条在外层底部，表体不限高 ========= */
+		.detail-table-scroll-outer #detail-table .fixed-table-body,
+		.detail-table-scroll-outer #detail-table .fixed-table-container,
+		.detail-table-scroll-outer .bootstrap-table .fixed-table-body,
+		.detail-table-scroll-outer .bootstrap-table .fixed-table-container {
+			overflow: visible !important;
+			max-height: none !important;
+			height: auto !important;
+		}
+		.detail-table-scroll-outer {
+			overflow-x: auto !important;
+			overflow-y: auto !important;
+		}
 	</style>
 </head>
 <body style="overflow: hidden;">
@@ -677,8 +640,8 @@
 	    var deliveryDetails = /*[[${delivery.deliveryDetails}]]*/ [];
 	    
 	    function deliveryDetailOperationHtml(rowIndex) {
-	        return '<a class="btn btn-xs btn-default" href="javascript:void(0)" onclick="copyDetailRowByIndex(this,' + rowIndex + ')" title="复制拆行（不同批号）" style="margin-right:6px;"><i class="fa fa-copy"></i></a>' +
-	            '<a class="btn-operation-delete" href="javascript:void(0)" onclick="deleteDetailRowByIndex(this,' + rowIndex + ')" title="删除该行明细"><i class="fa fa-trash"></i></a>';
+	        return '<a class="btn btn-xs btn-default" href="javascript:void(0)" onclick="copyDetailRowByIndex(this,' + rowIndex + ')" title="复制拆行（不同批号）" style="margin-right:4px;"><i class="fa fa-copy"></i> 复制</a>' +
+	            '<a class="btn-operation-delete" href="javascript:void(0)" onclick="deleteDetailRowByIndex(this,' + rowIndex + ')" title="删除该行明细"><i class="fa fa-trash"></i> 删除</a>';
 	    }
 	    function deliveryLineGroupKey(row) {
 	        if (!row) return '';
@@ -929,24 +892,20 @@
 	            }
 	        });
 	            
-	        // 方法3: 通过列数判断最后一列是否是操作列
+	        // 方法3: 仅填充 data-field=operation（操作列已移到产品编码前，不再使用「最后一列」推断）
 	        $('#detail-table tbody tr').each(function() {
 	            var $tr = $(this);
 	            var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : $tr.index();
-	            // 如果 rowIndex 无效，尝试从 tr 的 data-index 属性获取
 	            if (rowIndex === undefined || rowIndex === null) {
 	                rowIndex = $tr.attr('data-index');
 	                if (rowIndex === undefined) {
 	                    rowIndex = $tr.index();
 	                }
 	            }
-	            var $allCells = $tr.find('td');
-	            // 检查最后一列是否是操作列（通过列数判断，总共15列，最后一列是操作列）
-	            if ($allCells.length >= 15) {
-	                var $lastCell = $allCells.last();
+	            var $opCell = $tr.find('td[data-field="operation"]');
+	            if ($opCell.length > 0) {
 	                var btnHtml = deliveryDetailOperationHtml(rowIndex);
-	                $lastCell.html(btnHtml);
-	                console.log('Filled last cell for row:', rowIndex, 'Cell count:', $allCells.length, 'Cell:', $lastCell[0]); // 调试信息
+	                $opCell.html(btnHtml);
 	            }
 	        });
 	        
@@ -966,22 +925,19 @@
 	            $cell.html(btnHtml);
 	        });
 	        
-	        // 方法5: 直接通过表格的列索引填充（最可靠的方法）
-	        // 获取表格的所有行，通过列数判断最后一列
+	        // 方法5: 兜底填充所有带 data-field=operation 的单元格
 	        $('#detail-table').find('tbody tr').each(function() {
 	            var $tr = $(this);
-	            var $cells = $tr.find('td');
-	            // 如果列数 >= 15，最后一列应该是操作列
-	            if ($cells.length >= 15) {
-	                var $lastCell = $cells.last();
-	                var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : $tr.index();
-	                if (rowIndex === undefined || rowIndex === null) {
-	                    rowIndex = $tr.attr('data-index') || $tr.index();
-	                }
-	                var btnHtml = deliveryDetailOperationHtml(rowIndex);
-	                $lastCell.html(btnHtml);
-	                console.log('Filled last cell for row:', rowIndex, 'Cell count:', $cells.length); // 调试信息
+	            var $opCell = $tr.find('td[data-field="operation"]');
+	            if ($opCell.length === 0) {
+	                return;
 	            }
+	            var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : $tr.index();
+	            if (rowIndex === undefined || rowIndex === null) {
+	                rowIndex = $tr.attr('data-index') || $tr.index();
+	            }
+	            var btnHtml = deliveryDetailOperationHtml(rowIndex);
+	            $opCell.html(btnHtml);
 	        });
 	        
 	        console.log('fillOperationColumn completed'); // 调试信息
@@ -1062,6 +1018,14 @@
 	                width: 60,
 	                formatter: function(value, row, index) {
 	                    return index + 1;
+	                }
+            }, {
+                field: 'operation',
+                title: '操作',
+                align: 'center',
+                width: 130,
+                formatter: function(value, row, index) {
+	                    return deliveryDetailOperationHtml(index);
 	                }
             }, {
                 field: 'materialCode',
@@ -1262,14 +1226,6 @@
 	                width: 150,
 	                formatter: function(value, row, index) {
 	                    return value || '-';
-	                }
-	            }, {
-	                field: 'operation',
-	                title: '<i class="fa fa-cog"></i> 操作',
-	                align: 'center',
-	                width: 115,
-	                formatter: function(value, row, index) {
-	                    return deliveryDetailOperationHtml(index);
 	                }
 	            }]
 	        };
@@ -1843,6 +1799,9 @@
 	                                for (var i = 0; i < order.orderDetails.length; i++) {
 	                                    var detail = order.orderDetails[i];
 	                                    var cap = scmOrderDetailDeliveryCap(detail);
+	                                    if (isNaN(cap) || cap <= 0) {
+	                                        continue;
+	                                    }
 	                                    var price = parseFloat(detail.purchasePrice) || 0;
 	                                    var amt = price * cap;
 	                                    if (isNaN(amt)) {
@@ -1872,6 +1831,9 @@
 	                                        registerNo: detail.registerNo || ''
 	                                    };
 	                                    detailData.push(deliveryDetail);
+	                                }
+	                                if (order.orderDetails.length > 0 && detailData.length === 0) {
+	                                    $.modal.msgWarning('该订单明细可配送数量均为0，未带入任何行');
 	                                }
 	                                // 清空现有数据并加载新数据
 	                                $('#detail-table').bootstrapTable('load', detailData);
