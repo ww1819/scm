@@ -1,6 +1,8 @@
 package com.scm.web.controller.delivery;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -18,6 +20,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.scm.common.annotation.Log;
 import com.scm.common.core.controller.BaseController;
+import com.scm.common.exception.ServiceException;
+import com.scm.common.utils.StringUtils;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.enums.BusinessType;
@@ -29,6 +33,7 @@ import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.Order;
 import com.scm.system.domain.Supplier;
 import com.scm.system.domain.ZsTpOrder;
+import com.scm.system.domain.vo.DeliveryPrintSheetVo;
 import com.scm.system.service.IDeliveryService;
 import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.IHospitalService;
@@ -387,6 +392,151 @@ public class DeliveryController extends BaseController
         mmap.put("printInputCode", printInputCode);
 
         return prefix + "/print";
+    }
+
+    /** 单次「打印样式」导出最多张数，防止一次打开过多页面拖垮浏览器 */
+    private static final int PRINT_EXPORT_MAX_SHEETS = 300;
+
+    /**
+     * 按当前配送单打印页样式批量导出（HTML，新窗口打开后可打印或另存为 PDF）。
+     * exportMode=selected 时须传 ids；exportMode=all 时按 delivery 查询条件导出全部（不分页）。
+     */
+    @RequiresPermissions("delivery:delivery:export")
+    @Log(title = "配送单打印样式导出", businessType = BusinessType.EXPORT)
+    @GetMapping("/printExport")
+    public String printExport(@RequestParam("exportMode") String exportMode,
+        @RequestParam(value = "ids", required = false) String ids,
+        Delivery delivery,
+        ModelMap mmap)
+    {
+        List<DeliveryPrintSheetVo> sheets = new ArrayList<>();
+        if ("selected".equalsIgnoreCase(StringUtils.trim(exportMode)))
+        {
+            if (StringUtils.isEmpty(ids))
+            {
+                throw new ServiceException("请先勾选要导出的配送单");
+            }
+            LinkedHashSet<Long> idSet = new LinkedHashSet<>();
+            for (String p : ids.split(","))
+            {
+                String t = StringUtils.trim(p);
+                if (StringUtils.isEmpty(t))
+                {
+                    continue;
+                }
+                try
+                {
+                    idSet.add(Long.parseLong(t));
+                }
+                catch (NumberFormatException ex)
+                {
+                    throw new ServiceException("配送单ID格式不正确：" + t);
+                }
+            }
+            if (idSet.isEmpty())
+            {
+                throw new ServiceException("请先勾选要导出的配送单");
+            }
+            for (Long deliveryId : idSet)
+            {
+                DeliveryPrintSheetVo sheet = buildDeliveryPrintSheet(deliveryId);
+                if (sheet != null)
+                {
+                    sheets.add(sheet);
+                }
+            }
+            if (sheets.isEmpty())
+            {
+                throw new ServiceException("未找到可导出的配送单，请确认已勾选且有权访问");
+            }
+        }
+        else if ("all".equalsIgnoreCase(StringUtils.trim(exportMode)))
+        {
+            clearPage();
+            List<Delivery> rows = deliveryService.selectDeliveryList(delivery);
+            LinkedHashSet<Long> seen = new LinkedHashSet<>();
+            if (rows != null)
+            {
+                for (Delivery row : rows)
+                {
+                    if (row == null || row.getDeliveryId() == null)
+                    {
+                        continue;
+                    }
+                    if (!seen.add(row.getDeliveryId()))
+                    {
+                        continue;
+                    }
+                    DeliveryPrintSheetVo sheet = buildDeliveryPrintSheet(row.getDeliveryId());
+                    if (sheet != null)
+                    {
+                        sheets.add(sheet);
+                    }
+                }
+            }
+            if (sheets.isEmpty())
+            {
+                throw new ServiceException("当前搜索条件下没有可导出的配送单");
+            }
+        }
+        else
+        {
+            throw new ServiceException("无效的导出方式");
+        }
+        if (sheets.size() > PRINT_EXPORT_MAX_SHEETS)
+        {
+            throw new ServiceException("单次最多导出 " + PRINT_EXPORT_MAX_SHEETS + " 张配送单，请缩小筛选范围或分批导出");
+        }
+        mmap.put("sheets", sheets);
+        return prefix + "/print-export";
+    }
+
+    private DeliveryPrintSheetVo buildDeliveryPrintSheet(Long deliveryId)
+    {
+        try
+        {
+            Delivery delivery = deliveryService.selectDeliveryById(deliveryId);
+            if (delivery == null)
+            {
+                return null;
+            }
+            List<DeliveryDetail> details = delivery.getDeliveryDetails();
+            DeliveryPrintSheetVo vo = new DeliveryPrintSheetVo();
+            vo.setDelivery(delivery);
+            vo.setDeliveryDetails(details);
+
+            int totalQuantity = 0;
+            BigDecimal printTotalAmount = BigDecimal.ZERO;
+            if (details != null && !details.isEmpty())
+            {
+                for (DeliveryDetail detail : details)
+                {
+                    if (detail.getDeliveryQuantity() != null)
+                    {
+                        totalQuantity += detail.getDeliveryQuantity().intValue();
+                    }
+                    if (detail.getAmount() != null)
+                    {
+                        printTotalAmount = printTotalAmount.add(detail.getAmount());
+                    }
+                }
+            }
+            vo.setTotalQuantity(totalQuantity);
+            vo.setPrintTotalAmount(printTotalAmount);
+
+            String printInputCode = "";
+            String deliveryNo = delivery.getDeliveryNo();
+            if (deliveryNo != null && !deliveryNo.isEmpty())
+            {
+                printInputCode = deliveryNo.length() > 4 ? deliveryNo.substring(deliveryNo.length() - 4) : deliveryNo;
+            }
+            vo.setPrintInputCode(printInputCode);
+            return vo;
+        }
+        catch (ServiceException ex)
+        {
+            return null;
+        }
     }
 
     /**

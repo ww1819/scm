@@ -276,6 +276,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         assertSupplierHospitalSubmit(delivery);
         enrichDeliveryDetailPackCoefficients(delivery);
         validateDeliveryDetailPackQuantities(delivery.getDeliveryDetails());
+        validateDeliveryRefLineQuantities(delivery, null);
         if (StringUtils.isEmpty(delivery.getDeliveryStatus()))
         {
             delivery.setDeliveryStatus("0"); // 默认未审核
@@ -412,6 +413,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         assertSupplierHospitalSubmit(delivery);
         enrichDeliveryDetailPackCoefficients(delivery);
         validateDeliveryDetailPackQuantities(delivery.getDeliveryDetails());
+        validateDeliveryRefLineQuantities(delivery, delivery.getDeliveryId());
 
         // 如果修改了明细，重新计算配送金额
         if (delivery.getDeliveryDetails() != null && !delivery.getDeliveryDetails().isEmpty())
@@ -545,10 +547,69 @@ public class DeliveryServiceImpl implements IDeliveryService
         Order order = orderMapper.selectOrderById(orderId);
         if (order != null)
         {
+            assertOrderViewScopeForDelivery(order);
             List<OrderDetail> details = orderDetailMapper.selectOrderDetailListByOrderId(orderId);
+            enrichScmOrderDetailsDeliveryQty(details, orderId);
             order.setOrderDetails(details);
         }
         return order;
+    }
+
+    /** 与 {@link com.scm.system.service.impl.OrderServiceImpl#assertOrderViewScope} 一致，供引用订单生成配送单 */
+    private void assertOrderViewScopeForDelivery(Order order)
+    {
+        if (order == null)
+        {
+            return;
+        }
+        Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());
+        if (hospitalCtx != null && order.getHospitalId() != null && !hospitalCtx.equals(order.getHospitalId()))
+        {
+            throw new ServiceException("无权查看其他医院订单");
+        }
+        Long supplierCtx = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (supplierCtx != null && order.getSupplierId() != null && !supplierCtx.equals(order.getSupplierId()))
+        {
+            throw new ServiceException("无权查看其他供应商订单");
+        }
+    }
+
+    /**
+     * 按配送关联汇总已审核/待审核/已拒绝数量，计算可再申请配送数量（与订单明细页一致）
+     */
+    private void enrichScmOrderDetailsDeliveryQty(List<OrderDetail> list, Long orderId)
+    {
+        if (list == null || list.isEmpty() || orderId == null)
+        {
+            return;
+        }
+        List<OrderLineDeliveryQtyVo> agg = orderDeliveryTraceMapper.selectScmOrderLineDeliveryQtyByOrderId(orderId);
+        Map<String, OrderLineDeliveryQtyVo> map = new HashMap<>();
+        for (OrderLineDeliveryQtyVo row : agg)
+        {
+            if (row != null && StringUtils.isNotEmpty(row.getLineKey()))
+            {
+                map.put(row.getLineKey(), row);
+            }
+        }
+        for (OrderDetail od : list)
+        {
+            String key = od.getDetailId() == null ? null : String.valueOf(od.getDetailId());
+            OrderLineDeliveryQtyVo q = key == null ? null : map.get(key);
+            BigDecimal oq = od.getOrderQuantity() == null ? BigDecimal.ZERO
+                : BigDecimal.valueOf(od.getOrderQuantity().longValue());
+            BigDecimal a = (q != null && q.getAuditedQty() != null) ? q.getAuditedQty() : BigDecimal.ZERO;
+            BigDecimal p = (q != null && q.getPendingQty() != null) ? q.getPendingQty() : BigDecimal.ZERO;
+            BigDecimal rj = (q != null && q.getRejectedQty() != null) ? q.getRejectedQty() : BigDecimal.ZERO;
+            od.setDeliveredAuditedQty(a);
+            od.setDeliveredPendingAuditQty(p);
+            BigDecimal und = oq.subtract(a).subtract(p).subtract(rj);
+            if (und.compareTo(BigDecimal.ZERO) < 0)
+            {
+                und = BigDecimal.ZERO;
+            }
+            od.setUndeliveredQty(und);
+        }
     }
 
     @Override
@@ -817,19 +878,31 @@ public class DeliveryServiceImpl implements IDeliveryService
         vo.setHospitalId(parseLongOrNull(head.getScmHospitalId()));
         vo.setSpdSupplierId(StringUtils.trimToEmpty(head.getSupno()));
 
+        Map<String, OrderLineDeliveryQtyVo> zsLineAgg = new HashMap<>();
+        if (lines != null && !lines.isEmpty())
+        {
+            List<OrderLineDeliveryQtyVo> aggRows = orderDeliveryTraceMapper.selectZsOrderLineDeliveryQtyByZsOrderId(zsOrderId);
+            for (OrderLineDeliveryQtyVo row : aggRows)
+            {
+                if (row != null && StringUtils.isNotEmpty(row.getLineKey()))
+                {
+                    zsLineAgg.put(row.getLineKey(), row);
+                }
+            }
+        }
         List<DeliveryDetail> details = new ArrayList<>();
         if (lines != null)
         {
             for (ZsTpOrderDetail line : lines)
             {
-                details.add(mapZsDetailLine(line));
+                details.add(mapZsDetailLine(line, zsLineAgg));
             }
         }
         vo.setDeliveryDetails(details);
         return vo;
     }
 
-    private DeliveryDetail mapZsDetailLine(ZsTpOrderDetail line)
+    private DeliveryDetail mapZsDetailLine(ZsTpOrderDetail line, Map<String, OrderLineDeliveryQtyVo> zsLineAgg)
     {
         DeliveryDetail d = new DeliveryDetail();
         d.setMaterialId(0L);
@@ -841,18 +914,28 @@ public class DeliveryServiceImpl implements IDeliveryService
         d.setModel(StringUtils.trimToEmpty(line.getBzl()));
         d.setUnit(StringUtils.trimToEmpty(line.getDw()));
         BigDecimal sl = line.getSl() != null ? line.getSl() : BigDecimal.ZERO;
-        BigDecimal dj = line.getDj() != null ? line.getDj() : BigDecimal.ZERO;
-        BigDecimal je = line.getJe();
-        if (je == null)
+        d.setRefZsLineQty(sl);
+        OrderLineDeliveryQtyVo q = line != null && StringUtils.isNotEmpty(line.getId()) ? zsLineAgg.get(line.getId()) : null;
+        BigDecimal a = (q != null && q.getAuditedQty() != null) ? q.getAuditedQty() : BigDecimal.ZERO;
+        BigDecimal p = (q != null && q.getPendingQty() != null) ? q.getPendingQty() : BigDecimal.ZERO;
+        BigDecimal rj = (q != null && q.getRejectedQty() != null) ? q.getRejectedQty() : BigDecimal.ZERO;
+        BigDecimal available = sl.subtract(a).subtract(p).subtract(rj);
+        if (available.compareTo(BigDecimal.ZERO) < 0)
         {
-            je = sl.multiply(dj).setScale(2, RoundingMode.HALF_UP);
+            available = BigDecimal.ZERO;
+        }
+        BigDecimal dj = line.getDj() != null ? line.getDj() : BigDecimal.ZERO;
+        BigDecimal je;
+        if (available.compareTo(sl) == 0 && line.getJe() != null)
+        {
+            je = line.getJe().setScale(2, RoundingMode.HALF_UP);
         }
         else
         {
-            je = je.setScale(2, RoundingMode.HALF_UP);
+            je = available.multiply(dj).setScale(2, RoundingMode.HALF_UP);
         }
-        d.setDeliveryQuantity(sl);
-        d.setRemainingQuantity(sl);
+        d.setDeliveryQuantity(available);
+        d.setRemainingQuantity(available);
         d.setPrice(dj.setScale(4, RoundingMode.HALF_UP));
         d.setAmount(je);
         d.setManufacturer(StringUtils.trimToEmpty(line.getSccj()));
@@ -864,7 +947,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         {
             d.setPackCoefficient(line.getDsb());
         }
-        d.setLineApplyQty(sl);
+        d.setLineApplyQty(available);
         return d;
     }
 
@@ -964,6 +1047,189 @@ public class DeliveryServiceImpl implements IDeliveryService
                     qty.stripTrailingZeros().toPlainString()));
             }
             row++;
+        }
+    }
+
+    /**
+     * 保存前校验：引用本系统订单或第三方订单时，各订单行上配送数量合计不得超过「订货量 − 已占用（已审核/待审核/已拒绝）」；
+     * 修改配送单时排除本单历史占用后再比上限，避免编辑未审核单时误报。
+     */
+    private void validateDeliveryRefLineQuantities(Delivery delivery, Long excludeDeliveryId)
+    {
+        if (delivery == null || delivery.getDeliveryDetails() == null || delivery.getDeliveryDetails().isEmpty())
+        {
+            return;
+        }
+        int row = 1;
+        for (DeliveryDetail dd : delivery.getDeliveryDetails())
+        {
+            if (dd == null)
+            {
+                row++;
+                continue;
+            }
+            if (dd.getDeliveryQuantity() != null && dd.getDeliveryQuantity().compareTo(BigDecimal.ZERO) < 0)
+            {
+                throw new ServiceException(String.format("第%d行：配送数量不能为负数", row));
+            }
+            row++;
+        }
+        if (StringUtils.isNotEmpty(delivery.getZsOrderId()))
+        {
+            validateZsTpDeliveryLineApplyCaps(delivery, excludeDeliveryId);
+            return;
+        }
+        if (delivery.getOrderId() != null)
+        {
+            validateScmOrderDeliveryLineApplyCaps(delivery, excludeDeliveryId);
+        }
+    }
+
+    private static BigDecimal lineRemainingApplyCap(BigDecimal lineOrderQty, OrderLineDeliveryQtyVo q)
+    {
+        BigDecimal oq = lineOrderQty != null ? lineOrderQty : BigDecimal.ZERO;
+        BigDecimal a = (q != null && q.getAuditedQty() != null) ? q.getAuditedQty() : BigDecimal.ZERO;
+        BigDecimal p = (q != null && q.getPendingQty() != null) ? q.getPendingQty() : BigDecimal.ZERO;
+        BigDecimal rj = (q != null && q.getRejectedQty() != null) ? q.getRejectedQty() : BigDecimal.ZERO;
+        BigDecimal und = oq.subtract(a).subtract(p).subtract(rj);
+        if (und.compareTo(BigDecimal.ZERO) < 0)
+        {
+            return BigDecimal.ZERO;
+        }
+        return und;
+    }
+
+    private static Map<String, OrderLineDeliveryQtyVo> toLineQtyMap(List<OrderLineDeliveryQtyVo> agg)
+    {
+        Map<String, OrderLineDeliveryQtyVo> map = new HashMap<>();
+        if (agg == null)
+        {
+            return map;
+        }
+        for (OrderLineDeliveryQtyVo row : agg)
+        {
+            if (row != null && StringUtils.isNotEmpty(row.getLineKey()))
+            {
+                map.put(row.getLineKey(), row);
+            }
+        }
+        return map;
+    }
+
+    private void validateScmOrderDeliveryLineApplyCaps(Delivery delivery, Long excludeDeliveryId)
+    {
+        Long orderId = delivery.getOrderId();
+        if (orderId == null)
+        {
+            return;
+        }
+        Map<Long, BigDecimal> sumByOrderDetail = new HashMap<>();
+        for (DeliveryDetail dd : delivery.getDeliveryDetails())
+        {
+            if (dd == null || dd.getOrderDetailId() == null)
+            {
+                continue;
+            }
+            BigDecimal q = dd.getDeliveryQuantity() != null ? dd.getDeliveryQuantity() : BigDecimal.ZERO;
+            sumByOrderDetail.merge(dd.getOrderDetailId(), q, BigDecimal::add);
+        }
+        if (sumByOrderDetail.isEmpty())
+        {
+            return;
+        }
+        List<OrderLineDeliveryQtyVo> agg = excludeDeliveryId == null
+            ? orderDeliveryTraceMapper.selectScmOrderLineDeliveryQtyByOrderId(orderId)
+            : orderDeliveryTraceMapper.selectScmOrderLineDeliveryQtyByOrderIdExcludeDelivery(orderId, excludeDeliveryId);
+        Map<String, OrderLineDeliveryQtyVo> aggMap = toLineQtyMap(agg);
+        for (Map.Entry<Long, BigDecimal> e : sumByOrderDetail.entrySet())
+        {
+            Long odId = e.getKey();
+            BigDecimal sumQ = e.getValue();
+            OrderDetail od = orderDetailMapper.selectOrderDetailById(odId);
+            if (od == null)
+            {
+                throw new ServiceException("订单明细不存在，订单明细ID：" + odId);
+            }
+            if (od.getOrderId() == null || !od.getOrderId().equals(orderId))
+            {
+                throw new ServiceException("配送明细与订单不匹配（物料：" + StringUtils.trimToEmpty(od.getMaterialName()) + "）");
+            }
+            BigDecimal oq = od.getOrderQuantity() == null ? BigDecimal.ZERO
+                : BigDecimal.valueOf(od.getOrderQuantity().longValue());
+            OrderLineDeliveryQtyVo q = aggMap.get(String.valueOf(odId));
+            BigDecimal cap = lineRemainingApplyCap(oq, q);
+            if (sumQ.compareTo(cap) > 0)
+            {
+                throw new ServiceException(String.format("订单可配送数量超限【%s %s】：本单合计 %s，当前最多可配送 %s",
+                    StringUtils.trimToEmpty(od.getMaterialCode()),
+                    StringUtils.trimToEmpty(od.getMaterialName()),
+                    sumQ.stripTrailingZeros().toPlainString(),
+                    cap.stripTrailingZeros().toPlainString()));
+            }
+        }
+    }
+
+    private void validateZsTpDeliveryLineApplyCaps(Delivery delivery, Long excludeDeliveryId)
+    {
+        String zsOrderId = delivery.getZsOrderId();
+        if (StringUtils.isEmpty(zsOrderId))
+        {
+            return;
+        }
+        Map<String, BigDecimal> sumByZsLine = new HashMap<>();
+        for (DeliveryDetail dd : delivery.getDeliveryDetails())
+        {
+            if (dd == null || StringUtils.isEmpty(dd.getZsOrderDetailId()))
+            {
+                continue;
+            }
+            BigDecimal q = dd.getDeliveryQuantity() != null ? dd.getDeliveryQuantity() : BigDecimal.ZERO;
+            sumByZsLine.merge(dd.getZsOrderDetailId(), q, BigDecimal::add);
+        }
+        if (sumByZsLine.isEmpty())
+        {
+            return;
+        }
+        List<ZsTpOrderDetail> zsLines = zsTpOrderMapper.selectZsTpOrderDetailListByOrderId(zsOrderId);
+        Map<String, ZsTpOrderDetail> lineById = new HashMap<>();
+        if (zsLines != null)
+        {
+            for (ZsTpOrderDetail z : zsLines)
+            {
+                if (z != null && StringUtils.isNotEmpty(z.getId()))
+                {
+                    lineById.put(z.getId(), z);
+                }
+            }
+        }
+        List<OrderLineDeliveryQtyVo> agg = excludeDeliveryId == null
+            ? orderDeliveryTraceMapper.selectZsOrderLineDeliveryQtyByZsOrderId(zsOrderId)
+            : orderDeliveryTraceMapper.selectZsOrderLineDeliveryQtyByZsOrderIdExcludeDelivery(zsOrderId, excludeDeliveryId);
+        Map<String, OrderLineDeliveryQtyVo> aggMap = toLineQtyMap(agg);
+        for (Map.Entry<String, BigDecimal> e : sumByZsLine.entrySet())
+        {
+            String lineId = e.getKey();
+            BigDecimal sumQ = e.getValue();
+            ZsTpOrderDetail zline = lineById.get(lineId);
+            if (zline == null)
+            {
+                throw new ServiceException("第三方订单明细不存在，行ID：" + lineId);
+            }
+            if (StringUtils.isNotEmpty(zline.getOrderId()) && !zsOrderId.equals(zline.getOrderId()))
+            {
+                throw new ServiceException("配送明细与第三方订单不匹配（物料：" + StringUtils.trimToEmpty(zline.getName()) + "）");
+            }
+            BigDecimal oq = zline.getSl() != null ? zline.getSl() : BigDecimal.ZERO;
+            OrderLineDeliveryQtyVo q = aggMap.get(lineId);
+            BigDecimal cap = lineRemainingApplyCap(oq, q);
+            if (sumQ.compareTo(cap) > 0)
+            {
+                throw new ServiceException(String.format("第三方订单可配送数量超限【%s %s】：本单合计 %s，当前最多可配送 %s",
+                    StringUtils.trimToEmpty(zline.getCode()),
+                    StringUtils.trimToEmpty(zline.getName()),
+                    sumQ.stripTrailingZeros().toPlainString(),
+                    cap.stripTrailingZeros().toPlainString()));
+            }
         }
     }
 

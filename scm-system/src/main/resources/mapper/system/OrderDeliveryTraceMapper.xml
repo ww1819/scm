@@ -79,6 +79,21 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         group by r.order_detail_id
     </select>
 
+    <select id="selectScmOrderLineDeliveryQtyByOrderIdExcludeDelivery" resultMap="OrderLineQtyResult">
+        select r.order_detail_id as line_key,
+               sum(case when d.audit_status = '1' then ifnull(dd.delivery_quantity, 0) else 0 end) as audited_qty,
+               sum(case when d.audit_status is null or d.audit_status = '0' then ifnull(dd.delivery_quantity, 0) else 0 end) as pending_qty,
+               sum(case when d.audit_status = '2' then ifnull(dd.delivery_quantity, 0) else 0 end) as rejected_qty
+        from scm_order_detail_delivery_rel r
+        inner join scm_delivery_detail dd on dd.detail_id = r.delivery_detail_id
+        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
+        where r.order_id = cast(#{orderId} as char)
+        <if test="excludeDeliveryId != null">
+          and d.delivery_id != #{excludeDeliveryId}
+        </if>
+        group by r.order_detail_id
+    </select>
+
     <select id="selectZsOrderLineDeliveryQtyByZsOrderId" parameterType="String" resultMap="OrderLineQtyResult">
         select r.order_detail_id as line_key,
                sum(case when d.audit_status = '1' then ifnull(dd.delivery_quantity, 0) else 0 end) as audited_qty,
@@ -88,6 +103,21 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         inner join scm_delivery_detail dd on dd.detail_id = r.delivery_detail_id
         inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
         where r.order_id = #{zsOrderId}
+        group by r.order_detail_id
+    </select>
+
+    <select id="selectZsOrderLineDeliveryQtyByZsOrderIdExcludeDelivery" resultMap="OrderLineQtyResult">
+        select r.order_detail_id as line_key,
+               sum(case when d.audit_status = '1' then ifnull(dd.delivery_quantity, 0) else 0 end) as audited_qty,
+               sum(case when d.audit_status is null or d.audit_status = '0' then ifnull(dd.delivery_quantity, 0) else 0 end) as pending_qty,
+               sum(case when d.audit_status = '2' then ifnull(dd.delivery_quantity, 0) else 0 end) as rejected_qty
+        from zs_tp_order_detail_delivery_rel r
+        inner join scm_delivery_detail dd on dd.detail_id = r.delivery_detail_id
+        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
+        where r.order_id = #{zsOrderId}
+        <if test="excludeDeliveryId != null">
+          and d.delivery_id != #{excludeDeliveryId}
+        </if>
         group by r.order_detail_id
     </select>
 

@@ -1748,6 +1748,27 @@
 	        $('#detail-table').bootstrapTable('load', []);
 	    }
 	    
+	    /** 本系统订单行：可再申请配送数量（已扣已审核配送、待审核配送、已拒绝） */
+	    function scmOrderDetailDeliveryCap(detail) {
+	        if (!detail) {
+	            return 0;
+	        }
+	        if (detail.undeliveredQty != null && detail.undeliveredQty !== '') {
+	            var u = parseFloat(detail.undeliveredQty);
+	            if (!isNaN(u) && u >= 0) {
+	                return u;
+	            }
+	        }
+	        var oq = detail.orderQuantity != null ? parseFloat(detail.orderQuantity) : 0;
+	        var a = detail.deliveredAuditedQty != null ? parseFloat(detail.deliveredAuditedQty) : 0;
+	        var p = detail.deliveredPendingAuditQty != null ? parseFloat(detail.deliveredPendingAuditQty) : 0;
+	        var cap = oq - a - p;
+	        if (isNaN(cap) || cap < 0) {
+	            return 0;
+	        }
+	        return cap;
+	    }
+	    
 	    // 引入订单 - 打开订单选择对话框
 	    function importOrder() {
 	        var options = {
@@ -1821,6 +1842,12 @@
 	                                var detailData = [];
 	                                for (var i = 0; i < order.orderDetails.length; i++) {
 	                                    var detail = order.orderDetails[i];
+	                                    var cap = scmOrderDetailDeliveryCap(detail);
+	                                    var price = parseFloat(detail.purchasePrice) || 0;
+	                                    var amt = price * cap;
+	                                    if (isNaN(amt)) {
+	                                        amt = 0;
+	                                    }
 	                                    var deliveryDetail = {
 	                                        orderDetailId: detail.detailId || null,
 	                                        materialId: detail.materialId || null,
@@ -1829,11 +1856,12 @@
 	                                        specification: detail.specification || '',
 	                                        model: detail.model || '',
 	                                        unit: detail.unit || '',
-	                                        remainingQuantity: detail.remainingQuantity || detail.orderQuantity || 0,
-	                                        deliveryQuantity: detail.remainingQuantity || detail.orderQuantity || 0,
-	                                        lineApplyQty: parseFloat(detail.orderQuantity != null ? detail.orderQuantity : 0),
+	                                        refOrderLineQty: detail.orderQuantity != null ? parseFloat(detail.orderQuantity) : null,
+	                                        remainingQuantity: cap,
+	                                        deliveryQuantity: cap,
+	                                        lineApplyQty: cap,
 	                                        price: detail.purchasePrice || 0,
-	                                        amount: detail.amount || (detail.purchasePrice * (detail.remainingQuantity || detail.orderQuantity || 0)) || 0,
+	                                        amount: amt,
 	                                        packCoefficient: detail.packCoefficient != null ? detail.packCoefficient : null,
 	                                        batchNo: '',
 	                                        mainBarcode: '',
