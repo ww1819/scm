@@ -24,6 +24,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.util.RegionUtil;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import com.scm.common.core.text.Convert;
 import com.scm.common.utils.StringUtils;
@@ -34,7 +35,7 @@ import com.scm.system.domain.vo.DeliveryPrintSheetVo;
 /**
  * 将配送单按「物资配送单」打印版式写入 Excel（每单一个 Sheet）。
  * <p>
- * 版式与边框约定：信息区、页脚数值区为「仅底边框」下划线样式；明细表头至合计行为全框线；
+ * 版式与边框约定：信息区标签与取值无表框；明细表头至合计行为全框线；合计/合计大写及页脚四块为全框线；
  * 标题行无表框；不生成条码图片（仅保留「输入码」文字）。
  */
 public final class DeliveryPrintStyleExcelBuilder
@@ -122,7 +123,9 @@ public final class DeliveryPrintStyleExcelBuilder
 
         r = metaLine(sh, r, "配送商：", nz(d.getSupplierName()), "医院：", nz(d.getHospitalName()), "配送单号：", nz(d.getDeliveryNo()), st);
         r = metaLine(sh, r, "配送地址：", nz(d.getDeliveryAddress()), "供应商：", nz(d.getSupplierName()), "仓库：", nz(d.getWarehouse()), st);
+        int remarkRowIdx = r;
         r = metaLine(sh, r, "金额：", fmtMoney(vo.getPrintTotalAmount()), "发票：", nz(d.getInvoiceNo()), "备注：", nz(d.getRemark()), st);
+        setMetaRemarkRowHeight(sh, remarkRowIdx, d.getRemark());
 
         sh.createRow(r++);
 
@@ -175,18 +178,63 @@ public final class DeliveryPrintStyleExcelBuilder
             ? Convert.digitUppercase(vo.getPrintTotalAmount().setScale(2, RoundingMode.HALF_UP).doubleValue())
             : "零元整";
         setStr(sh, sr, 7, "合计大写金额：" + upper, st.borderLeft);
+        applyThinBorderAroundRegion(sh, sr, 0, 3);
+        applyThinBorderAroundRegion(sh, sr, 4, 4);
+        applyThinBorderAroundRegion(sh, sr, 5, 5);
+        applyThinBorderAroundRegion(sh, sr, 6, 6);
+        applyThinBorderAroundRegion(sh, sr, 7, 11);
 
         int fr = r++;
         Row footRow = sh.createRow(fr);
         footRow.setHeightInPoints(20);
         merge(sh, fr, fr, 0, 2);
-        setStr(sh, fr, 0, "制单日期：" + fmtDate(d.getCreateTime()), st.footer);
+        setStr(sh, fr, 0, "制单日期：" + fmtDate(d.getCreateTime()), st.footerFull);
         merge(sh, fr, fr, 3, 5);
-        setStr(sh, fr, 3, "制单人：" + nz(d.getCreateBy()), st.footer);
+        setStr(sh, fr, 3, "制单人：" + nz(d.getCreateBy()), st.footerFull);
         merge(sh, fr, fr, 6, 8);
-        setStr(sh, fr, 6, "签收人：______________________________", st.footer);
+        setStr(sh, fr, 6, "签收人：______________________________", st.footerFull);
         merge(sh, fr, fr, 9, 11);
-        setStr(sh, fr, 9, "签收日期：______________________________", st.footer);
+        setStr(sh, fr, 9, "签收日期：______________________________", st.footerFull);
+        applyThinBorderAroundRegion(sh, fr, 0, 2);
+        applyThinBorderAroundRegion(sh, fr, 3, 5);
+        applyThinBorderAroundRegion(sh, fr, 6, 8);
+        applyThinBorderAroundRegion(sh, fr, 9, 11);
+    }
+
+    private static void applyThinBorderAroundRegion(Sheet sh, int row, int c1, int c2)
+    {
+        CellRangeAddress reg = new CellRangeAddress(row, row, c1, c2);
+        RegionUtil.setBorderTop(BorderStyle.THIN, reg, sh);
+        RegionUtil.setBorderBottom(BorderStyle.THIN, reg, sh);
+        RegionUtil.setBorderLeft(BorderStyle.THIN, reg, sh);
+        RegionUtil.setBorderRight(BorderStyle.THIN, reg, sh);
+    }
+
+    /**
+     * 含「备注」的信息行：按备注换行与字数适当增高行高（与 metaValue 自动换行一致）。
+     */
+    private static void setMetaRemarkRowHeight(Sheet sh, int rowIdx, String remark)
+    {
+        Row row = sh.getRow(rowIdx);
+        if (row == null)
+        {
+            return;
+        }
+        if (StringUtils.isEmpty(StringUtils.trimToNull(remark)))
+        {
+            row.setHeightInPoints(18f);
+            return;
+        }
+        String t = remark.replace("\r\n", "\n").replace('\r', '\n');
+        int approxCharsPerLine = 26;
+        int displayLines = 0;
+        for (String seg : t.split("\n", -1))
+        {
+            int len = seg.length();
+            displayLines += Math.max(1, (len + approxCharsPerLine - 1) / approxCharsPerLine);
+        }
+        float h = Math.min(200f, Math.max(18f, 6f + displayLines * 13.5f));
+        row.setHeightInPoints(h);
     }
 
     private static int metaLine(Sheet sh, int r, String l1, String v1, String l2, String v2, String l3, String v3, Styles st)
@@ -336,7 +384,7 @@ public final class DeliveryPrintStyleExcelBuilder
     {
         /** 信息区标签：无框线、加粗 */
         final CellStyle metaLabel;
-        /** 信息区取值：仅底边框（下划线） */
+        /** 信息区取值：无框线（无底边框下划线） */
         final CellStyle metaValue;
         /** 标题行左侧留白 */
         final CellStyle plain;
@@ -353,8 +401,8 @@ public final class DeliveryPrintStyleExcelBuilder
         final CellStyle borderNum;
         final CellStyle borderNumInt;
         final CellStyle date;
-        /** 页脚：仅底边框 */
-        final CellStyle footer;
+        /** 页脚：四边细框线 */
+        final CellStyle footerFull;
 
         Styles(Workbook wb)
         {
@@ -374,7 +422,6 @@ public final class DeliveryPrintStyleExcelBuilder
             metaValue.setWrapText(true);
             metaValue.setAlignment(HorizontalAlignment.LEFT);
             clearBorders(metaValue);
-            metaValue.setBorderBottom(BorderStyle.THIN);
 
             plain = wb.createCellStyle();
             clearBorders(plain);
@@ -431,11 +478,10 @@ public final class DeliveryPrintStyleExcelBuilder
             date.setAlignment(HorizontalAlignment.CENTER);
             date.setDataFormat(df.getFormat("yyyy/mm/dd"));
 
-            footer = wb.createCellStyle();
-            footer.setVerticalAlignment(VerticalAlignment.CENTER);
-            footer.setWrapText(true);
-            clearBorders(footer);
-            footer.setBorderBottom(BorderStyle.THIN);
+            footerFull = thinAll(wb);
+            footerFull.setVerticalAlignment(VerticalAlignment.CENTER);
+            footerFull.setWrapText(true);
+            footerFull.setAlignment(HorizontalAlignment.LEFT);
         }
 
         private static void clearBorders(CellStyle s)
