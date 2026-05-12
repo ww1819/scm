@@ -147,6 +147,18 @@ CALL add_table_column('scm_delivery_detail', 'aux_barcode', 'varchar(128)', '辅
 /
 CALL add_table_column('scm_delivery_detail', 'pack_coefficient', 'decimal(18,6)', '打包系数', NULL);
 /
+CALL add_table_column('scm_delivery_detail', 'manufacturer_id', 'bigint(20)', '生产厂家ID', NULL);
+/
+CALL add_table_column('scm_delivery_detail', 'register_expire_date', 'date', '注册证有效期', NULL);
+/
+CALL add_table_column('scm_delivery_detail', 'package_spec', 'varchar(200)', '包装规格', NULL);
+/
+CALL add_table_column('scm_delivery_detail', 'in_time', 'datetime', '入库时间', NULL);
+/
+CALL add_table_column('scm_delivery_detail', 'remark', 'varchar(500)', '备注', NULL);
+/
+UPDATE scm_delivery_detail SET del_flag = '0' WHERE del_flag IS NULL OR TRIM(IFNULL(del_flag, '')) = '';
+/
 -- scm_delivery_invoice
 CALL add_table_column('scm_delivery_invoice', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
 /

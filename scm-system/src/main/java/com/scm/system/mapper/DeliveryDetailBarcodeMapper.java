@@ -13,5 +13,7 @@ public interface DeliveryDetailBarcodeMapper
 
     int deleteByDeliveryId(@Param("deliveryId") Long deliveryId);
 
+    int deleteByDeliveryDetailId(@Param("deliveryDetailId") Long deliveryDetailId);
+
     List<DeliveryDetailBarcode> selectListByDeliveryId(@Param("deliveryId") Long deliveryId);
 }

@@ -15,6 +15,10 @@
         delete from scm_delivery_detail_barcode where delivery_id = #{deliveryId}
     </delete>
 
+    <delete id="deleteByDeliveryDetailId">
+        delete from scm_delivery_detail_barcode where delivery_detail_id = #{deliveryDetailId}
+    </delete>
+
     <select id="selectListByDeliveryId" resultType="com.scm.system.domain.DeliveryDetailBarcode">
         select id, delivery_id as deliveryId, delivery_no as deliveryNo, delivery_detail_id as deliveryDetailId,
                seed_num as seedNum, barcode_no as barcodeNo, create_time as createTime

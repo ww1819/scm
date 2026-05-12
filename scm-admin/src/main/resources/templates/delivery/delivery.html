@@ -104,8 +104,11 @@
 	            <a class="btn btn-default multiple disabled" id="toolbar-btn-delivery-print" href="javascript:void(0)" shiro:hasPermission="delivery:delivery:print">
 	                <i class="fa fa-print"></i> 打印
 	            </a>
-	            <a class="btn btn-warning" onclick="openDeliveryPrintExportDialog()" shiro:hasPermission="delivery:delivery:export">
+	            <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="delivery:delivery:export">
 		            <i class="fa fa-download"></i> 导出
+		        </a>
+	            <a class="btn btn-default" onclick="openDeliveryPrintStyleExcelDialog()" shiro:hasPermission="delivery:delivery:export">
+		            <i class="fa fa-file-excel-o"></i> 打印导出
 		        </a>
 	            <a class="btn btn-primary" onclick="$.table.search()">
 		            <i class="fa fa-search"></i> 搜索
@@ -238,6 +241,7 @@
 		        createUrl: prefix + "/add",
 		        updateUrl: prefix + "/edit/{id}",
 		        removeUrl: prefix + "/remove",
+		        exportUrl: prefix + "/export",
 		        sortName: "createTime",
 		        sortOrder: "desc",
 		        modalName: "配送单",
@@ -366,24 +370,24 @@
 			$.table.search();
 		}
 
-		/** 导出：按配送单「打印」页样式在新窗口打开 HTML，可打印或另存为 PDF */
-		function openDeliveryPrintExportDialog() {
+		/** 按「物资配送单」打印版式导出 Excel（每单一个 Sheet），支持已勾选 / 全部 */
+		function openDeliveryPrintStyleExcelDialog() {
 			if (typeof layer === 'undefined') {
 				$.modal.msgError('页面未加载完成，请刷新后重试');
 				return;
 			}
 			layer.open({
 				type: 1,
-				title: '导出配送单（打印样式）',
+				title: '打印样式导出 Excel',
 				area: ['480px', '280px'],
 				shadeClose: true,
 				content: '<div style="padding:20px 24px 12px;">'
-					+ '<p style="color:#666;font-size:13px;line-height:1.65;margin-bottom:18px;">请选择导出范围：版面与工具栏「打印」打开的页面一致，可在浏览器中使用打印或另存为 PDF 保存。</p>'
-					+ '<button type="button" id="btn-delivery-print-export-selected" class="btn btn-primary btn-block" style="margin-bottom:12px;">导出已勾选</button>'
-					+ '<button type="button" id="btn-delivery-print-export-all" class="btn btn-warning btn-block">导出全部（按当前搜索条件，不分页）</button>'
+					+ '<p style="color:#666;font-size:13px;line-height:1.65;margin-bottom:18px;">请选择导出范围：Excel 中每个配送单单独一个工作表，版式与「打印」页面一致。</p>'
+					+ '<button type="button" id="btn-delivery-print-excel-selected" class="btn btn-primary btn-block" style="margin-bottom:12px;">导出已勾选</button>'
+					+ '<button type="button" id="btn-delivery-print-excel-all" class="btn btn-warning btn-block">导出全部（按当前搜索条件，不分页）</button>'
 					+ '</div>',
 				success: function(layero, index) {
-					layero.find('#btn-delivery-print-export-selected').on('click', function() {
+					layero.find('#btn-delivery-print-excel-selected').on('click', function() {
 						var rows = $('#bootstrap-table').bootstrapTable('getSelections');
 						if (!rows || rows.length === 0) {
 							$.modal.msgWarning('请先勾选要导出的配送单');
@@ -393,35 +397,100 @@
 						for (var i = 0; i < rows.length; i++) {
 							ids.push(rows[i].deliveryId);
 						}
-						openPrintExportForm('selected', ids.join(','));
+						submitPrintStyleExcelExport('selected', ids.join(','));
 						layer.close(index);
 					});
-					layero.find('#btn-delivery-print-export-all').on('click', function() {
-						openPrintExportForm('all', null);
+					layero.find('#btn-delivery-print-excel-all').on('click', function() {
+						submitPrintStyleExcelExport('all', null);
 						layer.close(index);
 					});
 				}
 			});
 		}
 
-		function openPrintExportForm(exportMode, idsComma) {
-			var action = prefix + '/printExport';
-			var form = $('<form method="get" action="' + action + '" target="_blank"></form>');
-			form.append($('<input type="hidden" name="exportMode" />').val(exportMode));
+		function submitPrintStyleExcelExport(exportMode, idsComma) {
+			$.modal.loading('正在导出，请稍候...');
+			var body = new URLSearchParams();
+			body.append('exportMode', exportMode);
 			if (exportMode === 'selected' && idsComma) {
-				form.append($('<input type="hidden" name="ids" />').val(idsComma));
+				body.append('ids', idsComma);
 			} else if (exportMode === 'all') {
-				var arr = $('#delivery-form').serializeArray();
-				for (var j = 0; j < arr.length; j++) {
-					if (!arr[j].name || arr[j].value === '') {
-						continue;
+				$('#delivery-form').serializeArray().forEach(function(item) {
+					if (item.name && item.value !== '') {
+						body.append(item.name, item.value);
 					}
-					form.append($('<input type="hidden" />').attr('name', arr[j].name).val(arr[j].value));
-				}
+				});
 			}
-			$('body').append(form);
-			form.trigger('submit');
-			form.remove();
+			var tableParams = $('#bootstrap-table').bootstrapTable('getOptions');
+			body.append('orderByColumn', tableParams.sortName || 'createTime');
+			body.append('isAsc', tableParams.sortOrder || 'desc');
+			var headers = { 'X-Requested-With': 'XMLHttpRequest' };
+			var csrftoken = $('meta[name=csrf-token]').attr('content');
+			if (csrftoken) {
+				headers['X-CSRF-Token'] = csrftoken;
+			}
+			fetch(prefix + '/printExportExcel', {
+				method: 'POST',
+				headers: headers,
+				body: body,
+				credentials: 'same-origin'
+			}).then(function(response) {
+				$.modal.closeLoading();
+				var ctype = (response.headers.get('Content-Type') || '').toLowerCase();
+				if (ctype.indexOf('application/json') !== -1) {
+					return response.json().then(function(result) {
+						if (result.code == web_status.SUCCESS && result.msg) {
+							window.location.href = ctx + 'common/download?fileName=' + encodeURIComponent(result.msg) + '&delete=' + true;
+						} else if (result.code == web_status.WARNING) {
+							$.modal.alertWarning(result.msg);
+						} else {
+							$.modal.alertError(result.msg || '导出失败');
+						}
+					});
+				}
+				if (!response.ok) {
+					return response.text().then(function(text) {
+						try {
+							var err = JSON.parse(text);
+							$.modal.alertError(err.msg || '导出失败');
+						} catch (e2) {
+							$.modal.alertError('导出失败（HTTP ' + response.status + '）');
+						}
+					});
+				}
+				return response.blob().then(function(blob) {
+					var fileName = '配送单打印样式.xlsx';
+					var cd = response.headers.get('Content-Disposition');
+					if (cd) {
+						var m = cd.match(/filename\*=utf-8''([^;]+)/i);
+						if (m && m[1]) {
+							try { fileName = decodeURIComponent(m[1].trim()); } catch (e3) {}
+						} else {
+							m = cd.match(/filename="([^"]+)"/i);
+							if (m && m[1]) {
+								fileName = m[1];
+							} else {
+								m = cd.match(/filename=([^;]+)/i);
+								if (m && m[1]) {
+									fileName = m[1].trim();
+								}
+							}
+						}
+					}
+					var url = window.URL.createObjectURL(blob);
+					var a = document.createElement('a');
+					a.href = url;
+					a.download = fileName;
+					document.body.appendChild(a);
+					a.click();
+					document.body.removeChild(a);
+					window.URL.revokeObjectURL(url);
+					$.modal.msgSuccess('导出成功');
+				});
+			}).catch(function() {
+				$.modal.closeLoading();
+				$.modal.alertError('导出失败');
+			});
 		}
 
 	</script>

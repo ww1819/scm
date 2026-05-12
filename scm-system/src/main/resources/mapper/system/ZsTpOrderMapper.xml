@@ -91,7 +91,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                     SELECT COALESCE(SUM(dd.delivery_quantity), 0)
                     FROM scm_delivery_detail dd
                     INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id AND (d.del_flag IS NULL OR d.del_flag = '0')
-                    WHERE dd.zs_order_detail_id = l.id
+                    WHERE dd.zs_order_detail_id = l.id AND (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
                 ) &lt; IFNULL(l.sl, 0)
             )
             AND EXISTS (
@@ -102,7 +102,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 SELECT 1 FROM scm_delivery_detail dd
                 INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id AND (d.del_flag IS NULL OR d.del_flag = '0')
                 INNER JOIN zs_tp_order_detail l ON l.id = dd.zs_order_detail_id
-                WHERE l.order_id = z.id AND (l.del_flag IS NULL OR l.del_flag = '0')
+                WHERE l.order_id = z.id AND (l.del_flag IS NULL OR l.del_flag = '0') AND (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
             )
             AND EXISTS (
                 SELECT 1 FROM zs_tp_order_detail l
@@ -111,7 +111,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                     SELECT COALESCE(SUM(dd.delivery_quantity), 0)
                     FROM scm_delivery_detail dd
                     INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id AND (d.del_flag IS NULL OR d.del_flag = '0')
-                    WHERE dd.zs_order_detail_id = l.id
+                    WHERE dd.zs_order_detail_id = l.id AND (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
                 ) &lt; IFNULL(l.sl, 0)
             ) THEN 'partial'
             ELSE 'none'
@@ -219,7 +219,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                     select 1 from scm_delivery_detail dd
                     inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
                     inner join zs_tp_order_detail l on l.id = dd.zs_order_detail_id
-                    where l.order_id = z.id and l.del_flag = '0'
+                    where l.order_id = z.id and l.del_flag = '0' and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
                 )
             </if>
             <if test="params != null and params.deliveryFilter != null and params.deliveryFilter == 'partial'">
@@ -227,7 +227,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                     select 1 from scm_delivery_detail dd
                     inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
                     inner join zs_tp_order_detail l on l.id = dd.zs_order_detail_id
-                    where l.order_id = z.id and l.del_flag = '0'
+                    where l.order_id = z.id and l.del_flag = '0' and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
                 )
                 and exists (
                     select 1 from zs_tp_order_detail l
@@ -236,7 +236,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                         select coalesce(sum(dd.delivery_quantity), 0)
                         from scm_delivery_detail dd
                         inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
-                        where dd.zs_order_detail_id = l.id
+                        where dd.zs_order_detail_id = l.id and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
                     ) &lt; ifnull(l.sl, 0)
                 )
             </if>
@@ -248,7 +248,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                         select coalesce(sum(dd.delivery_quantity), 0)
                         from scm_delivery_detail dd
                         inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
-                        where dd.zs_order_detail_id = l.id
+                        where dd.zs_order_detail_id = l.id and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
                     ) &lt; ifnull(l.sl, 0)
                 )
                 and exists (

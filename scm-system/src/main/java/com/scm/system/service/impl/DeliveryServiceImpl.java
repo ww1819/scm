@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -434,9 +435,317 @@ public class DeliveryServiceImpl implements IDeliveryService
         int r = deliveryMapper.updateDelivery(delivery);
         if (r > 0)
         {
+            if (delivery.getDeliveryDetails() != null)
+            {
+                persistDeliveryDetailsOnUpdate(delivery);
+            }
             maybeAutoConfirmZsTpOrderOnDeliverySave(delivery);
         }
         return r;
+    }
+
+    /**
+     * 修改配送单时合并写明细：删除新列表中不存在的旧行；已有行在原记录上更新；纯新增行插入。
+     */
+    private void persistDeliveryDetailsOnUpdate(Delivery delivery)
+    {
+        Long deliveryId = delivery.getDeliveryId();
+        if (deliveryId == null)
+        {
+            return;
+        }
+        List<DeliveryDetail> newLines = delivery.getDeliveryDetails();
+        if (newLines == null)
+        {
+            return;
+        }
+        if (newLines.isEmpty())
+        {
+            throw new ServiceException("配送明细不能为空");
+        }
+        Delivery persisted = deliveryMapper.selectDeliveryById(deliveryId);
+        if (persisted == null)
+        {
+            throw new ServiceException("配送单不存在");
+        }
+        if (delivery.getTenantId() == null && persisted.getTenantId() != null)
+        {
+            delivery.setTenantId(persisted.getTenantId());
+        }
+        List<DeliveryDetail> oldLines = deliveryDetailMapper.selectDeliveryDetailListByDeliveryId(deliveryId);
+        Map<Long, DeliveryDetail> oldById = new HashMap<>();
+        if (oldLines != null)
+        {
+            for (DeliveryDetail o : oldLines)
+            {
+                if (o != null && o.getDetailId() != null)
+                {
+                    oldById.put(o.getDetailId(), o);
+                }
+            }
+        }
+        Set<Long> keptDetailIds = new HashSet<>();
+        for (DeliveryDetail n : newLines)
+        {
+            if (n != null && n.getDetailId() != null)
+            {
+                keptDetailIds.add(n.getDetailId());
+            }
+        }
+        String detailDelBy = resolveDelByForDetailOp(delivery);
+        if (oldLines != null)
+        {
+            for (DeliveryDetail old : oldLines)
+            {
+                if (old != null && old.getDetailId() != null && !keptDetailIds.contains(old.getDetailId()))
+                {
+                    removeDeliveryDetailAndSideEffects(persisted, old, detailDelBy);
+                }
+            }
+        }
+
+        String savedCreateBy = delivery.getCreateBy();
+        if (StringUtils.isEmpty(StringUtils.trimToNull(delivery.getCreateBy())))
+        {
+            delivery.setCreateBy(StringUtils.isNotEmpty(delivery.getUpdateBy()) ? delivery.getUpdateBy()
+                : persisted.getCreateBy());
+        }
+        String createBy = StringUtils.trimToEmpty(delivery.getCreateBy());
+        String timeStr = DateUtils.getTime();
+
+        for (DeliveryDetail cur : newLines)
+        {
+            if (cur == null)
+            {
+                continue;
+            }
+            cur.setDeliveryId(deliveryId);
+            Long cid = cur.getDetailId();
+            DeliveryDetail old = cid != null ? oldById.get(cid) : null;
+            if (old == null)
+            {
+                cur.setDetailId(null);
+                deliveryDetailMapper.insertDeliveryDetail(cur);
+                subtractOrderLineRemaining(delivery.getOrderId(), cur);
+                insertOneOrderDeliveryDetailRel(delivery, cur, createBy, timeStr);
+                continue;
+            }
+            if (!deliveryId.equals(old.getDeliveryId()))
+            {
+                throw new ServiceException("配送明细不属于当前配送单");
+            }
+            if (deliveryLineRefChanged(delivery, old, cur))
+            {
+                addBackOrderLineRemaining(persisted.getOrderId(), old);
+                String did = String.valueOf(old.getDetailId());
+                scmOrderDetailDeliveryRelMapper.deleteByDeliveryDetailId(did);
+                zsTpOrderDetailDeliveryRelMapper.deleteByDeliveryDetailId(did);
+                scmBarcodeSeedService.deleteBarcodesByDeliveryDetailId(old.getDetailId());
+                deliveryDetailMapper.updateDeliveryDetail(cur);
+                subtractOrderLineRemaining(delivery.getOrderId(), cur);
+                insertOneOrderDeliveryDetailRel(delivery, cur, createBy, timeStr);
+            }
+            else
+            {
+                applyOrderRemainingOnDetailQtyOrOrderLineChange(persisted.getOrderId(), delivery.getOrderId(), old, cur);
+                deliveryDetailMapper.updateDeliveryDetail(cur);
+            }
+        }
+
+        delivery.setCreateBy(savedCreateBy);
+        if (StringUtils.isNotEmpty(delivery.getZsOrderId()) && "3".equals(StringUtils.trimToNull(delivery.getZsJsfs())))
+        {
+            scmBarcodeSeedService.deleteBarcodesByDeliveryId(deliveryId);
+            scmBarcodeSeedService.createZsDeliveryDetailBarcodesIfNeeded(delivery,
+                deliveryDetailMapper.selectDeliveryDetailListByDeliveryId(deliveryId));
+        }
+    }
+
+    private static boolean deliveryLineRefChanged(Delivery delivery, DeliveryDetail prev, DeliveryDetail cur)
+    {
+        if (StringUtils.isNotEmpty(delivery.getZsOrderId()))
+        {
+            return !StringUtils.equals(StringUtils.trimToEmpty(prev.getZsOrderDetailId()),
+                StringUtils.trimToEmpty(cur.getZsOrderDetailId()));
+        }
+        return !Objects.equals(prev.getOrderDetailId(), cur.getOrderDetailId());
+    }
+
+    private void removeDeliveryDetailAndSideEffects(Delivery persisted, DeliveryDetail old, String delBy)
+    {
+        if (old == null || old.getDetailId() == null)
+        {
+            return;
+        }
+        addBackOrderLineRemaining(persisted.getOrderId(), old);
+        String did = String.valueOf(old.getDetailId());
+        scmOrderDetailDeliveryRelMapper.deleteByDeliveryDetailId(did);
+        zsTpOrderDetailDeliveryRelMapper.deleteByDeliveryDetailId(did);
+        scmBarcodeSeedService.deleteBarcodesByDeliveryDetailId(old.getDetailId());
+        deliveryDetailMapper.deleteDeliveryDetailById(old.getDetailId(), StringUtils.trimToEmpty(delBy));
+    }
+
+    private String resolveDelByForDetailOp(Delivery delivery)
+    {
+        if (delivery != null && StringUtils.isNotEmpty(StringUtils.trimToNull(delivery.getUpdateBy())))
+        {
+            return StringUtils.trimToEmpty(delivery.getUpdateBy());
+        }
+        return StringUtils.trimToEmpty(ShiroUtils.getLoginName());
+    }
+
+    private void addBackOrderLineRemaining(Long orderId, DeliveryDetail deliveryDetail)
+    {
+        if (orderId == null || deliveryDetail == null || deliveryDetail.getOrderDetailId() == null)
+        {
+            return;
+        }
+        OrderDetail orderDetail = orderDetailMapper.selectOrderDetailById(deliveryDetail.getOrderDetailId());
+        if (orderDetail == null || orderDetail.getOrderId() == null || !orderId.equals(orderDetail.getOrderId()))
+        {
+            return;
+        }
+        if (deliveryDetail.getDeliveryQuantity() == null)
+        {
+            return;
+        }
+        int rem = orderDetail.getRemainingQuantity() != null ? orderDetail.getRemainingQuantity().intValue() : 0;
+        BigDecimal remaining = BigDecimal.valueOf(rem).add(deliveryDetail.getDeliveryQuantity());
+        orderDetail.setRemainingQuantity(remaining.intValue());
+        orderDetailMapper.updateOrderDetail(orderDetail);
+    }
+
+    private void subtractOrderLineRemaining(Long orderId, DeliveryDetail deliveryDetail)
+    {
+        if (orderId == null || deliveryDetail == null || deliveryDetail.getOrderDetailId() == null)
+        {
+            return;
+        }
+        OrderDetail orderDetail = orderDetailMapper.selectOrderDetailById(deliveryDetail.getOrderDetailId());
+        if (orderDetail == null || orderDetail.getOrderId() == null || !orderId.equals(orderDetail.getOrderId()))
+        {
+            return;
+        }
+        BigDecimal qty = deliveryDetail.getDeliveryQuantity() != null ? deliveryDetail.getDeliveryQuantity() : BigDecimal.ZERO;
+        int base = orderDetail.getRemainingQuantity() != null ? orderDetail.getRemainingQuantity().intValue() : 0;
+        BigDecimal remaining = new BigDecimal(base).subtract(qty);
+        if (remaining.compareTo(BigDecimal.ZERO) < 0)
+        {
+            remaining = BigDecimal.ZERO;
+        }
+        orderDetail.setRemainingQuantity(remaining.intValue());
+        orderDetailMapper.updateOrderDetail(orderDetail);
+    }
+
+    private void applyOrderRemainingOnDetailQtyOrOrderLineChange(Long persistedOrderId, Long newOrderId, DeliveryDetail old,
+        DeliveryDetail cur)
+    {
+        if (newOrderId == null)
+        {
+            return;
+        }
+        BigDecimal oq = old.getDeliveryQuantity() != null ? old.getDeliveryQuantity() : BigDecimal.ZERO;
+        BigDecimal nq = cur.getDeliveryQuantity() != null ? cur.getDeliveryQuantity() : BigDecimal.ZERO;
+        Long oOd = old.getOrderDetailId();
+        Long nOd = cur.getOrderDetailId();
+        if (Objects.equals(oOd, nOd) && Objects.equals(persistedOrderId, newOrderId) && oOd != null)
+        {
+            BigDecimal delta = nq.subtract(oq);
+            if (delta.compareTo(BigDecimal.ZERO) != 0)
+            {
+                applyOrderDetailRemainingDelta(newOrderId, nOd, delta);
+            }
+            return;
+        }
+        if (!Objects.equals(persistedOrderId, newOrderId))
+        {
+            addBackOrderLineRemaining(persistedOrderId, old);
+            subtractOrderLineRemaining(newOrderId, cur);
+            return;
+        }
+        if (oOd == null && nOd != null)
+        {
+            subtractOrderLineRemaining(newOrderId, cur);
+            return;
+        }
+        if (oOd != null && nOd == null)
+        {
+            addBackOrderLineRemaining(persistedOrderId, old);
+            return;
+        }
+        if (oOd != null && nOd != null && !oOd.equals(nOd))
+        {
+            addBackOrderLineRemaining(persistedOrderId, old);
+            subtractOrderLineRemaining(newOrderId, cur);
+        }
+    }
+
+    private void applyOrderDetailRemainingDelta(Long orderId, Long orderDetailId, BigDecimal deltaSubtractFromRemaining)
+    {
+        if (orderId == null || orderDetailId == null || deltaSubtractFromRemaining == null)
+        {
+            return;
+        }
+        OrderDetail orderDetail = orderDetailMapper.selectOrderDetailById(orderDetailId);
+        if (orderDetail == null || orderDetail.getOrderId() == null || !orderId.equals(orderDetail.getOrderId()))
+        {
+            return;
+        }
+        int base = orderDetail.getRemainingQuantity() != null ? orderDetail.getRemainingQuantity().intValue() : 0;
+        BigDecimal remaining = new BigDecimal(base).subtract(deltaSubtractFromRemaining);
+        if (remaining.compareTo(BigDecimal.ZERO) < 0)
+        {
+            remaining = BigDecimal.ZERO;
+        }
+        orderDetail.setRemainingQuantity(remaining.intValue());
+        orderDetailMapper.updateOrderDetail(orderDetail);
+    }
+
+    private void insertOneOrderDeliveryDetailRel(Delivery delivery, DeliveryDetail dd, String createBy, String timeStr)
+    {
+        if (delivery.getDeliveryId() == null || dd == null || dd.getDetailId() == null)
+        {
+            return;
+        }
+        String tenantId = delivery.getTenantId();
+        String deliveryIdStr = String.valueOf(delivery.getDeliveryId());
+        String deliveryNo = StringUtils.trimToEmpty(delivery.getDeliveryNo());
+
+        if (StringUtils.isNotEmpty(delivery.getZsOrderId()))
+        {
+            if (StringUtils.isEmpty(dd.getZsOrderDetailId()))
+            {
+                return;
+            }
+            ZsTpOrderDetailDeliveryRel r = new ZsTpOrderDetailDeliveryRel();
+            r.setId(IdUtils.simpleUuid7());
+            r.setOrderDetailId(dd.getZsOrderDetailId());
+            r.setOrderId(delivery.getZsOrderId());
+            r.setOrderNo(StringUtils.trimToEmpty(delivery.getOrderNo()));
+            r.setDeliveryId(deliveryIdStr);
+            r.setDeliveryNo(deliveryNo);
+            r.setDeliveryDetailId(String.valueOf(dd.getDetailId()));
+            r.setCreateTime(timeStr);
+            r.setCreateBy(createBy);
+            r.setTenantId(tenantId);
+            zsTpOrderDetailDeliveryRelMapper.batchInsert(java.util.Collections.singletonList(r));
+            return;
+        }
+        if (delivery.getOrderId() != null && dd.getOrderDetailId() != null)
+        {
+            ScmOrderDetailDeliveryRel r = new ScmOrderDetailDeliveryRel();
+            r.setId(IdUtils.simpleUuid7());
+            r.setOrderDetailId(String.valueOf(dd.getOrderDetailId()));
+            r.setOrderId(String.valueOf(delivery.getOrderId()));
+            r.setOrderNo(StringUtils.trimToEmpty(delivery.getOrderNo()));
+            r.setDeliveryId(deliveryIdStr);
+            r.setDeliveryNo(deliveryNo);
+            r.setDeliveryDetailId(String.valueOf(dd.getDetailId()));
+            r.setCreateTime(timeStr);
+            r.setCreateBy(createBy);
+            r.setTenantId(tenantId);
+            scmOrderDetailDeliveryRelMapper.batchInsert(java.util.Collections.singletonList(r));
+        }
     }
 
     /**
@@ -457,10 +766,13 @@ public class DeliveryServiceImpl implements IDeliveryService
         }
         for (String deliveryId : deliveryIds)
         {
+            Delivery d = deliveryMapper.selectDeliveryById(Long.parseLong(deliveryId));
+            String delBy = StringUtils.trimToEmpty(d != null && StringUtils.isNotEmpty(d.getUpdateBy()) ? d.getUpdateBy()
+                : ShiroUtils.getLoginName());
             scmOrderDetailDeliveryRelMapper.deleteByDeliveryId(deliveryId);
             zsTpOrderDetailDeliveryRelMapper.deleteByDeliveryId(deliveryId);
             scmBarcodeSeedService.deleteBarcodesByDeliveryId(Long.parseLong(deliveryId));
-            deliveryDetailMapper.deleteDeliveryDetailByDeliveryId(Long.parseLong(deliveryId));
+            deliveryDetailMapper.deleteDeliveryDetailByDeliveryId(Long.parseLong(deliveryId), delBy);
         }
         return deliveryMapper.deleteDeliveryByIds(deliveryIds);
     }
@@ -481,7 +793,9 @@ public class DeliveryServiceImpl implements IDeliveryService
         scmOrderDetailDeliveryRelMapper.deleteByDeliveryId(did);
         zsTpOrderDetailDeliveryRelMapper.deleteByDeliveryId(did);
         scmBarcodeSeedService.deleteBarcodesByDeliveryId(deliveryId);
-        deliveryDetailMapper.deleteDeliveryDetailByDeliveryId(deliveryId);
+        String delBy = StringUtils.trimToEmpty(d != null && StringUtils.isNotEmpty(d.getUpdateBy()) ? d.getUpdateBy()
+            : ShiroUtils.getLoginName());
+        deliveryDetailMapper.deleteDeliveryDetailByDeliveryId(deliveryId, delBy);
         return deliveryMapper.deleteDeliveryById(deliveryId);
     }
 

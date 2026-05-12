@@ -1,6 +1,7 @@
 package com.scm.system.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.scm.system.domain.DeliveryDetail;
 
 /**
@@ -64,22 +65,24 @@ public interface DeliveryDetailMapper
      * @param detailId 明细主键
      * @return 结果
      */
-    public int deleteDeliveryDetailById(Long detailId);
+    public int deleteDeliveryDetailById(@Param("detailId") Long detailId, @Param("delBy") String delBy);
 
     /**
-     * 根据配送单ID删除配送明细信息
-     * 
+     * 根据配送单ID逻辑删除配送明细
+     *
      * @param deliveryId 配送单ID
+     * @param delBy 删除人
      * @return 结果
      */
-    public int deleteDeliveryDetailByDeliveryId(Long deliveryId);
+    public int deleteDeliveryDetailByDeliveryId(@Param("deliveryId") Long deliveryId, @Param("delBy") String delBy);
 
     /**
-     * 批量删除配送明细信息
-     * 
+     * 批量逻辑删除配送明细
+     *
      * @param detailIds 需要删除的数据ID
+     * @param delBy 删除人
      * @return 结果
      */
-    public int deleteDeliveryDetailByIds(String[] detailIds);
+    public int deleteDeliveryDetailByIds(@Param("detailIds") String[] detailIds, @Param("delBy") String delBy);
 }
 

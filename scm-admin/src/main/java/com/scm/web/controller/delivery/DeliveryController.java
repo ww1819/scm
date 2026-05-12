@@ -1,5 +1,7 @@
 package com.scm.web.controller.delivery;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -25,6 +27,8 @@ import com.scm.common.utils.StringUtils;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.enums.BusinessType;
+import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.file.FileUtils;
 import com.scm.common.utils.poi.ExcelUtil;
 import com.scm.system.domain.Delivery;
 import com.scm.system.domain.DeliveryDetail;
@@ -40,6 +44,7 @@ import com.scm.system.service.IHospitalService;
 import com.scm.system.service.IScmHospitalContextService;
 import com.scm.system.service.IScmSupplierContextService;
 import com.scm.system.service.ISupplierService;
+import com.scm.system.util.DeliveryPrintStyleExcelBuilder;
 
 /**
  * 配送单信息
@@ -394,20 +399,35 @@ public class DeliveryController extends BaseController
         return prefix + "/print";
     }
 
-    /** 单次「打印样式」导出最多张数，防止一次打开过多页面拖垮浏览器 */
+    /** 单次「打印样式」Excel 导出最多配送单数 */
     private static final int PRINT_EXPORT_MAX_SHEETS = 300;
 
     /**
-     * 按当前配送单打印页样式批量导出（HTML，新窗口打开后可打印或另存为 PDF）。
-     * exportMode=selected 时须传 ids；exportMode=all 时按 delivery 查询条件导出全部（不分页）。
+     * 按打印版式导出 Excel（每单一个 Sheet）。exportMode=selected 时须传 ids；exportMode=all 时按查询条件导出全部（不分页）。
      */
     @RequiresPermissions("delivery:delivery:export")
-    @Log(title = "配送单打印样式导出", businessType = BusinessType.EXPORT)
-    @GetMapping("/printExport")
-    public String printExport(@RequestParam("exportMode") String exportMode,
+    @Log(title = "配送单打印样式Excel导出", businessType = BusinessType.EXPORT)
+    @PostMapping("/printExportExcel")
+    public void printExportExcel(@RequestParam("exportMode") String exportMode,
         @RequestParam(value = "ids", required = false) String ids,
         Delivery delivery,
-        ModelMap mmap)
+        HttpServletResponse response) throws IOException
+    {
+        List<DeliveryPrintSheetVo> sheets = resolveDeliveryPrintSheets(exportMode, ids, delivery);
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        try
+        {
+            FileUtils.setAttachmentResponseHeader(response, "配送单打印样式_" + DateUtils.dateTimeNow() + ".xlsx");
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            throw new ServiceException("导出失败：文件名编码异常");
+        }
+        DeliveryPrintStyleExcelBuilder.write(sheets, response.getOutputStream());
+    }
+
+    private List<DeliveryPrintSheetVo> resolveDeliveryPrintSheets(String exportMode, String ids, Delivery delivery)
     {
         List<DeliveryPrintSheetVo> sheets = new ArrayList<>();
         if ("selected".equalsIgnoreCase(StringUtils.trim(exportMode)))
@@ -487,8 +507,7 @@ public class DeliveryController extends BaseController
         {
             throw new ServiceException("单次最多导出 " + PRINT_EXPORT_MAX_SHEETS + " 张配送单，请缩小筛选范围或分批导出");
         }
-        mmap.put("sheets", sheets);
-        return prefix + "/print-export";
+        return sheets;
     }
 
     private DeliveryPrintSheetVo buildDeliveryPrintSheet(Long deliveryId)

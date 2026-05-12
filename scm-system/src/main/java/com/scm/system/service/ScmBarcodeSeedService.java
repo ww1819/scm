@@ -209,6 +209,14 @@ public class ScmBarcodeSeedService
         }
     }
 
+    public void deleteBarcodesByDeliveryDetailId(Long deliveryDetailId)
+    {
+        if (deliveryDetailId != null)
+        {
+            deliveryDetailBarcodeMapper.deleteByDeliveryDetailId(deliveryDetailId);
+        }
+    }
+
     public void attachDetailBarcodes(List<DeliveryDetail> details, Long deliveryId)
     {
         if (details == null || details.isEmpty() || deliveryId == null)
