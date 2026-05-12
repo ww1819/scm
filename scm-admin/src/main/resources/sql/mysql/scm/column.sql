@@ -430,6 +430,8 @@ CALL add_table_column('sys_user', 'tenant_id', 'varchar(64)', '租户ID', NULL);
 /
 CALL add_table_column('sys_user', 'user_source', 'varchar(32)', '用户来源（platform/supplier/delivery/hospital）', NULL);
 /
+CALL add_table_column('sys_user', 'real_name', 'varchar(50)', '姓名（票据、报表展示，空则沿用登录账号）', NULL);
+/
 -- sys_role：租户维度角色（医院管理员等）
 CALL add_table_column('sys_role', 'tenant_id', 'varchar(64)', '租户ID', NULL);
 /

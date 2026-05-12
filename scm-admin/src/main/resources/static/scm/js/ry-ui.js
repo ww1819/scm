@@ -1336,6 +1336,8 @@ var table = {
                             $.modal.alertSuccess(result.msg)
                         } else if (result.code == web_status.WARNING) {
                             $.modal.alertWarning(result.msg)
+                        } else if (result.code == web_status.PROFILE_GATE) {
+                            // 由全局 ajaxComplete 引导回首页
                         } else {
                             $.modal.alertError(result.msg);
                         }
@@ -1397,6 +1399,11 @@ var table = {
             },
             // 成功回调执行事件（父窗体静默更新）
             successCallback: function(result) {
+                if (result.code == web_status.PROFILE_GATE) {
+                    $.modal.closeLoading();
+                    $.modal.enable();
+                    return;
+                }
                 if (result.code == web_status.SUCCESS) {
                     var parent = activeWindow();
                     if ($.common.isEmpty(parent.table)) {
@@ -1421,6 +1428,10 @@ var table = {
             },
             // 选项卡成功回调执行事件（父窗体静默更新）
             successTabCallback: function(result) {
+                if (result.code == web_status.PROFILE_GATE) {
+                    $.modal.closeLoading();
+                    return;
+                }
                 if (result.code == web_status.SUCCESS) {
                     var topWindow = $(window.parent.document);
                     var currentId = $('.page-tabs-content', topWindow).find('.active').attr('data-panel');
@@ -1899,7 +1910,9 @@ table_type = {
 web_status = {
     SUCCESS: 0,
     FAIL: 500,
-    WARNING: 301
+    WARNING: 301,
+    /** 须先完善个人信息（姓名或合规登录名），与 AjaxResult.profileGate 一致 */
+    PROFILE_GATE: 602
 };
 
 /** 弹窗状态码 */
@@ -1908,3 +1921,51 @@ modal_status = {
     FAIL: "error",
     WARNING: "warning"
 };
+
+/** 全局：接口返回 602 时提示并回首页以打开强制完善弹窗 */
+var __scmProfileGateAlertTs = 0;
+$(document).ajaxComplete(function (event, xhr) {
+    try {
+        var ct = xhr.getResponseHeader("Content-Type") || "";
+        if (xhr.status !== 200 || ct.indexOf("application/json") < 0) {
+            return;
+        }
+        var r = JSON.parse(xhr.responseText);
+        if (!r || r.code !== web_status.PROFILE_GATE) {
+            return;
+        }
+        if (typeof $.modal !== "undefined") {
+            $.modal.closeLoading();
+            if ($.modal.enable) {
+                $.modal.enable();
+            }
+        }
+        var now = Date.now();
+        if (now - __scmProfileGateAlertTs < 1200) {
+            return;
+        }
+        __scmProfileGateAlertTs = now;
+        if (typeof layer !== "undefined") {
+            layer.alert(r.msg || "请先完善个人信息", {
+                title: "系统提示",
+                closeBtn: 0,
+                btn: ["确定"],
+                end: function () {
+                    var base = (typeof ctx !== "undefined" && ctx) ? ctx : "/";
+                    if (window.top && window.top.location) {
+                        window.top.location.href = base + "index";
+                    } else {
+                        window.location.href = base + "index";
+                    }
+                }
+            });
+        } else {
+            alert(r.msg || "请先完善个人信息");
+            var base2 = (typeof ctx !== "undefined" && ctx) ? ctx : "/";
+            if (window.top && window.top.location) {
+                window.top.location.href = base2 + "index";
+            }
+        }
+    } catch (e) {
+    }
+});

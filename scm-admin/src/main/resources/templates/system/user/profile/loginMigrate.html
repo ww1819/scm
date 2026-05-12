@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('登录名合规设置')" />
+</head>
+<body class="white-bg">
+<div class="wrapper wrapper-content animated fadeInRight ibox-content">
+    <form class="form-horizontal m" id="form-login-migrate">
+        <div class="alert alert-warning">
+            当前登录名含中文或不符合规则。请设置新的<strong>英文/数字登录名</strong>、验证当前密码并设置新密码。保存后将退出，请用<strong>新登录名</strong>重新登录。
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label">当前登录名：</label>
+            <div class="col-sm-8">
+                <input class="form-control" type="text" readonly th:value="${user.loginName}"/>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label is-required">新登录名：</label>
+            <div class="col-sm-8">
+                <input class="form-control" type="text" name="newLoginName" id="newLoginName" maxlength="30" required
+                       placeholder="字母、数字、下划线、连字符，不能含汉字"/>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label" th:classappend="${user.realName == null or #strings.isEmpty(#strings.trim(user.realName))} ? ' is-required' : ''">姓名：</label>
+            <div class="col-sm-8">
+                <input class="form-control" type="text" name="realName" id="realName" maxlength="50"
+                       th:value="${user.realName}"
+                       th:attr="required=${user.realName == null or #strings.isEmpty(#strings.trim(user.realName))}"
+                       placeholder="票据、报表展示用"/>
+                <span class="help-block m-b-none" th:if="${user.realName == null or #strings.isEmpty(#strings.trim(user.realName))}">姓名为必填。</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label is-required">当前密码：</label>
+            <div class="col-sm-8">
+                <input class="form-control" type="password" name="oldPassword" id="oldPassword" required>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label is-required">新密码：</label>
+            <div class="col-sm-8">
+                <input class="form-control" type="password" name="newPassword" id="newPassword" required minlength="5" maxlength="20">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-3 control-label is-required">确认新密码：</label>
+            <div class="col-sm-8">
+                <input class="form-control" type="password" name="confirmPassword" id="confirmPassword" required>
+            </div>
+        </div>
+    </form>
+</div>
+<th:block th:include="include :: footer" />
+<script>
+    $("#form-login-migrate").validate({
+        rules: {
+            newLoginName: { required: true, maxlength: 30 },
+            oldPassword: { required: true },
+            newPassword: { required: true, minlength: 5, maxlength: 20 },
+            confirmPassword: { required: true, equalTo: "#newPassword" }
+        },
+        messages: {
+            confirmPassword: { equalTo: "两次新密码不一致" }
+        }
+    });
+
+    function submitHandler() {
+        if (!$("#form-login-migrate").valid()) {
+            return;
+        }
+        $.ajax({
+            url: ctx + "system/user/profile/migrateLogin",
+            type: "post",
+            data: $("#form-login-migrate").serialize(),
+            dataType: "json",
+            beforeSend: function (xhr) {
+                var t = $('meta[name=csrf-token]').attr("content");
+                if (t) xhr.setRequestHeader("X-CSRF-Token", t);
+                $.modal.loading("正在保存…");
+            },
+            success: function (r) {
+                $.modal.closeLoading();
+                if (r.code === web_status.SUCCESS) {
+                    layer.msg(r.msg || "请重新登录", { time: 1500 }, function () {
+                        top.location.href = ctx + "login";
+                    });
+                } else {
+                    $.modal.alertError(r.msg || "保存失败");
+                }
+            },
+            error: function () {
+                $.modal.closeLoading();
+                $.modal.alertError("请求失败");
+            }
+        });
+    }
+</script>
+</body>
+</html>

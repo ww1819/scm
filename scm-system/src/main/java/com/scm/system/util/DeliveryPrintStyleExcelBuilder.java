@@ -190,7 +190,7 @@ public final class DeliveryPrintStyleExcelBuilder
         merge(sh, fr, fr, 0, 2);
         setStr(sh, fr, 0, "制单日期：" + fmtDate(d.getCreateTime()), st.footerFull);
         merge(sh, fr, fr, 3, 5);
-        setStr(sh, fr, 3, "制单人：" + nz(d.getCreateBy()), st.footerFull);
+        setStr(sh, fr, 3, "制单人：" + nz(d.getCreateByForDisplay()), st.footerFull);
         merge(sh, fr, fr, 6, 8);
         setStr(sh, fr, 6, "签收人：______________________________", st.footerFull);
         merge(sh, fr, fr, 9, 11);

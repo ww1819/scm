@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <th:block th:include="include :: header('完善姓名')" />
+</head>
+<body class="white-bg">
+<div class="wrapper wrapper-content animated fadeInRight ibox-content">
+    <form class="form-horizontal m" id="form-complete-realname">
+        <div class="form-group">
+            <label class="col-sm-3 control-label is-required">姓名：</label>
+            <div class="col-sm-8">
+                <input class="form-control" type="text" name="realName" id="realName" maxlength="50"
+                       placeholder="用于票据、报表展示" required>
+                <span class="help-block m-b-none">保存前无法使用系统其他功能。</span>
+            </div>
+        </div>
+    </form>
+</div>
+<th:block th:include="include :: footer" />
+<script>
+    $("#form-complete-realname").validate({
+        rules: { realName: { required: true, maxlength: 50 } },
+        messages: { realName: { required: "请输入姓名", maxlength: "姓名过长" } }
+    });
+
+    function submitHandler() {
+        if (!$("#form-complete-realname").valid()) {
+            return;
+        }
+        $.ajax({
+            url: ctx + "system/user/profile/completeRealName",
+            type: "post",
+            data: { realName: $("#realName").val() },
+            dataType: "json",
+            beforeSend: function (xhr) {
+                var t = $('meta[name=csrf-token]').attr("content");
+                if (t) xhr.setRequestHeader("X-CSRF-Token", t);
+                $.modal.loading("正在保存…");
+            },
+            success: function (r) {
+                $.modal.closeLoading();
+                if (r.code === web_status.SUCCESS) {
+                    if (parent && parent.layer) {
+                        parent.layer.closeAll();
+                    }
+                    if (parent && parent.location) {
+                        parent.location.reload();
+                    } else {
+                        location.href = ctx + "index";
+                    }
+                } else if (r.code === web_status.PROFILE_GATE) {
+                    $.modal.alertWarning(r.msg || "请先完善资料");
+                } else {
+                    $.modal.alertError(r.msg || "保存失败");
+                }
+            },
+            error: function () {
+                $.modal.closeLoading();
+                $.modal.alertError("请求失败");
+            }
+        });
+    }
+</script>
+</body>
+</html>

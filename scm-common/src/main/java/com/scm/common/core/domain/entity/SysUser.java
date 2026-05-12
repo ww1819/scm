@@ -44,6 +44,10 @@ public class SysUser extends BaseEntity
     @Excel(name = "用户名称")
     private String userName;
 
+    /** 姓名（票据、报表展示，空则沿用登录账号） */
+    @Excel(name = "姓名")
+    private String realName;
+
     /** 关联供应商名称（列表聚合展示，多选逗号分隔） */
     @Excel(name = "供应商")
     private String supplierNames;
@@ -202,6 +206,18 @@ public class SysUser extends BaseEntity
     public void setUserName(String userName)
     {
         this.userName = userName;
+    }
+
+    @Xss(message = "姓名不能包含脚本字符")
+    @Size(min = 0, max = 50, message = "姓名长度不能超过50个字符")
+    public String getRealName()
+    {
+        return realName;
+    }
+
+    public void setRealName(String realName)
+    {
+        this.realName = realName;
     }
 
     public String getSupplierNames()
@@ -430,6 +446,7 @@ public class SysUser extends BaseEntity
             .append("deptId", getDeptId())
             .append("loginName", getLoginName())
             .append("userName", getUserName())
+            .append("realName", getRealName())
             .append("supplierNames", getSupplierNames())
             .append("hospitalNames", getHospitalNames())
             .append("roleNames", getRoleNames())

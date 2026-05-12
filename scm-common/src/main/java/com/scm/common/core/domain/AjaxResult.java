@@ -172,13 +172,24 @@ public class AjaxResult extends HashMap<String, Object>
     /**
      * 返回错误消息
      *
-     * @param msg 返回内容
+     * @param msg  返回内容
      * @param data 数据对象
-     * @return 警告消息
+     * @return 错误消息
      */
     public static AjaxResult error(String msg, Object data)
     {
         return new AjaxResult(Type.ERROR, msg, data);
+    }
+
+    /**
+     * 需先完善个人信息（姓名或合规登录名等），与前端 web_status.PROFILE_GATE 对应。
+     */
+    public static AjaxResult profileGate(String msg)
+    {
+        AjaxResult json = new AjaxResult();
+        json.put(CODE_TAG, 602);
+        json.put(MSG_TAG, msg);
+        return json;
     }
 
     /**

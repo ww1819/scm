@@ -4,10 +4,12 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import javax.validation.constraints.*;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.scm.common.annotation.Excel;
 import com.scm.common.annotation.Excel.ColumnType;
+import com.scm.common.annotation.Excel.Type;
 import com.scm.common.core.domain.BaseEntity;
 
 /**
@@ -146,6 +148,32 @@ public class Delivery extends BaseEntity
 
     /** 配送明细 */
     private List<DeliveryDetail> deliveryDetails;
+
+    /**
+     * 制单人展示名（列表/导出/打印：由 sys_user.real_name 与 create_by 解析，不入库）。
+     */
+    @Excel(name = "制单人", type = Type.EXPORT)
+    private String createByDisplay;
+
+    /** 制单人展示：优先姓名，否则沿用登录账号 */
+    public String getCreateByForDisplay()
+    {
+        if (StringUtils.isNotEmpty(createByDisplay))
+        {
+            return createByDisplay;
+        }
+        return getCreateBy();
+    }
+
+    public String getCreateByDisplay()
+    {
+        return createByDisplay;
+    }
+
+    public void setCreateByDisplay(String createByDisplay)
+    {
+        this.createByDisplay = createByDisplay;
+    }
 
     @Size(min = 0, max = 50, message = "配送单号不能超过50个字符")
     public String getDeliveryNo()
@@ -551,6 +579,7 @@ public class Delivery extends BaseEntity
             .append("auditTime", getAuditTime())
             .append("auditRemark", getAuditRemark())
             .append("createBy", getCreateBy())
+            .append("createByDisplay", getCreateByDisplay())
             .append("createTime", getCreateTime())
             .append("updateBy", getUpdateBy())
             .append("updateTime", getUpdateTime())

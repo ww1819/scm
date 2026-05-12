@@ -41,6 +41,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="auditTime"       column="audit_time"            />
         <result property="auditRemark"     column="audit_remark"          />
         <result property="createBy"        column="create_by"            />
+        <result property="createByDisplay" column="create_by_display"    />
         <result property="createTime"      column="create_time"         />
         <result property="updateBy"        column="update_by"            />
         <result property="updateTime"      column="update_time"          />
@@ -65,13 +66,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                d.delivery_address, d.expected_delivery_date, d.invoice_no, d.invoice_amount,
                d.invoice_date, d.order_date,
                d.audit_status, d.audit_by, d.audit_time, d.audit_remark,
-               d.remark, d.create_by, d.create_time,
+               d.remark, d.create_by,
+               COALESCE(NULLIF(TRIM(creator.real_name), ''), d.create_by) as create_by_display,
+               d.create_time,
                d.update_by, d.update_time,
                d.del_flag, d.del_time, d.del_by, d.tenant_id,
                h.hospital_name, s.company_name as supplier_name
         from scm_delivery d
         left join scm_hospital h on d.hospital_id = h.hospital_id
         left join scm_supplier s on d.supplier_id = s.supplier_id
+        left join sys_user creator on creator.login_name = d.create_by and (creator.del_flag = '0' or creator.del_flag is null or creator.del_flag = '')
     </sql>
     
     <select id="selectDeliveryList" parameterType="Delivery" resultMap="DeliveryResult">

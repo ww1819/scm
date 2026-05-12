@@ -23,11 +23,13 @@ import com.scm.common.utils.CookieUtils;
 import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.ServletUtils;
 import com.scm.common.utils.StringUtils;
+import com.scm.common.utils.UserProfileGateUtils;
 import com.scm.framework.shiro.service.SysPasswordService;
 import com.scm.system.service.IScmTenantMenuPauseService;
 import com.scm.system.service.ISysConfigService;
 import com.scm.system.service.ISysMenuService;
 import com.scm.system.service.ISysNoticeService;
+import com.scm.system.service.ISysUserService;
 import java.util.Collections;
 
 /**
@@ -51,6 +53,9 @@ public class SysIndexController extends BaseController
 
     @Autowired
     private ISysNoticeService noticeService;
+
+    @Autowired
+    private ISysUserService userService;
 
     // 系统首页
     @GetMapping("/index")
@@ -81,6 +86,23 @@ public class SysIndexController extends BaseController
         mmap.put("isPasswordExpired", passwordIsExpiration(user.getPwdUpdateDate()));
         mmap.put("isMobile", ServletUtils.checkAgentIsMobile(ServletUtils.getRequest().getHeader("User-Agent")));
 
+        boolean profileGateNeedsLoginMigrate = false;
+        boolean profileGateNeedsRealName = false;
+        boolean profileGateActive = false;
+        if (user.getUserId() != null)
+        {
+            SysUser fresh = userService.selectUserById(user.getUserId());
+            if (fresh != null)
+            {
+                profileGateNeedsLoginMigrate = UserProfileGateUtils.isLoginNameInvalidForScm(fresh);
+                profileGateNeedsRealName = UserProfileGateUtils.isRealNameMissing(fresh);
+                profileGateActive = profileGateNeedsLoginMigrate || profileGateNeedsRealName;
+            }
+        }
+        mmap.put("profileGateActive", profileGateActive);
+        mmap.put("profileGateNeedsLoginMigrate", profileGateNeedsLoginMigrate);
+        mmap.put("profileGateNeedsRealName", profileGateNeedsRealName);
+
         // 菜单导航显示风格
         String menuStyle = configService.selectConfigByKey("sys.index.menuStyle");
         // 移动端，默认使左侧导航菜单，否则取默认配置
@@ -88,12 +110,15 @@ public class SysIndexController extends BaseController
 
         // 优先Cookie配置导航菜单
         Cookie[] cookies = ServletUtils.getRequest().getCookies();
-        for (Cookie cookie : cookies)
+        if (cookies != null)
         {
-            if (StringUtils.isNotEmpty(cookie.getName()) && "nav-style".equalsIgnoreCase(cookie.getName()))
+            for (Cookie cookie : cookies)
             {
-                indexStyle = cookie.getValue();
-                break;
+                if (StringUtils.isNotEmpty(cookie.getName()) && "nav-style".equalsIgnoreCase(cookie.getName()))
+                {
+                    indexStyle = cookie.getValue();
+                    break;
+                }
             }
         }
         String webIndex = "topnav".equalsIgnoreCase(indexStyle) ? "index-topnav" : "index";

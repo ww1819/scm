@@ -380,6 +380,24 @@ $(function() {
 	        tabActive();
 	    }
 	}
+
+	var profileGateActive = /*[[${profileGateActive}]]*/ false;
+	var profileGateNeedsLoginMigrate = /*[[${profileGateNeedsLoginMigrate}]]*/ false;
+	if (profileGateActive) {
+		var gateUrl = profileGateNeedsLoginMigrate ? (ctx + "system/user/profile/loginMigrate") : (ctx + "system/user/profile/completeRealName");
+		if (typeof layer !== "undefined") {
+			layer.open({
+				type: 2,
+				title: profileGateNeedsLoginMigrate ? "请设置合规登录名并修改密码" : "请完善姓名",
+				area: profileGateNeedsLoginMigrate ? ["580px", "540px"] : ["480px", "300px"],
+				shade: 0.35,
+				closeBtn: 0,
+				shadeClose: false,
+				resize: false,
+				content: gateUrl
+			});
+		}
+	}
 	
 	/* 初始密码提示 - 已暂时禁用 */
 	if(false && [[${isDefaultModifyPwd}]]) {

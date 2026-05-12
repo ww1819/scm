@@ -489,7 +489,7 @@
                             制单日期：<span th:text="${delivery.createTime != null ? #dates.format(delivery.createTime, 'yyyy/MM/dd') : ''}">2023/1/2</span>
                         </td>
                         <td colspan="3" style="text-align: left;">
-                            制单人：<span th:text="${delivery.createBy ?: '张三'}">张三</span>
+                            制单人：<span th:text="${#strings.isEmpty(delivery.createByForDisplay) ? (delivery.createBy ?: '张三') : delivery.createByForDisplay}">张三</span>
                         </td>
                         <td colspan="3" style="text-align: left;">
                             签收人：________________

@@ -10,6 +10,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import com.scm.common.config.ScmConfig;
 import com.scm.common.constant.Constants;
 import com.scm.framework.interceptor.RepeatSubmitInterceptor;
+import com.scm.framework.interceptor.UserProfileMandatoryInterceptor;
 
 /**
  * 通用配置
@@ -21,6 +22,9 @@ public class ResourcesConfig implements WebMvcConfigurer
 {
     @Autowired
     private RepeatSubmitInterceptor repeatSubmitInterceptor;
+
+    @Autowired
+    private UserProfileMandatoryInterceptor userProfileMandatoryInterceptor;
 
     @Override
     public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry)
@@ -38,6 +42,7 @@ public class ResourcesConfig implements WebMvcConfigurer
     @Override
     public void addInterceptors(@NonNull InterceptorRegistry registry)
     {
-        registry.addInterceptor(Objects.requireNonNull(repeatSubmitInterceptor)).addPathPatterns("/**");
+        registry.addInterceptor(Objects.requireNonNull(userProfileMandatoryInterceptor)).addPathPatterns("/**").order(0);
+        registry.addInterceptor(Objects.requireNonNull(repeatSubmitInterceptor)).addPathPatterns("/**").order(1);
     }
 }
