@@ -1,6 +1,8 @@
 package com.scm.system.mapper;
 
+import java.util.Date;
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.scm.system.domain.ZsTpOrder;
 import com.scm.system.domain.ZsTpOrderDetail;
 
@@ -33,4 +35,14 @@ public interface ZsTpOrderMapper
      * 按主表 ID 查明细（未删除）
      */
     List<ZsTpOrderDetail> selectZsTpOrderDetailListByOrderId(String orderId);
+
+    /**
+     * 供应商确认（未确认、未作废、未删除）
+     */
+    int updateZsTpOrderConfirm(@Param("id") String id, @Param("confirmBy") String confirmBy, @Param("confirmTime") Date confirmTime);
+
+    /**
+     * 医院作废（未作废、未删除）
+     */
+    int updateZsTpOrderVoid(@Param("id") String id, @Param("voidBy") String voidBy, @Param("voidTime") Date voidTime);
 }

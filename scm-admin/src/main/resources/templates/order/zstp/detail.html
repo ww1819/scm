@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
 <head>
 	<th:block th:include="include :: header('第三方订单详情')" />
 	<th:block th:include="include :: layout-latest-css" />
@@ -128,6 +128,73 @@
                     </div>
                 </div>
             </div>
+            <h4 class="form-header h4">确认与作废</h4>
+            <div class="row">
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">确认状态：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" readonly th:value="${head != null and (head.confirmStatus == '1' or head.confirmStatus == 1) ? '已确认' : '未确认'}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">确认人：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${head != null ? head.confirmBy : ''}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">确认时间：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" readonly th:value="${head != null && head.confirmTime != null ? #dates.format(head.confirmTime, 'yyyy-MM-dd HH:mm:ss') : ''}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">配送进度：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" readonly th:value="${head != null and head.deliveryProgress == 'partial' ? '部分配送' : (head != null and head.deliveryProgress == 'done' ? '已配送' : '未配送')}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">作废状态：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" readonly th:value="${head != null and (head.voidStatus == '1' or head.voidStatus == 1) ? '已作废' : '正常'}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">作废人：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" th:value="${head != null ? head.voidBy : ''}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-5 control-label">作废时间：</label>
+                        <div class="col-sm-7">
+                            <input class="form-control" type="text" readonly th:value="${head != null && head.voidTime != null ? #dates.format(head.voidTime, 'yyyy-MM-dd HH:mm:ss') : ''}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <a class="btn btn-success btn-sm" th:if="${tpQuerySupplierCtx and @permission.hasPermi('order:tpOrder:confirm') != 'hidden' and head != null and head.voidStatus != '1' and head.confirmStatus != '1'}" href="javascript:void(0)" onclick="tpDetailConfirm()"><i class="fa fa-check"></i> 确认订单</a>
+                    <a class="btn btn-danger btn-sm" th:if="${tpQueryHospitalCtx and @permission.hasPermi('order:tpOrder:void') != 'hidden' and head != null and head.voidStatus != '1'}" href="javascript:void(0)" onclick="tpDetailVoid()" style="margin-left:8px;"><i class="fa fa-ban"></i> 作废订单</a>
+                </div>
+            </div>
             <div class="row">
                 <div class="col-sm-6">
                     <div class="form-group">
@@ -160,6 +227,7 @@
 	<script th:inline="javascript">
 		var zsOrderId = [[${zsOrderId}]];
 		var prefix = ctx + "order/zstp";
+		var tpApi = ctx + "order/tpQuery";
 
 		$(function() {
 		    queryDetailList();
@@ -244,6 +312,22 @@
 		        return parseFloat(value).toFixed(2);
 		    }
 		    return '0.00';
+		}
+
+		function tpDetailConfirm() {
+			$.modal.confirm("确认该第三方订单？", function() {
+				$.operate.post(tpApi + "/confirm/" + zsOrderId, {}, function() {
+					location.reload();
+				});
+			});
+		}
+
+		function tpDetailVoid() {
+			$.modal.confirm("确认作废？作废后不可再引用生成配送单。", function() {
+				$.operate.post(tpApi + "/void/" + zsOrderId, {}, function() {
+					location.reload();
+				});
+			});
 		}
 
 		function openDeliveries() {

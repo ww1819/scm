@@ -1,7 +1,7 @@
 -- =============================================================================
 -- 为所有有效角色批量赋予「第三方订单查询」菜单及按钮权限（sys_role_menu）
 -- 菜单 ID 须已在 sys_menu 中存在：2400 订单管理(M)、2403 第三方订单查询(C)、
---   24031 第三方订单-查询(F)、24032 第三方订单-详情(F)
+--   24031 第三方订单-查询(F)、24032 第三方订单-详情(F)、24033 第三方订单-确认(F)、24034 第三方订单-作废(F)
 -- 说明：
 --   1) 同时插入 2400，避免仅有子菜单时侧栏/树形不显示父级。
 --   2) hospital_id、supplier_id 置空串，与现网 uk(role_id,menu_id,hospital_id,supplier_id) 一致。
@@ -18,6 +18,8 @@ CROSS JOIN (
   UNION ALL SELECT 2403
   UNION ALL SELECT 24031
   UNION ALL SELECT 24032
+  UNION ALL SELECT 24033
+  UNION ALL SELECT 24034
 ) m
 WHERE IFNULL(r.del_flag, '0') = '0'
   AND IFNULL(r.status, '0') = '0'

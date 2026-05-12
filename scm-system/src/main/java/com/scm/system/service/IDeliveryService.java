@@ -135,6 +135,16 @@ public interface IDeliveryService
     public int auditDelivery(Long deliveryId, String auditBy);
 
     /**
+     * 供应商确认第三方订单（记录确认人、确认时间）
+     */
+    void confirmZsTpOrder(String zsOrderId);
+
+    /**
+     * 医院作废第三方订单（记录作废人、作废时间；作废后不可再引用配送）
+     */
+    void voidZsTpOrder(String zsOrderId);
+
+    /**
      * 第三方订单明细分页/查看：带配送数量汇总
      */
     public List<ZsTpOrderDetail> selectZsTpOrderDetailListForView(String zsOrderId);

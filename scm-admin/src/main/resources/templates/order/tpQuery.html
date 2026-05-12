@@ -23,6 +23,28 @@
 							<li>
 								供应商：<input type="text" name="supplierKeyword" placeholder="编码/名称/首拼简码"/>
 							</li>
+							<li>
+								确认状态：<select name="params[tpConfirmStatus]">
+									<option value="">全部</option>
+									<option value="0">未确认</option>
+									<option value="1">已确认</option>
+								</select>
+							</li>
+							<li>
+								作废状态：<select name="params[tpVoidStatus]">
+									<option value="">全部</option>
+									<option value="0">正常</option>
+									<option value="1">已作废</option>
+								</select>
+							</li>
+							<li>
+								配送进度：<select name="params[deliveryFilter]">
+									<option value="">全部</option>
+									<option value="none">未配送</option>
+									<option value="partial">部分配送</option>
+									<option value="done">已配送</option>
+								</select>
+							</li>
 							<li class="select-time">
 								<label>推送时间范围：</label>
 								<input type="text" class="scm-push-datetime" id="tpPushBegin" placeholder="开始 yyyy-MM-dd HH:mm:ss" name="params[pushBegin]" autocomplete="off"/>
@@ -57,6 +79,10 @@
 	<th:block th:include="include :: layout-latest-js" />
 	<script th:inline="javascript">
 		var detailFlag = [[${@permission.hasPermi('order:tpOrder:detail')}]];
+		var confirmPerm = [[${@permission.hasPermi('order:tpOrder:confirm')}]];
+		var voidPerm = [[${@permission.hasPermi('order:tpOrder:void')}]];
+		var tpQuerySupplierCtx = [[${tpQuerySupplierCtx}]];
+		var tpQueryHospitalCtx = [[${tpQueryHospitalCtx}]];
 		var prefix = ctx + "order/tpQuery";
 		var tableId = "bootstrap-table";
 
@@ -130,6 +156,24 @@
 				isAsc: params.order,
 				searchValue: params.search
 			});
+		}
+
+		function fmtDeliveryProgress(p) {
+			if (p === 'partial') {
+				return '部分配送';
+			}
+			if (p === 'done') {
+				return '已配送';
+			}
+			return '未配送';
+		}
+
+		function fmtConfirmStatus(v) {
+			return (v === '1' || v === 1) ? '已确认' : '未确认';
+		}
+
+		function fmtVoidStatus(v) {
+			return (v === '1' || v === 1) ? '已作废' : '正常';
 		}
 
 		function fmtPushTime(v) {
@@ -229,14 +273,56 @@
 		            formatter: function (v) { return fmtPushTime(v); }
 		        },
 		        {
+		            field: 'confirmStatus',
+		            title: '确认状态',
+		            formatter: function (v) { return fmtConfirmStatus(v); }
+		        },
+		        {
+		            field: 'confirmBy',
+		            title: '确认人',
+		            formatter: function (v) { return v || '-'; }
+		        },
+		        {
+		            field: 'confirmTime',
+		            title: '确认时间',
+		            formatter: function (v) { return fmtPushTime(v); }
+		        },
+		        {
+		            field: 'voidStatus',
+		            title: '作废状态',
+		            formatter: function (v) { return fmtVoidStatus(v); }
+		        },
+		        {
+		            field: 'voidBy',
+		            title: '作废人',
+		            formatter: function (v) { return v || '-'; }
+		        },
+		        {
+		            field: 'voidTime',
+		            title: '作废时间',
+		            formatter: function (v) { return fmtPushTime(v); }
+		        },
+		        {
+		            field: 'deliveryProgress',
+		            title: '配送进度',
+		            formatter: function (v) { return fmtDeliveryProgress(v); }
+		        },
+		        {
 		            title: '操作',
 		            align: 'center',
-		            width: 100,
+		            width: 220,
 		            formatter: function(value, row) {
-		                if (detailFlag === 'hidden') {
-		                    return '';
+		                var btns = [];
+		                if (detailFlag !== 'hidden') {
+		                    btns.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="viewDetail(\'' + row.id + '\')"><i class="fa fa-eye"></i>详情</a>');
 		                }
-		                return '<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="viewDetail(\'' + row.id + '\')"><i class="fa fa-eye"></i>详情</a>';
+		                if (confirmPerm !== 'hidden' && tpQuerySupplierCtx === true && row.voidStatus !== '1' && row.confirmStatus !== '1') {
+		                    btns.push('<a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="tpConfirmOrder(\'' + row.id + '\')"><i class="fa fa-check"></i>确认</a>');
+		                }
+		                if (voidPerm !== 'hidden' && tpQueryHospitalCtx === true && row.voidStatus !== '1') {
+		                    btns.push('<a class="btn btn-danger btn-xs" href="javascript:void(0)" onclick="tpVoidOrder(\'' + row.id + '\')"><i class="fa fa-ban"></i>作废</a>');
+		                }
+		                return btns.join(' ');
 		            }
 		        }]
 		    };
@@ -254,6 +340,22 @@
 		function viewDetail(zsOrderId) {
 		    var url = prefix + '/detail/' + zsOrderId;
 		    $.modal.openTab("第三方订单详情", url);
+		}
+
+		function tpConfirmOrder(id) {
+			$.modal.confirm("确认该第三方订单？确认后将记录确认人与确认时间。", function() {
+				$.operate.post(prefix + "/confirm/" + id, {}, function() {
+					$.table.refresh();
+				});
+			});
+		}
+
+		function tpVoidOrder(id) {
+			$.modal.confirm("确认作废该第三方订单？作废后不可再引用生成配送单。", function() {
+				$.operate.post(prefix + "/void/" + id, {}, function() {
+					$.table.refresh();
+				});
+			});
 		}
 	</script>
 </body>

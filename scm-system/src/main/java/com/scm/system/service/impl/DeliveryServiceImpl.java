@@ -3,6 +3,7 @@ package com.scm.system.service.impl;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
@@ -327,14 +328,61 @@ public class DeliveryServiceImpl implements IDeliveryService
             scmBarcodeSeedService.createZsDeliveryDetailBarcodesIfNeeded(delivery, savedForBarcode);
         }
 
+        if (rows > 0)
+        {
+            maybeAutoConfirmZsTpOrderOnDeliverySave(delivery);
+        }
         return rows;
     }
 
     /**
-     * 修改配送单信息
-     *
-     * @param delivery 配送单信息
-     * @return 结果
+     * 配送单保存时：若引用了未确认的第三方订单，则自动确认，确认人为配送单制单人（create_by，缺省为 update_by 或当前登录名）
+     */
+    private void maybeAutoConfirmZsTpOrderOnDeliverySave(Delivery delivery)
+    {
+        if (delivery == null || StringUtils.isEmpty(delivery.getZsOrderId()))
+        {
+            return;
+        }
+        if (StringUtils.isEmpty(StringUtils.trimToNull(delivery.getCreateBy())) && delivery.getDeliveryId() != null)
+        {
+            Delivery persisted = deliveryMapper.selectDeliveryById(delivery.getDeliveryId());
+            if (persisted != null && StringUtils.isNotEmpty(persisted.getCreateBy()))
+            {
+                delivery.setCreateBy(persisted.getCreateBy());
+            }
+        }
+        ZsTpOrder head = zsTpOrderMapper.selectZsTpOrderById(delivery.getZsOrderId());
+        if (head == null || "1".equals(StringUtils.trimToNull(head.getVoidStatus())))
+        {
+            return;
+        }
+        if ("1".equals(StringUtils.trimToNull(head.getConfirmStatus())))
+        {
+            return;
+        }
+        String confirmBy = resolveDeliveryDocumentCreator(delivery);
+        Date now = DateUtils.getNowDate();
+        zsTpOrderMapper.updateZsTpOrderConfirm(delivery.getZsOrderId(), confirmBy, now);
+    }
+
+    private String resolveDeliveryDocumentCreator(Delivery delivery)
+    {
+        String a = StringUtils.trimToNull(delivery.getCreateBy());
+        if (a != null)
+        {
+            return a;
+        }
+        String b = StringUtils.trimToNull(delivery.getUpdateBy());
+        if (b != null)
+        {
+            return b;
+        }
+        return ShiroUtils.getLoginName();
+    }
+
+    /**
+     * 校验配送单是否允许进入编辑（未审核等）
      */
     @Override
     public void assertDeliveryEditable(Long deliveryId)
@@ -347,6 +395,12 @@ public class DeliveryServiceImpl implements IDeliveryService
         assertDeliveryNotAudited(existing, "修改");
     }
 
+    /**
+     * 修改配送单信息
+     *
+     * @param delivery 配送单信息
+     * @return 结果
+     */
     @Override
     @Transactional
     public int updateDelivery(Delivery delivery)
@@ -375,7 +429,12 @@ public class DeliveryServiceImpl implements IDeliveryService
             delivery.setDeliveryAmount(totalAmount);
         }
 
-        return deliveryMapper.updateDelivery(delivery);
+        int r = deliveryMapper.updateDelivery(delivery);
+        if (r > 0)
+        {
+            maybeAutoConfirmZsTpOrderOnDeliverySave(delivery);
+        }
+        return r;
     }
 
     /**
@@ -567,6 +626,14 @@ public class DeliveryServiceImpl implements IDeliveryService
 
     private void applyZsTpOrderQueryDataScope(ZsTpOrder query)
     {
+        if (query == null)
+        {
+            return;
+        }
+        if (query.getParams() == null)
+        {
+            query.setParams(new HashMap<>());
+        }
         Long userId = ShiroUtils.getUserId();
         Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(userId);
         if (hospitalCtx != null)
@@ -606,6 +673,10 @@ public class DeliveryServiceImpl implements IDeliveryService
         {
             return;
         }
+        if (query.getParams() == null)
+        {
+            query.setParams(new HashMap<>());
+        }
         Map<String, Object> p = query.getParams();
         Object pb = p.get("pushBegin");
         if (pb instanceof String)
@@ -628,6 +699,70 @@ public class DeliveryServiceImpl implements IDeliveryService
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void confirmZsTpOrder(String zsOrderId)
+    {
+        if (StringUtils.isEmpty(zsOrderId))
+        {
+            throw new ServiceException("第三方订单主键不能为空");
+        }
+        Long supplierCtx = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (supplierCtx == null)
+        {
+            throw new ServiceException("仅供应商账号可确认第三方订单");
+        }
+        ZsTpOrder head = zsTpOrderMapper.selectZsTpOrderById(zsOrderId);
+        if (head == null)
+        {
+            throw new ServiceException("第三方订单不存在或已删除");
+        }
+        assertZsTpOrderViewScope(head);
+        if (!supplierCtx.equals(head.getSupplierId()))
+        {
+            throw new ServiceException("无权确认该订单");
+        }
+        Date now = DateUtils.getNowDate();
+        String by = ShiroUtils.getLoginName();
+        int n = zsTpOrderMapper.updateZsTpOrderConfirm(zsOrderId, by, now);
+        if (n == 0)
+        {
+            throw new ServiceException("确认失败：订单已确认、已作废或不存在");
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void voidZsTpOrder(String zsOrderId)
+    {
+        if (StringUtils.isEmpty(zsOrderId))
+        {
+            throw new ServiceException("第三方订单主键不能为空");
+        }
+        Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());
+        if (hospitalCtx == null)
+        {
+            throw new ServiceException("仅医院账号可作废第三方订单");
+        }
+        ZsTpOrder head = zsTpOrderMapper.selectZsTpOrderById(zsOrderId);
+        if (head == null)
+        {
+            throw new ServiceException("第三方订单不存在或已删除");
+        }
+        assertZsTpOrderViewScope(head);
+        if (!hospitalCtx.equals(head.getHospitalId()))
+        {
+            throw new ServiceException("无权作废该订单");
+        }
+        Date now = DateUtils.getNowDate();
+        String by = ShiroUtils.getLoginName();
+        int n = zsTpOrderMapper.updateZsTpOrderVoid(zsOrderId, by, now);
+        if (n == 0)
+        {
+            throw new ServiceException("作废失败：订单已作废或不存在");
+        }
+    }
+
+    @Override
     public ZsTpOrderForDeliveryVo selectZsTpOrderForDelivery(String zsOrderId)
     {
         if (StringUtils.isEmpty(zsOrderId))
@@ -638,6 +773,10 @@ public class DeliveryServiceImpl implements IDeliveryService
         if (head == null)
         {
             throw new ServiceException("第三方订单不存在或已删除");
+        }
+        if ("1".equals(StringUtils.trimToNull(head.getVoidStatus())))
+        {
+            throw new ServiceException("该第三方订单已作废，不可再引用生成配送单");
         }
         List<ZsTpOrderDetail> lines = zsTpOrderMapper.selectZsTpOrderDetailListByOrderId(zsOrderId);
         ZsTpOrderForDeliveryVo vo = new ZsTpOrderForDeliveryVo();
@@ -846,6 +985,10 @@ public class DeliveryServiceImpl implements IDeliveryService
             ZsTpOrder z = zsTpOrderMapper.selectZsTpOrderById(d.getZsOrderId());
             if (z != null)
             {
+                if ("1".equals(StringUtils.trimToNull(z.getVoidStatus())))
+                {
+                    throw new ServiceException("该第三方订单已作废，不可生成配送单");
+                }
                 if (d.getHospitalId() == null)
                 {
                     d.setHospitalId(parseLongOrNull(z.getScmHospitalId()));

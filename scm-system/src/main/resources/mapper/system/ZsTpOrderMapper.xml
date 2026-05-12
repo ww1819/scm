@@ -31,6 +31,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="supplierName" column="supplier_name"/>
         <result property="zjly"          column="zjly"/>
         <result property="createTime"   column="create_time"/>
+        <result property="deliveryProgress" column="delivery_progress"/>
+        <result property="confirmStatus" column="confirm_status"/>
+        <result property="confirmBy"   column="confirm_by"/>
+        <result property="confirmTime" column="confirm_time"/>
+        <result property="voidStatus"   column="void_status"/>
+        <result property="voidBy"      column="void_by"/>
+        <result property="voidTime"    column="void_time"/>
     </resultMap>
 
     <resultMap type="com.scm.system.domain.ZsTpOrderDetail" id="ZsTpOrderDetailResult">
@@ -60,30 +67,81 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <sql id="selectZsTpOrderVo">
         select id, third_party_pk, customer, sheet_je, dh, supno, sup, ckno, ck, ksbh, ksmc, bz, jsfs, receive_channel, scm_sup_code,
                scm_hospital_code, scm_hospital_id, scm_supplier_id, zjly, create_time, hospital_id, supplier_id,
-               null as hospital_code, null as hospital_name, null as supplier_code, null as supplier_name
+               confirm_status, confirm_by, confirm_time, void_status, void_by, void_time,
+               null as hospital_code, null as hospital_name, null as supplier_code, null as supplier_name,
+               null as delivery_progress
         from zs_tp_order
     </sql>
 
     <sql id="selectZsTpOrderVoAliased">
         select z.id, z.third_party_pk, z.customer, z.sheet_je, z.dh, z.supno, z.sup, z.ckno, z.ck, z.ksbh, z.ksmc, z.bz, z.jsfs, z.receive_channel, z.scm_sup_code,
                z.scm_hospital_code, z.scm_hospital_id, z.scm_supplier_id, z.zjly, z.create_time, z.hospital_id, z.supplier_id,
-               null as hospital_code, null as hospital_name, null as supplier_code, null as supplier_name
+               z.confirm_status, z.confirm_by, z.confirm_time, z.void_status, z.void_by, z.void_time,
+               null as hospital_code, null as hospital_name, null as supplier_code, null as supplier_name,
+               null as delivery_progress
         from zs_tp_order z
+    </sql>
+
+    <sql id="zsTpOrderDeliveryProgressColumn">
+        ( CASE
+            WHEN NOT EXISTS (
+                SELECT 1 FROM zs_tp_order_detail l
+                WHERE l.order_id = z.id AND (l.del_flag IS NULL OR l.del_flag = '0') AND IFNULL(l.sl, 0) &gt; 0
+                AND (
+                    SELECT COALESCE(SUM(dd.delivery_quantity), 0)
+                    FROM scm_delivery_detail dd
+                    INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id AND (d.del_flag IS NULL OR d.del_flag = '0')
+                    WHERE dd.zs_order_detail_id = l.id
+                ) &lt; IFNULL(l.sl, 0)
+            )
+            AND EXISTS (
+                SELECT 1 FROM zs_tp_order_detail l2
+                WHERE l2.order_id = z.id AND (l2.del_flag IS NULL OR l2.del_flag = '0') AND IFNULL(l2.sl, 0) &gt; 0
+            ) THEN 'done'
+            WHEN EXISTS (
+                SELECT 1 FROM scm_delivery_detail dd
+                INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id AND (d.del_flag IS NULL OR d.del_flag = '0')
+                INNER JOIN zs_tp_order_detail l ON l.id = dd.zs_order_detail_id
+                WHERE l.order_id = z.id AND (l.del_flag IS NULL OR l.del_flag = '0')
+            )
+            AND EXISTS (
+                SELECT 1 FROM zs_tp_order_detail l
+                WHERE l.order_id = z.id AND (l.del_flag IS NULL OR l.del_flag = '0') AND IFNULL(l.sl, 0) &gt; 0
+                AND (
+                    SELECT COALESCE(SUM(dd.delivery_quantity), 0)
+                    FROM scm_delivery_detail dd
+                    INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id AND (d.del_flag IS NULL OR d.del_flag = '0')
+                    WHERE dd.zs_order_detail_id = l.id
+                ) &lt; IFNULL(l.sl, 0)
+            ) THEN 'partial'
+            ELSE 'none'
+        END )
     </sql>
 
     <sql id="zsTpOrderJoinColumns">
         z.id, z.third_party_pk, z.customer, z.sheet_je, z.dh, z.supno, z.sup, z.ckno, z.ck, z.ksbh, z.ksmc, z.bz, z.jsfs, z.receive_channel, z.scm_sup_code,
         z.scm_hospital_code, z.scm_hospital_id, z.scm_supplier_id, z.zjly, z.create_time, z.hospital_id, z.supplier_id,
+        z.confirm_status, z.confirm_by, z.confirm_time, z.void_status, z.void_by, z.void_time,
         COALESCE(nullif(trim(h.hospital_code), ''), nullif(trim(z.scm_hospital_code), '')) as hospital_code,
         h.hospital_name,
         COALESCE(nullif(trim(s.supplier_code), ''), nullif(trim(z.scm_sup_code), '')) as supplier_code,
-        COALESCE(nullif(trim(s.company_name), ''), nullif(trim(z.sup), '')) as supplier_name
+        COALESCE(nullif(trim(s.company_name), ''), nullif(trim(z.sup), '')) as supplier_name,
+        <include refid="zsTpOrderDeliveryProgressColumn"/> as delivery_progress
     </sql>
 
     <sql id="zsTpOrderJoinFrom">
         from zs_tp_order z
         left join scm_hospital h on z.hospital_id = h.hospital_id
         left join scm_supplier s on z.supplier_id = s.supplier_id
+    </sql>
+
+    <sql id="zsTpOrderConfirmVoidFilters">
+        <if test="params != null and params.tpConfirmStatus != null and params.tpConfirmStatus != ''">
+            and IFNULL(NULLIF(TRIM(z.confirm_status), ''), '0') = #{params.tpConfirmStatus}
+        </if>
+        <if test="params != null and params.tpVoidStatus != null and params.tpVoidStatus != ''">
+            and IFNULL(NULLIF(TRIM(z.void_status), ''), '0') = #{params.tpVoidStatus}
+        </if>
     </sql>
 
     <!-- 医院/供应商数据范围（与订单查询一致，供第三方订单列表复用） -->
@@ -154,24 +212,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </if>
     </sql>
 
-    <select id="selectZsTpOrderList" parameterType="com.scm.system.domain.ZsTpOrder" resultMap="ZsTpOrderResult">
-        select <include refid="zsTpOrderJoinColumns"/>
-        <include refid="zsTpOrderJoinFrom"/>
-        <where>
-            z.del_flag = '0'
-            <if test="dh != null and dh != ''">
-                and z.dh like concat('%', #{dh}, '%')
-            </if>
-            <if test="customer != null and customer != ''">
-                and z.customer like concat('%', #{customer}, '%')
-            </if>
-            <if test="ksmc != null and ksmc != ''">
-                and z.ksmc like concat('%', #{ksmc}, '%')
-            </if>
-            <include refid="zsTpOrderPushTimeFilters"/>
-            <include refid="zsTpOrderHospitalKeywordFilter"/>
-            <include refid="zsTpOrderSupplierKeywordFilter"/>
-            <include refid="zsTpOrderScopeFilters"/>
+    <!-- 配送进度筛选：none=未配送 partial=部分配送 done=已配送（与列表 delivery_progress 语义一致） -->
+    <sql id="zsTpOrderDeliveryFilterBlock">
             <if test="params != null and params.deliveryFilter != null and params.deliveryFilter == 'none'">
                 and not exists (
                     select 1 from scm_delivery_detail dd
@@ -214,6 +256,29 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                     where l2.order_id = z.id and l2.del_flag = '0' and ifnull(l2.sl, 0) &gt; 0
                 )
             </if>
+    </sql>
+
+    <select id="selectZsTpOrderList" parameterType="com.scm.system.domain.ZsTpOrder" resultMap="ZsTpOrderResult">
+        select <include refid="zsTpOrderJoinColumns"/>
+        <include refid="zsTpOrderJoinFrom"/>
+        <where>
+            z.del_flag = '0'
+            and (z.void_status is null or z.void_status = '' or z.void_status = '0')
+            <if test="dh != null and dh != ''">
+                and z.dh like concat('%', #{dh}, '%')
+            </if>
+            <if test="customer != null and customer != ''">
+                and z.customer like concat('%', #{customer}, '%')
+            </if>
+            <if test="ksmc != null and ksmc != ''">
+                and z.ksmc like concat('%', #{ksmc}, '%')
+            </if>
+            <include refid="zsTpOrderPushTimeFilters"/>
+            <include refid="zsTpOrderHospitalKeywordFilter"/>
+            <include refid="zsTpOrderSupplierKeywordFilter"/>
+            <include refid="zsTpOrderScopeFilters"/>
+            <include refid="zsTpOrderConfirmVoidFilters"/>
+            <include refid="zsTpOrderDeliveryFilterBlock"/>
         </where>
         order by z.create_time desc
     </select>
@@ -247,6 +312,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <include refid="zsTpOrderHospitalKeywordFilter"/>
             <include refid="zsTpOrderSupplierKeywordFilter"/>
             <include refid="zsTpOrderScopeFilters"/>
+            <include refid="zsTpOrderConfirmVoidFilters"/>
+            <include refid="zsTpOrderDeliveryFilterBlock"/>
         </where>
         order by z.create_time desc
     </select>
@@ -258,4 +325,27 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where order_id = #{orderId} and del_flag = '0'
         order by create_time
     </select>
+
+    <update id="updateZsTpOrderConfirm">
+        update zs_tp_order
+        set confirm_status = '1',
+            confirm_by = #{confirmBy},
+            confirm_time = #{confirmTime},
+            update_by = #{confirmBy},
+            update_time = #{confirmTime}
+        where id = #{id} and del_flag = '0'
+          and (void_status is null or void_status = '' or void_status = '0')
+          and (confirm_status is null or confirm_status = '' or confirm_status = '0')
+    </update>
+
+    <update id="updateZsTpOrderVoid">
+        update zs_tp_order
+        set void_status = '1',
+            void_by = #{voidBy},
+            void_time = #{voidTime},
+            update_by = #{voidBy},
+            update_time = #{voidTime}
+        where id = #{id} and del_flag = '0'
+          and (void_status is null or void_status = '' or void_status = '0')
+    </update>
 </mapper>

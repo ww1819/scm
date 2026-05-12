@@ -1,6 +1,8 @@
 package com.scm.system.domain;
 
 import java.math.BigDecimal;
+import java.util.Date;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.scm.common.core.domain.BaseEntity;
 
 /**
@@ -65,6 +67,25 @@ public class ZsTpOrder extends BaseEntity
 
     /** 资金来源 ZJLY */
     private String zjly;
+
+    /** 列表/详情：配送进度 none=未配送 partial=部分配送 done=已配送（列表 SQL 计算） */
+    private String deliveryProgress;
+
+    /** 确认状态：0未确认 1已确认 */
+    private String confirmStatus;
+
+    private String confirmBy;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date confirmTime;
+
+    /** 作废状态：0正常 1已作废 */
+    private String voidStatus;
+
+    private String voidBy;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private Date voidTime;
 
     public String getId()
     {
@@ -334,5 +355,75 @@ public class ZsTpOrder extends BaseEntity
     public void setZjly(String zjly)
     {
         this.zjly = zjly;
+    }
+
+    public String getDeliveryProgress()
+    {
+        return deliveryProgress;
+    }
+
+    public void setDeliveryProgress(String deliveryProgress)
+    {
+        this.deliveryProgress = deliveryProgress;
+    }
+
+    public String getConfirmStatus()
+    {
+        return confirmStatus;
+    }
+
+    public void setConfirmStatus(String confirmStatus)
+    {
+        this.confirmStatus = confirmStatus;
+    }
+
+    public String getConfirmBy()
+    {
+        return confirmBy;
+    }
+
+    public void setConfirmBy(String confirmBy)
+    {
+        this.confirmBy = confirmBy;
+    }
+
+    public Date getConfirmTime()
+    {
+        return confirmTime;
+    }
+
+    public void setConfirmTime(Date confirmTime)
+    {
+        this.confirmTime = confirmTime;
+    }
+
+    public String getVoidStatus()
+    {
+        return voidStatus;
+    }
+
+    public void setVoidStatus(String voidStatus)
+    {
+        this.voidStatus = voidStatus;
+    }
+
+    public String getVoidBy()
+    {
+        return voidBy;
+    }
+
+    public void setVoidBy(String voidBy)
+    {
+        this.voidBy = voidBy;
+    }
+
+    public Date getVoidTime()
+    {
+        return voidTime;
+    }
+
+    public void setVoidTime(Date voidTime)
+    {
+        this.voidTime = voidTime;
     }
 }
