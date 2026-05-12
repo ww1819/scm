@@ -495,6 +495,7 @@ public class DeliveryServiceImpl implements IDeliveryService
     @Override
     public List<ZsTpOrder> selectZsTpOrderList(ZsTpOrder query)
     {
+        applyZsTpOrderQueryDataScope(query);
         return zsTpOrderMapper.selectZsTpOrderList(query);
     }
 
@@ -502,6 +503,96 @@ public class DeliveryServiceImpl implements IDeliveryService
     public ZsTpOrder selectZsTpOrderById(String id)
     {
         return zsTpOrderMapper.selectZsTpOrderById(id);
+    }
+
+    @Override
+    public List<ZsTpOrder> selectZsTpOrderQueryList(ZsTpOrder query)
+    {
+        applyZsTpOrderQueryDataScope(query);
+        return zsTpOrderMapper.selectZsTpOrderQueryList(query);
+    }
+
+    @Override
+    public ZsTpOrder selectZsTpOrderHeadForView(String zsOrderId)
+    {
+        if (StringUtils.isEmpty(zsOrderId))
+        {
+            throw new ServiceException("第三方订单主键不能为空");
+        }
+        ZsTpOrder head = zsTpOrderMapper.selectZsTpOrderByIdJoined(zsOrderId);
+        if (head == null)
+        {
+            throw new ServiceException("第三方订单不存在或已删除");
+        }
+        assertZsTpOrderViewScope(head);
+        return head;
+    }
+
+    @Override
+    public void assertZsTpOrderViewScope(String zsOrderId)
+    {
+        if (StringUtils.isEmpty(zsOrderId))
+        {
+            throw new ServiceException("第三方订单主键不能为空");
+        }
+        ZsTpOrder head = zsTpOrderMapper.selectZsTpOrderById(zsOrderId);
+        if (head == null)
+        {
+            throw new ServiceException("第三方订单不存在或已删除");
+        }
+        assertZsTpOrderViewScope(head);
+    }
+
+    private void assertZsTpOrderViewScope(ZsTpOrder head)
+    {
+        Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());
+        if (hospitalCtx != null)
+        {
+            if (head.getHospitalId() == null || !hospitalCtx.equals(head.getHospitalId()))
+            {
+                throw new ServiceException("无权查看其他医院订单");
+            }
+        }
+        Long supplierCtx = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (supplierCtx != null)
+        {
+            if (head.getSupplierId() == null || !supplierCtx.equals(head.getSupplierId()))
+            {
+                throw new ServiceException("无权查看其他供应商订单");
+            }
+        }
+    }
+
+    private void applyZsTpOrderQueryDataScope(ZsTpOrder query)
+    {
+        Long userId = ShiroUtils.getUserId();
+        Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(userId);
+        if (hospitalCtx != null)
+        {
+            query.setHospitalId(hospitalCtx);
+        }
+        Long supplierCtx = scmSupplierContextService.resolveSupplierIdForUser(userId);
+        if (supplierCtx == null)
+        {
+            return;
+        }
+        List<Long> roleSupplierIds = resolveUserRoleSupplierIds(userId);
+        if (!roleSupplierIds.isEmpty())
+        {
+            if (!roleSupplierIds.contains(supplierCtx))
+            {
+                query.getParams().put("scopePairBlock", Boolean.TRUE);
+                return;
+            }
+            query.getParams().put("roleSupplierIds", roleSupplierIds);
+        }
+        query.setSupplierId(supplierCtx);
+        List<Long> forbid = hospitalSupplierPermissionService.listForbidSubmitHospitalIds(supplierCtx);
+        if (forbid != null && !forbid.isEmpty())
+        {
+            query.getParams().put("excludeHospitalIds", forbid);
+        }
+        scmHospitalSupplierMenuScopeService.applyMenuPairScopeToParams(query.getParams(), userId);
     }
 
     @Override

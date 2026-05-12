@@ -80,14 +80,29 @@ public interface IDeliveryService
     public Order selectOrderForDelivery(Long orderId);
 
     /**
-     * 第三方订单列表（zs_tp_order，未删除）
+     * 第三方订单列表（zs_tp_order，未删除；关联医院/供应商展示字段，并按当前用户医院/供应商数据范围过滤）
      */
     public List<ZsTpOrder> selectZsTpOrderList(ZsTpOrder query);
+
+    /**
+     * 第三方订单查询列表（关联医院/供应商；按当前用户医院/供应商数据范围过滤）
+     */
+    public List<ZsTpOrder> selectZsTpOrderQueryList(ZsTpOrder query);
 
     /**
      * 第三方订单主表（查看页）
      */
     public ZsTpOrder selectZsTpOrderById(String id);
+
+    /**
+     * 第三方订单主表（查看页，带医院/供应商展示字段，并校验当前用户数据范围）
+     */
+    public ZsTpOrder selectZsTpOrderHeadForView(String zsOrderId);
+
+    /**
+     * 校验当前用户是否可查看该第三方订单（明细、配送回查等接口调用）
+     */
+    public void assertZsTpOrderViewScope(String zsOrderId);
 
     /**
      * 按主键加载第三方订单并映射为配送单草稿数据

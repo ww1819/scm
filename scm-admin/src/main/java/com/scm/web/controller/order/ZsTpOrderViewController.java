@@ -1,6 +1,7 @@
 package com.scm.web.controller.order;
 
 import java.util.List;
+import org.apache.shiro.authz.annotation.Logical;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -29,39 +30,42 @@ public class ZsTpOrderViewController extends BaseController
     @Autowired
     private IDeliveryService deliveryService;
 
-    @RequiresPermissions("order:order:view")
+    @RequiresPermissions(value = { "order:order:view", "order:tpOrder:detail" }, logical = Logical.OR)
     @GetMapping("/detail/{zsOrderId}")
     public String detail(@PathVariable("zsOrderId") String zsOrderId, ModelMap mmap)
     {
-        ZsTpOrder head = deliveryService.selectZsTpOrderById(zsOrderId);
+        ZsTpOrder head = deliveryService.selectZsTpOrderHeadForView(zsOrderId);
         mmap.put("head", head);
         mmap.put("zsOrderId", zsOrderId);
         return prefix + "/detail";
     }
 
-    @RequiresPermissions("order:order:view")
+    @RequiresPermissions(value = { "order:order:view", "order:tpOrder:detail" }, logical = Logical.OR)
     @PostMapping("/detailList")
     @ResponseBody
     public TableDataInfo detailList(String zsOrderId)
     {
+        deliveryService.assertZsTpOrderViewScope(zsOrderId);
         List<ZsTpOrderDetail> list = deliveryService.selectZsTpOrderDetailListForView(zsOrderId);
         return getDataTable(list);
     }
 
-    @RequiresPermissions("order:order:view")
+    @RequiresPermissions(value = { "order:order:view", "order:tpOrder:detail" }, logical = Logical.OR)
     @PostMapping("/deliveriesByZs/{zsOrderId}")
     @ResponseBody
     public TableDataInfo deliveriesByZs(@PathVariable("zsOrderId") String zsOrderId)
     {
+        deliveryService.assertZsTpOrderViewScope(zsOrderId);
         List<Delivery> list = deliveryService.selectDeliveriesByZsOrderId(zsOrderId);
         return getDataTable(list);
     }
 
-    @RequiresPermissions("order:order:view")
+    @RequiresPermissions(value = { "order:order:view", "order:tpOrder:detail" }, logical = Logical.OR)
     @PostMapping("/detailDeliveryTraces")
     @ResponseBody
-    public TableDataInfo detailDeliveryTraces(String zsOrderDetailId)
+    public TableDataInfo detailDeliveryTraces(String zsOrderDetailId, String zsOrderId)
     {
+        deliveryService.assertZsTpOrderViewScope(zsOrderId);
         return getDataTable(deliveryService.selectTracesByZsOrderDetailId(zsOrderDetailId));
     }
 }

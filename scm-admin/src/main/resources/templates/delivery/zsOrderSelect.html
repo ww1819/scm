@@ -21,6 +21,12 @@
 								科室名称：<input type="text" name="ksmc"/>
 							</li>
 							<li>
+								医院名称：<input type="text" name="hospitalName"/>
+							</li>
+							<li>
+								供应商名称：<input type="text" name="supplierName"/>
+							</li>
+							<li>
 								配送进度：<select name="params[deliveryFilter]">
 									<option value="">全部</option>
 									<option value="none">未配送</option>
@@ -70,6 +76,46 @@
 		        {
 		            field: 'dh',
 		            title: '单号(DH)'
+		        },
+		        {
+		            field: 'hospitalCode',
+		            title: '医院编码',
+		            formatter: function (v) { return v || '-'; }
+		        },
+		        {
+		            field: 'hospitalName',
+		            title: '医院名称',
+		            formatter: function (v) { return v || '-'; }
+		        },
+		        {
+		            field: 'supplierCode',
+		            title: '供应商编码',
+		            formatter: function (v) { return v || '-'; }
+		        },
+		        {
+		            field: 'supplierName',
+		            title: '供应商名称',
+		            formatter: function (v) { return v || '-'; }
+		        },
+		        {
+		            field: 'supno',
+		            title: '订单供应商编码',
+		            formatter: function (v) { return v || '-'; }
+		        },
+		        {
+		            field: 'sup',
+		            title: '订单供应商名称',
+		            formatter: function (v) { return v || '-'; }
+		        },
+		        {
+		            field: 'ckno',
+		            title: '订单仓库编码',
+		            formatter: function (v) { return v || '-'; }
+		        },
+		        {
+		            field: 'ck',
+		            title: '订单仓库名称',
+		            formatter: function (v) { return v || '-'; }
 		        },
 		        {
 		            field: 'customer',

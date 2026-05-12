@@ -23,6 +23,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="scmHospitalCode" column="scm_hospital_code"/>
         <result property="scmHospitalId" column="scm_hospital_id"/>
         <result property="scmSupplierId" column="scm_supplier_id"/>
+        <result property="hospitalId"   column="hospital_id"/>
+        <result property="supplierId"   column="supplier_id"/>
+        <result property="hospitalCode" column="hospital_code"/>
+        <result property="hospitalName" column="hospital_name"/>
+        <result property="supplierCode" column="supplier_code"/>
+        <result property="supplierName" column="supplier_name"/>
         <result property="zjly"          column="zjly"/>
         <result property="createTime"   column="create_time"/>
     </resultMap>
@@ -53,18 +59,68 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <sql id="selectZsTpOrderVo">
         select id, third_party_pk, customer, sheet_je, dh, supno, sup, ckno, ck, ksbh, ksmc, bz, jsfs, receive_channel, scm_sup_code,
-               scm_hospital_code, scm_hospital_id, scm_supplier_id, zjly, create_time
+               scm_hospital_code, scm_hospital_id, scm_supplier_id, zjly, create_time, hospital_id, supplier_id,
+               null as hospital_code, null as hospital_name, null as supplier_code, null as supplier_name
         from zs_tp_order
     </sql>
 
     <sql id="selectZsTpOrderVoAliased">
         select z.id, z.third_party_pk, z.customer, z.sheet_je, z.dh, z.supno, z.sup, z.ckno, z.ck, z.ksbh, z.ksmc, z.bz, z.jsfs, z.receive_channel, z.scm_sup_code,
-               z.scm_hospital_code, z.scm_hospital_id, z.scm_supplier_id, z.zjly, z.create_time
+               z.scm_hospital_code, z.scm_hospital_id, z.scm_supplier_id, z.zjly, z.create_time, z.hospital_id, z.supplier_id,
+               null as hospital_code, null as hospital_name, null as supplier_code, null as supplier_name
         from zs_tp_order z
     </sql>
 
+    <sql id="zsTpOrderJoinColumns">
+        z.id, z.third_party_pk, z.customer, z.sheet_je, z.dh, z.supno, z.sup, z.ckno, z.ck, z.ksbh, z.ksmc, z.bz, z.jsfs, z.receive_channel, z.scm_sup_code,
+        z.scm_hospital_code, z.scm_hospital_id, z.scm_supplier_id, z.zjly, z.create_time, z.hospital_id, z.supplier_id,
+        COALESCE(nullif(trim(h.hospital_code), ''), nullif(trim(z.scm_hospital_code), '')) as hospital_code,
+        h.hospital_name,
+        COALESCE(nullif(trim(s.supplier_code), ''), nullif(trim(z.scm_sup_code), '')) as supplier_code,
+        COALESCE(nullif(trim(s.company_name), ''), nullif(trim(z.sup), '')) as supplier_name
+    </sql>
+
+    <sql id="zsTpOrderJoinFrom">
+        from zs_tp_order z
+        left join scm_hospital h on z.hospital_id = h.hospital_id
+        left join scm_supplier s on z.supplier_id = s.supplier_id
+    </sql>
+
+    <!-- 医院/供应商数据范围（与订单查询一致，供第三方订单列表复用） -->
+    <sql id="zsTpOrderScopeFilters">
+            <if test="hospitalId != null">
+                and z.hospital_id = #{hospitalId}
+            </if>
+            <if test="supplierId != null">
+                and z.supplier_id = #{supplierId}
+            </if>
+            <if test="params != null and params.excludeHospitalIds != null and params.excludeHospitalIds.size() &gt; 0">
+                and z.hospital_id NOT IN
+                <foreach collection="params.excludeHospitalIds" item="hid" open="(" separator="," close=")">
+                    #{hid}
+                </foreach>
+            </if>
+            <if test="params != null and params.roleSupplierIds != null and params.roleSupplierIds.size() &gt; 0">
+                and z.supplier_id IN
+                <foreach collection="params.roleSupplierIds" item="sid" open="(" separator="," close=")">
+                    #{sid}
+                </foreach>
+            </if>
+            <if test="params != null and params.scopePairBlock != null and (params.scopePairBlock == true or params.scopePairBlock == 'true')">
+                and 1 = 0
+            </if>
+            <if test="params != null and params.scopePairs != null and params.scopePairs.size() &gt; 0">
+                and (
+                <foreach collection="params.scopePairs" item="sp" separator=" OR ">
+                    (z.hospital_id = #{sp.hospitalId} AND z.supplier_id = #{sp.supplierId})
+                </foreach>
+                )
+            </if>
+    </sql>
+
     <select id="selectZsTpOrderList" parameterType="com.scm.system.domain.ZsTpOrder" resultMap="ZsTpOrderResult">
-        <include refid="selectZsTpOrderVoAliased"/>
+        select <include refid="zsTpOrderJoinColumns"/>
+        <include refid="zsTpOrderJoinFrom"/>
         <where>
             z.del_flag = '0'
             <if test="dh != null and dh != ''">
@@ -76,6 +132,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="ksmc != null and ksmc != ''">
                 and z.ksmc like concat('%', #{ksmc}, '%')
             </if>
+            <if test="hospitalName != null and hospitalName != ''">
+                and h.hospital_name like concat('%', #{hospitalName}, '%')
+            </if>
+            <if test="supplierName != null and supplierName != ''">
+                and s.company_name like concat('%', #{supplierName}, '%')
+            </if>
+            <include refid="zsTpOrderScopeFilters"/>
             <if test="params != null and params.deliveryFilter != null and params.deliveryFilter == 'none'">
                 and not exists (
                     select 1 from scm_delivery_detail dd
@@ -125,6 +188,37 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectZsTpOrderById" parameterType="String" resultMap="ZsTpOrderResult">
         <include refid="selectZsTpOrderVo"/>
         where id = #{id} and del_flag = '0'
+    </select>
+
+    <select id="selectZsTpOrderByIdJoined" parameterType="String" resultMap="ZsTpOrderResult">
+        select <include refid="zsTpOrderJoinColumns"/>
+        <include refid="zsTpOrderJoinFrom"/>
+        where z.id = #{id} and z.del_flag = '0'
+    </select>
+
+    <select id="selectZsTpOrderQueryList" parameterType="com.scm.system.domain.ZsTpOrder" resultMap="ZsTpOrderResult">
+        select <include refid="zsTpOrderJoinColumns"/>
+        <include refid="zsTpOrderJoinFrom"/>
+        <where>
+            z.del_flag = '0'
+            <if test="dh != null and dh != ''">
+                and z.dh like concat('%', #{dh}, '%')
+            </if>
+            <if test="customer != null and customer != ''">
+                and z.customer like concat('%', #{customer}, '%')
+            </if>
+            <if test="ksmc != null and ksmc != ''">
+                and z.ksmc like concat('%', #{ksmc}, '%')
+            </if>
+            <if test="hospitalName != null and hospitalName != ''">
+                and h.hospital_name like concat('%', #{hospitalName}, '%')
+            </if>
+            <if test="supplierName != null and supplierName != ''">
+                and s.company_name like concat('%', #{supplierName}, '%')
+            </if>
+            <include refid="zsTpOrderScopeFilters"/>
+        </where>
+        order by z.create_time desc
     </select>
 
     <select id="selectZsTpOrderDetailListByOrderId" parameterType="String" resultMap="ZsTpOrderDetailResult">
