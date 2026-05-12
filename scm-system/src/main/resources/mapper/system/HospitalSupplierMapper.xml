@@ -181,6 +181,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         from scm_delivery
         where hospital_id = #{hospitalId}
           and supplier_id = #{supplierId}
+          and (del_flag is null or del_flag = '' or del_flag = '0')
     </select>
 
     <select id="selectHospitalIdsInActiveSupplyForSupplier" resultType="long">

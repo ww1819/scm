@@ -45,7 +45,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="updateBy"        column="update_by"            />
         <result property="updateTime"      column="update_time"          />
         <result property="remark"          column="remark"              />
+        <result property="delFlag"        column="del_flag"             />
+        <result property="delTime"        column="del_time"             />
+        <result property="delBy"          column="del_by"               />
+        <result property="tenantId"       column="tenant_id"            />
     </resultMap>
+
+    <!-- 主表未逻辑删除：0 正常，2 已删除；NULL、空串视为未删 -->
+    <sql id="deliveryNotDeleted">
+        (d.del_flag IS NULL OR d.del_flag = '' OR d.del_flag = '0')
+    </sql>
     
     <sql id="selectDeliveryVo">
         select d.delivery_id, d.delivery_no, d.hospital_id, d.warehouse_name, d.order_id,
@@ -58,6 +67,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                d.audit_status, d.audit_by, d.audit_time, d.audit_remark,
                d.remark, d.create_by, d.create_time,
                d.update_by, d.update_time,
+               d.del_flag, d.del_time, d.del_by, d.tenant_id,
                h.hospital_name, s.company_name as supplier_name
         from scm_delivery d
         left join scm_hospital h on d.hospital_id = h.hospital_id
@@ -67,6 +77,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectDeliveryList" parameterType="Delivery" resultMap="DeliveryResult">
         <include refid="selectDeliveryVo"/>
         <where>
+            <include refid="deliveryNotDeleted"/>
             <if test="deliveryNo != null and deliveryNo != ''">
                 <choose>
                     <when test="params != null and params.exactDeliveryNo != null and (params.exactDeliveryNo == true or params.exactDeliveryNo == 'true')">
@@ -136,18 +147,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectDeliveryById" parameterType="Long" resultMap="DeliveryResult">
         <include refid="selectDeliveryVo"/>
         where d.delivery_id = #{deliveryId}
+          and <include refid="deliveryNotDeleted"/>
     </select>
     
     <select id="selectDeliveryByDeliveryNo" parameterType="String" resultMap="DeliveryResult">
         <include refid="selectDeliveryVo"/>
         where d.delivery_no = #{deliveryNo}
-          and (d.del_flag is null or d.del_flag = '0')
+          and (d.del_flag is null or d.del_flag = '' or d.del_flag = '0')
     </select>
 
     <select id="countDeliveryByZsOrderId" parameterType="String" resultType="int">
         select count(*) from scm_delivery
         where zs_order_id = #{zsOrderId}
-        and (del_flag is null or del_flag = '0')
+        and (del_flag is null or del_flag = '' or del_flag = '0')
     </select>
     
     <insert id="insertDelivery" parameterType="Delivery" useGeneratedKeys="true" keyProperty="deliveryId">
@@ -186,6 +198,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="auditRemark != null and auditRemark != ''">audit_remark,</if>
             <if test="remark != null and remark != ''">remark,</if>
             <if test="createBy != null and createBy != ''">create_by,</if>
+            del_flag,
             create_time
         )values(
             <if test="deliveryNo != null and deliveryNo != ''">#{deliveryNo},</if>
@@ -222,6 +235,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="auditRemark != null and auditRemark != ''">#{auditRemark},</if>
             <if test="remark != null and remark != ''">#{remark},</if>
             <if test="createBy != null and createBy != ''">#{createBy},</if>
+            '0',
             sysdate()
         )
     </insert>
@@ -287,17 +301,30 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             update_time = sysdate()
         </set>
         where delivery_id = #{deliveryId}
+          and (del_flag is null or del_flag = '' or del_flag = '0')
     </update>
     
-    <delete id="deleteDeliveryById" parameterType="Long">
-        delete from scm_delivery where delivery_id = #{deliveryId}
-    </delete>
+    <update id="deleteDeliveryById">
+        update scm_delivery
+        set del_flag = '2',
+            del_time = sysdate(),
+            del_by = #{delBy},
+            delivery_no = concat(left(ifnull(delivery_no, ''), 22), 'D', delivery_id)
+        where delivery_id = #{deliveryId}
+          and (del_flag is null or del_flag = '' or del_flag = '0')
+    </update>
     
-    <delete id="deleteDeliveryByIds" parameterType="String">
-        delete from scm_delivery where delivery_id in
-        <foreach item="deliveryId" collection="array" open="(" separator="," close=")">
+    <update id="deleteDeliveryByIds">
+        update scm_delivery
+        set del_flag = '2',
+            del_time = sysdate(),
+            del_by = #{delBy},
+            delivery_no = concat(left(ifnull(delivery_no, ''), 22), 'D', delivery_id)
+        where delivery_id in
+        <foreach item="deliveryId" collection="ids" open="(" separator="," close=")">
             #{deliveryId}
         </foreach>
-    </delete>
+          and (del_flag is null or del_flag = '' or del_flag = '0')
+    </update>
 </mapper>
 

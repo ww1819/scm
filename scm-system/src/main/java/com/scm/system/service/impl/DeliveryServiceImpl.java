@@ -774,7 +774,8 @@ public class DeliveryServiceImpl implements IDeliveryService
             scmBarcodeSeedService.deleteBarcodesByDeliveryId(Long.parseLong(deliveryId));
             deliveryDetailMapper.deleteDeliveryDetailByDeliveryId(Long.parseLong(deliveryId), delBy);
         }
-        return deliveryMapper.deleteDeliveryByIds(deliveryIds);
+        String masterDelBy = StringUtils.trimToEmpty(ShiroUtils.getLoginName());
+        return deliveryMapper.deleteDeliveryByIds(deliveryIds, masterDelBy);
     }
 
     /**
@@ -796,7 +797,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         String delBy = StringUtils.trimToEmpty(d != null && StringUtils.isNotEmpty(d.getUpdateBy()) ? d.getUpdateBy()
             : ShiroUtils.getLoginName());
         deliveryDetailMapper.deleteDeliveryDetailByDeliveryId(deliveryId, delBy);
-        return deliveryMapper.deleteDeliveryById(deliveryId);
+        return deliveryMapper.deleteDeliveryById(deliveryId, delBy);
     }
 
     private void assertDeliveryDeletable(Delivery d)
