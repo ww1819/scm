@@ -33,6 +33,9 @@ import com.scm.system.domain.vo.DeliveryPrintSheetVo;
 
 /**
  * 将配送单按「物资配送单」打印版式写入 Excel（每单一个 Sheet）。
+ * <p>
+ * 版式与边框约定：信息区、页脚数值区为「仅底边框」下划线样式；明细表头至合计行为全框线；
+ * 标题行无表框；不生成条码图片（仅保留「输入码」文字）。
  */
 public final class DeliveryPrintStyleExcelBuilder
 {
@@ -109,13 +112,13 @@ public final class DeliveryPrintStyleExcelBuilder
 
         int r = 0;
         Row r0 = sh.createRow(r++);
-        r0.setHeightInPoints(22);
+        r0.setHeightInPoints(26);
         merge(sh, 0, 0, 0, 3);
-        setStr(sh, 0, 0, "CODE128 " + code, st.border);
+        setStr(sh, 0, 0, "", st.plain);
         merge(sh, 0, 0, 4, 7);
         setStr(sh, 0, 4, "物资配送单", st.title);
         merge(sh, 0, 0, 8, 11);
-        setStr(sh, 0, 8, "输入码：" + code, st.border);
+        setStr(sh, 0, 8, "输入码：" + code, st.inputCode);
 
         r = metaLine(sh, r, "配送商：", nz(d.getSupplierName()), "医院：", nz(d.getHospitalName()), "配送单号：", nz(d.getDeliveryNo()), st);
         r = metaLine(sh, r, "配送地址：", nz(d.getDeliveryAddress()), "供应商：", nz(d.getSupplierName()), "仓库：", nz(d.getWarehouse()), st);
@@ -125,7 +128,7 @@ public final class DeliveryPrintStyleExcelBuilder
 
         String[] heads = { "序号", "品名", "规格", "单位", "单价", "数量", "金额", "批号", "有效期", "生产日期", "注册证号", "厂家" };
         int hr = r;
-        Row hRow = sh.createRow(hr);
+        sh.createRow(hr);
         for (int c = 0; c < COLS; c++)
         {
             setStr(sh, hr, c, heads[c], st.header);
@@ -146,56 +149,59 @@ public final class DeliveryPrintStyleExcelBuilder
                 int rr = dr.getRowNum();
                 int col = 0;
                 setStr(sh, rr, col++, String.valueOf(seq++), st.border);
-                setStr(sh, rr, col++, nz(det.getMaterialName()), st.border);
-                setStr(sh, rr, col++, nz(det.getSpecification()), st.border);
-                setStr(sh, rr, col++, nz(det.getUnit()), st.border);
-                setNum(sh, rr, col++, det.getPrice(), st.border2);
-                setNumInt(sh, rr, col++, det.getDeliveryQuantity(), st.border);
-                setNum(sh, rr, col++, det.getAmount(), st.border2);
-                setStr(sh, rr, col++, nz(det.getBatchNo()), st.border);
-                setDate(sh, rr, col++, det.getExpireDate(), st.date, st.border);
-                setDate(sh, rr, col++, det.getProductionDate(), st.date, st.border);
-                setStr(sh, rr, col++, nz(det.getRegisterNo()), st.border);
-                setStr(sh, rr, col++, nz(det.getManufacturer()), st.border);
+                setStr(sh, rr, col++, nz(det.getMaterialName()), st.borderLeft);
+                setStr(sh, rr, col++, nz(det.getSpecification()), st.borderLeft);
+                setStr(sh, rr, col++, nz(det.getUnit()), st.borderLeft);
+                setNum(sh, rr, col++, det.getPrice(), st.borderNum);
+                setNumInt(sh, rr, col++, det.getDeliveryQuantity(), st.borderNumInt);
+                setNum(sh, rr, col++, det.getAmount(), st.borderNum);
+                setStr(sh, rr, col++, nz(det.getBatchNo()), st.borderLeft);
+                setDate(sh, rr, col++, det.getExpireDate(), st.date, st.borderLeft);
+                setDate(sh, rr, col++, det.getProductionDate(), st.date, st.borderLeft);
+                setStr(sh, rr, col++, nz(det.getRegisterNo()), st.borderLeft);
+                setStr(sh, rr, col++, nz(det.getManufacturer()), st.borderLeft);
             }
         }
 
         int sr = r++;
-        Row sumRow = sh.createRow(sr);
-        merge(sh, sr, sr, 0, 4);
+        sh.createRow(sr);
+        merge(sh, sr, sr, 0, 3);
         setStr(sh, sr, 0, "合计", st.borderBold);
-        setStr(sh, sr, 5, String.valueOf(vo.getTotalQuantity()), st.border);
-        setStr(sh, sr, 6, fmtMoney(vo.getPrintTotalAmount()), st.border);
+        setStr(sh, sr, 4, "", st.border);
+        setNumInt(sh, sr, 5, BigDecimal.valueOf(vo.getTotalQuantity()), st.borderNumInt);
+        setNum(sh, sr, 6, vo.getPrintTotalAmount(), st.borderNum);
         merge(sh, sr, sr, 7, 11);
         String upper = vo.getPrintTotalAmount() != null
             ? Convert.digitUppercase(vo.getPrintTotalAmount().setScale(2, RoundingMode.HALF_UP).doubleValue())
             : "零元整";
-        setStr(sh, sr, 7, "合计大写金额：" + upper, st.border);
+        setStr(sh, sr, 7, "合计大写金额：" + upper, st.borderLeft);
 
         int fr = r++;
-        Row foot = sh.createRow(fr);
+        Row footRow = sh.createRow(fr);
+        footRow.setHeightInPoints(20);
         merge(sh, fr, fr, 0, 2);
-        setStr(sh, fr, 0, "制单日期：" + fmtDate(d.getCreateTime()), st.border);
+        setStr(sh, fr, 0, "制单日期：" + fmtDate(d.getCreateTime()), st.footer);
         merge(sh, fr, fr, 3, 5);
-        setStr(sh, fr, 3, "制单人：" + nz(d.getCreateBy()), st.border);
+        setStr(sh, fr, 3, "制单人：" + nz(d.getCreateBy()), st.footer);
         merge(sh, fr, fr, 6, 8);
-        setStr(sh, fr, 6, "签收人：________________", st.border);
+        setStr(sh, fr, 6, "签收人：______________________________", st.footer);
         merge(sh, fr, fr, 9, 11);
-        setStr(sh, fr, 9, "签收日期：________________", st.border);
+        setStr(sh, fr, 9, "签收日期：______________________________", st.footer);
     }
 
     private static int metaLine(Sheet sh, int r, String l1, String v1, String l2, String v2, String l3, String v3, Styles st)
     {
-        sh.createRow(r);
-        setStr(sh, r, 0, l1, st.label);
+        Row row = sh.createRow(r);
+        row.setHeightInPoints(18);
+        setStr(sh, r, 0, l1, st.metaLabel);
         merge(sh, r, r, 1, 3);
-        setStr(sh, r, 1, v1, st.border);
-        setStr(sh, r, 4, l2, st.label);
+        setStr(sh, r, 1, v1, st.metaValue);
+        setStr(sh, r, 4, l2, st.metaLabel);
         merge(sh, r, r, 5, 7);
-        setStr(sh, r, 5, v2, st.border);
-        setStr(sh, r, 8, l3, st.label);
+        setStr(sh, r, 5, v2, st.metaValue);
+        setStr(sh, r, 8, l3, st.metaLabel);
         merge(sh, r, r, 9, 11);
-        setStr(sh, r, 9, v3, st.border);
+        setStr(sh, r, 9, v3, st.metaValue);
         return r + 1;
     }
 
@@ -328,36 +334,66 @@ public final class DeliveryPrintStyleExcelBuilder
 
     private static final class Styles
     {
-        final CellStyle border;
-        final CellStyle border2;
-        final CellStyle borderBold;
+        /** 信息区标签：无框线、加粗 */
+        final CellStyle metaLabel;
+        /** 信息区取值：仅底边框（下划线） */
+        final CellStyle metaValue;
+        /** 标题行左侧留白 */
+        final CellStyle plain;
+        /** 主标题 */
         final CellStyle title;
+        /** 输入码：无框、右对齐 */
+        final CellStyle inputCode;
+        /** 表头：灰底全框 */
         final CellStyle header;
-        final CellStyle label;
+        /** 明细/合计：全框 */
+        final CellStyle border;
+        final CellStyle borderLeft;
+        final CellStyle borderBold;
+        final CellStyle borderNum;
+        final CellStyle borderNumInt;
         final CellStyle date;
+        /** 页脚：仅底边框 */
+        final CellStyle footer;
 
         Styles(Workbook wb)
         {
             CreationHelper ch = wb.getCreationHelper();
             DataFormat df = ch.createDataFormat();
 
-            border = baseBorder(wb);
-            border2 = baseBorder(wb);
-            border2.setDataFormat(df.getFormat("#,##0.00"));
+            metaLabel = wb.createCellStyle();
+            metaLabel.setVerticalAlignment(VerticalAlignment.CENTER);
+            metaLabel.setWrapText(true);
+            Font fl = wb.createFont();
+            fl.setBold(true);
+            metaLabel.setFont(fl);
+            clearBorders(metaLabel);
 
-            borderBold = baseBorder(wb);
-            Font fb = wb.createFont();
-            fb.setBold(true);
-            borderBold.setFont(fb);
+            metaValue = wb.createCellStyle();
+            metaValue.setVerticalAlignment(VerticalAlignment.CENTER);
+            metaValue.setWrapText(true);
+            metaValue.setAlignment(HorizontalAlignment.LEFT);
+            clearBorders(metaValue);
+            metaValue.setBorderBottom(BorderStyle.THIN);
 
-            title = baseBorder(wb);
+            plain = wb.createCellStyle();
+            clearBorders(plain);
+
+            title = wb.createCellStyle();
             title.setAlignment(HorizontalAlignment.CENTER);
+            title.setVerticalAlignment(VerticalAlignment.CENTER);
+            clearBorders(title);
             Font ft = wb.createFont();
             ft.setBold(true);
             ft.setFontHeightInPoints((short) 14);
             title.setFont(ft);
 
-            header = baseBorder(wb);
+            inputCode = wb.createCellStyle();
+            inputCode.setAlignment(HorizontalAlignment.RIGHT);
+            inputCode.setVerticalAlignment(VerticalAlignment.CENTER);
+            clearBorders(inputCode);
+
+            header = thinAll(wb);
             header.setAlignment(HorizontalAlignment.CENTER);
             header.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
             header.setFillPattern(FillPatternType.SOLID_FOREGROUND);
@@ -365,24 +401,58 @@ public final class DeliveryPrintStyleExcelBuilder
             fh.setBold(true);
             header.setFont(fh);
 
-            label = baseBorder(wb);
-            Font fl = wb.createFont();
-            fl.setBold(true);
-            label.setFont(fl);
+            border = thinAll(wb);
+            border.setVerticalAlignment(VerticalAlignment.CENTER);
+            border.setWrapText(true);
 
-            date = baseBorder(wb);
+            borderLeft = thinAll(wb);
+            borderLeft.setVerticalAlignment(VerticalAlignment.CENTER);
+            borderLeft.setWrapText(true);
+            borderLeft.setAlignment(HorizontalAlignment.LEFT);
+
+            borderBold = thinAll(wb);
+            borderBold.setVerticalAlignment(VerticalAlignment.CENTER);
+            Font fb = wb.createFont();
+            fb.setBold(true);
+            borderBold.setFont(fb);
+
+            borderNum = thinAll(wb);
+            borderNum.setVerticalAlignment(VerticalAlignment.CENTER);
+            borderNum.setAlignment(HorizontalAlignment.RIGHT);
+            borderNum.setDataFormat(df.getFormat("#,##0.00"));
+
+            borderNumInt = thinAll(wb);
+            borderNumInt.setVerticalAlignment(VerticalAlignment.CENTER);
+            borderNumInt.setAlignment(HorizontalAlignment.RIGHT);
+            borderNumInt.setDataFormat(df.getFormat("#,##0"));
+
+            date = thinAll(wb);
+            date.setVerticalAlignment(VerticalAlignment.CENTER);
+            date.setAlignment(HorizontalAlignment.CENTER);
             date.setDataFormat(df.getFormat("yyyy/mm/dd"));
+
+            footer = wb.createCellStyle();
+            footer.setVerticalAlignment(VerticalAlignment.CENTER);
+            footer.setWrapText(true);
+            clearBorders(footer);
+            footer.setBorderBottom(BorderStyle.THIN);
         }
 
-        private static CellStyle baseBorder(Workbook wb)
+        private static void clearBorders(CellStyle s)
+        {
+            s.setBorderTop(BorderStyle.NONE);
+            s.setBorderBottom(BorderStyle.NONE);
+            s.setBorderLeft(BorderStyle.NONE);
+            s.setBorderRight(BorderStyle.NONE);
+        }
+
+        private static CellStyle thinAll(Workbook wb)
         {
             CellStyle s = wb.createCellStyle();
             s.setBorderTop(BorderStyle.THIN);
             s.setBorderBottom(BorderStyle.THIN);
             s.setBorderLeft(BorderStyle.THIN);
             s.setBorderRight(BorderStyle.THIN);
-            s.setVerticalAlignment(VerticalAlignment.CENTER);
-            s.setWrapText(true);
             return s;
         }
     }

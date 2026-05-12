@@ -382,7 +382,7 @@
 				area: ['480px', '280px'],
 				shadeClose: true,
 				content: '<div style="padding:20px 24px 12px;">'
-					+ '<p style="color:#666;font-size:13px;line-height:1.65;margin-bottom:18px;">请选择导出范围：Excel 中每个配送单单独一个工作表，版式与「打印」页面一致。</p>'
+					+ '<p style="color:#666;font-size:13px;line-height:1.65;margin-bottom:18px;">请选择导出范围：Excel 中每个配送单单独一个工作表，版式与「打印」页面一致。保存时若浏览器支持，将弹出系统对话框由您选择保存路径与文件名；否则使用浏览器默认下载。</p>'
 					+ '<button type="button" id="btn-delivery-print-excel-selected" class="btn btn-primary btn-block" style="margin-bottom:12px;">导出已勾选</button>'
 					+ '<button type="button" id="btn-delivery-print-excel-all" class="btn btn-warning btn-block">导出全部（按当前搜索条件，不分页）</button>'
 					+ '</div>',
@@ -406,6 +406,85 @@
 					});
 				}
 			});
+		}
+
+		/** 从响应头解析导出文件名（与后端 Content-Disposition 一致） */
+		function resolvePrintExportFileName(response) {
+			var fileName = '';
+			var cd = response.headers.get('Content-Disposition') || response.headers.get('content-disposition');
+			if (cd) {
+				var m = cd.match(/filename\*=utf-8''([^;]+)/i);
+				if (m && m[1]) {
+					try { fileName = decodeURIComponent(m[1].trim()); } catch (e0) { fileName = m[1].trim(); }
+				}
+				if (!fileName) {
+					m = cd.match(/filename\*=UTF-8''([^;]+)/i);
+					if (m && m[1]) {
+						try { fileName = decodeURIComponent(m[1].trim()); } catch (e1) { fileName = m[1].trim(); }
+					}
+				}
+				if (!fileName) {
+					m = cd.match(/filename="([^"]+)"/i);
+					if (m && m[1]) { fileName = m[1]; }
+				}
+				if (!fileName) {
+					m = cd.match(/filename=([^;]+)/i);
+					if (m && m[1]) { fileName = m[1].trim().replace(/^"+|"+$/g, ''); }
+				}
+			}
+			if (!fileName) {
+				var d = new Date();
+				var p = function(n) { return (n < 10 ? '0' : '') + n; };
+				fileName = '配送单打印样式_' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate())
+					+ p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds()) + '.xlsx';
+			}
+			if (!/\.xlsx$/i.test(fileName)) {
+				fileName += '.xlsx';
+			}
+			return fileName;
+		}
+
+		/**
+		 * 保存导出文件：优先使用系统「另存为」由用户选择路径（File System Access API）；
+		 * 不支持时回退为浏览器默认下载。
+		 */
+		function savePrintExportBlob(blob, fileName) {
+			if (typeof window.showSaveFilePicker === 'function') {
+				return window.showSaveFilePicker({
+					suggestedName: fileName,
+					types: [{
+						description: 'Excel 工作簿',
+						accept: { 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'] }
+					}]
+				}).then(function(handle) {
+					return handle.createWritable();
+				}).then(function(writable) {
+					return writable.write(blob).then(function() { return writable.close(); });
+				}).then(function() {
+					$.modal.msgSuccess('已保存到所选位置');
+				}).catch(function(err) {
+					if (err && err.name === 'AbortError') {
+						$.modal.msgWarning('已取消保存');
+						return;
+					}
+					triggerBlobDownload(blob, fileName);
+					$.modal.msgSuccess('已保存（浏览器默认下载目录）');
+				});
+			}
+			triggerBlobDownload(blob, fileName);
+			$.modal.msgSuccess('导出成功');
+			return Promise.resolve();
+		}
+
+		function triggerBlobDownload(blob, fileName) {
+			var url = window.URL.createObjectURL(blob);
+			var a = document.createElement('a');
+			a.href = url;
+			a.download = fileName;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			window.URL.revokeObjectURL(url);
 		}
 
 		function submitPrintStyleExcelExport(exportMode, idsComma) {
@@ -459,33 +538,8 @@
 					});
 				}
 				return response.blob().then(function(blob) {
-					var fileName = '配送单打印样式.xlsx';
-					var cd = response.headers.get('Content-Disposition');
-					if (cd) {
-						var m = cd.match(/filename\*=utf-8''([^;]+)/i);
-						if (m && m[1]) {
-							try { fileName = decodeURIComponent(m[1].trim()); } catch (e3) {}
-						} else {
-							m = cd.match(/filename="([^"]+)"/i);
-							if (m && m[1]) {
-								fileName = m[1];
-							} else {
-								m = cd.match(/filename=([^;]+)/i);
-								if (m && m[1]) {
-									fileName = m[1].trim();
-								}
-							}
-						}
-					}
-					var url = window.URL.createObjectURL(blob);
-					var a = document.createElement('a');
-					a.href = url;
-					a.download = fileName;
-					document.body.appendChild(a);
-					a.click();
-					document.body.removeChild(a);
-					window.URL.revokeObjectURL(url);
-					$.modal.msgSuccess('导出成功');
+					var fileName = resolvePrintExportFileName(response);
+					return savePrintExportBlob(blob, fileName);
 				});
 			}).catch(function() {
 				$.modal.closeLoading();
