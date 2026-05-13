@@ -399,6 +399,38 @@ public class DeliveryController extends BaseController
         return prefix + "/print";
     }
 
+    /**
+     * 医用耗材质量验收单打印（A4）
+     */
+    @RequiresPermissions("delivery:delivery:print")
+    @GetMapping("/printAcceptance/{deliveryId}")
+    public String printAcceptance(@PathVariable("deliveryId") Long deliveryId, ModelMap mmap)
+    {
+        Delivery delivery = deliveryService.selectDeliveryById(deliveryId);
+        List<DeliveryDetail> details = delivery.getDeliveryDetails();
+        if (details == null)
+        {
+            details = java.util.Collections.emptyList();
+        }
+        mmap.put("delivery", delivery);
+        mmap.put("deliveryDetails", details);
+
+        BigDecimal printTotalAmount = BigDecimal.ZERO;
+        if (details != null && !details.isEmpty())
+        {
+            for (DeliveryDetail detail : details)
+            {
+                if (detail.getAmount() != null)
+                {
+                    printTotalAmount = printTotalAmount.add(detail.getAmount());
+                }
+            }
+        }
+        mmap.put("printTotalAmount", printTotalAmount);
+
+        return prefix + "/printAcceptance";
+    }
+
     /** 单次「打印样式」Excel 导出最多配送单数 */
     private static final int PRINT_EXPORT_MAX_SHEETS = 300;
 

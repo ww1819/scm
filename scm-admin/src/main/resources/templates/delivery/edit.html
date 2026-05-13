@@ -611,6 +611,7 @@
                 <h4 class="form-header h4" style="margin: 0; border-bottom: 2px solid #5cb85c;">详细信息列表</h4>
                 <div class="btn-group-custom">
                     <button type="button" class="btn btn-sm btn-info" onclick="printDelivery()" th:if="${delivery.deliveryId != null}"><i class="fa fa-print"></i> 打印配送单</button>
+                    <button type="button" class="btn btn-sm btn-info" onclick="printAcceptanceSlip()" th:if="${delivery.deliveryId != null}"><i class="fa fa-print"></i> 验收单打印</button>
                     <button type="button" class="btn btn-sm btn-success" onclick="newDocument()"><i class="fa fa-plus"></i> 新增单据</button>
                     <button type="button" class="btn btn-sm btn-info" onclick="importOrder()"><i class="fa fa-file-text-o"></i> 引入订单</button>
                     <button type="button" class="btn btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i> 保 存</button>
@@ -1675,6 +1676,19 @@
 	        }
 	    }
 	    
+	    function printAcceptanceSlip() {
+	        var deliveryId = $("input[name='deliveryId']").val();
+	        if (!deliveryId) {
+	            $.modal.msgWarning("配送单ID不存在，无法打印验收单");
+	            return;
+	        }
+	        var url = ctx + "delivery/delivery/printAcceptance/" + deliveryId;
+	        var w = window.open(url, '_blank');
+	        if (!w) {
+	            $.modal.alertError("浏览器阻止了弹窗，请允许弹窗后重试");
+	        }
+	    }
+
 	    // 打印配送单 - 直接打开浏览器打印预览
 	    function printDelivery() {
 	        var deliveryId = $("input[name='deliveryId']").val();
