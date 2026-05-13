@@ -67,6 +67,12 @@
 	            <a class="btn btn-warning" onclick="resetPre()">
 		            <i class="fa fa-refresh"></i> 重置
 		        </a>
+				<a class="btn btn-success multiple disabled" onclick="tpBatchConfirm()" shiro:hasPermission="order:tpOrder:confirm" th:if="${tpQuerySupplierCtx}">
+					<i class="fa fa-check"></i> 确认
+				</a>
+				<a class="btn btn-danger multiple disabled" onclick="tpBatchVoid()" shiro:hasPermission="order:tpOrder:void" th:if="${tpQueryHospitalCtx}">
+					<i class="fa fa-ban"></i> 作废
+				</a>
 	        </div>
 
 	        <div class="col-sm-12 select-table table-striped">
@@ -195,6 +201,9 @@
 		        modalName: "第三方订单",
 		        uniqueId: "id",
 		        columns: [{
+		            checkbox: true
+		        },
+		        {
 		            field: 'index',
 		            title: '序号',
 		            align: 'center',
@@ -353,6 +362,52 @@
 		function tpVoidOrder(id) {
 			$.modal.confirm("确认作废该第三方订单？作废后不可再引用生成配送单。", function() {
 				$.operate.post(prefix + "/void/" + id, {}, function() {
+					$.table.refresh();
+				});
+			});
+		}
+
+		function tpBatchConfirm() {
+			var rows = $("#" + tableId).bootstrapTable("getSelections");
+			if (!rows || rows.length === 0) {
+				$.modal.alertWarning("请至少选择一条订单");
+				return;
+			}
+			for (var i = 0; i < rows.length; i++) {
+				if (rows[i].voidStatus === '1' || rows[i].confirmStatus === '1') {
+					$.modal.alertWarning("所选记录中包含已确认或已作废的订单，请重新选择");
+					return;
+				}
+			}
+			var ids = [];
+			for (var j = 0; j < rows.length; j++) {
+				ids.push(rows[j].id);
+			}
+			$.modal.confirm("确认选中的 " + ids.length + " 条第三方订单？确认后将记录确认人与确认时间。", function() {
+				$.operate.post(prefix + "/confirmBatch", { ids: ids.join(",") }, function() {
+					$.table.refresh();
+				});
+			});
+		}
+
+		function tpBatchVoid() {
+			var rows = $("#" + tableId).bootstrapTable("getSelections");
+			if (!rows || rows.length === 0) {
+				$.modal.alertWarning("请至少选择一条订单");
+				return;
+			}
+			for (var i = 0; i < rows.length; i++) {
+				if (rows[i].voidStatus === '1') {
+					$.modal.alertWarning("所选记录中包含已作废的订单，请重新选择");
+					return;
+				}
+			}
+			var ids = [];
+			for (var j = 0; j < rows.length; j++) {
+				ids.push(rows[j].id);
+			}
+			$.modal.confirm("确认作废选中的 " + ids.length + " 条第三方订单？作废后不可再引用生成配送单。", function() {
+				$.operate.post(prefix + "/voidBatch", { ids: ids.join(",") }, function() {
 					$.table.refresh();
 				});
 			});

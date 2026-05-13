@@ -1,5 +1,6 @@
 package com.scm.web.controller.order;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,11 +10,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import com.scm.common.annotation.Log;
 import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.page.TableDataInfo;
+import com.scm.common.enums.BusinessType;
+import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.ShiroUtils;
+import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.ZsTpOrder;
 import com.scm.system.service.IDeliveryService;
 import com.scm.system.service.IScmHospitalContextService;
@@ -86,5 +92,95 @@ public class TpOrderQueryController extends BaseController
     {
         deliveryService.voidZsTpOrder(zsOrderId);
         return AjaxResult.success();
+    }
+
+    @RequiresPermissions("order:tpOrder:confirm")
+    @Log(title = "第三方订单批量确认", businessType = BusinessType.UPDATE)
+    @PostMapping("/confirmBatch")
+    @ResponseBody
+    public AjaxResult confirmBatch(@RequestParam("ids") String ids)
+    {
+        return runTpOrderBatch(ids, true);
+    }
+
+    @RequiresPermissions("order:tpOrder:void")
+    @Log(title = "第三方订单批量作废", businessType = BusinessType.UPDATE)
+    @PostMapping("/voidBatch")
+    @ResponseBody
+    public AjaxResult voidBatch(@RequestParam("ids") String ids)
+    {
+        return runTpOrderBatch(ids, false);
+    }
+
+    private AjaxResult runTpOrderBatch(String ids, boolean confirm)
+    {
+        if (StringUtils.isEmpty(ids))
+        {
+            return AjaxResult.error("请至少选择一条订单");
+        }
+        String[] parts = ids.split(",");
+        int ok = 0;
+        List<String> fails = new ArrayList<>();
+        for (String raw : parts)
+        {
+            String id = StringUtils.trim(raw);
+            if (StringUtils.isEmpty(id))
+            {
+                continue;
+            }
+            try
+            {
+                if (confirm)
+                {
+                    deliveryService.confirmZsTpOrder(id);
+                }
+                else
+                {
+                    deliveryService.voidZsTpOrder(id);
+                }
+                ok++;
+            }
+            catch (ServiceException ex)
+            {
+                fails.add(id + "：" + ex.getMessage());
+            }
+            catch (Exception ex)
+            {
+                fails.add(id + "：处理失败");
+            }
+        }
+        if (ok == 0 && fails.isEmpty())
+        {
+            return AjaxResult.error("未解析到有效订单主键");
+        }
+        String act = confirm ? "确认" : "作废";
+        if (fails.isEmpty())
+        {
+            return AjaxResult.success("批量" + act + "成功，共 " + ok + " 条");
+        }
+        if (ok == 0)
+        {
+            return AjaxResult.error("批量" + act + "失败：" + summarizeFails(fails));
+        }
+        return AjaxResult.warn("成功" + act + " " + ok + " 条；失败 " + fails.size() + " 条：" + summarizeFails(fails));
+    }
+
+    private static String summarizeFails(List<String> fails)
+    {
+        int max = Math.min(5, fails.size());
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < max; i++)
+        {
+            if (i > 0)
+            {
+                sb.append("；");
+            }
+            sb.append(fails.get(i));
+        }
+        if (fails.size() > max)
+        {
+            sb.append("…（共 ").append(fails.size()).append(" 条失败）");
+        }
+        return sb.toString();
     }
 }
