@@ -105,7 +105,10 @@ public class SupplierRegisterServiceImpl implements ISupplierRegisterService {
 
         SysUser user = new SysUser();
         user.setLoginName(adminUser.getLoginName().trim());
-        user.setUserName(StringUtils.isNotEmpty(adminUser.getUserName()) ? adminUser.getUserName() : adminUser.getLoginName());
+        String rn = StringUtils.trim(adminUser.getRealName());
+        user.setRealName(rn);
+        user.setUserName(StringUtils.isNotEmpty(adminUser.getUserName()) ? adminUser.getUserName().trim()
+            : (StringUtils.isNotEmpty(rn) ? rn : adminUser.getLoginName()));
         user.setUserType(UserConstants.REGISTER_USER_TYPE);
         user.setStatus("0");
         user.setSalt(ShiroUtils.randomSalt());
@@ -151,7 +154,10 @@ public class SupplierRegisterServiceImpl implements ISupplierRegisterService {
         } else {
             SysUser newUser = new SysUser();
             newUser.setLoginName(user.getLoginName().trim());
-            newUser.setUserName(StringUtils.isNotEmpty(user.getUserName()) ? user.getUserName() : user.getLoginName());
+            String rn = StringUtils.trim(user.getRealName());
+            newUser.setRealName(rn);
+            newUser.setUserName(StringUtils.isNotEmpty(user.getUserName()) ? user.getUserName().trim()
+                : (StringUtils.isNotEmpty(rn) ? rn : user.getLoginName()));
             newUser.setUserType(UserConstants.REGISTER_USER_TYPE);
             newUser.setStatus("0");
             newUser.setSalt(ShiroUtils.randomSalt());

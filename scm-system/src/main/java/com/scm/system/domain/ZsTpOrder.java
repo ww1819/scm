@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.scm.common.core.domain.BaseEntity;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * 第三方推送订单主表 zs_tp_order（查询/选择用）
@@ -86,6 +87,12 @@ public class ZsTpOrder extends BaseEntity
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date voidTime;
+
+    /** 确认人展示名（由 sys_user.real_name 解析，不入库） */
+    private String confirmByDisplay;
+
+    /** 作废人展示名（由 sys_user.real_name 解析，不入库） */
+    private String voidByDisplay;
 
     public String getId()
     {
@@ -425,5 +432,43 @@ public class ZsTpOrder extends BaseEntity
     public void setVoidTime(Date voidTime)
     {
         this.voidTime = voidTime;
+    }
+
+    public String getConfirmByForDisplay()
+    {
+        if (StringUtils.isNotEmpty(confirmByDisplay))
+        {
+            return confirmByDisplay;
+        }
+        return getConfirmBy();
+    }
+
+    public String getConfirmByDisplay()
+    {
+        return confirmByDisplay;
+    }
+
+    public void setConfirmByDisplay(String confirmByDisplay)
+    {
+        this.confirmByDisplay = confirmByDisplay;
+    }
+
+    public String getVoidByForDisplay()
+    {
+        if (StringUtils.isNotEmpty(voidByDisplay))
+        {
+            return voidByDisplay;
+        }
+        return getVoidBy();
+    }
+
+    public String getVoidByDisplay()
+    {
+        return voidByDisplay;
+    }
+
+    public void setVoidByDisplay(String voidByDisplay)
+    {
+        this.voidByDisplay = voidByDisplay;
     }
 }

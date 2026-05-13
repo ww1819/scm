@@ -13,6 +13,7 @@ function stripValidateMessage(html) {
 
 function register() {
     var username = $.common.trim($("input[name='username']").val());
+    var realName = $.common.trim($("input[name='realName']").val());
     var password = $.common.trim($("input[name='password']").val());
     var validateCode = $("input[name='validateCode']").val();
     $.ajax({
@@ -20,6 +21,7 @@ function register() {
         url: ctx + "register",
         data: {
             "loginName": username,
+            "realName": realName,
             "password": password,
             "validateCode": validateCode
         },
@@ -70,6 +72,11 @@ function validateRule() {
             maxlength: 20,
             loginNameScm: true
         },
+        realName: {
+            required: true,
+            maxlength: 50,
+            specialSign: true
+        },
         password: {
             required: true,
             minlength: 5,
@@ -86,6 +93,11 @@ function validateRule() {
             minlength: icon + "用户名不能小于2个字符",
             maxlength: icon + "用户名不能超过20个字符",
             loginNameScm: icon + "不能含汉字，仅允许字母、数字、_、-"
+        },
+        realName: {
+            required: icon + "请输入用户姓名",
+            maxlength: icon + "用户姓名不能超过50个字符",
+            specialSign: icon + "不能包含非法字符：< > \" ' \\ |"
         },
         password: {
             required: icon + "请输入您的密码",

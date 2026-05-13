@@ -38,10 +38,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="zsJsfs"          column="zs_jsfs"                 />
         <result property="auditStatus"     column="audit_status"          />
         <result property="auditBy"         column="audit_by"              />
+        <result property="auditByDisplay" column="audit_by_display"      />
         <result property="auditTime"       column="audit_time"            />
         <result property="auditRemark"     column="audit_remark"          />
         <result property="createBy"        column="create_by"            />
         <result property="createByDisplay" column="create_by_display"    />
+        <result property="deliveryPersonDisplay" column="delivery_person_display" />
         <result property="createTime"      column="create_time"         />
         <result property="updateBy"        column="update_by"            />
         <result property="updateTime"      column="update_time"          />
@@ -69,6 +71,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                d.audit_status, d.audit_by, d.audit_time, d.audit_remark,
                d.remark, d.create_by,
                COALESCE(NULLIF(TRIM(creator.real_name), ''), d.create_by) as create_by_display,
+               COALESCE(NULLIF(TRIM(auditor.real_name), ''), d.audit_by) as audit_by_display,
+               COALESCE(NULLIF(TRIM(dp.real_name), ''), d.delivery_person) as delivery_person_display,
                d.create_time,
                d.update_by, d.update_time,
                d.del_flag, d.del_time, d.del_by, d.tenant_id,
@@ -77,7 +81,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         from scm_delivery d
         left join scm_hospital h on d.hospital_id = h.hospital_id
         left join scm_supplier s on d.supplier_id = s.supplier_id
-        left join sys_user creator on creator.login_name = d.create_by and (creator.del_flag = '0' or creator.del_flag is null or creator.del_flag = '')
+        left join sys_user creator on (creator.del_flag = '0' or creator.del_flag is null or creator.del_flag = '')
+            and (creator.login_name = d.create_by or creator.user_name = d.create_by or cast(creator.user_id as char) = d.create_by)
+        left join sys_user auditor on (auditor.del_flag = '0' or auditor.del_flag is null or auditor.del_flag = '')
+            and (auditor.login_name = d.audit_by or auditor.user_name = d.audit_by or cast(auditor.user_id as char) = d.audit_by)
+        left join sys_user dp on (dp.del_flag = '0' or dp.del_flag is null or dp.del_flag = '')
+            and (dp.login_name = d.delivery_person or dp.user_name = d.delivery_person or cast(dp.user_id as char) = d.delivery_person)
     </sql>
     
     <select id="selectDeliveryList" parameterType="Delivery" resultMap="DeliveryResult">

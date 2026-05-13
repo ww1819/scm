@@ -142,7 +142,7 @@
                     <div class="form-group">
                         <label class="col-sm-5 control-label">确认人：</label>
                         <div class="col-sm-7">
-                            <input class="form-control" type="text" th:value="${head != null ? head.confirmBy : ''}" readonly>
+                            <input class="form-control" type="text" th:value="${head != null ? head.confirmByForDisplay : ''}" readonly>
                         </div>
                     </div>
                 </div>
@@ -176,7 +176,7 @@
                     <div class="form-group">
                         <label class="col-sm-5 control-label">作废人：</label>
                         <div class="col-sm-7">
-                            <input class="form-control" type="text" th:value="${head != null ? head.voidBy : ''}" readonly>
+                            <input class="form-control" type="text" th:value="${head != null ? head.voidByForDisplay : ''}" readonly>
                         </div>
                     </div>
                 </div>

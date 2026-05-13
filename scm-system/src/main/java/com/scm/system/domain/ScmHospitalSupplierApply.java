@@ -3,6 +3,7 @@ package com.scm.system.domain;
 import java.util.Date;
 import com.scm.common.annotation.Excel;
 import com.scm.common.core.domain.BaseEntity;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * 供应商关联医院申请
@@ -36,8 +37,9 @@ public class ScmHospitalSupplierApply extends BaseEntity
     private String contactPhone;
     @Excel(name = "审核状态", readConverterExp = "0=待审核,1=已通过,2=已拒绝", sort = 110)
     private String auditStatus;
-    @Excel(name = "审核人", sort = 120)
     private String auditBy;
+    @Excel(name = "审核人", sort = 120)
+    private String auditByDisplay;
     @Excel(name = "审核时间", width = 20, dateFormat = "yyyy-MM-dd HH:mm:ss", sort = 130)
     private Date auditTime;
     @Excel(name = "审核备注", width = 30, sort = 140)
@@ -81,6 +83,19 @@ public class ScmHospitalSupplierApply extends BaseEntity
     public void setAuditStatus(String auditStatus) { this.auditStatus = auditStatus; }
     public String getAuditBy() { return auditBy; }
     public void setAuditBy(String auditBy) { this.auditBy = auditBy; }
+
+    public String getAuditByForDisplay()
+    {
+        if (StringUtils.isNotEmpty(auditByDisplay))
+        {
+            return auditByDisplay;
+        }
+        return getAuditBy();
+    }
+
+    public String getAuditByDisplay() { return auditByDisplay; }
+    public void setAuditByDisplay(String auditByDisplay) { this.auditByDisplay = auditByDisplay; }
+
     public Date getAuditTime() { return auditTime; }
     public void setAuditTime(Date auditTime) { this.auditTime = auditTime; }
     public String getAuditRemark() { return auditRemark; }

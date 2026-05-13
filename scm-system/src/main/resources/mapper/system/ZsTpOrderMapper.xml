@@ -34,9 +34,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="deliveryProgress" column="delivery_progress"/>
         <result property="confirmStatus" column="confirm_status"/>
         <result property="confirmBy"   column="confirm_by"/>
+        <result property="confirmByDisplay" column="confirm_by_display"/>
         <result property="confirmTime" column="confirm_time"/>
         <result property="voidStatus"   column="void_status"/>
         <result property="voidBy"      column="void_by"/>
+        <result property="voidByDisplay" column="void_by_display"/>
         <result property="voidTime"    column="void_time"/>
     </resultMap>
 
@@ -122,6 +124,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         z.id, z.third_party_pk, z.customer, z.sheet_je, z.dh, z.supno, z.sup, z.ckno, z.ck, z.ksbh, z.ksmc, z.bz, z.jsfs, z.receive_channel, z.scm_sup_code,
         z.scm_hospital_code, z.scm_hospital_id, z.scm_supplier_id, z.zjly, z.create_time, z.hospital_id, z.supplier_id,
         z.confirm_status, z.confirm_by, z.confirm_time, z.void_status, z.void_by, z.void_time,
+        COALESCE(NULLIF(TRIM(confirmer.real_name), ''), z.confirm_by) as confirm_by_display,
+        COALESCE(NULLIF(TRIM(voider.real_name), ''), z.void_by) as void_by_display,
         COALESCE(nullif(trim(h.hospital_code), ''), nullif(trim(z.scm_hospital_code), '')) as hospital_code,
         h.hospital_name,
         COALESCE(nullif(trim(s.supplier_code), ''), nullif(trim(z.scm_sup_code), '')) as supplier_code,
@@ -133,6 +137,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         from zs_tp_order z
         left join scm_hospital h on z.hospital_id = h.hospital_id
         left join scm_supplier s on z.supplier_id = s.supplier_id
+        left join sys_user confirmer on (confirmer.del_flag = '0' or confirmer.del_flag is null or confirmer.del_flag = '')
+            and (confirmer.login_name = z.confirm_by or confirmer.user_name = z.confirm_by or cast(confirmer.user_id as char) = z.confirm_by)
+        left join sys_user voider on (voider.del_flag = '0' or voider.del_flag is null or voider.del_flag = '')
+            and (voider.login_name = z.void_by or voider.user_name = z.void_by or cast(voider.user_id as char) = z.void_by)
     </sql>
 
     <sql id="zsTpOrderConfirmVoidFilters">
@@ -284,8 +292,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </select>
 
     <select id="selectZsTpOrderById" parameterType="String" resultMap="ZsTpOrderResult">
-        <include refid="selectZsTpOrderVo"/>
-        where id = #{id} and del_flag = '0'
+        select <include refid="zsTpOrderJoinColumns"/>
+        <include refid="zsTpOrderJoinFrom"/>
+        where z.id = #{id} and z.del_flag = '0'
     </select>
 
     <select id="selectZsTpOrderByIdJoined" parameterType="String" resultMap="ZsTpOrderResult">

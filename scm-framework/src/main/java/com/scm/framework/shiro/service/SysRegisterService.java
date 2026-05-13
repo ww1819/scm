@@ -45,6 +45,14 @@ public class SysRegisterService
         {
             msg = "用户名不能为空";
         }
+        else if (StringUtils.isEmpty(StringUtils.trim(user.getRealName())))
+        {
+            msg = "用户姓名不能为空";
+        }
+        else if (StringUtils.trim(user.getRealName()).length() > 50)
+        {
+            msg = "用户姓名不能超过50个字符";
+        }
         else if (StringUtils.isEmpty(password))
         {
             msg = "用户密码不能为空";
@@ -69,6 +77,7 @@ public class SysRegisterService
             {
                 user.setPwdUpdateDate(DateUtils.getNowDate());
                 user.setUserName(loginName);
+                user.setRealName(StringUtils.trim(user.getRealName()));
                 user.setSalt(ShiroUtils.randomSalt());
                 user.setPassword(passwordService.encryptPassword(loginName, password, user.getSalt()));
                 boolean regFlag = userService.registerUser(user);

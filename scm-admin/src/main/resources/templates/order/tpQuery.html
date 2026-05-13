@@ -278,9 +278,9 @@
 		            formatter: function (v) { return fmtConfirmStatus(v); }
 		        },
 		        {
-		            field: 'confirmBy',
+		            field: 'confirmByDisplay',
 		            title: '确认人',
-		            formatter: function (v) { return v || '-'; }
+		            formatter: function (v, row) { return v || row.confirmBy || '-'; }
 		        },
 		        {
 		            field: 'confirmTime',
@@ -293,9 +293,9 @@
 		            formatter: function (v) { return fmtVoidStatus(v); }
 		        },
 		        {
-		            field: 'voidBy',
+		            field: 'voidByDisplay',
 		            title: '作废人',
-		            formatter: function (v) { return v || '-'; }
+		            formatter: function (v, row) { return v || row.voidBy || '-'; }
 		        },
 		        {
 		            field: 'voidTime',

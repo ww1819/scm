@@ -281,8 +281,8 @@
         <span class="sign-inline">
             <span class="sign-key">送货人：</span>
             <span class="sign-pre"
-                  th:if="${delivery.deliveryPerson != null and !#strings.isEmpty(#strings.trim(delivery.deliveryPerson))}"
-                  th:text="${#strings.trim(delivery.deliveryPerson)}"></span>
+                  th:if="${delivery.deliveryPersonForDisplay != null and !#strings.isEmpty(#strings.trim(delivery.deliveryPersonForDisplay))}"
+                  th:text="${#strings.trim(delivery.deliveryPersonForDisplay)}"></span>
             <span class="sign-under"></span>
         </span>
         <span class="sign-inline">

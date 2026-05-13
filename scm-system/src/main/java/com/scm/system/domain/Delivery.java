@@ -103,8 +103,7 @@ public class Delivery extends BaseEntity
     @Excel(name = "单据状态", readConverterExp = "0=未审核,1=已审核,2=已配送,3=已入库")
     private String deliveryStatus;
 
-    /** 配送员 */
-    @Excel(name = "配送员")
+    /** 配送员（入库原始值，可为登录账号或手工录入） */
     private String deliveryPerson;
 
     /** 配送地址 */
@@ -135,8 +134,7 @@ public class Delivery extends BaseEntity
     @Excel(name = "审核状态", readConverterExp = "0=待审核,1=已审核,2=已拒绝")
     private String auditStatus;
 
-    /** 审核人 */
-    @Excel(name = "审核人")
+    /** 审核人（入库原始值，一般为登录账号） */
     private String auditBy;
 
     /** 审核时间 */
@@ -158,6 +156,18 @@ public class Delivery extends BaseEntity
     @Excel(name = "制单人", type = Type.EXPORT)
     private String createByDisplay;
 
+    /**
+     * 审核人展示名（列表/导出/打印：由 sys_user.real_name 与 audit_by 解析，不入库）。
+     */
+    @Excel(name = "审核人", type = Type.EXPORT)
+    private String auditByDisplay;
+
+    /**
+     * 配送员展示名（列表/导出/打印：若 delivery_person 可匹配系统用户则取 real_name，否则沿用原值，不入库）。
+     */
+    @Excel(name = "配送员", type = Type.EXPORT)
+    private String deliveryPersonDisplay;
+
     /** 制单人展示：优先姓名，否则沿用登录账号 */
     public String getCreateByForDisplay()
     {
@@ -176,6 +186,44 @@ public class Delivery extends BaseEntity
     public void setCreateByDisplay(String createByDisplay)
     {
         this.createByDisplay = createByDisplay;
+    }
+
+    public String getAuditByForDisplay()
+    {
+        if (StringUtils.isNotEmpty(auditByDisplay))
+        {
+            return auditByDisplay;
+        }
+        return getAuditBy();
+    }
+
+    public String getAuditByDisplay()
+    {
+        return auditByDisplay;
+    }
+
+    public void setAuditByDisplay(String auditByDisplay)
+    {
+        this.auditByDisplay = auditByDisplay;
+    }
+
+    public String getDeliveryPersonForDisplay()
+    {
+        if (StringUtils.isNotEmpty(deliveryPersonDisplay))
+        {
+            return deliveryPersonDisplay;
+        }
+        return getDeliveryPerson();
+    }
+
+    public String getDeliveryPersonDisplay()
+    {
+        return deliveryPersonDisplay;
+    }
+
+    public void setDeliveryPersonDisplay(String deliveryPersonDisplay)
+    {
+        this.deliveryPersonDisplay = deliveryPersonDisplay;
     }
 
     @Size(min = 0, max = 50, message = "配送单号不能超过50个字符")
@@ -589,6 +637,8 @@ public class Delivery extends BaseEntity
             .append("orderDate", getOrderDate())
             .append("auditStatus", getAuditStatus())
             .append("auditBy", getAuditBy())
+            .append("auditByDisplay", getAuditByDisplay())
+            .append("deliveryPersonDisplay", getDeliveryPersonDisplay())
             .append("auditTime", getAuditTime())
             .append("auditRemark", getAuditRemark())
             .append("downloadLogCount", getDownloadLogCount())

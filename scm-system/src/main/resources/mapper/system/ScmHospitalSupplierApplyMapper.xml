@@ -18,6 +18,7 @@
         <result property="contactPhone" column="contact_phone"/>
         <result property="auditStatus" column="audit_status"/>
         <result property="auditBy" column="audit_by"/>
+        <result property="auditByDisplay" column="audit_by_display"/>
         <result property="auditTime" column="audit_time"/>
         <result property="auditRemark" column="audit_remark"/>
         <result property="delFlag" column="del_flag"/>
@@ -37,11 +38,15 @@
                h.hospital_code as hospital_code,
                s.supplier_code as supplier_code,
                a.supply_start_date, a.supply_end_date, a.contract_no, a.apply_reason, a.contact_person, a.contact_phone,
-               a.audit_status, a.audit_by, a.audit_time, a.audit_remark,
+               a.audit_status, a.audit_by,
+               COALESCE(NULLIF(TRIM(u_audit.real_name), ''), a.audit_by) as audit_by_display,
+               a.audit_time, a.audit_remark,
                a.del_flag, a.del_by, a.del_time, a.create_by, a.create_time, a.update_by, a.update_time, a.remark
         from scm_hospital_supplier_apply a
         left join scm_supplier s on s.supplier_id = cast(nullif(trim(a.supplier_id), '') as unsigned)
         left join scm_hospital h on h.hospital_id = cast(nullif(trim(a.hospital_id), '') as unsigned)
+        left join sys_user u_audit on (u_audit.del_flag = '0' or u_audit.del_flag is null or u_audit.del_flag = '')
+            and (u_audit.login_name = a.audit_by or u_audit.user_name = a.audit_by or cast(u_audit.user_id as char) = a.audit_by)
     </sql>
 
     <insert id="insertApply" parameterType="com.scm.system.domain.ScmHospitalSupplierApply">

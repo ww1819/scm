@@ -218,12 +218,18 @@
             <div class="col-sm-6 col-md-6">
                 <form id="registerForm" class="register-form-sheet" autocomplete="off">
                     <h4 class="no-margins">注册账号</h4>
-                    <p class="form-subtitle">请设置登录用户名与密码</p>
+                    <p class="form-subtitle">请填写用户名、用户姓名与密码</p>
 
                     <div class="form-group row register-row">
                         <label class="col-sm-4 col-xs-12 control-label"><span class="text-danger">*</span>用户名</label>
                         <div class="col-sm-8 col-xs-12">
                             <input type="text" name="username" class="form-control uname" placeholder="字母/数字/_/-，2～20 位" maxlength="20" autocomplete="username"/>
+                        </div>
+                    </div>
+                    <div class="form-group row register-row">
+                        <label class="col-sm-4 col-xs-12 control-label"><span class="text-danger">*</span>用户姓名</label>
+                        <div class="col-sm-8 col-xs-12">
+                            <input type="text" name="realName" class="form-control" placeholder="真实姓名，用于系统内展示" maxlength="50" autocomplete="name"/>
                         </div>
                     </div>
                     <div class="form-group row register-row">

@@ -102,8 +102,9 @@
 						return v || '-';
 					}
 				}, {
-					field: 'auditBy',
-					title: '审核人'
+					field: 'auditByDisplay',
+					title: '审核人',
+					formatter: function(v, row) { return v || row.auditBy || '-'; }
 				}, {
 					field: 'auditTime',
 					title: '审核时间'

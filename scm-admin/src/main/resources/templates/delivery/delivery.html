@@ -381,10 +381,17 @@
 		            }
 		        },
 		        {
-		            field: 'auditBy',
+		            field: 'createByDisplay',
+		            title: '制单人',
+		            formatter: function(value, row, index) {
+		                return value || row.createBy || '-';
+		            }
+		        },
+		        {
+		            field: 'auditByDisplay',
 		            title: '审核人',
 		            formatter: function(value, row, index) {
-		                return value || '-';
+		                return value || row.auditBy || '-';
 		            }
 		        },
 		        {

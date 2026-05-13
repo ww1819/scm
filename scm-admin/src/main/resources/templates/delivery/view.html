@@ -76,7 +76,7 @@
                     <div class="form-group">
                         <label class="col-sm-4 control-label">审核人：</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control" th:value="${delivery.auditBy != null ? delivery.auditBy : ''}" readonly>
+                            <input type="text" class="form-control" th:value="${delivery.auditByForDisplay}" readonly>
                         </div>
                     </div>
                 </div>

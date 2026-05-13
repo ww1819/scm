@@ -154,6 +154,14 @@ public class SupplierRegisterController extends BaseController {
         if (StringUtils.isEmpty(user.getPassword())) {
             return error("密码不能为空");
         }
+        String supplierRealName = StringUtils.trim(user.getRealName());
+        if (StringUtils.isEmpty(supplierRealName)) {
+            return error("用户姓名不能为空");
+        }
+        if (supplierRealName.length() > 50) {
+            return error("用户姓名不能超过50个字符");
+        }
+        user.setRealName(supplierRealName);
         if (user.getPassword().length() < 6) {
             return error("密码长度至少6位");
         }
@@ -198,6 +206,14 @@ public class SupplierRegisterController extends BaseController {
         if (StringUtils.isEmpty(user.getPassword())) {
             return error("密码不能为空");
         }
+        String salesRealName = StringUtils.trim(user.getRealName());
+        if (StringUtils.isEmpty(salesRealName)) {
+            return error("用户姓名不能为空");
+        }
+        if (salesRealName.length() > 50) {
+            return error("用户姓名不能超过50个字符");
+        }
+        user.setRealName(salesRealName);
         if (user.getPassword().length() < 6) {
             return error("密码长度至少6位");
         }
