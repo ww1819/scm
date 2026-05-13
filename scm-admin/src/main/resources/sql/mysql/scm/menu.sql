@@ -156,6 +156,8 @@ INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, targ
 -- 权限补遗（2026-04-27 代码扫描补齐）
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('25008', '配送单详情', '2501', '8', '#', '', 'F', '0', '1', 'delivery:delivery:detail', '#', 'admin', sysdate(), '', null, '代码中存在 detail 权限，菜单缺失补齐', '0');
 /
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('25009', '配送单反审核', '2501', '9', '#', '', 'F', '0', '1', 'delivery:delivery:unaudit', '#', 'admin', sysdate(), '', null, '接口已下载的配送单不可反审核', '0');
+/
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('26007', '结算单详情', '2601', '7', '#', '', 'F', '0', '1', 'settlement:settlement:detail', '#', 'admin', sysdate(), '', null, '代码中存在 detail 权限，菜单缺失补齐', '0');
 /
 -- 接口与对接（当前生产菜单表已有，脚本补齐）
@@ -594,7 +596,7 @@ WHERE del_flag = '0'
 -- D) 2026-05-02 配送单据申请：页面级对院商可见；新增/修改/删除/审核按钮仅供应商
 UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '1', default_open_scope = 'all_hospital',
   default_open_hospital = '1', default_open_supplier = '1', menu_biz_category = 'supply_chain'
-WHERE del_flag = '0' AND menu_id IN ('2501','25001','25005','25007','25008');
+WHERE del_flag = '0' AND menu_id IN ('2501','25001','25005','25007','25008','25009');
 /
 UPDATE sys_menu SET auth_type = 'supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all_supplier',
   default_open_hospital = '0', default_open_supplier = '1', menu_biz_category = 'supply_chain'

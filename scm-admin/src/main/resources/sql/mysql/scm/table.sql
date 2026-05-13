@@ -588,6 +588,15 @@ CREATE TABLE IF NOT EXISTS `scm_delivery_invoice` (
   UNIQUE KEY `uk_invoice_no` (`invoice_no`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='配送发票表';
 /
+CREATE TABLE IF NOT EXISTS `scm_delivery_download_log` (
+  `id` varchar(36) NOT NULL COMMENT '主键 UUID7（36位含连字符）',
+  `delivery_id` varchar(32) NOT NULL COMMENT '配送单ID（varchar 逻辑外键，对应 scm_delivery.delivery_id）',
+  `download_time` datetime NOT NULL COMMENT '下载时间',
+  `download_channel` varchar(32) DEFAULT NULL COMMENT 'SPD_XML=SPD配送单接口;ZS_XML=第三方配送单接口',
+  PRIMARY KEY (`id`),
+  KEY `idx_delivery_id` (`delivery_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='配送单接口下载记录';
+/
 CREATE TABLE IF NOT EXISTS `scm_settlement` (
   `settlement_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '结算单ID',
   `settlement_no` varchar(50) NOT NULL COMMENT '结算单号',

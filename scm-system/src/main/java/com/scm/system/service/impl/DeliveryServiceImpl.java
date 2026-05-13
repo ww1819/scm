@@ -21,6 +21,7 @@ import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.uuid.IdUtils;
 import com.scm.system.domain.Delivery;
+import com.scm.system.domain.DeliveryDownloadLog;
 import com.scm.system.domain.DeliveryDetail;
 import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.Order;
@@ -34,6 +35,7 @@ import com.scm.system.domain.vo.OrderDetailDeliveryTraceVo;
 import com.scm.system.domain.vo.OrderLineDeliveryQtyVo;
 import com.scm.system.domain.vo.ZsTpOrderForDeliveryVo;
 import com.scm.system.mapper.DeliveryDetailMapper;
+import com.scm.system.mapper.DeliveryDownloadLogMapper;
 import com.scm.system.mapper.DeliveryMapper;
 import com.scm.system.mapper.HospitalSupplierMapper;
 import com.scm.system.mapper.OrderDeliveryTraceMapper;
@@ -60,6 +62,9 @@ public class DeliveryServiceImpl implements IDeliveryService
 {
     @Autowired
     private DeliveryMapper deliveryMapper;
+
+    @Autowired
+    private DeliveryDownloadLogMapper deliveryDownloadLogMapper;
 
     @Autowired
     private DeliveryDetailMapper deliveryDetailMapper;
@@ -1828,6 +1833,62 @@ public class DeliveryServiceImpl implements IDeliveryService
         delivery.setDeliveryStatus("1"); // 单据状态：已审核
         delivery.setUpdateTime(DateUtils.getNowDate());
         return deliveryMapper.updateDelivery(delivery);
+    }
+
+    @Override
+    public List<DeliveryDownloadLog> selectDeliveryDownloadLogList(Long deliveryId)
+    {
+        if (deliveryId == null)
+        {
+            throw new ServiceException("配送单ID不能为空");
+        }
+        Delivery head = deliveryMapper.selectDeliveryById(deliveryId);
+        if (head == null)
+        {
+            throw new ServiceException("配送单不存在");
+        }
+        assertDeliveryViewScope(head);
+        return deliveryDownloadLogMapper.selectByDeliveryId(String.valueOf(deliveryId));
+    }
+
+    /**
+     * 反审核：恢复为待审核；若存在接口下载记录或已配送/已入库则不允许。
+     */
+    @Override
+    @Transactional
+    public int unAuditDelivery(Long deliveryId, String updateBy)
+    {
+        if (deliveryId == null)
+        {
+            return 0;
+        }
+        Delivery delivery = deliveryMapper.selectDeliveryById(deliveryId);
+        if (delivery == null)
+        {
+            return 0;
+        }
+        assertDeliveryViewScope(delivery);
+        if (!"1".equals(delivery.getAuditStatus()))
+        {
+            throw new ServiceException("仅已审核的配送单可反审核，配送单号：" + StringUtils.trimToEmpty(delivery.getDeliveryNo()));
+        }
+        if ("2".equals(delivery.getDeliveryStatus()) || "3".equals(delivery.getDeliveryStatus()))
+        {
+            throw new ServiceException("已配送或已入库的配送单不允许反审核，配送单号：" + StringUtils.trimToEmpty(delivery.getDeliveryNo()));
+        }
+        int logCnt = deliveryDownloadLogMapper.countByDeliveryId(String.valueOf(deliveryId));
+        if (logCnt > 0)
+        {
+            throw new ServiceException("该配送单已有接口下载记录（" + logCnt + " 次），不允许反审核。单号："
+                + StringUtils.trimToEmpty(delivery.getDeliveryNo()));
+        }
+        int n = deliveryMapper.unAuditDelivery(deliveryId, StringUtils.trimToEmpty(updateBy));
+        if (n <= 0)
+        {
+            throw new ServiceException("反审核失败，数据可能已变更，请刷新后重试。单号："
+                + StringUtils.trimToEmpty(delivery.getDeliveryNo()));
+        }
+        return n;
     }
 
     /**

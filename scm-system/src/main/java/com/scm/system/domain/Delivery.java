@@ -146,6 +146,9 @@ public class Delivery extends BaseEntity
     /** 审核备注 */
     private String auditRemark;
 
+    /** 接口下载次数（子查询，不入库） */
+    private Integer downloadLogCount;
+
     /** 配送明细 */
     private List<DeliveryDetail> deliveryDetails;
 
@@ -520,6 +523,16 @@ public class Delivery extends BaseEntity
         this.auditRemark = auditRemark;
     }
 
+    public Integer getDownloadLogCount()
+    {
+        return downloadLogCount;
+    }
+
+    public void setDownloadLogCount(Integer downloadLogCount)
+    {
+        this.downloadLogCount = downloadLogCount;
+    }
+
     public Long getDeliveryId()
     {
         return deliveryId;
@@ -578,6 +591,7 @@ public class Delivery extends BaseEntity
             .append("auditBy", getAuditBy())
             .append("auditTime", getAuditTime())
             .append("auditRemark", getAuditRemark())
+            .append("downloadLogCount", getDownloadLogCount())
             .append("createBy", getCreateBy())
             .append("createByDisplay", getCreateByDisplay())
             .append("createTime", getCreateTime())

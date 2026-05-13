@@ -3,6 +3,7 @@ package com.scm.system.service;
 import java.util.List;
 import com.scm.system.domain.Delivery;
 import com.scm.system.domain.DeliveryDetail;
+import com.scm.system.domain.DeliveryDownloadLog;
 import com.scm.system.domain.Order;
 import com.scm.system.domain.ZsTpOrder;
 import com.scm.system.domain.ZsTpOrderDetail;
@@ -133,6 +134,16 @@ public interface IDeliveryService
      * @return 结果
      */
     public int auditDelivery(Long deliveryId, String auditBy);
+
+    /**
+     * 反审核配送单（已产生接口下载记录时不允许）
+     */
+    public int unAuditDelivery(Long deliveryId, String updateBy);
+
+    /**
+     * 配送单接口下载记录（按时间倒序）
+     */
+    public List<DeliveryDownloadLog> selectDeliveryDownloadLogList(Long deliveryId);
 
     /**
      * 供应商确认第三方订单（记录确认人、确认时间）

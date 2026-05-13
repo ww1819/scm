@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.DeliveryDownloadLogMapper">
+
+    <resultMap type="com.scm.system.domain.DeliveryDownloadLog" id="DeliveryDownloadLogResult">
+        <id property="id" column="id"/>
+        <result property="deliveryId" column="delivery_id"/>
+        <result property="downloadTime" column="download_time"/>
+        <result property="downloadChannel" column="download_channel"/>
+    </resultMap>
+
+    <select id="countByDeliveryId" resultType="int">
+        select count(1) from scm_delivery_download_log where delivery_id = #{deliveryId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="selectByDeliveryId" resultMap="DeliveryDownloadLogResult">
+        select id, delivery_id, download_time, download_channel
+        from scm_delivery_download_log
+        where delivery_id = #{deliveryId,jdbcType=VARCHAR}
+        order by download_time desc, id desc
+    </select>
+</mapper>

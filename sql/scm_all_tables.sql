@@ -424,6 +424,16 @@ create table scm_delivery_invoice (
   unique key uk_invoice_no (invoice_no)
 ) engine=innodb auto_increment=1 comment = '配送发票表';
 
+drop table if exists scm_delivery_download_log;
+create table scm_delivery_download_log (
+  id                varchar(36)   not null                   comment '主键 UUID7（36位含连字符）',
+  delivery_id       varchar(32)   not null                   comment '配送单ID（varchar 逻辑外键）',
+  download_time     datetime      not null                   comment '下载时间',
+  download_channel varchar(32)    default null              comment 'SPD_XML=SPD配送单接口;ZS_XML=第三方配送单接口',
+  primary key (id),
+  key idx_delivery_id (delivery_id)
+) engine=innodb comment = '配送单接口下载记录';
+
 -- ----------------------------
 -- 结算相关表
 -- ----------------------------

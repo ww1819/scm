@@ -50,6 +50,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="delTime"        column="del_time"             />
         <result property="delBy"          column="del_by"               />
         <result property="tenantId"       column="tenant_id"            />
+        <result property="downloadLogCount" column="download_log_count" />
     </resultMap>
 
     <!-- 主表未逻辑删除：0 正常，2 已删除；NULL、空串视为未删 -->
@@ -71,6 +72,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                d.create_time,
                d.update_by, d.update_time,
                d.del_flag, d.del_time, d.del_by, d.tenant_id,
+               (select count(1) from scm_delivery_download_log dl where dl.delivery_id = concat(d.delivery_id, '')) as download_log_count,
                h.hospital_name, s.company_name as supplier_name
         from scm_delivery d
         left join scm_hospital h on d.hospital_id = h.hospital_id
@@ -305,6 +307,21 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             update_time = sysdate()
         </set>
         where delivery_id = #{deliveryId}
+          and (del_flag is null or del_flag = '' or del_flag = '0')
+    </update>
+
+    <update id="unAuditDelivery">
+        update scm_delivery
+        set audit_status = '0',
+            audit_by = null,
+            audit_time = null,
+            audit_remark = null,
+            delivery_status = '0',
+            update_by = #{updateBy},
+            update_time = sysdate()
+        where delivery_id = #{deliveryId}
+          and audit_status = '1'
+          and (delivery_status is null or delivery_status not in ('2', '3'))
           and (del_flag is null or del_flag = '' or del_flag = '0')
     </update>
     

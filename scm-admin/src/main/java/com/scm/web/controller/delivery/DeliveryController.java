@@ -32,6 +32,7 @@ import com.scm.common.utils.file.FileUtils;
 import com.scm.common.utils.poi.ExcelUtil;
 import com.scm.system.domain.Delivery;
 import com.scm.system.domain.DeliveryDetail;
+import com.scm.system.domain.DeliveryDownloadLog;
 import com.scm.system.domain.Hospital;
 import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.Order;
@@ -352,6 +353,39 @@ public class DeliveryController extends BaseController
             }
         }
         return successCount > 0 ? success("成功审核 " + successCount + " 个配送单") : error("审核配送单失败");
+    }
+
+    /**
+     * 反审核配送单（已有接口下载记录时不允许）
+     */
+    @RequiresPermissions("delivery:delivery:unaudit")
+    @Log(title = "配送单反审核", businessType = BusinessType.UPDATE)
+    @PostMapping("/unAudit")
+    @ResponseBody
+    public AjaxResult unAudit(String ids)
+    {
+        String[] deliveryIds = ids.split(",");
+        int successCount = 0;
+        for (String deliveryId : deliveryIds)
+        {
+            if (deliveryService.unAuditDelivery(Long.parseLong(deliveryId.trim()), getLoginName()) > 0)
+            {
+                successCount++;
+            }
+        }
+        return successCount > 0 ? success("成功反审核 " + successCount + " 个配送单") : error("反审核配送单失败");
+    }
+
+    /**
+     * 配送单接口下载记录
+     */
+    @RequiresPermissions("delivery:delivery:detail")
+    @GetMapping("/downloadLogList")
+    @ResponseBody
+    public AjaxResult downloadLogList(@RequestParam("deliveryId") Long deliveryId)
+    {
+        List<DeliveryDownloadLog> list = deliveryService.selectDeliveryDownloadLogList(deliveryId);
+        return AjaxResult.success(list);
     }
 
     /**

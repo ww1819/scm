@@ -133,6 +133,7 @@ insert into sys_menu values('25005', '配送单导出', '2501', '5', '#', '', 'F
 insert into sys_menu values('25006', '配送单审核', '2501', '6', '#', '', 'F', '0', '1', 'delivery:delivery:audit', '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('25007', '配送单打印', '2501', '7', '#', '', 'F', '0', '1', 'delivery:delivery:print', '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('25008', '配送单详情', '2501', '8', '#', '', 'F', '0', '1', 'delivery:delivery:detail', '#', 'admin', sysdate(), '', null, '代码中存在 detail 权限，菜单缺失补齐');
+insert into sys_menu values('25009', '配送单反审核', '2501', '9', '#', '', 'F', '0', '1', 'delivery:delivery:unaudit', '#', 'admin', sysdate(), '', null, '接口已下载的配送单不可反审核');
 -- 配送信息查询按钮
 insert into sys_menu values('25011', '明细表查询', '2502', '1', '#', '', 'F', '0', '1', 'delivery:delivery:list', '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('25012', '明细表导出', '2502', '2', '#', '', 'F', '0', '1', 'delivery:delivery:export', '#', 'admin', sysdate(), '', null, '');

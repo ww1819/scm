@@ -57,6 +57,11 @@ public interface DeliveryMapper
     public int updateDelivery(Delivery delivery);
 
     /**
+     * 反审核：清空审核信息并将单据状态置为未审核
+     */
+    int unAuditDelivery(@Param("deliveryId") Long deliveryId, @Param("updateBy") String updateBy);
+
+    /**
      * 逻辑删除配送单主表（del_flag=2）
      *
      * @param deliveryId 配送单主键

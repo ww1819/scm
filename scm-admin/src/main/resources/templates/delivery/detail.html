@@ -83,6 +83,16 @@
 
         <div class="row" style="margin-top: 16px;">
             <div class="col-sm-12">
+                <h4 class="form-header h4">接口下载记录</h4>
+                <p class="text-muted" style="font-size: 12px; margin-bottom: 8px;">通过 scminterface 成功下载配送单 XML 时自动记录；存在记录时该单不可反审核。</p>
+                <div class="table-responsive">
+                    <table id="table-delivery-download-log"></table>
+                </div>
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 16px;">
+            <div class="col-sm-12">
                 <h4 class="form-header h4">配送明细（含来源订单行）</h4>
                 <div class="table-responsive">
                     <table id="bootstrap-table"></table>
@@ -111,6 +121,7 @@
 		    if (refZsOrderIdStr != null && refZsOrderIdStr !== '') {
 		        $('#row-link-zs').show();
 		    }
+		    initDownloadLogTable();
 		    $('#bootstrap-table').bootstrapTable({
 		        url: prefix + "/detailList",
 		        method: 'post',
@@ -139,6 +150,46 @@
 		function fmtAudit(v) {
 		    var m = { '0': '待审核', '1': '已审核', '2': '已拒绝' };
 		    return m[v] || (v == null ? '-' : v);
+		}
+		function fmtDownloadChannel(v) {
+		    var m = { 'SPD_XML': 'SPD配送单XML', 'ZS_XML': '第三方配送单XML' };
+		    return m[v] || (v || '-');
+		}
+		function fmtDownloadTime(v) {
+		    if (!v) return '-';
+		    return v;
+		}
+		function initDownloadLogTable() {
+		    $.ajax({
+		        url: prefix + '/downloadLogList',
+		        type: 'GET',
+		        data: { deliveryId: deliveryId },
+		        success: function(res) {
+		            var rows = [];
+		            if (res && (res.code === 0 || (typeof web_status !== 'undefined' && res.code === web_status.SUCCESS))) {
+		                rows = res.data || [];
+		            }
+		            $('#table-delivery-download-log').bootstrapTable({
+		                data: rows,
+		                pagination: false,
+		                search: false,
+		                showRefresh: false,
+		                columns: [
+		                    { field: 'downloadTime', title: '下载时间', formatter: fmtDownloadTime },
+		                    { field: 'downloadChannel', title: '下载渠道', formatter: fmtDownloadChannel }
+		                ]
+		            });
+		        },
+		        error: function() {
+		            $('#table-delivery-download-log').bootstrapTable({
+		                data: [],
+		                columns: [
+		                    { field: 'downloadTime', title: '下载时间' },
+		                    { field: 'downloadChannel', title: '下载渠道' }
+		                ]
+		            });
+		        }
+		    });
 		}
 		function fmtDec(v) {
 		    if (v != null && v !== '') return parseFloat(v).toFixed(2);
