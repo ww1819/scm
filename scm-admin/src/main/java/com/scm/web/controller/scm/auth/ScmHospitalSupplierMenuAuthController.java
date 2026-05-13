@@ -28,6 +28,7 @@ import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.uuid.IdUtils;
 import com.scm.common.utils.StringUtils;
+import com.scm.framework.shiro.util.AuthorizationUtils;
 import com.scm.system.domain.Hospital;
 import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.ScmSupplierMenuAuth;
@@ -230,6 +231,50 @@ public class ScmHospitalSupplierMenuAuthController extends BaseController
             supplierMenuAuthMapper.batchInsert(rows);
         }
         return AjaxResult.success();
+    }
+
+    /**
+     * 将当前菜单树勾选（含闭包）合并写入多个供应商在本院下的授权，并同步各供应商全部角色的 sys_role_menu。
+     */
+    @RequiresPermissions("scmAuth:hospitalSupplierMenu:edit")
+    @Log(title = "医院授予供应商菜单-批量", businessType = BusinessType.GRANT)
+    @PostMapping("/batchGrant")
+    @ResponseBody
+    public AjaxResult batchGrant(@RequestParam("hospitalId") Long hospitalId,
+        @RequestParam("supplierIds") String supplierIdsStr,
+        @RequestParam(value = "menuIds", required = false) String menuIds)
+    {
+        assertHospitalInScope(hospitalId);
+        Long[] sidArr = StringUtils.isEmpty(supplierIdsStr) ? new Long[0] : com.scm.common.core.text.Convert.toLongArray(supplierIdsStr);
+        List<Long> supplierIds = new ArrayList<>();
+        for (Long s : sidArr)
+        {
+            if (s != null)
+            {
+                supplierIds.add(s);
+            }
+        }
+        if (supplierIds.isEmpty())
+        {
+            return AjaxResult.error("请至少选择一个供应商");
+        }
+        for (Long sid : supplierIds)
+        {
+            assertSupplierUnderHospital(hospitalId, sid);
+        }
+        Long[] menuArr = StringUtils.isEmpty(menuIds) ? new Long[0] : com.scm.common.core.text.Convert.toLongArray(menuIds);
+        Set<Long> seeds = new HashSet<>();
+        for (Long m : menuArr)
+        {
+            if (m != null)
+            {
+                seeds.add(m);
+            }
+        }
+        Map<String, Object> data = scmScopeBootstrapService.batchGrantHospitalSupplierMenus(hospitalId, supplierIds, seeds,
+            getLoginName());
+        AuthorizationUtils.clearAllCachedAuthorizationInfo();
+        return AjaxResult.success("批量授权完成", data);
     }
 
     private void assertHospitalInScope(Long hospitalId)

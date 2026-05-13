@@ -3,11 +3,15 @@ package com.scm.system.service.impl;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import com.alibaba.fastjson.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,13 +25,27 @@ import com.scm.common.core.domain.entity.SysRole;
 import com.scm.common.core.domain.entity.SysUser;
 import com.scm.common.core.text.Convert;
 import com.scm.common.exception.ServiceException;
+import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.uuid.IdUtils;
 import com.scm.common.utils.scm.ScmMenuMetadataInferer;
 import com.scm.common.utils.scm.ScmMenuSnapshotHelper;
+import com.scm.system.domain.MenuGrantHospitalAuthPair;
+import com.scm.system.domain.MenuGrantHospitalRoleRef;
+import com.scm.system.domain.MenuGrantRoleMenuPair;
+import com.scm.system.domain.MenuGrantSupplierAuthPair;
+import com.scm.system.domain.MenuGrantSupplierRoleRef;
+import com.scm.system.domain.ScmHospitalMenuAuth;
+import com.scm.system.domain.ScmSupplierMenuAuth;
+import com.scm.system.domain.SysRoleMenu;
+import com.scm.system.mapper.HospitalMapper;
+import com.scm.system.mapper.ScmHospitalMenuAuthMapper;
+import com.scm.system.mapper.ScmSupplierMenuAuthMapper;
+import com.scm.system.mapper.SupplierMapper;
 import com.scm.system.mapper.SysMenuChangeLogMapper;
 import com.scm.system.mapper.SysMenuMapper;
+import com.scm.system.mapper.SysRoleMapper;
 import com.scm.system.mapper.SysRoleMenuMapper;
 import com.scm.system.service.ISysMenuService;
 
@@ -48,7 +66,24 @@ public class SysMenuServiceImpl implements ISysMenuService
     private SysRoleMenuMapper roleMenuMapper;
 
     @Autowired
+    private HospitalMapper hospitalMapper;
+
+    @Autowired
+    private SupplierMapper supplierMapper;
+
+    @Autowired
+    private ScmHospitalMenuAuthMapper hospitalMenuAuthMapper;
+
+    @Autowired
+    private ScmSupplierMenuAuthMapper supplierMenuAuthMapper;
+
+    @Autowired
+    private SysRoleMapper sysRoleMapper;
+
+    @Autowired
     private SysMenuChangeLogMapper menuChangeLogMapper;
+
+    private static final int GLOBAL_GRANT_BATCH = 400;
 
     /**
      * 根据用户查询菜单
@@ -660,5 +695,262 @@ public class SysMenuServiceImpl implements ISysMenuService
     private boolean hasChild(List<SysMenu> list, SysMenu t)
     {
         return getChildList(list, t).size() > 0;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> grantMenuToAllHospitalsAndRoles(Long menuId, String operBy)
+    {
+        if (menuId == null || menuId <= 0)
+        {
+            throw new ServiceException("菜单ID无效");
+        }
+        if (menuMapper.selectMenuById(menuId) == null)
+        {
+            throw new ServiceException("菜单不存在");
+        }
+        Set<Long> grantMenus = Collections.singleton(menuId);
+        Date now = DateUtils.getNowDate();
+        String oper = StringUtils.isNotEmpty(operBy) ? operBy : "system";
+        List<Long> hospitalIds = hospitalMapper.selectActiveHospitalIds();
+        if (hospitalIds == null)
+        {
+            hospitalIds = new ArrayList<>();
+        }
+        Map<Long, Set<Long>> menusByHospital = new HashMap<>();
+        List<MenuGrantHospitalAuthPair> authPairs = hospitalMenuAuthMapper.selectAuthPairsForActiveHospitals();
+        if (authPairs != null)
+        {
+            for (MenuGrantHospitalAuthPair p : authPairs)
+            {
+                if (p.getHospitalId() == null || p.getMenuId() == null)
+                {
+                    continue;
+                }
+                menusByHospital.computeIfAbsent(p.getHospitalId(), k -> new HashSet<>()).add(p.getMenuId());
+            }
+        }
+        Map<Long, Set<Long>> menusByRole = new HashMap<>();
+        List<MenuGrantRoleMenuPair> rmPairs = roleMenuMapper.selectHospitalRoleMenuPairsForActiveHospitals();
+        if (rmPairs != null)
+        {
+            for (MenuGrantRoleMenuPair p : rmPairs)
+            {
+                if (p.getRoleId() == null || p.getMenuId() == null)
+                {
+                    continue;
+                }
+                menusByRole.computeIfAbsent(p.getRoleId(), k -> new HashSet<>()).add(p.getMenuId());
+            }
+        }
+        List<MenuGrantHospitalRoleRef> roleRefs = sysRoleMapper.selectActiveHospitalRoleRefs();
+        if (roleRefs == null)
+        {
+            roleRefs = new ArrayList<>();
+        }
+        int authInserted = 0;
+        int rmInserted = 0;
+        List<ScmHospitalMenuAuth> authBuf = new ArrayList<>();
+        for (Long hid : hospitalIds)
+        {
+            if (hid == null)
+            {
+                continue;
+            }
+            Set<Long> haveAuth = menusByHospital.computeIfAbsent(hid, k -> new HashSet<>());
+            for (Long mid : grantMenus)
+            {
+                if (haveAuth.contains(mid))
+                {
+                    continue;
+                }
+                ScmHospitalMenuAuth row = new ScmHospitalMenuAuth();
+                row.setId(IdUtils.simpleUuid7());
+                row.setHospitalId(hid);
+                row.setMenuId(mid);
+                row.setCreateBy(oper);
+                row.setCreateTime(now);
+                authBuf.add(row);
+                haveAuth.add(mid);
+                if (authBuf.size() >= GLOBAL_GRANT_BATCH)
+                {
+                    authInserted += hospitalMenuAuthMapper.batchInsertIgnore(authBuf);
+                    authBuf.clear();
+                }
+            }
+        }
+        if (!authBuf.isEmpty())
+        {
+            authInserted += hospitalMenuAuthMapper.batchInsertIgnore(authBuf);
+        }
+        List<SysRoleMenu> rmBuf = new ArrayList<>();
+        for (MenuGrantHospitalRoleRef ref : roleRefs)
+        {
+            if (ref.getRoleId() == null || ref.getHospitalId() == null)
+            {
+                continue;
+            }
+            String hidStr = String.valueOf(ref.getHospitalId());
+            Set<Long> haveRm = menusByRole.computeIfAbsent(ref.getRoleId(), k -> new HashSet<>());
+            for (Long mid : grantMenus)
+            {
+                if (haveRm.contains(mid))
+                {
+                    continue;
+                }
+                SysRoleMenu rm = new SysRoleMenu();
+                rm.setId(IdUtils.simpleUuid7());
+                rm.setRoleId(ref.getRoleId());
+                rm.setMenuId(mid);
+                rm.setHospitalId(hidStr);
+                rm.setSupplierId("");
+                rmBuf.add(rm);
+                haveRm.add(mid);
+                if (rmBuf.size() >= GLOBAL_GRANT_BATCH)
+                {
+                    rmInserted += roleMenuMapper.batchRoleMenuIgnore(rmBuf);
+                    rmBuf.clear();
+                }
+            }
+        }
+        if (!rmBuf.isEmpty())
+        {
+            rmInserted += roleMenuMapper.batchRoleMenuIgnore(rmBuf);
+        }
+        Map<String, Object> ret = new LinkedHashMap<>();
+        ret.put("hospitalCount", hospitalIds.size());
+        ret.put("hospitalAuthInserted", authInserted);
+        ret.put("roleMenuInserted", rmInserted);
+        ret.put("grantMenuCount", grantMenus.size());
+        return ret;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> grantMenuToAllSuppliersAndRoles(Long menuId, String operBy)
+    {
+        if (menuId == null || menuId <= 0)
+        {
+            throw new ServiceException("菜单ID无效");
+        }
+        if (menuMapper.selectMenuById(menuId) == null)
+        {
+            throw new ServiceException("菜单不存在");
+        }
+        Set<Long> grantMenus = Collections.singleton(menuId);
+        Date now = DateUtils.getNowDate();
+        String oper = StringUtils.isNotEmpty(operBy) ? operBy : "system";
+        List<Long> supplierIds = supplierMapper.selectActiveSupplierIds();
+        if (supplierIds == null)
+        {
+            supplierIds = new ArrayList<>();
+        }
+        Map<Long, Set<Long>> menusBySupplier = new HashMap<>();
+        List<MenuGrantSupplierAuthPair> authPairs = supplierMenuAuthMapper.selectGlobalAuthPairsForActiveSuppliers();
+        if (authPairs != null)
+        {
+            for (MenuGrantSupplierAuthPair p : authPairs)
+            {
+                if (p.getSupplierId() == null || p.getMenuId() == null)
+                {
+                    continue;
+                }
+                menusBySupplier.computeIfAbsent(p.getSupplierId(), k -> new HashSet<>()).add(p.getMenuId());
+            }
+        }
+        Map<Long, Set<Long>> menusByRole = new HashMap<>();
+        List<MenuGrantRoleMenuPair> rmPairs = roleMenuMapper.selectSupplierRoleMenuPairsForActiveSuppliers();
+        if (rmPairs != null)
+        {
+            for (MenuGrantRoleMenuPair p : rmPairs)
+            {
+                if (p.getRoleId() == null || p.getMenuId() == null)
+                {
+                    continue;
+                }
+                menusByRole.computeIfAbsent(p.getRoleId(), k -> new HashSet<>()).add(p.getMenuId());
+            }
+        }
+        List<MenuGrantSupplierRoleRef> roleRefs = sysRoleMapper.selectActiveSupplierRoleRefs();
+        if (roleRefs == null)
+        {
+            roleRefs = new ArrayList<>();
+        }
+        int authInserted = 0;
+        int rmInserted = 0;
+        List<ScmSupplierMenuAuth> authBuf = new ArrayList<>();
+        for (Long sid : supplierIds)
+        {
+            if (sid == null)
+            {
+                continue;
+            }
+            Set<Long> haveAuth = menusBySupplier.computeIfAbsent(sid, k -> new HashSet<>());
+            for (Long mid : grantMenus)
+            {
+                if (haveAuth.contains(mid))
+                {
+                    continue;
+                }
+                ScmSupplierMenuAuth row = new ScmSupplierMenuAuth();
+                row.setId(IdUtils.simpleUuid7());
+                row.setSupplierId(sid);
+                row.setHospitalId(null);
+                row.setMenuId(mid);
+                row.setCreateBy(oper);
+                row.setCreateTime(now);
+                authBuf.add(row);
+                haveAuth.add(mid);
+                if (authBuf.size() >= GLOBAL_GRANT_BATCH)
+                {
+                    authInserted += supplierMenuAuthMapper.batchInsertIgnore(authBuf);
+                    authBuf.clear();
+                }
+            }
+        }
+        if (!authBuf.isEmpty())
+        {
+            authInserted += supplierMenuAuthMapper.batchInsertIgnore(authBuf);
+        }
+        List<SysRoleMenu> rmBuf = new ArrayList<>();
+        for (MenuGrantSupplierRoleRef ref : roleRefs)
+        {
+            if (ref.getRoleId() == null || ref.getSupplierId() == null)
+            {
+                continue;
+            }
+            String sidStr = String.valueOf(ref.getSupplierId());
+            Set<Long> haveRm = menusByRole.computeIfAbsent(ref.getRoleId(), k -> new HashSet<>());
+            for (Long mid : grantMenus)
+            {
+                if (haveRm.contains(mid))
+                {
+                    continue;
+                }
+                SysRoleMenu rm = new SysRoleMenu();
+                rm.setId(IdUtils.simpleUuid7());
+                rm.setRoleId(ref.getRoleId());
+                rm.setMenuId(mid);
+                rm.setHospitalId("");
+                rm.setSupplierId(sidStr);
+                rmBuf.add(rm);
+                haveRm.add(mid);
+                if (rmBuf.size() >= GLOBAL_GRANT_BATCH)
+                {
+                    rmInserted += roleMenuMapper.batchRoleMenuIgnore(rmBuf);
+                    rmBuf.clear();
+                }
+            }
+        }
+        if (!rmBuf.isEmpty())
+        {
+            rmInserted += roleMenuMapper.batchRoleMenuIgnore(rmBuf);
+        }
+        Map<String, Object> ret = new LinkedHashMap<>();
+        ret.put("supplierCount", supplierIds.size());
+        ret.put("supplierAuthInserted", authInserted);
+        ret.put("roleMenuInserted", rmInserted);
+        ret.put("grantMenuCount", grantMenus.size());
+        return ret;
     }
 }

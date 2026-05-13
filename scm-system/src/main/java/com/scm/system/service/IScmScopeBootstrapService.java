@@ -51,6 +51,16 @@ public interface IScmScopeBootstrapService
     void applyDefaultHospitalGrantedSupplierMenus(Long hospitalId, Long supplierId, String operBy);
 
     /**
+     * 医院将一批菜单（含闭包：祖先与子树）合并写入多个供应商在本院下的 {@code scm_supplier_menu_auth}，
+     * 并为各供应商下<strong>全部角色</strong>补齐 {@code sys_role_menu}（仅 INSERT IGNORE 增量）。
+     *
+     * @param menuSeedIds 勾选菜单/按钮 ID（未展开）
+     * @return supplierCount、menuClosureSize、roleMenuInserted
+     */
+    Map<String, Object> batchGrantHospitalSupplierMenus(Long hospitalId, List<Long> supplierIds, Set<Long> menuSeedIds,
+        String operBy);
+
+    /**
      * 升级维护：为老医院/老供应商补齐管理员/职工/业务员角色，并补齐管理员角色菜单与白名单（仅补充缺失，不删除既有授权）。
      * @return 统计信息（createdHospitalAdminRole/createdHospitalStaffRole/createdSupplierAdminRole/createdSupplierSalesRole/addedHospitalMenuAuth/addedSupplierMenuAuth/addedHospitalRoleMenu/addedSupplierRoleMenu）
      */

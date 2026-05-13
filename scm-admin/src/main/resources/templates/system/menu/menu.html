@@ -44,6 +44,12 @@
                 <a class="btn btn-default" onclick="openChangeLogToolbar()" shiro:hasPermission="system:menu:list">
                     <i class="fa fa-history"></i> 变更记录
                 </a>
+                <a class="btn btn-warning" onclick="grantAllHospitals()" shiro:hasPermission="system:menu:edit" title="仅当前勾选的菜单节点，不含上级目录与下级菜单">
+                    <i class="fa fa-hospital-o"></i> 全院全角色赋权
+                </a>
+                <a class="btn btn-warning" onclick="grantAllSuppliers()" shiro:hasPermission="system:menu:edit" title="仅当前勾选的菜单节点；供应商全局白名单（hospital_id 为空）">
+                    <i class="fa fa-truck"></i> 全商全角色赋权
+                </a>
 	        </div>
        		 <div class="col-sm-12 select-table table-striped">
 	            <table id="bootstrap-tree-table"></table>
@@ -201,6 +207,30 @@
 				return;
 			}
 			openMenuChangeLog(rows[0].menuId);
+		}
+
+		function grantAllHospitals() {
+			var rows = $.bttTable.bootstrapTreeTable("getSelections");
+			if (!rows || rows.length === 0) {
+				$.modal.alertWarning("请先在表格中点选一行菜单");
+				return;
+			}
+			var menuId = rows[0].menuId;
+			$.modal.confirm("确认为当前<strong>仅勾选的一条菜单</strong>（不含上级目录与下级菜单），向<strong>全部在营医院</strong>及该院下<strong>所有角色</strong>赋权？（已存在的关联行会自动跳过，可能耗时数秒）", function() {
+				$.operate.post(prefix + "/grantAllHospitals", { menuId: menuId });
+			});
+		}
+
+		function grantAllSuppliers() {
+			var rows = $.bttTable.bootstrapTreeTable("getSelections");
+			if (!rows || rows.length === 0) {
+				$.modal.alertWarning("请先在表格中点选一行菜单");
+				return;
+			}
+			var menuId = rows[0].menuId;
+			$.modal.confirm("确认为当前<strong>仅勾选的一条菜单</strong>（不含上级目录与下级菜单），向<strong>全部在营供应商</strong>及该商下<strong>所有角色</strong>赋权？（供应商侧为全局白名单 hospital_id 为空；已存在行自动跳过）", function() {
+				$.operate.post(prefix + "/grantAllSuppliers", { menuId: menuId });
+			});
 		}
 
 		/* 保存排序-菜单 */

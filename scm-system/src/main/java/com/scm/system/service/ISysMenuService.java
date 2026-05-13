@@ -178,4 +178,18 @@ public interface ISysMenuService
     List<SysMenuChangeLog> selectMenuChangeLogList(Long menuId);
 
     SysMenuChangeLog selectMenuChangeLogById(String logId);
+
+    /**
+     * 将当前选中的单个菜单节点写入全部医院的菜单白名单，并为该院下全部角色补 sys_role_menu（幂等，INSERT IGNORE；不含祖先与子孙）。
+     * 赋权前批量加载各院白名单与角色菜单，内存比对后分批插入。
+     *
+     * @return 统计信息：hospitalCount、hospitalAuthInserted、roleMenuInserted、grantMenuCount
+     */
+    Map<String, Object> grantMenuToAllHospitalsAndRoles(Long menuId, String operBy);
+
+    /**
+     * 将当前选中的单个菜单节点写入全部供应商的全局菜单白名单（hospital_id 为空），并为该商下全部角色补 sys_role_menu（幂等；不含祖先与子孙）。
+     * 赋权前批量加载各商白名单与角色菜单，内存比对后分批插入。
+     */
+    Map<String, Object> grantMenuToAllSuppliersAndRoles(Long menuId, String operBy);
 }

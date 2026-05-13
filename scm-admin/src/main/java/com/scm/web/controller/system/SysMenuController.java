@@ -273,6 +273,38 @@ public class SysMenuController extends BaseController
     }
 
     /**
+     * 将选中菜单节点赋给全部医院及其角色（幂等；不含祖先与子孙）
+     */
+    @Log(title = "菜单全局赋权-医院", businessType = BusinessType.GRANT)
+    @RequiresPermissions("system:menu:edit")
+    @PostMapping("/grantAllHospitals")
+    @ResponseBody
+    public AjaxResult grantAllHospitals(@RequestParam("menuId") Long menuId)
+    {
+        Map<String, Object> data = menuService.grantMenuToAllHospitalsAndRoles(menuId, getLoginName());
+        AuthorizationUtils.clearAllCachedAuthorizationInfo();
+        String msg = String.format("赋权完成：医院数=%s，医院白名单新增=%s，角色菜单新增=%s，本次赋权菜单数=%s",
+            data.get("hospitalCount"), data.get("hospitalAuthInserted"), data.get("roleMenuInserted"), data.get("grantMenuCount"));
+        return AjaxResult.success(msg, data);
+    }
+
+    /**
+     * 将选中菜单节点赋给全部供应商及其角色（幂等；供应商白名单为 hospital_id 为空的全局行；不含祖先与子孙）
+     */
+    @Log(title = "菜单全局赋权-供应商", businessType = BusinessType.GRANT)
+    @RequiresPermissions("system:menu:edit")
+    @PostMapping("/grantAllSuppliers")
+    @ResponseBody
+    public AjaxResult grantAllSuppliers(@RequestParam("menuId") Long menuId)
+    {
+        Map<String, Object> data = menuService.grantMenuToAllSuppliersAndRoles(menuId, getLoginName());
+        AuthorizationUtils.clearAllCachedAuthorizationInfo();
+        String msg = String.format("赋权完成：供应商数=%s，供应商白名单新增=%s，角色菜单新增=%s，本次赋权菜单数=%s",
+            data.get("supplierCount"), data.get("supplierAuthInserted"), data.get("roleMenuInserted"), data.get("grantMenuCount"));
+        return AjaxResult.success(msg, data);
+    }
+
+    /**
      * 选择菜单树
      */
     @GetMapping("/selectMenuTree/{menuId}")

@@ -14,7 +14,23 @@
         </foreach>
     </insert>
 
+    <insert id="batchInsertIgnore">
+        INSERT IGNORE INTO scm_hospital_menu_auth (id, hospital_id, menu_id, create_by, create_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id}, #{item.hospitalId}, #{item.menuId}, #{item.createBy}, #{item.createTime})
+        </foreach>
+    </insert>
+
     <select id="selectMenuIdsByHospitalId" resultType="long">
         SELECT menu_id FROM scm_hospital_menu_auth WHERE hospital_id = #{hospitalId}
+    </select>
+
+    <select id="selectAuthPairsForActiveHospitals" resultType="MenuGrantHospitalAuthPair">
+        SELECT h.hospital_id AS hospitalId,
+               CAST(TRIM(a.menu_id) AS UNSIGNED) AS menuId
+        FROM scm_hospital_menu_auth a
+        INNER JOIN scm_hospital h ON h.hospital_id = CAST(TRIM(a.hospital_id) AS UNSIGNED)
+            AND h.del_flag = '0' AND h.status = '0'
     </select>
 </mapper>

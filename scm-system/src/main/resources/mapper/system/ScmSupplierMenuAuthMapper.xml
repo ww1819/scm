@@ -27,11 +27,28 @@
         </foreach>
     </insert>
 
+    <insert id="batchInsertIgnore">
+        INSERT IGNORE INTO scm_supplier_menu_auth (id, supplier_id, hospital_id, menu_id, create_by, create_time)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.id}, #{item.supplierId}, #{item.hospitalId}, #{item.menuId}, #{item.createBy}, #{item.createTime})
+        </foreach>
+    </insert>
+
     <select id="selectMenuIdsBySupplierId" resultType="long">
         SELECT DISTINCT menu_id FROM scm_supplier_menu_auth WHERE supplier_id = #{supplierId} AND hospital_id IS NULL
     </select>
 
     <select id="selectMenuIdsBySupplierAndHospital" resultType="long">
         SELECT DISTINCT menu_id FROM scm_supplier_menu_auth WHERE supplier_id = #{supplierId} AND hospital_id = #{hospitalId}
+    </select>
+
+    <select id="selectGlobalAuthPairsForActiveSuppliers" resultType="MenuGrantSupplierAuthPair">
+        SELECT s.supplier_id AS supplierId,
+               CAST(TRIM(a.menu_id) AS UNSIGNED) AS menuId
+        FROM scm_supplier_menu_auth a
+        INNER JOIN scm_supplier s ON s.supplier_id = CAST(TRIM(a.supplier_id) AS UNSIGNED)
+            AND s.del_flag = '0' AND s.status = '0'
+        WHERE a.hospital_id IS NULL
     </select>
 </mapper>

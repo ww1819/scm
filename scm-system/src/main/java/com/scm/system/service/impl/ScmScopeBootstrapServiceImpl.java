@@ -1,11 +1,16 @@
 package com.scm.system.service.impl;
 
 import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Date;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.scm.common.constant.ScmAuthConstants;
 import com.scm.common.core.domain.entity.SysMenu;
 import com.scm.common.core.domain.entity.SysRole;
+import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.PinyinUtils;
 import com.scm.common.utils.StringUtils;
@@ -870,7 +876,160 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         }
     }
 
-    private void addMenuChain(Set<Long> acc, Long menuId, Map<Long, SysMenu> byId)
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Object> batchGrantHospitalSupplierMenus(Long hospitalId, List<Long> supplierIds,
+        Set<Long> menuSeedIds, String operBy)
+    {
+        String oper = StringUtils.isNotEmpty(operBy) ? operBy : "system";
+        if (hospitalId == null || supplierIds == null || supplierIds.isEmpty())
+        {
+            throw new ServiceException("医院或供应商列表不能为空");
+        }
+        Set<Long> seeds = menuSeedIds != null ? new HashSet<>(menuSeedIds) : new HashSet<>();
+        seeds.removeIf(Objects::isNull);
+        if (seeds.isEmpty())
+        {
+            throw new ServiceException("请先在菜单树中勾选至少一个菜单或按钮");
+        }
+        List<SysMenu> allMenus = sysMenuMapper.selectMenuAll();
+        Map<Long, SysMenu> byId = indexMenusById(allMenus);
+        Map<Long, List<Long>> childrenByParent = buildChildrenByParentIndex(allMenus);
+        Set<Long> scope = collectScopeMenuIdsWithAncestors(ScmAuthConstants.AUTH_HOSPITAL_SUPPLIER);
+        Set<Long> hospitalOwned = new HashSet<>(hospitalMenuAuthMapper.selectMenuIdsByHospitalId(hospitalId));
+        Set<Long> allowed = new HashSet<>(scope);
+        allowed.retainAll(hospitalOwned);
+        Set<Long> closure = expandHospitalGrantMenuClosure(seeds, byId, childrenByParent);
+        closure.retainAll(allowed);
+        if (closure.isEmpty())
+        {
+            throw new ServiceException("所选菜单不在本院可授范围内或与医院菜单白名单无交集");
+        }
+        LinkedHashSet<Long> distinctSuppliers = new LinkedHashSet<>(supplierIds);
+        int suppliersTouched = 0;
+        int rmInserted = 0;
+        for (Long supplierId : distinctSuppliers)
+        {
+            if (supplierId == null)
+            {
+                continue;
+            }
+            Set<Long> existing = new HashSet<>(supplierMenuAuthMapper.selectMenuIdsBySupplierAndHospital(supplierId, hospitalId));
+            Set<Long> merged = new HashSet<>(existing);
+            merged.addAll(closure);
+            supplierMenuAuthMapper.deleteBySupplierAndHospital(supplierId, hospitalId);
+            batchInsertSupplierHospitalMenuAuth(hospitalId, supplierId, merged, oper);
+            suppliersTouched++;
+            String sidStr = String.valueOf(supplierId);
+            List<SysRole> roles = sysRoleMapper.selectRolesBySupplierId(supplierId);
+            if (roles == null)
+            {
+                continue;
+            }
+            for (SysRole role : roles)
+            {
+                if (role == null || role.getRoleId() == null)
+                {
+                    continue;
+                }
+                Set<Long> haveRm = new HashSet<>(
+                    sysRoleMenuMapper.selectMenuIdsByRoleAndScope(role.getRoleId(), "", sidStr));
+                List<SysRoleMenu> buf = new ArrayList<>();
+                for (Long mid : merged)
+                {
+                    if (haveRm.contains(mid))
+                    {
+                        continue;
+                    }
+                    SysRoleMenu rm = new SysRoleMenu();
+                    rm.setId(IdUtils.simpleUuid7());
+                    rm.setRoleId(role.getRoleId());
+                    rm.setMenuId(mid);
+                    rm.setHospitalId("");
+                    rm.setSupplierId(sidStr);
+                    buf.add(rm);
+                    if (buf.size() >= BATCH)
+                    {
+                        rmInserted += sysRoleMenuMapper.batchRoleMenuIgnore(buf);
+                        buf.clear();
+                    }
+                }
+                if (!buf.isEmpty())
+                {
+                    rmInserted += sysRoleMenuMapper.batchRoleMenuIgnore(buf);
+                }
+            }
+        }
+        Map<String, Object> ret = new LinkedHashMap<>();
+        ret.put("supplierCount", suppliersTouched);
+        ret.put("menuClosureSize", closure.size());
+        ret.put("roleMenuInserted", rmInserted);
+        return ret;
+    }
+
+    private static Map<Long, List<Long>> buildChildrenByParentIndex(List<SysMenu> all)
+    {
+        Map<Long, List<Long>> map = new HashMap<>();
+        if (all == null)
+        {
+            return map;
+        }
+        for (SysMenu m : all)
+        {
+            if (m == null || m.getMenuId() == null)
+            {
+                continue;
+            }
+            Long p = m.getParentId() == null ? 0L : m.getParentId();
+            map.computeIfAbsent(p, k -> new ArrayList<>()).add(m.getMenuId());
+        }
+        return map;
+    }
+
+    private static Set<Long> expandHospitalGrantMenuClosure(Set<Long> seedIds, Map<Long, SysMenu> byId,
+        Map<Long, List<Long>> childrenByParent)
+    {
+        Set<Long> acc = new LinkedHashSet<>();
+        if (seedIds == null)
+        {
+            return acc;
+        }
+        for (Long seed : seedIds)
+        {
+            if (seed == null)
+            {
+                continue;
+            }
+            addMenuChainStatic(acc, seed, byId);
+        }
+        Deque<Long> dq = new ArrayDeque<>();
+        for (Long seed : seedIds)
+        {
+            if (seed != null && seed > 0)
+            {
+                dq.addLast(seed);
+            }
+        }
+        while (!dq.isEmpty())
+        {
+            Long id = dq.pollFirst();
+            List<Long> ch = childrenByParent.get(id);
+            if (ch == null)
+            {
+                continue;
+            }
+            for (Long c : ch)
+            {
+                if (acc.add(c))
+                {
+                    dq.addLast(c);
+                }
+            }
+        }
+        return acc;
+    }
+
+    private static void addMenuChainStatic(Set<Long> acc, Long menuId, Map<Long, SysMenu> byId)
     {
         Long cur = menuId;
         int guard = 0;
@@ -884,5 +1043,10 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
             }
             cur = m.getParentId();
         }
+    }
+
+    private void addMenuChain(Set<Long> acc, Long menuId, Map<Long, SysMenu> byId)
+    {
+        addMenuChainStatic(acc, menuId, byId);
     }
 }

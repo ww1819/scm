@@ -266,5 +266,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		update sys_role set pinyin_code = #{pinyinCode}, update_time = sysdate()
 		where role_id = #{roleId}
 	</update>
-	
+
+	<select id="selectActiveHospitalRoleRefs" resultType="MenuGrantHospitalRoleRef">
+		select r.role_id as roleId, r.hospital_id as hospitalId
+		from sys_role r
+		inner join scm_hospital h on h.hospital_id = r.hospital_id and h.del_flag = '0' and h.status = '0'
+		where r.del_flag = '0' and r.role_type = 'hospital' and r.hospital_id is not null
+	</select>
+
+	<select id="selectActiveSupplierRoleRefs" resultType="MenuGrantSupplierRoleRef">
+		select r.role_id as roleId, r.supplier_id as supplierId
+		from sys_role r
+		inner join scm_supplier s on s.supplier_id = r.supplier_id and s.del_flag = '0' and s.status = '0'
+		where r.del_flag = '0' and r.role_type = 'supplier' and r.supplier_id is not null
+	</select>
+
 </mapper> 

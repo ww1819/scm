@@ -387,6 +387,15 @@ WHERE del_flag = '0' AND perms LIKE 'certificate:%' AND perms LIKE '%:audit%';
 UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '1', default_open_scope = 'all_hospital', menu_biz_category = 'supply_chain'
 WHERE del_flag = '0' AND (perms LIKE 'order:%' OR perms LIKE 'delivery:%');
 /
+-- 第三方订单：确认=默认供应商种子；作废=默认医院种子（覆盖上条对 24033/24034 的 grant=1）
+UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all',
+  default_open_hospital = '0', hospital_admin_only = '0', default_open_supplier = '1', supplier_admin_only = '0', menu_biz_category = 'supply_chain'
+WHERE del_flag = '0' AND menu_id = '24033';
+/
+UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all_hospital',
+  default_open_hospital = '1', hospital_admin_only = '0', default_open_supplier = '0', supplier_admin_only = '0', menu_biz_category = 'supply_chain'
+WHERE del_flag = '0' AND menu_id = '24034';
+/
 UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '1', default_open_scope = 'all_hospital', menu_biz_category = 'settlement'
 WHERE del_flag = '0' AND perms LIKE 'settlement:%';
 /

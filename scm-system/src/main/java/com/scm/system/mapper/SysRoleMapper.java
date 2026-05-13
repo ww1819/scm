@@ -3,6 +3,8 @@ package com.scm.system.mapper;
 import java.util.List;
 import org.apache.ibatis.annotations.Param;
 import com.scm.common.core.domain.entity.SysRole;
+import com.scm.system.domain.MenuGrantHospitalRoleRef;
+import com.scm.system.domain.MenuGrantSupplierRoleRef;
 
 /**
  * 角色表 数据层
@@ -123,4 +125,10 @@ public interface SysRoleMapper
     int countOrgAdminRolesByHospital(@Param("hospitalId") Long hospitalId, @Param("excludeRoleId") Long excludeRoleId);
 
     int countOrgAdminRolesBySupplier(@Param("supplierId") Long supplierId, @Param("excludeRoleId") Long excludeRoleId);
+
+    /** 未删除、医院类型且所属医院为活跃状态的角色 */
+    List<MenuGrantHospitalRoleRef> selectActiveHospitalRoleRefs();
+
+    /** 未删除、供应商类型且所属供应商为活跃状态的角色 */
+    List<MenuGrantSupplierRoleRef> selectActiveSupplierRoleRefs();
 }
