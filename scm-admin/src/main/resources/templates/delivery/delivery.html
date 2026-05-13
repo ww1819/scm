@@ -116,6 +116,9 @@
 	            <a class="btn btn-default" onclick="openDeliveryPrintStyleExcelDialog()" shiro:hasPermission="delivery:delivery:export">
 		            <i class="fa fa-file-excel-o"></i> 打印导出
 		        </a>
+	            <a class="btn btn-default" onclick="openDeliveryAcceptancePrintStyleExcelDialog()" shiro:hasPermission="delivery:delivery:export">
+		            <i class="fa fa-file-excel-o"></i> 验收单导出
+		        </a>
 	            <a class="btn btn-primary" onclick="$.table.search()">
 		            <i class="fa fa-search"></i> 搜索
 		        </a>
@@ -488,8 +491,46 @@
 			});
 		}
 
+		/** 按「医用耗材质量验收单」打印版式导出 Excel（每单一个 Sheet），支持已勾选 / 全部 */
+		function openDeliveryAcceptancePrintStyleExcelDialog() {
+			if (typeof layer === 'undefined') {
+				$.modal.msgError('页面未加载完成，请刷新后重试');
+				return;
+			}
+			layer.open({
+				type: 1,
+				title: '验收单样式导出 Excel',
+				area: ['480px', '300px'],
+				shadeClose: true,
+				content: '<div style="padding:20px 24px 12px;">'
+					+ '<p style="color:#666;font-size:13px;line-height:1.65;margin-bottom:18px;">请选择导出范围：Excel 中每个配送单单独一个工作表，版式与「验收单打印」页面一致（医用耗材质量验收单）。</p>'
+					+ '<button type="button" id="btn-delivery-acceptance-excel-selected" class="btn btn-primary btn-block" style="margin-bottom:12px;">导出已勾选</button>'
+					+ '<button type="button" id="btn-delivery-acceptance-excel-all" class="btn btn-warning btn-block">导出全部（按当前搜索条件，不分页）</button>'
+					+ '</div>',
+				success: function(layero, index) {
+					layero.find('#btn-delivery-acceptance-excel-selected').on('click', function() {
+						var rows = $('#bootstrap-table').bootstrapTable('getSelections');
+						if (!rows || rows.length === 0) {
+							$.modal.msgWarning('请先勾选要导出的配送单');
+							return;
+						}
+						var ids = [];
+						for (var i = 0; i < rows.length; i++) {
+							ids.push(rows[i].deliveryId);
+						}
+						submitAcceptancePrintStyleExcelExport('selected', ids.join(','));
+						layer.close(index);
+					});
+					layero.find('#btn-delivery-acceptance-excel-all').on('click', function() {
+						submitAcceptancePrintStyleExcelExport('all', null);
+						layer.close(index);
+					});
+				}
+			});
+		}
+
 		/** 从响应头解析导出文件名（与后端 Content-Disposition 一致） */
-		function resolvePrintExportFileName(response) {
+		function resolvePrintExportFileName(response, fallbackPrefix) {
 			var fileName = '';
 			var cd = response.headers.get('Content-Disposition') || response.headers.get('content-disposition');
 			if (cd) {
@@ -515,7 +556,8 @@
 			if (!fileName) {
 				var d = new Date();
 				var p = function(n) { return (n < 10 ? '0' : '') + n; };
-				fileName = '配送单打印样式_' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate())
+				var fp = fallbackPrefix || '配送单打印样式_';
+				fileName = fp + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate())
 					+ p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds()) + '.xlsx';
 			}
 			if (!/\.xlsx$/i.test(fileName)) {
@@ -568,6 +610,14 @@
 		}
 
 		function submitPrintStyleExcelExport(exportMode, idsComma) {
+			submitDeliveryStyleExcelExport(exportMode, idsComma, '/printExportExcel', '配送单打印样式_');
+		}
+
+		function submitAcceptancePrintStyleExcelExport(exportMode, idsComma) {
+			submitDeliveryStyleExcelExport(exportMode, idsComma, '/printAcceptanceExportExcel', '配送单验收单样式_');
+		}
+
+		function submitDeliveryStyleExcelExport(exportMode, idsComma, endpointPath, fallbackFilePrefix) {
 			$.modal.loading('正在导出，请稍候...');
 			var body = new URLSearchParams();
 			body.append('exportMode', exportMode);
@@ -588,7 +638,7 @@
 			if (csrftoken) {
 				headers['X-CSRF-Token'] = csrftoken;
 			}
-			fetch(prefix + '/printExportExcel', {
+			fetch(prefix + endpointPath, {
 				method: 'POST',
 				headers: headers,
 				body: body,
@@ -618,7 +668,7 @@
 					});
 				}
 				return response.blob().then(function(blob) {
-					var fileName = resolvePrintExportFileName(response);
+					var fileName = resolvePrintExportFileName(response, fallbackFilePrefix);
 					return savePrintExportBlob(blob, fileName);
 				});
 			}).catch(function() {

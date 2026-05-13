@@ -45,6 +45,7 @@ import com.scm.system.service.IHospitalService;
 import com.scm.system.service.IScmHospitalContextService;
 import com.scm.system.service.IScmSupplierContextService;
 import com.scm.system.service.ISupplierService;
+import com.scm.system.util.DeliveryAcceptancePrintStyleExcelBuilder;
 import com.scm.system.util.DeliveryPrintStyleExcelBuilder;
 
 /**
@@ -491,6 +492,31 @@ public class DeliveryController extends BaseController
             throw new ServiceException("导出失败：文件名编码异常");
         }
         DeliveryPrintStyleExcelBuilder.write(sheets, response.getOutputStream());
+    }
+
+    /**
+     * 按「医用耗材质量验收单」打印版式导出 Excel（每单一个 Sheet）。参数与 {@link #printExportExcel} 相同。
+     */
+    @RequiresPermissions("delivery:delivery:export")
+    @Log(title = "配送单验收单样式Excel导出", businessType = BusinessType.EXPORT)
+    @PostMapping("/printAcceptanceExportExcel")
+    public void printAcceptanceExportExcel(@RequestParam("exportMode") String exportMode,
+        @RequestParam(value = "ids", required = false) String ids,
+        Delivery delivery,
+        HttpServletResponse response) throws IOException
+    {
+        List<DeliveryPrintSheetVo> sheets = resolveDeliveryPrintSheets(exportMode, ids, delivery);
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        try
+        {
+            FileUtils.setAttachmentResponseHeader(response, "配送单验收单样式_" + DateUtils.dateTimeNow() + ".xlsx");
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            throw new ServiceException("导出失败：文件名编码异常");
+        }
+        DeliveryAcceptancePrintStyleExcelBuilder.write(sheets, response.getOutputStream());
     }
 
     private List<DeliveryPrintSheetVo> resolveDeliveryPrintSheets(String exportMode, String ids, Delivery delivery)
