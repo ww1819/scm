@@ -87,6 +87,8 @@ public class SysIndexController extends BaseController
         mmap.put("user", user);
         String scmOrgDisplayName = resolveScmOrgDisplayName(user);
         mmap.put("scmOrgDisplayName", scmOrgDisplayName != null ? scmOrgDisplayName : "");
+        String scmOrgDisplayCode = resolveScmOrgDisplayCode(user);
+        mmap.put("scmOrgDisplayCode", scmOrgDisplayCode != null ? scmOrgDisplayCode : "");
         mmap.put("scmNavbarPersonName", resolveNavbarPersonName(user));
         // 租户用户：被暂停的菜单ID列表，点击时提示“当前菜单功能被暂停”
         List<Long> pausedMenuIds = StringUtils.isNotEmpty(user.getTenantId())
@@ -174,6 +176,45 @@ public class SysIndexController extends BaseController
             if (s != null && StringUtils.isNotEmpty(s.getCompanyName()))
             {
                 return s.getCompanyName();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 导航栏展示：医院编码或供应商编码（与 {@link #resolveScmOrgDisplayName} 同一上下文）。
+     */
+    private String resolveScmOrgDisplayCode(SysUser user)
+    {
+        if (user == null || user.getUserId() == null)
+        {
+            return null;
+        }
+        Long hospitalId = scmHospitalContextService.resolveHospitalIdForUser(user.getUserId());
+        if (hospitalId != null)
+        {
+            Hospital h = hospitalService.selectHospitalById(hospitalId);
+            if (h != null)
+            {
+                String code = StringUtils.trimToNull(h.getHospitalCode());
+                if (code != null)
+                {
+                    return code;
+                }
+            }
+            return null;
+        }
+        Long supplierId = scmSupplierContextService.resolveSupplierIdForUser(user.getUserId());
+        if (supplierId != null)
+        {
+            Supplier s = supplierService.selectSupplierById(supplierId);
+            if (s != null)
+            {
+                String code = StringUtils.trimToNull(s.getSupplierCode());
+                if (code != null)
+                {
+                    return code;
+                }
             }
         }
         return null;

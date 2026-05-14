@@ -5,6 +5,46 @@
 var isMobile = false;
 var sidebarHeight = isMobile ? '100%' : '96%';
 
+/** 复制到剪贴板（HTTPS 下优先 Clipboard API，否则 execCommand） */
+function scmCopyTextToClipboard(text)
+{
+    var d = $.Deferred();
+    if (!text)
+    {
+        d.reject();
+        return d.promise();
+    }
+    if (navigator.clipboard && window.isSecureContext && typeof navigator.clipboard.writeText === 'function')
+    {
+        navigator.clipboard.writeText(text).then(function() {
+            d.resolve();
+        }).catch(function(err) {
+            d.reject(err);
+        });
+        return d.promise();
+    }
+    try
+    {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        ta.style.top = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        ta.setSelectionRange(0, text.length);
+        var ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        ok ? d.resolve() : d.reject();
+    }
+    catch (e)
+    {
+        d.reject(e);
+    }
+    return d.promise();
+}
+
 $(function() {
     // MetsiMenu
     $('#side-menu').metisMenu();
@@ -44,6 +84,35 @@ $(function() {
     if (/(iPhone|iPad|iPod|iOS)/i.test(navigator.userAgent)) {
         $('#content-main').css('overflow-y', 'auto');
     }
+
+    // 导航栏：机构名称左侧「复制机构编码」（用 span 避免嵌套在 dropdown-toggle 的 <a> 里；阻止冒泡以免触发下拉）
+    function scmOrgCodeCopyHandler(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var text = $(this).attr('data-copy-code') || '';
+        if (!text) {
+            return;
+        }
+        $.when(scmCopyTextToClipboard(text)).done(function() {
+            if ($.modal && $.modal.msgSuccess) {
+                $.modal.msgSuccess('已复制机构编码：' + text);
+            } else if (window.layer) {
+                layer.msg('已复制：' + text, { icon: 1, time: 2000 });
+            }
+        }).fail(function() {
+            if ($.modal && $.modal.msgError) {
+                $.modal.msgError('复制失败，请长按或选中编码后手动复制');
+            }
+        });
+    }
+    $(document).on('click', '.scm-org-code-copy-btn', scmOrgCodeCopyHandler);
+    $(document).on('keydown', '.scm-org-code-copy-btn', function(e) {
+        if (e.which === 13 || e.which === 32) {
+            e.preventDefault();
+            e.stopPropagation();
+            scmOrgCodeCopyHandler.call(this, e);
+        }
+    });
 
 });
 

@@ -186,12 +186,34 @@
 	                <li><a data-toggle="tooltip" data-trigger="hover" data-placement="bottom" title="全屏显示" href="javascript:;" id="fullScreen"><i class="fa fa-arrows-alt"></i> 全屏</a></li>
                     <li class="dropdown user-menu">
 						<a href="javascript:void(0)" class="dropdown-toggle" data-hover="dropdown">
-							<span class="hidden-xs" style="max-width:320px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;"
-								th:title="${#strings.isEmpty(scmOrgDisplayName) ? scmNavbarPersonName : scmOrgDisplayName + ' · ' + scmNavbarPersonName}">
+							<span class="hidden-xs" style="max-width:320px;display:inline-flex;flex-direction:column;justify-content:center;text-align:right;vertical-align:middle;line-height:1.2;min-height:0;"
+								th:with="tipBase=${#strings.isEmpty(scmOrgDisplayName) ? scmNavbarPersonName : scmOrgDisplayName + ' · ' + scmNavbarPersonName},tipCode=${#strings.isEmpty(scmOrgDisplayCode) ? '' : ' 编码:' + scmOrgDisplayCode}"
+								th:title="${tipBase + tipCode}">
 								<th:block th:if="${!#strings.isEmpty(scmOrgDisplayName)}">
-									<span th:text="${scmOrgDisplayName}">机构</span><span> · </span>
+									<th:block th:if="${!#strings.isEmpty(scmOrgDisplayCode)}">
+										<!-- 不可在 dropdown-toggle 的 <a> 内再嵌套 <a>，否则浏览器会拆 DOM，复制图标会跑到名称上方 -->
+										<span style="display:inline-flex;flex-direction:column;align-items:flex-end;justify-content:center;line-height:1.2;max-width:300px;text-align:right;">
+											<span style="display:flex;flex-flow:row nowrap;align-items:center;justify-content:flex-end;gap:6px;width:100%;max-width:100%;">
+												<span role="button" tabindex="0" class="scm-org-code-copy-btn" th:attr="data-copy-code=${scmOrgDisplayCode}" title="复制机构编码"
+													style="flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.95);padding:2px 4px;cursor:pointer;border-radius:2px;">
+													<i class="fa fa-copy" style="font-size:13px;line-height:1;"></i>
+												</span>
+												<span style="flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" th:text="${scmOrgDisplayName}">机构</span>
+											</span>
+											<span style="display:block;width:100%;font-size:11px;color:rgba(255,255,255,0.82);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;user-select:text;">
+												<span th:text="${scmOrgDisplayCode}">机构编码</span><span> · </span><span th:text="${scmNavbarPersonName}">姓名</span>
+											</span>
+										</span>
+									</th:block>
+									<th:block th:if="${#strings.isEmpty(scmOrgDisplayCode)}">
+										<span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+											<span th:text="${scmOrgDisplayName}">机构</span><span> · </span><span th:text="${scmNavbarPersonName}">姓名</span>
+										</span>
+									</th:block>
 								</th:block>
-								<span th:text="${scmNavbarPersonName}">姓名</span>
+								<th:block th:if="${#strings.isEmpty(scmOrgDisplayName)}">
+									<span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" th:text="${scmNavbarPersonName}">姓名</span>
+								</th:block>
 							</span>
 						</a>
 						<ul class="dropdown-menu">
