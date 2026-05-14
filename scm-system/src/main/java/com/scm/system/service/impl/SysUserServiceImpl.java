@@ -772,6 +772,7 @@ public class SysUserServiceImpl implements ISysUserService
                     deptService.checkDeptDataScope(user.getDeptId());
                     String password = configService.selectConfigByKey("sys.user.initPassword");
                     user.setPassword(Md5Utils.hash(user.getLoginName() + password));
+                    user.setPwdPlain(password);
                     user.setCreateBy(operName);
                     userMapper.insertUser(user);
                     successNum++;

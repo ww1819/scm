@@ -74,6 +74,17 @@
             <div class="row">
                 <div class="col-sm-6">
                     <div class="form-group">
+                        <label class="col-sm-4 control-label">登记明文密码：</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-plaintext" style="word-break:break-all;"
+                               th:text="${#strings.isEmpty(user.pwdPlain) ? '-' : user.pwdPlain}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
                         <label class="col-sm-4 control-label">用户类型：</label>
                         <div class="col-sm-8">
                             <p class="form-control-plaintext" th:with="ut=*{userType}"

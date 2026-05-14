@@ -19,6 +19,7 @@ import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.HospitalSupplierChangeLog;
 import com.scm.system.domain.ScmHospitalSupplierApply;
 import com.scm.system.domain.ScmHospitalSupplierApplyLog;
+import com.scm.system.domain.ScmHospitalSupplierModifyApply;
 import com.scm.system.domain.ScmNoticeReceiver;
 import com.scm.system.domain.SysNotice;
 import com.scm.system.domain.ScmSupplierCertApplyBundle;
@@ -28,6 +29,7 @@ import com.scm.system.mapper.HospitalSupplierChangeLogMapper;
 import com.scm.system.mapper.HospitalSupplierMapper;
 import com.scm.system.mapper.ScmHospitalSupplierApplyLogMapper;
 import com.scm.system.mapper.ScmHospitalSupplierApplyMapper;
+import com.scm.system.mapper.ScmHospitalSupplierModifyApplyMapper;
 import com.scm.system.mapper.ScmNoticeReceiverMapper;
 import com.scm.system.mapper.ScmSupplierCertApplyBundleMapper;
 import com.scm.system.mapper.SupplierCertificateMapper;
@@ -71,6 +73,9 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
 
     @Autowired
     private ScmHospitalSupplierApplyMapper hospitalSupplierApplyMapper;
+
+    @Autowired
+    private ScmHospitalSupplierModifyApplyMapper hospitalSupplierModifyApplyMapper;
 
     @Autowired
     private ScmHospitalSupplierApplyLogMapper hospitalSupplierApplyLogMapper;
@@ -776,6 +781,246 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
         log.setOperBy(operBy);
         log.setSnapshot(s.toJSONString());
         hospitalSupplierApplyLogMapper.insertLog(log);
+    }
+
+    @Override
+    public HospitalSupplier assertSupplierApprovedRelationForModify(Long relationId, Long supplierId)
+    {
+        if (relationId == null || supplierId == null)
+        {
+            throw new ServiceException("参数不能为空");
+        }
+        HospitalSupplier rel = hospitalSupplierMapper.selectHospitalSupplierById(relationId);
+        if (rel == null)
+        {
+            throw new ServiceException("关联不存在");
+        }
+        if (!supplierId.equals(rel.getSupplierId()))
+        {
+            throw new ServiceException("无权引用该关联");
+        }
+        if (!"1".equals(StringUtils.trimToEmpty(rel.getBindStatus())))
+        {
+            throw new ServiceException("仅已绑定关联可申请修改");
+        }
+        if (!"1".equals(StringUtils.trimToEmpty(rel.getAuditStatus())))
+        {
+            throw new ServiceException("仅已审核通过的关联可申请修改");
+        }
+        if (!"0".equals(StringUtils.trimToEmpty(rel.getStatus())))
+        {
+            throw new ServiceException("关联已停用，不可申请修改");
+        }
+        return rel;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int submitAssociationModifyFromSupplier(Long relationId, Long supplierId, Date supplyStartDate,
+        Date supplyEndDate, String createBy, String contractNo, String applyReason, String contactPerson,
+        String contactPhone)
+    {
+        HospitalSupplier rel = assertSupplierApprovedRelationForModify(relationId, supplierId);
+        validateSupplyDateRange(supplyStartDate, supplyEndDate);
+        if (hospitalSupplierModifyApplyMapper.countPendingByRelationId(relationId) > 0)
+        {
+            throw new ServiceException("该关联已存在待审核的修改申请，请勿重复提交");
+        }
+        ScmHospitalSupplierModifyApply row = new ScmHospitalSupplierModifyApply();
+        row.setModifyApplyId(IdUtils.dashedUuid7());
+        row.setRelationId(relationId);
+        row.setSupplierId(String.valueOf(supplierId));
+        row.setHospitalId(String.valueOf(rel.getHospitalId()));
+        row.setSupplierName(getSupplierName(supplierId));
+        row.setHospitalName(getHospitalName(rel.getHospitalId()));
+        row.setPrevSupplyStartDate(rel.getSupplyStartDate());
+        row.setPrevSupplyEndDate(rel.getSupplyEndDate());
+        row.setPrevRemark(StringUtils.trimToEmpty(rel.getRemark()));
+        row.setSupplyStartDate(supplyStartDate);
+        row.setSupplyEndDate(supplyEndDate);
+        row.setContractNo(contractNo);
+        row.setApplyReason(applyReason);
+        row.setContactPerson(contactPerson);
+        row.setContactPhone(contactPhone);
+        row.setBeforeSnapshot(JSON.toJSONString(rel));
+        row.setAuditStatus("0");
+        row.setDelFlag("0");
+        row.setCreateBy(createBy);
+        return hospitalSupplierModifyApplyMapper.insert(row);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int withdrawAssociationModifyApply(String modifyApplyId, Long supplierId, String operBy)
+    {
+        if (StringUtils.isEmpty(modifyApplyId) || supplierId == null)
+        {
+            throw new ServiceException("参数不能为空");
+        }
+        ScmHospitalSupplierModifyApply before = hospitalSupplierModifyApplyMapper.selectById(modifyApplyId);
+        if (before == null)
+        {
+            throw new ServiceException("申请不存在");
+        }
+        if (!String.valueOf(supplierId).equals(before.getSupplierId()))
+        {
+            throw new ServiceException("仅允许撤回本供应商申请");
+        }
+        if (!"0".equals(before.getAuditStatus()))
+        {
+            throw new ServiceException("仅待审核申请可撤回");
+        }
+        ScmHospitalSupplierModifyApply upd = new ScmHospitalSupplierModifyApply();
+        upd.setModifyApplyId(modifyApplyId);
+        upd.setDelFlag("2");
+        upd.setDelBy(operBy);
+        upd.setDelTime(DateUtils.getNowDate());
+        upd.setUpdateBy(operBy);
+        return hospitalSupplierModifyApplyMapper.update(upd);
+    }
+
+    @Override
+    public List<ScmHospitalSupplierModifyApply> selectAssociationModifyApplyList(ScmHospitalSupplierModifyApply query)
+    {
+        return hospitalSupplierModifyApplyMapper.selectList(query);
+    }
+
+    @Override
+    public List<ScmHospitalSupplierModifyApply> selectSupplierModifyApplyList(Long supplierId, String auditStatus,
+        String hospitalKeyword, String supplierKeyword)
+    {
+        if (supplierId == null)
+        {
+            return java.util.Collections.emptyList();
+        }
+        ScmHospitalSupplierModifyApply q = new ScmHospitalSupplierModifyApply();
+        q.setSupplierId(String.valueOf(supplierId));
+        q.setAuditStatus(auditStatus);
+        q.setHospitalKeyword(StringUtils.trimToNull(hospitalKeyword));
+        q.setSupplierKeyword(StringUtils.trimToNull(supplierKeyword));
+        return hospitalSupplierModifyApplyMapper.selectList(q);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public int auditAssociationModifyApply(String modifyApplyId, String approved, String auditRemark, String operBy,
+        Long hospitalCtx)
+    {
+        if (StringUtils.isEmpty(modifyApplyId))
+        {
+            throw new ServiceException("申请ID不能为空");
+        }
+        ScmHospitalSupplierModifyApply before = hospitalSupplierModifyApplyMapper.selectById(modifyApplyId);
+        if (before == null)
+        {
+            throw new ServiceException("申请不存在");
+        }
+        if (hospitalCtx != null && !String.valueOf(hospitalCtx).equals(before.getHospitalId()))
+        {
+            throw new ServiceException("仅允许审核当前医院的关联修改申请");
+        }
+        if (!"0".equals(before.getAuditStatus()))
+        {
+            throw new ServiceException("该申请已审核，请勿重复操作");
+        }
+        ScmHospitalSupplierModifyApply upd = new ScmHospitalSupplierModifyApply();
+        upd.setModifyApplyId(modifyApplyId);
+        upd.setAuditStatus("1".equals(approved) ? "1" : "2");
+        upd.setAuditBy(operBy);
+        upd.setAuditTime(DateUtils.getNowDate());
+        upd.setAuditRemark(auditRemark);
+        upd.setUpdateBy(operBy);
+        int rows = hospitalSupplierModifyApplyMapper.update(upd);
+        if (rows > 0 && "1".equals(approved))
+        {
+            applyRelationUpdateFromModifyApply(before, operBy);
+        }
+        if (rows > 0)
+        {
+            ScmHospitalSupplierModifyApply after = hospitalSupplierModifyApplyMapper.selectById(modifyApplyId);
+            publishModifyAuditNotice(after, "1".equals(approved), auditRemark, operBy);
+        }
+        return rows;
+    }
+
+    private void applyRelationUpdateFromModifyApply(ScmHospitalSupplierModifyApply apply, String operBy)
+    {
+        if (apply == null || apply.getRelationId() == null)
+        {
+            return;
+        }
+        HospitalSupplier rel = hospitalSupplierMapper.selectHospitalSupplierById(apply.getRelationId());
+        if (rel == null)
+        {
+            throw new ServiceException("关联已不存在，无法生效修改");
+        }
+        if (!String.valueOf(rel.getHospitalId()).equals(apply.getHospitalId())
+            || !String.valueOf(rel.getSupplierId()).equals(apply.getSupplierId()))
+        {
+            throw new ServiceException("关联数据与申请不一致，拒绝生效");
+        }
+        HospitalSupplier upd = new HospitalSupplier();
+        upd.setRelationId(apply.getRelationId());
+        upd.setSupplyStartDate(apply.getSupplyStartDate());
+        upd.setSupplyEndDate(apply.getSupplyEndDate());
+        upd.setUpdateBy(operBy);
+        StringBuilder rm = new StringBuilder();
+        if (StringUtils.isNotEmpty(apply.getContractNo()))
+        {
+            rm.append("合同编号:").append(apply.getContractNo()).append(" ");
+        }
+        if (StringUtils.isNotEmpty(apply.getContactPerson()))
+        {
+            rm.append("联系人:").append(apply.getContactPerson()).append(" ");
+        }
+        if (StringUtils.isNotEmpty(apply.getContactPhone()))
+        {
+            rm.append("电话:").append(apply.getContactPhone());
+        }
+        if (rm.length() > 0)
+        {
+            upd.setRemark(rm.toString().trim());
+        }
+        else if (StringUtils.isNotEmpty(apply.getApplyReason()))
+        {
+            upd.setRemark(apply.getApplyReason());
+        }
+        updateHospitalSupplier(upd);
+    }
+
+    private void publishModifyAuditNotice(ScmHospitalSupplierModifyApply row, boolean approved, String auditRemark,
+        String operBy)
+    {
+        if (row == null)
+        {
+            return;
+        }
+        String supplierName = row.getSupplierName();
+        String hospitalName = row.getHospitalName();
+        String title = approved ? "医院关联修改申请审核通过" : "医院关联修改申请审核拒绝";
+        StringBuilder content = new StringBuilder();
+        content.append("供应商【").append(supplierName).append("】对医院【").append(hospitalName).append("】的关联信息修改申请已审核");
+        content.append(approved ? "通过" : "拒绝").append("。");
+        if (row.getSupplyStartDate() != null || row.getSupplyEndDate() != null)
+        {
+            content.append(" 申请供货期限：");
+            content.append(row.getSupplyStartDate() == null ? "-" : DateUtils.parseDateToStr("yyyy-MM-dd", row.getSupplyStartDate()));
+            content.append(" 至 ");
+            content.append(row.getSupplyEndDate() == null ? "-" : DateUtils.parseDateToStr("yyyy-MM-dd", row.getSupplyEndDate()));
+            content.append("。");
+        }
+        if (StringUtils.isNotEmpty(auditRemark))
+        {
+            content.append(" 审核备注：").append(auditRemark).append("。");
+        }
+        SysNotice notice = new SysNotice();
+        notice.setNoticeTitle(title);
+        notice.setNoticeType("1");
+        notice.setStatus("0");
+        notice.setNoticeContent(content.toString());
+        notice.setCreateBy(StringUtils.isEmpty(operBy) ? "system" : operBy);
+        noticeService.insertNotice(notice);
+        bindNoticeReceivers(notice.getNoticeId(), Long.valueOf(row.getSupplierId()), operBy);
     }
 }
 

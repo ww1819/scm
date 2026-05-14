@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
 <head>
-	<th:block th:include="include :: header('新增医院关联')" />
+	<th:block th:include="include :: header('关联关系修改申请')" />
 	<th:block th:include="include :: layout-latest-css" />
 </head>
 <body class="gray-bg">
@@ -9,17 +9,22 @@
 		<div class="row">
 			<div class="col-sm-12">
 				<div class="panel panel-default">
-					<div class="panel-heading">新增医院关联</div>
+					<div class="panel-heading">关联关系修改申请</div>
 					<div class="panel-body">
-						<p class="text-muted">供应商向医院发起关联申请，需填写供货合同起止日期，提交后等待医院审核。</p>
-						<p class="text-info" style="margin-top:-8px;"><i class="fa fa-info-circle"></i> 若关联<strong>已审核通过</strong>后发现信息有误，请前往 <a href="javascript:void(0)" onclick="$.modal.openTab('关联关系修改', ctx + 'supplier/associate/modify')">关联关系修改</a> 发起修改申请。</p>
-						<form id="associate-form" class="form-horizontal">
+						<p class="text-muted">请选择<strong>已审核通过</strong>的医院关联，系统将带出当前供货期限等信息；修改后提交，由医院审核通过后生效至关联数据。</p>
+						<form id="modify-form" class="form-horizontal">
 							<div class="form-group">
-								<label class="col-sm-2 control-label">选择医院</label>
+								<label class="col-sm-2 control-label">引用关联</label>
 								<div class="col-sm-6">
-									<select name="hospitalId" id="hospitalId" class="form-control" required>
-										<option value="">请选择医院</option>
+									<select name="relationId" id="relationId" class="form-control" required>
+										<option value="">请选择已审核的医院关联</option>
 									</select>
+								</div>
+							</div>
+							<div class="form-group">
+								<label class="col-sm-2 control-label">医院</label>
+								<div class="col-sm-6">
+									<p class="form-control-static" id="hospitalDisplay">-</p>
 								</div>
 							</div>
 							<div class="form-group">
@@ -35,7 +40,7 @@
 							<div class="form-group">
 								<label class="col-sm-2 control-label">合同编号</label>
 								<div class="col-sm-6">
-									<input type="text" class="form-control" id="contractNo" name="contractNo" placeholder="可选，便于医院核对合同" />
+									<input type="text" class="form-control" id="contractNo" name="contractNo" placeholder="可选" />
 								</div>
 							</div>
 							<div class="form-group">
@@ -51,13 +56,13 @@
 							<div class="form-group">
 								<label class="col-sm-2 control-label">申请说明</label>
 								<div class="col-sm-6">
-									<textarea class="form-control" id="applyReason" name="applyReason" rows="3" placeholder="可填写合作背景、供货范围等"></textarea>
+									<textarea class="form-control" id="applyReason" name="applyReason" rows="3" placeholder="请说明需修改的原因或更正内容"></textarea>
 								</div>
 							</div>
 							<div class="form-group">
 								<div class="col-sm-offset-2 col-sm-6">
-									<button type="submit" class="btn btn-primary" id="btnSubmit" shiro:hasPermission="supplier:associate:add">
-										<i class="fa fa-check"></i> 提交关联申请
+									<button type="submit" class="btn btn-primary" id="btnSubmitModify" shiro:hasPermission="supplier:associateModify:add">
+										<i class="fa fa-check"></i> 提交修改申请
 									</button>
 								</div>
 							</div>
@@ -67,10 +72,10 @@
 			</div>
 			<div class="col-sm-12" style="margin-top: 10px;">
 				<div class="panel panel-default">
-					<div class="panel-heading">我的关联申请</div>
+					<div class="panel-heading">我的关联修改申请</div>
 					<div class="panel-body">
 						<div class="col-sm-12 search-collapse" style="padding-left: 0; padding-right: 0;">
-							<form id="apply-search-form">
+							<form id="modify-search-form">
 								<div class="select-list">
 									<ul>
 										<li>审核状态：
@@ -88,18 +93,18 @@
 											<input type="text" name="supplierKeyword" placeholder="编码/名称/拼音简码"/>
 										</li>
 										<li>
-											<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search('apply-search-form', 'apply-table')"><i class="fa fa-search"></i>&nbsp;搜索</a>
+											<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search('modify-search-form', 'modify-apply-table')"><i class="fa fa-search"></i>&nbsp;搜索</a>
 										</li>
 									</ul>
 								</div>
 							</form>
 						</div>
 						<div class="btn-group-sm" role="group" style="margin-bottom: 10px;">
-							<a class="btn btn-danger" onclick="withdrawApply()" shiro:hasPermission="supplier:associate:withdraw">
+							<a class="btn btn-danger" onclick="withdrawModifyApply()" shiro:hasPermission="supplier:associateModify:withdraw">
 								<i class="fa fa-undo"></i> 撤回申请
 							</a>
 						</div>
-						<table id="apply-table"></table>
+						<table id="modify-apply-table"></table>
 					</div>
 				</div>
 			</div>
@@ -109,21 +114,36 @@
 	<th:block th:include="include :: layout-latest-js" />
 	<script th:inline="javascript">
 		var prefix = ctx + "supplier/associate";
-		var withdrawFlag = [[${@permission.hasPermi('supplier:associate:withdraw')}]];
+		var withdrawModifyFlag = [[${@permission.hasPermi('supplier:associateModify:withdraw')}]];
 		$(function() {
-			loadHospitals();
-			initMyApplyTable();
-			$("#associate-form").on("submit", function(e) {
+			loadApprovedRelations();
+			initModifyApplyTable();
+			$("#relationId").on("change", function() {
+				var rid = $(this).val();
+				if (!rid) {
+					$("#hospitalDisplay").text("-");
+					$("#supplyStartDate").val("");
+					$("#supplyEndDate").val("");
+					return;
+				}
+				$.get(prefix + "/relationPrefill", { relationId: rid }, function(res) {
+					if (res.code == 0 && res.data) {
+						var d = res.data;
+						$("#hospitalDisplay").text((d.hospitalName || "") + (d.hospitalCode ? ("（" + d.hospitalCode + "）") : ""));
+						$("#supplyStartDate").val(d.supplyStartDateStr || "");
+						$("#supplyEndDate").val(d.supplyEndDateStr || "");
+					} else {
+						$.modal.msgError(res.msg || "加载关联信息失败");
+					}
+				});
+			});
+			$("#modify-form").on("submit", function(e) {
 				e.preventDefault();
-				var hospitalId = $("#hospitalId").val();
+				var relationId = $("#relationId").val();
 				var supplyStartDate = $("#supplyStartDate").val();
 				var supplyEndDate = $("#supplyEndDate").val();
-				var contractNo = $("#contractNo").val();
-				var applyReason = $("#applyReason").val();
-				var contactPerson = $("#contactPerson").val();
-				var contactPhone = $("#contactPhone").val();
-				if (!hospitalId) {
-					$.modal.msgWarning("请选择医院");
+				if (!relationId) {
+					$.modal.msgWarning("请选择要修改的关联");
 					return;
 				}
 				if (!supplyStartDate || !supplyEndDate) {
@@ -134,59 +154,60 @@
 					$.modal.msgWarning("供货开始日期不能晚于结束日期");
 					return;
 				}
-				$("#btnSubmit").prop("disabled", true);
+				$("#btnSubmitModify").prop("disabled", true);
 				$.ajax({
-					url: prefix + "/submit",
+					url: prefix + "/submitModify",
 					type: "post",
 					data: {
-						hospitalId: hospitalId,
+						relationId: relationId,
 						supplyStartDate: supplyStartDate,
 						supplyEndDate: supplyEndDate,
-						contractNo: contractNo,
-						applyReason: applyReason,
-						contactPerson: contactPerson,
-						contactPhone: contactPhone
+						contractNo: $("#contractNo").val(),
+						applyReason: $("#applyReason").val(),
+						contactPerson: $("#contactPerson").val(),
+						contactPhone: $("#contactPhone").val()
 					},
 					success: function(result) {
 						if (result.code == 0) {
 							$.modal.msgSuccess(result.msg);
-							$("#hospitalId").val("");
-							$.table.refresh('apply-table');
+							$("#modify-form")[0].reset();
+							$("#hospitalDisplay").text("-");
+							$.table.refresh('modify-apply-table');
 						} else {
 							$.modal.msgError(result.msg);
 						}
-						$("#btnSubmit").prop("disabled", false);
+						$("#btnSubmitModify").prop("disabled", false);
 					},
 					error: function() {
 						$.modal.msgError("提交失败，请稍后重试");
-						$("#btnSubmit").prop("disabled", false);
+						$("#btnSubmitModify").prop("disabled", false);
 					}
 				});
 			});
 		});
-		function loadHospitals() {
-			$.get(prefix + "/listHospitals", function(result) {
+		function loadApprovedRelations() {
+			$.get(prefix + "/approvedRelations", function(result) {
 				if (result.code == 0 && result.data && result.data.length) {
-					var $sel = $("#hospitalId");
+					var $sel = $("#relationId");
 					$sel.find("option:not(:first)").remove();
 					$.each(result.data, function(i, o) {
-						$sel.append("<option value='" + o.hospitalId + "'>" + (o.hospitalName || o.hospitalId) + "</option>");
+						var label = (o.hospitalName || o.hospitalId || "") + " | 供货:" + (o.supplyStartDateStr || "-") + "~" + (o.supplyEndDateStr || "-");
+						$sel.append("<option value='" + o.relationId + "'>" + label + "</option>");
 					});
 				}
 			});
 		}
-
-		function initMyApplyTable() {
+		function initModifyApplyTable() {
 			var options = {
-				id: "apply-table",
-				url: prefix + "/myList",
-				formId: "apply-search-form",
+				id: "modify-apply-table",
+				url: prefix + "/myModifyList",
+				formId: "modify-search-form",
 				sortName: "createTime",
 				sortOrder: "desc",
-				modalName: "关联申请",
+				modalName: "关联修改申请",
 				rememberSelected: true,
 				maintainSelected: true,
-				uniqueId: "applyId",
+				uniqueId: "modifyApplyId",
 				queryParams: function(params) {
 					var curParams = {
 						pageSize: params.limit,
@@ -195,14 +216,18 @@
 						orderByColumn: params.sort,
 						isAsc: params.order
 					};
-					return $.extend(curParams, $.common.formToJSON("apply-search-form"));
+					return $.extend(curParams, $.common.formToJSON("modify-search-form"));
 				},
 				columns: [{
 					checkbox: true
 				}, {
-					field: 'applyId',
+					field: 'modifyApplyId',
 					title: '申请ID',
 					visible: false
+				}, {
+					field: 'relationId',
+					title: '关联ID',
+					width: 90
 				}, {
 					title: '序号',
 					align: 'center',
@@ -220,11 +245,21 @@
 					field: 'supplierName',
 					title: '供应商名称'
 				}, {
+					field: 'prevSupplyStartDate',
+					title: '变更前供货开始',
+					formatter: function(v) { return v ? (typeof v === 'string' && v.length >= 10 ? v.substring(0, 10) : v) : '-'; }
+				}, {
+					field: 'prevSupplyEndDate',
+					title: '变更前供货结束',
+					formatter: function(v) { return v ? (typeof v === 'string' && v.length >= 10 ? v.substring(0, 10) : v) : '-'; }
+				}, {
 					field: 'supplyStartDate',
-					title: '供货开始'
+					title: '申请供货开始',
+					formatter: function(v) { return v ? (typeof v === 'string' && v.length >= 10 ? v.substring(0, 10) : v) : '-'; }
 				}, {
 					field: 'supplyEndDate',
-					title: '供货结束'
+					title: '申请供货结束',
+					formatter: function(v) { return v ? (typeof v === 'string' && v.length >= 10 ? v.substring(0, 10) : v) : '-'; }
 				}, {
 					field: 'auditStatus',
 					title: '状态',
@@ -242,15 +277,14 @@
 					align: 'center',
 					formatter: function(value, row) {
 						if (row.auditStatus != '0') return '-';
-						return '<a class="btn btn-danger btn-xs ' + withdrawFlag + '" href="javascript:void(0)" onclick="withdrawApply(\'' + row.applyId + '\')"><i class="fa fa-undo"></i>撤回</a>';
+						return '<a class="btn btn-danger btn-xs ' + withdrawModifyFlag + '" href="javascript:void(0)" onclick="withdrawModifyApply(\'' + row.modifyApplyId + '\')"><i class="fa fa-undo"></i>撤回</a>';
 					}
 				}]
 			};
 			$.table.init(options);
 		}
-
-		function withdrawApply(applyId) {
-			var targetId = applyId;
+		function withdrawModifyApply(modifyApplyId) {
+			var targetId = modifyApplyId;
 			if (!targetId) {
 				var row = $.table.selectFirstColumns();
 				if (!row || row.length === 0) {
@@ -259,11 +293,11 @@
 				}
 				targetId = row[0];
 			}
-			$.modal.confirm("确认撤回该申请吗？", function () {
-				$.post(prefix + "/withdraw", { applyId: targetId }, function (res) {
+			$.modal.confirm("确认撤回该修改申请吗？", function () {
+				$.post(prefix + "/withdrawModify", { modifyApplyId: targetId }, function (res) {
 					if (res.code == web_status.SUCCESS) {
 						$.modal.msgSuccess(res.msg || "撤回成功");
-						$.table.refresh('apply-table');
+						$.table.refresh('modify-apply-table');
 					} else {
 						$.modal.msgError(res.msg || "撤回失败");
 					}

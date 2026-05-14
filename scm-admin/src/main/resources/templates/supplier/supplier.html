@@ -86,6 +86,9 @@
 	            <a class="btn btn-info" onclick="$.modal.openTab('新增医院关联', ctx + 'supplier/associate')" shiro:hasPermission="supplier:associate:view">
 	                <i class="fa fa-link"></i> 新增关联
 	            </a>
+	            <a class="btn btn-default" onclick="$.modal.openTab('关联关系修改', ctx + 'supplier/associate/modify')" shiro:hasPermission="supplier:associateModify:view">
+	                <i class="fa fa-pencil-square-o"></i> 关联修改
+	            </a>
 	             <a class="btn btn-primary single disabled" onclick="$.operate.editTab()" shiro:hasPermission="supplier:supplier:edit">
 		            <i class="fa fa-edit"></i> 修改
 		        </a>

@@ -213,6 +213,42 @@ CREATE TABLE IF NOT EXISTS `scm_hospital_supplier_apply_log` (
   KEY `idx_hsal_hospital_supplier` (`hospital_id`,`supplier_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='关联申请变更记录表';
 /
+CREATE TABLE IF NOT EXISTS `scm_hospital_supplier_modify_apply` (
+  `modify_apply_id` varchar(36) NOT NULL COMMENT '主键UUID7',
+  `relation_id` bigint(20) NOT NULL COMMENT '被修改的 scm_hospital_supplier.relation_id（已审核通过）',
+  `supplier_id` varchar(36) NOT NULL COMMENT '供应商ID',
+  `hospital_id` varchar(36) NOT NULL COMMENT '医院ID',
+  `supplier_name` varchar(200) DEFAULT '' COMMENT '供应商名称快照',
+  `hospital_name` varchar(200) DEFAULT '' COMMENT '医院名称快照',
+  `prev_supply_start_date` date DEFAULT NULL COMMENT '变更前供货开始',
+  `prev_supply_end_date` date DEFAULT NULL COMMENT '变更前供货结束',
+  `prev_remark` varchar(500) DEFAULT '' COMMENT '变更前关联备注快照',
+  `supply_start_date` date DEFAULT NULL COMMENT '申请变更后供货开始',
+  `supply_end_date` date DEFAULT NULL COMMENT '申请变更后供货结束',
+  `contract_no` varchar(64) DEFAULT '' COMMENT '合同编号',
+  `apply_reason` varchar(1000) DEFAULT '' COMMENT '申请说明',
+  `contact_person` varchar(64) DEFAULT '' COMMENT '联系人',
+  `contact_phone` varchar(32) DEFAULT '' COMMENT '联系电话',
+  `before_snapshot` longtext COMMENT '变更前完整快照JSON',
+  `audit_status` char(1) DEFAULT '0' COMMENT '审核状态（0待审核 1已通过 2已拒绝）',
+  `audit_by` varchar(64) DEFAULT '' COMMENT '审核人',
+  `audit_time` datetime DEFAULT NULL COMMENT '审核时间',
+  `audit_remark` varchar(500) DEFAULT '' COMMENT '审核备注',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除状态（0存在 2删除）',
+  `del_by` varchar(64) DEFAULT '' COMMENT '删除者',
+  `del_time` datetime DEFAULT NULL COMMENT '删除时间',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`modify_apply_id`),
+  KEY `idx_hsma_relation` (`relation_id`),
+  KEY `idx_hsma_hospital` (`hospital_id`),
+  KEY `idx_hsma_supplier` (`supplier_id`),
+  KEY `idx_hsma_audit` (`audit_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医院供应商关联修改申请（引用已审核关联后提交，医院审核通过后更新关联表）';
+/
 CREATE TABLE IF NOT EXISTS `scm_material_category` (
   `category_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '分类ID',
   `parent_id` bigint(20) DEFAULT 0 COMMENT '父分类ID',
@@ -1271,6 +1307,7 @@ CREATE TABLE IF NOT EXISTS `sys_user` (
   `sex` char(1) DEFAULT '0' COMMENT '用户性别（0男 1女 2未知）',
   `avatar` varchar(100) DEFAULT '' COMMENT '头像路径',
   `password` varchar(50) DEFAULT '' COMMENT '密码',
+  `pwd_plain` varchar(64) DEFAULT NULL COMMENT '管理员登记的明文密码（用户自行改密后清空）',
   `salt` varchar(20) DEFAULT '' COMMENT '盐加密',
   `status` char(1) DEFAULT '0' COMMENT '账号状态（0正常 1停用）',
   `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0存在 2删除）',

@@ -3,6 +3,7 @@ package com.scm.system.service;
 import java.util.List;
 import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.ScmHospitalSupplierApply;
+import com.scm.system.domain.ScmHospitalSupplierModifyApply;
 
 /**
  * 医院供应商关联 服务层
@@ -116,5 +117,39 @@ public interface IHospitalSupplierService
      * 医院审核申请（通过后写入 scm_hospital_supplier）
      */
     public int auditAssociationApply(String applyId, String approved, String auditRemark, String operBy, Long hospitalCtx);
+
+    /**
+     * 供应商基于已审核通过的关联发起修改申请
+     */
+    int submitAssociationModifyFromSupplier(Long relationId, Long supplierId, java.util.Date supplyStartDate,
+        java.util.Date supplyEndDate, String createBy, String contractNo, String applyReason, String contactPerson,
+        String contactPhone);
+
+    /**
+     * 供应商撤回修改申请（仅待审核）
+     */
+    int withdrawAssociationModifyApply(String modifyApplyId, Long supplierId, String operBy);
+
+    /**
+     * 医院侧查看关联修改申请列表
+     */
+    List<ScmHospitalSupplierModifyApply> selectAssociationModifyApplyList(ScmHospitalSupplierModifyApply query);
+
+    /**
+     * 供应商侧查看本方的关联修改申请
+     */
+    List<ScmHospitalSupplierModifyApply> selectSupplierModifyApplyList(Long supplierId, String auditStatus,
+        String hospitalKeyword, String supplierKeyword);
+
+    /**
+     * 医院审核关联修改申请（通过后更新 scm_hospital_supplier）
+     */
+    int auditAssociationModifyApply(String modifyApplyId, String approved, String auditRemark, String operBy,
+        Long hospitalCtx);
+
+    /**
+     * 校验并加载供应商可修改的已审核关联（用于引用预填）
+     */
+    HospitalSupplier assertSupplierApprovedRelationForModify(Long relationId, Long supplierId);
 }
 

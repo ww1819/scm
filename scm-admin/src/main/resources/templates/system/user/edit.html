@@ -103,6 +103,17 @@
             <div class="row">
                 <div class="col-sm-6">
                     <div class="form-group">
+                        <label class="col-sm-4 control-label">登记明文密码：</label>
+                        <div class="col-sm-8">
+                            <p class="form-control-static" style="word-break:break-all;"
+                               th:text="${#strings.isEmpty(user.pwdPlain) ? '（无记录：历史用户或未通过本系统登记/用户已自行修改密码）' : user.pwdPlain}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
                         <label class="col-sm-4 control-label">用户类型：</label>
                         <div class="col-sm-8">
                             <select name="userType" id="userType" class="form-control" th:field="*{userType}">

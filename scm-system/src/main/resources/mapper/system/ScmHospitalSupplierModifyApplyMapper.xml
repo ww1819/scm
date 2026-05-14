@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.ScmHospitalSupplierModifyApplyMapper">
+
+    <resultMap id="ModifyApplyResult" type="com.scm.system.domain.ScmHospitalSupplierModifyApply">
+        <id property="modifyApplyId" column="modify_apply_id"/>
+        <result property="relationId" column="relation_id"/>
+        <result property="supplierId" column="supplier_id"/>
+        <result property="hospitalId" column="hospital_id"/>
+        <result property="hospitalCode" column="hospital_code"/>
+        <result property="supplierName" column="supplier_name"/>
+        <result property="supplierCode" column="supplier_code"/>
+        <result property="hospitalName" column="hospital_name"/>
+        <result property="prevSupplyStartDate" column="prev_supply_start_date"/>
+        <result property="prevSupplyEndDate" column="prev_supply_end_date"/>
+        <result property="prevRemark" column="prev_remark"/>
+        <result property="supplyStartDate" column="supply_start_date"/>
+        <result property="supplyEndDate" column="supply_end_date"/>
+        <result property="contractNo" column="contract_no"/>
+        <result property="applyReason" column="apply_reason"/>
+        <result property="contactPerson" column="contact_person"/>
+        <result property="contactPhone" column="contact_phone"/>
+        <result property="beforeSnapshot" column="before_snapshot"/>
+        <result property="auditStatus" column="audit_status"/>
+        <result property="auditBy" column="audit_by"/>
+        <result property="auditByDisplay" column="audit_by_display"/>
+        <result property="auditTime" column="audit_time"/>
+        <result property="auditRemark" column="audit_remark"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="delBy" column="del_by"/>
+        <result property="delTime" column="del_time"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectModifyApplyVo">
+        select m.modify_apply_id, m.relation_id, m.supplier_id, m.hospital_id,
+               coalesce(nullif(trim(h.hospital_name), ''), m.hospital_name) as hospital_name,
+               coalesce(nullif(trim(s.company_name), ''), m.supplier_name) as supplier_name,
+               h.hospital_code as hospital_code,
+               s.supplier_code as supplier_code,
+               m.prev_supply_start_date, m.prev_supply_end_date, m.prev_remark,
+               m.supply_start_date, m.supply_end_date, m.contract_no, m.apply_reason, m.contact_person, m.contact_phone,
+               m.before_snapshot,
+               m.audit_status, m.audit_by,
+               COALESCE(NULLIF(TRIM(u_audit.real_name), ''), m.audit_by) as audit_by_display,
+               m.audit_time, m.audit_remark,
+               m.del_flag, m.del_by, m.del_time, m.create_by, m.create_time, m.update_by, m.update_time, m.remark
+        from scm_hospital_supplier_modify_apply m
+        left join scm_supplier s on s.supplier_id = cast(nullif(trim(m.supplier_id), '') as unsigned)
+        left join scm_hospital h on h.hospital_id = cast(nullif(trim(m.hospital_id), '') as unsigned)
+        left join sys_user u_audit on (u_audit.del_flag = '0' or u_audit.del_flag is null or u_audit.del_flag = '')
+            and (u_audit.login_name = m.audit_by or u_audit.user_name = m.audit_by or cast(u_audit.user_id as char) = m.audit_by)
+    </sql>
+
+    <insert id="insert" parameterType="com.scm.system.domain.ScmHospitalSupplierModifyApply">
+        insert into scm_hospital_supplier_modify_apply (
+            modify_apply_id, relation_id, supplier_id, hospital_id, supplier_name, hospital_name,
+            prev_supply_start_date, prev_supply_end_date, prev_remark,
+            supply_start_date, supply_end_date, contract_no, apply_reason, contact_person, contact_phone,
+            before_snapshot, audit_status, audit_by, audit_time, audit_remark,
+            del_flag, del_by, del_time, create_by, create_time, update_by, update_time, remark
+        ) values (
+            #{modifyApplyId}, #{relationId}, #{supplierId}, #{hospitalId}, #{supplierName}, #{hospitalName},
+            #{prevSupplyStartDate}, #{prevSupplyEndDate}, #{prevRemark},
+            #{supplyStartDate}, #{supplyEndDate}, #{contractNo}, #{applyReason}, #{contactPerson}, #{contactPhone},
+            #{beforeSnapshot}, #{auditStatus}, #{auditBy}, #{auditTime}, #{auditRemark},
+            #{delFlag}, #{delBy}, #{delTime}, #{createBy}, sysdate(), #{updateBy}, #{updateTime}, #{remark}
+        )
+    </insert>
+
+    <update id="update" parameterType="com.scm.system.domain.ScmHospitalSupplierModifyApply">
+        update scm_hospital_supplier_modify_apply
+        <set>
+            <if test="auditStatus != null">audit_status = #{auditStatus},</if>
+            <if test="auditBy != null">audit_by = #{auditBy},</if>
+            <if test="auditTime != null">audit_time = #{auditTime},</if>
+            <if test="auditRemark != null">audit_remark = #{auditRemark},</if>
+            <if test="delFlag != null">del_flag = #{delFlag},</if>
+            <if test="delBy != null">del_by = #{delBy},</if>
+            <if test="delTime != null">del_time = #{delTime},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where modify_apply_id = #{modifyApplyId}
+    </update>
+
+    <select id="selectById" resultMap="ModifyApplyResult">
+        <include refid="selectModifyApplyVo"/>
+        where m.modify_apply_id = #{modifyApplyId}
+        limit 1
+    </select>
+
+    <select id="countPendingByRelationId" resultType="int">
+        select count(1) from scm_hospital_supplier_modify_apply m
+        where m.relation_id = #{relationId}
+          and m.audit_status = '0'
+          and (m.del_flag = '0' or m.del_flag is null)
+    </select>
+
+    <select id="selectList" parameterType="com.scm.system.domain.ScmHospitalSupplierModifyApply" resultMap="ModifyApplyResult">
+        <include refid="selectModifyApplyVo"/>
+        <where>
+            and (m.del_flag = '0' or m.del_flag is null)
+            <if test="hospitalId != null and hospitalId != ''">and m.hospital_id = #{hospitalId}</if>
+            <if test="supplierId != null and supplierId != ''">and m.supplier_id = #{supplierId}</if>
+            <if test="auditStatus != null and auditStatus != ''">and m.audit_status = #{auditStatus}</if>
+            <if test="hospitalKeyword != null and hospitalKeyword != ''">
+                and (
+                    ifnull(h.hospital_code, '') like concat('%', #{hospitalKeyword}, '%')
+                    or ifnull(h.hospital_name, '') like concat('%', #{hospitalKeyword}, '%')
+                    or ifnull(h.pinyin_code, '') like concat('%', #{hospitalKeyword}, '%')
+                    or ifnull(m.hospital_name, '') like concat('%', #{hospitalKeyword}, '%')
+                )
+            </if>
+            <if test="supplierKeyword != null and supplierKeyword != ''">
+                and (
+                    ifnull(s.supplier_code, '') like concat('%', #{supplierKeyword}, '%')
+                    or ifnull(s.company_name, '') like concat('%', #{supplierKeyword}, '%')
+                    or ifnull(s.pinyin_code, '') like concat('%', #{supplierKeyword}, '%')
+                    or ifnull(m.supplier_name, '') like concat('%', #{supplierKeyword}, '%')
+                )
+            </if>
+        </where>
+        order by m.create_time desc
+    </select>
+</mapper>

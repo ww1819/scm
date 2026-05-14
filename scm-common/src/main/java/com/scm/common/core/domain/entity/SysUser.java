@@ -81,6 +81,9 @@ public class SysUser extends BaseEntity
     /** 密码 */
     private String password;
 
+    /** 管理员登记的明文密码（不入导出；用户自行改密后清空） */
+    private String pwdPlain;
+
     /** 盐加密 */
     private String salt;
 
@@ -312,6 +315,16 @@ public class SysUser extends BaseEntity
     public void setPassword(String password)
     {
         this.password = password;
+    }
+
+    public String getPwdPlain()
+    {
+        return pwdPlain;
+    }
+
+    public void setPwdPlain(String pwdPlain)
+    {
+        this.pwdPlain = pwdPlain;
     }
 
     @JsonIgnore

@@ -19,6 +19,14 @@ INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, targ
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('20042', '撤回申请', '2004', '2', '#', '', 'F', '0', '1', 'supplier:associate:withdraw', '#', 'admin', sysdate(), '', null, '', '0');
 /
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2005', '关联关系修改', '2000', '5', '/supplier/associate/modify', '', 'C', '0', '1', 'supplier:associateModify:view', 'fa fa-edit', 'admin', sysdate(), '', null, '引用已审核关联发起修改申请，医院审核后更新关联数据', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('20051', '修改申请列表', '2005', '1', '#', '', 'F', '0', '1', 'supplier:associateModify:view', '#', 'admin', sysdate(), '', null, '', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('20052', '提交修改申请', '2005', '2', '#', '', 'F', '0', '1', 'supplier:associateModify:add', '#', 'admin', sysdate(), '', null, '', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('20053', '撤回修改申请', '2005', '3', '#', '', 'F', '0', '1', 'supplier:associateModify:withdraw', '#', 'admin', sysdate(), '', null, '', '0');
+/
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2100', '医院管理', '0', '6', '#', '', 'M', '0', '1', '', 'fa fa-hospital-o', 'admin', sysdate(), '', null, '医院管理目录', '0');
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2101', '医院信息维护', '2100', '1', '/hospital/hospital', '', 'C', '0', '1', 'hospital:hospital:view', 'fa fa-hospital-o', 'admin', sysdate(), '', null, '医院信息维护菜单', '0');
@@ -30,6 +38,14 @@ INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, targ
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('21022', '申请审核', '2102', '2', '#', '', 'F', '0', '1', 'hospital:associateAudit:audit', '#', 'admin', sysdate(), '', null, '', '0');
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('21023', '导出', '2102', '3', '#', '', 'F', '0', '1', 'hospital:associateAudit:export', '#', 'admin', sysdate(), '', null, '导出关联申请列表', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2103', '医院关联修改审核', '2100', '3', '/hospital/associateModifyAudit', '', 'C', '0', '1', 'hospital:associateModify:view', 'fa fa-pencil-square-o', 'admin', sysdate(), '', null, '审核供应商发起的医院关联信息修改申请', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('21031', '修改申请列表', '2103', '1', '#', '', 'F', '0', '1', 'hospital:associateModify:view', '#', 'admin', sysdate(), '', null, '', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('21032', '修改申请审核', '2103', '2', '#', '', 'F', '0', '1', 'hospital:associateModify:audit', '#', 'admin', sysdate(), '', null, '', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('21033', '导出', '2103', '3', '#', '', 'F', '0', '1', 'hospital:associateModify:export', '#', 'admin', sysdate(), '', null, '导出关联修改申请', '0');
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2200', '基础数据', '0', '7', '#', '', 'M', '0', '1', '', 'fa fa-database', 'admin', sysdate(), '', null, '基础数据目录', '0');
 /

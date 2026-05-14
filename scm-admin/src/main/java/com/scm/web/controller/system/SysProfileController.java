@@ -96,6 +96,7 @@ public class SysProfileController extends BaseController
         }
         user.setSalt(ShiroUtils.randomSalt());
         user.setPassword(passwordService.encryptPassword(user.getLoginName(), newPassword, user.getSalt()));
+        user.setPwdPlain("");
         user.setPwdUpdateDate(DateUtils.getNowDate());
         if (userService.resetUserPwd(user) > 0)
         {
@@ -320,6 +321,7 @@ public class SysProfileController extends BaseController
         fresh.setLoginName(newLogin);
         fresh.setSalt(ShiroUtils.randomSalt());
         fresh.setPassword(passwordService.encryptPassword(newLogin, newPassword, fresh.getSalt()));
+        fresh.setPwdPlain("");
         fresh.setPwdUpdateDate(DateUtils.getNowDate());
         if (userService.updateUserInfo(fresh) > 0)
         {

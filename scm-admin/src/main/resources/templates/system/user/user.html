@@ -209,6 +209,16 @@
 		            title: '手机'
 		        },
 		        {
+		            field: 'pwdPlain',
+		            title: '明文密码',
+		            width: 140,
+		            formatter: function (value) {
+		                if (!value) return '<span class="text-muted">-</span>';
+		                var t = $('<div/>').text(value).html();
+		                return '<span title="' + t + '">' + t + '</span>';
+		            }
+		        },
+		        {
 		        	visible: editFlag == 'hidden' ? false : true,
 		        	title: '用户状态',
 		        	align: 'center',
