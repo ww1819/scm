@@ -242,11 +242,11 @@
                     <li class="dropdown user-menu">
 						<a href="javascript:void(0)" class="dropdown-toggle" data-hover="dropdown">
 							<span class="hidden-xs" style="max-width:320px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;"
-								th:title="${#strings.isEmpty(scmOrgDisplayName) ? #strings.defaultString(user.userName, '-') : scmOrgDisplayName + ' · ' + #strings.defaultString(user.userName, '-')}">
+								th:title="${#strings.isEmpty(scmOrgDisplayName) ? scmNavbarPersonName : scmOrgDisplayName + ' · ' + scmNavbarPersonName}">
 								<th:block th:if="${!#strings.isEmpty(scmOrgDisplayName)}">
 									<span th:text="${scmOrgDisplayName}">机构</span><span> · </span>
 								</th:block>
-								<span th:text="${#strings.defaultString(user.userName, '-')}">姓名</span>
+								<span th:text="${scmNavbarPersonName}">姓名</span>
 							</span>
 						</a>
 						<ul class="dropdown-menu">

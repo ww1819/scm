@@ -87,6 +87,7 @@ public class SysIndexController extends BaseController
         mmap.put("user", user);
         String scmOrgDisplayName = resolveScmOrgDisplayName(user);
         mmap.put("scmOrgDisplayName", scmOrgDisplayName != null ? scmOrgDisplayName : "");
+        mmap.put("scmNavbarPersonName", resolveNavbarPersonName(user));
         // 租户用户：被暂停的菜单ID列表，点击时提示“当前菜单功能被暂停”
         List<Long> pausedMenuIds = StringUtils.isNotEmpty(user.getTenantId())
             ? tenantMenuPauseService.selectPausedMenuIdsByTenantId(user.getTenantId()) : Collections.emptyList();
@@ -178,11 +179,31 @@ public class SysIndexController extends BaseController
         return null;
     }
 
+    /**
+     * 导航栏人员展示：优先 real_name（人员姓名），空则回退 user_name。
+     */
+    private String resolveNavbarPersonName(SysUser user)
+    {
+        if (user == null)
+        {
+            return "-";
+        }
+        String rn = StringUtils.trimToNull(user.getRealName());
+        if (rn != null)
+        {
+            return rn;
+        }
+        String un = user.getUserName();
+        return StringUtils.isNotEmpty(un) ? un : "-";
+    }
+
     // 锁定屏幕
     @GetMapping("/lockscreen")
     public String lockscreen(ModelMap mmap)
     {
-        mmap.put("user", getSysUser());
+        SysUser user = getSysUser();
+        mmap.put("user", user);
+        mmap.put("scmNavbarPersonName", resolveNavbarPersonName(user));
         ServletUtils.getSession().setAttribute(ShiroConstants.LOCK_SCREEN, true);
         return "lock";
     }

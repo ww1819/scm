@@ -24,6 +24,10 @@
                             <b class="font-noraml">登录名称：</b>
                             <p class="pull-right">[[${user.loginName}]]</p>
                         </li>
+                        <li class="list-group-item"><i class="fa fa-id-card-o"></i>
+                            <b class="font-noraml">人员姓名：</b>
+                            <p class="pull-right" th:text="${(user.realName == null or #strings.isEmpty(#strings.trim(user.realName))) ? '—' : #strings.trim(user.realName)}">—</p>
+                        </li>
                         <li class="list-group-item"><i class="fa fa-phone"></i>
                             <b  class="font-noraml">手机号码：</b>
                             <p class="pull-right">[[${user.phonenumber}]]</p>
@@ -66,6 +70,12 @@
                                         <label class="col-sm-2 control-label">用户名称：</label>
                                         <div class="col-sm-10">
                                             <input type="text" class="form-control" name="userName" th:field="*{userName}" placeholder="请输入用户名称">
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="col-sm-2 control-label">人员姓名：</label>
+                                        <div class="col-sm-10">
+                                            <input type="text" class="form-control" id="realName" name="realName" maxlength="50" th:field="*{realName}" placeholder="真实姓名（对应 real_name），用于导航栏与业务展示；可留空则显示用户名称">
                                         </div>
                                     </div>
                                     <div class="form-group">
@@ -183,6 +193,10 @@
 				userName:{
 					required:true,
 				},
+				realName:{
+					maxlength: 50,
+					specialSign: true
+				},
 				email:{
 					required:true,
 		            email:true,
@@ -222,6 +236,10 @@
 				"userName": {
 	                required: "请输入用户名称",
 	            },
+				"realName": {
+					maxlength: "人员姓名最多50个字符",
+					specialSign: "不能含 < > \" ' \\ | 等字符"
+				},
 				"email": {
 					required: "请输入邮箱",
 		            remote: "Email已经存在"
