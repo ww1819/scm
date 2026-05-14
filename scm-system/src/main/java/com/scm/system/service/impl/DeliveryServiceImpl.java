@@ -1806,7 +1806,38 @@ public class DeliveryServiceImpl implements IDeliveryService
     @Override
     public List<DeliveryDetail> selectDeliveryDetailList(DeliveryDetail deliveryDetail)
     {
+        applySupplierHospitalDataScopeToDetail(deliveryDetail);
         return deliveryDetailMapper.selectDeliveryDetailList(deliveryDetail);
+    }
+
+    /**
+     * 配送明细报表：与配送主表列表一致，按医院/供应商上下文及菜单维度限制主表 del 上的范围。
+     */
+    private void applySupplierHospitalDataScopeToDetail(DeliveryDetail detail)
+    {
+        Delivery scope = new Delivery();
+        applySupplierHospitalDataScope(scope);
+        Map<String, Object> target = detail.getParams();
+        if (scope.getParams() != null && !scope.getParams().isEmpty())
+        {
+            target.putAll(scope.getParams());
+        }
+        if (scope.getHospitalId() != null)
+        {
+            target.put("scopeHospitalId", scope.getHospitalId());
+        }
+        else
+        {
+            target.remove("scopeHospitalId");
+        }
+        if (scope.getSupplierId() != null)
+        {
+            target.put("scopeSupplierId", scope.getSupplierId());
+        }
+        else
+        {
+            target.remove("scopeSupplierId");
+        }
     }
 
     /**

@@ -186,7 +186,13 @@
 	                <li><a data-toggle="tooltip" data-trigger="hover" data-placement="bottom" title="全屏显示" href="javascript:;" id="fullScreen"><i class="fa fa-arrows-alt"></i> 全屏</a></li>
                     <li class="dropdown user-menu">
 						<a href="javascript:void(0)" class="dropdown-toggle" data-hover="dropdown">
-							<span class="hidden-xs">[[${#strings.defaultString(user.userName, '-')}]]</span>
+							<span class="hidden-xs" style="max-width:320px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom;"
+								th:title="${#strings.isEmpty(scmOrgDisplayName) ? #strings.defaultString(user.userName, '-') : scmOrgDisplayName + ' · ' + #strings.defaultString(user.userName, '-')}">
+								<th:block th:if="${!#strings.isEmpty(scmOrgDisplayName)}">
+									<span th:text="${scmOrgDisplayName}">机构</span><span> · </span>
+								</th:block>
+								<span th:text="${#strings.defaultString(user.userName, '-')}">姓名</span>
+							</span>
 						</a>
 						<ul class="dropdown-menu">
 							<li class="mt5">

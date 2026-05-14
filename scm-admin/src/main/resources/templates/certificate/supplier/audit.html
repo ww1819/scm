@@ -325,6 +325,8 @@
 		    var options = {
 		        url: prefix + "/list",
 		        uniqueId: "certificateId",  // 设置唯一ID字段，用于复选框选择
+		        rememberSelected: true,
+		        maintainSelected: true,
 		        queryParams: function(params) {
 		            // 根据状态筛选框的值进行筛选
 		            var auditStatusFilter = $('#auditStatusFilter').val();

@@ -25,7 +25,13 @@ import com.scm.common.utils.ServletUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.UserProfileGateUtils;
 import com.scm.framework.shiro.service.SysPasswordService;
+import com.scm.system.domain.Hospital;
+import com.scm.system.domain.Supplier;
+import com.scm.system.service.IHospitalService;
+import com.scm.system.service.IScmHospitalContextService;
+import com.scm.system.service.IScmSupplierContextService;
 import com.scm.system.service.IScmTenantMenuPauseService;
+import com.scm.system.service.ISupplierService;
 import com.scm.system.service.ISysConfigService;
 import com.scm.system.service.ISysMenuService;
 import com.scm.system.service.ISysNoticeService;
@@ -57,6 +63,18 @@ public class SysIndexController extends BaseController
     @Autowired
     private ISysUserService userService;
 
+    @Autowired
+    private IScmHospitalContextService scmHospitalContextService;
+
+    @Autowired
+    private IScmSupplierContextService scmSupplierContextService;
+
+    @Autowired
+    private IHospitalService hospitalService;
+
+    @Autowired
+    private ISupplierService supplierService;
+
     // 系统首页
     @GetMapping("/index")
     public String index(ModelMap mmap, HttpServletRequest request)
@@ -67,6 +85,8 @@ public class SysIndexController extends BaseController
         List<SysMenu> menus = menuService.selectMenusByUser(user);
         mmap.put("menus", menus);
         mmap.put("user", user);
+        String scmOrgDisplayName = resolveScmOrgDisplayName(user);
+        mmap.put("scmOrgDisplayName", scmOrgDisplayName != null ? scmOrgDisplayName : "");
         // 租户用户：被暂停的菜单ID列表，点击时提示“当前菜单功能被暂停”
         List<Long> pausedMenuIds = StringUtils.isNotEmpty(user.getTenantId())
             ? tenantMenuPauseService.selectPausedMenuIdsByTenantId(user.getTenantId()) : Collections.emptyList();
@@ -125,6 +145,37 @@ public class SysIndexController extends BaseController
         // CSRF Token
         request.getSession().setAttribute(ShiroConstants.CSRF_TOKEN, ServletUtils.generateToken());
         return webIndex;
+    }
+
+    /**
+     * 导航栏展示：医院或供应商名称（与业务上下文一致；医院用户优先于供应商用户）。
+     */
+    private String resolveScmOrgDisplayName(SysUser user)
+    {
+        if (user == null || user.getUserId() == null)
+        {
+            return null;
+        }
+        Long hospitalId = scmHospitalContextService.resolveHospitalIdForUser(user.getUserId());
+        if (hospitalId != null)
+        {
+            Hospital h = hospitalService.selectHospitalById(hospitalId);
+            if (h != null && StringUtils.isNotEmpty(h.getHospitalName()))
+            {
+                return h.getHospitalName();
+            }
+            return null;
+        }
+        Long supplierId = scmSupplierContextService.resolveSupplierIdForUser(user.getUserId());
+        if (supplierId != null)
+        {
+            Supplier s = supplierService.selectSupplierById(supplierId);
+            if (s != null && StringUtils.isNotEmpty(s.getCompanyName()))
+            {
+                return s.getCompanyName();
+            }
+        }
+        return null;
     }
 
     // 锁定屏幕
