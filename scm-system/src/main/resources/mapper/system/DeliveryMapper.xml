@@ -39,13 +39,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="auditStatus"     column="audit_status"          />
         <result property="auditBy"         column="audit_by"              />
         <result property="auditByDisplay" column="audit_by_display"      />
+        <result property="auditByNameSnapshot" column="audit_by_name_snapshot" />
         <result property="auditTime"       column="audit_time"            />
         <result property="auditRemark"     column="audit_remark"          />
         <result property="createBy"        column="create_by"            />
         <result property="createByDisplay" column="create_by_display"    />
+        <result property="createByNameSnapshot" column="create_by_name_snapshot" />
         <result property="deliveryPersonDisplay" column="delivery_person_display" />
         <result property="createTime"      column="create_time"         />
         <result property="updateBy"        column="update_by"            />
+        <result property="unauditByNameSnapshot" column="unaudit_by_name_snapshot" />
         <result property="updateTime"      column="update_time"          />
         <result property="remark"          column="remark"              />
         <result property="delFlag"        column="del_flag"             />
@@ -70,11 +73,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                d.invoice_date, d.order_date,
                d.audit_status, d.audit_by, d.audit_time, d.audit_remark,
                d.remark, d.create_by,
-               COALESCE(NULLIF(TRIM(creator.real_name), ''), d.create_by) as create_by_display,
-               COALESCE(NULLIF(TRIM(auditor.real_name), ''), d.audit_by) as audit_by_display,
+               COALESCE(NULLIF(TRIM(d.create_by_name_snapshot), ''), NULLIF(TRIM(creator.real_name), ''), d.create_by) as create_by_display,
+               COALESCE(NULLIF(TRIM(d.audit_by_name_snapshot), ''), NULLIF(TRIM(auditor.real_name), ''), d.audit_by) as audit_by_display,
                COALESCE(NULLIF(TRIM(dp.real_name), ''), d.delivery_person) as delivery_person_display,
                d.create_time,
                d.update_by, d.update_time,
+               d.create_by_name_snapshot, d.audit_by_name_snapshot, d.unaudit_by_name_snapshot,
                d.del_flag, d.del_time, d.del_by, d.tenant_id,
                (select count(1) from scm_delivery_download_log dl where dl.delivery_id = concat(d.delivery_id, '')) as download_log_count,
                h.hospital_name, s.company_name as supplier_name
@@ -213,6 +217,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="auditRemark != null and auditRemark != ''">audit_remark,</if>
             <if test="remark != null and remark != ''">remark,</if>
             <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="createByNameSnapshot != null and createByNameSnapshot != ''">create_by_name_snapshot,</if>
             del_flag,
             create_time
         )values(
@@ -250,6 +255,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="auditRemark != null and auditRemark != ''">#{auditRemark},</if>
             <if test="remark != null and remark != ''">#{remark},</if>
             <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="createByNameSnapshot != null and createByNameSnapshot != ''">#{createByNameSnapshot},</if>
             '0',
             sysdate()
         )
@@ -311,6 +317,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="auditBy != null">audit_by = #{auditBy},</if>
             <if test="auditTime != null">audit_time = #{auditTime},</if>
             <if test="auditRemark != null">audit_remark = #{auditRemark},</if>
+            <if test="auditByNameSnapshot != null">audit_by_name_snapshot = #{auditByNameSnapshot},</if>
             <if test="remark != null and remark != ''">remark = #{remark},</if>
             <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
             update_time = sysdate()
@@ -327,6 +334,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             audit_remark = null,
             delivery_status = '0',
             update_by = #{updateBy},
+            unaudit_by_name_snapshot = #{unauditByNameSnapshot},
             update_time = sysdate()
         where delivery_id = #{deliveryId}
           and audit_status = '1'

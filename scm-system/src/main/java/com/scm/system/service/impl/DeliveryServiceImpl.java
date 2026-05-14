@@ -27,6 +27,7 @@ import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.Order;
 import com.scm.system.domain.OrderDetail;
 import com.scm.common.core.domain.entity.SysRole;
+import com.scm.common.core.domain.entity.SysUser;
 import com.scm.system.domain.ScmOrderDetailDeliveryRel;
 import com.scm.system.domain.ZsTpOrder;
 import com.scm.system.domain.ZsTpOrderDetail;
@@ -50,6 +51,7 @@ import com.scm.system.service.IScmHospitalContextService;
 import com.scm.system.service.IScmHospitalSupplierMenuScopeService;
 import com.scm.system.service.IScmHospitalSupplierPermissionService;
 import com.scm.system.service.IScmSupplierContextService;
+import com.scm.system.service.ISysUserService;
 import com.scm.system.service.ScmBarcodeSeedService;
 
 /**
@@ -103,6 +105,59 @@ public class DeliveryServiceImpl implements IDeliveryService
     private HospitalSupplierMapper hospitalSupplierMapper;
     @Autowired
     private SysRoleMapper sysRoleMapper;
+
+    @Autowired
+    private ISysUserService userService;
+
+    private static final int OPERATOR_NAME_SNAPSHOT_MAX_LEN = 64;
+
+    /**
+     * 操作人姓名快照：优先 real_name，其次 user_name，否则登录名/原值（截断入库长度）。
+     */
+    private String resolveOperatorNameSnapshot(String operatorKey)
+    {
+        String login = StringUtils.trimToNull(operatorKey);
+        if (login == null)
+        {
+            return null;
+        }
+        try
+        {
+            SysUser u = userService.selectUserByLoginName(login);
+            if (u == null)
+            {
+                return truncateSnapshot(login);
+            }
+            String rn = StringUtils.trimToNull(u.getRealName());
+            if (rn != null)
+            {
+                return truncateSnapshot(rn);
+            }
+            String un = StringUtils.trimToNull(u.getUserName());
+            if (un != null)
+            {
+                return truncateSnapshot(un);
+            }
+            return truncateSnapshot(login);
+        }
+        catch (Exception ex)
+        {
+            return truncateSnapshot(login);
+        }
+    }
+
+    private static String truncateSnapshot(String s)
+    {
+        if (s == null)
+        {
+            return null;
+        }
+        if (s.length() <= OPERATOR_NAME_SNAPSHOT_MAX_LEN)
+        {
+            return s;
+        }
+        return s.substring(0, OPERATOR_NAME_SNAPSHOT_MAX_LEN);
+    }
 
     /**
      * 查询配送单信息
@@ -314,6 +369,11 @@ public class DeliveryServiceImpl implements IDeliveryService
         }
         delivery.setDeliveryAmount(totalAmount);
 
+        if (StringUtils.isNotEmpty(delivery.getCreateBy()))
+        {
+            delivery.setCreateByNameSnapshot(resolveOperatorNameSnapshot(delivery.getCreateBy()));
+        }
+
         int rows = deliveryMapper.insertDelivery(delivery);
 
         // 保存配送明细
@@ -370,7 +430,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         }
         String confirmBy = resolveDeliveryDocumentCreator(delivery);
         Date now = DateUtils.getNowDate();
-        zsTpOrderMapper.updateZsTpOrderConfirm(delivery.getZsOrderId(), confirmBy, now);
+        zsTpOrderMapper.updateZsTpOrderConfirm(delivery.getZsOrderId(), confirmBy, resolveOperatorNameSnapshot(confirmBy), now);
     }
 
     private String resolveDeliveryDocumentCreator(Delivery delivery)
@@ -1104,7 +1164,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         }
         Date now = DateUtils.getNowDate();
         String by = ShiroUtils.getLoginName();
-        int n = zsTpOrderMapper.updateZsTpOrderConfirm(zsOrderId, by, now);
+        int n = zsTpOrderMapper.updateZsTpOrderConfirm(zsOrderId, by, resolveOperatorNameSnapshot(by), now);
         if (n == 0)
         {
             throw new ServiceException("确认失败：订单已确认、已作废或不存在");
@@ -1136,7 +1196,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         }
         Date now = DateUtils.getNowDate();
         String by = ShiroUtils.getLoginName();
-        int n = zsTpOrderMapper.updateZsTpOrderVoid(zsOrderId, by, now);
+        int n = zsTpOrderMapper.updateZsTpOrderVoid(zsOrderId, by, resolveOperatorNameSnapshot(by), now);
         if (n == 0)
         {
             throw new ServiceException("作废失败：订单已作废或不存在");
@@ -1860,6 +1920,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         }
         delivery.setAuditStatus("1");
         delivery.setAuditBy(StringUtils.trimToEmpty(auditBy));
+        delivery.setAuditByNameSnapshot(resolveOperatorNameSnapshot(auditBy));
         delivery.setAuditTime(DateUtils.getNowDate());
         delivery.setDeliveryStatus("1"); // 单据状态：已审核
         delivery.setUpdateTime(DateUtils.getNowDate());
@@ -1913,7 +1974,8 @@ public class DeliveryServiceImpl implements IDeliveryService
             throw new ServiceException("该配送单已有接口下载记录（" + logCnt + " 次），不允许反审核。单号："
                 + StringUtils.trimToEmpty(delivery.getDeliveryNo()));
         }
-        int n = deliveryMapper.unAuditDelivery(deliveryId, StringUtils.trimToEmpty(updateBy));
+        int n = deliveryMapper.unAuditDelivery(deliveryId, StringUtils.trimToEmpty(updateBy),
+            resolveOperatorNameSnapshot(updateBy));
         if (n <= 0)
         {
             throw new ServiceException("反审核失败，数据可能已变更，请刷新后重试。单号："

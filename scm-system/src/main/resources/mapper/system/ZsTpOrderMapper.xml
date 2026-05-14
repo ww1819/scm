@@ -34,10 +34,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="deliveryProgress" column="delivery_progress"/>
         <result property="confirmStatus" column="confirm_status"/>
         <result property="confirmBy"   column="confirm_by"/>
+        <result property="confirmByNameSnapshot" column="confirm_by_name_snapshot"/>
         <result property="confirmByDisplay" column="confirm_by_display"/>
         <result property="confirmTime" column="confirm_time"/>
         <result property="voidStatus"   column="void_status"/>
         <result property="voidBy"      column="void_by"/>
+        <result property="voidByNameSnapshot" column="void_by_name_snapshot"/>
         <result property="voidByDisplay" column="void_by_display"/>
         <result property="voidTime"    column="void_time"/>
     </resultMap>
@@ -69,7 +71,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <sql id="selectZsTpOrderVo">
         select id, third_party_pk, customer, sheet_je, dh, supno, sup, ckno, ck, ksbh, ksmc, bz, jsfs, receive_channel, scm_sup_code,
                scm_hospital_code, scm_hospital_id, scm_supplier_id, zjly, create_time, hospital_id, supplier_id,
-               confirm_status, confirm_by, confirm_time, void_status, void_by, void_time,
+               confirm_status, confirm_by, confirm_by_name_snapshot, confirm_time, void_status, void_by, void_by_name_snapshot, void_time,
                null as hospital_code, null as hospital_name, null as supplier_code, null as supplier_name,
                null as delivery_progress
         from zs_tp_order
@@ -78,7 +80,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <sql id="selectZsTpOrderVoAliased">
         select z.id, z.third_party_pk, z.customer, z.sheet_je, z.dh, z.supno, z.sup, z.ckno, z.ck, z.ksbh, z.ksmc, z.bz, z.jsfs, z.receive_channel, z.scm_sup_code,
                z.scm_hospital_code, z.scm_hospital_id, z.scm_supplier_id, z.zjly, z.create_time, z.hospital_id, z.supplier_id,
-               z.confirm_status, z.confirm_by, z.confirm_time, z.void_status, z.void_by, z.void_time,
+               z.confirm_status, z.confirm_by, z.confirm_by_name_snapshot, z.confirm_time, z.void_status, z.void_by, z.void_by_name_snapshot, z.void_time,
                null as hospital_code, null as hospital_name, null as supplier_code, null as supplier_name,
                null as delivery_progress
         from zs_tp_order z
@@ -124,8 +126,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         z.id, z.third_party_pk, z.customer, z.sheet_je, z.dh, z.supno, z.sup, z.ckno, z.ck, z.ksbh, z.ksmc, z.bz, z.jsfs, z.receive_channel, z.scm_sup_code,
         z.scm_hospital_code, z.scm_hospital_id, z.scm_supplier_id, z.zjly, z.create_time, z.hospital_id, z.supplier_id,
         z.confirm_status, z.confirm_by, z.confirm_time, z.void_status, z.void_by, z.void_time,
-        COALESCE(NULLIF(TRIM(confirmer.real_name), ''), z.confirm_by) as confirm_by_display,
-        COALESCE(NULLIF(TRIM(voider.real_name), ''), z.void_by) as void_by_display,
+        z.confirm_by_name_snapshot, z.void_by_name_snapshot,
+        COALESCE(NULLIF(TRIM(z.confirm_by_name_snapshot), ''), NULLIF(TRIM(confirmer.real_name), ''), z.confirm_by) as confirm_by_display,
+        COALESCE(NULLIF(TRIM(z.void_by_name_snapshot), ''), NULLIF(TRIM(voider.real_name), ''), z.void_by) as void_by_display,
         COALESCE(nullif(trim(h.hospital_code), ''), nullif(trim(z.scm_hospital_code), '')) as hospital_code,
         h.hospital_name,
         COALESCE(nullif(trim(s.supplier_code), ''), nullif(trim(z.scm_sup_code), '')) as supplier_code,
@@ -339,6 +342,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         update zs_tp_order
         set confirm_status = '1',
             confirm_by = #{confirmBy},
+            confirm_by_name_snapshot = #{confirmByNameSnapshot},
             confirm_time = #{confirmTime},
             update_by = #{confirmBy},
             update_time = #{confirmTime}
@@ -351,6 +355,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         update zs_tp_order
         set void_status = '1',
             void_by = #{voidBy},
+            void_by_name_snapshot = #{voidByNameSnapshot},
             void_time = #{voidTime},
             update_by = #{voidBy},
             update_time = #{voidTime}

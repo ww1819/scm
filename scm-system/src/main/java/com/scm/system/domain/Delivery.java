@@ -144,6 +144,15 @@ public class Delivery extends BaseEntity
     /** 审核备注 */
     private String auditRemark;
 
+    /** 制单人姓名快照（操作时落库，避免用户改名后不可追溯） */
+    private String createByNameSnapshot;
+
+    /** 审核人姓名快照（操作时落库，避免用户改名后不可追溯） */
+    private String auditByNameSnapshot;
+
+    /** 反审核人姓名快照（最近一次反审核操作时落库） */
+    private String unauditByNameSnapshot;
+
     /** 接口下载次数（子查询，不入库） */
     private Integer downloadLogCount;
 
@@ -571,6 +580,36 @@ public class Delivery extends BaseEntity
         this.auditRemark = auditRemark;
     }
 
+    public String getCreateByNameSnapshot()
+    {
+        return createByNameSnapshot;
+    }
+
+    public void setCreateByNameSnapshot(String createByNameSnapshot)
+    {
+        this.createByNameSnapshot = createByNameSnapshot;
+    }
+
+    public String getAuditByNameSnapshot()
+    {
+        return auditByNameSnapshot;
+    }
+
+    public void setAuditByNameSnapshot(String auditByNameSnapshot)
+    {
+        this.auditByNameSnapshot = auditByNameSnapshot;
+    }
+
+    public String getUnauditByNameSnapshot()
+    {
+        return unauditByNameSnapshot;
+    }
+
+    public void setUnauditByNameSnapshot(String unauditByNameSnapshot)
+    {
+        this.unauditByNameSnapshot = unauditByNameSnapshot;
+    }
+
     public Integer getDownloadLogCount()
     {
         return downloadLogCount;
@@ -637,12 +676,15 @@ public class Delivery extends BaseEntity
             .append("orderDate", getOrderDate())
             .append("auditStatus", getAuditStatus())
             .append("auditBy", getAuditBy())
+            .append("auditByNameSnapshot", getAuditByNameSnapshot())
             .append("auditByDisplay", getAuditByDisplay())
             .append("deliveryPersonDisplay", getDeliveryPersonDisplay())
             .append("auditTime", getAuditTime())
             .append("auditRemark", getAuditRemark())
+            .append("unauditByNameSnapshot", getUnauditByNameSnapshot())
             .append("downloadLogCount", getDownloadLogCount())
             .append("createBy", getCreateBy())
+            .append("createByNameSnapshot", getCreateByNameSnapshot())
             .append("createByDisplay", getCreateByDisplay())
             .append("createTime", getCreateTime())
             .append("updateBy", getUpdateBy())

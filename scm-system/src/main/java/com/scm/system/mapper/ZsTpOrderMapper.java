@@ -39,10 +39,12 @@ public interface ZsTpOrderMapper
     /**
      * 供应商确认（未确认、未作废、未删除）
      */
-    int updateZsTpOrderConfirm(@Param("id") String id, @Param("confirmBy") String confirmBy, @Param("confirmTime") Date confirmTime);
+    int updateZsTpOrderConfirm(@Param("id") String id, @Param("confirmBy") String confirmBy,
+        @Param("confirmByNameSnapshot") String confirmByNameSnapshot, @Param("confirmTime") Date confirmTime);
 
     /**
      * 医院作废（未作废、未删除）
      */
-    int updateZsTpOrderVoid(@Param("id") String id, @Param("voidBy") String voidBy, @Param("voidTime") Date voidTime);
+    int updateZsTpOrderVoid(@Param("id") String id, @Param("voidBy") String voidBy,
+        @Param("voidByNameSnapshot") String voidByNameSnapshot, @Param("voidTime") Date voidTime);
 }

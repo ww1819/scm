@@ -85,6 +85,12 @@ public class ZsTpOrder extends BaseEntity
 
     private String voidBy;
 
+    /** 确认人姓名快照（操作时落库，避免用户改名后不可追溯） */
+    private String confirmByNameSnapshot;
+
+    /** 作废人姓名快照（操作时落库，避免用户改名后不可追溯） */
+    private String voidByNameSnapshot;
+
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date voidTime;
 
@@ -422,6 +428,26 @@ public class ZsTpOrder extends BaseEntity
     public void setVoidBy(String voidBy)
     {
         this.voidBy = voidBy;
+    }
+
+    public String getConfirmByNameSnapshot()
+    {
+        return confirmByNameSnapshot;
+    }
+
+    public void setConfirmByNameSnapshot(String confirmByNameSnapshot)
+    {
+        this.confirmByNameSnapshot = confirmByNameSnapshot;
+    }
+
+    public String getVoidByNameSnapshot()
+    {
+        return voidByNameSnapshot;
+    }
+
+    public void setVoidByNameSnapshot(String voidByNameSnapshot)
+    {
+        this.voidByNameSnapshot = voidByNameSnapshot;
     }
 
     public Date getVoidTime()
