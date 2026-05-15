@@ -321,6 +321,27 @@ public class OrderController extends BaseController
     }
 
     /**
+     * 作废订单（已作废后不可再引用生成配送单）
+     */
+    @RequiresPermissions("order:order:void")
+    @Log(title = "订单作废", businessType = BusinessType.UPDATE)
+    @PostMapping("/void")
+    @ResponseBody
+    public AjaxResult voidOrder(String ids)
+    {
+        String[] orderIds = ids.split(",");
+        int successCount = 0;
+        for (String orderId : orderIds)
+        {
+            if (orderService.voidOrder(Long.parseLong(orderId.trim()), getLoginName()) > 0)
+            {
+                successCount++;
+            }
+        }
+        return successCount > 0 ? success("成功作废 " + successCount + " 个订单") : error("作废订单失败");
+    }
+
+    /**
      * 查询订单明细列表（与订单查看页一致）
      */
     @RequiresPermissions("order:order:view")

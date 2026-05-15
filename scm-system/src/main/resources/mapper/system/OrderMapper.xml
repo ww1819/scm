@@ -63,6 +63,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="orderStatus != null and orderStatus != ''">
                 AND o.order_status = #{orderStatus}
             </if>
+            <if test="params != null and params.excludeVoided != null and (params.excludeVoided == true or params.excludeVoided == 'true' or params.excludeVoided == '1')">
+                AND o.order_status != '4'
+            </if>
             <if test="orderDate != null">
                 AND date(o.order_date) = date(#{orderDate})
             </if>

@@ -20,6 +20,7 @@ import com.scm.system.domain.OrderDetail;
 import com.scm.system.domain.HospitalSupplier;
 import com.scm.common.core.domain.entity.SysRole;
 import com.scm.system.domain.vo.OrderLineDeliveryQtyVo;
+import com.scm.system.mapper.DeliveryMapper;
 import com.scm.system.mapper.HospitalSupplierMapper;
 import com.scm.system.mapper.OrderDeliveryTraceMapper;
 import com.scm.system.mapper.OrderDetailMapper;
@@ -48,6 +49,9 @@ public class OrderServiceImpl implements IOrderService
 
     @Autowired
     private OrderDeliveryTraceMapper orderDeliveryTraceMapper;
+
+    @Autowired
+    private DeliveryMapper deliveryMapper;
 
     @Autowired
     private ScmBarcodeSeedService scmBarcodeSeedService;
@@ -390,6 +394,76 @@ public class OrderServiceImpl implements IOrderService
         order.setOrderStatus("1"); // 已接收
         order.setUpdateTime(DateUtils.getNowDate());
         return orderMapper.updateOrder(order);
+    }
+
+    @Override
+    public int autoReceiveOrderOnDeliveryReference(Long orderId, String receiverLoginName)
+    {
+        if (orderId == null)
+        {
+            return 0;
+        }
+        Order order = orderMapper.selectOrderById(orderId);
+        if (order == null || !"0".equals(StringUtils.trimToNull(order.getOrderStatus())))
+        {
+            return 0;
+        }
+        order.setOrderStatus("1");
+        order.setUpdateBy(StringUtils.trimToEmpty(receiverLoginName));
+        order.setUpdateTime(DateUtils.getNowDate());
+        return orderMapper.updateOrder(order);
+    }
+
+    /**
+     * 作废订单：仅医院可操作；配送中/已完成/已作废不可作废；已有配送单不可作废。
+     */
+    @Override
+    public int voidOrder(Long orderId, String voidBy)
+    {
+        if (orderId == null)
+        {
+            return 0;
+        }
+        Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());
+        if (hospitalCtx == null)
+        {
+            throw new ServiceException("仅医院账号可作废订单");
+        }
+        Order order = orderMapper.selectOrderById(orderId);
+        if (order == null)
+        {
+            return 0;
+        }
+        assertOrderViewScope(order);
+        if (!hospitalCtx.equals(order.getHospitalId()))
+        {
+            throw new ServiceException("无权作废该订单");
+        }
+        String status = StringUtils.trimToNull(order.getOrderStatus());
+        if ("4".equals(status))
+        {
+            throw new ServiceException("作废失败：订单已作废或不存在，订单号：" + StringUtils.trimToEmpty(order.getOrderNo()));
+        }
+        if ("2".equals(status) || "3".equals(status))
+        {
+            throw new ServiceException("配送中或已完成的订单不允许作废，订单号：" + StringUtils.trimToEmpty(order.getOrderNo()));
+        }
+        int deliveryCnt = deliveryMapper.countDeliveryByOrderId(orderId);
+        if (deliveryCnt > 0)
+        {
+            throw new ServiceException("该订单已存在配送单（" + deliveryCnt + " 条），不允许作废。订单号："
+                + StringUtils.trimToEmpty(order.getOrderNo()));
+        }
+        order.setOrderStatus("4");
+        order.setUpdateBy(StringUtils.trimToEmpty(voidBy));
+        order.setUpdateTime(DateUtils.getNowDate());
+        int n = orderMapper.updateOrder(order);
+        if (n <= 0)
+        {
+            throw new ServiceException("作废失败，数据可能已变更，请刷新后重试。订单号："
+                + StringUtils.trimToEmpty(order.getOrderNo()));
+        }
+        return n;
     }
 
     /**

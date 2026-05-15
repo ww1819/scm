@@ -122,6 +122,7 @@ insert into sys_menu values('24003', '订单修改', '2401', '3', '#', '', 'F', 
 insert into sys_menu values('24004', '订单删除', '2401', '4', '#', '', 'F', '0', '1', 'order:order:remove', '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('24005', '订单导出', '2401', '5', '#', '', 'F', '0', '1', 'order:order:export', '#', 'admin', sysdate(), '', null, '');
 insert into sys_menu values('24006', '订单详情', '2401', '6', '#', '', 'F', '0', '1', 'order:order:detail', '#', 'admin', sysdate(), '', null, '');
+insert into sys_menu values('24008', '订单作废', '2401', '7', '#', '', 'F', '0', '1', 'order:order:void', '#', 'admin', sysdate(), '', null, '作废后不可再引用生成配送单');
 insert into sys_menu values('24007', '订单接收', '2402', '1', '#', '', 'F', '0', '1', 'order:order:receive', '#', 'admin', sysdate(), '', null, '');
 
 -- 配送管理按钮

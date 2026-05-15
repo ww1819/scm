@@ -72,7 +72,7 @@
 									<option value="1">已接收</option>
 									<option value="2">配送中</option>
 									<option value="3">已完成</option>
-									<option value="4">已取消</option>
+									<option value="4">已作废</option>
 								</select>
 							</li>
 							<li class="select-time">
@@ -103,6 +103,9 @@
 	            <a class="btn btn-info multiple disabled" onclick="receiveOrder()" shiro:hasPermission="order:order:receive">
 	                <i class="fa fa-check"></i> 接收订单
 	            </a>
+	            <a class="btn btn-danger multiple disabled" onclick="voidOrders()" shiro:hasPermission="order:order:void">
+	                <i class="fa fa-ban"></i> 作废
+	            </a>
 	            <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="order:order:export">
 		            <i class="fa fa-download"></i> 导出
 		        </a>
@@ -127,6 +130,7 @@
 		var removeFlag = [[${@permission.hasPermi('order:order:remove')}]];
 		var detailFlag = [[${@permission.hasPermi('order:order:detail')}]];
 		var receiveFlag = [[${@permission.hasPermi('order:order:receive')}]];
+		var voidFlag = [[${@permission.hasPermi('order:order:void')}]];
 		var prefix = ctx + "order/order";
 
 		$(function() {
@@ -232,7 +236,7 @@
 		        			'1': '<span class="label label-info">已接收</span>',
 		        			'2': '<span class="label label-primary">配送中</span>',
 		        			'3': '<span class="label label-success">已完成</span>',
-		        			'4': '<span class="label label-danger">已取消</span>'
+		        			'4': '<span class="label label-danger">已作废</span>'
 		        		};
 		        		return statusMap[row.orderStatus] || '';
 		        	}
@@ -251,6 +255,9 @@
 		                actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.orderId + '\')"><i class="fa fa-remove"></i>删除</a> ');
 		                if (row.orderStatus == '0' && receiveFlag != 'hidden') {
 		                	actions.push('<a class="btn btn-primary btn-xs" href="javascript:void(0)" onclick="receiveSingleOrder(\'' + row.orderId + '\')"><i class="fa fa-check"></i>接收</a> ');
+		                }
+		                if ((row.orderStatus == '0' || row.orderStatus == '1') && voidFlag != 'hidden') {
+		                	actions.push('<a class="btn btn-danger btn-xs" href="javascript:void(0)" onclick="voidSingleOrder(\'' + row.orderId + '\')"><i class="fa fa-ban"></i>作废</a> ');
 		                }
 		                return actions.join('');
 		            }
@@ -289,6 +296,36 @@
 			$.modal.confirm("确认要接收该订单吗？", function() {
 				$.operate.post(prefix + "/receive", { "ids": orderId });
 		    });
+		}
+
+		/* 批量作废订单 */
+		function voidOrders() {
+			var rows = $('#bootstrap-table').bootstrapTable('getSelections');
+			if (!rows || rows.length === 0) {
+				$.modal.msgWarning("请至少选择一条记录");
+				return;
+			}
+			for (var i = 0; i < rows.length; i++) {
+				var st = rows[i].orderStatus;
+				if (st !== '0' && st !== '1') {
+					$.modal.msgWarning("所选记录中包含不可作废的订单（仅待接收/已接收可作废），请重新选择");
+					return;
+				}
+			}
+			var ids = [];
+			for (var j = 0; j < rows.length; j++) {
+				ids.push(rows[j].orderId);
+			}
+			$.modal.confirm("确认作废选中的 " + ids.length + " 条订单？作废后不可再引用生成配送单。", function() {
+				$.operate.submit(prefix + "/void", "post", "json", { ids: ids.join() });
+			});
+		}
+
+		/* 作废单个订单 */
+		function voidSingleOrder(orderId) {
+			$.modal.confirm("确认作废该订单？作废后不可再引用生成配送单。", function() {
+				$.operate.submit(prefix + "/void", "post", "json", { ids: orderId });
+			});
 		}
 	</script>
 </body>

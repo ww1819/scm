@@ -68,6 +68,24 @@ public interface IOrderService
     public int receiveOrder(Long orderId);
 
     /**
+     * 配送单引用时自动接收：仅待接收(0)变为已接收(1)，接收人记为 updateBy
+     *
+     * @param orderId 订单ID
+     * @param receiverLoginName 接收人登录名（配送单制单人）
+     * @return 结果
+     */
+    public int autoReceiveOrderOnDeliveryReference(Long orderId, String receiverLoginName);
+
+    /**
+     * 作废订单（状态置为已作废/已取消 4）
+     *
+     * @param orderId 订单ID
+     * @param voidBy 操作人登录名
+     * @return 结果
+     */
+    public int voidOrder(Long orderId, String voidBy);
+
+    /**
      * 查询订单明细列表
      * 
      * @param orderId 订单ID

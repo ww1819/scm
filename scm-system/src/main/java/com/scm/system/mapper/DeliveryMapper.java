@@ -41,6 +41,11 @@ public interface DeliveryMapper
     public int countDeliveryByZsOrderId(String zsOrderId);
 
     /**
+     * 统计未删除配送单中已关联某本系统订单的数量
+     */
+    int countDeliveryByOrderId(@Param("orderId") Long orderId);
+
+    /**
      * 新增配送单信息
      *
      * @param delivery 配送单信息
