@@ -102,6 +102,10 @@ public class DeliveryDetail extends BaseEntity
     @Excel(name = "注册证号")
     private String registerNo;
 
+    /** 国家医保编码 */
+    @Excel(name = "国家医保编码")
+    private String nationalInsuranceCode;
+
     /** 配送单号 */
     @Excel(name = "配送单号")
     private String deliveryNo;
@@ -362,6 +366,17 @@ public class DeliveryDetail extends BaseEntity
         this.registerNo = registerNo;
     }
 
+    @Size(min = 0, max = 128, message = "国家医保编码不能超过128个字符")
+    public String getNationalInsuranceCode()
+    {
+        return nationalInsuranceCode;
+    }
+
+    public void setNationalInsuranceCode(String nationalInsuranceCode)
+    {
+        this.nationalInsuranceCode = nationalInsuranceCode;
+    }
+
     public String getDeliveryNo()
     {
         return deliveryNo;
@@ -526,6 +541,7 @@ public class DeliveryDetail extends BaseEntity
             .append("expireDate", getExpireDate())
             .append("manufacturer", getManufacturer())
             .append("registerNo", getRegisterNo())
+            .append("nationalInsuranceCode", getNationalInsuranceCode())
             .append("deliveryNo", getDeliveryNo())
             .toString();
     }

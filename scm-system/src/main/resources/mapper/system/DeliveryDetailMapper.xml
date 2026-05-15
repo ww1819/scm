@@ -73,6 +73,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="manufacturer"     column="manufacturer_name"   />
 
         <result property="registerNo"       column="register_no"         />
+        <result property="remark"           column="remark"              />
+        <result property="nationalInsuranceCode" column="national_insurance_code" />
 
         <result property="deliveryNo"       column="delivery_no"         />
 
@@ -108,7 +110,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
                d.delivery_quantity, d.price, d.amount, d.pack_coefficient, d.batch_no, d.main_barcode, d.aux_barcode, d.production_date,
 
-               d.expire_date, d.manufacturer_name, d.register_no,
+               d.expire_date, d.manufacturer_name, d.register_no, d.remark, d.national_insurance_code,
 
                del.delivery_no
 
@@ -128,7 +130,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
                d.delivery_quantity, d.price, d.amount, d.pack_coefficient, d.batch_no, d.main_barcode, d.aux_barcode, d.production_date,
 
-               d.expire_date, d.manufacturer_name, d.register_no,
+               d.expire_date, d.manufacturer_name, d.register_no, d.remark, d.national_insurance_code,
 
                del.delivery_no,
 
@@ -343,6 +345,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="manufacturer != null and manufacturer != ''">manufacturer_name,</if>
 
             <if test="registerNo != null and registerNo != ''">register_no,</if>
+            <if test="remark != null">remark,</if>
+            <if test="nationalInsuranceCode != null and nationalInsuranceCode != ''">national_insurance_code,</if>
 
             del_flag,
 
@@ -391,6 +395,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="manufacturer != null and manufacturer != ''">#{manufacturer},</if>
 
             <if test="registerNo != null and registerNo != ''">#{registerNo},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="nationalInsuranceCode != null and nationalInsuranceCode != ''">#{nationalInsuranceCode},</if>
 
             '0',
 
@@ -408,7 +414,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
                material_name, specification, model, unit, remaining_quantity, delivery_quantity,
 
-               price, amount, pack_coefficient, batch_no, main_barcode, aux_barcode, production_date, expire_date, manufacturer_name, register_no, del_flag, create_time)
+               price, amount, pack_coefficient, batch_no, main_barcode, aux_barcode, production_date, expire_date, manufacturer_name, register_no, remark, national_insurance_code, del_flag, create_time)
 
         values
 
@@ -420,7 +426,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
              #{item.remainingQuantity}, #{item.deliveryQuantity}, #{item.price}, #{item.amount}, #{item.packCoefficient},
 
-             #{item.batchNo}, #{item.mainBarcode}, #{item.auxBarcode}, #{item.productionDate}, #{item.expireDate}, #{item.manufacturer}, #{item.registerNo}, '0', sysdate())
+             #{item.batchNo}, #{item.mainBarcode}, #{item.auxBarcode}, #{item.productionDate}, #{item.expireDate}, #{item.manufacturer}, #{item.registerNo}, #{item.remark}, #{item.nationalInsuranceCode}, '0', sysdate())
 
         </foreach>
 
@@ -475,6 +481,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="manufacturer != null and manufacturer != ''">manufacturer_name = #{manufacturer},</if>
 
             <if test="registerNo != null and registerNo != ''">register_no = #{registerNo},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="nationalInsuranceCode != null">national_insurance_code = #{nationalInsuranceCode},</if>
 
         </set>
 

@@ -590,6 +590,7 @@ CREATE TABLE IF NOT EXISTS `scm_delivery_detail` (
   `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(500) DEFAULT '' COMMENT '备注',
+  `national_insurance_code` varchar(128) DEFAULT '' COMMENT '国家医保编码',
   `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0存在 2删除，与 SCM 全库约定一致）',
   `del_time` datetime DEFAULT NULL COMMENT '删除时间',
   `del_by` varchar(64) DEFAULT NULL COMMENT '删除人',

@@ -20,12 +20,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="packCoefficient" column="pack_coefficient"    />
         <result property="manufacturer"    column="manufacturer_name"  />
         <result property="registerNo"      column="register_no"        />
+        <result property="remark"          column="remark"             />
     </resultMap>
     
     <sql id="selectOrderDetailVo">
         select d.detail_id, d.order_id, d.material_id, d.material_code, d.material_name,
                d.specification, d.model, d.unit, d.purchase_price, d.order_quantity,
-               d.remaining_quantity, d.amount, d.pack_coefficient, d.manufacturer_name, d.register_no
+               d.remaining_quantity, d.amount, d.pack_coefficient, d.manufacturer_name, d.register_no, d.remark
         from scm_order_detail d
     </sql>
     

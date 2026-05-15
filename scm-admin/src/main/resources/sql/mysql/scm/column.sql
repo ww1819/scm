@@ -171,6 +171,8 @@ CALL add_table_column('scm_delivery_detail', 'in_time', 'datetime', '入库时�
 /
 CALL add_table_column('scm_delivery_detail', 'remark', 'varchar(500)', '备注', NULL);
 /
+CALL add_table_column('scm_delivery_detail', 'national_insurance_code', 'varchar(128)', '国家医保编码', NULL);
+/
 UPDATE scm_delivery_detail SET del_flag = '0' WHERE del_flag IS NULL OR TRIM(IFNULL(del_flag, '')) = '';
 /
 -- scm_delivery_invoice

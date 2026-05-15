@@ -1364,6 +1364,8 @@ public class DeliveryServiceImpl implements IDeliveryService
         d.setAmount(je);
         d.setManufacturer(StringUtils.trimToEmpty(line.getSccj()));
         d.setRegisterNo(StringUtils.trimToEmpty(line.getZcz()));
+        d.setNationalInsuranceCode(StringUtils.trimToEmpty(line.getBz()));
+        d.setRemark(StringUtils.trimToEmpty(line.getBz1()));
         d.setBatchNo("");
         d.setMainBarcode("");
         d.setAuxBarcode("");
