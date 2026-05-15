@@ -238,58 +238,7 @@ public class OrderServiceImpl implements IOrderService
     @Transactional
     public int insertOrder(Order order)
     {
-        assertSupplierHospitalSubmit(order);
-        if (StringUtils.isEmpty(order.getOrderStatus()))
-        {
-            order.setOrderStatus("0"); // 默认待接收
-        }
-        if (order.getOrderDate() == null)
-        {
-            order.setOrderDate(DateUtils.getNowDate());
-        }
-        // 如果订单编号为空，自动生成唯一编号
-        if (StringUtils.isEmpty(order.getOrderNo()))
-        {
-            order.setOrderNo(generateOrderNo());
-        }
-        order.setCreateTime(DateUtils.getNowDate());
-        
-        // 计算订单金额
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        if (order.getOrderDetails() != null && !order.getOrderDetails().isEmpty())
-        {
-            for (OrderDetail detail : order.getOrderDetails())
-            {
-                if (detail.getPurchasePrice() != null && detail.getOrderQuantity() != null)
-                {
-                    BigDecimal amount = detail.getPurchasePrice().multiply(new BigDecimal(detail.getOrderQuantity()));
-                    detail.setAmount(amount);
-                    totalAmount = totalAmount.add(amount);
-                    detail.setRemainingQuantity(detail.getOrderQuantity());
-                }
-            }
-        }
-        order.setOrderAmount(totalAmount);
-        
-        int rows = orderMapper.insertOrder(order);
-
-        if (StringUtils.isNotEmpty(order.getTenantId()))
-        {
-            String wid = order.getWarehouseId() != null ? String.valueOf(order.getWarehouseId()) : "";
-            scmBarcodeSeedService.ensureTenantSeedRowIfAbsent(order.getTenantId(), wid);
-        }
-        
-        // 保存订单明细
-        if (order.getOrderDetails() != null && !order.getOrderDetails().isEmpty())
-        {
-            for (OrderDetail detail : order.getOrderDetails())
-            {
-                detail.setOrderId(order.getOrderId());
-            }
-            orderDetailMapper.batchInsertOrderDetail(order.getOrderDetails());
-        }
-        
-        return rows;
+        throw new ServiceException("订单不支持新增，仅可接收或作废");
     }
 
     /**
@@ -302,45 +251,7 @@ public class OrderServiceImpl implements IOrderService
     @Transactional
     public int updateOrder(Order order)
     {
-        assertSupplierHospitalSubmit(order);
-        order.setUpdateTime(DateUtils.getNowDate());
-        
-        // 如果修改了明细，重新计算订单金额并保存明细
-        if (order.getOrderDetails() != null && !order.getOrderDetails().isEmpty())
-        {
-            BigDecimal totalAmount = BigDecimal.ZERO;
-            for (OrderDetail detail : order.getOrderDetails())
-            {
-                if (detail.getPurchasePrice() != null && detail.getOrderQuantity() != null)
-                {
-                    BigDecimal amount = detail.getPurchasePrice().multiply(new BigDecimal(detail.getOrderQuantity()));
-                    detail.setAmount(amount);
-                    totalAmount = totalAmount.add(amount);
-                    // 设置订单ID
-                    detail.setOrderId(order.getOrderId());
-                    // 如果剩余待配送数未设置，默认等于订货数量
-                    if (detail.getRemainingQuantity() == null)
-                    {
-                        detail.setRemainingQuantity(detail.getOrderQuantity());
-                    }
-                }
-            }
-            order.setOrderAmount(totalAmount);
-            
-            // 删除旧的明细
-            orderDetailMapper.deleteOrderDetailByOrderId(order.getOrderId());
-            
-            // 插入新的明细
-            orderDetailMapper.batchInsertOrderDetail(order.getOrderDetails());
-        }
-        else
-        {
-            // 如果没有明细，删除所有旧明细
-            orderDetailMapper.deleteOrderDetailByOrderId(order.getOrderId());
-            order.setOrderAmount(BigDecimal.ZERO);
-        }
-        
-        return orderMapper.updateOrder(order);
+        throw new ServiceException("订单不支持修改，仅可接收或作废");
     }
 
     /**
@@ -353,13 +264,7 @@ public class OrderServiceImpl implements IOrderService
     @Transactional
     public int deleteOrderByIds(String ids)
     {
-        String[] orderIds = Convert.toStrArray(ids);
-        for (String orderId : orderIds)
-        {
-            // 删除订单明细
-            orderDetailMapper.deleteOrderDetailByOrderId(Long.parseLong(orderId));
-        }
-        return orderMapper.deleteOrderByIds(orderIds);
+        throw new ServiceException("订单不支持删除，仅可接收或作废");
     }
 
     /**
@@ -372,9 +277,7 @@ public class OrderServiceImpl implements IOrderService
     @Transactional
     public int deleteOrderById(Long orderId)
     {
-        // 删除订单明细
-        orderDetailMapper.deleteOrderDetailByOrderId(orderId);
-        return orderMapper.deleteOrderById(orderId);
+        throw new ServiceException("订单不支持删除，仅可接收或作废");
     }
 
     /**

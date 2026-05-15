@@ -283,6 +283,13 @@ INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, targ
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('24008', '订单作废', '2401', '7', '#', '', 'F', '0', '1', 'order:order:void', '#', 'admin', sysdate(), '', null, '作废后不可再引用生成配送单', '0');
 /
+-- 订单仅接收/作废：隐藏新增、修改、删除按钮权限（visible=1 不显示）
+UPDATE sys_menu SET visible = '1', remark = '已停用：订单不支持新增' WHERE menu_id = '24002';
+/
+UPDATE sys_menu SET visible = '1', remark = '已停用：订单不支持修改' WHERE menu_id = '24003';
+/
+UPDATE sys_menu SET visible = '1', remark = '已停用：订单不支持删除' WHERE menu_id = '24004';
+/
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('24007', '订单接收', '2402', '1', '#', '', 'F', '0', '1', 'order:order:receive', '#', 'admin', sysdate(), '', null, '', '0');
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('27001', '统计查询', '2701', '1', '#', '', 'F', '0', '1', 'datacenter:datacenter:list', '#', 'admin', sysdate(), '', null, '', '0');
