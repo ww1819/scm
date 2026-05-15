@@ -3,39 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <title>医用耗材质量验收单</title>
-    <style>
+    <!-- 用户打印设置（纸张、方向、字号） -->
+    <style th:inline="css">
+        :root {
+            --ps-pw: [[${printStyle.paperWidthMm}]]mm;
+            --ps-ph: [[${printStyle.paperHeightMm}]]mm;
+            --ps-title: [[${printStyle.titleFontPx}]]px;
+            --ps-hf: [[${printStyle.headerFooterFontPx}]]px;
+            --ps-ct: [[${printStyle.contentFontPx}]]px;
+            --ps-off-x: [[${printStyle.offsetXMm}]]mm;
+            --ps-off-y: [[${printStyle.offsetYMm}]]mm;
+        }
         @media print {
             @page {
-                size: A4 portrait;
-                margin: 12mm;
+                size: [[${printStyle.pageWidthMm}]]mm [[${printStyle.pageHeightMm}]]mm;
+                margin: 10mm;
             }
+        }
+    </style>
+    <style>
+        @media print {
             body {
                 margin: 0;
                 padding: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
             }
             .no-print {
                 display: none !important;
             }
             .print-wrap {
                 max-width: none;
+                width: calc(100% - max(0mm, var(--ps-off-x)));
+                margin-left: var(--ps-off-x);
+                margin-top: var(--ps-off-y);
             }
             .doc-title {
-                font-size: 18px;
-                margin-bottom: 12px;
+                font-size: calc(var(--ps-title) * 0.82);
+                margin-bottom: 10px;
             }
             .meta-grid {
-                font-size: 11px;
-                gap: 6px 10px;
+                font-size: calc(var(--ps-hf) * 0.92);
+                gap: 5px 8px;
             }
             .data-table {
-                font-size: 7.5px;
+                font-size: calc(var(--ps-ct) * 0.85);
             }
             .data-table th,
             .data-table td {
                 padding: 2px 1px;
             }
             .sign-section {
-                font-size: 11px;
+                font-size: calc(var(--ps-hf) * 0.92);
                 column-gap: 8px;
                 row-gap: 8px;
             }
@@ -45,20 +65,30 @@
             box-sizing: border-box;
         }
 
+        html {
+            overflow-x: auto;
+        }
+
         body {
             font-family: "Microsoft YaHei", "微软雅黑", "PingFang SC", "SimSun", "宋体", Arial, sans-serif;
-            font-size: 12px;
+            font-size: var(--ps-hf);
             margin: 0;
             padding: 16px;
             background: #fff;
             color: #000;
             -webkit-font-smoothing: antialiased;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
+        /* 偏移用 margin 参与排版；正横向偏移时收窄宽度，避免总宽超出版心被裁切 */
         .print-wrap {
-            width: 100%;
-            max-width: 186mm;
-            margin: 0 auto;
+            width: min(var(--ps-pw), calc(100% - max(0mm, var(--ps-off-x))));
+            max-width: min(var(--ps-pw), calc(100% - max(0mm, var(--ps-off-x))));
+            flex-shrink: 0;
+            margin-left: var(--ps-off-x);
+            margin-top: var(--ps-off-y);
         }
 
         .print-actions {
@@ -69,8 +99,8 @@
         }
 
         .print-actions button {
-            margin: 0 10px;
-            padding: 8px 20px;
+            margin: 0 8px;
+            padding: 8px 16px;
             font-size: 14px;
             cursor: pointer;
             border: none;
@@ -79,7 +109,7 @@
 
         .doc-title {
             text-align: center;
-            font-size: 22px;
+            font-size: var(--ps-title);
             font-weight: bold;
             margin: 0 0 18px;
             line-height: 1.35;
@@ -91,6 +121,7 @@
             gap: 8px 14px;
             margin-bottom: 14px;
             line-height: 1.5;
+            font-size: var(--ps-hf);
         }
 
         .meta-item {
@@ -117,7 +148,7 @@
             border-collapse: collapse;
             table-layout: fixed;
             border: 1px solid #000;
-            font-size: 9px;
+            font-size: var(--ps-ct);
             margin-bottom: 18px;
         }
 
@@ -140,14 +171,13 @@
             text-align: left;
         }
 
-        /* 签字区：每行固定 3 项（共两行 3+2） */
         .sign-section {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
             column-gap: 14px;
             row-gap: 12px;
             margin-top: 16px;
-            font-size: 12px;
+            font-size: var(--ps-hf);
             line-height: 1.6;
             align-items: baseline;
         }
@@ -181,134 +211,327 @@
             vertical-align: baseline;
             flex-shrink: 0;
         }
+
+        /* 打印设置弹层 */
+        .page-no-print {
+            text-align: right;
+            font-size: calc(var(--ps-hf) * 0.95);
+            margin-bottom: 6px;
+            line-height: 1.2;
+        }
+        .print-sheet {
+            position: relative;
+            margin-bottom: 24px;
+        }
+        .print-sheet--break {
+            break-after: page;
+            page-break-after: always;
+        }
+        @media print {
+            .print-sheet {
+                margin-bottom: 0;
+            }
+            .print-sheet:not(:last-child) {
+                break-after: page;
+                page-break-after: always;
+            }
+        }
+
+        .ps-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+        .ps-modal-overlay.show {
+            display: flex;
+        }
+        .ps-modal {
+            background: #fff;
+            border-radius: 6px;
+            max-width: 420px;
+            width: 100%;
+            padding: 18px 20px 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+        }
+        .ps-modal h3 {
+            margin: 0 0 14px;
+            font-size: 16px;
+        }
+        .ps-row {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .ps-row label {
+            width: 120px;
+            flex-shrink: 0;
+            font-weight: bold;
+        }
+        .ps-row input, .ps-row select {
+            flex: 1;
+            min-width: 120px;
+            padding: 6px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .ps-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+        .ps-actions {
+            margin-top: 16px;
+            text-align: right;
+            gap: 8px;
+            display: flex;
+            justify-content: flex-end;
+        }
+        .ps-msg {
+            margin-top: 8px;
+            font-size: 13px;
+            min-height: 1.2em;
+        }
+        .ps-msg.err { color: #c00; }
+        .ps-msg.ok { color: #080; }
     </style>
 </head>
 <body>
 <div class="print-wrap">
     <div class="print-actions no-print">
         <button type="button" onclick="window.print()" style="background: #5cb85c; color: white;">打印</button>
+        <button type="button" onclick="openPrintSettingModal()" style="background: #337ab7; color: white;">打印设置</button>
         <button type="button" onclick="window.close()" style="background: #d9534f; color: white;">关闭</button>
     </div>
 
-    <th:block th:with="hospitalTitle=${delivery.hospitalName != null ? #strings.trim(delivery.hospitalName) : ''}">
-        <h1 class="doc-title">
-            <span th:text="${#strings.isEmpty(hospitalTitle) ? '—' : hospitalTitle}">某某医院</span>医用耗材质量验收单
-        </h1>
-    </th:block>
+    <div class="print-sheet" th:each="pageRows, pStat : ${deliveryDetailPages}"
+         th:classappend="${!pStat.last} ? ' print-sheet--break' : ''">
+        <div class="page-no-print">第 <span th:text="${pStat.count}">1</span> 页 / 共 <span th:text="${printPageCount}">1</span> 页</div>
 
-    <div class="meta-grid">
-        <div class="meta-item">
-            <span class="meta-label">配送商：</span>
-            <span class="meta-value" th:text="${delivery.supplierName ?: '-'}">-</span>
-        </div>
-        <div class="meta-item">
-            <span class="meta-label">订单号：</span>
-            <span class="meta-value" th:text="${delivery.orderNo ?: '-'}">-</span>
-        </div>
-        <div class="meta-item">
-            <span class="meta-label">仓库：</span>
-            <span class="meta-value" th:text="${delivery.warehouse ?: '-'}">-</span>
-        </div>
-        <div class="meta-item">
-            <span class="meta-label">配送单号：</span>
-            <span class="meta-value" th:text="${delivery.deliveryNo ?: '-'}">-</span>
-        </div>
-        <div class="meta-item">
-            <span class="meta-label">供应商：</span>
-            <span class="meta-value" th:text="${delivery.supplierName ?: '-'}">-</span>
-        </div>
-        <div class="meta-item">
-            <span class="meta-label">医院：</span>
-            <span class="meta-value" th:text="${delivery.hospitalName ?: '-'}">-</span>
-        </div>
-        <div class="meta-item">
-            <span class="meta-label">总金额：</span>
-            <span class="meta-value" th:text="${printTotalAmount != null ? #numbers.formatDecimal(printTotalAmount, 1, 2) : '0'}">0</span>
-        </div>
-        <div class="meta-item">
-            <span class="meta-label">发票号：</span>
-            <span class="meta-value" th:text="${delivery.invoiceNo ?: '-'}">-</span>
-        </div>
-    </div>
+        <th:block th:with="hospitalTitle=${delivery.hospitalName != null ? #strings.trim(delivery.hospitalName) : ''}">
+            <h1 class="doc-title">
+                <span th:text="${#strings.isEmpty(hospitalTitle) ? '—' : hospitalTitle}">某某医院</span>医用耗材质量验收单
+            </h1>
+        </th:block>
 
-    <table class="data-table">
-        <thead>
-        <tr>
-            <th style="width: 9%;">名称</th>
-            <th style="width: 9%;">规格</th>
-            <th style="width: 5%;">单位</th>
-            <th style="width: 6%;">单价</th>
-            <th style="width: 5%;">数量</th>
-            <th style="width: 10%;">厂家</th>
-            <th style="width: 7%;">批号</th>
-            <th style="width: 7%;">生产日期</th>
-            <th style="width: 7%;">有效期</th>
-            <th style="width: 9%;">注册证号</th>
-            <th style="width: 7%;">合格证</th>
-            <th style="width: 8%;">生产企业许可证</th>
-            <th style="width: 11%;">质量情况</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:if="${deliveryDetails == null or #lists.isEmpty(deliveryDetails)}">
-            <td colspan="13" style="padding: 16px;">暂无明细数据</td>
-        </tr>
-        <tr th:each="detail : ${deliveryDetails}">
-            <td class="text-left" th:text="${detail.materialName ?: '-'}">-</td>
-            <td class="text-left" th:text="${detail.specification ?: '-'}">-</td>
-            <td th:text="${detail.unit ?: '-'}">-</td>
-            <td th:text="${detail.price != null ? #numbers.formatDecimal(detail.price, 1, 2) : '-'}">-</td>
-            <td th:text="${detail.deliveryQuantity != null ? #numbers.formatDecimal(detail.deliveryQuantity, 0, 0) : '-'}">-</td>
-            <td class="text-left" th:text="${detail.manufacturer ?: '-'}">-</td>
-            <td th:text="${detail.batchNo ?: '-'}">-</td>
-            <td th:text="${detail.productionDate != null ? #dates.format(detail.productionDate, 'yyyy/MM/dd') : '-'}">-</td>
-            <td th:text="${detail.expireDate != null ? #dates.format(detail.expireDate, 'yyyy/MM/dd') : '-'}">-</td>
-            <td class="text-left" th:text="${detail.registerNo ?: '-'}">-</td>
-            <td></td>
-            <td></td>
-            <td></td>
-        </tr>
-        </tbody>
-    </table>
+        <div class="meta-grid">
+            <div class="meta-item">
+                <span class="meta-label">配送商：</span>
+                <span class="meta-value" th:text="${delivery.supplierName ?: '-'}">-</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">订单号：</span>
+                <span class="meta-value" th:text="${delivery.orderNo ?: '-'}">-</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">仓库：</span>
+                <span class="meta-value" th:text="${delivery.warehouse ?: '-'}">-</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">配送单号：</span>
+                <span class="meta-value" th:text="${delivery.deliveryNo ?: '-'}">-</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">供应商：</span>
+                <span class="meta-value" th:text="${delivery.supplierName ?: '-'}">-</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">医院：</span>
+                <span class="meta-value" th:text="${delivery.hospitalName ?: '-'}">-</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">总金额：</span>
+                <span class="meta-value" th:text="${printTotalAmount != null ? #numbers.formatDecimal(printTotalAmount, 1, 2) : '0'}">0</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">发票号：</span>
+                <span class="meta-value" th:text="${delivery.invoiceNo ?: '-'}">-</span>
+            </div>
+        </div>
 
-    <div class="sign-section">
-        <span class="sign-inline">
-            <span class="sign-key">物资材料供应处：</span><span class="sign-under"></span>
-        </span>
-        <span class="sign-inline">
-            <span class="sign-key">科室签收人：</span><span class="sign-under"></span>
-        </span>
-        <span class="sign-inline">
-            <span class="sign-key">送货人：</span>
-            <span class="sign-pre"
-                  th:if="${delivery.deliveryPersonForDisplay != null and !#strings.isEmpty(#strings.trim(delivery.deliveryPersonForDisplay))}"
-                  th:text="${#strings.trim(delivery.deliveryPersonForDisplay)}"></span>
-            <span class="sign-under"></span>
-        </span>
-        <span class="sign-inline">
-            <span class="sign-key">配送日期：</span>
-            <span class="sign-pre"
-                  th:text="${delivery.expectedDeliveryDate != null ? #dates.format(delivery.expectedDeliveryDate, 'yyyy/MM/dd') : ''}"></span>
-        </span>
-        <span class="sign-inline">
-            <span class="sign-key">经手人签字：</span><span class="sign-under"></span>
-        </span>
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th style="width: 9%;">名称</th>
+                <th style="width: 9%;">规格</th>
+                <th style="width: 5%;">单位</th>
+                <th style="width: 6%;">单价</th>
+                <th style="width: 5%;">数量</th>
+                <th style="width: 10%;">厂家</th>
+                <th style="width: 7%;">批号</th>
+                <th style="width: 7%;">生产日期</th>
+                <th style="width: 7%;">有效期</th>
+                <th style="width: 9%;">注册证号</th>
+                <th style="width: 7%;">合格证</th>
+                <th style="width: 8%;">生产企业许可证</th>
+                <th style="width: 11%;">质量情况</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(pageRows)}">
+                <td colspan="13" style="padding: 16px;">暂无明细数据</td>
+            </tr>
+            <tr th:each="detail : ${pageRows}">
+                <td class="text-left" th:text="${detail.materialName ?: '-'}">-</td>
+                <td class="text-left" th:text="${detail.specification ?: '-'}">-</td>
+                <td th:text="${detail.unit ?: '-'}">-</td>
+                <td th:text="${detail.price != null ? #numbers.formatDecimal(detail.price, 1, 2) : '-'}">-</td>
+                <td th:text="${detail.deliveryQuantity != null ? #numbers.formatDecimal(detail.deliveryQuantity, 0, 0) : '-'}">-</td>
+                <td class="text-left" th:text="${detail.manufacturer ?: '-'}">-</td>
+                <td th:text="${detail.batchNo ?: '-'}">-</td>
+                <td th:text="${detail.productionDate != null ? #dates.format(detail.productionDate, 'yyyy/MM/dd') : '-'}">-</td>
+                <td th:text="${detail.expireDate != null ? #dates.format(detail.expireDate, 'yyyy/MM/dd') : '-'}">-</td>
+                <td class="text-left" th:text="${detail.registerNo ?: '-'}">-</td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="sign-section" th:if="${pStat.last}">
+            <span class="sign-inline">
+                <span class="sign-key">物资材料供应处：</span><span class="sign-under"></span>
+            </span>
+            <span class="sign-inline">
+                <span class="sign-key">科室签收人：</span><span class="sign-under"></span>
+            </span>
+            <span class="sign-inline">
+                <span class="sign-key">送货人：</span>
+                <span class="sign-pre"
+                      th:if="${delivery.deliveryPerson != null and !#strings.isEmpty(#strings.trim(delivery.deliveryPerson))}"
+                      th:text="${#strings.trim(delivery.deliveryPerson)}"></span>
+                <span class="sign-under"></span>
+            </span>
+            <span class="sign-inline">
+                <span class="sign-key">配送日期：</span>
+                <span class="sign-pre"
+                      th:text="${delivery.expectedDeliveryDate != null ? #dates.format(delivery.expectedDeliveryDate, 'yyyy/MM/dd') : ''}"></span>
+            </span>
+            <span class="sign-inline">
+                <span class="sign-key">经手人签字：</span><span class="sign-under"></span>
+            </span>
+        </div>
     </div>
 </div>
 
-<script>
-    (function () {
-        function doPrint() {
-            setTimeout(function () {
-                window.print();
-            }, 400);
-        }
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', doPrint);
-        } else {
-            doPrint();
-        }
-    })();
+<div id="ps-modal" class="ps-modal-overlay no-print" onclick="if(event.target===this) closePrintSettingModal()">
+    <div class="ps-modal" onclick="event.stopPropagation()">
+        <h3>打印设置</h3>
+        <p class="ps-hint">纸张与偏移单位为 mm；可设置每页明细行数，保存后按「验收单」类型生效并刷新本页。</p>
+        <div class="ps-row">
+            <label>打印方向</label>
+            <select id="ps-orientation">
+                <option value="portrait">竖向</option>
+                <option value="landscape">横向</option>
+            </select>
+        </div>
+        <div class="ps-row">
+            <label>纸宽 (mm)</label>
+            <input type="number" id="ps-paper-w" min="50" max="500" step="1"/>
+        </div>
+        <div class="ps-row">
+            <label>纸高 (mm)</label>
+            <input type="number" id="ps-paper-h" min="50" max="500" step="1"/>
+        </div>
+        <div class="ps-row">
+            <label>标题字号 (px)</label>
+            <input type="number" id="ps-title" min="6" max="72" step="1"/>
+        </div>
+        <div class="ps-row">
+            <label>表头/尾字号 (px)</label>
+            <input type="number" id="ps-hf" min="6" max="48" step="1"/>
+        </div>
+        <div class="ps-row">
+            <label>内容字号 (px)</label>
+            <input type="number" id="ps-ct" min="5" max="36" step="1"/>
+        </div>
+        <div class="ps-row">
+            <label>横向偏移 (mm)</label>
+            <input type="number" id="ps-off-x" min="-100" max="100" step="1" title="负左正右"/>
+        </div>
+        <div class="ps-row">
+            <label>纵向偏移 (mm)</label>
+            <input type="number" id="ps-off-y" min="-100" max="100" step="1" title="负上正下"/>
+        </div>
+        <div class="ps-row">
+            <label>每页行数</label>
+            <input type="number" id="ps-rows" min="1" max="200" step="1" title="明细表每页行数"/>
+        </div>
+        <div class="ps-msg" id="ps-msg"></div>
+        <div class="ps-actions">
+            <button type="button" onclick="closePrintSettingModal()" style="padding:6px 14px;border:1px solid #ccc;background:#fff;border-radius:4px;cursor:pointer;">取消</button>
+            <button type="button" onclick="submitPrintSetting()" style="padding:6px 14px;border:none;background:#337ab7;color:#fff;border-radius:4px;cursor:pointer;">保存</button>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    var printPageType = /*[[${printPageType}]]*/ 'ACCEPTANCE';
+    var reloadUrl = /*[[@{/delivery/delivery/printAcceptance/{id}(id=${delivery.deliveryId})}]]*/ '';
+    var savePrintSettingUrl = /*[[@{/delivery/delivery/printSetting/save}]]*/ '';
+
+    function openPrintSettingModal() {
+        document.getElementById('ps-orientation').value = /*[[${printStyle.orientation}]]*/ 'portrait';
+        document.getElementById('ps-paper-w').value = /*[[${printStyle.paperWidthMm}]]*/ 210;
+        document.getElementById('ps-paper-h').value = /*[[${printStyle.paperHeightMm}]]*/ 297;
+        document.getElementById('ps-title').value = /*[[${printStyle.titleFontPx}]]*/ 22;
+        document.getElementById('ps-hf').value = /*[[${printStyle.headerFooterFontPx}]]*/ 12;
+        document.getElementById('ps-ct').value = /*[[${printStyle.contentFontPx}]]*/ 9;
+        document.getElementById('ps-off-x').value = /*[[${printStyle.offsetXMm}]]*/ 0;
+        document.getElementById('ps-off-y').value = /*[[${printStyle.offsetYMm}]]*/ 0;
+        document.getElementById('ps-rows').value = /*[[${printStyle.rowsPerPage}]]*/ 10;
+        document.getElementById('ps-msg').textContent = '';
+        document.getElementById('ps-msg').className = 'ps-msg';
+        document.getElementById('ps-modal').classList.add('show');
+    }
+
+    function closePrintSettingModal() {
+        document.getElementById('ps-modal').classList.remove('show');
+    }
+
+    function submitPrintSetting() {
+        var msg = document.getElementById('ps-msg');
+        msg.textContent = '保存中…';
+        msg.className = 'ps-msg';
+        var fd = new URLSearchParams();
+        fd.append('printType', printPageType);
+        fd.append('orientation', document.getElementById('ps-orientation').value);
+        fd.append('paperWidthMm', document.getElementById('ps-paper-w').value);
+        fd.append('paperHeightMm', document.getElementById('ps-paper-h').value);
+        fd.append('titleFontPx', document.getElementById('ps-title').value);
+        fd.append('headerFooterFontPx', document.getElementById('ps-hf').value);
+        fd.append('contentFontPx', document.getElementById('ps-ct').value);
+        fd.append('offsetXMm', document.getElementById('ps-off-x').value);
+        fd.append('offsetYMm', document.getElementById('ps-off-y').value);
+        fd.append('rowsPerPage', document.getElementById('ps-rows').value);
+        fetch(savePrintSettingUrl, {
+            method: 'POST',
+            body: fd,
+            credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function (r) { return r.json(); }).then(function (j) {
+            if (j.code === 0) {
+                msg.textContent = j.msg || '已保存';
+                msg.className = 'ps-msg ok';
+                setTimeout(function () {
+                    window.location.href = reloadUrl;
+                }, 300);
+            } else {
+                msg.textContent = j.msg || '保存失败';
+                msg.className = 'ps-msg err';
+            }
+        }).catch(function () {
+            msg.textContent = '请求失败';
+            msg.className = 'ps-msg err';
+        });
+    }
 </script>
 </body>
 </html>

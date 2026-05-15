@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.ScmUserPrintSettingMapper">
+
+    <resultMap type="com.scm.system.domain.ScmUserPrintSetting" id="ScmUserPrintSettingResult">
+        <id property="settingId" column="setting_id"/>
+        <result property="userId" column="user_id"/>
+        <result property="printType" column="print_type"/>
+        <result property="orientation" column="orientation"/>
+        <result property="paperWidthMm" column="paper_width_mm"/>
+        <result property="paperHeightMm" column="paper_height_mm"/>
+        <result property="titleFontPx" column="title_font_px"/>
+        <result property="headerFooterFontPx" column="header_footer_font_px"/>
+        <result property="contentFontPx" column="content_font_px"/>
+        <result property="offsetXMm" column="offset_x_mm"/>
+        <result property="offsetYMm" column="offset_y_mm"/>
+        <result property="rowsPerPage" column="rows_per_page"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <select id="selectByUserIdAndPrintType" resultMap="ScmUserPrintSettingResult">
+        select setting_id, user_id, print_type, orientation, paper_width_mm, paper_height_mm,
+               title_font_px, header_footer_font_px, content_font_px, offset_x_mm, offset_y_mm, rows_per_page,
+               create_by, create_time, update_by, update_time
+        from scm_user_print_setting
+        where user_id = #{userId} and print_type = #{printType}
+        limit 1
+    </select>
+
+    <insert id="insertScmUserPrintSetting" useGeneratedKeys="true" keyProperty="settingId">
+        insert into scm_user_print_setting (
+            user_id, print_type, orientation, paper_width_mm, paper_height_mm,
+            title_font_px, header_footer_font_px, content_font_px, offset_x_mm, offset_y_mm, rows_per_page,
+            create_by, create_time, update_by, update_time
+        ) values (
+            #{userId}, #{printType}, #{orientation}, #{paperWidthMm}, #{paperHeightMm},
+            #{titleFontPx}, #{headerFooterFontPx}, #{contentFontPx}, #{offsetXMm}, #{offsetYMm}, #{rowsPerPage},
+            #{createBy}, #{createTime}, #{updateBy}, #{updateTime}
+        )
+    </insert>
+
+    <update id="updateScmUserPrintSetting">
+        update scm_user_print_setting
+        set orientation = #{orientation},
+            paper_width_mm = #{paperWidthMm},
+            paper_height_mm = #{paperHeightMm},
+            title_font_px = #{titleFontPx},
+            header_footer_font_px = #{headerFooterFontPx},
+            content_font_px = #{contentFontPx},
+            offset_x_mm = #{offsetXMm},
+            offset_y_mm = #{offsetYMm},
+            rows_per_page = #{rowsPerPage},
+            update_by = #{updateBy},
+            update_time = #{updateTime}
+        where user_id = #{userId} and print_type = #{printType}
+    </update>
+</mapper>

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
@@ -23,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.scm.common.annotation.Log;
 import com.scm.common.core.controller.BaseController;
 import com.scm.common.exception.ServiceException;
+import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.page.TableDataInfo;
@@ -30,6 +32,7 @@ import com.scm.common.enums.BusinessType;
 import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.file.FileUtils;
 import com.scm.common.utils.poi.ExcelUtil;
+import com.scm.system.constants.ScmPrintPageType;
 import com.scm.system.domain.Delivery;
 import com.scm.system.domain.DeliveryDetail;
 import com.scm.system.domain.DeliveryDownloadLog;
@@ -39,10 +42,12 @@ import com.scm.system.domain.Order;
 import com.scm.system.domain.Supplier;
 import com.scm.system.domain.ZsTpOrder;
 import com.scm.system.domain.vo.DeliveryPrintSheetVo;
+import com.scm.system.domain.vo.PrintStyleVO;
 import com.scm.system.service.IDeliveryService;
 import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.IHospitalService;
 import com.scm.system.service.IScmHospitalContextService;
+import com.scm.system.service.IScmUserPrintSettingService;
 import com.scm.system.service.IScmSupplierContextService;
 import com.scm.system.service.ISupplierService;
 import com.scm.system.util.DeliveryAcceptancePrintStyleExcelBuilder;
@@ -61,6 +66,9 @@ public class DeliveryController extends BaseController
 
     @Autowired
     private IDeliveryService deliveryService;
+
+    @Autowired
+    private IScmUserPrintSettingService scmUserPrintSettingService;
 
     @Autowired
     private IHospitalService hospitalService;
@@ -431,7 +439,79 @@ public class DeliveryController extends BaseController
         }
         mmap.put("printInputCode", printInputCode);
 
+        putPrintStyleModel(mmap, ScmPrintPageType.DELIVERY);
+        applyDeliveryDetailPages(mmap, details);
         return prefix + "/print";
+    }
+
+    /**
+     * 保存当前用户打印版式设置（按打印类型），保存后前端刷新预览页生效
+     */
+    @RequiresPermissions("delivery:delivery:print")
+    @PostMapping("/printSetting/save")
+    @ResponseBody
+    public AjaxResult savePrintSetting(@RequestParam("printType") String printType,
+        @RequestParam("orientation") String orientation,
+        @RequestParam("paperWidthMm") int paperWidthMm,
+        @RequestParam("paperHeightMm") int paperHeightMm,
+        @RequestParam("titleFontPx") int titleFontPx,
+        @RequestParam("headerFooterFontPx") int headerFooterFontPx,
+        @RequestParam("contentFontPx") int contentFontPx,
+        @RequestParam("offsetXMm") int offsetXMm,
+        @RequestParam("offsetYMm") int offsetYMm,
+        @RequestParam("rowsPerPage") int rowsPerPage)
+    {
+        if (!ScmPrintPageType.isValid(printType))
+        {
+            return error("无效的打印类型");
+        }
+        scmUserPrintSettingService.saveOrUpdate(ShiroUtils.getUserId(), getLoginName(), printType, orientation,
+            paperWidthMm, paperHeightMm, titleFontPx, headerFooterFontPx, contentFontPx, offsetXMm, offsetYMm,
+            rowsPerPage);
+        return success("已保存");
+    }
+
+    private void putPrintStyleModel(ModelMap mmap, String printType)
+    {
+        Long uid = null;
+        try
+        {
+            uid = ShiroUtils.getUserId();
+        }
+        catch (Exception e)
+        {
+            logger.debug("print style: no shiro user, use defaults only");
+        }
+        mmap.put("printStyle", scmUserPrintSettingService.resolvePrintStyle(uid, printType));
+        mmap.put("printPageType", printType);
+    }
+
+    /**
+     * 按打印设置中的每页行数拆分明细，供模板分页输出
+     */
+    private void applyDeliveryDetailPages(ModelMap mmap, List<DeliveryDetail> details)
+    {
+        PrintStyleVO ps = (PrintStyleVO) mmap.get("printStyle");
+        int rpp = ps != null ? ps.getRowsPerPage() : 10;
+        List<List<DeliveryDetail>> pages = partitionDeliveryDetails(details, rpp);
+        mmap.put("deliveryDetailPages", pages);
+        mmap.put("printPageCount", pages.size());
+    }
+
+    private static List<List<DeliveryDetail>> partitionDeliveryDetails(List<DeliveryDetail> details, int rowsPerPage)
+    {
+        int n = Math.max(1, rowsPerPage);
+        List<DeliveryDetail> list = details == null ? Collections.emptyList() : details;
+        if (list.isEmpty())
+        {
+            return Collections.singletonList(new ArrayList<>());
+        }
+        List<List<DeliveryDetail>> pages = new ArrayList<>();
+        for (int i = 0; i < list.size(); i += n)
+        {
+            pages.add(new ArrayList<>(list.subList(i, Math.min(i + n, list.size()))));
+        }
+        return pages;
     }
 
     /**
@@ -463,6 +543,8 @@ public class DeliveryController extends BaseController
         }
         mmap.put("printTotalAmount", printTotalAmount);
 
+        putPrintStyleModel(mmap, ScmPrintPageType.ACCEPTANCE);
+        applyDeliveryDetailPages(mmap, details);
         return prefix + "/printAcceptance";
     }
 
