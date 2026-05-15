@@ -41,6 +41,71 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         left join scm_hospital h on o.hospital_id = h.hospital_id
         left join scm_supplier s on o.supplier_id = s.supplier_id
     </sql>
+
+    <!-- 选择订单弹窗 sheet 页：none/partial/done/void/partialVoid -->
+    <sql id="orderScmHasDelivery">
+        EXISTS (
+            SELECT 1 FROM scm_delivery d
+            WHERE d.order_id = o.order_id
+            AND (d.del_flag IS NULL OR d.del_flag = '' OR d.del_flag = '0')
+        )
+    </sql>
+    <sql id="orderSheetTabBlock">
+        <choose>
+            <when test="params.sheetTab == 'void'">
+                AND o.order_status = '4'
+                AND NOT <include refid="orderScmHasDelivery"/>
+            </when>
+            <when test="params.sheetTab == 'partialVoid'">
+                AND o.order_status = '4'
+                AND <include refid="orderScmHasDelivery"/>
+            </when>
+            <when test="params.sheetTab == 'partial'">
+                AND o.order_status != '4'
+                AND (
+                    EXISTS (
+                        SELECT 1 FROM scm_order_detail od
+                        WHERE od.order_id = o.order_id
+                        AND IFNULL(od.order_quantity, 0) &gt; 0
+                        AND IFNULL(od.remaining_quantity, 0) &gt; 0
+                        AND IFNULL(od.remaining_quantity, 0) &lt; IFNULL(od.order_quantity, 0)
+                    )
+                    OR (
+                        EXISTS (
+                            SELECT 1 FROM scm_order_detail od1
+                            WHERE od1.order_id = o.order_id AND IFNULL(od1.order_quantity, 0) &gt; 0 AND IFNULL(od1.remaining_quantity, 0) = 0
+                        )
+                        AND EXISTS (
+                            SELECT 1 FROM scm_order_detail od2
+                            WHERE od2.order_id = o.order_id AND IFNULL(od2.order_quantity, 0) &gt; 0 AND IFNULL(od2.remaining_quantity, 0) &gt; 0
+                        )
+                    )
+                )
+            </when>
+            <when test="params.sheetTab == 'done'">
+                AND o.order_status != '4'
+                AND NOT EXISTS (
+                    SELECT 1 FROM scm_order_detail od
+                    WHERE od.order_id = o.order_id
+                    AND IFNULL(od.order_quantity, 0) &gt; 0
+                    AND IFNULL(od.remaining_quantity, 0) &gt; 0
+                )
+                AND EXISTS (
+                    SELECT 1 FROM scm_order_detail od2
+                    WHERE od2.order_id = o.order_id AND IFNULL(od2.order_quantity, 0) &gt; 0
+                )
+            </when>
+            <otherwise>
+                AND o.order_status != '4'
+                AND NOT EXISTS (
+                    SELECT 1 FROM scm_order_detail od
+                    WHERE od.order_id = o.order_id
+                    AND IFNULL(od.order_quantity, 0) &gt; 0
+                    AND IFNULL(od.remaining_quantity, 0) &lt; IFNULL(od.order_quantity, 0)
+                )
+            </otherwise>
+        </choose>
+    </sql>
     
     <select id="selectOrderList" parameterType="Order" resultMap="OrderResult">
         <include refid="selectOrderVo"/>
@@ -63,17 +128,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="orderStatus != null and orderStatus != ''">
                 AND o.order_status = #{orderStatus}
             </if>
+            <if test="params != null and params.sheetTab != null and params.sheetTab != ''">
+                <include refid="orderSheetTabBlock"/>
+            </if>
+            <if test="params == null or params.sheetTab == null or params.sheetTab == ''">
             <if test="params != null and params.excludeVoided != null and (params.excludeVoided == true or params.excludeVoided == 'true' or params.excludeVoided == '1')">
                 AND o.order_status != '4'
-            </if>
-            <if test="orderDate != null">
-                AND date(o.order_date) = date(#{orderDate})
-            </if>
-            <if test="params.beginTime != null and params.beginTime != ''">
-                AND date(o.order_date) &gt;= date(#{params.beginTime})
-            </if>
-            <if test="params.endTime != null and params.endTime != ''">
-                AND date(o.order_date) &lt;= date(#{params.endTime})
             </if>
             <if test="params != null and params.deliveryFilter != null and params.deliveryFilter == 'none'">
                 AND NOT EXISTS (
@@ -115,6 +175,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                     SELECT 1 FROM scm_order_detail od2
                     WHERE od2.order_id = o.order_id AND IFNULL(od2.order_quantity, 0) &gt; 0
                 )
+            </if>
+            </if>
+            <if test="orderDate != null">
+                AND date(o.order_date) = date(#{orderDate})
+            </if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                AND date(o.order_date) &gt;= date(#{params.beginTime})
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                AND date(o.order_date) &lt;= date(#{params.endTime})
             </if>
             <if test="params != null and params.excludeHospitalIds != null and params.excludeHospitalIds.size() &gt; 0">
                 AND o.hospital_id NOT IN
