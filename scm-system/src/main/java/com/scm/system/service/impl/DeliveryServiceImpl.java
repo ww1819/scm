@@ -386,6 +386,7 @@ public class DeliveryServiceImpl implements IDeliveryService
             for (DeliveryDetail detail : delivery.getDeliveryDetails())
             {
                 detail.setDeliveryId(delivery.getDeliveryId());
+                detail.setDeliveryNo(StringUtils.trimToEmpty(delivery.getDeliveryNo()));
             }
             deliveryDetailMapper.batchInsertDeliveryDetail(delivery.getDeliveryDetails());
 
@@ -604,6 +605,11 @@ public class DeliveryServiceImpl implements IDeliveryService
         }
         String createBy = StringUtils.trimToEmpty(delivery.getCreateBy());
         String timeStr = DateUtils.getTime();
+        String detailDeliveryNo = StringUtils.trimToEmpty(delivery.getDeliveryNo());
+        if (StringUtils.isEmpty(detailDeliveryNo))
+        {
+            detailDeliveryNo = StringUtils.trimToEmpty(persisted.getDeliveryNo());
+        }
 
         for (DeliveryDetail cur : newLines)
         {
@@ -612,6 +618,7 @@ public class DeliveryServiceImpl implements IDeliveryService
                 continue;
             }
             cur.setDeliveryId(deliveryId);
+            cur.setDeliveryNo(detailDeliveryNo);
             Long cid = cur.getDetailId();
             DeliveryDetail old = cid != null ? oldById.get(cid) : null;
             if (old == null)

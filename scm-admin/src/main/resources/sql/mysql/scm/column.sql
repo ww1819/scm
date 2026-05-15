@@ -173,6 +173,13 @@ CALL add_table_column('scm_delivery_detail', 'remark', 'varchar(500)', '备注',
 /
 CALL add_table_column('scm_delivery_detail', 'national_insurance_code', 'varchar(128)', '国家医保编码', NULL);
 /
+CALL add_table_column('scm_delivery_detail', 'delivery_no', 'varchar(50)', '配送单号（冗余主表，便于按单号查明细）', '');
+/
+UPDATE scm_delivery_detail d
+INNER JOIN scm_delivery del ON del.delivery_id = d.delivery_id
+SET d.delivery_no = IFNULL(del.delivery_no, '')
+WHERE TRIM(IFNULL(d.delivery_no, '')) = '' AND IFNULL(del.delivery_no, '') <> '';
+/
 UPDATE scm_delivery_detail SET del_flag = '0' WHERE del_flag IS NULL OR TRIM(IFNULL(del_flag, '')) = '';
 /
 -- scm_delivery_invoice

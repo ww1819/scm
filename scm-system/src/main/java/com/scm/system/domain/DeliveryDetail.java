@@ -106,7 +106,7 @@ public class DeliveryDetail extends BaseEntity
     @Excel(name = "国家医保编码")
     private String nationalInsuranceCode;
 
-    /** 配送单号 */
+    /** 配送单号（冗余落库 scm_delivery_detail.delivery_no，便于直接 SQL 按单号查明细；查询时若为空仍回退主表） */
     @Excel(name = "配送单号")
     private String deliveryNo;
 

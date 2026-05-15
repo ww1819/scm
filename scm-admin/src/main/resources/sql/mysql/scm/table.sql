@@ -565,6 +565,7 @@ CREATE TABLE IF NOT EXISTS `scm_delivery` (
 CREATE TABLE IF NOT EXISTS `scm_delivery_detail` (
   `detail_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '明细ID',
   `delivery_id` bigint(20) NOT NULL COMMENT '配送单ID',
+  `delivery_no` varchar(50) NOT NULL DEFAULT '' COMMENT '配送单号（冗余主表，便于按单号查明细）',
   `order_detail_id` bigint(20) DEFAULT NULL COMMENT '订单明细ID',
   `material_id` bigint(20) NOT NULL COMMENT '物资ID',
   `material_code` varchar(50) DEFAULT '' COMMENT '产品编码',
@@ -602,6 +603,7 @@ CREATE TABLE IF NOT EXISTS `scm_delivery_detail` (
   `spd_order_entry_id` bigint(20) DEFAULT NULL COMMENT 'SPD采购订单明细ID purchase_order_entry.id',
   PRIMARY KEY (`detail_id`),
   KEY `idx_delivery_id` (`delivery_id`),
+  KEY `idx_scm_delivery_detail_delivery_no` (`delivery_no`),
   KEY `idx_material_id` (`material_id`),
   KEY `idx_order_detail_id` (`order_detail_id`),
   KEY `idx_scm_delivery_detail_del` (`delivery_id`,`del_flag`),
