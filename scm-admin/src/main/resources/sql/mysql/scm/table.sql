@@ -1601,3 +1601,26 @@ CREATE TABLE IF NOT EXISTS `scm_product_cert_license_snap` (
   KEY `idx_spcls_material_supplier` (`material_id`,`supplier_id`,`del_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品证件扩展证照快照（UUID7主键，varchar逻辑外键）';
 /
+
+-- 用户打印版式设置（按 sys_user.user_id + 打印类型唯一；纸张尺寸单位 mm）
+CREATE TABLE IF NOT EXISTS `scm_user_print_setting` (
+  `setting_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `user_id` bigint(20) NOT NULL COMMENT '用户ID sys_user.user_id',
+  `print_type` varchar(32) NOT NULL COMMENT '打印类型 ACCEPTANCE验收单 DELIVERY配送单',
+  `orientation` varchar(16) NOT NULL DEFAULT 'portrait' COMMENT 'portrait竖向 landscape横向',
+  `paper_width_mm` int(11) NOT NULL DEFAULT '210' COMMENT '纸张宽 mm（竖向定义下的宽）',
+  `paper_height_mm` int(11) NOT NULL DEFAULT '297' COMMENT '纸张高 mm',
+  `title_font_px` int(11) NOT NULL DEFAULT '22' COMMENT '标题字号 px',
+  `header_footer_font_px` int(11) NOT NULL DEFAULT '12' COMMENT '表头表尾字号 px',
+  `content_font_px` int(11) NOT NULL DEFAULT '9' COMMENT '表格正文字号 px',
+  `offset_x_mm` int(11) NOT NULL DEFAULT '0' COMMENT '横向偏移mm 负左正右',
+  `offset_y_mm` int(11) NOT NULL DEFAULT '0' COMMENT '纵向偏移mm 负上正下',
+  `rows_per_page` int(11) NOT NULL DEFAULT '10' COMMENT '每页明细行数',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`setting_id`),
+  UNIQUE KEY `uk_sups_user_type` (`user_id`,`print_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户打印版式设置';
+/
