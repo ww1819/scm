@@ -3,12 +3,41 @@
 <head>
 	<th:block th:include="include :: header('选择订单')" />
 	<th:block th:include="include :: layout-latest-css" />
+	<style>
+		.order-select-sheet-bar {
+			background: #fff;
+			border: 1px solid #e7eaec;
+			border-bottom: none;
+			padding: 0 10px;
+			margin-bottom: 0;
+		}
+		.order-select-sheet-bar .nav-tabs {
+			border-bottom: 1px solid #e7eaec;
+			margin-bottom: 0;
+		}
+		.order-select-sheet-bar .nav-tabs > li > a {
+			padding: 10px 16px;
+			color: #676a6c;
+			border-radius: 0;
+			margin-right: 2px;
+		}
+		.order-select-sheet-bar .nav-tabs > li.active > a,
+		.order-select-sheet-bar .nav-tabs > li.active > a:hover,
+		.order-select-sheet-bar .nav-tabs > li.active > a:focus {
+			color: #1ab394;
+			font-weight: 600;
+			border: 1px solid #e7eaec;
+			border-bottom-color: #fff;
+			background: #fff;
+		}
+	</style>
 </head>
 <body class="gray-bg">
 	<div class="container-div">
 		<div class="row">
 			<div class="col-sm-12 search-collapse">
 				<form id="order-form">
+					<input type="hidden" name="params[sheetTab]" id="sheetTab" value="none"/>
 					<div class="select-list">
 						<ul>
 							<li>
@@ -21,30 +50,32 @@
 								供应商名称：<input type="text" name="supplierName"/>
 							</li>
 							<li>
-								订单状态：<select name="orderStatus">
-									<option value="">所有</option>
-									<option value="0">待接收</option>
-									<option value="1">已接收</option>
-									<option value="2">配送中</option>
-									<option value="3">已完成</option>
-									<option value="4">已取消</option>
-								</select>
-							</li>
-							<li>
-								配送进度：<select name="params[deliveryFilter]">
-									<option value="">全部</option>
-									<option value="none">未配送</option>
-									<option value="partial">部分配送</option>
-									<option value="done">已配送</option>
-								</select>
-							</li>
-							<li>
 								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
 								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
 							</li>
 						</ul>
 					</div>
 				</form>
+			</div>
+
+			<div class="col-sm-12 order-select-sheet-bar">
+				<ul class="nav nav-tabs" id="orderSheetTabs" role="tablist">
+					<li role="presentation" class="active">
+						<a href="javascript:void(0)" data-sheet="none" onclick="switchOrderSheet('none')">未配送</a>
+					</li>
+					<li role="presentation">
+						<a href="javascript:void(0)" data-sheet="partial" onclick="switchOrderSheet('partial')">部分配送</a>
+					</li>
+					<li role="presentation">
+						<a href="javascript:void(0)" data-sheet="done" onclick="switchOrderSheet('done')">全部配送</a>
+					</li>
+					<li role="presentation">
+						<a href="javascript:void(0)" data-sheet="void" onclick="switchOrderSheet('void')">已作废</a>
+					</li>
+					<li role="presentation">
+						<a href="javascript:void(0)" data-sheet="partialVoid" onclick="switchOrderSheet('partialVoid')">部分作废</a>
+					</li>
+				</ul>
 			</div>
 			
 	        <div class="col-sm-12 select-table table-striped">
@@ -53,7 +84,6 @@
 		</div>
 	</div>
 	
-	<!-- 隐藏字段，用于存储选中的订单ID和名称 -->
 	<input type="hidden" id="rowIds" name="rowIds"/>
 	<input type="hidden" id="rowNames" name="rowNames"/>
 	
@@ -61,10 +91,39 @@
 	<th:block th:include="include :: layout-latest-js" />
 	<script th:inline="javascript">
 		var prefix = ctx + "order/order";
+		var currentSheetTab = 'none';
 
 		$(function() {
 		    queryOrderList();
 		});
+
+		function isSheetSelectable(sheet) {
+			return sheet === 'none' || sheet === 'partial';
+		}
+
+		function switchOrderSheet(sheet) {
+			currentSheetTab = sheet || 'none';
+			$('#sheetTab').val(currentSheetTab);
+			$('#orderSheetTabs li').removeClass('active');
+			$('#orderSheetTabs a[data-sheet="' + currentSheetTab + '"]').parent().addClass('active');
+			updateSheetCheckboxColumn();
+			$.table.search();
+		}
+
+		function updateSheetCheckboxColumn() {
+			var $table = $('#bootstrap-table');
+			if (!$table.length || !$table.bootstrapTable('getOptions')) {
+				return;
+			}
+			if (isSheetSelectable(currentSheetTab)) {
+				$table.bootstrapTable('showColumn', 'checkbox');
+			} else {
+				$table.bootstrapTable('uncheckAll');
+				$table.bootstrapTable('hideColumn', 'checkbox');
+				$("#rowIds").val('');
+				$("#rowNames").val('');
+			}
+		}
 
 		function queryOrderList() {
 		    var options = {
@@ -76,7 +135,8 @@
 		        rememberSelected: true,
 		        maintainSelected: true,
 		        columns: [{
-		            checkbox: true
+		            checkbox: true,
+		            field: 'checkbox'
 		        },
 		        {
 		            field: 'orderId',
@@ -123,7 +183,7 @@
 		        			'1': '<span class="label label-info">已接收</span>',
 		        			'2': '<span class="label label-primary">配送中</span>',
 		        			'3': '<span class="label label-success">已完成</span>',
-		        			'4': '<span class="label label-danger">已取消</span>'
+		        			'4': '<span class="label label-danger">已作废</span>'
 		        		};
 		        		return statusMap[row.orderStatus] || '';
 		        	}
@@ -134,9 +194,12 @@
 		        }]
 		    };
 		    $.table.init(options);
+		    updateSheetCheckboxColumn();
 		    
-		    // 监听选择事件，更新隐藏字段
 		    $("#bootstrap-table").on("check.bs.table check-all.bs.table uncheck.bs.table uncheck-all.bs.table", function (e, rowsAfter, rowsBefore) {
+		        if (!isSheetSelectable(currentSheetTab)) {
+		            return;
+		        }
 		        var rows = $.common.equals("uncheck-all", e.type) ? rowsBefore : rowsAfter;
 		        var rowIds = $.table.affectedRowIds(rows);
 		        var rowNames = [];
@@ -152,12 +215,15 @@
 		    });
 		}
 		
-		/* 自定义重置 */
 		function resetPre() {
+			var sheet = currentSheetTab;
 			$("#order-form")[0].reset();
+			$('#sheetTab').val(sheet);
+			currentSheetTab = sheet;
+			$('#orderSheetTabs li').removeClass('active');
+			$('#orderSheetTabs a[data-sheet="' + sheet + '"]').parent().addClass('active');
 			$.table.search();
 		}
 	</script>
 </body>
 </html>
-

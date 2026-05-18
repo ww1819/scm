@@ -47,6 +47,7 @@ import com.scm.system.mapper.SysRoleMapper;
 import com.scm.system.mapper.ZsTpOrderDetailDeliveryRelMapper;
 import com.scm.system.mapper.ZsTpOrderMapper;
 import com.scm.system.service.IDeliveryService;
+import com.scm.system.service.IOrderService;
 import com.scm.system.service.IScmHospitalContextService;
 import com.scm.system.service.IScmHospitalSupplierMenuScopeService;
 import com.scm.system.service.IScmHospitalSupplierPermissionService;
@@ -73,6 +74,9 @@ public class DeliveryServiceImpl implements IDeliveryService
 
     @Autowired
     private OrderMapper orderMapper;
+
+    @Autowired
+    private IOrderService orderService;
 
     @Autowired
     private OrderDetailMapper orderDetailMapper;
@@ -382,6 +386,7 @@ public class DeliveryServiceImpl implements IDeliveryService
             for (DeliveryDetail detail : delivery.getDeliveryDetails())
             {
                 detail.setDeliveryId(delivery.getDeliveryId());
+                detail.setDeliveryNo(StringUtils.trimToEmpty(delivery.getDeliveryNo()));
             }
             deliveryDetailMapper.batchInsertDeliveryDetail(delivery.getDeliveryDetails());
 
@@ -398,8 +403,30 @@ public class DeliveryServiceImpl implements IDeliveryService
         if (rows > 0)
         {
             maybeAutoConfirmZsTpOrderOnDeliverySave(delivery);
+            maybeAutoReceiveOrderOnDeliverySave(delivery);
         }
         return rows;
+    }
+
+    /**
+     * 配送单保存时：若引用了未接收的本系统订单，则自动接收，接收人为配送单制单人
+     */
+    private void maybeAutoReceiveOrderOnDeliverySave(Delivery delivery)
+    {
+        if (delivery == null || delivery.getOrderId() == null)
+        {
+            return;
+        }
+        if (StringUtils.isEmpty(StringUtils.trimToNull(delivery.getCreateBy())) && delivery.getDeliveryId() != null)
+        {
+            Delivery persisted = deliveryMapper.selectDeliveryById(delivery.getDeliveryId());
+            if (persisted != null && StringUtils.isNotEmpty(persisted.getCreateBy()))
+            {
+                delivery.setCreateBy(persisted.getCreateBy());
+            }
+        }
+        String receiver = resolveDeliveryDocumentCreator(delivery);
+        orderService.autoReceiveOrderOnDeliveryReference(delivery.getOrderId(), receiver);
     }
 
     /**
@@ -505,6 +532,7 @@ public class DeliveryServiceImpl implements IDeliveryService
                 persistDeliveryDetailsOnUpdate(delivery);
             }
             maybeAutoConfirmZsTpOrderOnDeliverySave(delivery);
+            maybeAutoReceiveOrderOnDeliverySave(delivery);
         }
         return r;
     }
@@ -577,6 +605,11 @@ public class DeliveryServiceImpl implements IDeliveryService
         }
         String createBy = StringUtils.trimToEmpty(delivery.getCreateBy());
         String timeStr = DateUtils.getTime();
+        String detailDeliveryNo = StringUtils.trimToEmpty(delivery.getDeliveryNo());
+        if (StringUtils.isEmpty(detailDeliveryNo))
+        {
+            detailDeliveryNo = StringUtils.trimToEmpty(persisted.getDeliveryNo());
+        }
 
         for (DeliveryDetail cur : newLines)
         {
@@ -585,6 +618,7 @@ public class DeliveryServiceImpl implements IDeliveryService
                 continue;
             }
             cur.setDeliveryId(deliveryId);
+            cur.setDeliveryNo(detailDeliveryNo);
             Long cid = cur.getDetailId();
             DeliveryDetail old = cid != null ? oldById.get(cid) : null;
             if (old == null)
@@ -928,6 +962,10 @@ public class DeliveryServiceImpl implements IDeliveryService
         if (order != null)
         {
             assertOrderViewScopeForDelivery(order);
+            if ("4".equals(StringUtils.trimToNull(order.getOrderStatus())))
+            {
+                throw new ServiceException("该订单已作废，不可再引用生成配送单");
+            }
             List<OrderDetail> details = orderDetailMapper.selectOrderDetailListByOrderId(orderId);
             enrichScmOrderDetailsDeliveryQty(details, orderId);
             order.setOrderDetails(details);
@@ -1333,6 +1371,8 @@ public class DeliveryServiceImpl implements IDeliveryService
         d.setAmount(je);
         d.setManufacturer(StringUtils.trimToEmpty(line.getSccj()));
         d.setRegisterNo(StringUtils.trimToEmpty(line.getZcz()));
+        d.setNationalInsuranceCode(StringUtils.trimToEmpty(line.getBz()));
+        d.setRemark(StringUtils.trimToEmpty(line.getBz1()));
         d.setBatchNo("");
         d.setMainBarcode("");
         d.setAuxBarcode("");
@@ -1711,6 +1751,10 @@ public class DeliveryServiceImpl implements IDeliveryService
             Order o = orderMapper.selectOrderById(d.getOrderId());
             if (o != null)
             {
+                if ("4".equals(StringUtils.trimToNull(o.getOrderStatus())))
+                {
+                    throw new ServiceException("该订单已作废，不可生成配送单");
+                }
                 if (StringUtils.isEmpty(d.getZsCustomerId()))
                 {
                     d.setZsCustomerId("");

@@ -73,6 +73,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="manufacturer"     column="manufacturer_name"   />
 
         <result property="registerNo"       column="register_no"         />
+        <result property="remark"           column="remark"              />
+        <result property="nationalInsuranceCode" column="national_insurance_code" />
 
         <result property="medicalInsuranceCode" column="medical_insurance_code"/>
 
@@ -110,9 +112,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
                d.delivery_quantity, d.price, d.amount, d.pack_coefficient, d.batch_no, d.main_barcode, d.aux_barcode, d.production_date,
 
-               d.expire_date, d.manufacturer_name, d.register_no, d.medical_insurance_code,
+               d.expire_date, d.manufacturer_name, d.register_no, d.remark, d.national_insurance_code,
 
-               del.delivery_no
+               IFNULL(NULLIF(TRIM(d.delivery_no), ''), IFNULL(del.delivery_no, '')) AS delivery_no
 
         from scm_delivery_detail d
 
@@ -130,9 +132,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
                d.delivery_quantity, d.price, d.amount, d.pack_coefficient, d.batch_no, d.main_barcode, d.aux_barcode, d.production_date,
 
-               d.expire_date, d.manufacturer_name, d.register_no, d.medical_insurance_code,
+               d.expire_date, d.manufacturer_name, d.register_no, d.remark, d.national_insurance_code,
 
-               del.delivery_no,
+               IFNULL(NULLIF(TRIM(d.delivery_no), ''), IFNULL(del.delivery_no, '')) AS delivery_no,
 
                del.audit_status as delivery_audit_status,
 
@@ -202,7 +204,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
             <if test="deliveryNo != null and deliveryNo != ''">
 
-                AND del.delivery_no like concat('%', #{deliveryNo}, '%')
+                AND IFNULL(NULLIF(TRIM(d.delivery_no), ''), IFNULL(del.delivery_no, '')) like concat('%', #{deliveryNo}, '%')
 
             </if>
 
@@ -306,6 +308,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
             <if test="deliveryId != null">delivery_id,</if>
 
+            <if test="deliveryNo != null and deliveryNo != ''">delivery_no,</if>
+
             <if test="orderDetailId != null">order_detail_id,</if>
 
             <if test="zsOrderDetailId != null and zsOrderDetailId != ''">zs_order_detail_id,</if>
@@ -345,6 +349,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="manufacturer != null and manufacturer != ''">manufacturer_name,</if>
 
             <if test="registerNo != null and registerNo != ''">register_no,</if>
+            <if test="remark != null">remark,</if>
+            <if test="nationalInsuranceCode != null and nationalInsuranceCode != ''">national_insurance_code,</if>
 
             del_flag,
 
@@ -353,6 +359,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         )values(
 
             <if test="deliveryId != null">#{deliveryId},</if>
+
+            <if test="deliveryNo != null and deliveryNo != ''">#{deliveryNo},</if>
 
             <if test="orderDetailId != null">#{orderDetailId},</if>
 
@@ -393,6 +401,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="manufacturer != null and manufacturer != ''">#{manufacturer},</if>
 
             <if test="registerNo != null and registerNo != ''">#{registerNo},</if>
+            <if test="remark != null">#{remark},</if>
+            <if test="nationalInsuranceCode != null and nationalInsuranceCode != ''">#{nationalInsuranceCode},</if>
 
             '0',
 
@@ -406,23 +416,23 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <insert id="batchInsertDeliveryDetail" parameterType="java.util.List">
 
-        insert into scm_delivery_detail(delivery_id, order_detail_id, material_id, zs_order_detail_id, material_code,
+        insert into scm_delivery_detail(delivery_id, delivery_no, order_detail_id, material_id, zs_order_detail_id, material_code,
 
                material_name, specification, model, unit, remaining_quantity, delivery_quantity,
 
-               price, amount, pack_coefficient, batch_no, main_barcode, aux_barcode, production_date, expire_date, manufacturer_name, register_no, del_flag, create_time)
+               price, amount, pack_coefficient, batch_no, main_barcode, aux_barcode, production_date, expire_date, manufacturer_name, register_no, remark, national_insurance_code, del_flag, create_time)
 
         values
 
         <foreach collection="list" item="item" separator=",">
 
-            (#{item.deliveryId}, #{item.orderDetailId}, #{item.materialId}, #{item.zsOrderDetailId}, #{item.materialCode},
+            (#{item.deliveryId}, IFNULL(#{item.deliveryNo}, ''), #{item.orderDetailId}, #{item.materialId}, #{item.zsOrderDetailId}, #{item.materialCode},
 
              #{item.materialName}, #{item.specification}, #{item.model}, #{item.unit},
 
              #{item.remainingQuantity}, #{item.deliveryQuantity}, #{item.price}, #{item.amount}, #{item.packCoefficient},
 
-             #{item.batchNo}, #{item.mainBarcode}, #{item.auxBarcode}, #{item.productionDate}, #{item.expireDate}, #{item.manufacturer}, #{item.registerNo}, '0', sysdate())
+             #{item.batchNo}, #{item.mainBarcode}, #{item.auxBarcode}, #{item.productionDate}, #{item.expireDate}, #{item.manufacturer}, #{item.registerNo}, #{item.remark}, #{item.nationalInsuranceCode}, '0', sysdate())
 
         </foreach>
 
@@ -437,6 +447,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <set>
 
             <if test="deliveryId != null">delivery_id = #{deliveryId},</if>
+
+            <if test="deliveryNo != null">delivery_no = #{deliveryNo},</if>
 
             <if test="orderDetailId != null">order_detail_id = #{orderDetailId},</if>
 
@@ -477,6 +489,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="manufacturer != null and manufacturer != ''">manufacturer_name = #{manufacturer},</if>
 
             <if test="registerNo != null and registerNo != ''">register_no = #{registerNo},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="nationalInsuranceCode != null">national_insurance_code = #{nationalInsuranceCode},</if>
 
         </set>
 

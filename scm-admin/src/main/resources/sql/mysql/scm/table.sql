@@ -565,6 +565,7 @@ CREATE TABLE IF NOT EXISTS `scm_delivery` (
 CREATE TABLE IF NOT EXISTS `scm_delivery_detail` (
   `detail_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '明细ID',
   `delivery_id` bigint(20) NOT NULL COMMENT '配送单ID',
+  `delivery_no` varchar(50) NOT NULL DEFAULT '' COMMENT '配送单号（冗余主表，便于按单号查明细）',
   `order_detail_id` bigint(20) DEFAULT NULL COMMENT '订单明细ID',
   `material_id` bigint(20) NOT NULL COMMENT '物资ID',
   `material_code` varchar(50) DEFAULT '' COMMENT '产品编码',
@@ -591,6 +592,7 @@ CREATE TABLE IF NOT EXISTS `scm_delivery_detail` (
   `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(500) DEFAULT '' COMMENT '备注',
+  `national_insurance_code` varchar(128) DEFAULT '' COMMENT '国家医保编码',
   `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0存在 2删除，与 SCM 全库约定一致）',
   `del_time` datetime DEFAULT NULL COMMENT '删除时间',
   `del_by` varchar(64) DEFAULT NULL COMMENT '删除人',
@@ -602,6 +604,7 @@ CREATE TABLE IF NOT EXISTS `scm_delivery_detail` (
   `spd_order_entry_id` bigint(20) DEFAULT NULL COMMENT 'SPD采购订单明细ID purchase_order_entry.id',
   PRIMARY KEY (`detail_id`),
   KEY `idx_delivery_id` (`delivery_id`),
+  KEY `idx_scm_delivery_detail_delivery_no` (`delivery_no`),
   KEY `idx_material_id` (`material_id`),
   KEY `idx_order_detail_id` (`order_detail_id`),
   KEY `idx_scm_delivery_detail_del` (`delivery_id`,`del_flag`),

@@ -281,6 +281,15 @@ INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, targ
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('24006', '订单详情', '2401', '6', '#', '', 'F', '0', '1', 'order:order:detail', '#', 'admin', sysdate(), '', null, '', '0');
 /
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('24008', '订单作废', '2401', '7', '#', '', 'F', '0', '1', 'order:order:void', '#', 'admin', sysdate(), '', null, '作废后不可再引用生成配送单', '0');
+/
+-- 订单仅接收/作废：隐藏新增、修改、删除按钮权限（visible=1 不显示）
+UPDATE sys_menu SET visible = '1', remark = '已停用：订单不支持新增' WHERE menu_id = '24002';
+/
+UPDATE sys_menu SET visible = '1', remark = '已停用：订单不支持修改' WHERE menu_id = '24003';
+/
+UPDATE sys_menu SET visible = '1', remark = '已停用：订单不支持删除' WHERE menu_id = '24004';
+/
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('24007', '订单接收', '2402', '1', '#', '', 'F', '0', '1', 'order:order:receive', '#', 'admin', sysdate(), '', null, '', '0');
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('27001', '统计查询', '2701', '1', '#', '', 'F', '0', '1', 'datacenter:datacenter:list', '#', 'admin', sysdate(), '', null, '', '0');
@@ -411,6 +420,11 @@ WHERE del_flag = '0' AND menu_id = '24033';
 UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all_hospital',
   default_open_hospital = '1', hospital_admin_only = '0', default_open_supplier = '0', supplier_admin_only = '0', menu_biz_category = 'supply_chain'
 WHERE del_flag = '0' AND menu_id = '24034';
+/
+-- 订单作废：默认医院及医院角色开放，供应商不默认开放
+UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all_hospital',
+  default_open_hospital = '1', hospital_admin_only = '0', default_open_supplier = '0', supplier_admin_only = '0', menu_biz_category = 'supply_chain'
+WHERE del_flag = '0' AND menu_id = '24008';
 /
 UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '1', default_open_scope = 'all_hospital', menu_biz_category = 'settlement'
 WHERE del_flag = '0' AND perms LIKE 'settlement:%';
@@ -648,6 +662,13 @@ SELECT REPLACE(UUID(), '-', ''), CAST(su.supplier_id AS CHAR), NULL, CAST(m.menu
 FROM scm_supplier_user su
 JOIN sys_menu m ON m.menu_id IN ('2306','23061') AND (m.del_flag = '0' OR m.del_flag IS NULL)
 WHERE (su.del_flag = '0' OR su.del_flag IS NULL);
+/
+-- F) 订单作废：为已有医院补齐菜单白名单（新建医院由 bootstrap 自动分配）
+INSERT IGNORE INTO scm_hospital_menu_auth (id, hospital_id, menu_id, create_by, create_time)
+SELECT REPLACE(UUID(), '-', ''), CAST(hu.hospital_id AS CHAR), CAST(m.menu_id AS CHAR), 'migration-order-void', NOW()
+FROM scm_hospital_user hu
+JOIN sys_menu m ON m.menu_id IN ('24008') AND (m.del_flag = '0' OR m.del_flag IS NULL)
+WHERE (hu.del_flag = '0' OR hu.del_flag IS NULL);
 /
 -- C) 平台菜单回收：医院/供应商角色不应持有 auth_type=platform 的菜单
 DELETE rm

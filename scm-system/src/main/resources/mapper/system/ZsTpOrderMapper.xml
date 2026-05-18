@@ -269,12 +269,89 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </if>
     </sql>
 
+    <!-- 第三方订单是否存在配送明细 -->
+    <sql id="zsTpOrderHasDelivery">
+        exists (
+            select 1 from scm_delivery_detail dd
+            inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
+            inner join zs_tp_order_detail l on l.id = dd.zs_order_detail_id
+            where l.order_id = z.id and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
+        )
+    </sql>
+
+    <!-- 选择第三方订单弹窗 sheet 页 -->
+    <sql id="zsTpOrderSheetTabBlock">
+        <choose>
+            <when test="params.sheetTab == 'void'">
+                and IFNULL(NULLIF(TRIM(z.void_status), ''), '0') = '1'
+                and not <include refid="zsTpOrderHasDelivery"/>
+            </when>
+            <when test="params.sheetTab == 'partialVoid'">
+                and IFNULL(NULLIF(TRIM(z.void_status), ''), '0') = '1'
+                and <include refid="zsTpOrderHasDelivery"/>
+            </when>
+            <when test="params.sheetTab == 'partial'">
+                and IFNULL(NULLIF(TRIM(z.void_status), ''), '0') = '0'
+                and exists (
+                    select 1 from scm_delivery_detail dd
+                    inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
+                    inner join zs_tp_order_detail l on l.id = dd.zs_order_detail_id
+                    where l.order_id = z.id and l.del_flag = '0' and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
+                )
+                and exists (
+                    select 1 from zs_tp_order_detail l
+                    where l.order_id = z.id and l.del_flag = '0' and ifnull(l.sl, 0) &gt; 0
+                    and (
+                        select coalesce(sum(dd.delivery_quantity), 0)
+                        from scm_delivery_detail dd
+                        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
+                        where dd.zs_order_detail_id = l.id and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
+                    ) &lt; ifnull(l.sl, 0)
+                )
+            </when>
+            <when test="params.sheetTab == 'done'">
+                and IFNULL(NULLIF(TRIM(z.void_status), ''), '0') = '0'
+                and not exists (
+                    select 1 from zs_tp_order_detail l
+                    where l.order_id = z.id and l.del_flag = '0' and ifnull(l.sl, 0) &gt; 0
+                    and (
+                        select coalesce(sum(dd.delivery_quantity), 0)
+                        from scm_delivery_detail dd
+                        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
+                        where dd.zs_order_detail_id = l.id and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
+                    ) &lt; ifnull(l.sl, 0)
+                )
+                and exists (
+                    select 1 from zs_tp_order_detail l2
+                    where l2.order_id = z.id and l2.del_flag = '0' and ifnull(l2.sl, 0) &gt; 0
+                )
+            </when>
+            <otherwise>
+                and IFNULL(NULLIF(TRIM(z.void_status), ''), '0') = '0'
+                and not exists (
+                    select 1 from scm_delivery_detail dd
+                    inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
+                    inner join zs_tp_order_detail l on l.id = dd.zs_order_detail_id
+                    where l.order_id = z.id and l.del_flag = '0' and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
+                )
+            </otherwise>
+        </choose>
+    </sql>
+
     <select id="selectZsTpOrderList" parameterType="com.scm.system.domain.ZsTpOrder" resultMap="ZsTpOrderResult">
         select <include refid="zsTpOrderJoinColumns"/>
         <include refid="zsTpOrderJoinFrom"/>
         <where>
             z.del_flag = '0'
-            and (z.void_status is null or z.void_status = '' or z.void_status = '0')
+            <choose>
+                <when test="params != null and params.sheetTab != null and params.sheetTab != ''">
+                    <include refid="zsTpOrderSheetTabBlock"/>
+                </when>
+                <otherwise>
+                    and (z.void_status is null or z.void_status = '' or z.void_status = '0')
+                    <include refid="zsTpOrderDeliveryFilterBlock"/>
+                </otherwise>
+            </choose>
             <if test="dh != null and dh != ''">
                 and z.dh like concat('%', #{dh}, '%')
             </if>
@@ -288,8 +365,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <include refid="zsTpOrderHospitalKeywordFilter"/>
             <include refid="zsTpOrderSupplierKeywordFilter"/>
             <include refid="zsTpOrderScopeFilters"/>
+            <if test="params == null or params.sheetTab == null or params.sheetTab == ''">
             <include refid="zsTpOrderConfirmVoidFilters"/>
-            <include refid="zsTpOrderDeliveryFilterBlock"/>
+            </if>
         </where>
         order by z.create_time desc
     </select>

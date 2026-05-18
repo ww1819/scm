@@ -5,6 +5,32 @@
 	<th:block th:include="include :: layout-latest-css" />
 	<style>
 		.select-list .select-time .scm-push-datetime { min-width: 172px; width: 172px; display: inline-block; vertical-align: middle; padding-left: 8px; height: 30px; line-height: 30px; border: 1px solid #e5e6e7; border-radius: 4px; }
+		.order-select-sheet-bar {
+			background: #fff;
+			border: 1px solid #e7eaec;
+			border-bottom: none;
+			padding: 0 10px;
+			margin-bottom: 0;
+		}
+		.order-select-sheet-bar .nav-tabs {
+			border-bottom: 1px solid #e7eaec;
+			margin-bottom: 0;
+		}
+		.order-select-sheet-bar .nav-tabs > li > a {
+			padding: 10px 16px;
+			color: #676a6c;
+			border-radius: 0;
+			margin-right: 2px;
+		}
+		.order-select-sheet-bar .nav-tabs > li.active > a,
+		.order-select-sheet-bar .nav-tabs > li.active > a:hover,
+		.order-select-sheet-bar .nav-tabs > li.active > a:focus {
+			color: #1ab394;
+			font-weight: 600;
+			border: 1px solid #e7eaec;
+			border-bottom-color: #fff;
+			background: #fff;
+		}
 	</style>
 </head>
 <body class="gray-bg">
@@ -12,6 +38,7 @@
 		<div class="row">
 			<div class="col-sm-12 search-collapse">
 				<form id="zs-order-form">
+					<input type="hidden" name="params[sheetTab]" id="sheetTab" value="none"/>
 					<div class="select-list">
 						<ul>
 							<li>
@@ -36,20 +63,32 @@
 								科室名称：<input type="text" name="ksmc"/>
 							</li>
 							<li>
-								配送进度：<select name="params[deliveryFilter]">
-									<option value="">全部</option>
-									<option value="none">未配送</option>
-									<option value="partial">部分配送</option>
-									<option value="done">已配送</option>
-								</select>
-							</li>
-							<li>
 								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
 								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetZs()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
 							</li>
 						</ul>
 					</div>
 				</form>
+			</div>
+
+			<div class="col-sm-12 order-select-sheet-bar">
+				<ul class="nav nav-tabs" id="zsOrderSheetTabs" role="tablist">
+					<li role="presentation" class="active">
+						<a href="javascript:void(0)" data-sheet="none" onclick="switchZsOrderSheet('none')">未配送</a>
+					</li>
+					<li role="presentation">
+						<a href="javascript:void(0)" data-sheet="partial" onclick="switchZsOrderSheet('partial')">部分配送</a>
+					</li>
+					<li role="presentation">
+						<a href="javascript:void(0)" data-sheet="done" onclick="switchZsOrderSheet('done')">全部配送</a>
+					</li>
+					<li role="presentation">
+						<a href="javascript:void(0)" data-sheet="void" onclick="switchZsOrderSheet('void')">已作废</a>
+					</li>
+					<li role="presentation">
+						<a href="javascript:void(0)" data-sheet="partialVoid" onclick="switchZsOrderSheet('partialVoid')">部分作废</a>
+					</li>
+				</ul>
 			</div>
 
 	        <div class="col-sm-12 select-table table-striped">
@@ -65,6 +104,7 @@
 	<script th:inline="javascript">
 		var prefix = ctx + "delivery/delivery";
 		var zsTableId = "bootstrap-table";
+		var currentSheetTab = 'none';
 
 		function normalizePushRangeParams(obj, beginSel, endSel) {
 			if (!obj || typeof obj !== 'object') {
@@ -120,6 +160,33 @@
 			});
 		}
 
+		function isSheetSelectable(sheet) {
+			return sheet === 'none' || sheet === 'partial';
+		}
+
+		function switchZsOrderSheet(sheet) {
+			currentSheetTab = sheet || 'none';
+			$('#sheetTab').val(currentSheetTab);
+			$('#zsOrderSheetTabs li').removeClass('active');
+			$('#zsOrderSheetTabs a[data-sheet="' + currentSheetTab + '"]').parent().addClass('active');
+			updateZsSheetCheckboxColumn();
+			$.table.search();
+		}
+
+		function updateZsSheetCheckboxColumn() {
+			var $table = $('#' + zsTableId);
+			if (!$table.length || !$table.bootstrapTable('getOptions')) {
+				return;
+			}
+			if (isSheetSelectable(currentSheetTab)) {
+				$table.bootstrapTable('showColumn', 'checkbox');
+			} else {
+				$table.bootstrapTable('uncheckAll');
+				$table.bootstrapTable('hideColumn', 'checkbox');
+				$("#rowIds").val('');
+			}
+		}
+
 		$(function() {
 			initZsPushRangeLaydate();
 		    initZsTable();
@@ -149,7 +216,8 @@
 		        rememberSelected: true,
 		        maintainSelected: true,
 		        columns: [{
-		            checkbox: true
+		            checkbox: true,
+		            field: 'checkbox'
 		        },
 		        {
 		            field: 'id',
@@ -227,6 +295,14 @@
 		            title: 'SCM供应商编码'
 		        },
 		        {
+		            field: 'voidStatus',
+		            title: '作废状态',
+		            align: 'center',
+		            formatter: function (v) {
+		                return (v === '1' || v === 1) ? '<span class="label label-danger">已作废</span>' : '<span class="label label-success">正常</span>';
+		            }
+		        },
+		        {
 		            field: 'sheetJe',
 		            title: '金额',
 		            formatter: function (value, row, index) {
@@ -238,8 +314,12 @@
 		        }]
 		    };
 		    $.table.init(options);
+		    updateZsSheetCheckboxColumn();
 
 		    $("#" + zsTableId).on("check.bs.table check-all.bs.table uncheck.bs.table uncheck-all.bs.table", function (e, rowsAfter, rowsBefore) {
+		        if (!isSheetSelectable(currentSheetTab)) {
+		            return;
+		        }
 		        var rows = $.common.equals("uncheck-all", e.type) ? rowsBefore : rowsAfter;
 		        var rowIds = $.table.affectedRowIds(rows);
 		        $("#rowIds").val(rowIds.join(','));
@@ -247,10 +327,15 @@
 		}
 
 		function resetZs() {
+			var sheet = currentSheetTab;
 			if (typeof resetDate === 'function') {
 				resetDate();
 			}
 			$("#zs-order-form")[0].reset();
+			$('#sheetTab').val(sheet);
+			currentSheetTab = sheet;
+			$('#zsOrderSheetTabs li').removeClass('active');
+			$('#zsOrderSheetTabs a[data-sheet="' + sheet + '"]').parent().addClass('active');
 			$.table.search();
 		}
 	</script>

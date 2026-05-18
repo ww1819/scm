@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.scm.common.annotation.Log;
 import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
+import com.scm.common.exception.ServiceException;
 import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.enums.BusinessType;
 import com.scm.common.utils.poi.ExcelUtil;
@@ -44,6 +45,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 @RequestMapping("/order/order")
 public class OrderController extends BaseController
 {
+    private static final String ORDER_MUTATION_DISABLED_MSG = "订单不支持新增、修改或删除，仅可接收或作废";
+
     private String prefix = "order";
 
     @Autowired
@@ -113,8 +116,7 @@ public class OrderController extends BaseController
     @GetMapping("/add")
     public String add(ModelMap mmap)
     {
-        fillScopedHospitalSupplier(mmap);
-        return prefix + "/add";
+        throw new ServiceException(ORDER_MUTATION_DISABLED_MSG);
     }
 
     /**
@@ -126,23 +128,7 @@ public class OrderController extends BaseController
     @ResponseBody
     public AjaxResult addSave(@Validated Order order, @RequestParam(value = "orderDetailsJson", required = false) String orderDetailsJson)
     {
-        // 解析订单明细JSON
-        if (orderDetailsJson != null && !orderDetailsJson.isEmpty())
-        {
-            try
-            {
-                ObjectMapper objectMapper = new ObjectMapper();
-                List<OrderDetail> orderDetails = objectMapper.readValue(orderDetailsJson, 
-                    new TypeReference<List<OrderDetail>>() {});
-                order.setOrderDetails(orderDetails);
-            }
-            catch (Exception e)
-            {
-                return error("解析订单明细数据失败：" + e.getMessage());
-            }
-        }
-        order.setCreateBy(getLoginName());
-        return toAjax(orderService.insertOrder(order));
+        return error(ORDER_MUTATION_DISABLED_MSG);
     }
 
     /**
@@ -187,10 +173,7 @@ public class OrderController extends BaseController
     @GetMapping("/edit/{orderId}")
     public String edit(@PathVariable("orderId") Long orderId, ModelMap mmap)
     {
-        Order order = orderService.selectOrderById(orderId);
-        mmap.put("order", order);
-        fillScopedHospitalSupplier(mmap);
-        return prefix + "/edit";
+        throw new ServiceException(ORDER_MUTATION_DISABLED_MSG);
     }
 
     private void fillScopedHospitalSupplier(ModelMap mmap)
@@ -267,23 +250,7 @@ public class OrderController extends BaseController
     @ResponseBody
     public AjaxResult editSave(@Validated Order order, @RequestParam(value = "orderDetailsJson", required = false) String orderDetailsJson)
     {
-        // 解析订单明细JSON
-        if (orderDetailsJson != null && !orderDetailsJson.isEmpty())
-        {
-            try
-            {
-                ObjectMapper objectMapper = new ObjectMapper();
-                List<OrderDetail> orderDetails = objectMapper.readValue(orderDetailsJson, 
-                    new TypeReference<List<OrderDetail>>() {});
-                order.setOrderDetails(orderDetails);
-            }
-            catch (Exception e)
-            {
-                return error("解析订单明细数据失败：" + e.getMessage());
-            }
-        }
-        order.setUpdateBy(getLoginName());
-        return toAjax(orderService.updateOrder(order));
+        return error(ORDER_MUTATION_DISABLED_MSG);
     }
 
     /**
@@ -295,7 +262,7 @@ public class OrderController extends BaseController
     @ResponseBody
     public AjaxResult remove(String ids)
     {
-        return toAjax(orderService.deleteOrderByIds(ids));
+        return error(ORDER_MUTATION_DISABLED_MSG);
     }
 
 
@@ -318,6 +285,27 @@ public class OrderController extends BaseController
             }
         }
         return successCount > 0 ? success("成功接收 " + successCount + " 个订单") : error("接收订单失败");
+    }
+
+    /**
+     * 作废订单（已作废后不可再引用生成配送单）
+     */
+    @RequiresPermissions("order:order:void")
+    @Log(title = "订单作废", businessType = BusinessType.UPDATE)
+    @PostMapping("/void")
+    @ResponseBody
+    public AjaxResult voidOrder(String ids)
+    {
+        String[] orderIds = ids.split(",");
+        int successCount = 0;
+        for (String orderId : orderIds)
+        {
+            if (orderService.voidOrder(Long.parseLong(orderId.trim()), getLoginName()) > 0)
+            {
+                successCount++;
+            }
+        }
+        return successCount > 0 ? success("成功作废 " + successCount + " 个订单") : error("作废订单失败");
     }
 
     /**

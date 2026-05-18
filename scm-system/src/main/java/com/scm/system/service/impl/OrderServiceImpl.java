@@ -20,6 +20,7 @@ import com.scm.system.domain.OrderDetail;
 import com.scm.system.domain.HospitalSupplier;
 import com.scm.common.core.domain.entity.SysRole;
 import com.scm.system.domain.vo.OrderLineDeliveryQtyVo;
+import com.scm.system.mapper.DeliveryMapper;
 import com.scm.system.mapper.HospitalSupplierMapper;
 import com.scm.system.mapper.OrderDeliveryTraceMapper;
 import com.scm.system.mapper.OrderDetailMapper;
@@ -48,6 +49,9 @@ public class OrderServiceImpl implements IOrderService
 
     @Autowired
     private OrderDeliveryTraceMapper orderDeliveryTraceMapper;
+
+    @Autowired
+    private DeliveryMapper deliveryMapper;
 
     @Autowired
     private ScmBarcodeSeedService scmBarcodeSeedService;
@@ -234,58 +238,7 @@ public class OrderServiceImpl implements IOrderService
     @Transactional
     public int insertOrder(Order order)
     {
-        assertSupplierHospitalSubmit(order);
-        if (StringUtils.isEmpty(order.getOrderStatus()))
-        {
-            order.setOrderStatus("0"); // 默认待接收
-        }
-        if (order.getOrderDate() == null)
-        {
-            order.setOrderDate(DateUtils.getNowDate());
-        }
-        // 如果订单编号为空，自动生成唯一编号
-        if (StringUtils.isEmpty(order.getOrderNo()))
-        {
-            order.setOrderNo(generateOrderNo());
-        }
-        order.setCreateTime(DateUtils.getNowDate());
-        
-        // 计算订单金额
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        if (order.getOrderDetails() != null && !order.getOrderDetails().isEmpty())
-        {
-            for (OrderDetail detail : order.getOrderDetails())
-            {
-                if (detail.getPurchasePrice() != null && detail.getOrderQuantity() != null)
-                {
-                    BigDecimal amount = detail.getPurchasePrice().multiply(new BigDecimal(detail.getOrderQuantity()));
-                    detail.setAmount(amount);
-                    totalAmount = totalAmount.add(amount);
-                    detail.setRemainingQuantity(detail.getOrderQuantity());
-                }
-            }
-        }
-        order.setOrderAmount(totalAmount);
-        
-        int rows = orderMapper.insertOrder(order);
-
-        if (StringUtils.isNotEmpty(order.getTenantId()))
-        {
-            String wid = order.getWarehouseId() != null ? String.valueOf(order.getWarehouseId()) : "";
-            scmBarcodeSeedService.ensureTenantSeedRowIfAbsent(order.getTenantId(), wid);
-        }
-        
-        // 保存订单明细
-        if (order.getOrderDetails() != null && !order.getOrderDetails().isEmpty())
-        {
-            for (OrderDetail detail : order.getOrderDetails())
-            {
-                detail.setOrderId(order.getOrderId());
-            }
-            orderDetailMapper.batchInsertOrderDetail(order.getOrderDetails());
-        }
-        
-        return rows;
+        throw new ServiceException("订单不支持新增，仅可接收或作废");
     }
 
     /**
@@ -298,45 +251,7 @@ public class OrderServiceImpl implements IOrderService
     @Transactional
     public int updateOrder(Order order)
     {
-        assertSupplierHospitalSubmit(order);
-        order.setUpdateTime(DateUtils.getNowDate());
-        
-        // 如果修改了明细，重新计算订单金额并保存明细
-        if (order.getOrderDetails() != null && !order.getOrderDetails().isEmpty())
-        {
-            BigDecimal totalAmount = BigDecimal.ZERO;
-            for (OrderDetail detail : order.getOrderDetails())
-            {
-                if (detail.getPurchasePrice() != null && detail.getOrderQuantity() != null)
-                {
-                    BigDecimal amount = detail.getPurchasePrice().multiply(new BigDecimal(detail.getOrderQuantity()));
-                    detail.setAmount(amount);
-                    totalAmount = totalAmount.add(amount);
-                    // 设置订单ID
-                    detail.setOrderId(order.getOrderId());
-                    // 如果剩余待配送数未设置，默认等于订货数量
-                    if (detail.getRemainingQuantity() == null)
-                    {
-                        detail.setRemainingQuantity(detail.getOrderQuantity());
-                    }
-                }
-            }
-            order.setOrderAmount(totalAmount);
-            
-            // 删除旧的明细
-            orderDetailMapper.deleteOrderDetailByOrderId(order.getOrderId());
-            
-            // 插入新的明细
-            orderDetailMapper.batchInsertOrderDetail(order.getOrderDetails());
-        }
-        else
-        {
-            // 如果没有明细，删除所有旧明细
-            orderDetailMapper.deleteOrderDetailByOrderId(order.getOrderId());
-            order.setOrderAmount(BigDecimal.ZERO);
-        }
-        
-        return orderMapper.updateOrder(order);
+        throw new ServiceException("订单不支持修改，仅可接收或作废");
     }
 
     /**
@@ -349,13 +264,7 @@ public class OrderServiceImpl implements IOrderService
     @Transactional
     public int deleteOrderByIds(String ids)
     {
-        String[] orderIds = Convert.toStrArray(ids);
-        for (String orderId : orderIds)
-        {
-            // 删除订单明细
-            orderDetailMapper.deleteOrderDetailByOrderId(Long.parseLong(orderId));
-        }
-        return orderMapper.deleteOrderByIds(orderIds);
+        throw new ServiceException("订单不支持删除，仅可接收或作废");
     }
 
     /**
@@ -368,9 +277,7 @@ public class OrderServiceImpl implements IOrderService
     @Transactional
     public int deleteOrderById(Long orderId)
     {
-        // 删除订单明细
-        orderDetailMapper.deleteOrderDetailByOrderId(orderId);
-        return orderMapper.deleteOrderById(orderId);
+        throw new ServiceException("订单不支持删除，仅可接收或作废");
     }
 
     /**
@@ -390,6 +297,76 @@ public class OrderServiceImpl implements IOrderService
         order.setOrderStatus("1"); // 已接收
         order.setUpdateTime(DateUtils.getNowDate());
         return orderMapper.updateOrder(order);
+    }
+
+    @Override
+    public int autoReceiveOrderOnDeliveryReference(Long orderId, String receiverLoginName)
+    {
+        if (orderId == null)
+        {
+            return 0;
+        }
+        Order order = orderMapper.selectOrderById(orderId);
+        if (order == null || !"0".equals(StringUtils.trimToNull(order.getOrderStatus())))
+        {
+            return 0;
+        }
+        order.setOrderStatus("1");
+        order.setUpdateBy(StringUtils.trimToEmpty(receiverLoginName));
+        order.setUpdateTime(DateUtils.getNowDate());
+        return orderMapper.updateOrder(order);
+    }
+
+    /**
+     * 作废订单：仅医院可操作；配送中/已完成/已作废不可作废；已有配送单不可作废。
+     */
+    @Override
+    public int voidOrder(Long orderId, String voidBy)
+    {
+        if (orderId == null)
+        {
+            return 0;
+        }
+        Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());
+        if (hospitalCtx == null)
+        {
+            throw new ServiceException("仅医院账号可作废订单");
+        }
+        Order order = orderMapper.selectOrderById(orderId);
+        if (order == null)
+        {
+            return 0;
+        }
+        assertOrderViewScope(order);
+        if (!hospitalCtx.equals(order.getHospitalId()))
+        {
+            throw new ServiceException("无权作废该订单");
+        }
+        String status = StringUtils.trimToNull(order.getOrderStatus());
+        if ("4".equals(status))
+        {
+            throw new ServiceException("作废失败：订单已作废或不存在，订单号：" + StringUtils.trimToEmpty(order.getOrderNo()));
+        }
+        if ("2".equals(status) || "3".equals(status))
+        {
+            throw new ServiceException("配送中或已完成的订单不允许作废，订单号：" + StringUtils.trimToEmpty(order.getOrderNo()));
+        }
+        int deliveryCnt = deliveryMapper.countDeliveryByOrderId(orderId);
+        if (deliveryCnt > 0)
+        {
+            throw new ServiceException("该订单已存在配送单（" + deliveryCnt + " 条），不允许作废。订单号："
+                + StringUtils.trimToEmpty(order.getOrderNo()));
+        }
+        order.setOrderStatus("4");
+        order.setUpdateBy(StringUtils.trimToEmpty(voidBy));
+        order.setUpdateTime(DateUtils.getNowDate());
+        int n = orderMapper.updateOrder(order);
+        if (n <= 0)
+        {
+            throw new ServiceException("作废失败，数据可能已变更，请刷新后重试。订单号："
+                + StringUtils.trimToEmpty(order.getOrderNo()));
+        }
+        return n;
     }
 
     /**

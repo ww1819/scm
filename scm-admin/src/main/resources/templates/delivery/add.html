@@ -8,11 +8,15 @@
 			padding: 8px 12px !important;
 			white-space: nowrap;
 		}
-		/* 主/辅条码：加宽、单元格与表头允许换行 */
+		/* 主/辅条码、国家医保编码、备注：加宽、单元格与表头允许换行，与多行文本框一致 */
 		#detail-table th[data-field="mainBarcode"],
 		#detail-table th[data-field="auxBarcode"],
+		#detail-table th[data-field="nationalInsuranceCode"],
+		#detail-table th[data-field="remark"],
 		#detail-table td[data-field="mainBarcode"],
-		#detail-table td[data-field="auxBarcode"] {
+		#detail-table td[data-field="auxBarcode"],
+		#detail-table td[data-field="nationalInsuranceCode"],
+		#detail-table td[data-field="remark"] {
 			white-space: normal !important;
 			word-break: break-all;
 			vertical-align: top !important;
@@ -57,17 +61,23 @@
 			min-width: 140px;
 			max-width: 180px;
 		}
-		/* 明细表区域：外层容器承担横向+纵向滚动，滚动条可见 */
+		/* 明细表区域：外层容器承担横向+纵向滚动，滚动条始终在可视区内 */
 		.detail-table-scroll-outer {
-			overflow: auto !important;
+			overflow-x: auto !important;
+			overflow-y: hidden !important;
+			display: flex;
+			flex-direction: column;
 			width: 100%;
-			max-height: min(520px, calc(100vh - 200px));
-			min-height: 200px;
+			flex: 1 1 auto;
+			min-height: 160px;
+			max-height: none;
 			border: 1px solid #ddd;
 			border-radius: 4px;
 			-webkit-overflow-scrolling: touch;
 			scrollbar-width: thin;
 			-ms-overflow-style: auto;
+			box-sizing: border-box;
+			scrollbar-gutter: stable;
 		}
 		.detail-table-scroll-outer::-webkit-scrollbar {
 			width: 10px !important;
@@ -83,7 +93,7 @@
 			border-radius: 5px;
 		}
 		.detail-table-scroll-outer .bootstrap-table .fixed-table-container {
-			min-width: 2600px;
+			min-width: 3000px;
 		}
 		/* 序号、操作列冻结在左侧（位于产品编码前） */
 		.detail-table-scroll-outer #detail-table .fixed-table-header thead th[data-field="index"],
@@ -116,35 +126,13 @@
 		.detail-table-scroll-outer #detail-table.table-striped > tbody > tr:nth-child(odd) > td[data-field="operation"] {
 			background-color: #f9f9f9 !important;
 		}
-		/* 明细列表仅在外层滚动，避免内外双滚动条且内层滚动条被样式吞掉 */
-		.detail-table-scroll-outer .fixed-table-container,
-		.detail-table-scroll-outer .fixed-table-body {
-			overflow: visible !important;
-			max-height: none !important;
-		}
-		/* 固定表头 */
-		#detail-table .fixed-table-header {
-			position: sticky !important;
-			top: 0 !important;
-			z-index: 100 !important;
-			background-color: #fff !important;
-			overflow: visible !important;
-			will-change: transform;
-		}
-		#detail-table .fixed-table-header table {
-			margin-bottom: 0 !important;
-		}
-		#detail-table .fixed-table-header thead {
-			position: sticky !important;
-			top: 0 !important;
-			z-index: 100 !important;
-		}
-		#detail-table .fixed-table-header th {
-			background-color: #f5f5f5 !important;
-			border-bottom: 2px solid #ddd !important;
-			position: sticky !important;
-			top: 0 !important;
-			z-index: 100 !important;
+		/* 明细表高度由 bootstrap-table height 控制，表头固定、表体滚动 */
+		.detail-table-scroll-outer > .bootstrap-table,
+		.detail-table-scroll-outer #detail-table.bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
+			height: 100% !important;
+			width: 100%;
 		}
 		/* 固定左侧列 - 表头 */
 		#detail-table .fixed-table-header .fixed-columns-left {
@@ -225,17 +213,10 @@
 			position: sticky !important;
 			right: 0 !important;
 		}
-		/* 表格容器滚动 */
 		#detail-table .fixed-table-container {
-			overflow: visible !important;
 			position: relative !important;
 		}
-		/* 表头容器 - 固定不滚动 */
 		#detail-table .fixed-table-header {
-			position: sticky !important;
-			top: 0 !important;
-			z-index: 100 !important;
-			background-color: #fff !important;
 			margin-bottom: 0 !important;
 		}
 		/* 仅隐藏左侧固定列内的滚动条，避免双滚动条；主表区域保留滚动条 */
@@ -426,6 +407,38 @@
 			min-width: 30px !important;
 			min-height: 30px !important;
 		}
+		/* 页面布局：表单固定高度，明细区 flex 占满剩余空间，避免横向滚动条被裁切 */
+		body.delivery-form-page {
+			overflow: hidden;
+			height: 100%;
+		}
+		.main-content.delivery-form-main {
+			display: flex;
+			flex-direction: column;
+			height: calc(100vh - 80px);
+			min-height: 0;
+			overflow: hidden;
+			padding: 15px 20px;
+			background-color: #f5f5f5;
+			box-sizing: border-box;
+		}
+		.delivery-form-main > .form-card {
+			flex: 0 0 auto;
+		}
+		.delivery-form-main > .table-card {
+			flex: 1 1 auto;
+			min-height: 0;
+			display: flex;
+			flex-direction: column;
+			margin-bottom: 0;
+		}
+		.table-card .table-card-toolbar {
+			flex: 0 0 auto;
+		}
+		.table-card .detail-table-scroll-outer {
+			flex: 1 1 auto;
+			min-height: 0;
+		}
 		/* 页面布局优化 */
 		.main-content {
 			padding: 15px 20px;
@@ -457,6 +470,30 @@
 			border-radius: 4px;
 			padding: 20px;
 			box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+			overflow: visible;
+			min-height: 0;
+		}
+		.detail-table-scroll-outer .bootstrap-table .fixed-table-header {
+			background-color: #f5f5f5 !important;
+			box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+			z-index: 20 !important;
+		}
+		.detail-table-scroll-outer .bootstrap-table .fixed-table-header table {
+			margin-bottom: 0 !important;
+			background-color: #f5f5f5 !important;
+		}
+		.detail-table-scroll-outer .bootstrap-table .fixed-table-header th {
+			background-color: #f5f5f5 !important;
+			border-bottom: 2px solid #ddd !important;
+		}
+		.detail-table-scroll-outer .fixed-table-header thead th[data-field="index"] {
+			z-index: 252 !important;
+		}
+		.detail-table-scroll-outer .fixed-table-header thead th[data-field="operation"] {
+			z-index: 251 !important;
+		}
+		.detail-table-scroll-outer .bootstrap-table .fixed-table-container {
+			min-width: 3000px;
 		}
 		/* 按钮组样式优化 */
 		.btn-group-custom {
@@ -485,23 +522,14 @@
 			min-width: 100px;
 			padding: 8px 20px;
 		}
-		/* ========= 明细表滚动覆盖：横向条在外层底部，表体不限高 ========= */
-		.detail-table-scroll-outer #detail-table .fixed-table-body,
-		.detail-table-scroll-outer #detail-table .fixed-table-container,
-		.detail-table-scroll-outer .bootstrap-table .fixed-table-body,
+		/* 宽表横向滚动；纵向由 bootstrap-table 表体承担，勿覆盖 overflow */
 		.detail-table-scroll-outer .bootstrap-table .fixed-table-container {
-			overflow: visible !important;
-			max-height: none !important;
-			height: auto !important;
-		}
-		.detail-table-scroll-outer {
-			overflow-x: auto !important;
-			overflow-y: auto !important;
+			min-width: 3000px;
 		}
 	</style>
 </head>
-<body style="overflow: hidden;">
-    <div class="main-content" style="overflow: hidden; height: calc(100vh - 80px);">
+<body class="gray-bg delivery-form-page">
+    <div class="main-content delivery-form-main">
         <form id="form-delivery-add" class="form-horizontal">
             <input type="hidden" name="orderId" id="orderId" value="">
             <input type="hidden" name="zsOrderId" id="zsOrderId" value="">
@@ -629,7 +657,7 @@
         </form>
 
         <div class="table-card">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+            <div class="table-card-toolbar" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; flex-shrink: 0;">
                 <h4 class="form-header h4" style="margin: 0; border-bottom: 2px solid #5cb85c;">详细信息列表</h4>
                 <div class="btn-group-custom">
                     <button type="button" class="btn btn-sm btn-info" onclick="printDelivery()" id="print-delivery-btn"><i class="fa fa-print"></i> 打印配送单</button>
@@ -658,6 +686,42 @@
 	            .replace(/&/g, '&amp;')
 	            .replace(/</g, '&lt;')
 	            .replace(/>/g, '&gt;');
+	    }
+
+	    /** 明细表可视高度：供 bootstrap-table height 固定表头 */
+	    function calculateDeliveryDetailTableHeight() {
+	        var $outer = $('.detail-table-scroll-outer');
+	        if ($outer.length === 0) {
+	            return 480;
+	        }
+	        var h = $outer.innerHeight();
+	        if (!h || h < 1) {
+	            var top = $outer.offset().top || 0;
+	            h = $(window).height() - top - 20;
+	        }
+	        return Math.max(Math.floor(h - 6), 200);
+	    }
+
+	    function resetDeliveryDetailTableHeight() {
+	        var $table = $('#detail-table');
+	        if ($table.length === 0) {
+	            return;
+	        }
+	        try {
+	            if (!$table.bootstrapTable('getOptions')) {
+	                return;
+	            }
+	        } catch (e) {
+	            return;
+	        }
+	        var h = calculateDeliveryDetailTableHeight();
+	        $table.bootstrapTable('resetView', { height: h });
+	    }
+
+	    function scheduleResetDeliveryDetailTableHeight() {
+	        setTimeout(resetDeliveryDetailTableHeight, 0);
+	        setTimeout(resetDeliveryDetailTableHeight, 120);
+	        setTimeout(resetDeliveryDetailTableHeight, 400);
 	    }
 
 	    // 初始化日期选择器
@@ -749,9 +813,7 @@
 	            }
 	            $("input[name='deliveryAmount']").val(totalAmount.toFixed(2));
 	            $('#detail-table').bootstrapTable('load', allData);
-	            try {
-	                $('#detail-table').bootstrapTable('resetView');
-	            } catch (e) { /* 旧版无此方法时忽略 */ }
+	            scheduleResetDeliveryDetailTableHeight();
 	            setTimeout(function() {
 	                if (typeof fillOperationColumnImmediate === 'function') fillOperationColumnImmediate();
 	                if (typeof fillOperationColumn === 'function') fillOperationColumn();
@@ -865,20 +927,7 @@
 	                        }
 	                    }
 
-	                    // 尝试多种方式查找操作列单元格
-	                    var $operationCell = $tr.find('td').first();
-	                    if ($operationCell.length === 0) {
-	                        $operationCell = $tr.find('td:last-child');
-	                    }
-	                    if ($operationCell.length === 0) {
-	                        $operationCell = $tr.find('td[data-field="operation"]');
-	                    }
-	                    if ($operationCell.length === 0) {
-	                        var allCells = $tr.find('td');
-	                        if (allCells.length > 0) {
-	                            $operationCell = allCells.last();
-	                        }
-	                    }
+	                    var $operationCell = $tr.find('td[data-field="operation"]');
 
 	                    if ($operationCell.length > 0) {
 	                        // 强制填充，无论是否为空
@@ -898,65 +947,24 @@
 	            });
 	        });
 
-	        // 方法2: 处理主表格中的操作列（最后一列）
-	        var mainTableRows = $('#detail-table tbody tr');
-	        console.log('Main table rows:', mainTableRows.length); // 调试信息
-
-	        mainTableRows.each(function() {
-	            var $tr = $(this);
-	            var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : $tr.index();
-	            // 如果 rowIndex 无效，尝试从 tr 的 data-index 属性获取
-	            if (rowIndex === undefined || rowIndex === null) {
-	                rowIndex = $tr.attr('data-index');
-	                if (rowIndex === undefined) {
-	                    rowIndex = $tr.index();
-	                }
-	            }
-	            // 尝试多种方式找到操作列
-	            var $operationCell = $tr.find('td[data-field="operation"]');
-	            if ($operationCell.length === 0) {
-	                $operationCell = $tr.find('td:last-child');
-	            }
-	            // 如果还是找不到，尝试通过列索引（最后一列应该是操作列）
-	            if ($operationCell.length === 0) {
-	                var $allCells = $tr.find('td');
-	                if ($allCells.length > 0) {
-	                    $operationCell = $allCells.last();
-	                }
-	            }
-	            if ($operationCell.length > 0) {
-	                // 强制填充操作列，确保操作列有内容（移除条件检查，始终填充）
-	                var btnHtml = deliveryDetailOperationHtml(rowIndex);
-	                $operationCell.html(btnHtml);
-	                console.log('Filled main table cell for row:', rowIndex, 'Cell:', $operationCell[0]); // 调试信息
-	            } else {
-	                console.log('No operation cell found in main table for row:', rowIndex); // 调试信息
-	            }
-	        });
-
-	        // 方法3: 通过列数判断最后一列是否是操作列
+	        // 方法2: 主表格仅填充 data-field=operation（操作列在序号后，非最后一列）
 	        $('#detail-table tbody tr').each(function() {
 	            var $tr = $(this);
 	            var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : $tr.index();
-	            // 如果 rowIndex 无效，尝试从 tr 的 data-index 属性获取
 	            if (rowIndex === undefined || rowIndex === null) {
 	                rowIndex = $tr.attr('data-index');
 	                if (rowIndex === undefined) {
 	                    rowIndex = $tr.index();
 	                }
 	            }
-	            var $allCells = $tr.find('td');
-	            // 检查最后一列是否是操作列（通过列数判断，总共15列，最后一列是操作列）
-	            if ($allCells.length >= 15) {
-	                var $lastCell = $allCells.last();
-	                // 强制填充，确保操作列有内容（移除条件检查，始终填充）
+	            var $operationCell = $tr.find('td[data-field="operation"]');
+	            if ($operationCell.length > 0) {
 	                var btnHtml = deliveryDetailOperationHtml(rowIndex);
-	                $lastCell.html(btnHtml);
-	                console.log('Filled last cell for row:', rowIndex, 'Cell count:', $allCells.length, 'Cell:', $lastCell[0]); // 调试信息
+	                $operationCell.html(btnHtml);
 	            }
 	        });
 
-	        // 方法4: 直接查找所有可能的操作列位置并填充
+	        // 方法3: 直接查找所有可能的操作列位置并填充
 	        $('#detail-table, .fixed-columns-right').find('td[data-field="operation"]').each(function() {
 	            var $cell = $(this);
 	            var $tr = $cell.closest('tr');
@@ -1007,6 +1015,7 @@
 	            showToggle: false, // 不显示切换视图按钮
 	            showColumns: false, // 不显示列选择按钮
 	            striped: true, // 斑马纹
+	            height: calculateDeliveryDetailTableHeight(),
 	            columns: [{
 	                field: 'index',
 	                title: '序号',
@@ -1216,13 +1225,41 @@
 	                title: '型号',
 	                align: 'center',
 	                width: 120
-	            }, {
+	            }, 	            {
 	                field: 'registerNo',
 	                title: '注册证号',
 	                align: 'center',
 	                width: 150,
 	                formatter: function(value, row, index) {
 	                    return value || '-';
+	                }
+	            },
+	            {
+	                field: 'nationalInsuranceCode',
+	                title: '国家医保编码',
+	                align: 'left',
+	                width: 300,
+	                cellStyle: function() {
+	                    return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'vertical-align': 'top' } };
+	                },
+	                formatter: function(value, row, index) {
+	                    var safe = escapeHtmlForBarcode(value != null ? String(value) : '');
+	                    return '<textarea class="form-control input-sm barcode-textarea" rows="3" maxlength="128" ' +
+	                           'onblur="updateNationalInsuranceCode(this, ' + index + ')">' + safe + '</textarea>';
+	                }
+	            },
+	            {
+	                field: 'remark',
+	                title: '备注',
+	                align: 'left',
+	                width: 300,
+	                cellStyle: function() {
+	                    return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'vertical-align': 'top' } };
+	                },
+	                formatter: function(value, row, index) {
+	                    var safe = escapeHtmlForBarcode(value != null ? String(value) : '');
+	                    return '<textarea class="form-control input-sm barcode-textarea" rows="3" maxlength="500" ' +
+	                           'onblur="updateDetailRemark(this, ' + index + ')">' + safe + '</textarea>';
 	                }
 	            }]
 	        };
@@ -1248,35 +1285,13 @@
                 return;
             }
 
-            // 方法1: 直接查找固定列中的所有td并填充
-	            $('.fixed-columns-right tbody tr, .fixed-columns-right tr').each(function(index) {
-	                var $tr = $(this);
-	                var $td = $tr.find('td').first();
-	                if ($td.length > 0) {
-	                    var rowIndex = $tr.data('index') || $tr.attr('data-index') || index;
-	                    var btnHtml = deliveryDetailOperationHtml(rowIndex);
-	                    $td.html(btnHtml);
-	                    console.log('Filled fixed column row', index, 'with button');
-	                }
-	            });
-
-            // 方法2: 查找主表格中所有操作列单元格
-            $('#detail-table tbody tr').each(function(index) {
-                var $tr = $(this);
-                var rowIndex = $tr.data('index') || index;
-                // 查找操作列 - 最后一列或data-field="operation"的列
-                var $opCell = $tr.find('td[data-field="operation"]');
-                if ($opCell.length === 0) {
-                    var $allTds = $tr.find('td');
-                    if ($allTds.length >= 15) {
-                        $opCell = $allTds.last();
-                    }
+            $('#detail-table, .fixed-columns-left, .fixed-columns-right').find('td[data-field="operation"]').each(function() {
+                var $cell = $(this);
+                var $tr = $cell.closest('tr');
+                var rowIndex = $tr.data('index') || $tr.attr('data-index') || $tr.index();
+                if ($cell.find('.btn-operation-delete').length === 0) {
+                    $cell.html(deliveryDetailOperationHtml(rowIndex));
                 }
-	                if ($opCell.length > 0 && $opCell.find('.btn-operation-delete').length === 0) {
-	                    var btnHtml = deliveryDetailOperationHtml(rowIndex);
-	                    $opCell.html(btnHtml);
-	                    console.log('Filled main table row', index, 'with button');
-	                }
             });
         }
 
@@ -1285,20 +1300,9 @@
             $('#detail-table [data-toggle="tooltip"]').tooltip();
         }, 300);
 
-        // 同步表头滚动 - 确保表头固定
-        setTimeout(function() {
-            var $table = $('#detail-table');
-            var $header = $table.find('.fixed-table-header');
-            var $body = $table.find('.fixed-table-body');
-
-            // 监听表体滚动，同步表头水平滚动
-            if ($body.length && $header.length) {
-                $body.on('scroll', function() {
-                    var scrollLeft = $body.scrollLeft();
-                    $header.scrollLeft(scrollLeft);
-                });
-            }
-        }, 500);
+        $(window).off('resize.deliveryDetailTable').on('resize.deliveryDetailTable', resetDeliveryDetailTableHeight);
+        scheduleResetDeliveryDetailTableHeight();
+        $('#detail-table').on('post-body.bs.table load-success.bs.table refresh.bs.table', scheduleResetDeliveryDetailTableHeight);
 
         // 立即执行一次填充（延迟执行，确保表格已初始化）
         setTimeout(function() {
@@ -1457,6 +1461,36 @@
 	        var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : index;
 	        if (data[rowIndex]) {
 	            data[rowIndex].auxBarcode = value || '';
+	        }
+	    }
+
+	    function updateNationalInsuranceCode(input, index) {
+	        var value = $(input).val();
+	        if (value && value.length > 128) {
+	            $.modal.alertWarning('国家医保编码不能超过128个字符');
+	            $(input).focus();
+	            return;
+	        }
+	        var $tr = $(input).closest('tr');
+	        var data = $('#detail-table').bootstrapTable('getData');
+	        var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : index;
+	        if (data[rowIndex]) {
+	            data[rowIndex].nationalInsuranceCode = value || '';
+	        }
+	    }
+
+	    function updateDetailRemark(input, index) {
+	        var value = $(input).val();
+	        if (value && value.length > 500) {
+	            $.modal.alertWarning('备注不能超过500个字符');
+	            $(input).focus();
+	            return;
+	        }
+	        var $tr = $(input).closest('tr');
+	        var data = $('#detail-table').bootstrapTable('getData');
+	        var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : index;
+	        if (data[rowIndex]) {
+	            data[rowIndex].remark = value || '';
 	        }
 	    }
 
@@ -1843,7 +1877,9 @@
 	                                        productionDate: detail.productionDate || '',
 	                                        expireDate: detail.expireDate || '',
 	                                        manufacturer: detail.manufacturer || '',
-	                                        registerNo: detail.registerNo || ''
+	                                        registerNo: detail.registerNo || '',
+	                                        nationalInsuranceCode: detail.nationalInsuranceCode || '',
+	                                        remark: detail.remark || ''
 	                                    });
 	                                }
 	                                if (data.deliveryDetails.length > 0 && detailData.length === 0) {
@@ -1974,7 +2010,9 @@
 	                                        productionDate: '',
 	                                        expireDate: '',
 	                                        manufacturer: detail.manufacturer || '',
-	                                        registerNo: detail.registerNo || ''
+	                                        registerNo: detail.registerNo || '',
+	                                        nationalInsuranceCode: '',
+	                                        remark: detail.remark || ''
 	                                    };
 	                                    detailData.push(deliveryDetail);
 	                                }
