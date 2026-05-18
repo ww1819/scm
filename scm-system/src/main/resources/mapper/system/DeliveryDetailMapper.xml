@@ -74,6 +74,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
         <result property="registerNo"       column="register_no"         />
 
+        <result property="medicalInsuranceCode" column="medical_insurance_code"/>
+
         <result property="deliveryNo"       column="delivery_no"         />
 
         <result property="deliveryAuditStatus" column="delivery_audit_status"/>
@@ -108,7 +110,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
                d.delivery_quantity, d.price, d.amount, d.pack_coefficient, d.batch_no, d.main_barcode, d.aux_barcode, d.production_date,
 
-               d.expire_date, d.manufacturer_name, d.register_no,
+               d.expire_date, d.manufacturer_name, d.register_no, d.medical_insurance_code,
 
                del.delivery_no
 
@@ -128,7 +130,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
                d.delivery_quantity, d.price, d.amount, d.pack_coefficient, d.batch_no, d.main_barcode, d.aux_barcode, d.production_date,
 
-               d.expire_date, d.manufacturer_name, d.register_no,
+               d.expire_date, d.manufacturer_name, d.register_no, d.medical_insurance_code,
 
                del.delivery_no,
 

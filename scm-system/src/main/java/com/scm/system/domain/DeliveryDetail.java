@@ -102,6 +102,10 @@ public class DeliveryDetail extends BaseEntity
     @Excel(name = "注册证号")
     private String registerNo;
 
+    /** 医保编码 */
+    @Excel(name = "医保编码")
+    private String medicalInsuranceCode;
+
     /** 配送单号 */
     @Excel(name = "配送单号")
     private String deliveryNo;
@@ -360,6 +364,16 @@ public class DeliveryDetail extends BaseEntity
     public void setRegisterNo(String registerNo)
     {
         this.registerNo = registerNo;
+    }
+
+    public String getMedicalInsuranceCode()
+    {
+        return medicalInsuranceCode;
+    }
+
+    public void setMedicalInsuranceCode(String medicalInsuranceCode)
+    {
+        this.medicalInsuranceCode = medicalInsuranceCode;
     }
 
     public String getDeliveryNo()

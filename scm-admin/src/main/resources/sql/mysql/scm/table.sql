@@ -582,6 +582,7 @@ CREATE TABLE IF NOT EXISTS `scm_delivery_detail` (
   `manufacturer_id` bigint(20) DEFAULT NULL COMMENT '生产厂家ID',
   `manufacturer_name` varchar(200) DEFAULT '' COMMENT '生产厂家',
   `register_no` varchar(100) DEFAULT '' COMMENT '注册证号',
+  `medical_insurance_code` varchar(100) DEFAULT '' COMMENT '医保编码',
   `register_expire_date` date DEFAULT NULL COMMENT '注册证有效期',
   `package_spec` varchar(200) DEFAULT '' COMMENT '包装规格',
   `in_time` datetime DEFAULT NULL COMMENT '入库时间',

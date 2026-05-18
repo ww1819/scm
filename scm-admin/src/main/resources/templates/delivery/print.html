@@ -252,6 +252,22 @@
         .detail-table .td-empty-tip {
             padding: 12px;
         }
+
+        .detail-table th.cell-dual-date,
+        .detail-table td.cell-dual-date {
+            line-height: 1.15;
+            padding: 2px 1px;
+            vertical-align: middle;
+        }
+
+        .detail-table .dual-date-line {
+            display: block;
+            white-space: nowrap;
+        }
+
+        .detail-table .dual-date-line + .dual-date-line {
+            margin-top: 2px;
+        }
         
         /* 表格底部：合计行、签名行（与明细相同 1px 边框，不加粗） */
         .detail-table tbody tr.total-row-qty-amt td,
@@ -565,8 +581,8 @@
                             <th>数量</th>
                             <th>金额</th>
                             <th class="barcode-col">批号</th>
-                            <th>有效期</th>
-                            <th>生产日期</th>
+                            <th class="cell-dual-date">生产日期<br/>有效期</th>
+                            <th>医保编码</th>
                             <th>注册证号</th>
                             <th>厂家</th>
                         </tr>
@@ -584,8 +600,11 @@
                             <td th:text="${detail.deliveryQuantity != null ? #numbers.formatDecimal(detail.deliveryQuantity, 0, 0) : '-'}">200</td>
                             <td th:text="${detail.amount != null ? #numbers.formatDecimal(detail.amount, 1, 2) : '-'}">6000</td>
                             <td class="barcode-col" th:text="${detail.batchNo ?: '-'}">E7LK0610</td>
-                            <td th:text="${detail.expireDate != null ? #dates.format(detail.expireDate, 'yyyy/MM/dd') : '-'}">2024/10/5</td>
-                            <td th:text="${detail.productionDate != null ? #dates.format(detail.productionDate, 'yyyy/MM/dd') : '-'}">2024/10/5</td>
+                            <td class="cell-dual-date">
+                                <span class="dual-date-line" th:text="${detail.productionDate != null ? #dates.format(detail.productionDate, 'yyyy/MM/dd') : '-'}">2024/10/5</span>
+                                <span class="dual-date-line" th:text="${detail.expireDate != null ? #dates.format(detail.expireDate, 'yyyy/MM/dd') : '-'}">2025/10/5</span>
+                            </td>
+                            <td th:text="${detail.medicalInsuranceCode != null and !#strings.isEmpty(#strings.trim(detail.medicalInsuranceCode)) ? detail.medicalInsuranceCode : '-'}">-</td>
                             <td th:text="${detail.registerNo ?: '-'}">国械注准20193101882</td>
                             <td th:text="${detail.manufacturer ?: '-'}">北京费森尤斯医疗器械有限公司</td>
                         </tr>
