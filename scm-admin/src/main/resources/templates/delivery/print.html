@@ -206,7 +206,7 @@
         .detail-table {
             width: 100%;
             max-width: 100%;
-            table-layout: auto;
+            table-layout: fixed;
             border-collapse: collapse;
             border: 1px solid #000;
             font-size: var(--ps-ct);
@@ -267,6 +267,16 @@
 
         .detail-table .dual-date-line + .dual-date-line {
             margin-top: 2px;
+        }
+
+        .detail-table th.col-ins,
+        .detail-table td.col-ins,
+        .detail-table th.col-reg,
+        .detail-table td.col-reg,
+        .detail-table th.col-mfr,
+        .detail-table td.col-mfr {
+            min-width: 8mm;
+            word-break: break-all;
         }
         
         /* 表格底部：合计行、签名行（与明细相同 1px 边框，不加粗） */
@@ -571,6 +581,20 @@
             </div>
             <div class="table-section">
                 <table class="detail-table">
+                    <colgroup>
+                        <col style="width:4%"/>
+                        <col style="width:14%"/>
+                        <col style="width:12%"/>
+                        <col style="width:5%"/>
+                        <col style="width:6%"/>
+                        <col style="width:5%"/>
+                        <col style="width:7%"/>
+                        <col style="width:9%"/>
+                        <col style="width:10%"/>
+                        <col style="width:9%"/>
+                        <col style="width:11%"/>
+                        <col style="width:8%"/>
+                    </colgroup>
                     <thead>
                         <tr>
                             <th>序号</th>
@@ -582,9 +606,9 @@
                             <th>金额</th>
                             <th class="barcode-col">批号</th>
                             <th class="cell-dual-date">生产日期<br/>有效期</th>
-                            <th>医保编码</th>
-                            <th>注册证号</th>
-                            <th>厂家</th>
+                            <th class="col-ins">医保编码</th>
+                            <th class="col-reg">注册证号</th>
+                            <th class="col-mfr">厂家</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -604,9 +628,9 @@
                                 <span class="dual-date-line" th:text="${detail.productionDate != null ? #dates.format(detail.productionDate, 'yyyy/MM/dd') : '-'}">2024/10/5</span>
                                 <span class="dual-date-line" th:text="${detail.expireDate != null ? #dates.format(detail.expireDate, 'yyyy/MM/dd') : '-'}">2025/10/5</span>
                             </td>
-                            <td th:text="${detail.medicalInsuranceCode != null and !#strings.isEmpty(#strings.trim(detail.medicalInsuranceCode)) ? detail.medicalInsuranceCode : '-'}">-</td>
-                            <td th:text="${detail.registerNo ?: '-'}">国械注准20193101882</td>
-                            <td th:text="${detail.manufacturer ?: '-'}">北京费森尤斯医疗器械有限公司</td>
+                            <td class="col-ins" th:text="${detail.nationalInsuranceCode != null and !#strings.isEmpty(#strings.trim(detail.nationalInsuranceCode)) ? detail.nationalInsuranceCode : '-'}">-</td>
+                            <td class="col-reg" th:text="${detail.registerNo != null and !#strings.isEmpty(#strings.trim(detail.registerNo)) ? detail.registerNo : '-'}">-</td>
+                            <td class="col-mfr" th:text="${detail.manufacturer != null and !#strings.isEmpty(#strings.trim(detail.manufacturer)) ? detail.manufacturer : '-'}">-</td>
                         </tr>
                         <tr class="total-row-qty-amt" th:if="${pStat.last}">
                             <td colspan="5" style="font-weight: bold;">合计</td>
