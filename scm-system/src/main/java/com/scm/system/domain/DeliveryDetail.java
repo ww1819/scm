@@ -102,6 +102,10 @@ public class DeliveryDetail extends BaseEntity
     @Excel(name = "注册证号")
     private String registerNo;
 
+    /** 医保编码 */
+    @Excel(name = "医保编码")
+    private String medicalInsuranceCode;
+
     /** 国家医保编码 */
     @Excel(name = "国家医保编码")
     private String nationalInsuranceCode;

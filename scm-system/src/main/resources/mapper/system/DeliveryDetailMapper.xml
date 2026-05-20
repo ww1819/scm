@@ -76,6 +76,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="remark"           column="remark"              />
         <result property="nationalInsuranceCode" column="national_insurance_code" />
 
+        <result property="medicalInsuranceCode" column="medical_insurance_code"/>
+
         <result property="deliveryNo"       column="delivery_no"         />
 
         <result property="deliveryAuditStatus" column="delivery_audit_status"/>

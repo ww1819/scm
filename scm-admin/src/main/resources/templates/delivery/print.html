@@ -80,7 +80,7 @@
                 display: none;
             }
         }
-        
+
         html {
             overflow-x: auto;
         }
@@ -97,7 +97,7 @@
             flex-direction: column;
             align-items: center;
         }
-        
+
         /* 偏移用 margin 参与排版，避免 relative+left 画出页面右侧被裁切；
            横向正偏移时收窄宽度，避免 width100%+margin 超出父级再次裁切 */
         .print-container {
@@ -110,13 +110,13 @@
             box-sizing: border-box;
             overflow: visible;
         }
-        
+
         /* 标题区域：左条码、中标题、右输入码，左右对称 */
         .header {
             margin-bottom: 8px;
             padding-bottom: 0;
         }
-        
+
         .header-inner {
             display: grid;
             grid-template-columns: minmax(100px, 1fr) auto minmax(100px, 1fr);
@@ -124,32 +124,32 @@
             gap: 12px;
             width: 100%;
         }
-        
+
         .header-barcode {
             justify-self: start;
             text-align: left;
             max-width: 100%;
         }
-        
+
         .header-barcode svg {
             display: block;
             margin-right: auto;
             max-width: 100%;
             height: auto;
         }
-        
+
         .header-title {
             justify-self: center;
             text-align: center;
         }
-        
+
         .header-title h1 {
             font-size: var(--ps-title);
             font-weight: bold;
             margin: 0;
             padding: 4px 0;
         }
-        
+
         .input-code {
             justify-self: end;
             align-self: center;
@@ -158,11 +158,11 @@
             white-space: normal;
             word-break: break-all;
         }
-        
+
         .input-code-label {
             margin-right: 5px;
         }
-        
+
         /* 基本信息区域：三列网格 */
         .info-section {
             display: grid;
@@ -172,20 +172,20 @@
             margin-bottom: 8px;
             line-height: 1.25;
         }
-        
+
         .info-item {
             display: flex;
             align-items: flex-start;
             min-width: 0;
         }
-        
+
         .info-label {
             font-weight: bold;
             margin-right: 6px;
             white-space: nowrap;
             flex-shrink: 0;
         }
-        
+
         .info-value {
             flex: 1;
             min-width: 0;
@@ -194,7 +194,7 @@
             overflow: visible;
             text-overflow: clip;
         }
-        
+
         /* 表格区域 */
         .table-section {
             margin-top: 5px;
@@ -202,17 +202,17 @@
             width: 100%;
             box-sizing: border-box;
         }
-        
+
         .detail-table {
             width: 100%;
             max-width: 100%;
-            table-layout: auto;
+            table-layout: fixed;
             border-collapse: collapse;
             border: 1px solid #000;
             font-size: var(--ps-ct);
             margin: 0;
         }
-        
+
         .detail-table th,
         .detail-table td {
             border: 1px solid #000;
@@ -221,7 +221,7 @@
             vertical-align: middle;
             line-height: 1.15;
         }
-        
+
         .detail-table th {
             background-color: #f0f0f0;
             font-weight: bold;
@@ -229,11 +229,11 @@
             word-break: break-word;
             padding: 1px 2px;
         }
-        
+
         .detail-table td {
             word-break: break-word;
         }
-        
+
         .detail-table th.barcode-col,
         .detail-table td.barcode-col {
             min-width: 0;
@@ -244,26 +244,52 @@
             vertical-align: top;
             padding: 1px 2px;
         }
-        
+
         .detail-table tbody tr {
             height: auto;
         }
-        
+
         .detail-table .td-empty-tip {
             padding: 12px;
         }
-        
+
+        .detail-table th.cell-dual-date,
+        .detail-table td.cell-dual-date {
+            line-height: 1.15;
+            padding: 2px 1px;
+            vertical-align: middle;
+        }
+
+        .detail-table .dual-date-line {
+            display: block;
+            white-space: nowrap;
+        }
+
+        .detail-table .dual-date-line + .dual-date-line {
+            margin-top: 2px;
+        }
+
+        .detail-table th.col-ins,
+        .detail-table td.col-ins,
+        .detail-table th.col-reg,
+        .detail-table td.col-reg,
+        .detail-table th.col-mfr,
+        .detail-table td.col-mfr {
+            min-width: 8mm;
+            word-break: break-all;
+        }
+
         /* 表格底部：合计行、签名行（与明细相同 1px 边框，不加粗） */
         .detail-table tbody tr.total-row-qty-amt td,
         .detail-table tbody tr.print-signature-row td {
             padding: 2px 3px;
             vertical-align: top;
         }
-        
+
         .detail-table tbody tr.print-signature-row td {
             text-align: left;
         }
-        
+
         /* 验收内容区域（与明细表同宽）；暂时隐藏见 .acceptance-section--hidden */
         .acceptance-section {
             margin-bottom: 15px;
@@ -272,32 +298,32 @@
             width: 100%;
             box-sizing: border-box;
         }
-        
+
         .acceptance-section--hidden {
             display: none;
         }
-        
+
         .detail-table tbody tr.total-row-qty-amt td:nth-child(1) {
             text-align: left;
         }
-        
+
         .detail-table tbody tr.total-row-qty-amt td:nth-child(2),
         .detail-table tbody tr.total-row-qty-amt td:nth-child(3) {
             text-align: center;
         }
-        
+
         .detail-table tbody tr.total-row-qty-amt td.total-uppercase-summary {
             text-align: left;
             white-space: normal;
             word-break: break-all;
         }
-        
+
         .acceptance-title {
             font-weight: bold;
             font-size: var(--ps-hf);
             margin-bottom: 6px;
         }
-        
+
         .acceptance-item {
             display: flex;
             align-items: center;
@@ -305,27 +331,27 @@
             line-height: 1.25;
             white-space: nowrap;
         }
-        
+
         .acceptance-text {
             flex: 1;
             margin-right: 10px;
             white-space: normal;
             word-break: break-word;
         }
-        
+
         .acceptance-checkbox {
             display: inline-flex;
             flex-shrink: 0;
             white-space: nowrap;
             align-items: center;
         }
-        
+
         .checkbox-group {
             display: inline-block;
             margin: 0 5px;
             white-space: nowrap;
         }
-        
+
         /* 底部信息区域 */
         .footer-section {
             margin-top: 20px;
@@ -333,56 +359,56 @@
             justify-content: space-between;
             align-items: flex-start;
         }
-        
+
         .footer-left {
             flex: 1;
         }
-        
+
         .footer-right {
             flex: 0 0 300px;
             text-align: right;
         }
-        
+
         .total-section {
             margin-bottom: 15px;
         }
-        
+
         .total-row {
             display: flex;
             margin-bottom: 5px;
             line-height: 26px;
         }
-        
+
         .total-label {
             font-weight: bold;
             width: 80px;
         }
-        
+
         .total-value {
             flex: 1;
         }
-        
+
         .signature-section {
             margin-top: 20px;
         }
-        
+
         .signature-row {
             display: flex;
             justify-content: space-between;
             margin-bottom: 8px;
             line-height: 26px;
         }
-        
+
         .signature-item {
             flex: 1;
             margin-right: 20px;
         }
-        
+
         .signature-label {
             font-weight: bold;
             margin-right: 5px;
         }
-        
+
         /* 打印按钮 */
         .print-actions {
             text-align: center;
@@ -390,7 +416,7 @@
             padding: 10px;
             background: #f5f5f5;
         }
-        
+
         .print-actions button {
             margin: 0 10px;
             padding: 8px 20px;
@@ -496,7 +522,7 @@
                 <i class="fa fa-times"></i> 关闭
             </button>
         </div>
-        
+
         <!-- 分页：每页含标题区、基本信息、明细表；合计与签名仅在最后一页 -->
         <div class="print-sheet" th:each="pageRows, pStat : ${deliveryDetailPages}"
              th:classappend="${!pStat.last} ? ' print-sheet--break' : ''">
@@ -555,6 +581,20 @@
             </div>
             <div class="table-section">
                 <table class="detail-table">
+                    <colgroup>
+                        <col style="width:4%"/>
+                        <col style="width:14%"/>
+                        <col style="width:12%"/>
+                        <col style="width:5%"/>
+                        <col style="width:6%"/>
+                        <col style="width:5%"/>
+                        <col style="width:7%"/>
+                        <col style="width:9%"/>
+                        <col style="width:10%"/>
+                        <col style="width:9%"/>
+                        <col style="width:11%"/>
+                        <col style="width:8%"/>
+                    </colgroup>
                     <thead>
                         <tr>
                             <th>序号</th>
@@ -565,10 +605,10 @@
                             <th>数量</th>
                             <th>金额</th>
                             <th class="barcode-col">批号</th>
-                            <th>有效期</th>
-                            <th>生产日期</th>
-                            <th>注册证号</th>
-                            <th>厂家</th>
+                            <th class="cell-dual-date">有效期<br/>生产日期</th>
+                            <th class="col-ins">医保编码</th>
+                            <th class="col-reg">注册证号</th>
+                            <th class="col-mfr">厂家</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -584,10 +624,13 @@
                             <td th:text="${detail.deliveryQuantity != null ? #numbers.formatDecimal(detail.deliveryQuantity, 0, 0) : '-'}">200</td>
                             <td th:text="${detail.amount != null ? #numbers.formatDecimal(detail.amount, 1, 2) : '-'}">6000</td>
                             <td class="barcode-col" th:text="${detail.batchNo ?: '-'}">E7LK0610</td>
-                            <td th:text="${detail.expireDate != null ? #dates.format(detail.expireDate, 'yyyy/MM/dd') : '-'}">2024/10/5</td>
-                            <td th:text="${detail.productionDate != null ? #dates.format(detail.productionDate, 'yyyy/MM/dd') : '-'}">2024/10/5</td>
-                            <td th:text="${detail.registerNo ?: '-'}">国械注准20193101882</td>
-                            <td th:text="${detail.manufacturer ?: '-'}">北京费森尤斯医疗器械有限公司</td>
+                            <td class="cell-dual-date">
+                                <span class="dual-date-line" th:text="${detail.productionDate != null ? #dates.format(detail.productionDate, 'yyyy/MM/dd') : '-'}">2024/10/5</span>
+                                <span class="dual-date-line" th:text="${detail.expireDate != null ? #dates.format(detail.expireDate, 'yyyy/MM/dd') : '-'}">2025/10/5</span>
+                            </td>
+                            <td class="col-ins" th:text="${detail.nationalInsuranceCode != null and !#strings.isEmpty(#strings.trim(detail.nationalInsuranceCode)) ? detail.nationalInsuranceCode : '-'}">-</td>
+                            <td class="col-reg" th:text="${detail.registerNo != null and !#strings.isEmpty(#strings.trim(detail.registerNo)) ? detail.registerNo : '-'}">-</td>
+                            <td class="col-mfr" th:text="${detail.manufacturer != null and !#strings.isEmpty(#strings.trim(detail.manufacturer)) ? detail.manufacturer : '-'}">-</td>
                         </tr>
                         <tr class="total-row-qty-amt" th:if="${pStat.last}">
                             <td colspan="5" style="font-weight: bold;">合计</td>
@@ -615,7 +658,7 @@
                 </table>
             </div>
         </div>
-        
+
         <!-- 验收内容区域（暂时隐藏） -->
         <div class="acceptance-section acceptance-section--hidden">
             <div class="acceptance-title">注/验收内容：</div>
@@ -707,7 +750,7 @@
             </div>
         </div>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
     <script th:inline="javascript">
         var printInputCode = /*[[${printInputCode}]]*/ '';
@@ -770,7 +813,7 @@
                 msg.className = 'ps-msg err';
             });
         }
-        
+
         function renderHeaderBarcodes() {
             var nodes = document.querySelectorAll('[id^="headerBarcode-"]');
             var i;
@@ -789,11 +832,11 @@
                 }
             }
         }
-        
+
         function initPrintPage() {
             renderHeaderBarcodes();
         }
-        
+
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initPrintPage);
         } else {
