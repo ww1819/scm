@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.scm.common.exception.ServiceException;
+import com.scm.common.utils.PageUtils;
 import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.uuid.IdUtils;
@@ -26,7 +27,7 @@ public class ScmHospitalSupplierPermissionServiceImpl implements IScmHospitalSup
         {
             return Collections.emptyList();
         }
-        return permissionMapper.selectForbidSubmitHospitalIds(supplierId);
+        return PageUtils.callWithoutPaging(() -> permissionMapper.selectForbidSubmitHospitalIds(supplierId));
     }
 
     @Override

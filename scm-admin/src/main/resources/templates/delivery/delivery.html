@@ -322,7 +322,14 @@
 		            align: 'center',
 		            width: 60,
 		            formatter: function(value, row, index) {
-		                return index + 1;
+		                var $table = $('#bootstrap-table');
+		                var options = $table.bootstrapTable('getOptions');
+		                if (!options) {
+		                    return index + 1;
+		                }
+		                var pageSize = options.pageSize || 10;
+		                var pageNumber = options.pageNumber || 1;
+		                return (pageNumber - 1) * pageSize + index + 1;
 		            }
 		        },
 		        {

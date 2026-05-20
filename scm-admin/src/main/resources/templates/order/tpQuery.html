@@ -3,8 +3,132 @@
 <head>
 	<th:block th:include="include :: header('第三方订单查询')" />
 	<th:block th:include="include :: layout-latest-css" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-css" />
 	<style>
-		.select-list .select-time .scm-push-datetime { min-width: 172px; width: 172px; display: inline-block; vertical-align: middle; padding-left: 8px; height: 30px; line-height: 30px; border: 1px solid #e5e6e7; border-radius: 4px; }
+		/* 明细框：主表横滚 + fixed-columns 冻结操作列；行高由 JS 与主表同步 */
+		.order-table-wrap {
+			min-height: 730px;
+			position: relative;
+			padding-bottom: 6px;
+			overflow: hidden;
+		}
+
+		.order-table-wrap .bootstrap-table {
+			height: 100%;
+			padding-bottom: 46px;
+		}
+
+		.order-table-wrap .fixed-table-container {
+			padding-bottom: 46px;
+		}
+
+		.order-table-wrap .fixed-table-body {
+			overflow-x: auto !important;
+			overflow-y: auto !important;
+		}
+
+		.order-table-wrap .fixed-table-pagination {
+			position: absolute;
+			left: 10px;
+			right: 10px;
+			bottom: 0;
+			background: #fff;
+			z-index: 3;
+			border-top: 1px solid #eee;
+			margin: 0 !important;
+			padding: 6px 0;
+		}
+
+		.order-table-wrap .fixed-table-pagination .pagination {
+			margin-right: 28px;
+		}
+
+		.order-table-wrap.tp-query-table .fixed-table-header {
+			position: relative;
+			top: auto;
+			z-index: 2;
+			background: #fff;
+		}
+		/* 主表固定列宽算法，订单编号列才能按 175px 生效 */
+		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header table,
+		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body > table {
+			table-layout: fixed;
+		}
+		/* 订单编号列宽（仅主表滚动区，勿作用到右侧冻结区） */
+		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="dh"],
+		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="dh"] {
+			min-width: 175px !important;
+			width: 175px !important;
+			max-width: 175px !important;
+		}
+		/* 平台/订单供应商名称：加宽并单行省略 */
+		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="supplierName"],
+		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"],
+		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="sup"],
+		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="sup"] {
+			min-width: 220px !important;
+			width: 220px !important;
+			max-width: 220px !important;
+			padding-left: 14px !important;
+			padding-right: 14px !important;
+			white-space: nowrap !important;
+			overflow: hidden !important;
+			text-overflow: ellipsis !important;
+		}
+		/* 主表滚动区内隐藏操作列（由右侧 fixed-columns-right 展示，避免双列） */
+		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="tpOperate"],
+		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="tpOperate"] {
+			padding: 0 !important;
+			border-left: 0 !important;
+			border-right: 0 !important;
+			font-size: 0;
+			line-height: 0;
+			color: transparent;
+			overflow: hidden;
+		}
+		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="tpOperate"] > *,
+		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="tpOperate"] > * {
+			display: none;
+		}
+		/* 右侧冻结操作列 */
+		.order-table-wrap.tp-query-table .fixed-columns-right {
+			z-index: 5;
+			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
+		}
+		.order-table-wrap.tp-query-table .fixed-columns-right .fixed-table-header th,
+		.order-table-wrap.tp-query-table .fixed-columns-right .fixed-table-body td {
+			background-color: #fff;
+			vertical-align: middle;
+			white-space: nowrap;
+			box-sizing: border-box;
+		}
+		.order-table-wrap.tp-query-table .fixed-columns-right .fixed-table-header th[data-field="tpOperate"] {
+			background-color: #f5f5f5;
+			min-width: 200px;
+			width: 200px;
+		}
+		.order-table-wrap.tp-query-table .fixed-columns-right .fixed-table-body td[data-field="tpOperate"] {
+			min-width: 200px;
+			width: 200px;
+			padding: 8px 12px;
+		}
+		.order-table-wrap.tp-query-table.table-striped .fixed-columns-right .fixed-table-body tbody tr:nth-of-type(odd) td {
+			background-color: #f9f9f9;
+		}
+		.order-table-wrap.tp-query-table .fixed-columns-right .fixed-table-body {
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		/* 主表明细单行，避免行高不一致导致冻结列错位 */
+		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body tbody td {
+			white-space: nowrap !important;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			vertical-align: middle;
+		}
+		#tp-query-form .select-time label {
+			white-space: nowrap;
+		}
 	</style>
 </head>
 <body class="gray-bg">
@@ -46,10 +170,10 @@
 								</select>
 							</li>
 							<li class="select-time">
-								<label>推送时间范围：</label>
-								<input type="text" class="scm-push-datetime" id="tpPushBegin" placeholder="开始 yyyy-MM-dd HH:mm:ss" name="params[pushBegin]" autocomplete="off"/>
+								<label>日期：</label>
+								<input type="text" class="time-input" id="startTime" placeholder="开始日期" name="params[pushBegin]" autocomplete="off"/>
 								<span>-</span>
-								<input type="text" class="scm-push-datetime" id="tpPushEnd" placeholder="结束 yyyy-MM-dd HH:mm:ss" name="params[pushEnd]" autocomplete="off"/>
+								<input type="text" class="time-input" id="endTime" placeholder="结束日期" name="params[pushEnd]" autocomplete="off"/>
 							</li>
 							<li>
 								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()" style="display: none;"><i class="fa fa-search"></i>&nbsp;搜索</a>
@@ -75,7 +199,7 @@
 				</a>
 	        </div>
 
-	        <div class="col-sm-12 select-table table-striped">
+	        <div class="col-sm-12 select-table table-striped order-table-wrap tp-query-table">
 			    <table id="bootstrap-table"></table>
 			</div>
 		</div>
@@ -83,6 +207,7 @@
 
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
 	<script th:inline="javascript">
 		var detailFlag = [[${@permission.hasPermi('order:tpOrder:detail')}]];
 		var confirmPerm = [[${@permission.hasPermi('order:tpOrder:confirm')}]];
@@ -92,7 +217,8 @@
 		var prefix = ctx + "order/tpQuery";
 		var tableId = "bootstrap-table";
 
-		function normalizePushRangeParams(obj, beginSel, endSel) {
+		/** 日期选择器提交时补全为当天起止时分秒，供后端范围查询 */
+		function normalizePushRangeParams(obj) {
 			if (!obj || typeof obj !== 'object') {
 				return;
 			}
@@ -113,48 +239,266 @@
 			}
 			fix(beginKey, false);
 			fix(endKey, true);
-			if (beginSel && obj[beginKey]) {
-				$(beginSel).val(obj[beginKey]);
+		}
+
+		function calculateTableHeight() {
+			var $detail = $('.order-table-wrap');
+			if ($detail.length === 0) {
+				return 700;
 			}
-			if (endSel && obj[endKey]) {
-				$(endSel).val(obj[endKey]);
+			return Math.max($detail.innerHeight() - 8, 650);
+		}
+
+		function adjustTableHeight() {
+			var $table = $('#' + tableId);
+			if ($table.length > 0 && $table.bootstrapTable('getOptions')) {
+				$table.bootstrapTable('resetView', { height: calculateTableHeight() });
 			}
 		}
 
-		function initTpPushRangeLaydate() {
-			if (typeof layui === 'undefined') {
-				return;
-			}
-			layui.use('laydate', function () {
-				var laydate = layui.laydate;
-				laydate.render({
-					elem: '#tpPushBegin',
-					type: 'datetime',
-					format: 'yyyy-MM-dd HH:mm:ss',
-					theme: 'molv',
-					trigger: 'click',
-					btns: ['clear', 'now', 'confirm']
-				});
-				laydate.render({
-					elem: '#tpPushEnd',
-					type: 'datetime',
-					format: 'yyyy-MM-dd HH:mm:ss',
-					theme: 'molv',
-					trigger: 'click',
-					btns: ['clear', 'now', 'confirm']
-				});
+		var tpColCss = {
+			padding: '8px 12px',
+			whiteSpace: 'nowrap',
+			overflow: 'hidden',
+			textOverflow: 'ellipsis',
+			boxSizing: 'border-box'
+		};
+
+		/** 个别列加大左右内边距，拉开与相邻列距离 */
+		var tpColStyleOverrides = {
+			supplierCode: { padding: '8px 14px 8px 12px' },
+			supplierName: { padding: '8px 14px' },
+			supno: { padding: '8px 14px 8px 12px' },
+			sup: { padding: '8px 14px' },
+			ksbh: { padding: '8px 12px 8px 14px' }
+		};
+
+		function tpColStyleFor(field) {
+			return $.extend({}, tpColCss, tpColStyleOverrides[field] || {});
+		}
+
+		function tpHeaderStyleFor(field) {
+			return function () {
+				return { css: tpColStyleFor(field) };
+			};
+		}
+
+		function tpCellStyleFor(field) {
+			return function () {
+				return { css: tpColStyleFor(field) };
+			};
+		}
+
+		/** 为各列统一表头/单元格样式（与列宽一起由 bootstrap-table 计算，避免表头表体错位） */
+		function applyTpColumnSpacing(columns) {
+			return $.map(columns, function (col) {
+				var c = $.extend(true, {}, col);
+				if (!c.checkbox && c.field) {
+					c.headerStyle = tpHeaderStyleFor(c.field);
+					c.cellStyle = tpCellStyleFor(c.field);
+				}
+				return c;
 			});
 		}
 
+		/** 主表区域：有纵向滚动条时表头补偿宽度，防止列从中间开始错位 */
+		function fixTpTableHeaderAlign() {
+			var $bt = $('#' + tableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			if ($mainBody.length && $mainBody[0] && $mainHeader.length) {
+				var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
+				$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+			}
+		}
+
+		function bindTpMainHorizontalScroll() {
+			var $bt = $('#' + tableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			$mainBody.off('scroll.tpMainH').on('scroll.tpMainH', function () {
+				$mainHeader.scrollLeft($mainBody.scrollLeft());
+			});
+		}
+
+		var tpDhColWidth = '175px';
+
+		/** 主表滚动区订单编号列宽（按列索引 + colgroup，覆盖 fitHeader） */
+		function applyTpDhColumnWidth() {
+			var $container = $('#' + tableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $th = $mainHeader.find('th[data-field="dh"]');
+			if ($th.length === 0) {
+				return;
+			}
+			var colIdx = $th[0].cellIndex;
+			var setW = function (el) {
+				el.style.setProperty('width', tpDhColWidth, 'important');
+				el.style.setProperty('min-width', tpDhColWidth, 'important');
+				el.style.setProperty('max-width', tpDhColWidth, 'important');
+			};
+			$th.each(function () { setW(this); });
+			$mainBody.find('table tbody tr').each(function () {
+				var cell = this.cells[colIdx];
+				if (cell) {
+					setW(cell);
+				}
+			});
+			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			var opt = $('#' + tableId).bootstrapTable('getOptions');
+			if (opt && opt.columns && opt.columns[0] && opt.columns[0][colIdx]) {
+				opt.columns[0][colIdx].width = 175;
+			}
+		}
+
+		function scheduleTpDhColumnWidth() {
+			applyTpDhColumnWidth();
+			requestAnimationFrame(applyTpDhColumnWidth);
+		}
+
+		var tpSupplierNameColWidth = 220;
+
+		/** 按字段强制列宽（覆盖 fitHeader / table-layout） */
+		function applyTpFieldColumnWidth(field, widthPx) {
+			var w = widthPx + 'px';
+			var $container = $('#' + tableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $th = $mainHeader.find('th[data-field="' + field + '"]');
+			if ($th.length === 0) {
+				return;
+			}
+			var colIdx = $th[0].cellIndex;
+			var setW = function (el) {
+				el.style.setProperty('width', w, 'important');
+				el.style.setProperty('min-width', w, 'important');
+				el.style.setProperty('max-width', w, 'important');
+			};
+			$th.each(function () { setW(this); });
+			$mainBody.find('table tbody tr').each(function () {
+				var cell = this.cells[colIdx];
+				if (cell) {
+					setW(cell);
+				}
+			});
+			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			var opt = $('#' + tableId).bootstrapTable('getOptions');
+			if (opt && opt.columns && opt.columns[0] && opt.columns[0][colIdx]) {
+				opt.columns[0][colIdx].width = widthPx;
+			}
+		}
+
+		function scheduleTpFixedColumnWidths() {
+			scheduleTpDhColumnWidth();
+			applyTpFieldColumnWidth('supplierName', tpSupplierNameColWidth);
+			applyTpFieldColumnWidth('sup', tpSupplierNameColWidth);
+			requestAnimationFrame(function () {
+				applyTpFieldColumnWidth('supplierName', tpSupplierNameColWidth);
+				applyTpFieldColumnWidth('sup', tpSupplierNameColWidth);
+			});
+		}
+
+		/** 仅主表设置最小总宽，避免误改 fixed-columns-right 导致表头列错位 */
+		function applyTpMainTableMinWidth() {
+			var sum = 0;
+			var opt = $('#' + tableId).bootstrapTable('getOptions');
+			if (opt && opt.columns && opt.columns[0]) {
+				$.each(opt.columns[0], function (_, col) {
+					if (col && col.width) {
+						sum += parseInt(col.width, 10) || 0;
+					} else if (col && col.checkbox) {
+						sum += 40;
+					}
+				});
+			}
+			if (sum < 2400) {
+				sum = 2400;
+			}
+			var $container = $('#' + tableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			$container.children('.fixed-table-header').find('table').css('min-width', sum + 'px');
+			$container.children('.fixed-table-body').children('table').css('min-width', sum + 'px');
+		}
+
+		/** 主表与右侧冻结操作列：纵向滚动联动 */
+		function syncTpOperateColumnScroll() {
+			var $bt = $('#' + tableId).closest('.bootstrap-table');
+			var $rightBody = $bt.find('.fixed-columns-right .fixed-table-body');
+			if ($rightBody.length === 0) {
+				return;
+			}
+			var $mainBody = $bt.find('.fixed-table-container').children('.fixed-table-body');
+			$mainBody.off('scroll.tpOperateSync').on('scroll.tpOperateSync', function () {
+				$rightBody.scrollTop($mainBody.scrollTop());
+			});
+		}
+
+		/** 逐行同步主表与冻结操作列行高，保证按钮与明细在同一水平线 */
+		function syncTpOperateRowHeights() {
+			var $bt = $('#' + tableId).closest('.bootstrap-table');
+			var $right = $bt.find('.fixed-columns-right');
+			if ($right.length === 0) {
+				return;
+			}
+			var $mainRows = $bt.find('.fixed-table-container').children('.fixed-table-body').find('table tbody tr');
+			var $rightRows = $right.find('.fixed-table-body table tbody tr');
+			var len = Math.min($mainRows.length, $rightRows.length);
+			$mainRows.add($rightRows).css({ height: '', minHeight: '' });
+			for (var i = 0; i < len; i++) {
+				var mainEl = $mainRows[i];
+				var rightEl = $rightRows[i];
+				var h = Math.max(mainEl.offsetHeight, rightEl.offsetHeight);
+				if (h > 0) {
+					var hs = h + 'px';
+					mainEl.style.height = hs;
+					mainEl.style.minHeight = hs;
+					rightEl.style.height = hs;
+					rightEl.style.minHeight = hs;
+					$(mainEl).find('td').css('height', hs);
+					$(rightEl).find('td').css('height', hs);
+				}
+			}
+			var $mainHead = $bt.find('.fixed-table-container > .fixed-table-header table thead tr');
+			var $rightHead = $right.find('.fixed-table-header table thead tr');
+			if ($mainHead.length && $rightHead.length) {
+				var hh = Math.max($mainHead[0].offsetHeight, $rightHead[0].offsetHeight);
+				if (hh > 0) {
+					var hhs = hh + 'px';
+					$mainHead.css({ height: hhs, minHeight: hhs });
+					$rightHead.css({ height: hhs, minHeight: hhs });
+				}
+			}
+		}
+
+		function scheduleTpOperateRowSync() {
+			syncTpOperateRowHeights();
+			requestAnimationFrame(syncTpOperateRowHeights);
+		}
+
+		function refreshTpTableLayout() {
+			fixTpTableHeaderAlign();
+			bindTpMainHorizontalScroll();
+			applyTpMainTableMinWidth();
+			syncTpOperateColumnScroll();
+			scheduleTpFixedColumnWidths();
+			scheduleTpOperateRowSync();
+		}
+
 		$(function() {
-			initTpPushRangeLaydate();
 		    queryList();
+		    $(window).resize(function() {
+		    	adjustTableHeight();
+		    });
 		});
 
 		function tpQueryParams(params) {
 			table.set(tableId);
 			var formParams = $.common.formToJSON("tp-query-form");
-			normalizePushRangeParams(formParams, '#tpPushBegin', '#tpPushEnd');
+			normalizePushRangeParams(formParams);
 			return $.extend({}, formParams, {
 				pageNum: Math.floor(params.offset / params.limit) + 1,
 				pageSize: params.limit,
@@ -202,14 +546,40 @@
 		        uniqueId: "id",
 		        rememberSelected: true,
 		        maintainSelected: true,
-		        columns: [{
-		            checkbox: true
+		        mobileResponsive: false,
+		        fixedColumns: true,
+		        fixedNumber: 0,
+		        fixedRightNumber: 1,
+		        height: calculateTableHeight(),
+		        onLoadSuccess: function() {
+		            setTimeout(function() {
+		                adjustTableHeight();
+		                refreshTpTableLayout();
+		            }, 50);
+		            setTimeout(function() {
+		                var $t = $('#' + tableId);
+		                if ($t.bootstrapTable('getOptions')) {
+		                    $t.bootstrapTable('resetView', { height: calculateTableHeight() });
+		                }
+		                refreshTpTableLayout();
+		            }, 200);
+		            setTimeout(function () {
+		                scheduleTpFixedColumnWidths();
+		                scheduleTpOperateRowSync();
+		            }, 450);
+		        },
+		        onPostBody: function() {
+		            refreshTpTableLayout();
+		        },
+		        columns: applyTpColumnSpacing([{
+		            checkbox: true,
+		            width: 40
 		        },
 		        {
 		            field: 'index',
 		            title: '序号',
 		            align: 'center',
-		            width: 60,
+		            width: 64,
 		            formatter: function(value, row, index) {
 		                var opt = $("#" + tableId).bootstrapTable("getOptions");
 		                var pn = opt.pageNumber || 1;
@@ -220,6 +590,7 @@
 		        {
 		            field: 'dh',
 		            title: '订单编号',
+		            width: 175,
 		            formatter: function (value, row) {
 		                var v = value || '';
 		                if (detailFlag !== 'hidden') {
@@ -231,97 +602,116 @@
 		        {
 		            field: 'hospitalCode',
 		            title: '平台医院编码',
+		            width: 120,
 		            formatter: function (value) { return value || '-'; }
 		        },
 		        {
 		            field: 'hospitalName',
 		            title: '平台医院名称',
+		            width: 180,
 		            formatter: function (value) { return value || '-'; }
 		        },
 		        {
 		            field: 'supplierCode',
 		            title: '平台供应商编码',
+		            width: 120,
 		            formatter: function (value) { return value || '-'; }
 		        },
 		        {
 		            field: 'supplierName',
 		            title: '平台供应商名称',
+		            width: 220,
 		            formatter: function (value) { return value || '-'; }
 		        },
 		        {
 		            field: 'ckno',
 		            title: '订单仓库编码',
+		            width: 116,
 		            formatter: function (v) { return v || '-'; }
 		        },
 		        {
 		            field: 'ck',
 		            title: '订单仓库名称',
+		            width: 130,
 		            formatter: function (v) { return v || '-'; }
 		        },
 		        {
 		            field: 'supno',
 		            title: '订单供应商编码',
+		            width: 116,
 		            formatter: function (v) { return v || '-'; }
 		        },
 		        {
 		            field: 'sup',
 		            title: '订单供应商名称',
+		            width: 220,
 		            formatter: function (v) { return v || '-'; }
 		        },
 		        {
 		            field: 'ksbh',
 		            title: '订单科室编码',
+		            width: 96,
 		            formatter: function (v) { return v || '-'; }
 		        },
 		        {
 		            field: 'ksmc',
 		            title: '订单科室名称',
+		            width: 96,
 		            formatter: function (v) { return v || '-'; }
 		        },
 		        {
 		            field: 'createTime',
 		            title: '推送时间',
+		            width: 168,
 		            formatter: function (v) { return fmtPushTime(v); }
 		        },
 		        {
 		            field: 'confirmStatus',
 		            title: '确认状态',
+		            width: 96,
 		            formatter: function (v) { return fmtConfirmStatus(v); }
 		        },
 		        {
 		            field: 'confirmByDisplay',
 		            title: '确认人',
+		            width: 108,
 		            formatter: function (v, row) { return v || row.confirmBy || '-'; }
 		        },
 		        {
 		            field: 'confirmTime',
 		            title: '确认时间',
+		            width: 168,
 		            formatter: function (v) { return fmtPushTime(v); }
 		        },
 		        {
 		            field: 'voidStatus',
 		            title: '作废状态',
+		            width: 96,
 		            formatter: function (v) { return fmtVoidStatus(v); }
 		        },
 		        {
 		            field: 'voidByDisplay',
 		            title: '作废人',
+		            width: 108,
 		            formatter: function (v, row) { return v || row.voidBy || '-'; }
 		        },
 		        {
 		            field: 'voidTime',
 		            title: '作废时间',
+		            width: 168,
 		            formatter: function (v) { return fmtPushTime(v); }
 		        },
 		        {
 		            field: 'deliveryProgress',
 		            title: '配送进度',
+		            width: 100,
 		            formatter: function (v) { return fmtDeliveryProgress(v); }
 		        },
 		        {
+		            field: 'tpOperate',
 		            title: '操作',
 		            align: 'center',
-		            width: 220,
+		            width: 200,
 		            formatter: function(value, row) {
 		                var btns = [];
 		                if (detailFlag !== 'hidden') {
@@ -335,7 +725,7 @@
 		                }
 		                return btns.join(' ');
 		            }
-		        }]
+		        }])
 		    };
 		    $.table.init(options);
 		}

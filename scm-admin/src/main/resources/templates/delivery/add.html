@@ -3,63 +3,90 @@
 <head>
 	<th:block th:include="include :: header('新增配送单')" />
 	<style>
-		/* 优化表格列间距 */
-		#detail-table th, #detail-table td {
-			padding: 8px 12px !important;
+		/* 单据录入：每行五列 */
+		.delivery-doc-form .row {
+			margin-left: -8px;
+			margin-right: -8px;
+		}
+		.delivery-doc-form .row::after {
+			content: "";
+			display: table;
+			clear: both;
+		}
+		.delivery-doc-form .col-doc-5,
+		.delivery-doc-form .col-doc-10 {
+			position: relative;
+			min-height: 1px;
+			padding-left: 8px;
+			padding-right: 8px;
+		}
+		@media (min-width: 992px) {
+			.delivery-doc-form .col-doc-5 { width: 20%; float: left; }
+			.delivery-doc-form .col-doc-10 { width: 40%; float: left; }
+		}
+		@media (max-width: 991px) {
+			.delivery-doc-form .col-doc-5 { width: 50%; float: left; }
+			.delivery-doc-form .col-doc-10 { width: 100%; float: left; }
+		}
+		.delivery-doc-form .form-group {
+			margin-bottom: 8px;
+		}
+		.delivery-doc-form .control-label {
+			font-size: 12px;
+			padding-top: 6px;
+		}
+		.delivery-doc-form .form-control {
+			height: 30px;
+			padding: 4px 8px;
+		}
+		/* 明细表：压缩行高（含主表、左右冻结列） */
+		.detail-table-scroll-outer .bootstrap-table .table > thead > tr > th,
+		.detail-table-scroll-outer .bootstrap-table .table > tbody > tr > td,
+		#detail-table th,
+		#detail-table td,
+		#detail-table .fixed-columns-left th,
+		#detail-table .fixed-columns-left td,
+		#detail-table .fixed-columns-right th,
+		#detail-table .fixed-columns-right td {
+			padding: 2px 6px !important;
 			white-space: nowrap;
+			line-height: 1.2 !important;
+			font-size: 12px !important;
+			vertical-align: middle !important;
 		}
-		/* 主/辅条码、国家医保编码、备注：加宽、单元格与表头允许换行，与多行文本框一致 */
-		#detail-table th[data-field="mainBarcode"],
-		#detail-table th[data-field="auxBarcode"],
-		#detail-table th[data-field="nationalInsuranceCode"],
-		#detail-table th[data-field="remark"],
-		#detail-table td[data-field="mainBarcode"],
-		#detail-table td[data-field="auxBarcode"],
-		#detail-table td[data-field="nationalInsuranceCode"],
-		#detail-table td[data-field="remark"] {
-			white-space: normal !important;
-			word-break: break-all;
-			vertical-align: top !important;
-			min-width: 240px;
-			max-width: 420px;
+		.detail-table-scroll-outer .bootstrap-table .table > tbody > tr {
+			height: auto !important;
 		}
-		#detail-table .barcode-textarea {
+		#detail-table .detail-text-input,
+		#detail-table .detail-date-input,
+		#detail-table .form-control.input-sm {
 			width: 100%;
-			min-width: 220px;
-			min-height: 56px;
+			height: 24px;
+			line-height: 1.2;
+			padding: 1px 6px;
 			box-sizing: border-box;
-			white-space: pre-wrap;
-			word-break: break-all;
-			line-height: 1.4;
-			resize: vertical;
 			font-size: 12px;
+			margin: 0;
+			display: inline-block;
+			vertical-align: middle;
 		}
-		#detail-table .batch-no-textarea {
-			width: 100%;
-			min-width: 160px;
-			min-height: 48px;
-			box-sizing: border-box;
-			white-space: pre-wrap;
-			word-break: break-all;
-			line-height: 1.35;
-			resize: vertical;
-			font-size: 12px;
+		#detail-table .btn-xs {
+			padding: 0 4px !important;
+			font-size: 12px !important;
+			line-height: 22px !important;
+			height: 22px !important;
+			margin: 0 2px 0 0 !important;
 		}
-		#detail-table th[data-field="batchNo"],
-		#detail-table td[data-field="batchNo"],
-		#detail-table th[data-field="expireDate"],
-		#detail-table td[data-field="expireDate"],
-		#detail-table th[data-field="productionDate"],
-		#detail-table td[data-field="productionDate"] {
-			white-space: normal !important;
-			vertical-align: top !important;
+		#detail-table td[data-field="operation"] .btn,
+		#detail-table .fixed-columns-right td .btn {
+			vertical-align: middle;
 		}
 		#detail-table th[data-field="expireDate"],
 		#detail-table td[data-field="expireDate"],
 		#detail-table th[data-field="productionDate"],
 		#detail-table td[data-field="productionDate"] {
-			min-width: 140px;
-			max-width: 180px;
+			min-width: 130px;
+			max-width: 150px;
 		}
 		/* 明细表区域：外层容器承担横向+纵向滚动，滚动条始终在可视区内 */
 		.detail-table-scroll-outer {
@@ -287,27 +314,29 @@
 			min-width: 60px !important;
 			text-align: center !important;
 		}
-		/* 优化操作列按钮样式 */
-		.btn-operation-delete {
+		/* 优化操作列按钮样式（明细表内紧凑） */
+		#detail-table .btn-operation-delete,
+		.detail-table-scroll-outer .btn-operation-delete {
 			display: inline-flex !important;
 			align-items: center;
 			justify-content: center;
-			padding: 6px 10px;
+			padding: 0 6px !important;
 			margin: 0 auto;
 			color: #fff !important;
 			background: linear-gradient(135deg, #d9534f 0%, #c9302c 100%) !important;
 			border: none !important;
-			border-radius: 4px;
-			font-size: 13px;
-			line-height: 1;
+			border-radius: 3px;
+			font-size: 12px !important;
+			line-height: 22px !important;
 			text-align: center;
 			cursor: pointer;
 			transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 			text-decoration: none !important;
-			min-width: 32px;
-			width: 32px;
-			max-width: 32px;
-			height: 28px;
+			min-width: 28px !important;
+			width: 28px !important;
+			max-width: 28px !important;
+			height: 22px !important;
+			min-height: 22px !important;
 			box-shadow: 0 2px 4px rgba(217, 83, 79, 0.3);
 			position: relative;
 			overflow: hidden;
@@ -405,7 +434,7 @@
 			width: auto !important;
 			height: auto !important;
 			min-width: 30px !important;
-			min-height: 30px !important;
+			min-height: 24px !important;
 		}
 		/* 页面布局：表单固定高度，明细区 flex 占满剩余空间，避免横向滚动条被裁切 */
 		body.delivery-form-page {
@@ -543,10 +572,10 @@
             <input type="hidden" name="spdSupplierId" id="spdSupplierId" value="">
             <input type="hidden" name="orderDate" id="orderDateField" value="">
             <input type="hidden" name="warehouse" id="warehouseField" value="">
-            <div class="form-card">
+            <div class="form-card delivery-doc-form">
                 <h4 class="form-header h4">单据录入</h4>
             <div class="row">
-            	<div class="col-sm-3">
+            	<div class="col-doc-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">配送单号：</label>
                         <div class="col-sm-7">
@@ -554,7 +583,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-doc-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">医院：</label>
                         <div class="col-sm-7">
@@ -568,7 +597,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-doc-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">总金额：</label>
                         <div class="col-sm-7">
@@ -576,7 +605,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-doc-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">配送商：</label>
                         <div class="col-sm-7">
@@ -590,9 +619,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-3">
+                <div class="col-doc-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">发票号：</label>
                         <div class="col-sm-7">
@@ -600,7 +627,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+            </div>
+            <div class="row">
+                <div class="col-doc-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">发票日期：</label>
                         <div class="col-sm-7">
@@ -608,7 +637,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-doc-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">订单号：</label>
                         <div class="col-sm-7">
@@ -616,7 +645,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-doc-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">预计配送日期：</label>
                         <div class="col-sm-7">
@@ -624,9 +653,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-3">
+                <div class="col-doc-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">配送员：</label>
                         <div class="col-sm-7">
@@ -634,7 +661,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-doc-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">配送地址：</label>
                         <div class="col-sm-7">
@@ -642,15 +669,15 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+            </div>
+            <div class="row">
+                <div class="col-doc-10">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">备注：</label>
-                        <div class="col-sm-7">
+                        <label class="col-sm-2 control-label">备注：</label>
+                        <div class="col-sm-10">
                             <input name="remark" maxlength="500" class="form-control" type="text" placeholder="请输入备注">
                         </div>
                     </div>
-                </div>
-                <div class="col-sm-3">
                 </div>
             </div>
             </div>
@@ -686,6 +713,41 @@
 	            .replace(/&/g, '&amp;')
 	            .replace(/</g, '&lt;')
 	            .replace(/>/g, '&gt;');
+	    }
+
+	    function escapeAttrForInput(s) {
+	        return escapeHtmlForBarcode(s).replace(/"/g, '&quot;');
+	    }
+
+	    function detailTextInputHtml(value, index, maxlength, blurFn) {
+	        var safe = escapeAttrForInput(value != null ? String(value) : '');
+	        return '<input type="text" class="form-control input-sm detail-text-input" value="' + safe + '" ' +
+	               'maxlength="' + maxlength + '" onblur="' + blurFn + '(this, ' + index + ')" ' +
+	               'onkeypress="if(event.keyCode==13){this.blur();return false;}" />';
+	    }
+
+	    function formatDetailDateValue(value) {
+	        if (!value) {
+	            return '';
+	        }
+	        if (typeof value === 'string') {
+	            return value.length >= 10 ? value.substring(0, 10) : value;
+	        }
+	        var date = new Date(value);
+	        if (isNaN(date.getTime())) {
+	            return '';
+	        }
+	        return date.getFullYear() + '-' +
+	            String(date.getMonth() + 1).padStart(2, '0') + '-' +
+	            String(date.getDate()).padStart(2, '0');
+	    }
+
+	    function detailDateInputHtml(value, index, field, blurFn) {
+	        var safe = escapeAttrForInput(formatDetailDateValue(value));
+	        return '<input type="text" class="form-control input-sm detail-date-input date-input" value="' + safe + '" ' +
+	               'placeholder="年/月/日" data-field="' + field + '" data-index="' + index + '" ' +
+	               'onblur="' + blurFn + '(this, ' + index + ')" ' +
+	               'onkeypress="if(event.keyCode==13){this.blur();return false;}" />';
 	    }
 
 	    /** 明细表可视高度：供 bootstrap-table height 固定表头 */
@@ -1121,96 +1183,41 @@
 	                field: 'batchNo',
 	                title: '批号',
 	                align: 'left',
-	                width: 200,
-	                cellStyle: function() {
-	                    return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'vertical-align': 'top' } };
-	                },
+	                width: 160,
 	                formatter: function(value, row, index) {
-	                    var safe = escapeHtmlForBarcode(value != null ? String(value) : '');
-	                    return '<textarea class="form-control input-sm batch-no-textarea" rows="2" maxlength="50" ' +
-	                           'onblur="updateBatchNo(this, ' + index + ')">' + safe + '</textarea>';
+	                    return detailTextInputHtml(value, index, 50, 'updateBatchNo');
 	                }
 	            }, {
 	                field: 'expireDate',
 	                title: '有效期',
 	                align: 'center',
-	                width: 150,
-	                cellStyle: function() {
-	                    return { css: { 'white-space': 'normal', 'vertical-align': 'top' } };
-	                },
+	                width: 140,
 	                formatter: function(value, row, index) {
-	                    var val = '';
-	                    if (value) {
-	                        if (typeof value === 'string') {
-	                            val = value;
-	                        } else {
-	                            var date = new Date(value);
-	                            if (!isNaN(date.getTime())) {
-	                                val = date.getFullYear() + '-' +
-	                                      String(date.getMonth() + 1).padStart(2, '0') + '-' +
-	                                      String(date.getDate()).padStart(2, '0');
-	                            }
-	                        }
-	                    }
-	                    return '<input type="text" class="form-control input-sm date-input expire-date" style="width:100%;min-width:130px;" value="' + val + '" ' +
-	                           'placeholder="年/月/日" ' +
-	                           'onblur="updateExpireDate(this, ' + index + ')" ' +
-	                           'onkeypress="if(event.keyCode==13){this.blur();return false;}" ' +
-	                           'data-field="expireDate" data-index="' + index + '" />';
+	                    return detailDateInputHtml(value, index, 'expireDate', 'updateExpireDate');
 	                }
 	            }, {
 	                field: 'productionDate',
 	                title: '生产日期',
 	                align: 'center',
-	                width: 150,
-	                cellStyle: function() {
-	                    return { css: { 'white-space': 'normal', 'vertical-align': 'top' } };
-	                },
+	                width: 140,
 	                formatter: function(value, row, index) {
-	                    var val = '';
-	                    if (value) {
-	                        if (typeof value === 'string') {
-	                            val = value;
-	                        } else {
-	                            var date = new Date(value);
-	                            if (!isNaN(date.getTime())) {
-	                                val = date.getFullYear() + '-' +
-	                                      String(date.getMonth() + 1).padStart(2, '0') + '-' +
-	                                      String(date.getDate()).padStart(2, '0');
-	                            }
-	                        }
-	                    }
-	                    return '<input type="text" class="form-control input-sm date-input production-date" style="width:100%;min-width:130px;" value="' + val + '" ' +
-	                           'placeholder="年/月/日" ' +
-	                           'onblur="updateProductionDate(this, ' + index + ')" ' +
-	                           'onkeypress="if(event.keyCode==13){this.blur();return false;}" ' +
-	                           'data-field="productionDate" data-index="' + index + '" />';
+	                    return detailDateInputHtml(value, index, 'productionDate', 'updateProductionDate');
 	                }
 	            }, {
 	                field: 'mainBarcode',
 	                title: '主条码',
 	                align: 'left',
-	                width: 300,
-	                cellStyle: function() {
-	                    return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'vertical-align': 'top' } };
-	                },
+	                width: 180,
 	                formatter: function(value, row, index) {
-	                    var safe = escapeHtmlForBarcode(value != null ? String(value) : '');
-	                    return '<textarea class="form-control input-sm barcode-textarea" rows="3" maxlength="128" ' +
-	                           'onblur="updateMainBarcode(this, ' + index + ')">' + safe + '</textarea>';
+	                    return detailTextInputHtml(value, index, 128, 'updateMainBarcode');
 	                }
 	            }, {
 	                field: 'auxBarcode',
 	                title: '辅条码',
 	                align: 'left',
-	                width: 300,
-	                cellStyle: function() {
-	                    return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'vertical-align': 'top' } };
-	                },
+	                width: 180,
 	                formatter: function(value, row, index) {
-	                    var safe = escapeHtmlForBarcode(value != null ? String(value) : '');
-	                    return '<textarea class="form-control input-sm barcode-textarea" rows="3" maxlength="128" ' +
-	                           'onblur="updateAuxBarcode(this, ' + index + ')">' + safe + '</textarea>';
+	                    return detailTextInputHtml(value, index, 128, 'updateAuxBarcode');
 	                }
 	            }, {
 	                field: 'manufacturer',
@@ -1238,28 +1245,18 @@
 	                field: 'nationalInsuranceCode',
 	                title: '国家医保编码',
 	                align: 'left',
-	                width: 300,
-	                cellStyle: function() {
-	                    return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'vertical-align': 'top' } };
-	                },
+	                width: 200,
 	                formatter: function(value, row, index) {
-	                    var safe = escapeHtmlForBarcode(value != null ? String(value) : '');
-	                    return '<textarea class="form-control input-sm barcode-textarea" rows="3" maxlength="128" ' +
-	                           'onblur="updateNationalInsuranceCode(this, ' + index + ')">' + safe + '</textarea>';
+	                    return detailTextInputHtml(value, index, 128, 'updateNationalInsuranceCode');
 	                }
 	            },
 	            {
 	                field: 'remark',
 	                title: '备注',
 	                align: 'left',
-	                width: 300,
-	                cellStyle: function() {
-	                    return { css: { 'white-space': 'normal', 'word-break': 'break-all', 'vertical-align': 'top' } };
-	                },
+	                width: 200,
 	                formatter: function(value, row, index) {
-	                    var safe = escapeHtmlForBarcode(value != null ? String(value) : '');
-	                    return '<textarea class="form-control input-sm barcode-textarea" rows="3" maxlength="500" ' +
-	                           'onblur="updateDetailRemark(this, ' + index + ')">' + safe + '</textarea>';
+	                    return detailTextInputHtml(value, index, 500, 'updateDetailRemark');
 	                }
 	            }]
 	        };

@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.scm.common.core.text.Convert;
 import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.PageUtils;
 import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.Order;
@@ -196,20 +197,22 @@ public class OrderServiceImpl implements IOrderService
         {
             return new ArrayList<>();
         }
-        List<SysRole> roles = sysRoleMapper.selectRolesByUserId(userId);
-        if (roles == null || roles.isEmpty())
-        {
-            return new ArrayList<>();
-        }
-        Set<Long> out = new HashSet<>();
-        for (SysRole role : roles)
-        {
-            if (role != null && role.getSupplierId() != null)
+        return PageUtils.callWithoutPaging(() -> {
+            List<SysRole> roles = sysRoleMapper.selectRolesByUserId(userId);
+            if (roles == null || roles.isEmpty())
             {
-                out.add(role.getSupplierId());
+                return new ArrayList<Long>();
             }
-        }
-        return new ArrayList<>(out);
+            Set<Long> out = new HashSet<>();
+            for (SysRole role : roles)
+            {
+                if (role != null && role.getSupplierId() != null)
+                {
+                    out.add(role.getSupplierId());
+                }
+            }
+            return new ArrayList<>(out);
+        });
     }
 
     private void assertHospitalSupplierBound(Long hospitalId, Long supplierId)
