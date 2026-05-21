@@ -1,71 +1,174 @@
 <!DOCTYPE html>
-<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro" class="tp-query-root">
 <head>
 	<th:block th:include="include :: header('第三方订单查询')" />
 	<th:block th:include="include :: layout-latest-css" />
 	<th:block th:include="include :: bootstrap-table-fixed-columns-css" />
 	<style>
-		/* 明细框：主表横滚 + fixed-columns 冻结操作列；行高由 JS 与主表同步 */
-		.order-table-wrap {
-			min-height: 730px;
-			position: relative;
-			padding-bottom: 6px;
+		/* 页面布局：与配送信息查询-配送明细表一致，明细框占满剩余可视区域 */
+		html.tp-query-root,
+		html.tp-query-root body.tp-query-body {
+			height: 100%;
+			margin: 0;
+			overflow: hidden;
+			box-sizing: border-box;
+		}
+		body.tp-query-body {
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+		}
+		.tp-query-page.container-div {
+			flex: 1 1 0%;
+			min-height: 0;
+			height: auto !important;
+			display: flex;
+			flex-direction: column;
 			overflow: hidden;
 		}
-
-		.order-table-wrap .bootstrap-table {
+		.tp-query-page > .row {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			margin: 0;
+			min-height: 0;
+			overflow: visible;
+		}
+		.tp-query-page .search-collapse,
+		.tp-query-page #toolbar {
+			flex-shrink: 0;
+		}
+		/* 明细框：主表横滚 + fixed-columns 冻结操作列（对齐配送明细表 query-table-wrap） */
+		.query-table-wrap.tp-query-table {
+			flex: 1;
+			min-height: 0;
+			position: relative;
+			padding-bottom: 0;
+			overflow-x: hidden;
+			overflow-y: visible;
+			display: flex;
+			flex-direction: column;
+		}
+		.query-table-wrap.tp-query-table > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
+			width: 100%;
+			display: flex;
+			flex-direction: column;
 			height: 100%;
-			padding-bottom: 46px;
 		}
-
-		.order-table-wrap .fixed-table-container {
-			padding-bottom: 46px;
+		.query-table-wrap.tp-query-table .fixed-table-container {
+			display: flex;
+			flex-direction: column;
+			flex: 1;
+			min-height: 0;
+			padding-bottom: 0;
 		}
-
-		.order-table-wrap .fixed-table-body {
-			overflow-x: auto !important;
+		.query-table-wrap.tp-query-table .fixed-table-body {
+			overflow-x: hidden !important;
 			overflow-y: auto !important;
+			flex: 1;
+			min-height: 0;
 		}
-
-		.order-table-wrap .fixed-table-pagination {
-			position: absolute;
-			left: 10px;
-			right: 10px;
-			bottom: 0;
+		/* 明细框底部横向滚动条（与表头/表体联动，固定在分页上方） */
+		.query-table-wrap.tp-query-table .tp-detail-hscroll {
+			flex-shrink: 0;
+			overflow-x: auto;
+			overflow-y: hidden;
+			height: 14px;
+			min-height: 14px;
+			background: #f5f5f5;
+			border-top: 1px solid #e5e5e5;
+			box-sizing: border-box;
+			-webkit-overflow-scrolling: touch;
+			scrollbar-width: thin;
+		}
+		.query-table-wrap.tp-query-table .tp-detail-hscroll::-webkit-scrollbar {
+			height: 10px;
+		}
+		.query-table-wrap.tp-query-table .tp-detail-hscroll::-webkit-scrollbar-thumb {
+			background: rgba(0, 0, 0, 0.28);
+			border-radius: 5px;
+		}
+		.query-table-wrap.tp-query-table .tp-detail-hscroll::-webkit-scrollbar-track {
+			background: #eee;
+		}
+		.query-table-wrap.tp-query-table .tp-detail-hscroll-inner {
+			height: 1px;
+			pointer-events: none;
+		}
+		.query-table-wrap.tp-query-table .fixed-table-pagination {
+			position: relative;
+			bottom: auto;
+			display: block !important;
 			background: #fff;
-			z-index: 3;
+			z-index: 6;
 			border-top: 1px solid #eee;
 			margin: 0 !important;
-			padding: 6px 0;
+			margin-top: 12px !important;
+			padding: 10px 10px 14px !important;
+			flex-shrink: 0;
 		}
-
-		.order-table-wrap .fixed-table-pagination .pagination {
+		.query-table-wrap.tp-query-table .fixed-table-pagination .pagination {
 			margin-right: 28px;
 		}
-
-		.order-table-wrap.tp-query-table .fixed-table-header {
+		.query-table-wrap.tp-query-table .fixed-table-header {
 			position: relative;
 			top: auto;
 			z-index: 2;
-			background: #fff;
+			background: #fff !important;
+		}
+		.query-table-wrap.tp-query-table .fixed-table-header th {
+			background-color: #f5f5f5 !important;
+			border-bottom: 2px solid #ddd !important;
+		}
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th,
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body tbody td,
+		.query-table-wrap.tp-query-table .fixed-columns-right .fixed-table-header th,
+		.query-table-wrap.tp-query-table .fixed-columns-right .fixed-table-body td {
+			box-sizing: border-box !important;
+			padding: 8px 14px !important;
+			white-space: nowrap !important;
+			word-break: keep-all !important;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			vertical-align: middle;
 		}
 		/* 主表固定列宽算法，订单编号列才能按 175px 生效 */
-		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header table,
-		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body > table {
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header table,
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body > table {
 			table-layout: fixed;
 		}
-		/* 订单编号列宽（仅主表滚动区，勿作用到右侧冻结区） */
-		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="dh"],
-		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="dh"] {
+		/* 序号、编码、订单编号列宽（仅主表滚动区） */
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="index"],
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="index"] {
+			min-width: 80px !important;
+			width: 80px !important;
+			max-width: 80px !important;
+		}
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="hospitalCode"],
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="hospitalCode"] {
+			min-width: 160px !important;
+			width: 160px !important;
+			max-width: 160px !important;
+		}
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="supplierCode"],
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="supplierCode"] {
+			min-width: 160px !important;
+			width: 160px !important;
+			max-width: 160px !important;
+		}
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="dh"],
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="dh"] {
 			min-width: 175px !important;
 			width: 175px !important;
 			max-width: 175px !important;
 		}
 		/* 平台/订单供应商名称：加宽并单行省略 */
-		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="supplierName"],
-		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"],
-		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="sup"],
-		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="sup"] {
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="supplierName"],
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"],
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="sup"],
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="sup"] {
 			min-width: 220px !important;
 			width: 220px !important;
 			max-width: 220px !important;
@@ -76,8 +179,8 @@
 			text-overflow: ellipsis !important;
 		}
 		/* 主表滚动区内隐藏操作列（由右侧 fixed-columns-right 展示，避免双列） */
-		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="tpOperate"],
-		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="tpOperate"] {
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="tpOperate"],
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="tpOperate"] {
 			padding: 0 !important;
 			border-left: 0 !important;
 			border-right: 0 !important;
@@ -86,41 +189,41 @@
 			color: transparent;
 			overflow: hidden;
 		}
-		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="tpOperate"] > *,
-		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="tpOperate"] > * {
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="tpOperate"] > *,
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="tpOperate"] > * {
 			display: none;
 		}
 		/* 右侧冻结操作列 */
-		.order-table-wrap.tp-query-table .fixed-columns-right {
+		.query-table-wrap.tp-query-table .fixed-columns-right {
 			z-index: 5;
 			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
 		}
-		.order-table-wrap.tp-query-table .fixed-columns-right .fixed-table-header th,
-		.order-table-wrap.tp-query-table .fixed-columns-right .fixed-table-body td {
+		.query-table-wrap.tp-query-table .fixed-columns-right .fixed-table-header th,
+		.query-table-wrap.tp-query-table .fixed-columns-right .fixed-table-body td {
 			background-color: #fff;
 			vertical-align: middle;
 			white-space: nowrap;
 			box-sizing: border-box;
 		}
-		.order-table-wrap.tp-query-table .fixed-columns-right .fixed-table-header th[data-field="tpOperate"] {
+		.query-table-wrap.tp-query-table .fixed-columns-right .fixed-table-header th[data-field="tpOperate"] {
 			background-color: #f5f5f5;
 			min-width: 200px;
 			width: 200px;
 		}
-		.order-table-wrap.tp-query-table .fixed-columns-right .fixed-table-body td[data-field="tpOperate"] {
+		.query-table-wrap.tp-query-table .fixed-columns-right .fixed-table-body td[data-field="tpOperate"] {
 			min-width: 200px;
 			width: 200px;
-			padding: 8px 12px;
+			padding: 8px 14px;
 		}
-		.order-table-wrap.tp-query-table.table-striped .fixed-columns-right .fixed-table-body tbody tr:nth-of-type(odd) td {
+		.query-table-wrap.tp-query-table.table-striped .fixed-columns-right .fixed-table-body tbody tr:nth-of-type(odd) td {
 			background-color: #f9f9f9;
 		}
-		.order-table-wrap.tp-query-table .fixed-columns-right .fixed-table-body {
+		.query-table-wrap.tp-query-table .fixed-columns-right .fixed-table-body {
 			overflow-x: hidden !important;
 			overflow-y: hidden !important;
 		}
 		/* 主表明细单行，避免行高不一致导致冻结列错位 */
-		.order-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body tbody td {
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body tbody td {
 			white-space: nowrap !important;
 			overflow: hidden;
 			text-overflow: ellipsis;
@@ -131,9 +234,9 @@
 		}
 	</style>
 </head>
-<body class="gray-bg">
-	<div class="container-div">
-		<div class="row">
+<body class="gray-bg tp-query-body">
+	<div class="container-div tp-query-page">
+		<div class="row" style="margin: 0; display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%;">
 			<div class="col-sm-12 search-collapse">
 				<form id="tp-query-form">
 					<div class="select-list">
@@ -199,7 +302,7 @@
 				</a>
 	        </div>
 
-	        <div class="col-sm-12 select-table table-striped order-table-wrap tp-query-table">
+	        <div class="col-sm-12 select-table table-striped query-table-wrap tp-query-table">
 			    <table id="bootstrap-table"></table>
 			</div>
 		</div>
@@ -241,12 +344,48 @@
 			fix(endKey, true);
 		}
 
-		function calculateTableHeight() {
-			var $detail = $('.order-table-wrap');
-			if ($detail.length === 0) {
-				return 700;
+		/** 明细框外包层高度：与配送信息查询-配送明细表 layoutDeliveryQueryWrapHeights 一致 */
+		function layoutTpQueryWrapHeight() {
+			var $page = $('.tp-query-page.container-div');
+			if (!$page.length) {
+				return;
 			}
-			return Math.max($detail.innerHeight() - 8, 650);
+			var $wrap = $page.find('.query-table-wrap');
+			if (!$wrap.length) {
+				return;
+			}
+			var el = $wrap[0];
+			var pageBottom = $page[0].getBoundingClientRect().bottom;
+			var top = el.getBoundingClientRect().top;
+			var base = Math.floor(pageBottom - top - 6);
+			var docEl = document.documentElement;
+			var viewH = (docEl && docEl.clientHeight) ? docEl.clientHeight : (window.innerHeight || 0);
+			var maxByViewport = Math.floor(viewH - top - 10);
+			var boosted = Math.min(base + 56, maxByViewport);
+			var h = Math.max(base, boosted);
+			if (h < 260) {
+				h = 260;
+			}
+			el.style.setProperty('flex', '0 0 auto', 'important');
+			el.style.setProperty('height', h + 'px', 'important');
+			el.style.setProperty('min-height', h + 'px', 'important');
+			el.style.removeProperty('max-height');
+			el.style.setProperty('box-sizing', 'border-box', 'important');
+		}
+
+		function calculateTableHeight() {
+			var $table = $('#' + tableId);
+			var $wrap = $table.closest('.query-table-wrap');
+			if ($wrap.length === 0) {
+				return 600;
+			}
+			var el = $wrap[0];
+			var h = el ? el.clientHeight : Math.floor($wrap.innerHeight());
+			if (!h || h < 1) {
+				h = Math.floor($wrap.innerHeight());
+			}
+			h = Math.floor(h - 12);
+			return Math.max(h, 280);
 		}
 
 		function adjustTableHeight() {
@@ -256,8 +395,17 @@
 			}
 		}
 
+		function relayoutTpQueryTable() {
+			layoutTpQueryWrapHeight();
+			adjustTableHeight();
+			setTimeout(function () {
+				adjustTableHeight();
+				refreshTpTableLayout();
+			}, 80);
+		}
+
 		var tpColCss = {
-			padding: '8px 12px',
+			padding: '8px 14px',
 			whiteSpace: 'nowrap',
 			overflow: 'hidden',
 			textOverflow: 'ellipsis',
@@ -319,7 +467,74 @@
 			var $mainBody = $container.children('.fixed-table-body');
 			var $mainHeader = $container.children('.fixed-table-header');
 			$mainBody.off('scroll.tpMainH').on('scroll.tpMainH', function () {
-				$mainHeader.scrollLeft($mainBody.scrollLeft());
+				var sl = $mainBody.scrollLeft();
+				$mainHeader.scrollLeft(sl);
+				var $bar = $bt.children('.tp-detail-hscroll');
+				if ($bar.length && $bar.scrollLeft() !== sl) {
+					$bar.scrollLeft(sl);
+				}
+			});
+		}
+
+		/** 明细框底部横向滚动条 */
+		function ensureTpDetailHScrollBar() {
+			var $bt = $('#' + tableId).closest('.bootstrap-table');
+			if ($bt.length === 0) {
+				return $();
+			}
+			var $bar = $bt.children('.tp-detail-hscroll');
+			if ($bar.length === 0) {
+				$bar = $('<div class="tp-detail-hscroll"><div class="tp-detail-hscroll-inner"></div></div>');
+				var $pag = $bt.children('.fixed-table-pagination');
+				if ($pag.length) {
+					$bar.insertBefore($pag);
+				} else {
+					$bt.append($bar);
+				}
+			}
+			return $bar;
+		}
+
+		function syncTpDetailHScrollSize() {
+			var $bt = $('#' + tableId).closest('.bootstrap-table');
+			var $bar = ensureTpDetailHScrollBar();
+			if ($bar.length === 0) {
+				return;
+			}
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $table = $mainBody.find('table').first();
+			if ($table.length === 0 || !$mainBody[0]) {
+				$bar.hide();
+				return;
+			}
+			var scrollW = $table[0].scrollWidth;
+			var clientW = $mainBody[0].clientWidth;
+			$bar.find('.tp-detail-hscroll-inner').width(Math.max(scrollW, clientW + 1));
+			var $right = $bt.find('.fixed-columns-right');
+			var rightW = ($right.length && $right.is(':visible')) ? Math.ceil($right.outerWidth()) : 0;
+			$bar.css({ marginRight: rightW + 'px', display: 'block' });
+			if (scrollW <= clientW + 2) {
+				$bar.css('overflow-x', 'hidden');
+			} else {
+				$bar.css('overflow-x', 'auto');
+			}
+			$bar.scrollLeft($mainBody.scrollLeft());
+		}
+
+		function bindTpDetailHScroll() {
+			var $bt = $('#' + tableId).closest('.bootstrap-table');
+			var $bar = ensureTpDetailHScrollBar();
+			if ($bar.length === 0) {
+				return;
+			}
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			$bar.off('scroll.tpDetailH').on('scroll.tpDetailH', function () {
+				var sl = this.scrollLeft;
+				$mainBody.scrollLeft(sl);
+				$mainHeader.scrollLeft(sl);
 			});
 		}
 
@@ -360,6 +575,9 @@
 			requestAnimationFrame(applyTpDhColumnWidth);
 		}
 
+		var tpIndexColWidth = 80;
+		var tpHospitalCodeColWidth = 160;
+		var tpSupplierCodeColWidth = 160;
 		var tpSupplierNameColWidth = 220;
 
 		/** 按字段强制列宽（覆盖 fitHeader / table-layout） */
@@ -395,9 +613,15 @@
 
 		function scheduleTpFixedColumnWidths() {
 			scheduleTpDhColumnWidth();
+			applyTpFieldColumnWidth('index', tpIndexColWidth);
+			applyTpFieldColumnWidth('hospitalCode', tpHospitalCodeColWidth);
+			applyTpFieldColumnWidth('supplierCode', tpSupplierCodeColWidth);
 			applyTpFieldColumnWidth('supplierName', tpSupplierNameColWidth);
 			applyTpFieldColumnWidth('sup', tpSupplierNameColWidth);
 			requestAnimationFrame(function () {
+				applyTpFieldColumnWidth('index', tpIndexColWidth);
+				applyTpFieldColumnWidth('hospitalCode', tpHospitalCodeColWidth);
+				applyTpFieldColumnWidth('supplierCode', tpSupplierCodeColWidth);
 				applyTpFieldColumnWidth('supplierName', tpSupplierNameColWidth);
 				applyTpFieldColumnWidth('sup', tpSupplierNameColWidth);
 			});
@@ -458,8 +682,6 @@
 					mainEl.style.minHeight = hs;
 					rightEl.style.height = hs;
 					rightEl.style.minHeight = hs;
-					$(mainEl).find('td').css('height', hs);
-					$(rightEl).find('td').css('height', hs);
 				}
 			}
 			var $mainHead = $bt.find('.fixed-table-container > .fixed-table-header table thead tr');
@@ -486,13 +708,15 @@
 			syncTpOperateColumnScroll();
 			scheduleTpFixedColumnWidths();
 			scheduleTpOperateRowSync();
+			syncTpDetailHScrollSize();
+			bindTpDetailHScroll();
 		}
 
 		$(function() {
+		    layoutTpQueryWrapHeight();
 		    queryList();
-		    $(window).resize(function() {
-		    	adjustTableHeight();
-		    });
+		    $(window).on('resize', relayoutTpQueryTable);
+		    setTimeout(relayoutTpQueryTable, 300);
 		});
 
 		function tpQueryParams(params) {
@@ -552,15 +776,8 @@
 		        fixedRightNumber: 1,
 		        height: calculateTableHeight(),
 		        onLoadSuccess: function() {
+		            setTimeout(relayoutTpQueryTable, 0);
 		            setTimeout(function() {
-		                adjustTableHeight();
-		                refreshTpTableLayout();
-		            }, 50);
-		            setTimeout(function() {
-		                var $t = $('#' + tableId);
-		                if ($t.bootstrapTable('getOptions')) {
-		                    $t.bootstrapTable('resetView', { height: calculateTableHeight() });
-		                }
 		                refreshTpTableLayout();
 		            }, 200);
 		            setTimeout(function () {
@@ -579,7 +796,7 @@
 		            field: 'index',
 		            title: '序号',
 		            align: 'center',
-		            width: 64,
+		            width: 80,
 		            formatter: function(value, row, index) {
 		                var opt = $("#" + tableId).bootstrapTable("getOptions");
 		                var pn = opt.pageNumber || 1;
@@ -602,7 +819,7 @@
 		        {
 		            field: 'hospitalCode',
 		            title: '平台医院编码',
-		            width: 120,
+		            width: 160,
 		            formatter: function (value) { return value || '-'; }
 		        },
 		        {
@@ -614,7 +831,7 @@
 		        {
 		            field: 'supplierCode',
 		            title: '平台供应商编码',
-		            width: 120,
+		            width: 160,
 		            formatter: function (value) { return value || '-'; }
 		        },
 		        {

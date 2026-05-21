@@ -39,395 +39,383 @@
 			height: 30px;
 			padding: 4px 8px;
 		}
-		/* 明细表：压缩行高 */
-		#detail-table th, #detail-table td {
-			padding: 3px 8px !important;
-			white-space: nowrap;
-			line-height: 1.35;
-			font-size: 12px;
+		/* ========== 详细信息列表：与配送信息查询-配送明细表一致 ========== */
+		.bootstrap-table .fixed-table-header {
+			background-color: #fff !important;
 		}
-		#detail-table tbody td {
-			vertical-align: middle !important;
+		.bootstrap-table .fixed-table-header th {
+			background-color: #f5f5f5 !important;
+			border-bottom: 2px solid #ddd !important;
 		}
-		#detail-table .detail-text-input,
-		#detail-table .detail-date-input,
-		#detail-table .form-control.input-sm {
-			width: 100%;
-			height: 26px;
-			line-height: 1.35;
-			padding: 2px 6px;
-			box-sizing: border-box;
-			font-size: 12px;
-			margin: 0;
-			display: inline-block;
-			vertical-align: middle;
-		}
-		#detail-table .btn-xs {
-			padding: 1px 5px;
-			font-size: 12px;
-			line-height: 1.35;
-		}
-		#detail-table th[data-field="expireDate"],
-		#detail-table td[data-field="expireDate"],
-		#detail-table th[data-field="productionDate"],
-		#detail-table td[data-field="productionDate"] {
-			min-width: 130px;
-			max-width: 150px;
-		}
-		.detail-table-scroll-outer {
-			overflow-x: auto !important;
-			overflow-y: hidden !important;
+		#delivery-detail-list-section.query-table-wrap {
+			flex: 1 1 0%;
+			min-height: 0;
+			position: relative;
+			padding-bottom: 0;
+			overflow-x: hidden;
+			overflow-y: visible;
 			display: flex;
 			flex-direction: column;
-			width: 100%;
+			border: none;
+			border-radius: 0;
+			background: #fff;
+		}
+		#delivery-detail-list-section.select-table {
+			margin-top: 0 !important;
+			padding-top: 0 !important;
+			padding-bottom: 0 !important;
+			box-shadow: none !important;
+			border-radius: 0 !important;
+		}
+		#delivery-detail-list-section .fixed-table-container,
+		#delivery-detail-list-section .fixed-table-body,
+		#delivery-detail-list-section .bootstrap-table {
+			background: #fff;
+		}
+		#delivery-detail-list-section.query-table-wrap.select-table {
+			overflow-x: hidden !important;
+			overflow-y: visible !important;
+		}
+		#delivery-detail-list-section.query-table-wrap > .bootstrap-table {
 			flex: 1 1 auto;
-			min-height: 160px;
-			max-height: none;
-			border: 1px solid #ddd;
-			border-radius: 4px;
-			-webkit-overflow-scrolling: touch;
+			min-height: 0;
+			width: 100%;
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			position: relative;
+		}
+		#delivery-detail-list-section .fixed-columns-right {
+			display: none !important;
+		}
+		#delivery-detail-list-section .fixed-table-container {
+			display: flex;
+			flex-direction: column;
+			flex: 1;
+			min-height: 0;
+			padding-bottom: 0;
+		}
+		#delivery-detail-list-section .fixed-table-body {
+			overflow-x: scroll !important;
+			overflow-y: auto !important;
+			flex: 1;
+			min-height: 0;
 			scrollbar-width: thin;
-			-ms-overflow-style: auto;
-			box-sizing: border-box;
-			scrollbar-gutter: stable;
+			-ms-overflow-style: scrollbar;
 		}
-		.detail-table-scroll-outer::-webkit-scrollbar {
-			width: 10px !important;
-			height: 10px !important;
-			display: block !important;
+		#delivery-detail-list-section .fixed-table-body::-webkit-scrollbar {
+			height: 12px;
+			width: 8px;
 		}
-		.detail-table-scroll-outer::-webkit-scrollbar-thumb {
+		#delivery-detail-list-section.detail-has-fixed-op .fixed-table-body::-webkit-scrollbar:vertical {
+			width: 0 !important;
+			display: none;
+		}
+		#delivery-detail-list-section .detail-vscroll-rail {
+			position: absolute;
+			right: 0;
+			width: 10px;
+			overflow-x: hidden;
+			overflow-y: auto;
+			z-index: 7;
+			background: #f1f1f1;
+			scrollbar-width: thin;
+		}
+		#delivery-detail-list-section .detail-vscroll-rail::-webkit-scrollbar {
+			width: 8px;
+		}
+		#delivery-detail-list-section .detail-vscroll-rail::-webkit-scrollbar-thumb {
+			background: rgba(0, 0, 0, 0.28);
+			border-radius: 4px;
+		}
+		#delivery-detail-list-section .detail-vscroll-rail-inner {
+			width: 1px;
+		}
+		#delivery-detail-list-section .fixed-table-body::-webkit-scrollbar-thumb {
 			background: rgba(0, 0, 0, 0.28);
 			border-radius: 5px;
 		}
-		.detail-table-scroll-outer::-webkit-scrollbar-track {
+		#delivery-detail-list-section .fixed-table-body::-webkit-scrollbar-track {
 			background: #f1f1f1;
-			border-radius: 5px;
 		}
-		.detail-table-scroll-outer .bootstrap-table .fixed-table-container {
-			min-width: 3000px;
+		.delivery-detail-section #delivery-detail-list-section {
+			flex: 1 1 auto !important;
+			min-height: 480px !important;
+			height: auto !important;
 		}
-		/* 序号、操作列冻结在左侧（位于产品编码前） */
-		.detail-table-scroll-outer #detail-table .fixed-table-header thead th[data-field="index"],
-		.detail-table-scroll-outer #detail-table .fixed-table-body tbody td[data-field="index"] {
-			position: sticky !important;
-			left: 0 !important;
-			z-index: 32 !important;
-			background-color: #fff !important;
-			box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
+		#delivery-detail-list-section .fixed-table-header {
+			background: #fff !important;
 		}
-		.detail-table-scroll-outer #detail-table .fixed-table-header thead th[data-field="index"] {
-			background-color: #f5f5f5 !important;
-			z-index: 34 !important;
+		#delivery-detail-list-section .fixed-table-header table.table,
+		#delivery-detail-list-section .fixed-table-body table.table {
+			border-collapse: collapse;
 		}
-		.detail-table-scroll-outer #detail-table.table-striped > tbody > tr:nth-child(odd) > td[data-field="index"] {
-			background-color: #f9f9f9 !important;
+		#delivery-detail-list-section .fixed-table-container {
+			position: relative;
 		}
-		.detail-table-scroll-outer #detail-table .fixed-table-header thead th[data-field="operation"],
-		.detail-table-scroll-outer #detail-table .fixed-table-body tbody td[data-field="operation"] {
-			position: sticky !important;
-			left: 60px !important;
-			z-index: 31 !important;
-			background-color: #fff !important;
-			box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
+		#detail-table.delivery-detail-fixed-table {
+			table-layout: fixed !important;
 		}
-		.detail-table-scroll-outer #detail-table .fixed-table-header thead th[data-field="operation"] {
-			background-color: #f5f5f5 !important;
-			z-index: 33 !important;
+		#delivery-detail-list-section .fixed-table-body .fixed-table-border {
+			display: none !important;
+			height: 0 !important;
+			min-height: 0 !important;
+			max-height: 0 !important;
+			border: 0 !important;
 		}
-		.detail-table-scroll-outer #detail-table.table-striped > tbody > tr:nth-child(odd) > td[data-field="operation"] {
-			background-color: #f9f9f9 !important;
+		#delivery-detail-list-section .fixed-table-body table {
+			height: auto !important;
+			min-height: 0 !important;
 		}
-		.detail-table-scroll-outer > .bootstrap-table,
-		.detail-table-scroll-outer #detail-table.bootstrap-table {
-			flex: 1 1 auto;
-			min-height: 0;
-			height: 100% !important;
+		#delivery-detail-list-section .fixed-table-body tbody {
+			height: auto !important;
+		}
+		#delivery-detail-list-section .fixed-table-body tbody tr {
+			height: 44px !important;
+			max-height: 44px !important;
+			min-height: 44px !important;
+		}
+		#delivery-detail-list-section .fixed-table-header th {
+			box-sizing: border-box !important;
+			padding: 6px 8px !important;
+			white-space: nowrap !important;
+			word-break: keep-all !important;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			vertical-align: middle !important;
+		}
+		#delivery-detail-list-section .fixed-table-body td {
+			box-sizing: border-box !important;
+			height: 44px !important;
+			max-height: 44px !important;
+			min-height: 44px !important;
+			padding: 4px 6px !important;
+			white-space: nowrap !important;
+			word-break: keep-all !important;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			vertical-align: middle !important;
+		}
+		#delivery-detail-list-section .fixed-table-header th[data-field="index"],
+		#delivery-detail-list-section .fixed-table-body td[data-field="index"],
+		#delivery-detail-list-section .fixed-table-header th[data-field="unit"],
+		#delivery-detail-list-section .fixed-table-body td[data-field="unit"],
+		#delivery-detail-list-section .fixed-table-header th[data-field="packCoefficient"],
+		#delivery-detail-list-section .fixed-table-body td[data-field="packCoefficient"] {
+			padding-left: 4px !important;
+			padding-right: 4px !important;
+		}
+		#delivery-detail-list-section .fixed-table-header th[data-field="materialName"],
+		#delivery-detail-list-section .fixed-table-body td[data-field="materialName"] {
+			width: 116px !important;
+			max-width: 130px !important;
+			min-width: 72px !important;
+		}
+		#delivery-detail-list-section .fixed-table-header th[data-field="specification"],
+		#delivery-detail-list-section .fixed-table-body td[data-field="specification"] {
+			width: 96px !important;
+			max-width: 110px !important;
+			min-width: 64px !important;
+			padding-left: 4px !important;
+			padding-right: 6px !important;
+		}
+		#delivery-detail-list-section .fixed-table-header th.bs-checkbox,
+		#delivery-detail-list-section .fixed-table-body td.bs-checkbox {
+			width: 42px !important;
+			min-width: 42px !important;
+			max-width: 42px !important;
+			text-align: center !important;
+			padding: 8px 4px !important;
+		}
+		#delivery-detail-list-section .fixed-table-header th[data-field="batchNo"],
+		#delivery-detail-list-section .fixed-table-body td[data-field="batchNo"],
+		#delivery-detail-list-section .fixed-table-header th[data-field="expireDate"],
+		#delivery-detail-list-section .fixed-table-body td[data-field="expireDate"],
+		#delivery-detail-list-section .fixed-table-header th[data-field="productionDate"],
+		#delivery-detail-list-section .fixed-table-body td[data-field="productionDate"] {
+			white-space: normal !important;
+			word-break: normal !important;
+			overflow: visible;
+			text-overflow: clip;
+		}
+		#delivery-detail-list-section .detail-text-input,
+		#delivery-detail-list-section .detail-date-input,
+		#delivery-detail-list-section .form-control.input-sm {
 			width: 100%;
+			height: 28px;
+			line-height: 1.4;
+			padding: 4px 8px;
+			box-sizing: border-box;
+			font-size: 12px;
+			margin: 0;
 		}
-		/* 固定左侧列 - 表头 */
-		#detail-table .fixed-table-header .fixed-columns-left {
-			position: sticky !important;
-			left: 0 !important;
-			z-index: 101 !important;
-			background-color: #f5f5f5 !important;
+		#delivery-detail-list-section.detail-has-fixed-op .fixed-table-container {
+			padding-right: 0;
+			box-sizing: border-box;
 		}
-		#detail-table .fixed-table-header .fixed-columns-left th {
-			background-color: #f5f5f5 !important;
-		}
-		/* 固定左侧列 - 表体 */
-		#detail-table .fixed-table-body .fixed-columns-left {
-			position: sticky !important;
-			left: 0 !important;
-			z-index: 20 !important;
-			background-color: #fff !important;
-			overflow: hidden !important;
-		}
-		#detail-table .fixed-table-body .fixed-columns-left td {
-			background-color: #fff !important;
-		}
-		/* 确保左侧固定列在滚动时保持可见 */
-		#detail-table .fixed-columns-left,
-		.fixed-columns-left {
-			position: sticky !important;
-			left: 0 !important;
-			background-color: #fff !important;
-			overflow: hidden !important;
-		}
-		/* 确保左侧固定列中的表格单元格也固定 */
-		.fixed-columns-left td,
-		.fixed-columns-left th {
-			position: sticky !important;
-			left: 0 !important;
-		}
-		/* 隐藏左侧固定列的滚动条 */
-		.fixed-columns-left::-webkit-scrollbar,
-		#detail-table .fixed-columns-left::-webkit-scrollbar {
-			display: none !important;
+		#delivery-detail-list-section.detail-has-fixed-op .fixed-table-container > .fixed-table-header th[data-field="operation"],
+		#delivery-detail-list-section.detail-has-fixed-op .fixed-table-container > .fixed-table-body td[data-field="operation"] {
+			padding: 0 !important;
+			border: 0 !important;
+			font-size: 0;
+			line-height: 0;
+			overflow: hidden;
+			min-width: 0 !important;
 			width: 0 !important;
-			height: 0 !important;
+			max-width: 0 !important;
 		}
-		.fixed-columns-left {
-			-ms-overflow-style: none !important; /* IE and Edge */
-			scrollbar-width: none !important; /* Firefox */
-		}
-		/* 固定右侧列 - 表头 */
-		#detail-table .fixed-table-header .fixed-columns-right {
-			position: sticky !important;
-			right: 0 !important;
-			z-index: 101 !important;
-			background-color: #f5f5f5 !important;
-		}
-		#detail-table .fixed-table-header .fixed-columns-right th {
-			background-color: #f5f5f5 !important;
-		}
-		/* 固定右侧列 - 表体 */
-		#detail-table .fixed-table-body .fixed-columns-right {
-			position: sticky !important;
-			right: 0 !important;
-			z-index: 20 !important;
-			background-color: #fff !important;
-		}
-		#detail-table .fixed-table-body .fixed-columns-right td {
-			background-color: #fff !important;
-		}
-		/* 确保固定列在滚动时保持可见 */
-		#detail-table .fixed-columns-right,
-		.fixed-columns-right {
-			position: sticky !important;
-			right: 0 !important;
-			background-color: #fff !important;
-		}
-		/* 确保固定列中的表格单元格也固定 */
-		.fixed-columns-right td,
-		.fixed-columns-right th {
-			position: sticky !important;
-			right: 0 !important;
-		}
-		#detail-table .fixed-table-container {
-			position: relative !important;
-		}
-		#detail-table .fixed-table-header {
-			margin-bottom: 0 !important;
-		}
-		/* 横向滚动仅由 .detail-table-scroll-outer 承担，见文件末尾「明细表滚动覆盖」 */
-		/* 仅隐藏左侧固定列内的滚动条，避免双滚动条；主表区域保留滚动条 */
-		#detail-table .fixed-columns-left::-webkit-scrollbar,
-		.fixed-columns-left::-webkit-scrollbar {
+		#delivery-detail-list-section.detail-has-fixed-op .fixed-table-container > .fixed-table-header th[data-field="operation"] > *,
+		#delivery-detail-list-section.detail-has-fixed-op .fixed-table-container > .fixed-table-body td[data-field="operation"] > * {
 			display: none !important;
-			width: 0 !important;
-			height: 0 !important;
 		}
-		#detail-table .fixed-columns-left {
-			-ms-overflow-style: none !important;
-			scrollbar-width: none !important;
+		#delivery-detail-list-section .detail-op-fixed-panel {
+			position: absolute;
+			right: 10px;
+			width: 175px;
+			z-index: 6;
+			background: #fff;
+			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+			box-sizing: border-box;
 		}
-		/* 表格内部的滚动条样式 */
-		#detail-table .fixed-table-container::-webkit-scrollbar {
-			height: 8px;
-			width: 6px;
+		#delivery-detail-list-section .detail-op-fixed-head {
+			flex-shrink: 0;
+			background: #f5f5f5;
+			border-bottom: 2px solid #ddd;
+			text-align: center;
+			font-size: 12px;
+			font-weight: 600;
+			color: #333;
+			line-height: 1.4;
+			padding: 0 8px;
+			box-sizing: border-box;
 		}
-		#detail-table .fixed-table-container::-webkit-scrollbar-track {
-			background: transparent;
+		#delivery-detail-list-section .detail-op-fixed-body {
+			flex: 1;
+			overflow: hidden;
+			position: relative;
 		}
-		#detail-table .fixed-table-container::-webkit-scrollbar-thumb {
-			background: rgba(0, 0, 0, 0.2);
-			border-radius: 3px;
+		#delivery-detail-list-section .detail-op-fixed-body-inner {
+			position: relative;
+			will-change: transform;
 		}
-		#detail-table .fixed-table-container::-webkit-scrollbar-thumb:hover {
-			background: rgba(0, 0, 0, 0.4);
+		#delivery-detail-list-section .detail-op-fixed-row {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 6px 8px;
+			box-sizing: border-box;
+			border-bottom: 1px solid #eee;
+			height: 44px;
+			min-height: 44px;
+			max-height: 44px;
 		}
-		#detail-table .fixed-table-body::-webkit-scrollbar {
-			height: 8px;
-			width: 6px;
+		#delivery-detail-list-section.table-striped .detail-op-fixed-row:nth-child(odd) {
+			background-color: #f9f9f9;
 		}
-		#detail-table .fixed-table-body::-webkit-scrollbar-track {
-			background: transparent;
+		#delivery-detail-list-section .detail-op-btns {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			gap: 6px;
+			flex-wrap: nowrap;
 		}
-		#detail-table .fixed-table-body::-webkit-scrollbar-thumb {
-			background: rgba(0, 0, 0, 0.2);
-			border-radius: 3px;
-		}
-		#detail-table .fixed-table-body::-webkit-scrollbar-thumb:hover {
-			background: rgba(0, 0, 0, 0.4);
-		}
-		/* 确保操作列内容显示 */
-		#detail-table .fixed-columns-right td,
-		#detail-table .fixed-columns-right th {
-			visibility: visible !important;
-			opacity: 1 !important;
-		}
-		/* 确保操作列的按钮可见 */
-		#detail-table .fixed-columns-right .btn,
-		#detail-table .fixed-columns-right .btn-operation-delete {
-			display: inline-block !important;
-			visibility: visible !important;
-		}
-		/* 优化操作列按钮样式 */
-		.btn-operation-delete {
+		#delivery-detail-list-section .detail-op-btn-copy,
+		#delivery-detail-list-section .detail-op-btn-del {
 			display: inline-flex !important;
 			align-items: center;
 			justify-content: center;
-			padding: 6px 10px;
-			margin: 0 auto;
-			color: #fff !important;
-			background: linear-gradient(135deg, #d9534f 0%, #c9302c 100%) !important;
-			border: none !important;
-			border-radius: 4px;
-			font-size: 13px;
-			line-height: 1;
-			text-align: center;
-			cursor: pointer;
-			transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+			gap: 4px;
+			height: 26px !important;
+			line-height: 1 !important;
+			padding: 0 8px !important;
+			font-size: 12px !important;
+			border-radius: 3px !important;
+			white-space: nowrap;
 			text-decoration: none !important;
-			min-width: 32px;
-			width: 32px;
-			max-width: 32px;
-			height: 28px;
-			box-shadow: 0 2px 4px rgba(217, 83, 79, 0.3);
-			position: relative;
-			overflow: hidden;
-			opacity: 1 !important;
-			visibility: visible !important;
-			white-space: nowrap !important;
+			box-shadow: none !important;
 		}
-		.btn-operation-delete::before {
-			content: '';
-			position: absolute;
-			top: 50%;
-			left: 50%;
-			width: 0;
-			height: 0;
-			border-radius: 50%;
-			background: rgba(255, 255, 255, 0.3);
-			transform: translate(-50%, -50%);
-			transition: width 0.4s, height 0.4s;
+		#delivery-detail-list-section .detail-op-btn-copy {
+			color: #31708f !important;
+			background: #fff !important;
+			border: 1px solid #bce8f1 !important;
 		}
-		.btn-operation-delete:hover {
-			color: #fff;
-			background: linear-gradient(135deg, #c9302c 0%, #ac2925 100%);
-			box-shadow: 0 4px 8px rgba(217, 83, 79, 0.4);
-			transform: translateY(-2px) scale(1.05);
+		#delivery-detail-list-section .detail-op-btn-copy:hover {
+			color: #fff !important;
+			background: #5bc0de !important;
+			border-color: #46b8da !important;
 		}
-		.btn-operation-delete:hover::before {
-			width: 300px;
-			height: 300px;
+		#delivery-detail-list-section .detail-op-btn-del {
+			color: #fff !important;
+			background: #d9534f !important;
+			border: 1px solid #d43f3a !important;
 		}
-		.btn-operation-delete:active {
-			background: linear-gradient(135deg, #ac2925 0%, #8b211e 100%);
-			box-shadow: 0 1px 2px rgba(217, 83, 79, 0.3);
-			transform: translateY(0) scale(1);
+		#delivery-detail-list-section .detail-op-btn-del:hover {
+			background: #c9302c !important;
+			border-color: #ac2925 !important;
 		}
-		.btn-operation-delete i {
+		#delivery-detail-list-section .detail-op-btn-copy i,
+		#delivery-detail-list-section .detail-op-btn-del i {
 			margin: 0;
-			font-size: 13px;
-			position: relative;
-			z-index: 1;
+			font-size: 12px;
+			line-height: 1;
 		}
-		/* 操作列单元格居中 */
-		#detail-table td[data-field="operation"],
-		#detail-table .fixed-columns-right td {
-			text-align: center !important;
-			vertical-align: middle !important;
-			padding: 8px 4px !important;
-			background-color: #fff !important;
-			width: 90px !important;
-			min-width: 90px !important;
-			max-width: 90px !important;
-			white-space: nowrap !important;
-			overflow: hidden !important;
-		}
-		/* 操作列标题样式 */
-		#detail-table th[data-field="operation"] {
-			text-align: center !important;
-			font-weight: 600;
-			background-color: #f5f5f5 !important;
-			color: #333;
-			width: 90px !important;
-			min-width: 90px !important;
-			max-width: 90px !important;
-			white-space: nowrap !important;
-			overflow: hidden !important;
-		}
-		/* 操作列固定时的样式优化 */
-		#detail-table .fixed-columns-right td[data-field="operation"],
-		#detail-table .fixed-columns-right td:last-child {
-			background-color: #fff !important;
-			text-align: center !important;
-			padding: 8px 4px !important;
-			width: 90px !important;
-			min-width: 90px !important;
-			max-width: 90px !important;
-			white-space: nowrap !important;
-			overflow: hidden !important;
-		}
-		#detail-table .fixed-columns-right th[data-field="operation"],
-		#detail-table .fixed-columns-right th:last-child {
-			background-color: #f5f5f5 !important;
-			text-align: center !important;
-			width: 90px !important;
-			min-width: 90px !important;
-			max-width: 90px !important;
-			white-space: nowrap !important;
-			overflow: hidden !important;
-		}
-		/* 确保操作列按钮在固定列中正确显示 */
-		#detail-table .fixed-columns-right .btn-operation-delete {
-			display: inline-flex !important;
-			visibility: visible !important;
-			opacity: 1 !important;
-		}
-		/* 页面布局：表单固定高度，明细区 flex 占满剩余空间，避免横向滚动条被裁切 */
+				/* 页面布局：表单固定高度，明细区 flex 占满剩余空间，避免横向滚动条被裁切 */
 		body.delivery-form-page {
 			overflow: hidden;
 			height: 100%;
+			min-height: 100%;
 		}
 		.main-content.delivery-form-main {
 			display: flex;
 			flex-direction: column;
-			height: calc(100vh - 80px);
-			min-height: 0;
+			height: calc(100vh - 24px);
+			min-height: calc(100vh - 24px);
+			max-height: calc(100vh - 24px);
 			overflow: hidden;
-			padding: 15px 20px;
+			padding: 6px 10px 12px 10px;
 			background-color: #f5f5f5;
 			box-sizing: border-box;
 		}
-		.delivery-form-main > .form-card {
+		.delivery-form-main > form.form-horizontal {
 			flex: 0 0 auto;
+			margin: 0 0 8px 0;
+			padding: 0;
 		}
-		.delivery-form-main > .table-card {
+		.delivery-form-main .form-card.delivery-doc-form {
+			margin-top: 0;
+			margin-bottom: 0 !important;
+			padding: 14px 16px 16px;
+		}
+		.delivery-form-main .form-card.delivery-doc-form .form-header {
+			margin-top: 0;
+			margin-bottom: 14px;
+			padding-bottom: 8px;
+		}
+		.delivery-form-main > .delivery-detail-section {
 			flex: 1 1 auto;
-			min-height: 0;
+			min-height: 480px;
 			display: flex;
 			flex-direction: column;
-			margin-bottom: 0;
+			overflow: hidden;
+			margin-bottom: 0 !important;
+			margin-top: 0 !important;
+			padding: 14px 16px 16px;
+			background: #fff;
+			border-radius: 6px;
+			box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
 		}
-		.table-card .table-card-toolbar {
+		.delivery-detail-section .delivery-detail-toolbar {
 			flex: 0 0 auto;
+			margin-bottom: 8px;
+			background: #fff;
 		}
-		.table-card .detail-table-scroll-outer {
-			flex: 1 1 auto;
-			min-height: 0;
+		.delivery-detail-section .delivery-detail-toolbar .form-header {
+			margin-top: 0;
+			margin-bottom: 14px;
+			padding-bottom: 8px;
 		}
 		/* 页面布局优化 */
 		.main-content {
@@ -453,34 +441,6 @@
 		/* 表单组间距优化 */
 		.form-horizontal .form-group {
 			margin-bottom: 15px;
-		}
-		/* 表格区域卡片样式 */
-		.table-card {
-			background-color: #fff;
-			border-radius: 4px;
-			padding: 20px;
-			box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-			overflow: visible;
-			min-height: 0;
-		}
-		.detail-table-scroll-outer .bootstrap-table .fixed-table-header {
-			background-color: #f5f5f5 !important;
-			box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-			z-index: 20 !important;
-		}
-		.detail-table-scroll-outer .bootstrap-table .fixed-table-header table {
-			margin-bottom: 0 !important;
-			background-color: #f5f5f5 !important;
-		}
-		.detail-table-scroll-outer .bootstrap-table .fixed-table-header th {
-			background-color: #f5f5f5 !important;
-			border-bottom: 2px solid #ddd !important;
-		}
-		.detail-table-scroll-outer .fixed-table-header thead th[data-field="index"] {
-			z-index: 252 !important;
-		}
-		.detail-table-scroll-outer .fixed-table-header thead th[data-field="operation"] {
-			z-index: 251 !important;
 		}
 		/* 按钮组样式优化 */
 		.btn-group-custom {
@@ -508,9 +468,6 @@
 		.footer-actions .btn {
 			min-width: 100px;
 			padding: 8px 20px;
-		}
-		.detail-table-scroll-outer .bootstrap-table .fixed-table-container {
-			min-width: 3000px;
 		}
 	</style>
 </head>
@@ -642,8 +599,8 @@
             </div>
         </form>
         
-        <div class="table-card">
-            <div class="table-card-toolbar" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; flex-shrink: 0;">
+        <div class="delivery-detail-section">
+            <div class="delivery-detail-toolbar" style="display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;">
                 <h4 class="form-header h4" style="margin: 0; border-bottom: 2px solid #5cb85c;">详细信息列表</h4>
                 <div class="btn-group-custom">
                     <button type="button" class="btn btn-sm btn-info" onclick="printDelivery()" th:if="${delivery.deliveryId != null}"><i class="fa fa-print"></i> 打印配送单</button>
@@ -655,16 +612,18 @@
                     <button type="button" class="btn btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i> 关 闭</button>
                 </div>
             </div>
-            <div class="detail-table-scroll-outer detail-table-wrapper">
-                <table id="detail-table"></table>
+            <div id="delivery-detail-list-section" class="col-sm-12 select-table table-striped query-table-wrap">
+                <table id="detail-table" class="delivery-detail-fixed-table"></table>
             </div>
         </div>
     </div>
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
-	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
 	<script th:inline="javascript">
 	    var prefix = ctx + "delivery/delivery";
+	    var DETAIL_OPERATION_COL_WIDTH = 175;
+	    var DETAIL_VSCROLL_GUTTER = 10;
+	    var DETAIL_ROW_HEIGHT = 44;
 	    
 	    function escapeHtmlForBarcode(s) {
 	        if (s == null || s === '') return '';
@@ -709,22 +668,90 @@
 	               'onkeypress="if(event.keyCode==13){this.blur();return false;}" />';
 	    }
 
-	    function calculateDeliveryDetailTableHeight() {
-	        var $outer = $('.detail-table-scroll-outer');
-	        if ($outer.length === 0) {
-	            return 480;
+	    function getDeliveryDetailTableMinWidth() {
+	        var sum = 0;
+	        var opt = $('#detail-table').bootstrapTable('getOptions');
+	        if (opt && opt.columns && opt.columns[0]) {
+	            $.each(opt.columns[0], function (_, col) {
+	                if (!col || col.field === 'operation') {
+	                    return;
+	                }
+	                if (col.checkbox) {
+	                    sum += parseInt(col.width, 10) || 42;
+	                    return;
+	                }
+	                if (col.width) {
+	                    sum += parseInt(col.width, 10) || 0;
+	                }
+	            });
 	        }
-	        var h = $outer.innerHeight();
-	        if (!h || h < 1) {
-	            var top = $outer.offset().top || 0;
-	            h = $(window).height() - top - 20;
-	        }
-	        return Math.max(Math.floor(h - 6), 200);
+	        return sum > 0 ? sum + 8 : 800;
 	    }
 
-	    function resetDeliveryDetailTableHeight() {
+	    function applyDeliveryDetailTableMinWidth() {
+	        var w = getDeliveryDetailTableMinWidth() + 'px';
+	        var $container = $('#detail-table').closest('.bootstrap-table').find('.fixed-table-container').first();
+	        if (!$container.length) {
+	            return;
+	        }
+	        $container.children('.fixed-table-header').find('table').css('min-width', w);
+	        $container.children('.fixed-table-body').children('table').css('min-width', w);
+	    }
+
+	    var detailTableLayoutTimer = null;
+	    var detailTableLayoutLock = false;
+
+	    /** 明细外包层：从当前位置铺满到窗口（标签页）底部 */
+	    function layoutDeliveryAddDetailWrapHeight() {
+	        var $page = $('.delivery-form-main');
+	        var $section = $page.children('.delivery-detail-section');
+	        var $wrap = $('#delivery-detail-list-section');
+	        var $toolbar = $section.find('.delivery-detail-toolbar');
+	        if (!$page.length || !$wrap.length || !$section.length) {
+	            return;
+	        }
+	        var el = $wrap[0];
+	        var docEl = document.documentElement;
+	        var viewH = (docEl && docEl.clientHeight) ? docEl.clientHeight : (window.innerHeight || 0);
+	        var wrapTop = el.getBoundingClientRect().top;
+	        var sectionTop = $section[0].getBoundingClientRect().top;
+	        var toolbarH = $toolbar.length ? $toolbar.outerHeight(true) : 0;
+	        var hByWrap = Math.floor(viewH - wrapTop - 10);
+	        var hBySection = Math.floor(viewH - sectionTop - toolbarH - 14);
+	        var h = Math.max(hByWrap, hBySection, 480);
+	        $section.css({
+	            display: 'flex',
+	            flexDirection: 'column',
+	            flex: '1 1 auto',
+	            minHeight: '0',
+	            overflow: 'hidden'
+	        });
+	        el.style.setProperty('flex', '1 1 auto', 'important');
+	        el.style.setProperty('height', h + 'px', 'important');
+	        el.style.setProperty('min-height', '480px', 'important');
+	        el.style.removeProperty('max-height');
+	        el.style.setProperty('box-sizing', 'border-box', 'important');
+	    }
+
+	    function calculateDeliveryAddDetailTableHeight() {
+	        var $wrap = $('#delivery-detail-list-section');
+	        if ($wrap.length === 0) {
+	            return 560;
+	        }
+	        var el = $wrap[0];
+	        var h = el ? el.clientHeight : Math.floor($wrap.innerHeight());
+	        if (!h || h < 1) {
+	            h = Math.floor($wrap.innerHeight());
+	        }
+	        h = Math.floor(h - 14);
+	        return Math.max(h, 480);
+	    }
+
+	    function buildDetailOperationFixedPanel() {
 	        var $table = $('#detail-table');
-	        if ($table.length === 0) {
+	        var $wrap = $('#delivery-detail-list-section');
+	        var $bt = $table.closest('.bootstrap-table');
+	        if ($bt.length === 0) {
 	            return;
 	        }
 	        try {
@@ -734,22 +761,295 @@
 	        } catch (e) {
 	            return;
 	        }
-	        var h = calculateDeliveryDetailTableHeight();
-	        $table.bootstrapTable('resetView', { height: h });
+	        $wrap.addClass('detail-has-fixed-op');
+	        $bt.find('.fixed-columns-right').hide();
+
+	        var $panel = $bt.children('.detail-op-fixed-panel');
+	        if (!$panel.length) {
+	            $panel = $('<div class="detail-op-fixed-panel">' +
+	                '<div class="detail-op-fixed-head">操作</div>' +
+	                '<div class="detail-op-fixed-body"></div></div>');
+	            $bt.append($panel);
+	        }
+
+	        var data = $table.bootstrapTable('getData') || [];
+	        var rowsHtml = '';
+	        for (var i = 0; i < data.length; i++) {
+	            rowsHtml += '<div class="detail-op-fixed-row" data-index="' + i + '">' +
+	                deliveryDetailOperationHtml(i) + '</div>';
+	        }
+	        $panel.find('.detail-op-fixed-body').html('<div class="detail-op-fixed-body-inner">' + rowsHtml + '</div>');
+	        layoutDetailOperationFixedPanel();
 	    }
 
-	    function scheduleResetDeliveryDetailTableHeight() {
-	        setTimeout(resetDeliveryDetailTableHeight, 0);
-	        setTimeout(resetDeliveryDetailTableHeight, 120);
-	        setTimeout(resetDeliveryDetailTableHeight, 400);
+	    function layoutDetailOperationFixedPanel() {
+	        var $bt = $('#detail-table').closest('.bootstrap-table');
+	        var $panel = $bt.children('.detail-op-fixed-panel');
+	        if (!$panel.length) {
+	            return;
+	        }
+	        var $container = $bt.find('.fixed-table-container').first();
+	        var $mainHeader = $container.children('.fixed-table-header');
+	        var $mainBody = $container.children('.fixed-table-body');
+	        var top = $container.position().top;
+	        var h = $container.outerHeight();
+	        var headH = $mainHeader.outerHeight() || 38;
+	        $panel.css({
+	            top: top + 'px',
+	            height: (h > 0 ? h : '') + (h > 0 ? 'px' : ''),
+	            width: DETAIL_OPERATION_COL_WIDTH + 'px',
+	            right: DETAIL_VSCROLL_GUTTER + 'px'
+	        });
+	        $panel.find('.detail-op-fixed-head').css({
+	            height: headH + 'px',
+	            lineHeight: headH + 'px'
+	        });
+	        layoutDetailVscrollRail(top, h, headH);
+	        syncDetailOperationPanelRowHeights();
+	        syncDetailOperationPanelScrollOffset();
 	    }
-	    
+
+	    function layoutDetailVscrollRail(containerTop, containerH, headH) {
+	        var $bt = $('#detail-table').closest('.bootstrap-table');
+	        var $rail = $bt.children('.detail-vscroll-rail');
+	        if (!$rail.length) {
+	            return;
+	        }
+	        var bodyH = Math.max((containerH || 0) - (headH || 0), 0);
+	        $rail.css({
+	            top: ((containerTop || 0) + (headH || 0)) + 'px',
+	            height: bodyH + 'px',
+	            width: DETAIL_VSCROLL_GUTTER + 'px'
+	        });
+	    }
+
+	    function ensureDetailVscrollRail() {
+	        var $bt = $('#detail-table').closest('.bootstrap-table');
+	        var $mainBody = $bt.find('.fixed-table-container > .fixed-table-body');
+	        if ($mainBody.length === 0) {
+	            return;
+	        }
+	        var $rail = $bt.children('.detail-vscroll-rail');
+	        if (!$rail.length) {
+	            $rail = $('<div class="detail-vscroll-rail"><div class="detail-vscroll-rail-inner"></div></div>');
+	            $bt.append($rail);
+	        }
+	        var bodyEl = $mainBody[0];
+	        var innerEl = $rail.find('.detail-vscroll-rail-inner')[0];
+	        if (bodyEl && innerEl) {
+	            innerEl.style.height = bodyEl.scrollHeight + 'px';
+	        }
+	        $rail.off('scroll.detailVscrollRail').on('scroll.detailVscrollRail', function () {
+	            $mainBody.scrollTop($rail.scrollTop());
+	        });
+	    }
+
+	    function syncDetailOperationPanelScrollOffset() {
+	        var $bt = $('#detail-table').closest('.bootstrap-table');
+	        var $mainBody = $bt.find('.fixed-table-container').children('.fixed-table-body');
+	        var st = $mainBody.scrollTop();
+	        $bt.find('.detail-op-fixed-body-inner').css('transform', 'translateY(' + (-st) + 'px)');
+	    }
+
+	    function syncDetailOperationPanelScroll() {
+	        var $bt = $('#detail-table').closest('.bootstrap-table');
+	        var $mainBody = $bt.find('.fixed-table-container').children('.fixed-table-body');
+	        if ($mainBody.length === 0) {
+	            return;
+	        }
+	        $mainBody.off('scroll.detailOpPanel').on('scroll.detailOpPanel', function () {
+	            var $rail = $bt.children('.detail-vscroll-rail');
+	            if ($rail.length && $rail.scrollTop() !== $mainBody.scrollTop()) {
+	                $rail.scrollTop($mainBody.scrollTop());
+	            }
+	            syncDetailOperationPanelScrollOffset();
+	        });
+	    }
+
+	    function applyDetailTableRowHeight() {
+	        var $bt = $('#detail-table').closest('.bootstrap-table');
+	        var $body = $bt.find('.fixed-table-container > .fixed-table-body');
+	        var rh = DETAIL_ROW_HEIGHT + 'px';
+	        $body.find('.fixed-table-border').each(function () {
+	            this.style.setProperty('display', 'none', 'important');
+	            this.style.setProperty('height', '0', 'important');
+	        });
+	        $body.find('> table').each(function () {
+	            this.style.setProperty('height', 'auto', 'important');
+	            this.style.removeProperty('min-height');
+	        });
+	        $body.find('tbody').each(function () {
+	            this.style.setProperty('height', 'auto', 'important');
+	        });
+	        $body.find('tbody tr').each(function () {
+	            this.style.setProperty('height', rh, 'important');
+	            this.style.setProperty('min-height', rh, 'important');
+	            this.style.setProperty('max-height', rh, 'important');
+	            $(this).find('td').each(function () {
+	                this.style.setProperty('height', rh, 'important');
+	                this.style.setProperty('min-height', rh, 'important');
+	                this.style.setProperty('max-height', rh, 'important');
+	                this.style.setProperty('padding-top', '4px', 'important');
+	                this.style.setProperty('padding-bottom', '4px', 'important');
+	                this.style.setProperty('vertical-align', 'middle', 'important');
+	            });
+	        });
+	        $bt.find('.detail-op-fixed-row').each(function () {
+	            this.style.setProperty('height', rh, 'important');
+	            this.style.setProperty('min-height', rh, 'important');
+	            this.style.setProperty('max-height', rh, 'important');
+	        });
+	    }
+
+	    function syncDetailOperationPanelRowHeights() {
+	        applyDetailTableRowHeight();
+	    }
+
+	    function scheduleDetailOperationPanelSync() {
+	        syncDetailOperationPanelRowHeights();
+	        requestAnimationFrame(syncDetailOperationPanelRowHeights);
+	    }
+
+	    function syncDetailTableHeaderColumnWidths() {
+	        var $bt = $('#detail-table').closest('.bootstrap-table');
+	        var $container = $bt.find('.fixed-table-container').first();
+	        var $mainBody = $container.children('.fixed-table-body');
+	        var $mainHeader = $container.children('.fixed-table-header');
+	        var $bodyTable = $mainBody.find('table').first();
+	        var $headTable = $mainHeader.find('table').first();
+	        var $firstRow = $mainBody.find('tbody tr:first');
+	        if (!$bodyTable.length || !$headTable.length || !$firstRow.length) {
+	            return;
+	        }
+	        var totalW = 0;
+	        $headTable.find('thead th[data-field]').each(function () {
+	            var field = $(this).data('field');
+	            if (!field) {
+	                return;
+	            }
+	            if (field === 'operation') {
+	                $(this).css({ width: '0', minWidth: '0', maxWidth: '0', padding: '0', border: '0' });
+	                $firstRow.find('td[data-field="operation"]').css({
+	                    width: '0', minWidth: '0', maxWidth: '0', padding: '0', border: '0'
+	                });
+	                return;
+	            }
+	            var $td = $firstRow.find('td[data-field="' + field + '"]');
+	            if (!$td.length) {
+	                return;
+	            }
+	            var w = Math.ceil($td.outerWidth());
+	            if (w < 1) {
+	                w = 1;
+	            }
+	            var ws = w + 'px';
+	            $td.css({ width: ws, minWidth: ws, maxWidth: ws });
+	            $(this).css({ width: ws, minWidth: ws, maxWidth: ws });
+	            totalW += w;
+	        });
+	        var minW = parseInt($bodyTable.css('min-width'), 10) || 0;
+	        var tableW = Math.max(totalW, $bodyTable.outerWidth(), minW);
+	        if (tableW > 0) {
+	            var tw = tableW + 'px';
+	            $bodyTable.css('width', tw);
+	            $headTable.css('width', tw);
+	        }
+	    }
+
+	    function fixDetailTableHeaderAlign() {
+	        var $wrap = $('#delivery-detail-list-section');
+	        var $bt = $('#detail-table').closest('.bootstrap-table');
+	        var $container = $bt.find('.fixed-table-container').first();
+	        var $mainBody = $container.children('.fixed-table-body');
+	        var $mainHeader = $container.children('.fixed-table-header');
+	        if (!$mainBody.length || !$mainHeader.length) {
+	            return;
+	        }
+	        var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
+	        var rightReserve = $wrap.hasClass('detail-has-fixed-op')
+	            ? (DETAIL_OPERATION_COL_WIDTH + DETAIL_VSCROLL_GUTTER) : 0;
+	        $mainHeader.css('margin-right', (scrollW + rightReserve) + 'px');
+	        $mainHeader.scrollLeft($mainBody.scrollLeft());
+	        syncDetailTableHeaderColumnWidths();
+	    }
+
+	    function scheduleDetailHeaderAlign() {
+	        fixDetailTableHeaderAlign();
+	        requestAnimationFrame(fixDetailTableHeaderAlign);
+	    }
+
+	    function refreshDetailTableLayout() {
+	        var $table = $('#detail-table');
+	        var $bt = $table.closest('.bootstrap-table');
+	        if ($bt.length === 0) {
+	            return;
+	        }
+	        try {
+	            if (!$table.bootstrapTable('getOptions')) {
+	                return;
+	            }
+	        } catch (e) {
+	            return;
+	        }
+	        var $container = $bt.find('.fixed-table-container').first();
+	        var $mainBody = $container.children('.fixed-table-body');
+	        var $mainHeader = $container.children('.fixed-table-header');
+	        applyDeliveryDetailTableMinWidth();
+	        buildDetailOperationFixedPanel();
+	        $mainBody.off('scroll.detailMainH').on('scroll.detailMainH', function () {
+	            $mainHeader.scrollLeft($mainBody.scrollLeft());
+	        });
+	        ensureDetailVscrollRail();
+	        syncDetailOperationPanelScroll();
+	        scheduleDetailOperationPanelSync();
+	        scheduleDetailHeaderAlign();
+	    }
+
+	    function relayoutDeliveryAddDetailTable() {
+	        if (detailTableLayoutLock) {
+	            return;
+	        }
+	        detailTableLayoutLock = true;
+	        try {
+	            layoutDeliveryAddDetailWrapHeight();
+	            var $table = $('#detail-table');
+	            var hd = calculateDeliveryAddDetailTableHeight();
+	            try {
+	                if ($table.length && $table.bootstrapTable('getOptions')) {
+	                    $table.bootstrapTable('resetView', { height: hd });
+	                }
+	            } catch (e) { /* ignore */ }
+	            applyDetailTableRowHeight();
+	            refreshDetailTableLayout();
+	            applyDetailTableRowHeight();
+	        } finally {
+	            detailTableLayoutLock = false;
+	        }
+	    }
+
+	    function scheduleRelayoutDeliveryDetailTable() {
+	        if (detailTableLayoutTimer) {
+	            clearTimeout(detailTableLayoutTimer);
+	        }
+	        detailTableLayoutTimer = setTimeout(function () {
+	            detailTableLayoutTimer = null;
+	            relayoutDeliveryAddDetailTable();
+	        }, 80);
+	    }
+
+	    function relayoutDeliveryDetailFull() {
+	        layoutDeliveryAddDetailWrapHeight();
+	        relayoutDeliveryAddDetailTable();
+	    }
+
 	    // 配送明细数据（从后端传递）
 	    var deliveryDetails = /*[[${delivery.deliveryDetails}]]*/ [];
 	    
 	    function deliveryDetailOperationHtml(rowIndex) {
-	        return '<a class="btn btn-xs btn-default" href="javascript:void(0)" onclick="copyDetailRowByIndex(this,' + rowIndex + ')" title="复制拆行（不同批号）" style="margin-right:4px;"><i class="fa fa-copy"></i> 复制</a>' +
-	            '<a class="btn-operation-delete" href="javascript:void(0)" onclick="deleteDetailRowByIndex(this,' + rowIndex + ')" title="删除该行明细"><i class="fa fa-trash"></i> 删除</a>';
+	        return '<div class="detail-op-btns">' +
+	            '<a class="btn btn-xs detail-op-btn-copy" href="javascript:void(0)" onclick="copyDetailRowByIndex(this,' + rowIndex + ')" title="复制拆行（不同批号）"><i class="fa fa-copy"></i><span>复制</span></a>' +
+	            '<a class="btn btn-xs detail-op-btn-del" href="javascript:void(0)" onclick="deleteDetailRowByIndex(this,' + rowIndex + ')" title="删除该行明细"><i class="fa fa-trash"></i><span>删除</span></a>' +
+	            '</div>';
 	    }
 	    function deliveryLineGroupKey(row) {
 	        if (!row) return '';
@@ -816,10 +1116,8 @@
 	            }
 	            $("input[name='deliveryAmount']").val(totalAmount.toFixed(2));
 	            $('#detail-table').bootstrapTable('load', allData);
-	            scheduleResetDeliveryDetailTableHeight();
+	            scheduleRelayoutDeliveryDetailTable();
 	            setTimeout(function() {
-	                if (typeof fillOperationColumnImmediate === 'function') fillOperationColumnImmediate();
-	                if (typeof fillOperationColumn === 'function') fillOperationColumn();
 	                $('#detail-table').find('.date-input').data('laydate-init', false);
 	                if (typeof initDatePickers === 'function') initDatePickers();
 	            }, 100);
@@ -878,129 +1176,6 @@
 	        $.modal.msgSuccess('已复制明细，新行数量默认为 0，请填写数量及批号、效期等');
 	    };
 	    
-	    // 确保操作列正确渲染的函数 - 定义为全局函数，以便在所有地方都能访问
-	    var fillOperationColumn = function() {
-	        console.log('fillOperationColumn called'); // 调试信息
-	        
-	        // 获取表格数据以确定行数
-	        var data = $('#detail-table').bootstrapTable('getData');
-	        console.log('Table data length:', data ? data.length : 0); // 调试信息
-	        
-	        if (!data || data.length === 0) {
-	            console.log('No data in table, skipping fillOperationColumn');
-	            return;
-	        }
-	        
-	        // 方法1: 处理固定列中的操作列 - 使用多种选择器确保找到固定列
-	        var fixedColSelectors = [
-	            '.fixed-columns-right',
-	            '#detail-table .fixed-columns-right',
-	            '.fixed-table-body .fixed-columns-right',
-	            '.bootstrap-table .fixed-columns-right'
-	        ];
-	        
-	        fixedColSelectors.forEach(function(selector) {
-	            var $fixedCols = $(selector);
-	            console.log('Fixed columns found with selector "' + selector + '":', $fixedCols.length);
-	            
-	            $fixedCols.each(function() {
-	                var $fixedCol = $(this);
-	                // 尝试多种方式查找行
-	                var rows = $fixedCol.find('tbody tr');
-	                if (rows.length === 0) {
-	                    rows = $fixedCol.find('tr');
-	                }
-	                console.log('Fixed column rows found:', rows.length);
-	                
-	                rows.each(function() {
-	                    var $tr = $(this);
-	                    // 尝试多种方式获取行索引
-	                    var rowIndex = $tr.data('index');
-	                    if (rowIndex === undefined || rowIndex === null) {
-	                        rowIndex = $tr.attr('data-index');
-	                    }
-	                    if (rowIndex === undefined || rowIndex === null) {
-	                        rowIndex = $tr.index();
-	                    }
-	                    // 如果还是无效，尝试从主表格对应行获取
-	                    if (rowIndex === undefined || rowIndex === null) {
-	                        var mainTableRow = $('#detail-table tbody tr').eq($tr.index());
-	                        if (mainTableRow.length > 0) {
-	                            rowIndex = mainTableRow.data('index') || mainTableRow.index();
-	                        }
-	                    }
-	                    
-	                    var $operationCell = $tr.find('td[data-field="operation"]');
-	                    
-	                    if ($operationCell.length > 0) {
-	                        // 强制填充，无论是否为空
-	                        var btnHtml = deliveryDetailOperationHtml(rowIndex);
-	                        $operationCell.html(btnHtml);
-	                        // 确保按钮可见
-	                        $operationCell.find('.btn-operation-delete').css({
-	                            'display': 'inline-flex',
-	                            'visibility': 'visible',
-	                            'opacity': '1'
-	                        });
-	                        console.log('Filled fixed column cell for row:', rowIndex, 'Cell:', $operationCell[0], 'Button:', $operationCell.find('.btn-operation-delete')[0]); // 调试信息
-	                    } else {
-	                        console.log('No operation cell found in fixed column for row:', rowIndex, 'TR:', $tr[0]); // 调试信息
-	                    }
-	                });
-	            });
-	        });
-	            
-	        // 方法2: 主表格仅填充 data-field=operation
-	        $('#detail-table tbody tr').each(function() {
-	            var $tr = $(this);
-	            var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : $tr.index();
-	            if (rowIndex === undefined || rowIndex === null) {
-	                rowIndex = $tr.attr('data-index');
-	                if (rowIndex === undefined) {
-	                    rowIndex = $tr.index();
-	                }
-	            }
-	            var $opCell = $tr.find('td[data-field="operation"]');
-	            if ($opCell.length > 0) {
-	                var btnHtml = deliveryDetailOperationHtml(rowIndex);
-	                $opCell.html(btnHtml);
-	            }
-	        });
-	        
-	        // 方法4: 直接查找所有可能的操作列位置并填充
-	        $('#detail-table, .fixed-columns-right').find('td[data-field="operation"]').each(function() {
-	            var $cell = $(this);
-	            var $tr = $cell.closest('tr');
-	            var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : $tr.index();
-	            // 如果 rowIndex 无效，尝试从 tr 的 data-index 属性获取
-	            if (rowIndex === undefined || rowIndex === null) {
-	                rowIndex = $tr.attr('data-index');
-	                if (rowIndex === undefined) {
-	                    rowIndex = $tr.index();
-	                }
-	            }
-	            var btnHtml = deliveryDetailOperationHtml(rowIndex);
-	            $cell.html(btnHtml);
-	        });
-	        
-	        // 方法5: 兜底填充所有带 data-field=operation 的单元格
-	        $('#detail-table').find('tbody tr').each(function() {
-	            var $tr = $(this);
-	            var $opCell = $tr.find('td[data-field="operation"]');
-	            if ($opCell.length === 0) {
-	                return;
-	            }
-	            var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : $tr.index();
-	            if (rowIndex === undefined || rowIndex === null) {
-	                rowIndex = $tr.attr('data-index') || $tr.index();
-	            }
-	            var btnHtml = deliveryDetailOperationHtml(rowIndex);
-	            $opCell.html(btnHtml);
-	        });
-	        
-	        console.log('fillOperationColumn completed'); // 调试信息
-	    };
-	    
 	    // 初始化日期选择器
 	    var laydate;
 	    layui.use('laydate', function(){
@@ -1022,9 +1197,12 @@
 	    // 初始化详细信息列表表格
 	    $(function() {
 	        initDetailTable();
+	        setTimeout(relayoutDeliveryDetailFull, 120);
+	        setTimeout(relayoutDeliveryDetailFull, 400);
 	    });
 	    
 	    function initDetailTable() {
+	        layoutDeliveryAddDetailWrapHeight();
 	        // 转换配送明细数据格式
 	        var detailData = [];
 	        console.log('initDetailTable called, deliveryDetails:', deliveryDetails); // 调试信息
@@ -1071,48 +1249,49 @@
 	            showToggle: false, // 不显示切换视图按钮
 	            showColumns: false, // 不显示列选择按钮
 	            striped: true, // 斑马纹
-	            height: calculateDeliveryDetailTableHeight(),
+	            clickToSelect: true,
+	            height: calculateDeliveryAddDetailTableHeight(),
+	            mobileResponsive: false,
+	            rowStyle: function () {
+	                return { css: { height: DETAIL_ROW_HEIGHT + 'px', maxHeight: DETAIL_ROW_HEIGHT + 'px' } };
+	            },
 	            columns: [{
+	                checkbox: true,
+	                width: 42,
+	                align: 'center'
+	            }, {
 	                field: 'index',
 	                title: '序号',
 	                align: 'center',
-	                width: 60,
+	                width: 48,
 	                formatter: function(value, row, index) {
 	                    return index + 1;
-	                }
-            }, {
-                field: 'operation',
-                title: '操作',
-                align: 'center',
-                width: 130,
-                formatter: function(value, row, index) {
-	                    return deliveryDetailOperationHtml(index);
 	                }
             }, {
                 field: 'materialCode',
                 title: '产品编码',
                 align: 'center',
-                width: 150
+                width: 108
             }, {
                 field: 'materialName',
                 title: '产品名称',
                 align: 'left',
-                width: 200
+                width: 116
             }, {
                 field: 'specification',
                 title: '规格',
-                align: 'center',
-                width: 120
+                align: 'left',
+                width: 96
             }, {
 	                field: 'unit',
 	                title: '单位',
 	                align: 'center',
-	                width: 80
+	                width: 52
 	            }, {
 	                field: 'remainingQuantity',
 	                title: '可配数量',
 	                align: 'right',
-	                width: 100,
+	                width: 78,
 	                formatter: function(value, row, index) {
 	                    if (value) {
 	                        return parseFloat(value).toFixed(2);
@@ -1123,7 +1302,7 @@
 	                field: 'deliveryQuantity',
 	                title: '数量',
 	                align: 'right',
-	                width: 100,
+	                width: 78,
 	                formatter: function(value, row, index) {
 	                    var val = '';
 	                    if (value === '' || value === null || value === undefined) {
@@ -1140,7 +1319,7 @@
 	                field: 'price',
 	                title: '单价',
 	                align: 'right',
-	                width: 100,
+	                width: 86,
 	                formatter: function(value, row, index) {
 	                    if (value) {
 	                        return '¥' + parseFloat(value).toFixed(2);
@@ -1151,7 +1330,7 @@
 	                field: 'amount',
 	                title: '金额',
 	                align: 'right',
-	                width: 120,
+	                width: 96,
 	                formatter: function(value, row, index) {
 	                    if (value) {
 	                        return '¥' + parseFloat(value).toFixed(2);
@@ -1165,7 +1344,7 @@
 	                field: 'packCoefficient',
 	                title: '打包系数',
 	                align: 'right',
-	                width: 90,
+	                width: 68,
 	                formatter: function(value, row, index) {
 	                    if (value != null && value !== '' && !isNaN(parseFloat(value))) {
 	                        return parseFloat(value).toString();
@@ -1251,80 +1430,48 @@
 	                formatter: function(value, row, index) {
 	                    return detailTextInputHtml(value, index, 500, 'updateDetailRemark');
 	                }
+	            }, {
+	                field: 'operation',
+	                title: '操作',
+	                align: 'center',
+	                width: 175,
+	                formatter: function(value, row, index) {
+	                    return deliveryDetailOperationHtml(index);
+	                }
 	            }]
 	        };
+	        options.onPostBody = function () {
+	            applyDetailTableRowHeight();
+	            refreshDetailTableLayout();
+	            applyDetailTableRowHeight();
+	            if (typeof initDatePickers === 'function') {
+	                initDatePickers();
+	            }
+	        };
+	        options.onLoadSuccess = function () {
+	            scheduleRelayoutDeliveryDetailTable();
+	            setTimeout(refreshDetailTableLayout, 50);
+	            setTimeout(refreshDetailTableLayout, 200);
+	            setTimeout(refreshDetailTableLayout, 450);
+	        };
         $('#detail-table').bootstrapTable(options);
-        
-        // 表格加载完成后立即填充操作列
-        $('#detail-table').on('post-body.bs.table', function() {
-            console.log('post-body.bs.table event fired');
-            fillOperationColumnImmediate();
-        });
-        
-        $('#detail-table').on('load-success.bs.table', function() {
-            console.log('load-success.bs.table event fired');
-            fillOperationColumnImmediate();
-        });
-        
-        // 立即填充操作列的函数 - 更直接的方法
-        function fillOperationColumnImmediate() {
-            console.log('fillOperationColumnImmediate called');
-            var data = $('#detail-table').bootstrapTable('getData');
-            if (!data || data.length === 0) {
-                console.log('No data, skipping');
-                return;
-            }
-            
-            $('#detail-table, .fixed-columns-left, .fixed-columns-right').find('td[data-field="operation"]').each(function() {
-                var $cell = $(this);
-                var $tr = $cell.closest('tr');
-                var rowIndex = $tr.data('index') || $tr.attr('data-index') || $tr.index();
-                if ($cell.find('.btn-operation-delete').length === 0) {
-                    $cell.html(deliveryDetailOperationHtml(rowIndex));
-                }
-            });
-        }
-        
-        // 初始化工具提示
+
         setTimeout(function() {
             $('#detail-table [data-toggle="tooltip"]').tooltip();
         }, 300);
-        
-        $(window).off('resize.deliveryDetailTable').on('resize.deliveryDetailTable', resetDeliveryDetailTableHeight);
-        scheduleResetDeliveryDetailTableHeight();
-        $('#detail-table').on('post-body.bs.table load-success.bs.table refresh.bs.table', scheduleResetDeliveryDetailTableHeight);
-        
-        // 立即执行一次填充（延迟执行，确保表格已初始化）
-        setTimeout(function() {
-            fillOperationColumn();
-        }, 200);
-        
-        // 监听多个事件确保操作列被填充
-        $('#detail-table').on('post-body.bs.table load-success.bs.table loaded.bs.table refresh.bs.table', function() {
-            setTimeout(function() {
-                fillOperationColumn();
-            }, 200);
-        });
-        
-        // 不再使用 MutationObserver：fillOperationColumn 会 $td.html() 改 DOM，触发观察器再次 fill，形成死循环。
-        
-        // 初始填充 - 使用多个延迟确保在固定列插件渲染后执行
-        setTimeout(function() {
-            fillOperationColumn();
-        }, 300);
-        setTimeout(function() {
-            fillOperationColumn();
-        }, 600);
-        setTimeout(function() {
-            fillOperationColumn();
-        }, 1000);
-        setTimeout(function() {
-            fillOperationColumn();
-        }, 1500);
-        setTimeout(function() {
-            fillOperationColumn();
-        }, 2000);
-	        
+
+        $(window).off('resize.deliveryDetailTable').on('resize.deliveryDetailTable', function () {
+	            layoutDeliveryAddDetailWrapHeight();
+	            scheduleRelayoutDeliveryDetailTable();
+	        });
+        scheduleRelayoutDeliveryDetailTable();
+        setTimeout(refreshDetailTableLayout, 80);
+        setTimeout(refreshDetailTableLayout, 250);
+        setTimeout(refreshDetailTableLayout, 500);
+        $('#detail-table').on('refresh.bs.table post-header.bs.table reset-view.bs.table', function () {
+	            applyDetailTableRowHeight();
+	            refreshDetailTableLayout();
+	        });
 	        // 初始化日期选择器（延迟执行，等待表格渲染完成）
 	        function initDatePickers() {
 	            setTimeout(function() {
@@ -1558,16 +1705,6 @@
 	                
 	                // 重新加载数据
 	                $('#detail-table').bootstrapTable('load', allData);
-	                
-	                // 重新填充操作列
-	                setTimeout(function() {
-	                    if (typeof fillOperationColumnImmediate === 'function') {
-	                        fillOperationColumnImmediate();
-	                    }
-	                    if (typeof fillOperationColumn === 'function') {
-	                        fillOperationColumn();
-	                    }
-	                }, 100);
 	                
 	                // 重新计算总金额
 	                var totalAmount = 0;
