@@ -194,11 +194,8 @@
                         <div class="stat-icon text-primary">
                             <i class="fa fa-cubes"></i>
                         </div>
-                        <div class="stat-number text-primary">1,234</div>
+                        <div class="stat-number text-primary" th:text="${dashboard != null ? dashboard.deliveryCount : 0}">0</div>
                         <div class="stat-label">配送订单数</div>
-                        <div class="progress progress-custom">
-                            <div class="progress-bar progress-bar-primary" style="width: 75%"></div>
-                        </div>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6">
@@ -206,11 +203,8 @@
                         <div class="stat-icon text-success">
                             <i class="fa fa-shopping-cart"></i>
                         </div>
-                        <div class="stat-number text-success">856</div>
+                        <div class="stat-number text-success" th:text="${dashboard != null ? dashboard.orderCount : 0}">0</div>
                         <div class="stat-label">订单总数</div>
-                        <div class="progress progress-custom">
-                            <div class="progress-bar progress-bar-success" style="width: 85%"></div>
-                        </div>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6">
@@ -218,11 +212,8 @@
                         <div class="stat-icon text-warning">
                             <i class="fa fa-users"></i>
                         </div>
-                        <div class="stat-number text-warning">156</div>
+                        <div class="stat-number text-warning" th:text="${dashboard != null ? dashboard.settlementCount : 0}">0</div>
                         <div class="stat-label">结算总数量</div>
-                        <div class="progress progress-custom">
-                            <div class="progress-bar progress-bar-warning" style="width: 65%"></div>
-                        </div>
                     </div>
                 </div>
                 <div class="col-lg-3 col-md-6">
@@ -230,11 +221,10 @@
                         <div class="stat-icon text-info">
                             <i class="fa fa-money"></i>
                         </div>
-                        <div class="stat-number text-info">¥2.8M</div>
+                        <div class="stat-number text-info" id="monthSettlementAmountDisplay">¥0</div>
                         <div class="stat-label">本月结算总金额</div>
-                        <div class="progress progress-custom">
-                            <div class="progress-bar progress-bar-info" style="width: 90%"></div>
-                        </div>
+                        <input type="hidden" id="monthSettlementAmountRaw"
+                               th:value="${dashboard != null && dashboard.monthSettlementAmount != null ? dashboard.monthSettlementAmount : 0}"/>
                     </div>
                 </div>
             </div>
@@ -420,6 +410,61 @@
     <script th:src="@{/js/bootstrap.min.js}"></script>
     <script th:src="@{/ajax/libs/report/echarts/echarts-all.min.js}"></script>
     
+    <script th:inline="javascript">
+        var dashboardData = {
+            monthLabels: /*[[${dashboard != null ? dashboard.monthLabels : null}]]*/ [],
+            monthlySalesWan: /*[[${dashboard != null ? dashboard.monthlySalesWan : null}]]*/ [],
+            monthlyOrderCounts: /*[[${dashboard != null ? dashboard.monthlyOrderCounts : null}]]*/ [],
+            supplierNames: /*[[${dashboard != null ? dashboard.supplierNames : null}]]*/ [],
+            supplierAmounts: /*[[${dashboard != null ? dashboard.supplierAmounts : null}]]*/ [],
+            categoryNames: /*[[${dashboard != null ? dashboard.categoryNames : null}]]*/ [],
+            categoryAmounts: /*[[${dashboard != null ? dashboard.categoryAmounts : null}]]*/ []
+        };
+        if (!dashboardData.monthLabels) { dashboardData.monthLabels = []; }
+        if (!dashboardData.monthlySalesWan) { dashboardData.monthlySalesWan = []; }
+        if (!dashboardData.monthlyOrderCounts) { dashboardData.monthlyOrderCounts = []; }
+        if (!dashboardData.supplierNames) { dashboardData.supplierNames = []; }
+        if (!dashboardData.supplierAmounts) { dashboardData.supplierAmounts = []; }
+        if (!dashboardData.categoryNames) { dashboardData.categoryNames = []; }
+        if (!dashboardData.categoryAmounts) { dashboardData.categoryAmounts = []; }
+
+        function formatSettlementAmount(raw) {
+            var n = parseFloat(raw);
+            if (isNaN(n) || n === 0) {
+                return '¥0';
+            }
+            if (n >= 10000) {
+                return '¥' + (n / 10000).toFixed(2) + '万';
+            }
+            return '¥' + n.toFixed(2);
+        }
+
+        function chartEmptyGraphic() {
+            return {
+                type: 'text',
+                left: 'center',
+                top: 'middle',
+                style: { text: '暂无数据', fill: '#999', fontSize: 14 }
+            };
+        }
+
+        function hasTrendData() {
+            if (!dashboardData.monthLabels || dashboardData.monthLabels.length === 0) {
+                return false;
+            }
+            for (var i = 0; i < dashboardData.monthlySalesWan.length; i++) {
+                if (parseFloat(dashboardData.monthlySalesWan[i]) > 0) {
+                    return true;
+                }
+            }
+            for (var j = 0; j < dashboardData.monthlyOrderCounts.length; j++) {
+                if (parseInt(dashboardData.monthlyOrderCounts[j], 10) > 0) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    </script>
     <script>
         // 更新时间显示
         function updateTime() {
@@ -446,139 +491,100 @@
 
         // 初始化图表
         $(document).ready(function() {
-            // 销售趋势图
+            var rawAmt = $('#monthSettlementAmountRaw').val();
+            $('#monthSettlementAmountDisplay').text(formatSettlementAmount(rawAmt));
+
             var salesChart = echarts.init(document.getElementById('salesChart'));
-            var salesOption = {
-                tooltip: {
-                    trigger: 'axis'
-                },
-                legend: {
-                    data: ['销售额 (万元)', '订单数量']
-                },
-                grid: {
-                    left: '3%',
-                    right: '4%',
-                    bottom: '10%',
-                    containLabel: true
-                },
+            var salesOption = hasTrendData() ? {
+                tooltip: { trigger: 'axis' },
+                legend: { data: ['销售额 (万元)', '订单数量'] },
+                grid: { left: '3%', right: '4%', bottom: '10%', containLabel: true },
                 xAxis: {
                     type: 'category',
                     boundaryGap: false,
-                    data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+                    data: dashboardData.monthLabels,
                     axisLabel: { interval: 0, rotate: 30 }
                 },
-                yAxis: {
-                    type: 'value'
-                },
+                yAxis: { type: 'value' },
                 series: [
                     {
                         name: '销售额 (万元)',
                         type: 'line',
-                        stack: 'Total',
-                        data: [120, 145, 190, 210, 300, 280, 320, 410, 380, 500, 460, 300],
+                        data: dashboardData.monthlySalesWan,
                         smooth: true,
-                        itemStyle: {
-                            color: '#667eea'
-                        }
+                        itemStyle: { color: '#667eea' }
                     },
                     {
                         name: '订单数量',
                         type: 'line',
-                        stack: 'Total',
-                        data: [65, 72, 59, 68, 80, 77, 85, 92, 88, 81, 95, 55],
+                        data: dashboardData.monthlyOrderCounts,
                         smooth: true,
-                        itemStyle: {
-                            color: '#764ba2'
-                        }
+                        itemStyle: { color: '#764ba2' }
                     }
                 ]
-            };
+            } : { graphic: [chartEmptyGraphic()] };
             salesChart.setOption(salesOption);
 
-            // 供应商排名柱状图
             var supplierChart = echarts.init(document.getElementById('supplierChart'));
-            var supplierOption = {
+            var hasSupplier = dashboardData.supplierNames && dashboardData.supplierNames.length > 0;
+            var supplierOption = hasSupplier ? {
                 tooltip: {
                     trigger: 'axis',
-                    axisPointer: {
-                        type: 'shadow'
+                    axisPointer: { type: 'shadow' },
+                    formatter: function(params) {
+                        var p = params[0];
+                        return p.name + '<br/>' + p.seriesName + ': ' + p.value + ' 万元';
                     }
                 },
-                grid: {
-                    left: '3%',
-                    right: '4%',
-                    bottom: '12%',
-                    containLabel: true
-                },
-                xAxis: {
-                    type: 'category',
-                    data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
-                    axisTick: {
-                        alignWithLabel: true
-                    },
-                    axisLabel: { interval: 0, rotate: 35 }
-                },
+                grid: { left: '3%', right: '8%', bottom: '3%', containLabel: true },
+                xAxis: { type: 'value', name: '万元' },
                 yAxis: {
-                    type: 'value'
+                    type: 'category',
+                    data: dashboardData.supplierNames.slice().reverse(),
+                    axisLabel: { interval: 0 }
                 },
-                series: [
-                    {
-                        name: '交易金额 (万元)',
-                        type: 'bar',
-                        barWidth: '55%',
-                        data: [120, 155, 190, 210, 268, 300, 285, 320, 350, 420, 380, 290],
-                        itemStyle: {
-                            color: function(params) {
-                                var palette = ['#667eea', '#764ba2', '#f093fb', '#f5576c', '#4facfe', '#43e97b', '#fa709a', '#30cfd0', '#a8edea', '#ff9a9e', '#fcb69f', '#667eea'];
-                                return palette[params.dataIndex % palette.length];
-                            }
-                        }
-                    }
-                ]
-            };
+                series: [{
+                    name: '交易金额 (万元)',
+                    type: 'bar',
+                    data: dashboardData.supplierAmounts.slice().reverse(),
+                    itemStyle: { color: '#667eea' }
+                }]
+            } : { graphic: [chartEmptyGraphic()] };
             supplierChart.setOption(supplierOption);
 
-            // 商品分类统计
             var categoryChart = echarts.init(document.getElementById('categoryChart'));
-            var categoryOption = {
+            var categoryPie = [];
+            if (dashboardData.categoryNames) {
+                for (var i = 0; i < dashboardData.categoryNames.length; i++) {
+                    categoryPie.push({
+                        name: dashboardData.categoryNames[i],
+                        value: dashboardData.categoryAmounts[i]
+                    });
+                }
+            }
+            var categoryOption = categoryPie.length > 0 ? {
                 tooltip: {
-                    trigger: 'axis',
-                    axisPointer: {
-                        type: 'shadow'
+                    trigger: 'item',
+                    formatter: '{b}: {c} 万元 ({d}%)'
+                },
+                legend: {
+                    type: 'scroll',
+                    orient: 'vertical',
+                    right: 10,
+                    top: 20,
+                    bottom: 20
+                },
+                series: [{
+                    name: '分类金额',
+                    type: 'pie',
+                    radius: ['40%', '65%'],
+                    center: ['40%', '50%'],
+                    data: categoryPie,
+                    emphasis: {
+                        itemStyle: { shadowBlur: 10, shadowOffsetX: 0, shadowColor: 'rgba(0, 0, 0, 0.5)' }
                     }
-                },
-                grid: {
-                    left: '3%',
-                    right: '4%',
-                    bottom: '12%',
-                    containLabel: true
-                },
-                xAxis: {
-                    type: 'category',
-                    data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
-                    axisTick: {
-                        alignWithLabel: true
-                    },
-                    axisLabel: { interval: 0, rotate: 35 }
-                },
-                yAxis: {
-                    type: 'value'
-                },
-                series: [
-                    {
-                        name: '商品数量',
-                        type: 'bar',
-                        barWidth: '55%',
-                        data: [280, 300, 265, 310, 290, 320, 305, 340, 315, 360, 330, 295],
-                        itemStyle: {
-                            color: function(params) {
-                                var palette = ['#5cb85c', '#f0ad4e', '#d9534f', '#5bc0de', '#667eea', '#43e97b', '#fa709a', '#30cfd0', '#a8edea', '#ff9a9e', '#fcb69f', '#5cb85c'];
-                                return palette[params.dataIndex % palette.length];
-                            }
-                        }
-                    }
-                ]
-            };
+                }]
+            } : { graphic: [chartEmptyGraphic()] };
             categoryChart.setOption(categoryOption);
 
             // 响应式调整
