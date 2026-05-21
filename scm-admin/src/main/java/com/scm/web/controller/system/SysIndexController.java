@@ -34,6 +34,7 @@ import com.scm.system.service.IScmTenantMenuPauseService;
 import com.scm.system.service.ISupplierService;
 import com.scm.system.service.ISysConfigService;
 import com.scm.system.service.ISysMenuService;
+import com.scm.system.service.IDashboardService;
 import com.scm.system.service.ISysNoticeService;
 import com.scm.system.service.ISysUserService;
 import java.util.Collections;
@@ -59,6 +60,9 @@ public class SysIndexController extends BaseController
 
     @Autowired
     private ISysNoticeService noticeService;
+
+    @Autowired
+    private IDashboardService dashboardService;
 
     @Autowired
     private ISysUserService userService;
@@ -287,6 +291,7 @@ public class SysIndexController extends BaseController
     {
         mmap.put("version", ScmConfig.getVersion());
         mmap.put("dashboardNotices", noticeService.selectDashboardNoticesByUserId(getUserId()));
+        mmap.put("dashboard", dashboardService.getDashboardStats(getUserId()));
         return "main";
     }
 
