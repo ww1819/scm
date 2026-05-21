@@ -4,7 +4,76 @@
 	<th:block th:include="include :: header('选择第三方订单')" />
 	<th:block th:include="include :: layout-latest-css" />
 	<style>
-		.select-list .select-time .scm-push-datetime { min-width: 172px; width: 172px; display: inline-block; vertical-align: middle; padding-left: 8px; height: 30px; line-height: 30px; border: 1px solid #e5e6e7; border-radius: 4px; }
+		.select-list .select-time .scm-push-datetime { min-width: 210px; width: 210px; display: inline-block; vertical-align: middle; padding-left: 8px; height: 30px; line-height: 30px; border: 1px solid #e5e6e7; border-radius: 4px; }
+		#toolbar-zs-order.zs-order-action-bar {
+			display: block !important;
+			float: none;
+			margin: 0 8px 0 0;
+			padding: 0;
+			background: #fff;
+		}
+		#toolbar-zs-order.zs-order-action-bar .btn {
+			margin-right: 6px;
+		}
+		.select-table .fixed-table-toolbar {
+			display: flex;
+			align-items: center;
+			flex-wrap: wrap;
+		}
+		.select-table .fixed-table-toolbar .columns,
+		.select-table .fixed-table-toolbar .pull-right {
+			float: none;
+			margin-left: auto;
+		}
+		/* 明细表：单行显示、列间距 */
+		.zs-order-select-table .fixed-table-container > .fixed-table-header th,
+		.zs-order-select-table .fixed-table-container > .fixed-table-body tbody td {
+			box-sizing: border-box !important;
+			padding: 8px 12px !important;
+			white-space: nowrap !important;
+			word-break: keep-all !important;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			vertical-align: middle;
+		}
+		.zs-order-select-table .fixed-table-container > .fixed-table-header table,
+		.zs-order-select-table .fixed-table-container > .fixed-table-body > table {
+			table-layout: fixed;
+		}
+		.zs-order-select-table .fixed-table-container > .fixed-table-header th[data-field="dh"],
+		.zs-order-select-table .fixed-table-container > .fixed-table-body td[data-field="dh"] {
+			min-width: 150px !important;
+			width: 150px !important;
+			max-width: 150px !important;
+		}
+		.zs-order-select-table .fixed-table-container > .fixed-table-header th[data-field="hospitalName"],
+		.zs-order-select-table .fixed-table-container > .fixed-table-body td[data-field="hospitalName"] {
+			min-width: 200px !important;
+			width: 200px !important;
+			max-width: 200px !important;
+		}
+		.zs-order-select-table .fixed-table-container > .fixed-table-header th[data-field="supplierName"],
+		.zs-order-select-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"],
+		.zs-order-select-table .fixed-table-container > .fixed-table-header th[data-field="sup"],
+		.zs-order-select-table .fixed-table-container > .fixed-table-body td[data-field="sup"] {
+			min-width: 220px !important;
+			width: 220px !important;
+			max-width: 220px !important;
+			padding-left: 14px !important;
+			padding-right: 14px !important;
+		}
+		.zs-order-select-table .fixed-table-container > .fixed-table-header th[data-field="ck"],
+		.zs-order-select-table .fixed-table-container > .fixed-table-body td[data-field="ck"] {
+			min-width: 120px !important;
+			width: 120px !important;
+			max-width: 120px !important;
+		}
+		.zs-order-select-table .fixed-table-container > .fixed-table-header th[data-field="createTime"],
+		.zs-order-select-table .fixed-table-container > .fixed-table-body td[data-field="createTime"] {
+			min-width: 160px !important;
+			width: 160px !important;
+			max-width: 160px !important;
+		}
 		.order-select-sheet-bar {
 			background: #fff;
 			border: 1px solid #e7eaec;
@@ -42,7 +111,7 @@
 					<div class="select-list">
 						<ul>
 							<li>
-								单号(DH)：<input type="text" name="dh" placeholder="模糊"/>
+								单号：<input type="text" name="dh" placeholder="模糊"/>
 							</li>
 							<li>
 								医院：<input type="text" name="hospitalKeyword" placeholder="编码/名称/首拼简码"/>
@@ -52,19 +121,15 @@
 							</li>
 							<li class="select-time">
 								<label>推送时间范围：</label>
-								<input type="text" class="scm-push-datetime" id="zsPushBegin" placeholder="开始 yyyy-MM-dd HH:mm:ss" name="params[pushBegin]" autocomplete="off"/>
+								<input type="text" class="scm-push-datetime" id="zsPushBegin" placeholder="开始 年/月/日 时:分:秒" name="params[pushBegin]" autocomplete="off"/>
 								<span>-</span>
-								<input type="text" class="scm-push-datetime" id="zsPushEnd" placeholder="结束 yyyy-MM-dd HH:mm:ss" name="params[pushEnd]" autocomplete="off"/>
+								<input type="text" class="scm-push-datetime" id="zsPushEnd" placeholder="结束 年/月/日 时:分:秒" name="params[pushEnd]" autocomplete="off"/>
 							</li>
 							<li>
 								服务标识：<input type="text" name="customer"/>
 							</li>
 							<li>
 								科室名称：<input type="text" name="ksmc"/>
-							</li>
-							<li>
-								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
-								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetZs()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
 							</li>
 						</ul>
 					</div>
@@ -91,7 +156,14 @@
 				</ul>
 			</div>
 
-	        <div class="col-sm-12 select-table table-striped">
+			<div class="btn-group-sm" id="toolbar-zs-order" role="group" style="display: none;">
+				<a class="btn btn-primary btn-sm" href="javascript:void(0)" onclick="zsOrderConfirm()"><i class="fa fa-check"></i> 确认</a>
+				<a class="btn btn-default btn-sm" href="javascript:void(0)" onclick="zsOrderClose()"><i class="fa fa-close"></i> 关闭</a>
+				<a class="btn btn-primary btn-sm" href="javascript:void(0)" onclick="$.table.search()"><i class="fa fa-search"></i> 搜索</a>
+				<a class="btn btn-warning btn-sm" href="javascript:void(0)" onclick="resetZs()"><i class="fa fa-refresh"></i> 重置</a>
+			</div>
+
+	        <div class="col-sm-12 select-table table-striped zs-order-select-table">
 			    <table id="bootstrap-table"></table>
 			</div>
 		</div>
@@ -106,6 +178,31 @@
 		var zsTableId = "bootstrap-table";
 		var currentSheetTab = 'none';
 
+		function padDatePart(n) {
+			var num = parseInt(n, 10);
+			return num < 10 ? ('0' + num) : String(num);
+		}
+
+		/** 将 laydate 中文显示值转为后端查询用的 yyyy-MM-dd HH:mm:ss */
+		function chineseDateTimeToParam(s) {
+			if (s == null || s === '') {
+				return '';
+			}
+			s = String(s).replace(/^\s+|\s+$/g, '');
+			if (!s) {
+				return '';
+			}
+			var m = s.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/);
+			if (m) {
+				var base = m[1] + '-' + padDatePart(m[2]) + '-' + padDatePart(m[3]);
+				if (m[4] != null) {
+					return base + ' ' + padDatePart(m[4]) + ':' + padDatePart(m[5]) + ':' + padDatePart(m[6] || '0');
+				}
+				return base;
+			}
+			return s;
+		}
+
 		function normalizePushRangeParams(obj, beginSel, endSel) {
 			if (!obj || typeof obj !== 'object') {
 				return;
@@ -117,22 +214,18 @@
 				if (v == null || v === '') {
 					return;
 				}
-				var s = String(v).replace(/^\s+|\s+$/g, '');
+				var s = chineseDateTimeToParam(String(v));
 				if (!s) {
 					return;
 				}
 				if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
 					obj[key] = endOfDay ? (s + ' 23:59:59') : (s + ' 00:00:00');
+				} else {
+					obj[key] = s;
 				}
 			}
 			fix(beginKey, false);
 			fix(endKey, true);
-			if (beginSel && obj[beginKey]) {
-				$(beginSel).val(obj[beginKey]);
-			}
-			if (endSel && obj[endKey]) {
-				$(endSel).val(obj[endKey]);
-			}
 		}
 
 		function initZsPushRangeLaydate() {
@@ -144,7 +237,7 @@
 				laydate.render({
 					elem: '#zsPushBegin',
 					type: 'datetime',
-					format: 'yyyy-MM-dd HH:mm:ss',
+					format: 'yyyy年MM月dd日 HH:mm:ss',
 					theme: 'molv',
 					trigger: 'click',
 					btns: ['clear', 'now', 'confirm']
@@ -152,7 +245,7 @@
 				laydate.render({
 					elem: '#zsPushEnd',
 					type: 'datetime',
-					format: 'yyyy-MM-dd HH:mm:ss',
+					format: 'yyyy年MM月dd日 HH:mm:ss',
 					theme: 'molv',
 					trigger: 'click',
 					btns: ['clear', 'now', 'confirm']
@@ -205,17 +298,74 @@
 			});
 		}
 
+		function mountZsOrderToolbar() {
+			var $table = $('#' + zsTableId);
+			var $bootstrapTable = $table.closest('.bootstrap-table');
+			var $toolbar = $bootstrapTable.find('.fixed-table-toolbar');
+			var $actions = $('#toolbar-zs-order');
+			if ($toolbar.length && $actions.length) {
+				if ($actions.parent()[0] !== $toolbar[0]) {
+					$actions.prependTo($toolbar);
+				}
+				$actions.addClass('zs-order-action-bar').show();
+			}
+		}
+
+		function zsOrderConfirm() {
+			var rowIds = $('#rowIds').val();
+			if (!rowIds || rowIds === '') {
+				$.modal.alertWarning("请至少选择一条第三方订单");
+				return;
+			}
+			var index = parent.layer.getFrameIndex(window.name);
+			var layero = parent.$('#layui-layer' + index);
+			var opener = (typeof activeWindow === 'function') ? activeWindow() : null;
+			if (opener && typeof opener.__deliveryZsOrderCallBack === 'function') {
+				opener.__deliveryZsOrderCallBack(index, layero);
+				return;
+			}
+			$.modal.alertWarning("无法提交，请关闭后重试");
+		}
+
+		function zsOrderClose() {
+			$.modal.close();
+		}
+
+		var zsColCss = {
+			padding: '8px 12px',
+			whiteSpace: 'nowrap',
+			overflow: 'hidden',
+			textOverflow: 'ellipsis',
+			boxSizing: 'border-box'
+		};
+
+		function zsCellText(v) {
+			if (v == null || v === '') {
+				return '-';
+			}
+			var s = String(v);
+			return '<span class="zs-cell-ellipsis" title="' + s.replace(/"/g, '&quot;') + '">' + s + '</span>';
+		}
+
+		function zsColStyleFor(field) {
+			return function () {
+				return { css: zsColCss };
+			};
+		}
+
+		function applyZsColumnSpacing(columns) {
+			return $.map(columns, function (col) {
+				var c = $.extend(true, {}, col);
+				if (!c.checkbox && c.field) {
+					c.headerStyle = zsColStyleFor(c.field);
+					c.cellStyle = zsColStyleFor(c.field);
+				}
+				return c;
+			});
+		}
+
 		function initZsTable() {
-		    var options = {
-		        id: zsTableId,
-		        formId: "zs-order-form",
-		        url: prefix + "/zsOrder/list",
-		        queryParams: zsOrderQueryParams,
-		        modalName: "第三方订单",
-		        uniqueId: "id",
-		        rememberSelected: true,
-		        maintainSelected: true,
-		        columns: [{
+		    var columns = applyZsColumnSpacing([{
 		            checkbox: true,
 		            field: 'checkbox'
 		        },
@@ -226,78 +376,93 @@
 		        },
 		        {
 		            field: 'dh',
-		            title: '单号(DH)'
+		            title: '单号',
+		            width: 150
 		        },
 		        {
 		            field: 'hospitalCode',
 		            title: '平台医院编码',
-		            formatter: function (v) { return v || '-'; }
+		            visible: false
 		        },
 		        {
 		            field: 'hospitalName',
 		            title: '平台医院名称',
-		            formatter: function (v) { return v || '-'; }
+		            width: 200,
+		            formatter: function (v) { return zsCellText(v); }
 		        },
 		        {
 		            field: 'supplierCode',
 		            title: '平台供应商编码',
-		            formatter: function (v) { return v || '-'; }
+		            visible: false
 		        },
 		        {
 		            field: 'supplierName',
 		            title: '平台供应商名称',
-		            formatter: function (v) { return v || '-'; }
+		            width: 220,
+		            formatter: function (v) { return zsCellText(v); }
 		        },
 		        {
 		            field: 'ckno',
 		            title: '订单仓库编码',
-		            formatter: function (v) { return v || '-'; }
+		            visible: false
 		        },
 		        {
 		            field: 'ck',
 		            title: '订单仓库名称',
-		            formatter: function (v) { return v || '-'; }
+		            width: 120,
+		            formatter: function (v) { return zsCellText(v); }
 		        },
 		        {
 		            field: 'supno',
 		            title: '订单供应商编码',
-		            formatter: function (v) { return v || '-'; }
+		            width: 140,
+		            formatter: function (v) { return zsCellText(v); }
 		        },
 		        {
 		            field: 'sup',
 		            title: '订单供应商名称',
-		            formatter: function (v) { return v || '-'; }
+		            width: 220,
+		            formatter: function (v) { return zsCellText(v); }
 		        },
 		        {
 		            field: 'ksbh',
 		            title: '订单科室编码',
-		            formatter: function (v) { return v || '-'; }
+		            width: 120,
+		            formatter: function (v) { return zsCellText(v); }
 		        },
 		        {
 		            field: 'ksmc',
 		            title: '订单科室名称',
-		            formatter: function (v) { return v || '-'; }
+		            width: 140,
+		            formatter: function (v) { return zsCellText(v); }
 		        },
 		        {
 		            field: 'createTime',
 		            title: '推送时间',
+		            width: 160,
 		            formatter: function (v) {
 		                if (v == null || v === '') return '-';
-		                return typeof v === 'string' && v.length >= 19 ? v.substring(0, 19) : v;
+		                var s = typeof v === 'string' && v.length >= 19 ? v.substring(0, 19) : String(v);
+		                return '<span class="zs-cell-ellipsis" title="' + s.replace(/"/g, '&quot;') + '">' + s + '</span>';
 		            }
 		        },
 		        {
 		            field: 'customer',
-		            title: '服务标识'
+		            title: '服务标识',
+		            width: 100,
+		            formatter: function (v) { return zsCellText(v); }
 		        },
 		        {
 		            field: 'scmSupCode',
-		            title: 'SCM供应商编码'
+		            title: 'SCM供应商编码',
+		            width: 130,
+		            formatter: function (v) { return zsCellText(v); }
 		        },
 		        {
 		            field: 'voidStatus',
 		            title: '作废状态',
 		            align: 'center',
+		            width: 90,
 		            formatter: function (v) {
 		                return (v === '1' || v === 1) ? '<span class="label label-danger">已作废</span>' : '<span class="label label-success">正常</span>';
 		            }
@@ -305,16 +470,33 @@
 		        {
 		            field: 'sheetJe',
 		            title: '金额',
+		            width: 100,
 		            formatter: function (value, row, index) {
 		                if (value != null && value !== '') {
 		                    return '¥' + parseFloat(value).toFixed(2);
 		                }
 		                return '';
 		            }
-		        }]
+		        }]);
+
+		    var options = {
+		        id: zsTableId,
+		        formId: "zs-order-form",
+		        url: prefix + "/zsOrder/list",
+		        queryParams: zsOrderQueryParams,
+		        modalName: "第三方订单",
+		        uniqueId: "id",
+		        rememberSelected: true,
+		        maintainSelected: true,
+		        showSearch: false,
+		        onLoadSuccess: function () {
+		            mountZsOrderToolbar();
+		        },
+		        columns: columns
 		    };
 		    $.table.init(options);
 		    updateZsSheetCheckboxColumn();
+		    setTimeout(mountZsOrderToolbar, 0);
 
 		    $("#" + zsTableId).on("check.bs.table check-all.bs.table uncheck.bs.table uncheck-all.bs.table", function (e, rowsAfter, rowsBefore) {
 		        if (!isSheetSelectable(currentSheetTab)) {

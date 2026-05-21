@@ -1985,6 +1985,7 @@
 	            url: ctx + "delivery/delivery/zsOrder/select",
 	            width: "1000",
 	            height: "600",
+	            btn: 0,
 	            callBack: function(index, layero) {
 	                var body = $.modal.getChildFrame(index);
 	                var rowIds = body.find('#rowIds').val();
@@ -2093,6 +2094,7 @@
 	                });
 	            }
 	        };
+	        window.__deliveryZsOrderCallBack = options.callBack;
 	        $.modal.openOptions(options);
 	    }
 
