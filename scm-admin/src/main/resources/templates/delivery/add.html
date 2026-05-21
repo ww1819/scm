@@ -32,12 +32,14 @@
 			margin-bottom: 8px;
 		}
 		.delivery-doc-form .control-label {
-			font-size: 12px;
-			padding-top: 6px;
+			font-size: 14px;
+			padding-top: 7px;
 		}
 		.delivery-doc-form .form-control {
-			height: 30px;
-			padding: 4px 8px;
+			height: 34px;
+			padding: 6px 10px;
+			font-size: 14px;
+			line-height: 20px;
 		}
 		/* ========== 详细信息列表：与配送信息查询-配送明细表一致 ========== */
 		.bootstrap-table .fixed-table-header {
@@ -96,17 +98,47 @@
 			min-height: 0;
 			padding-bottom: 0;
 		}
+		#delivery-detail-list-section .bootstrap-table {
+			position: relative;
+			box-sizing: border-box;
+			padding-bottom: 14px !important;
+		}
+		/* 横向滚动条移到底部独立轨道，表体不再出现横条以免挡住最后一行 */
 		#delivery-detail-list-section .fixed-table-body {
-			overflow-x: scroll !important;
+			overflow-x: hidden !important;
 			overflow-y: auto !important;
-			flex: 1;
+			flex: 1 1 auto;
 			min-height: 0;
+			box-sizing: border-box !important;
+			padding-bottom: 0 !important;
 			scrollbar-width: thin;
 			-ms-overflow-style: scrollbar;
 		}
 		#delivery-detail-list-section .fixed-table-body::-webkit-scrollbar {
-			height: 12px;
+			height: 0 !important;
 			width: 8px;
+		}
+		#delivery-detail-list-section .detail-hscroll-rail {
+			position: absolute;
+			left: 0;
+			bottom: 0;
+			height: 14px;
+			overflow-x: auto;
+			overflow-y: hidden;
+			z-index: 8;
+			background: #f1f1f1;
+			scrollbar-width: thin;
+			box-sizing: border-box;
+		}
+		#delivery-detail-list-section .detail-hscroll-rail::-webkit-scrollbar {
+			height: 12px;
+		}
+		#delivery-detail-list-section .detail-hscroll-rail::-webkit-scrollbar-thumb {
+			background: rgba(0, 0, 0, 0.28);
+			border-radius: 5px;
+		}
+		#delivery-detail-list-section .detail-hscroll-rail-inner {
+			height: 1px;
 		}
 		/* 纵向滚动条改到操作列右侧：主表区隐藏竖条，由 detail-vscroll-rail 承载 */
 		#delivery-detail-list-section.detail-has-fixed-op .fixed-table-body {
@@ -631,6 +663,7 @@
 	    var DETAIL_OPERATION_COL_WIDTH = 175;
 	    var DETAIL_VSCROLL_GUTTER = 10;
 	    var DETAIL_ROW_HEIGHT = 44;
+	    var DETAIL_HSCROLL_GUTTER = 14;
 
 	    function escapeHtmlForBarcode(s) {
 	        if (s == null || s === '') return '';
@@ -751,8 +784,7 @@
 	        if (!h || h < 1) {
 	            h = Math.floor($wrap.innerHeight());
 	        }
-	        /* 预留横向滚动条高度 */
-	        h = Math.floor(h - 14);
+	        /* 表体 CSS padding-bottom 已预留横向滚动条，此处不再扣减 */
 	        return Math.max(h, 480);
 	    }
 
@@ -804,9 +836,10 @@
 	        var top = $container.position().top;
 	        var h = $container.outerHeight();
 	        var headH = $mainHeader.outerHeight() || 38;
+	        var panelH = Math.max((h || 0) - DETAIL_HSCROLL_GUTTER, 0);
 	        $panel.css({
 	            top: top + 'px',
-	            height: (h > 0 ? h : '') + (h > 0 ? 'px' : ''),
+	            height: (panelH > 0 ? panelH : '') + (panelH > 0 ? 'px' : ''),
 	            width: DETAIL_OPERATION_COL_WIDTH + 'px',
 	            right: DETAIL_VSCROLL_GUTTER + 'px'
 	        });
@@ -815,8 +848,62 @@
 	            lineHeight: headH + 'px'
 	        });
 	        layoutDetailVscrollRail(top, h, headH);
+	        layoutDetailHscrollRail();
 	        syncDetailOperationPanelRowHeights();
 	        syncDetailOperationPanelScrollOffset();
+	    }
+
+	    function layoutDetailHscrollRail() {
+	        var $bt = $('#detail-table').closest('.bootstrap-table');
+	        var $rail = $bt.children('.detail-hscroll-rail');
+	        if (!$rail.length) {
+	            return;
+	        }
+	        var $wrap = $('#delivery-detail-list-section');
+	        var rightReserve = $wrap.hasClass('detail-has-fixed-op')
+	            ? (DETAIL_OPERATION_COL_WIDTH + DETAIL_VSCROLL_GUTTER) : 0;
+	        $rail.css({
+	            left: '0',
+	            bottom: '0',
+	            height: DETAIL_HSCROLL_GUTTER + 'px',
+	            right: rightReserve + 'px',
+	            width: 'auto'
+	        });
+	    }
+
+	    function updateDetailHscrollRailSize() {
+	        var $bt = $('#detail-table').closest('.bootstrap-table');
+	        var $mainBody = $bt.find('.fixed-table-container > .fixed-table-body');
+	        var $rail = $bt.children('.detail-hscroll-rail');
+	        if (!$mainBody.length || !$rail.length) {
+	            return;
+	        }
+	        var bodyEl = $mainBody[0];
+	        var innerEl = $rail.find('.detail-hscroll-rail-inner')[0];
+	        if (bodyEl && innerEl) {
+	            innerEl.style.width = Math.max(bodyEl.scrollWidth, bodyEl.clientWidth) + 'px';
+	        }
+	    }
+
+	    function ensureDetailHscrollRail() {
+	        var $bt = $('#detail-table').closest('.bootstrap-table');
+	        var $container = $bt.find('.fixed-table-container').first();
+	        var $mainBody = $container.children('.fixed-table-body');
+	        var $mainHeader = $container.children('.fixed-table-header');
+	        if (!$mainBody.length) {
+	            return;
+	        }
+	        var $rail = $bt.children('.detail-hscroll-rail');
+	        if (!$rail.length) {
+	            $rail = $('<div class="detail-hscroll-rail"><div class="detail-hscroll-rail-inner"></div></div>');
+	            $bt.append($rail);
+	        }
+	        updateDetailHscrollRailSize();
+	        $rail.off('scroll.detailHscrollRail').on('scroll.detailHscrollRail', function () {
+	            var sl = $rail.scrollLeft();
+	            $mainBody.scrollLeft(sl);
+	            $mainHeader.scrollLeft(sl);
+	        });
 	    }
 
 	    function layoutDetailVscrollRail(containerTop, containerH, headH) {
@@ -825,7 +912,7 @@
 	        if (!$rail.length) {
 	            return;
 	        }
-	        var bodyH = Math.max((containerH || 0) - (headH || 0), 0);
+	        var bodyH = Math.max((containerH || 0) - (headH || 0) - DETAIL_HSCROLL_GUTTER, 0);
 	        $rail.css({
 	            top: ((containerTop || 0) + (headH || 0)) + 'px',
 	            height: bodyH + 'px',
@@ -982,6 +1069,7 @@
 	        $mainHeader.css('margin-right', (scrollW + rightReserve) + 'px');
 	        $mainHeader.scrollLeft($mainBody.scrollLeft());
 	        syncDetailTableHeaderColumnWidths();
+	        updateDetailHscrollRailSize();
 	    }
 
 	    function scheduleDetailHeaderAlign() {
@@ -1012,9 +1100,12 @@
 	            $mainHeader.scrollLeft($mainBody.scrollLeft());
 	        });
 	        ensureDetailVscrollRail();
+	        ensureDetailHscrollRail();
+	        layoutDetailHscrollRail();
 	        syncDetailOperationPanelScroll();
 	        scheduleDetailOperationPanelSync();
 	        scheduleDetailHeaderAlign();
+	        updateDetailHscrollRailSize();
 	    }
 
 	    function relayoutDeliveryAddDetailTable() {
