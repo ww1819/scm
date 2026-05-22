@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.scm.common.annotation.Log;
 import com.scm.common.core.controller.BaseController;
@@ -186,10 +187,7 @@ public class DeliveryController extends BaseController
         {
             try
             {
-                ObjectMapper objectMapper = new ObjectMapper();
-                List<DeliveryDetail> deliveryDetails = objectMapper.readValue(deliveryDetailsJson,
-                    new TypeReference<List<DeliveryDetail>>() {});
-                delivery.setDeliveryDetails(deliveryDetails);
+                delivery.setDeliveryDetails(parseDeliveryDetailsJson(deliveryDetailsJson));
             }
             catch (Exception e)
             {
@@ -305,10 +303,7 @@ public class DeliveryController extends BaseController
         {
             try
             {
-                ObjectMapper objectMapper = new ObjectMapper();
-                List<DeliveryDetail> deliveryDetails = objectMapper.readValue(deliveryDetailsJson,
-                    new TypeReference<List<DeliveryDetail>>() {});
-                delivery.setDeliveryDetails(deliveryDetails);
+                delivery.setDeliveryDetails(parseDeliveryDetailsJson(deliveryDetailsJson));
             }
             catch (Exception e)
             {
@@ -317,6 +312,16 @@ public class DeliveryController extends BaseController
         }
         delivery.setUpdateBy(getLoginName());
         return toAjax(deliveryService.updateDelivery(delivery));
+    }
+
+    /**
+     * 解析前端提交的配送明细 JSON（忽略 bootstrap-table 复选框等未知字段）
+     */
+    private List<DeliveryDetail> parseDeliveryDetailsJson(String deliveryDetailsJson) throws IOException
+    {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return objectMapper.readValue(deliveryDetailsJson, new TypeReference<List<DeliveryDetail>>() {});
     }
 
     /**
