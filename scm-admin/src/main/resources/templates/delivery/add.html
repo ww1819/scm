@@ -1189,6 +1189,22 @@
 	        }
 	        return s;
 	    }
+	    /** 提交前剔除 bootstrap-table 复选框等内部字段，避免 JSON 含 "0":false 导致后端反序列化失败 */
+	    function sanitizeDeliveryDetailRowsForSave(rows) {
+	        var strip = { btSelectItem: 1, state: 1, index: 1 };
+	        var out = [];
+	        for (var i = 0; i < rows.length; i++) {
+	            var row = rows[i];
+	            var clean = {};
+	            for (var k in row) {
+	                if (!Object.prototype.hasOwnProperty.call(row, k)) continue;
+	                if (strip[k] || /^\d+$/.test(k)) continue;
+	                clean[k] = row[k];
+	            }
+	            out.push(clean);
+	        }
+	        return out;
+	    }
 	    /** 从当前行 DOM（含右侧固定列）解析行号，避免操作列 HTML 里写死的 index 与表格不同步 */
 	    function resolveDetailRowIndex(btn, indexHint) {
 	        if (btn) {
@@ -1322,6 +1338,7 @@
 	            },
 	            columns: [{
 	                checkbox: true,
+	                field: 'btSelectItem',
 	                width: 42,
 	                align: 'center'
 	            }, {
@@ -1857,7 +1874,7 @@
 	            // 添加明细数据（作为JSON字符串）
 	            formData.push({
 	                name: 'deliveryDetailsJson',
-	                value: JSON.stringify(detailData)
+	                value: JSON.stringify(sanitizeDeliveryDetailRowsForSave(detailData))
 	            });
 
 	            // 使用自定义保存逻辑，保存成功后关闭标签页并刷新列表
