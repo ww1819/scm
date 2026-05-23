@@ -77,13 +77,29 @@
 			z-index: 2;
 			background: #fff !important;
 		}
-		/* 表体随内容增高，仅用 max-height 限制；避免 bootstrap 固定 height 撑出底部白条 */
+		/* 表头独立在 fixed-table-header 时，表体内 table 勿再用负 margin 上拉（否则 tbody 被顶出可视区） */
+		.zs-order-select-page .zs-order-table-wrap .fixed-table-container > .fixed-table-body > table {
+			margin-top: 0 !important;
+		}
+		.zs-order-select-page .zs-order-table-wrap .fixed-table-container > .fixed-table-body thead {
+			visibility: collapse;
+			height: 0;
+			line-height: 0;
+			padding: 0;
+			border: 0;
+		}
+		.zs-order-select-page .zs-order-table-wrap .fixed-table-container > .fixed-table-body thead th {
+			height: 0 !important;
+			padding: 0 !important;
+			border: 0 !important;
+			line-height: 0 !important;
+		}
+		/* 表体高度由 applyZsTableBodyScroll 用 important 写入，勿在此写 height:auto 以免 flex 下表体高度塌成 0 */
 		.zs-order-select-page .zs-order-table-wrap .fixed-table-body {
 			overflow-x: hidden !important;
 			overflow-y: auto !important;
-			flex: 1 1 auto;
+			flex: 1;
 			min-height: 0;
-			height: auto !important;
 		}
 		.zs-order-select-page .zs-order-table-wrap .fixed-table-body::-webkit-scrollbar {
 			height: 0 !important;
@@ -479,6 +495,43 @@
 			$mainBody.find('.fixed-table-border').remove();
 		}
 
+		/** 表头为 relative 布局时，bootstrap-table 仍会写 margin-top 负值，须每次渲染后清零 */
+		function fixZsTableBodyMargin() {
+			var $mainBody = $('#' + zsTableId).closest('.bootstrap-table')
+				.find('.fixed-table-container > .fixed-table-body');
+			$mainBody.children('table').each(function () {
+				this.style.setProperty('margin-top', '0', 'important');
+			});
+		}
+
+		function calculateZsTableHeight() {
+			var $wrap = $('.zs-order-table-wrap');
+			if (!$wrap.length) {
+				return 360;
+			}
+			var h = $wrap[0].clientHeight || Math.floor($wrap.innerHeight());
+			if (!h || h < 1) {
+				var $page = $('.zs-order-select-page.container-div');
+				if ($page.length) {
+					var pageBottom = $page[0].getBoundingClientRect().bottom;
+					var top = $wrap[0].getBoundingClientRect().top;
+					h = Math.floor(pageBottom - top - 6);
+				}
+			}
+			var $bt = $('#' + zsTableId).closest('.bootstrap-table');
+			h -= ($bt.find('.fixed-table-toolbar').outerHeight(true) || 0);
+			h -= ($bt.find('.fixed-table-pagination').outerHeight(true) || 0);
+			h -= ($bt.children('.zs-detail-hscroll:visible').outerHeight(true) || 0);
+			return Math.max(Math.floor(h - 8), 200);
+		}
+
+		function adjustZsTableHeight() {
+			var $table = $('#' + zsTableId);
+			if ($table.length && $table.bootstrapTable('getOptions')) {
+				$table.bootstrapTable('resetView', { height: calculateZsTableHeight() });
+			}
+		}
+
 		/** 表体高度 = 容器剩余高度（横条/分页已在 flex 中占位，勿从 wrap 重复扣减） */
 		function applyZsTableBodyScroll() {
 			var $table = $('#' + zsTableId);
@@ -508,18 +561,17 @@
 			$rows.each(function () {
 				contentH += $(this).outerHeight(true) || 0;
 			});
-			if (contentH > 0) {
-				if (contentH <= bodyH) {
-					bodyH = Math.ceil(contentH);
-				}
+			if (contentH > 0 && contentH <= bodyH) {
+				bodyH = Math.ceil(contentH);
 			}
-			$mainBody.css({
-				height: bodyH + 'px',
-				minHeight: '0',
-				maxHeight: bodyH + 'px',
-				overflowY: (contentH > bodyH + 1) ? 'auto' : 'hidden',
-				overflowX: 'hidden'
-			});
+			var bodyEl = $mainBody[0];
+			if (bodyEl) {
+				bodyEl.style.setProperty('height', bodyH + 'px', 'important');
+				bodyEl.style.setProperty('max-height', bodyH + 'px', 'important');
+				bodyEl.style.setProperty('min-height', (contentH > 0 ? Math.min(contentH, bodyH) : bodyH) + 'px', 'important');
+				bodyEl.style.setProperty('overflow-y', (contentH > bodyH + 1) ? 'auto' : 'hidden', 'important');
+				bodyEl.style.setProperty('overflow-x', 'hidden', 'important');
+			}
 		}
 
 		function ensureZsDetailHScrollBar() {
@@ -596,17 +648,26 @@
 		}
 
 		function refreshZsTableScrollLayout() {
+			fixZsTableBodyMargin();
 			bindZsMainHorizontalScroll();
 			bindZsDetailHScroll();
 			syncZsDetailHScrollSize();
 			applyZsTableBodyScroll();
+			fixZsTableBodyMargin();
 		}
 
 		function relayoutZsOrderTable() {
 			layoutZsOrderTableWrapHeight();
+			adjustZsTableHeight();
 			refreshZsTableScrollLayout();
-			setTimeout(refreshZsTableScrollLayout, 80);
-			setTimeout(refreshZsTableScrollLayout, 200);
+			setTimeout(function () {
+				adjustZsTableHeight();
+				refreshZsTableScrollLayout();
+			}, 80);
+			setTimeout(function () {
+				adjustZsTableHeight();
+				refreshZsTableScrollLayout();
+			}, 200);
 		}
 
 		$(function() {
@@ -838,12 +899,16 @@
 		        maintainSelected: true,
 		        showSearch: false,
 		        mobileResponsive: false,
+		        height: calculateZsTableHeight(),
 		        onLoadSuccess: function () {
 		            mountZsOrderToolbar();
 		            setTimeout(relayoutZsOrderTable, 0);
+		            setTimeout(relayoutZsOrderTable, 80);
+		            setTimeout(relayoutZsOrderTable, 200);
 		        },
 		        onPostBody: function () {
 		            mountZsOrderToolbar();
+		            fixZsTableBodyMargin();
 		            setTimeout(refreshZsTableScrollLayout, 0);
 		        },
 		        columns: columns
