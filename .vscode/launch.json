@@ -15,7 +15,8 @@
             "name": "ScmApplication",
             "request": "launch",
             "mainClass": "com.scm.ScmApplication",
-            "projectName": "scm-admin"
+            "projectName": "scm-admin",
+            "preLaunchTask": "maven-compile-scm"
         },
         {
             "type": "java",
