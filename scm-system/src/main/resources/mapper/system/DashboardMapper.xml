@@ -68,13 +68,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <sql id="settlementScopeFilter">
         <if test="hospitalId != null">
-            AND s.hospital_id = #{hospitalId}
+            AND s.customer_id = #{hospitalId}
         </if>
         <if test="supplierId != null">
             AND s.supplier_id = #{supplierId}
         </if>
         <if test="params != null and params.excludeHospitalIds != null and params.excludeHospitalIds.size() &gt; 0">
-            AND s.hospital_id NOT IN
+            AND s.customer_id NOT IN
             <foreach collection="params.excludeHospitalIds" item="hid" open="(" separator="," close=")">
                 #{hid}
             </foreach>
@@ -91,7 +91,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <if test="params != null and params.scopePairs != null and params.scopePairs.size() &gt; 0">
             AND (
             <foreach collection="params.scopePairs" item="sp" separator=" OR ">
-                (s.hospital_id = #{sp.hospitalId} AND s.supplier_id = #{sp.supplierId})
+                (s.customer_id = #{sp.hospitalId} AND s.supplier_id = #{sp.supplierId})
             </foreach>
             )
         </if>
