@@ -238,17 +238,30 @@
 		}
 		#delivery-detail-list-section .fixed-table-header th[data-field="materialName"],
 		#delivery-detail-list-section .fixed-table-body td[data-field="materialName"] {
-			width: 116px !important;
-			max-width: 130px !important;
+			width: 140px !important;
 			min-width: 72px !important;
 		}
 		#delivery-detail-list-section .fixed-table-header th[data-field="specification"],
 		#delivery-detail-list-section .fixed-table-body td[data-field="specification"] {
 			width: 96px !important;
-			max-width: 110px !important;
 			min-width: 64px !important;
 			padding-left: 4px !important;
 			padding-right: 6px !important;
+		}
+		#delivery-detail-list-section .fixed-table-header {
+			overflow: visible !important;
+		}
+		#delivery-detail-list-section .fixed-table-header .rc-handle-container {
+			z-index: 12;
+		}
+		#delivery-detail-list-section .fixed-table-header .rc-handle {
+			cursor: col-resize;
+		}
+		#delivery-detail-list-section .detail-cell-text {
+			display: block;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
 		}
 		#delivery-detail-list-section .fixed-table-header th.bs-checkbox,
 		#delivery-detail-list-section .fixed-table-body td.bs-checkbox {
@@ -650,13 +663,16 @@
     </div>
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
+	<th:block th:include="include :: bootstrap-table-resizable-js" />
 	<script th:inline="javascript">
 	    var prefix = ctx + "delivery/delivery";
 	    var DETAIL_OPERATION_COL_WIDTH = 175;
 	    var DETAIL_VSCROLL_GUTTER = 10;
 	    var DETAIL_ROW_HEIGHT = 44;
 	    var DETAIL_HSCROLL_GUTTER = 14;
-	    
+	    var detailColumnWidths = {};
+	    var DETAIL_COL_RESIZE_SKIP = { btSelectItem: 1, index: 1, operation: 1 };
+
 	    function escapeHtmlForBarcode(s) {
 	        if (s == null || s === '') return '';
 	        return String(s)
@@ -667,6 +683,70 @@
 
 	    function escapeAttrForInput(s) {
 	        return escapeHtmlForBarcode(s).replace(/"/g, '&quot;');
+	    }
+
+	    function detailCellTextHtml(value) {
+	        if (value == null || value === '') {
+	            return '';
+	        }
+	        var s = String(value);
+	        return '<span class="detail-cell-text" title="' + escapeAttrForInput(s) + '">' + escapeHtmlForBarcode(s) + '</span>';
+	    }
+
+	    function applyDetailColumnWidthFromHeader() {
+	        var $bt = $('#detail-table').closest('.bootstrap-table');
+	        var $headTable = $bt.find('.fixed-table-header table').first();
+	        var $bodyTable = $bt.find('.fixed-table-body table').first();
+	        if (!$headTable.length || !$bodyTable.length) {
+	            return;
+	        }
+	        var totalW = 0;
+	        $headTable.find('thead th[data-field]').each(function () {
+	            var field = $(this).data('field');
+	            if (!field || DETAIL_COL_RESIZE_SKIP[field]) {
+	                return;
+	            }
+	            var w = Math.ceil($(this).outerWidth());
+	            if (w < 40) {
+	                w = 40;
+	            }
+	            var ws = w + 'px';
+	            detailColumnWidths[field] = w;
+	            $(this).css({ width: ws, minWidth: ws, maxWidth: 'none' });
+	            $bodyTable.find('td[data-field="' + field + '"]').css({ width: ws, minWidth: ws, maxWidth: 'none' });
+	            totalW += w;
+	        });
+	        if (totalW > 0) {
+	            var tw = totalW + 'px';
+	            $headTable.css('width', tw);
+	            $bodyTable.css('width', tw);
+	        }
+	        updateDetailHscrollRailSize();
+	    }
+
+	    function initDetailHeaderColumnResize() {
+	        if (typeof $.fn.resizableColumns !== 'function') {
+	            return;
+	        }
+	        var $headTable = $('#detail-table').closest('.bootstrap-table').find('.fixed-table-header table').first();
+	        if (!$headTable.length) {
+	            return;
+	        }
+	        if ($headTable.data('resizableColumns')) {
+	            $headTable.data('resizableColumns').destroy();
+	        }
+	        $headTable.resizableColumns({
+	            store: false,
+	            resizeFromBody: false,
+	            selector: 'thead tr:first > th[data-field]:not([data-noresize])',
+	            resize: function () {
+	                applyDetailColumnWidthFromHeader();
+	            },
+	            stop: function () {
+	                applyDetailColumnWidthFromHeader();
+	                scheduleDetailHeaderAlign();
+	            }
+	        });
 	    }
 
 	    function detailTextInputHtml(value, index, maxlength, blurFn) {
@@ -1024,13 +1104,21 @@
 	            if (!$td.length) {
 	                return;
 	            }
+	            if (detailColumnWidths[field]) {
+	                var storedW = detailColumnWidths[field];
+	                var storedWs = storedW + 'px';
+	                $td.css({ width: storedWs, minWidth: storedWs, maxWidth: 'none' });
+	                $(this).css({ width: storedWs, minWidth: storedWs, maxWidth: 'none' });
+	                totalW += storedW;
+	                return;
+	            }
 	            var w = Math.ceil($td.outerWidth());
 	            if (w < 1) {
 	                w = 1;
 	            }
 	            var ws = w + 'px';
-	            $td.css({ width: ws, minWidth: ws, maxWidth: ws });
-	            $(this).css({ width: ws, minWidth: ws, maxWidth: ws });
+	            $td.css({ width: ws, minWidth: ws, maxWidth: 'none' });
+	            $(this).css({ width: ws, minWidth: ws, maxWidth: 'none' });
 	            totalW += w;
 	        });
 	        var minW = parseInt($bodyTable.css('min-width'), 10) || 0;
@@ -1093,6 +1181,7 @@
 	        scheduleDetailOperationPanelSync();
 	        scheduleDetailHeaderAlign();
 	        updateDetailHscrollRailSize();
+	        setTimeout(initDetailHeaderColumnResize, 0);
 	    }
 
 	    function relayoutDeliveryAddDetailTable() {
@@ -1378,17 +1467,20 @@
                 field: 'materialCode',
                 title: '产品编码',
                 align: 'center',
-                width: 108
+                width: 108,
+                formatter: function (value) { return detailCellTextHtml(value); }
             }, {
                 field: 'materialName',
                 title: '产品名称',
                 align: 'left',
-                width: 116
+                width: 140,
+                formatter: function (value) { return detailCellTextHtml(value); }
             }, {
                 field: 'specification',
                 title: '规格',
                 align: 'left',
-                width: 96
+                width: 96,
+                formatter: function (value) { return detailCellTextHtml(value); }
             }, {
 	                field: 'unit',
 	                title: '单位',
@@ -2085,16 +2177,39 @@
 	        var options = {
 	            title: '选择订单',
 	            url: ctx + "order/order/select",
-	            width: "1000",
-	            height: "600",
-	            callBack: function(index, layero) {
-	                var body = $.modal.getChildFrame(index);
-	                var orderId = body.find('#rowIds').val();
+	            width: "1280",
+	            height: "720",
+	            btn: 0,
+	            callBack: function(index, layero, selectedRowIds) {
+	                var orderId = selectedRowIds;
+	                if (!orderId || orderId === '') {
+	                    var body = $.modal.getChildFrame(index);
+	                    orderId = body.find('#rowIds').val();
+	                }
 	                if (!orderId || orderId == '') {
 	                    $.modal.alertWarning("请至少选择一条记录");
 	                    return false;
 	                }
-	                
+	                var closeLayer = function() {
+	                    var layerIndex = index || window.__deliveryOrderLayerIndex;
+	                    try {
+	                        if (!layerIndex && window.top) {
+	                            layerIndex = window.top.__deliveryOrderLayerIndex;
+	                        }
+	                    } catch (e) { /* ignore */ }
+	                    if (layerIndex) {
+	                        top.layer.close(layerIndex);
+	                    }
+	                    window.__deliveryOrderLayerIndex = null;
+	                    try {
+	                        window.top.__deliveryOrderLayerIndex = null;
+	                        delete window.top.__deliveryOrderCallBack;
+	                        delete window.top.__deliveryOrderOpenerWin;
+	                    } catch (e) { /* ignore */ }
+	                    delete window.__deliveryOrderCallBack;
+	                    delete window.__deliveryOrderOpenerWin;
+	                };
+
 	                // 获取选中的订单ID（只取第一个）
 	                var ids = orderId.split(',');
 	                var selectedOrderId = ids[0];
@@ -2199,7 +2314,7 @@
 	                                $('#detail-table').bootstrapTable('load', []);
 	                            }
 	                            
-	                            $.modal.close(index);
+	                            closeLayer();
 	                            $.modal.msgSuccess("订单信息已引入");
 	                        } else {
 	                            $.modal.alertError(result.msg || "获取订单信息失败");
@@ -2209,9 +2324,14 @@
 	                        $.modal.alertError("获取订单信息失败");
 	                    }
 	                });
-	                return false;
 	            }
 	        };
+	        window.__deliveryOrderCallBack = options.callBack;
+	        window.__deliveryOrderOpenerWin = window;
+	        try {
+	            window.top.__deliveryOrderCallBack = options.callBack;
+	            window.top.__deliveryOrderOpenerWin = window;
+	        } catch (e) { /* ignore */ }
 	        $.modal.openOptions(options);
 	    }
 	    

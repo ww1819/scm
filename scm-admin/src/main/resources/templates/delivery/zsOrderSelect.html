@@ -704,24 +704,102 @@
 			}
 		}
 
+		/** 关闭本弹窗（兼容 top / parent 两套 layer 索引） */
+		function closeZsOrderLayer() {
+			var layerApi = (window.top && window.top.layer) ? window.top.layer : parent.layer;
+			var idx = layerApi.getFrameIndex(window.name);
+			if (idx != null && idx !== '' && !isNaN(idx)) {
+				layerApi.close(idx);
+				return;
+			}
+			$.modal.close();
+		}
+
+		/** 获取打开本弹窗的配送单页（添加页）iframe */
+		function getDeliveryOpenerWindow() {
+			try {
+				if (window.top && window.top.__deliveryZsOrderOpenerWin) {
+					return window.top.__deliveryZsOrderOpenerWin;
+				}
+			} catch (e) { /* ignore */ }
+			try {
+				var topWin = window.top;
+				if (topWin && topWin.$) {
+					var currentId = topWin.$('.page-tabs-content').find('.active').attr('data-id');
+					if (currentId) {
+						var iframe = topWin.$('.mainContent .Scm_iframe[data-id="' + currentId + '"], .Scm_iframe[data-id="' + currentId + '"]')[0];
+						if (iframe && iframe.contentWindow) {
+							return iframe.contentWindow;
+						}
+					}
+				}
+			} catch (e) { /* 跨域等 */ }
+			if (typeof activeWindow === 'function') {
+				var w = activeWindow();
+				if (w) {
+					return w;
+				}
+			}
+			var w = window.parent;
+			for (var i = 0; i < 8 && w; i++) {
+				try {
+					if (typeof w.__deliveryZsOrderCallBack === 'function') {
+						return w;
+					}
+				} catch (e) { /* ignore */ }
+				if (w === w.parent) {
+					break;
+				}
+				w = w.parent;
+			}
+			return null;
+		}
+
+		function resolveDeliveryZsOrderCallback() {
+			var opener = getDeliveryOpenerWindow();
+			if (opener && typeof opener.__deliveryZsOrderCallBack === 'function') {
+				return { opener: opener, cb: opener.__deliveryZsOrderCallBack };
+			}
+			try {
+				if (window.top && typeof window.top.__deliveryZsOrderCallBack === 'function') {
+					return {
+						opener: window.top.__deliveryZsOrderOpenerWin || opener,
+						cb: window.top.__deliveryZsOrderCallBack
+					};
+				}
+			} catch (e) { /* ignore */ }
+			return null;
+		}
+
 		function zsOrderConfirm() {
 			var rowIds = $('#rowIds').val();
 			if (!rowIds || rowIds === '') {
 				$.modal.alertWarning("请至少选择一条第三方订单");
 				return;
 			}
-			var index = parent.layer.getFrameIndex(window.name);
-			var layero = parent.$('#layui-layer' + index);
-			var opener = (typeof activeWindow === 'function') ? activeWindow() : null;
-			if (opener && typeof opener.__deliveryZsOrderCallBack === 'function') {
-				opener.__deliveryZsOrderCallBack(index, layero);
+			var layerApi = (window.top && window.top.layer) ? window.top.layer : parent.layer;
+			var index = layerApi.getFrameIndex(window.name);
+			var layero = (window.top && window.top.$) ? window.top.$('#layui-layer' + index) : parent.$('#layui-layer' + index);
+			var resolved = resolveDeliveryZsOrderCallback();
+			if (!resolved || !resolved.cb) {
+				$.modal.alertWarning("无法提交，请关闭后重试");
 				return;
 			}
-			$.modal.alertWarning("无法提交，请关闭后重试");
+			var opener = resolved.opener;
+			if (opener) {
+				opener.__deliveryZsOrderLayerIndex = index;
+			}
+			try {
+				window.top.__deliveryZsOrderLayerIndex = index;
+			} catch (e) { /* ignore */ }
+			var ret = resolved.cb.call(opener || window, index, layero, rowIds);
+			if (ret !== false) {
+				closeZsOrderLayer();
+			}
 		}
 
 		function zsOrderClose() {
-			$.modal.close();
+			closeZsOrderLayer();
 		}
 
 		var zsColCss = {

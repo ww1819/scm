@@ -1,9 +1,293 @@
 <!DOCTYPE html>
-<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" class="zs-order-select-root">
 <head>
 	<th:block th:include="include :: header('选择订单')" />
 	<th:block th:include="include :: layout-latest-css" />
 	<style>
+		/* 弹窗内全页布局：仅明细表体纵向滚动，搜索/页签/工具栏/分页固定 */
+		html.zs-order-select-root,
+		html.zs-order-select-root body.zs-order-select-body {
+			height: 100%;
+			margin: 0;
+			overflow: hidden;
+			box-sizing: border-box;
+		}
+		body.zs-order-select-body {
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+		}
+		.zs-order-select-page.container-div {
+			flex: 1 1 0%;
+			min-height: 0;
+			height: auto !important;
+			padding: 0 12px 8px;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+		}
+		.zs-order-select-page > .row {
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+			margin: 0;
+			min-height: 0;
+			overflow: hidden;
+		}
+		.zs-order-select-page .search-collapse,
+		.zs-order-select-page .order-select-sheet-bar {
+			flex-shrink: 0;
+		}
+		.zs-order-select-page > .row > .zs-order-table-wrap.col-sm-12 {
+			float: none;
+			width: 100%;
+		}
+		.zs-order-select-page .zs-order-table-wrap {
+			flex: 1;
+			min-height: 0;
+			margin-top: 0;
+			padding-bottom: 0;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+		.zs-order-select-page .zs-order-table-wrap > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
+			width: 100%;
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			position: relative;
+			box-sizing: border-box;
+		}
+		.zs-order-select-page .zs-order-table-wrap .fixed-table-toolbar {
+			flex-shrink: 0;
+		}
+		.zs-order-select-page .zs-order-table-wrap .fixed-table-container {
+			display: flex;
+			flex-direction: column;
+			flex: 1;
+			min-height: 0;
+		}
+		.zs-order-select-page .zs-order-table-wrap .fixed-table-header {
+			flex-shrink: 0;
+			position: relative;
+			top: auto;
+			z-index: 2;
+			background: #fff !important;
+		}
+		/* 表头独立在 fixed-table-header 时，表体内 table 勿再用负 margin 上拉（否则 tbody 被顶出可视区） */
+		.zs-order-select-page .zs-order-table-wrap .fixed-table-container > .fixed-table-body > table {
+			margin-top: 0 !important;
+		}
+		.zs-order-select-page .zs-order-table-wrap .fixed-table-container > .fixed-table-body thead {
+			visibility: collapse;
+			height: 0;
+			line-height: 0;
+			padding: 0;
+			border: 0;
+		}
+		.zs-order-select-page .zs-order-table-wrap .fixed-table-container > .fixed-table-body thead th {
+			height: 0 !important;
+			padding: 0 !important;
+			border: 0 !important;
+			line-height: 0 !important;
+		}
+		/* 表体高度由 applyZsTableBodyScroll 用 important 写入，勿在此写 height:auto 以免 flex 下表体高度塌成 0 */
+		.zs-order-select-page .zs-order-table-wrap .fixed-table-body {
+			overflow-x: hidden !important;
+			overflow-y: auto !important;
+			flex: 1;
+			min-height: 0;
+		}
+		.zs-order-select-page .zs-order-table-wrap .fixed-table-body::-webkit-scrollbar {
+			height: 0 !important;
+		}
+		/* 禁止 fixed-table-border 撑出底部白条遮挡末行 */
+		.zs-order-select-page .zs-order-table-wrap .fixed-table-body .fixed-table-border {
+			display: none !important;
+			height: 0 !important;
+			min-height: 0 !important;
+			max-height: 0 !important;
+			border: 0 !important;
+			margin: 0 !important;
+			padding: 0 !important;
+		}
+		.zs-order-select-page .zs-order-table-wrap .fixed-table-body table {
+			height: auto !important;
+			min-height: 0 !important;
+		}
+		.zs-order-select-page .zs-order-table-wrap .fixed-table-body tbody {
+			height: auto !important;
+		}
+		.zs-order-select-page .zs-order-table-wrap .zs-detail-hscroll {
+			flex-shrink: 0;
+			overflow-x: auto;
+			overflow-y: hidden;
+			height: 14px;
+			min-height: 14px;
+			background: #f5f5f5;
+			border-top: 1px solid #e5e5e5;
+			box-sizing: border-box;
+			scrollbar-width: thin;
+		}
+		.zs-order-select-page .zs-order-table-wrap .zs-detail-hscroll.zs-hscroll-hidden {
+			display: none !important;
+			height: 0 !important;
+			min-height: 0 !important;
+			border: 0 !important;
+			margin: 0 !important;
+			padding: 0 !important;
+		}
+		.zs-order-select-page .zs-order-table-wrap .zs-detail-hscroll::-webkit-scrollbar {
+			height: 10px;
+		}
+		.zs-order-select-page .zs-order-table-wrap .zs-detail-hscroll::-webkit-scrollbar-thumb {
+			background: rgba(0, 0, 0, 0.28);
+			border-radius: 5px;
+		}
+		.zs-order-select-page .zs-order-table-wrap .zs-detail-hscroll-inner {
+			height: 1px;
+			pointer-events: none;
+		}
+		.zs-order-select-page .zs-order-table-wrap .fixed-table-pagination {
+			flex-shrink: 0;
+			position: relative;
+			bottom: auto;
+			display: block !important;
+			background: #fff;
+			z-index: 6;
+			border-top: 1px solid #eee;
+			margin: 0 !important;
+			padding: 8px 10px !important;
+		}
+		/* 顶部搜索区：略压低高度，上下内边距一致 */
+		.zs-order-select-page .search-collapse {
+			margin-top: 6px;
+			padding-top: 8px;
+			padding-bottom: 8px;
+		}
+		.zs-order-select-page .search-collapse .select-list ul {
+			margin-bottom: 0;
+		}
+		.zs-order-select-page .search-collapse .order-select-search-rows > ul {
+			display: block;
+			width: 100%;
+			overflow: hidden;
+		}
+		.zs-order-select-page .search-collapse .order-select-search-rows > ul + ul {
+			margin-top: 2px;
+		}
+		.zs-order-select-page .search-collapse .select-list li {
+			margin: 4px 15px 4px 0;
+		}
+		.zs-order-select-page .search-collapse .select-list li label {
+			margin-top: 4px;
+			margin-bottom: 4px;
+		}
+		.select-list .select-time .scm-push-datetime { min-width: 210px; width: 210px; display: inline-block; vertical-align: middle; padding-left: 8px; height: 30px; line-height: 30px; border: 1px solid #e5e6e7; border-radius: 4px; }
+		#toolbar-order-select.zs-order-action-bar {
+			display: block !important;
+			float: none;
+			margin: 0 8px 0 0;
+			padding: 0;
+			background: #fff;
+		}
+		.zs-order-select-page .zs-order-table-wrap .fixed-table-toolbar {
+			padding-left: 2px;
+		}
+		#toolbar-order-select.zs-order-action-bar .btn {
+			margin-right: 6px;
+		}
+		.select-table .fixed-table-toolbar {
+			display: flex;
+			align-items: center;
+			flex-wrap: wrap;
+		}
+		.select-table .fixed-table-toolbar .columns,
+		.select-table .fixed-table-toolbar .pull-right {
+			float: none;
+			margin-left: auto;
+		}
+		/* 明细表：单行显示、列间距 */
+		.zs-order-select-table .fixed-table-container > .fixed-table-header th,
+		.zs-order-select-table .fixed-table-container > .fixed-table-body tbody td {
+			box-sizing: border-box !important;
+			padding: 8px 12px !important;
+			white-space: nowrap !important;
+			word-break: keep-all !important;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			vertical-align: middle;
+		}
+		.zs-order-select-table .fixed-table-container > .fixed-table-header table,
+		.zs-order-select-table .fixed-table-container > .fixed-table-body > table {
+			table-layout: fixed;
+		}
+		.zs-order-select-table .fixed-table-container > .fixed-table-header th.bs-checkbox,
+		.zs-order-select-table .fixed-table-container > .fixed-table-body td.bs-checkbox {
+			text-align: center !important;
+		}
+		.zs-order-select-table .fixed-table-container > .fixed-table-header th.bs-checkbox .th-inner {
+			text-align: center !important;
+			justify-content: center;
+		}
+		.zs-order-select-table .fixed-table-container > .fixed-table-header th[data-field="serialNumber"],
+		.zs-order-select-table .fixed-table-container > .fixed-table-body td[data-field="serialNumber"] {
+			min-width: 72px !important;
+			width: 72px !important;
+			max-width: 72px !important;
+			text-align: center;
+		}
+		.zs-order-select-table .fixed-table-container > .fixed-table-header th[data-field="serialNumber"] {
+			overflow: visible !important;
+			text-overflow: clip !important;
+		}
+		.zs-order-select-table .fixed-table-container > .fixed-table-header th[data-field="orderNo"],
+		.zs-order-select-table .fixed-table-container > .fixed-table-body td[data-field="orderNo"] {
+			min-width: 150px !important;
+			width: 150px !important;
+			max-width: 150px !important;
+		}
+		.zs-order-select-table .fixed-table-container > .fixed-table-header th[data-field="orderAmount"],
+		.zs-order-select-table .fixed-table-container > .fixed-table-body td[data-field="orderAmount"] {
+			min-width: 100px !important;
+			width: 100px !important;
+			max-width: 100px !important;
+		}
+		.zs-order-select-table .fixed-table-container > .fixed-table-header th[data-field="hospitalName"],
+		.zs-order-select-table .fixed-table-container > .fixed-table-body td[data-field="hospitalName"] {
+			min-width: 200px !important;
+			width: 200px !important;
+			max-width: 200px !important;
+		}
+		.zs-order-select-table .fixed-table-container > .fixed-table-header th[data-field="supplierName"],
+		.zs-order-select-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"] {
+			min-width: 220px !important;
+			width: 220px !important;
+			max-width: 220px !important;
+			padding-left: 14px !important;
+			padding-right: 14px !important;
+		}
+		.zs-order-select-table .fixed-table-container > .fixed-table-header th[data-field="warehouse"],
+		.zs-order-select-table .fixed-table-container > .fixed-table-body td[data-field="warehouse"] {
+			min-width: 120px !important;
+			width: 120px !important;
+			max-width: 120px !important;
+		}
+		.zs-order-select-table .fixed-table-container > .fixed-table-header th[data-field="orderDate"],
+		.zs-order-select-table .fixed-table-container > .fixed-table-body td[data-field="orderDate"] {
+			min-width: 160px !important;
+			width: 160px !important;
+			max-width: 160px !important;
+		}
+		.zs-order-select-table .fixed-table-container > .fixed-table-header th[data-field="department"],
+		.zs-order-select-table .fixed-table-container > .fixed-table-body td[data-field="department"] {
+			min-width: 140px !important;
+			width: 140px !important;
+			max-width: 140px !important;
+		}
 		.order-select-sheet-bar {
 			background: #fff;
 			border: 1px solid #e7eaec;
@@ -32,13 +316,13 @@
 		}
 	</style>
 </head>
-<body class="gray-bg">
-	<div class="container-div">
-		<div class="row">
+<body class="gray-bg zs-order-select-body">
+	<div class="container-div zs-order-select-page">
+		<div class="row" style="margin: 0; display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%;">
 			<div class="col-sm-12 search-collapse">
 				<form id="order-form">
 					<input type="hidden" name="params[sheetTab]" id="sheetTab" value="none"/>
-					<div class="select-list">
+					<div class="select-list order-select-search-rows">
 						<ul>
 							<li>
 								订单编号：<input type="text" name="orderNo"/>
@@ -46,12 +330,10 @@
 							<li>
 								医院名称：<input type="text" name="hospitalName"/>
 							</li>
+						</ul>
+						<ul>
 							<li>
 								供应商名称：<input type="text" name="supplierName"/>
-							</li>
-							<li>
-								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
-								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
 							</li>
 						</ul>
 					</div>
@@ -77,25 +359,29 @@
 					</li>
 				</ul>
 			</div>
-			
-	        <div class="col-sm-12 select-table table-striped">
+
+			<div class="btn-group-sm" id="toolbar-order-select" role="group" style="display: none;">
+				<a class="btn btn-primary btn-sm" href="javascript:void(0)" onclick="orderConfirm()"><i class="fa fa-check"></i> 确认</a>
+				<a class="btn btn-default btn-sm" href="javascript:void(0)" onclick="orderClose()"><i class="fa fa-close"></i> 关闭</a>
+				<a class="btn btn-primary btn-sm" href="javascript:void(0)" onclick="$.table.search()"><i class="fa fa-search"></i> 搜索</a>
+				<a class="btn btn-warning btn-sm" href="javascript:void(0)" onclick="resetOrderSelect()"><i class="fa fa-refresh"></i> 重置</a>
+			</div>
+
+	        <div class="col-sm-12 select-table table-striped zs-order-select-table zs-order-table-wrap">
 			    <table id="bootstrap-table"></table>
 			</div>
 		</div>
 	</div>
-	
+
 	<input type="hidden" id="rowIds" name="rowIds"/>
-	<input type="hidden" id="rowNames" name="rowNames"/>
-	
+
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
 	<script th:inline="javascript">
 		var prefix = ctx + "order/order";
+		var zsTableId = "bootstrap-table";
 		var currentSheetTab = 'none';
-
-		$(function() {
-		    queryOrderList();
-		});
+		var ZS_HSCROLL_GUTTER = 14;
 
 		function isSheetSelectable(sheet) {
 			return sheet === 'none' || sheet === 'partial';
@@ -106,12 +392,13 @@
 			$('#sheetTab').val(currentSheetTab);
 			$('#orderSheetTabs li').removeClass('active');
 			$('#orderSheetTabs a[data-sheet="' + currentSheetTab + '"]').parent().addClass('active');
-			updateSheetCheckboxColumn();
+			updateZsSheetCheckboxColumn();
 			$.table.search();
+			setTimeout(relayoutZsOrderTable, 100);
 		}
 
-		function updateSheetCheckboxColumn() {
-			var $table = $('#bootstrap-table');
+		function updateZsSheetCheckboxColumn() {
+			var $table = $('#' + zsTableId);
 			if (!$table.length || !$table.bootstrapTable('getOptions')) {
 				return;
 			}
@@ -121,43 +408,421 @@
 				$table.bootstrapTable('uncheckAll');
 				$table.bootstrapTable('hideColumn', 'checkbox');
 				$("#rowIds").val('');
-				$("#rowNames").val('');
 			}
 		}
 
-		function queryOrderList() {
-		    var options = {
-		        url: prefix + "/list",
-		        sortName: "orderDate",
-		        sortOrder: "desc",
-		        modalName: "订单",
-		        uniqueId: "orderId",
-		        rememberSelected: true,
-		        maintainSelected: true,
-		        columns: [{
+		function layoutZsOrderTableWrapHeight() {
+			var $page = $('.zs-order-select-page.container-div');
+			if (!$page.length) {
+				return;
+			}
+			var $wrap = $page.find('.zs-order-table-wrap');
+			if (!$wrap.length) {
+				return;
+			}
+			var el = $wrap[0];
+			var pageBottom = $page[0].getBoundingClientRect().bottom;
+			var top = el.getBoundingClientRect().top;
+			var h = Math.max(Math.floor(pageBottom - top - 6), 220);
+			el.style.setProperty('flex', '0 0 auto', 'important');
+			el.style.setProperty('height', h + 'px', 'important');
+			el.style.setProperty('min-height', h + 'px', 'important');
+			el.style.setProperty('box-sizing', 'border-box', 'important');
+		}
+
+		function clearZsTableBodyFiller() {
+			var $mainBody = $('#' + zsTableId).closest('.bootstrap-table')
+				.find('.fixed-table-container > .fixed-table-body');
+			$mainBody.find('.fixed-table-border').remove();
+		}
+
+		/** 表头为 relative 布局时，bootstrap-table 仍会写 margin-top 负值，须每次渲染后清零 */
+		function fixZsTableBodyMargin() {
+			var $mainBody = $('#' + zsTableId).closest('.bootstrap-table')
+				.find('.fixed-table-container > .fixed-table-body');
+			$mainBody.children('table').each(function () {
+				this.style.setProperty('margin-top', '0', 'important');
+			});
+		}
+
+		function calculateZsTableHeight() {
+			var $wrap = $('.zs-order-table-wrap');
+			if (!$wrap.length) {
+				return 360;
+			}
+			var h = $wrap[0].clientHeight || Math.floor($wrap.innerHeight());
+			if (!h || h < 1) {
+				var $page = $('.zs-order-select-page.container-div');
+				if ($page.length) {
+					var pageBottom = $page[0].getBoundingClientRect().bottom;
+					var top = $wrap[0].getBoundingClientRect().top;
+					h = Math.floor(pageBottom - top - 6);
+				}
+			}
+			var $bt = $('#' + zsTableId).closest('.bootstrap-table');
+			h -= ($bt.find('.fixed-table-toolbar').outerHeight(true) || 0);
+			h -= ($bt.find('.fixed-table-pagination').outerHeight(true) || 0);
+			h -= ($bt.children('.zs-detail-hscroll:visible').outerHeight(true) || 0);
+			return Math.max(Math.floor(h - 8), 200);
+		}
+
+		function adjustZsTableHeight() {
+			var $table = $('#' + zsTableId);
+			if ($table.length && $table.bootstrapTable('getOptions')) {
+				$table.bootstrapTable('resetView', { height: calculateZsTableHeight() });
+			}
+		}
+
+		/** 表体高度 = 容器剩余高度（横条/分页已在 flex 中占位，勿从 wrap 重复扣减） */
+		function applyZsTableBodyScroll() {
+			var $table = $('#' + zsTableId);
+			if (!$table.length) {
+				return;
+			}
+			var $bt = $table.closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			if (!$mainBody.length || !$container.length) {
+				return;
+			}
+			clearZsTableBodyFiller();
+			var headerH = $mainHeader.outerHeight(true) || 38;
+			var containerH = $container[0] ? $container[0].clientHeight : 0;
+			if (containerH < 1) {
+				var $wrap = $table.closest('.zs-order-table-wrap');
+				containerH = Math.floor(($wrap.innerHeight() || 0)
+					- ($bt.find('.fixed-table-toolbar').outerHeight(true) || 0)
+					- ($bt.find('.fixed-table-pagination').outerHeight(true) || 0)
+					- ($bt.children('.zs-detail-hscroll:visible').outerHeight(true) || 0));
+			}
+			var bodyH = Math.max(Math.floor(containerH - headerH), 120);
+			var $rows = $mainBody.find('tbody tr');
+			var contentH = 0;
+			$rows.each(function () {
+				contentH += $(this).outerHeight(true) || 0;
+			});
+			if (contentH > 0 && contentH <= bodyH) {
+				bodyH = Math.ceil(contentH);
+			}
+			var bodyEl = $mainBody[0];
+			if (bodyEl) {
+				bodyEl.style.setProperty('height', bodyH + 'px', 'important');
+				bodyEl.style.setProperty('max-height', bodyH + 'px', 'important');
+				bodyEl.style.setProperty('min-height', (contentH > 0 ? Math.min(contentH, bodyH) : bodyH) + 'px', 'important');
+				bodyEl.style.setProperty('overflow-y', (contentH > bodyH + 1) ? 'auto' : 'hidden', 'important');
+				bodyEl.style.setProperty('overflow-x', 'hidden', 'important');
+			}
+		}
+
+		function ensureZsDetailHScrollBar() {
+			var $bt = $('#' + zsTableId).closest('.bootstrap-table');
+			if (!$bt.length) {
+				return $();
+			}
+			var $bar = $bt.children('.zs-detail-hscroll');
+			if (!$bar.length) {
+				$bar = $('<div class="zs-detail-hscroll"><div class="zs-detail-hscroll-inner"></div></div>');
+				var $pag = $bt.children('.fixed-table-pagination');
+				if ($pag.length) {
+					$bar.insertBefore($pag);
+				} else {
+					$bt.append($bar);
+				}
+			}
+			return $bar;
+		}
+
+		function syncZsDetailHScrollSize() {
+			var $bt = $('#' + zsTableId).closest('.bootstrap-table');
+			var $bar = ensureZsDetailHScrollBar();
+			if (!$bar.length) {
+				return;
+			}
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $table = $mainBody.find('table').first();
+			if (!$table.length || !$mainBody[0]) {
+				$bar.hide();
+				return;
+			}
+			var scrollW = $table[0].scrollWidth;
+			var clientW = $mainBody[0].clientWidth;
+			$bar.find('.zs-detail-hscroll-inner').width(Math.max(scrollW, clientW + 1));
+			if (scrollW <= clientW + 2) {
+				$bar.addClass('zs-hscroll-hidden').css('overflow-x', 'hidden');
+			} else {
+				$bar.removeClass('zs-hscroll-hidden').css({ display: 'block', overflowX: 'auto' });
+			}
+			$bar.scrollLeft($mainBody.scrollLeft());
+		}
+
+		function bindZsMainHorizontalScroll() {
+			var $bt = $('#' + zsTableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			$mainBody.off('scroll.zsMainH').on('scroll.zsMainH', function () {
+				var sl = $mainBody.scrollLeft();
+				$mainHeader.scrollLeft(sl);
+				var $bar = $bt.children('.zs-detail-hscroll');
+				if ($bar.length && $bar.scrollLeft() !== sl) {
+					$bar.scrollLeft(sl);
+				}
+			});
+		}
+
+		function bindZsDetailHScroll() {
+			var $bt = $('#' + zsTableId).closest('.bootstrap-table');
+			var $bar = ensureZsDetailHScrollBar();
+			if (!$bar.length) {
+				return;
+			}
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			$bar.off('scroll.zsDetailH').on('scroll.zsDetailH', function () {
+				var sl = this.scrollLeft;
+				$mainBody.scrollLeft(sl);
+				$mainHeader.scrollLeft(sl);
+			});
+		}
+
+		function refreshZsTableScrollLayout() {
+			fixZsTableBodyMargin();
+			bindZsMainHorizontalScroll();
+			bindZsDetailHScroll();
+			syncZsDetailHScrollSize();
+			applyZsTableBodyScroll();
+			fixZsTableBodyMargin();
+		}
+
+		function relayoutZsOrderTable() {
+			layoutZsOrderTableWrapHeight();
+			adjustZsTableHeight();
+			refreshZsTableScrollLayout();
+			setTimeout(function () {
+				adjustZsTableHeight();
+				refreshZsTableScrollLayout();
+			}, 80);
+			setTimeout(function () {
+				adjustZsTableHeight();
+				refreshZsTableScrollLayout();
+			}, 200);
+		}
+
+		$(function() {
+			layoutZsOrderTableWrapHeight();
+		    initOrderTable();
+			$(window).on('resize', relayoutZsOrderTable);
+			setTimeout(relayoutZsOrderTable, 200);
+		});
+
+		function orderQueryParams(params) {
+			table.set(zsTableId);
+			var formParams = $.common.formToJSON("order-form");
+			return $.extend({}, formParams, {
+				pageNum: Math.floor(params.offset / params.limit) + 1,
+				pageSize: params.limit,
+				orderByColumn: params.sort,
+				isAsc: params.order,
+				searchValue: params.search
+			});
+		}
+
+		function mountOrderToolbar() {
+			var $table = $('#' + zsTableId);
+			var $bootstrapTable = $table.closest('.bootstrap-table');
+			var $toolbar = $bootstrapTable.find('.fixed-table-toolbar');
+			var $actions = $('#toolbar-order-select');
+			if ($toolbar.length && $actions.length) {
+				if ($actions.parent()[0] !== $toolbar[0]) {
+					$actions.prependTo($toolbar);
+				}
+				$actions.addClass('zs-order-action-bar').show();
+			}
+		}
+
+		/** 关闭本弹窗（兼容 top / parent 两套 layer 索引） */
+		function closeOrderLayer() {
+			var layerApi = (window.top && window.top.layer) ? window.top.layer : parent.layer;
+			var idx = layerApi.getFrameIndex(window.name);
+			if (idx != null && idx !== '' && !isNaN(idx)) {
+				layerApi.close(idx);
+				return;
+			}
+			$.modal.close();
+		}
+
+		/** 获取打开本弹窗的配送单页（添加页）iframe */
+		function getDeliveryOpenerWindow() {
+			try {
+				if (window.top && window.top.__deliveryOrderOpenerWin) {
+					return window.top.__deliveryOrderOpenerWin;
+				}
+			} catch (e) { /* ignore */ }
+			try {
+				var topWin = window.top;
+				if (topWin && topWin.$) {
+					var currentId = topWin.$('.page-tabs-content').find('.active').attr('data-id');
+					if (currentId) {
+						var iframe = topWin.$('.mainContent .Scm_iframe[data-id="' + currentId + '"], .Scm_iframe[data-id="' + currentId + '"]')[0];
+						if (iframe && iframe.contentWindow) {
+							return iframe.contentWindow;
+						}
+					}
+				}
+			} catch (e) { /* 跨域等 */ }
+			if (typeof activeWindow === 'function') {
+				var w = activeWindow();
+				if (w) {
+					return w;
+				}
+			}
+			var w = window.parent;
+			for (var i = 0; i < 8 && w; i++) {
+				try {
+					if (typeof w.__deliveryOrderCallBack === 'function') {
+						return w;
+					}
+				} catch (e) { /* ignore */ }
+				if (w === w.parent) {
+					break;
+				}
+				w = w.parent;
+			}
+			return null;
+		}
+
+		function resolveDeliveryOrderCallback() {
+			var opener = getDeliveryOpenerWindow();
+			if (opener && typeof opener.__deliveryOrderCallBack === 'function') {
+				return { opener: opener, cb: opener.__deliveryOrderCallBack };
+			}
+			try {
+				if (window.top && typeof window.top.__deliveryOrderCallBack === 'function') {
+					return {
+						opener: window.top.__deliveryOrderOpenerWin || opener,
+						cb: window.top.__deliveryOrderCallBack
+					};
+				}
+			} catch (e) { /* ignore */ }
+			return null;
+		}
+
+		function orderConfirm() {
+			var rowIds = $('#rowIds').val();
+			if (!rowIds || rowIds === '') {
+				$.modal.alertWarning("请至少选择一条记录");
+				return;
+			}
+			var layerApi = (window.top && window.top.layer) ? window.top.layer : parent.layer;
+			var index = layerApi.getFrameIndex(window.name);
+			var layero = (window.top && window.top.$) ? window.top.$('#layui-layer' + index) : parent.$('#layui-layer' + index);
+			var resolved = resolveDeliveryOrderCallback();
+			if (!resolved || !resolved.cb) {
+				$.modal.alertWarning("无法提交，请关闭后重试");
+				return;
+			}
+			var opener = resolved.opener;
+			if (opener) {
+				opener.__deliveryOrderLayerIndex = index;
+			}
+			try {
+				window.top.__deliveryOrderLayerIndex = index;
+			} catch (e) { /* ignore */ }
+			var ret = resolved.cb.call(opener || window, index, layero, rowIds);
+			if (ret !== false) {
+				closeOrderLayer();
+			}
+		}
+
+		function orderClose() {
+			closeOrderLayer();
+		}
+
+		var zsColCss = {
+			padding: '8px 12px',
+			whiteSpace: 'nowrap',
+			overflow: 'hidden',
+			textOverflow: 'ellipsis',
+			boxSizing: 'border-box'
+		};
+
+		function zsCellText(v) {
+			if (v == null || v === '') {
+				return '-';
+			}
+			var s = String(v);
+			return '<span class="zs-cell-ellipsis" title="' + s.replace(/"/g, '&quot;') + '">' + s + '</span>';
+		}
+
+		function zsColStyleFor(field) {
+			return function () {
+				return { css: zsColCss };
+			};
+		}
+
+		function applyZsColumnSpacing(columns) {
+			return $.map(columns, function (col) {
+				var c = $.extend(true, {}, col);
+				if (!c.checkbox && c.field) {
+					c.headerStyle = zsColStyleFor(c.field);
+					c.cellStyle = zsColStyleFor(c.field);
+				}
+				return c;
+			});
+		}
+
+		function initOrderTable() {
+		    var columns = applyZsColumnSpacing([{
 		            checkbox: true,
 		            field: 'checkbox'
 		        },
 		        {
 		            field: 'orderId',
-		            title: '订单ID'
+		            title: '订单ID',
+		            visible: false
+		        },
+		        {
+		            field: 'serialNumber',
+		            title: '序号',
+		            align: 'center',
+		            width: 72,
+		            formatter: function (value, row, index) {
+		                var $table = $('#' + zsTableId);
+		                var opts = $table.bootstrapTable('getOptions');
+		                if (!opts) {
+		                    return index + 1;
+		                }
+		                var pageSize = opts.pageSize || 10;
+		                var pageNumber = opts.pageNumber || 1;
+		                return (pageNumber - 1) * pageSize + index + 1;
+		            }
 		        },
 		        {
 		            field: 'orderNo',
 		            title: '订单编号',
-		            sortable: true
+		            sortable: true,
+		            width: 150,
+		            formatter: function (v) { return zsCellText(v); }
 		        },
 		        {
 		            field: 'hospitalName',
-		            title: '医院名称'
+		            title: '医院名称',
+		            width: 200,
+		            formatter: function (v) { return zsCellText(v); }
 		        },
 		        {
 		            field: 'supplierName',
-		            title: '供应商名称'
+		            title: '供应商名称',
+		            width: 220,
+		            formatter: function (v) { return zsCellText(v); }
 		        },
 		        {
 		            field: 'orderAmount',
 		            title: '订单金额',
+		            width: 100,
 		            formatter: function (value, row, index) {
 		                if (value) {
 		                    return '¥' + parseFloat(value).toFixed(2);
@@ -167,55 +832,89 @@
 		        },
 		        {
 		            field: 'warehouse',
-		            title: '要货仓库'
+		            title: '要货仓库',
+		            width: 120,
+		            formatter: function (v) { return zsCellText(v); }
 		        },
 		        {
 		            field: 'orderDate',
 		            title: '订单日期',
-		            sortable: true
+		            sortable: true,
+		            width: 160,
+		            formatter: function (v) {
+		                if (v == null || v === '') return '-';
+		                var s = typeof v === 'string' && v.length >= 19 ? v.substring(0, 19) : String(v);
+		                return '<span class="zs-cell-ellipsis" title="' + s.replace(/"/g, '&quot;') + '">' + s + '</span>';
+		            }
 		        },
 		        {
-		        	title: '订单状态',
-		        	align: 'center',
-		        	formatter: function (value, row, index) {
-		        		var statusMap = {
-		        			'0': '<span class="label label-warning">待接收</span>',
-		        			'1': '<span class="label label-info">已接收</span>',
-		        			'2': '<span class="label label-primary">配送中</span>',
-		        			'3': '<span class="label label-success">已完成</span>',
-		        			'4': '<span class="label label-danger">已作废</span>'
-		        		};
-		        		return statusMap[row.orderStatus] || '';
-		        	}
+		            field: 'orderStatus',
+		            title: '订单状态',
+		            align: 'center',
+		            width: 90,
+		            formatter: function (value, row, index) {
+		                var statusMap = {
+		                    '0': '<span class="label label-warning">待接收</span>',
+		                    '1': '<span class="label label-info">已接收</span>',
+		                    '2': '<span class="label label-primary">配送中</span>',
+		                    '3': '<span class="label label-success">已完成</span>',
+		                    '4': '<span class="label label-danger">已作废</span>'
+		                };
+		                return statusMap[row.orderStatus] || '';
+		            }
 		        },
 		        {
 		            field: 'department',
-		            title: '申请科室'
-		        }]
+		            title: '申请科室',
+		            width: 140,
+		            formatter: function (v) { return zsCellText(v); }
+		        }]);
+
+		    var options = {
+		        id: zsTableId,
+		        formId: "order-form",
+		        url: prefix + "/list",
+		        queryParams: orderQueryParams,
+		        sortName: "orderDate",
+		        sortOrder: "desc",
+		        modalName: "订单",
+		        uniqueId: "orderId",
+		        rememberSelected: true,
+		        maintainSelected: true,
+		        showSearch: false,
+		        mobileResponsive: false,
+		        height: calculateZsTableHeight(),
+		        onLoadSuccess: function () {
+		            mountOrderToolbar();
+		            setTimeout(relayoutZsOrderTable, 0);
+		            setTimeout(relayoutZsOrderTable, 80);
+		            setTimeout(relayoutZsOrderTable, 200);
+		        },
+		        onPostBody: function () {
+		            mountOrderToolbar();
+		            fixZsTableBodyMargin();
+		            setTimeout(refreshZsTableScrollLayout, 0);
+		        },
+		        columns: columns
 		    };
 		    $.table.init(options);
-		    updateSheetCheckboxColumn();
-		    
-		    $("#bootstrap-table").on("check.bs.table check-all.bs.table uncheck.bs.table uncheck-all.bs.table", function (e, rowsAfter, rowsBefore) {
+		    updateZsSheetCheckboxColumn();
+		    setTimeout(function () {
+		        mountOrderToolbar();
+		        relayoutZsOrderTable();
+		    }, 0);
+
+		    $("#" + zsTableId).on("check.bs.table check-all.bs.table uncheck.bs.table uncheck-all.bs.table", function (e, rowsAfter, rowsBefore) {
 		        if (!isSheetSelectable(currentSheetTab)) {
 		            return;
 		        }
 		        var rows = $.common.equals("uncheck-all", e.type) ? rowsBefore : rowsAfter;
 		        var rowIds = $.table.affectedRowIds(rows);
-		        var rowNames = [];
-		        if ($.isArray(rows)) {
-		            rowNames = $.map(rows, function(row) {
-		                return row.orderNo;
-		            });
-		        } else {
-		            rowNames = [rows.orderNo];
-		        }
 		        $("#rowIds").val(rowIds.join(','));
-		        $("#rowNames").val(rowNames.join(','));
 		    });
 		}
-		
-		function resetPre() {
+
+		function resetOrderSelect() {
 			var sheet = currentSheetTab;
 			$("#order-form")[0].reset();
 			$('#sheetTab').val(sheet);
@@ -223,6 +922,7 @@
 			$('#orderSheetTabs li').removeClass('active');
 			$('#orderSheetTabs a[data-sheet="' + sheet + '"]').parent().addClass('active');
 			$.table.search();
+			setTimeout(relayoutZsOrderTable, 100);
 		}
 	</script>
 </body>

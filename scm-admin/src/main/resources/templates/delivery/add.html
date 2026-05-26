@@ -41,14 +41,7 @@
 			font-size: 14px;
 			line-height: 20px;
 		}
-		/* ========== 详细信息列表：与配送信息查询-配送明细表一致 ========== */
-		.bootstrap-table .fixed-table-header {
-			background-color: #fff !important;
-		}
-		.bootstrap-table .fixed-table-header th {
-			background-color: #f5f5f5 !important;
-			border-bottom: 2px solid #ddd !important;
-		}
+		/* ========== 详细信息列表：样式对齐配送信息查询-配送明细表 ========== */
 		#delivery-detail-list-section.query-table-wrap {
 			flex: 1 1 0%;
 			min-height: 0;
@@ -91,28 +84,13 @@
 		#delivery-detail-list-section .fixed-columns-right {
 			display: none !important;
 		}
-		#delivery-detail-list-section .fixed-table-container {
-			display: flex;
-			flex-direction: column;
-			flex: 1;
-			min-height: 0;
-			padding-bottom: 0;
-		}
 		#delivery-detail-list-section .bootstrap-table {
-			position: relative;
-			box-sizing: border-box;
 			padding-bottom: 14px !important;
 		}
-		/* 横向滚动条移到底部独立轨道，表体不再出现横条以免挡住最后一行 */
 		#delivery-detail-list-section .fixed-table-body {
 			overflow-x: hidden !important;
 			overflow-y: auto !important;
-			flex: 1 1 auto;
-			min-height: 0;
-			box-sizing: border-box !important;
-			padding-bottom: 0 !important;
 			scrollbar-width: thin;
-			-ms-overflow-style: scrollbar;
 		}
 		#delivery-detail-list-section .fixed-table-body::-webkit-scrollbar {
 			height: 0 !important;
@@ -130,164 +108,27 @@
 			scrollbar-width: thin;
 			box-sizing: border-box;
 		}
-		#delivery-detail-list-section .detail-hscroll-rail::-webkit-scrollbar {
-			height: 12px;
-		}
-		#delivery-detail-list-section .detail-hscroll-rail::-webkit-scrollbar-thumb {
-			background: rgba(0, 0, 0, 0.28);
-			border-radius: 5px;
-		}
 		#delivery-detail-list-section .detail-hscroll-rail-inner {
 			height: 1px;
 		}
-		/* 纵向滚动条改到操作列右侧：主表区隐藏竖条，由 detail-vscroll-rail 承载 */
 		#delivery-detail-list-section.detail-has-fixed-op .fixed-table-body {
-			scrollbar-width: thin;
+			overflow-y: auto !important;
+			scrollbar-width: none;
+			-ms-overflow-style: none;
 		}
-		#delivery-detail-list-section.detail-has-fixed-op .fixed-table-body::-webkit-scrollbar:vertical {
+		#delivery-detail-list-section.detail-has-fixed-op .fixed-table-body::-webkit-scrollbar {
 			width: 0 !important;
+			height: 0 !important;
 			display: none;
 		}
 		#delivery-detail-list-section .detail-vscroll-rail {
-			position: absolute;
-			right: 0;
-			width: 10px;
-			overflow-x: hidden;
-			overflow-y: auto;
-			z-index: 7;
-			background: #f1f1f1;
-			scrollbar-width: thin;
-		}
-		#delivery-detail-list-section .detail-vscroll-rail::-webkit-scrollbar {
-			width: 8px;
-		}
-		#delivery-detail-list-section .detail-vscroll-rail::-webkit-scrollbar-thumb {
-			background: rgba(0, 0, 0, 0.28);
-			border-radius: 4px;
-		}
-		#delivery-detail-list-section .detail-vscroll-rail-inner {
-			width: 1px;
-		}
-		#delivery-detail-list-section .fixed-table-body::-webkit-scrollbar-thumb {
-			background: rgba(0, 0, 0, 0.28);
-			border-radius: 5px;
-		}
-		#delivery-detail-list-section .fixed-table-body::-webkit-scrollbar-track {
-			background: #f1f1f1;
-		}
-		.delivery-detail-section #delivery-detail-list-section {
-			flex: 1 1 auto !important;
-			min-height: 480px !important;
-			height: auto !important;
-		}
-		#delivery-detail-list-section .fixed-table-header {
-			background: #fff !important;
-		}
-		#delivery-detail-list-section .fixed-table-header table.table,
-		#delivery-detail-list-section .fixed-table-body table.table {
-			border-collapse: collapse;
-		}
-		#delivery-detail-list-section .fixed-table-container {
-			position: relative;
-		}
-		#detail-table.delivery-detail-fixed-table {
-			table-layout: fixed !important;
-		}
-		/* 明细行高固定：单行与多行一致；禁止 bootstrap-table 用 fixed-table-border 撑高视觉行 */
-		#delivery-detail-list-section .fixed-table-body .fixed-table-border {
 			display: none !important;
-			height: 0 !important;
-			min-height: 0 !important;
-			max-height: 0 !important;
-			border: 0 !important;
 		}
-		#delivery-detail-list-section .fixed-table-body table {
+		#delivery-detail-list-section .fixed-table-body > table,
+		#delivery-detail-list-section .fixed-table-body > table tbody {
 			height: auto !important;
 			min-height: 0 !important;
 		}
-		#delivery-detail-list-section .fixed-table-body tbody {
-			height: auto !important;
-		}
-		#delivery-detail-list-section .fixed-table-body tbody tr {
-			height: 44px !important;
-			max-height: 44px !important;
-			min-height: 44px !important;
-		}
-		#delivery-detail-list-section .fixed-table-header th {
-			box-sizing: border-box !important;
-			padding: 6px 8px !important;
-			white-space: nowrap !important;
-			word-break: keep-all !important;
-			overflow: hidden;
-			text-overflow: ellipsis;
-			vertical-align: middle !important;
-		}
-		#delivery-detail-list-section .fixed-table-body td {
-			box-sizing: border-box !important;
-			height: 44px !important;
-			max-height: 44px !important;
-			min-height: 44px !important;
-			padding: 4px 6px !important;
-			white-space: nowrap !important;
-			word-break: keep-all !important;
-			overflow: hidden;
-			text-overflow: ellipsis;
-			vertical-align: middle !important;
-		}
-		#delivery-detail-list-section .fixed-table-header th[data-field="index"],
-		#delivery-detail-list-section .fixed-table-body td[data-field="index"],
-		#delivery-detail-list-section .fixed-table-header th[data-field="unit"],
-		#delivery-detail-list-section .fixed-table-body td[data-field="unit"],
-		#delivery-detail-list-section .fixed-table-header th[data-field="packCoefficient"],
-		#delivery-detail-list-section .fixed-table-body td[data-field="packCoefficient"] {
-			padding-left: 4px !important;
-			padding-right: 4px !important;
-		}
-		#delivery-detail-list-section .fixed-table-header th[data-field="materialName"],
-		#delivery-detail-list-section .fixed-table-body td[data-field="materialName"] {
-			width: 116px !important;
-			max-width: 130px !important;
-			min-width: 72px !important;
-		}
-		#delivery-detail-list-section .fixed-table-header th[data-field="specification"],
-		#delivery-detail-list-section .fixed-table-body td[data-field="specification"] {
-			width: 96px !important;
-			max-width: 110px !important;
-			min-width: 64px !important;
-			padding-left: 4px !important;
-			padding-right: 6px !important;
-		}
-		#delivery-detail-list-section .fixed-table-header th.bs-checkbox,
-		#delivery-detail-list-section .fixed-table-body td.bs-checkbox {
-			width: 42px !important;
-			min-width: 42px !important;
-			max-width: 42px !important;
-			text-align: center !important;
-			padding: 8px 4px !important;
-		}
-		#delivery-detail-list-section .fixed-table-header th[data-field="batchNo"],
-		#delivery-detail-list-section .fixed-table-body td[data-field="batchNo"],
-		#delivery-detail-list-section .fixed-table-header th[data-field="expireDate"],
-		#delivery-detail-list-section .fixed-table-body td[data-field="expireDate"],
-		#delivery-detail-list-section .fixed-table-header th[data-field="productionDate"],
-		#delivery-detail-list-section .fixed-table-body td[data-field="productionDate"] {
-			white-space: normal !important;
-			word-break: normal !important;
-			overflow: visible;
-			text-overflow: clip;
-		}
-		#delivery-detail-list-section .detail-text-input,
-		#delivery-detail-list-section .detail-date-input,
-		#delivery-detail-list-section .form-control.input-sm {
-			width: 100%;
-			height: 28px;
-			line-height: 1.4;
-			padding: 4px 8px;
-			box-sizing: border-box;
-			font-size: 12px;
-			margin: 0;
-		}
-		/* 主表横滚区隐藏操作列，由自绘右侧固定面板展示（不占 padding，避免竖条落在操作列左侧） */
 		#delivery-detail-list-section.detail-has-fixed-op .fixed-table-container {
 			padding-right: 0;
 			box-sizing: border-box;
@@ -307,7 +148,6 @@
 		#delivery-detail-list-section.detail-has-fixed-op .fixed-table-container > .fixed-table-body td[data-field="operation"] > * {
 			display: none !important;
 		}
-		/* 右侧固定：仅「操作」列，不依赖 fixed-columns 插件 */
 		#delivery-detail-list-section .detail-op-fixed-panel {
 			position: absolute;
 			right: 10px;
@@ -325,8 +165,8 @@
 			background: #f5f5f5;
 			border-bottom: 2px solid #ddd;
 			text-align: center;
-			font-size: 12px;
-			font-weight: 600;
+			font-size: 14px;
+			font-weight: normal;
 			color: #333;
 			line-height: 1.4;
 			padding: 0 8px;
@@ -345,15 +185,251 @@
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			padding: 6px 8px;
+			padding: 2px 4px;
 			box-sizing: border-box;
 			border-bottom: 1px solid #eee;
 			height: 44px;
 			min-height: 44px;
 			max-height: 44px;
+			overflow: hidden;
+		}
+		#delivery-detail-list-section .detail-op-fixed-row .detail-op-btns {
+			flex-direction: row !important;
+			flex-wrap: nowrap !important;
+			width: 100%;
+			max-width: 100%;
+		}
+		#delivery-detail-list-section .detail-op-fixed-row .detail-op-btn-copy,
+		#delivery-detail-list-section .detail-op-fixed-row .detail-op-btn-del {
+			flex: 0 0 auto;
+			padding: 0 6px !important;
+			font-size: 11px !important;
+		}
+		#delivery-detail-list-section.detail-has-fixed-op .fixed-table-container > .fixed-table-body {
+			box-sizing: border-box;
 		}
 		#delivery-detail-list-section.table-striped .detail-op-fixed-row:nth-child(odd) {
 			background-color: #f9f9f9;
+		}
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header {
+			position: relative;
+			top: auto;
+			z-index: 2;
+			background: #fff !important;
+			flex-shrink: 0;
+			/* 必须 hidden，scrollLeft 才能让表头与表体横向联动 */
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		#delivery-detail-list-section .fixed-table-header .rc-handle-container {
+			z-index: 12;
+		}
+		#delivery-detail-list-section .fixed-table-header .rc-handle {
+			cursor: col-resize;
+		}
+		#delivery-detail-list-section .fixed-table-container {
+			display: flex;
+			flex-direction: column;
+			flex: 1;
+			min-height: 0;
+			padding-bottom: 0;
+		}
+		#delivery-detail-list-section .bootstrap-table {
+			position: relative;
+			box-sizing: border-box;
+		}
+		#delivery-detail-list-section .fixed-table-body {
+			flex: 1 1 auto;
+			min-height: 0;
+			box-sizing: border-box !important;
+			padding-bottom: 0 !important;
+		}
+		.delivery-detail-section #delivery-detail-list-section {
+			flex: 1 1 auto !important;
+			min-height: 480px !important;
+			height: auto !important;
+		}
+		#detail-table.delivery-detail-fixed-table {
+			table-layout: fixed !important;
+		}
+		#detail-table.table {
+			border-collapse: collapse;
+		}
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header table,
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-body table {
+			table-layout: fixed;
+			border-collapse: collapse;
+		}
+		#delivery-detail-list-section .fixed-table-container {
+			position: relative;
+			border: 1px solid #e7eaec;
+			background: #fff;
+		}
+		/* 表头/表体单元格：主表固定表头 + 表体，与冻结操作列对齐 */
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th .th-inner,
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th .sortable,
+		#detail-table thead th .th-inner,
+		#detail-table thead th .sortable {
+			padding: 8px 10px !important;
+			font-size: 14px !important;
+			line-height: 1.42857143;
+			font-weight: normal;
+			text-align: center !important;
+			overflow: visible !important;
+			text-overflow: clip !important;
+			white-space: nowrap !important;
+		}
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th {
+			overflow: visible !important;
+			text-overflow: clip !important;
+		}
+		#detail-table thead th[data-field="operation"],
+		#detail-table tbody td[data-field="operation"] {
+			text-align: center !important;
+		}
+		#delivery-detail-list-section .fixed-table-body .fixed-table-border {
+			display: none !important;
+		}
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th,
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td,
+		#detail-table thead th,
+		#detail-table tbody td {
+			box-sizing: border-box !important;
+			border: 1px solid #e7eaec !important;
+			padding: 8px 14px !important;
+			white-space: nowrap !important;
+			word-break: keep-all !important;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			vertical-align: middle !important;
+		}
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th,
+		#detail-table thead th {
+			background-color: #f5f5f5 !important;
+			text-align: center !important;
+			font-size: 14px !important;
+			font-weight: normal;
+			color: #333;
+			border-bottom: 2px solid #ddd !important;
+		}
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td,
+		#detail-table tbody td {
+			background-color: #fff;
+			font-size: 13px !important;
+			color: #333;
+		}
+		#delivery-detail-list-section.table-striped .fixed-table-container > .fixed-table-body tbody tr:nth-of-type(odd) td,
+		#delivery-detail-list-section.table-striped #detail-table tbody tr:nth-of-type(odd) td {
+			background-color: #f9f9f9;
+		}
+		#delivery-detail-list-section.table-striped .fixed-table-container > .fixed-table-body tbody tr:hover td,
+		#delivery-detail-list-section.table-striped #detail-table tbody tr:hover td {
+			background-color: #f5f5f5 !important;
+		}
+		#detail-table tbody td[data-field="materialName"],
+		#detail-table tbody td[data-field="specification"],
+		#detail-table tbody td[data-field="materialCode"],
+		#detail-table tbody td[data-field="manufacturer"],
+		#detail-table tbody td[data-field="registerNo"],
+		#detail-table tbody td[data-field="nationalInsuranceCode"],
+		#detail-table tbody td[data-field="remark"],
+		#detail-table tbody td[data-field="mainBarcode"],
+		#detail-table tbody td[data-field="auxBarcode"] {
+			text-align: left !important;
+		}
+		#detail-table thead th[data-field="batchNo"],
+		#detail-table tbody td[data-field="batchNo"],
+		#detail-table thead th[data-field="mainBarcode"],
+		#detail-table tbody td[data-field="mainBarcode"],
+		#detail-table thead th[data-field="auxBarcode"],
+		#detail-table tbody td[data-field="auxBarcode"] {
+			white-space: normal !important;
+			word-break: break-all !important;
+			overflow: visible;
+			text-overflow: clip;
+			vertical-align: top;
+		}
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-body tbody tr,
+		#detail-table tbody tr {
+			height: 44px !important;
+			max-height: 44px !important;
+			min-height: 44px !important;
+		}
+		#detail-table thead th.bs-checkbox,
+		#detail-table tbody td.bs-checkbox,
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th.bs-checkbox,
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td.bs-checkbox,
+		#detail-table thead th[data-field="index"],
+		#detail-table tbody td[data-field="index"],
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="index"],
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td[data-field="index"],
+		#detail-table thead th[data-field="unit"],
+		#detail-table tbody td[data-field="unit"],
+		#detail-table thead th[data-field="packCoefficient"],
+		#detail-table tbody td[data-field="packCoefficient"],
+		#detail-table thead th[data-field="remainingQuantity"],
+		#detail-table tbody td[data-field="remainingQuantity"],
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="unit"],
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td[data-field="unit"],
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="packCoefficient"],
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td[data-field="packCoefficient"],
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="remainingQuantity"],
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td[data-field="remainingQuantity"] {
+			text-align: center !important;
+			padding-left: 4px !important;
+			padding-right: 4px !important;
+		}
+		#detail-table tbody td[data-field="unit"] .detail-cell-text,
+		#detail-table tbody td[data-field="packCoefficient"] .detail-cell-text,
+		#detail-table tbody td[data-field="remainingQuantity"] .detail-cell-text {
+			text-align: center !important;
+		}
+		/* 列宽拖动：若依 bootstrap-table-resizable，手柄在一体表上 */
+		#delivery-detail-list-section .rc-handle-container {
+			z-index: 20;
+		}
+		#delivery-detail-list-section .detail-cell-text,
+		#delivery-detail-list-section .barcode-cell-wrap {
+			display: block;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			max-width: 100%;
+		}
+		#delivery-detail-list-section .barcode-cell-wrap {
+			white-space: normal !important;
+			word-break: break-all !important;
+			line-height: 1.4;
+			overflow: visible;
+			text-overflow: clip;
+		}
+		#detail-table thead th.bs-checkbox,
+		#detail-table tbody td.bs-checkbox {
+			width: 42px !important;
+			min-width: 42px !important;
+			max-width: 42px !important;
+			text-align: center !important;
+			padding: 8px 4px !important;
+		}
+		#detail-table thead th[data-field="expireDate"],
+		#detail-table tbody td[data-field="expireDate"],
+		#detail-table thead th[data-field="productionDate"],
+		#detail-table tbody td[data-field="productionDate"] {
+			white-space: normal !important;
+			word-break: normal !important;
+			overflow: visible;
+			text-overflow: clip;
+		}
+		#delivery-detail-list-section .detail-text-input,
+		#delivery-detail-list-section .detail-date-input,
+		#delivery-detail-list-section .form-control.input-sm {
+			width: 100%;
+			height: 28px;
+			line-height: 1.4;
+			padding: 4px 8px;
+			box-sizing: border-box;
+			font-size: 12px;
+			margin: 0;
 		}
 		#delivery-detail-list-section .detail-op-btns {
 			display: inline-flex;
@@ -651,19 +727,71 @@
                     <button type="button" class="btn btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i> 关 闭</button>
                 </div>
             </div>
-            <div id="delivery-detail-list-section" class="col-sm-12 select-table table-striped query-table-wrap">
-                <table id="detail-table" class="delivery-detail-fixed-table"></table>
+            <div id="delivery-detail-list-section" class="col-sm-12 select-table table-striped table-bordered query-table-wrap">
+                <table id="detail-table" class="delivery-detail-fixed-table" data-resizable="true"></table>
             </div>
         </div>
     </div>
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
+	<th:block th:include="include :: bootstrap-table-resizable-js" />
 	<script>
 	    var prefix = ctx + "delivery/delivery";
 	    var DETAIL_OPERATION_COL_WIDTH = 175;
-	    var DETAIL_VSCROLL_GUTTER = 10;
+	    var DETAIL_OP_PANEL_RIGHT = 10;
 	    var DETAIL_ROW_HEIGHT = 44;
 	    var DETAIL_HSCROLL_GUTTER = 14;
+	    var detailColumnWidths = {};
+	    var DETAIL_COL_RESIZE_SKIP = { btSelectItem: 1, index: 1, operation: 1 };
+	    /** 默认列宽（保证表头完整显示；含排序图标预留） */
+	    var DETAIL_DEFAULT_COL_WIDTHS = {
+	        btSelectItem: 42,
+	        index: 56,
+	        materialCode: 120,
+	        materialName: 156,
+	        specification: 120,
+	        unit: 60,
+	        remainingQuantity: 108,
+	        deliveryQuantity: 80,
+	        price: 92,
+	        amount: 100,
+	        packCoefficient: 100,
+	        batchNo: 160,
+	        expireDate: 118,
+	        productionDate: 118,
+	        mainBarcode: 150,
+	        auxBarcode: 150,
+	        manufacturer: 160,
+	        model: 80,
+	        registerNo: 200,
+	        nationalInsuranceCode: 160,
+	        remark: 140
+	    };
+
+	    function seedDetailDefaultColumnWidths() {
+	        $.extend(detailColumnWidths, DETAIL_DEFAULT_COL_WIDTHS);
+	        var opt = $('#detail-table').bootstrapTable('getOptions');
+	        if (opt && opt.columns && opt.columns[0]) {
+	            $.each(opt.columns[0], function (_, col) {
+	                if (!col) {
+	                    return;
+	                }
+	                if (col.checkbox) {
+	                    detailColumnWidths.btSelectItem = parseInt(col.width, 10) || 42;
+	                    return;
+	                }
+	                if (col.field && col.width) {
+	                    var w = parseInt(col.width, 10);
+	                    if (w > 0) {
+	                        detailColumnWidths[col.field] = Math.max(
+	                            detailColumnWidths[col.field] || 0,
+	                            w
+	                        );
+	                    }
+	                }
+	            });
+	        }
+	    }
 
 	    function escapeHtmlForBarcode(s) {
 	        if (s == null || s === '') return '';
@@ -677,9 +805,57 @@
 	        return escapeHtmlForBarcode(s).replace(/"/g, '&quot;');
 	    }
 
+	    function detailCellTextHtml(value) {
+	        if (value == null || value === '') {
+	            return '';
+	        }
+	        var s = String(value);
+	        return '<span class="detail-cell-text" title="' + escapeAttrForInput(s) + '">' + escapeHtmlForBarcode(s) + '</span>';
+	    }
+
+	    function detailSortText(a, b) {
+	        var sa = (a == null || a === undefined) ? '' : String(a);
+	        var sb = (b == null || b === undefined) ? '' : String(b);
+	        return sa.localeCompare(sb, 'zh-CN', { numeric: true, sensitivity: 'base' });
+	    }
+
+	    function detailSortNumber(a, b) {
+	        var na = parseFloat(a);
+	        var nb = parseFloat(b);
+	        if (isNaN(na)) {
+	            na = 0;
+	        }
+	        if (isNaN(nb)) {
+	            nb = 0;
+	        }
+	        return na - nb;
+	    }
+
+	    function detailRowAmountValue(row) {
+	        if (!row) {
+	            return 0;
+	        }
+	        var amt = parseFloat(row.amount);
+	        if (!isNaN(amt)) {
+	            return amt;
+	        }
+	        return parseFloat(row.deliveryQuantity || 0) * parseFloat(row.price || 0) || 0;
+	    }
+
+	    function detailSortAmount(a, b, rowA, rowB) {
+	        return detailRowAmountValue(rowA) - detailRowAmountValue(rowB);
+	    }
+
+	    function cleanupDetailTableLegacyWidgets() {
+	        var $bt = $('#detail-table').closest('.bootstrap-table');
+	        $bt.find('.fixed-columns-right').hide();
+	        $bt.find('.detail-col-resize-bar').remove();
+	    }
+
 	    function detailTextInputHtml(value, index, maxlength, blurFn) {
 	        var safe = escapeAttrForInput(value != null ? String(value) : '');
-	        return '<input type="text" class="form-control input-sm detail-text-input" value="' + safe + '" ' +
+	        var titleAttr = safe ? (' title="' + safe + '"') : '';
+	        return '<input type="text" class="form-control input-sm detail-text-input" value="' + safe + '"' + titleAttr + ' ' +
 	               'maxlength="' + maxlength + '" onblur="' + blurFn + '(this, ' + index + ')" ' +
 	               'onkeypress="if(event.keyCode==13){this.blur();return false;}" />';
 	    }
@@ -702,10 +878,73 @@
 
 	    function detailDateInputHtml(value, index, field, blurFn) {
 	        var safe = escapeAttrForInput(formatDetailDateValue(value));
-	        return '<input type="text" class="form-control input-sm detail-date-input date-input" value="' + safe + '" ' +
+	        var titleAttr = safe ? (' title="' + safe + '"') : '';
+	        return '<input type="text" class="form-control input-sm detail-date-input date-input" value="' + safe + '"' + titleAttr + ' ' +
 	               'placeholder="年/月/日" data-field="' + field + '" data-index="' + index + '" ' +
 	               'onblur="' + blurFn + '(this, ' + index + ')" ' +
 	               'onkeypress="if(event.keyCode==13){this.blur();return false;}" />';
+	    }
+
+	    /** 明细单元格悬停显示完整内容（列宽不足被省略时） */
+	    function initDetailCellTitles() {
+	        var $table = $('#detail-table');
+	        var data = [];
+	        try {
+	            data = $table.bootstrapTable('getData') || [];
+	        } catch (e) {
+	            return;
+	        }
+	        $table.closest('.bootstrap-table').find('.fixed-table-body tbody tr').each(function () {
+	            var idx = $(this).data('index');
+	            if (idx === undefined || idx === null || !data[idx]) {
+	                return;
+	            }
+	            var row = data[idx];
+	            $(this).find('td[data-field]').each(function () {
+	                var field = $(this).attr('data-field');
+	                if (!field || field === 'btSelectItem' || field === 'operation' || field === 'index') {
+	                    return;
+	                }
+	                var $td = $(this);
+	                var $inp = $td.find('input').first();
+	                var title = '';
+	                if ($inp.length) {
+	                    title = ($inp.val() || '').trim();
+	                } else if (field === 'price') {
+	                    title = row.price ? ('¥' + parseFloat(row.price).toFixed(2)) : '¥0.00';
+	                } else if (field === 'amount') {
+	                    var amt = parseFloat(row.amount);
+	                    if (isNaN(amt)) {
+	                        amt = parseFloat(row.deliveryQuantity || 0) * parseFloat(row.price || 0);
+	                    }
+	                    title = '¥' + (isNaN(amt) ? 0 : amt).toFixed(2);
+	                } else if (field === 'remainingQuantity' || field === 'deliveryQuantity') {
+	                    var n = parseFloat(row[field]);
+	                    title = isNaN(n) ? '0.00' : n.toFixed(2);
+	                } else if (field === 'packCoefficient') {
+	                    if (row.packCoefficient != null && row.packCoefficient !== '' && !isNaN(parseFloat(row.packCoefficient))) {
+	                        title = String(parseFloat(row.packCoefficient));
+	                    } else {
+	                        title = '-';
+	                    }
+	                } else {
+	                    var val = row[field];
+	                    if (val == null || val === '') {
+	                        title = (field === 'manufacturer' || field === 'registerNo') ? '-' : '';
+	                    } else {
+	                        title = String(val);
+	                    }
+	                }
+	                if (title) {
+	                    $td.attr('title', title);
+	                    $inp.attr('title', title);
+	                    $td.find('.detail-cell-text').attr('title', title);
+	                } else {
+	                    $td.removeAttr('title');
+	                    $inp.removeAttr('title');
+	                }
+	            });
+	        });
 	    }
 
 	    function getDeliveryDetailTableMinWidth() {
@@ -728,7 +967,143 @@
 	        return sum > 0 ? sum + 8 : 800;
 	    }
 
-	    /** 仅主表设置最小总宽，勿改 fixed-columns-right */
+	    function ensureDetailTableColgroup($table, colCount) {
+	        if (!$table || !$table.length) {
+	            return $();
+	        }
+	        var $colgroup = $table.children('colgroup');
+	        if (!$colgroup.length) {
+	            $colgroup = $('<colgroup></colgroup>');
+	            $table.prepend($colgroup);
+	        }
+	        while ($colgroup.children('col').length < colCount) {
+	            $colgroup.append('<col />');
+	        }
+	        while ($colgroup.children('col').length > colCount) {
+	            $colgroup.children('col:last').remove();
+	        }
+	        return $colgroup;
+	    }
+
+	    /** 表头列宽 → 表体所有行 + colgroup（固定表头双表必须按列索引同步） */
+	    function applyDetailColumnWidthFromHeader() {
+	        var $container = $('#detail-table').closest('.bootstrap-table').find('.fixed-table-container').first();
+	        var $headTable = $container.children('.fixed-table-header').find('table').first();
+	        var $bodyTable = $container.children('.fixed-table-body').find('#detail-table');
+	        if (!$bodyTable.length) {
+	            $bodyTable = $container.children('.fixed-table-body').find('table').not('.fixed-table-border').first();
+	        }
+	        if (!$headTable.length || !$bodyTable.length) {
+	            return;
+	        }
+	        var $ths = $headTable.find('thead tr:first th');
+	        var colCount = $ths.length;
+	        if (colCount < 1) {
+	            return;
+	        }
+	        ensureDetailTableColgroup($headTable, colCount);
+	        ensureDetailTableColgroup($bodyTable, colCount);
+	        var totalW = 0;
+	        var setW = function (el, w, lockMax) {
+	            if (!el) {
+	                return;
+	            }
+	            var ws = w + 'px';
+	            el.style.setProperty('width', ws, 'important');
+	            el.style.setProperty('min-width', ws, 'important');
+	            if (lockMax) {
+	                el.style.setProperty('max-width', ws, 'important');
+	            } else {
+	                el.style.setProperty('max-width', 'none', 'important');
+	            }
+	        };
+	        $ths.each(function () {
+	            var colIdx = this.cellIndex;
+	            if (colIdx < 0) {
+	                return;
+	            }
+	            var field = $(this).attr('data-field');
+	            var w;
+	            if (field === 'operation') {
+	                w = 0;
+	                $(this).css({ padding: 0, border: 0, fontSize: 0, lineHeight: 0, overflow: 'hidden' });
+	            } else if (field && detailColumnWidths[field]) {
+	                w = detailColumnWidths[field];
+	            } else if ($(this).hasClass('bs-checkbox')) {
+	                w = detailColumnWidths.btSelectItem || 42;
+	            } else {
+	                w = Math.ceil(this.getBoundingClientRect().width);
+	                if (!w || w < 40) {
+	                    w = 40;
+	                }
+	                if (field) {
+	                    detailColumnWidths[field] = w;
+	                }
+	            }
+	            var lockMax = $(this).hasClass('bs-checkbox');
+	            setW(this, w, lockMax);
+	            $headTable.find('colgroup col').eq(colIdx).each(function () {
+	                setW(this, w, false);
+	            });
+	            $bodyTable.find('colgroup col').eq(colIdx).each(function () {
+	                setW(this, w, false);
+	            });
+	            $bodyTable.find('tbody tr').each(function () {
+	                var cell = this.cells[colIdx];
+	                if (cell) {
+	                    setW(cell, w, lockMax);
+	                    if (field === 'operation') {
+	                        cell.style.setProperty('padding', '0', 'important');
+	                        cell.style.setProperty('border', '0', 'important');
+	                    }
+	                }
+	            });
+	            totalW += w;
+	        });
+	        if (totalW > 0) {
+	            var tw = totalW + 'px';
+	            $headTable[0].style.setProperty('width', tw, 'important');
+	            $bodyTable[0].style.setProperty('width', tw, 'important');
+	        }
+	        updateDetailHscrollRailSize();
+	    }
+
+	    function initDetailHeaderColumnResize() {
+	        if (typeof $.fn.resizableColumns !== 'function') {
+	            return;
+	        }
+	        var $headTable = $('#detail-table').closest('.bootstrap-table').find('.fixed-table-header table').first();
+	        if (!$headTable.length) {
+	            return;
+	        }
+	        if ($headTable.data('resizableColumns')) {
+	            $headTable.data('resizableColumns').destroy();
+	        }
+	        $headTable.find('thead th').each(function () {
+	            var field = $(this).data('field');
+	            if ($(this).hasClass('bs-checkbox') || (field && DETAIL_COL_RESIZE_SKIP[field])) {
+	                $(this).attr('data-noresize', 'true');
+	            } else {
+	                $(this).removeAttr('data-noresize');
+	            }
+	        });
+	        $headTable.resizableColumns({
+	            store: false,
+	            resizeFromBody: false,
+	            selector: 'thead tr:first > th[data-field]:not([data-noresize])',
+	            resize: function () {
+	                applyDetailColumnWidthFromHeader();
+	            },
+	            stop: function () {
+	                applyDetailColumnWidthFromHeader();
+	                requestAnimationFrame(function () {
+	                    applyDetailColumnWidthFromHeader();
+	                    scheduleDetailHeaderAlign();
+	                });
+	            }
+	        });
+	    }
+
 	    function applyDeliveryDetailTableMinWidth() {
 	        var w = getDeliveryDetailTableMinWidth() + 'px';
 	        var $container = $('#detail-table').closest('.bootstrap-table').find('.fixed-table-container').first();
@@ -739,61 +1114,11 @@
 	        $container.children('.fixed-table-body').children('table').css('min-width', w);
 	    }
 
-	    var detailTableLayoutTimer = null;
-	    var detailTableLayoutLock = false;
-
-	    /** 明细外包层：从当前位置铺满到窗口（标签页）底部 */
-	    function layoutDeliveryAddDetailWrapHeight() {
-	        var $page = $('.delivery-form-main');
-	        var $section = $page.children('.delivery-detail-section');
-	        var $wrap = $('#delivery-detail-list-section');
-	        var $toolbar = $section.find('.delivery-detail-toolbar');
-	        if (!$page.length || !$wrap.length || !$section.length) {
-	            return;
-	        }
-	        var el = $wrap[0];
-	        var docEl = document.documentElement;
-	        var viewH = (docEl && docEl.clientHeight) ? docEl.clientHeight : (window.innerHeight || 0);
-	        var wrapTop = el.getBoundingClientRect().top;
-	        var sectionTop = $section[0].getBoundingClientRect().top;
-	        var toolbarH = $toolbar.length ? $toolbar.outerHeight(true) : 0;
-	        var hByWrap = Math.floor(viewH - wrapTop - 10);
-	        var hBySection = Math.floor(viewH - sectionTop - toolbarH - 14);
-	        var h = Math.max(hByWrap, hBySection, 480);
-	        $section.css({
-	            display: 'flex',
-	            flexDirection: 'column',
-	            flex: '1 1 auto',
-	            minHeight: '0',
-	            overflow: 'hidden'
-	        });
-	        el.style.setProperty('flex', '1 1 auto', 'important');
-	        el.style.setProperty('height', h + 'px', 'important');
-	        el.style.setProperty('min-height', '480px', 'important');
-	        el.style.removeProperty('max-height');
-	        el.style.setProperty('box-sizing', 'border-box', 'important');
-	    }
-
-	    function calculateDeliveryAddDetailTableHeight() {
-	        var $wrap = $('#delivery-detail-list-section');
-	        if ($wrap.length === 0) {
-	            return 560;
-	        }
-	        var el = $wrap[0];
-	        var h = el ? el.clientHeight : Math.floor($wrap.innerHeight());
-	        if (!h || h < 1) {
-	            h = Math.floor($wrap.innerHeight());
-	        }
-	        /* 表体 CSS padding-bottom 已预留横向滚动条，此处不再扣减 */
-	        return Math.max(h, 480);
-	    }
-
-	    /** 自绘右侧固定操作列（仅操作列，含复制/删除按钮） */
 	    function buildDetailOperationFixedPanel() {
 	        var $table = $('#detail-table');
 	        var $wrap = $('#delivery-detail-list-section');
 	        var $bt = $table.closest('.bootstrap-table');
-	        if ($bt.length === 0) {
+	        if (!$bt.length) {
 	            return;
 	        }
 	        try {
@@ -841,15 +1166,14 @@
 	            top: top + 'px',
 	            height: (panelH > 0 ? panelH : '') + (panelH > 0 ? 'px' : ''),
 	            width: DETAIL_OPERATION_COL_WIDTH + 'px',
-	            right: DETAIL_VSCROLL_GUTTER + 'px'
+	            right: DETAIL_OP_PANEL_RIGHT + 'px'
 	        });
 	        $panel.find('.detail-op-fixed-head').css({
 	            height: headH + 'px',
 	            lineHeight: headH + 'px'
 	        });
-	        layoutDetailVscrollRail(top, h, headH);
 	        layoutDetailHscrollRail();
-	        syncDetailOperationPanelRowHeights();
+	        scheduleDetailOperationPanelSync();
 	        syncDetailOperationPanelScrollOffset();
 	    }
 
@@ -861,7 +1185,7 @@
 	        }
 	        var $wrap = $('#delivery-detail-list-section');
 	        var rightReserve = $wrap.hasClass('detail-has-fixed-op')
-	            ? (DETAIL_OPERATION_COL_WIDTH + DETAIL_VSCROLL_GUTTER) : 0;
+	            ? (DETAIL_OPERATION_COL_WIDTH + DETAIL_OP_PANEL_RIGHT) : 0;
 	        $rail.css({
 	            left: '0',
 	            bottom: '0',
@@ -869,6 +1193,31 @@
 	            right: rightReserve + 'px',
 	            width: 'auto'
 	        });
+	    }
+
+	    /** 表头、表体、底部横滚条 scrollLeft 保持一致 */
+	    function syncDetailHorizontalScroll(scrollLeft, source) {
+	        var $bt = $('#detail-table').closest('.bootstrap-table');
+	        var $container = $bt.find('.fixed-table-container').first();
+	        var $mainBody = $container.children('.fixed-table-body');
+	        var $mainHeader = $container.children('.fixed-table-header');
+	        var $rail = $bt.children('.detail-hscroll-rail');
+	        if (!$mainBody.length) {
+	            return;
+	        }
+	        var sl = scrollLeft;
+	        if (sl == null || sl === undefined) {
+	            sl = $mainBody.scrollLeft();
+	        }
+	        if (source !== 'body' && $mainBody.scrollLeft() !== sl) {
+	            $mainBody.scrollLeft(sl);
+	        }
+	        if (source !== 'header' && $mainHeader.length && $mainHeader.scrollLeft() !== sl) {
+	            $mainHeader.scrollLeft(sl);
+	        }
+	        if (source !== 'rail' && $rail.length && $rail.scrollLeft() !== sl) {
+	            $rail.scrollLeft(sl);
+	        }
 	    }
 
 	    function updateDetailHscrollRailSize() {
@@ -882,6 +1231,13 @@
 	        var innerEl = $rail.find('.detail-hscroll-rail-inner')[0];
 	        if (bodyEl && innerEl) {
 	            innerEl.style.width = Math.max(bodyEl.scrollWidth, bodyEl.clientWidth) + 'px';
+	        }
+	        var scrollW = bodyEl.scrollWidth;
+	        var clientW = bodyEl.clientWidth;
+	        if (scrollW <= clientW + 2) {
+	            $rail.css('overflow-x', 'hidden');
+	        } else {
+	            $rail.css('overflow-x', 'auto');
 	        }
 	    }
 
@@ -900,44 +1256,35 @@
 	        }
 	        updateDetailHscrollRailSize();
 	        $rail.off('scroll.detailHscrollRail').on('scroll.detailHscrollRail', function () {
-	            var sl = $rail.scrollLeft();
-	            $mainBody.scrollLeft(sl);
-	            $mainHeader.scrollLeft(sl);
+	            syncDetailHorizontalScroll(this.scrollLeft, 'rail');
 	        });
 	    }
 
-	    function layoutDetailVscrollRail(containerTop, containerH, headH) {
+	    function bindDetailHorizontalScroll() {
 	        var $bt = $('#detail-table').closest('.bootstrap-table');
-	        var $rail = $bt.children('.detail-vscroll-rail');
-	        if (!$rail.length) {
+	        var $container = $bt.find('.fixed-table-container').first();
+	        var $mainBody = $container.children('.fixed-table-body');
+	        var $mainHeader = $container.children('.fixed-table-header');
+	        if (!$mainBody.length) {
 	            return;
 	        }
-	        var bodyH = Math.max((containerH || 0) - (headH || 0) - DETAIL_HSCROLL_GUTTER, 0);
-	        $rail.css({
-	            top: ((containerTop || 0) + (headH || 0)) + 'px',
-	            height: bodyH + 'px',
-	            width: DETAIL_VSCROLL_GUTTER + 'px'
+	        $mainBody.off('scroll.detailMainH').on('scroll.detailMainH', function () {
+	            syncDetailHorizontalScroll(this.scrollLeft, 'body');
 	        });
-	    }
-
-	    function ensureDetailVscrollRail() {
-	        var $bt = $('#detail-table').closest('.bootstrap-table');
-	        var $mainBody = $bt.find('.fixed-table-container > .fixed-table-body');
-	        if ($mainBody.length === 0) {
-	            return;
-	        }
-	        var $rail = $bt.children('.detail-vscroll-rail');
-	        if (!$rail.length) {
-	            $rail = $('<div class="detail-vscroll-rail"><div class="detail-vscroll-rail-inner"></div></div>');
-	            $bt.append($rail);
-	        }
-	        var bodyEl = $mainBody[0];
-	        var innerEl = $rail.find('.detail-vscroll-rail-inner')[0];
-	        if (bodyEl && innerEl) {
-	            innerEl.style.height = bodyEl.scrollHeight + 'px';
-	        }
-	        $rail.off('scroll.detailVscrollRail').on('scroll.detailVscrollRail', function () {
-	            $mainBody.scrollTop($rail.scrollTop());
+	        $mainHeader.off('scroll.detailHeaderH').on('scroll.detailHeaderH', function () {
+	            syncDetailHorizontalScroll(this.scrollLeft, 'header');
+	        });
+	        $mainBody.off('wheel.detailMainHWheel').on('wheel.detailMainHWheel', function (e) {
+	            var dx = e.originalEvent ? e.originalEvent.deltaX : e.deltaX;
+	            if (!dx) {
+	                return;
+	            }
+	            var el = this;
+	            if (Math.abs(dx) > 0) {
+	                el.scrollLeft += dx;
+	                syncDetailHorizontalScroll(el.scrollLeft, 'body');
+	                e.preventDefault();
+	            }
 	        });
 	    }
 
@@ -951,14 +1298,10 @@
 	    function syncDetailOperationPanelScroll() {
 	        var $bt = $('#detail-table').closest('.bootstrap-table');
 	        var $mainBody = $bt.find('.fixed-table-container').children('.fixed-table-body');
-	        if ($mainBody.length === 0) {
+	        if (!$mainBody.length) {
 	            return;
 	        }
 	        $mainBody.off('scroll.detailOpPanel').on('scroll.detailOpPanel', function () {
-	            var $rail = $bt.children('.detail-vscroll-rail');
-	            if ($rail.length && $rail.scrollTop() !== $mainBody.scrollTop()) {
-	                $rail.scrollTop($mainBody.scrollTop());
-	            }
 	            syncDetailOperationPanelScrollOffset();
 	        });
 	    }
@@ -978,7 +1321,9 @@
 	        $body.find('tbody').each(function () {
 	            this.style.setProperty('height', 'auto', 'important');
 	        });
+	        var rowCount = 0;
 	        $body.find('tbody tr').each(function () {
+	            rowCount++;
 	            this.style.setProperty('height', rh, 'important');
 	            this.style.setProperty('min-height', rh, 'important');
 	            this.style.setProperty('max-height', rh, 'important');
@@ -991,6 +1336,10 @@
 	                this.style.setProperty('vertical-align', 'middle', 'important');
 	            });
 	        });
+	        if (rowCount > 0) {
+	            var tableH = (rowCount * DETAIL_ROW_HEIGHT) + 'px';
+	            $body.find('> table').css({ height: tableH, minHeight: tableH, maxHeight: tableH });
+	        }
 	        $bt.find('.detail-op-fixed-row').each(function () {
 	            this.style.setProperty('height', rh, 'important');
 	            this.style.setProperty('min-height', rh, 'important');
@@ -1000,6 +1349,15 @@
 
 	    function syncDetailOperationPanelRowHeights() {
 	        applyDetailTableRowHeight();
+	        var rh = DETAIL_ROW_HEIGHT + 'px';
+	        var $bt = $('#detail-table').closest('.bootstrap-table');
+	        $bt.find('.detail-op-fixed-row').css({ height: rh, minHeight: rh, maxHeight: rh });
+	        var $mainHeader = $bt.find('.fixed-table-container > .fixed-table-header');
+	        var headH = $mainHeader.outerHeight() || DETAIL_ROW_HEIGHT;
+	        $bt.find('.detail-op-fixed-head').css({
+	            height: headH + 'px',
+	            lineHeight: headH + 'px'
+	        });
 	    }
 
 	    function scheduleDetailOperationPanelSync() {
@@ -1007,51 +1365,8 @@
 	        requestAnimationFrame(syncDetailOperationPanelRowHeights);
 	    }
 
-	    /** 表头列宽与表体按 data-field 逐列对齐 */
 	    function syncDetailTableHeaderColumnWidths() {
-	        var $bt = $('#detail-table').closest('.bootstrap-table');
-	        var $container = $bt.find('.fixed-table-container').first();
-	        var $mainBody = $container.children('.fixed-table-body');
-	        var $mainHeader = $container.children('.fixed-table-header');
-	        var $bodyTable = $mainBody.find('table').first();
-	        var $headTable = $mainHeader.find('table').first();
-	        var $firstRow = $mainBody.find('tbody tr:first');
-	        if (!$bodyTable.length || !$headTable.length || !$firstRow.length) {
-	            return;
-	        }
-	        var totalW = 0;
-	        $headTable.find('thead th[data-field]').each(function () {
-	            var field = $(this).data('field');
-	            if (!field) {
-	                return;
-	            }
-	            if (field === 'operation') {
-	                $(this).css({ width: '0', minWidth: '0', maxWidth: '0', padding: '0', border: '0' });
-	                $firstRow.find('td[data-field="operation"]').css({
-	                    width: '0', minWidth: '0', maxWidth: '0', padding: '0', border: '0'
-	                });
-	                return;
-	            }
-	            var $td = $firstRow.find('td[data-field="' + field + '"]');
-	            if (!$td.length) {
-	                return;
-	            }
-	            var w = Math.ceil($td.outerWidth());
-	            if (w < 1) {
-	                w = 1;
-	            }
-	            var ws = w + 'px';
-	            $td.css({ width: ws, minWidth: ws, maxWidth: ws });
-	            $(this).css({ width: ws, minWidth: ws, maxWidth: ws });
-	            totalW += w;
-	        });
-	        var minW = parseInt($bodyTable.css('min-width'), 10) || 0;
-	        var tableW = Math.max(totalW, $bodyTable.outerWidth(), minW);
-	        if (tableW > 0) {
-	            var tw = tableW + 'px';
-	            $bodyTable.css('width', tw);
-	            $headTable.css('width', tw);
-	        }
+	        applyDetailColumnWidthFromHeader();
 	    }
 
 	    function fixDetailTableHeaderAlign() {
@@ -1065,10 +1380,12 @@
 	        }
 	        var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
 	        var rightReserve = $wrap.hasClass('detail-has-fixed-op')
-	            ? (DETAIL_OPERATION_COL_WIDTH + DETAIL_VSCROLL_GUTTER) : 0;
+	            ? (DETAIL_OPERATION_COL_WIDTH + DETAIL_OP_PANEL_RIGHT) : 0;
+	        /* 表头、表体右侧预留操作列宽度一致，避免后半段列名与明细竖线错位 */
 	        $mainHeader.css('margin-right', (scrollW + rightReserve) + 'px');
-	        $mainHeader.scrollLeft($mainBody.scrollLeft());
-	        syncDetailTableHeaderColumnWidths();
+	        $mainBody.css('margin-right', rightReserve + 'px');
+	        applyDetailColumnWidthFromHeader();
+	        syncDetailHorizontalScroll($mainBody.scrollLeft(), 'align');
 	        updateDetailHscrollRailSize();
 	    }
 
@@ -1077,11 +1394,10 @@
 	        requestAnimationFrame(fixDetailTableHeaderAlign);
 	    }
 
-	    /** 表头横滚 + 右侧固定操作列 */
 	    function refreshDetailTableLayout() {
 	        var $table = $('#detail-table');
 	        var $bt = $table.closest('.bootstrap-table');
-	        if ($bt.length === 0) {
+	        if (!$bt.length) {
 	            return;
 	        }
 	        try {
@@ -1091,21 +1407,86 @@
 	        } catch (e) {
 	            return;
 	        }
+	        cleanupDetailTableLegacyWidgets();
 	        var $container = $bt.find('.fixed-table-container').first();
 	        var $mainBody = $container.children('.fixed-table-body');
 	        var $mainHeader = $container.children('.fixed-table-header');
 	        applyDeliveryDetailTableMinWidth();
+	        seedDetailDefaultColumnWidths();
+	        syncDetailTableHeaderColumnWidths();
 	        buildDetailOperationFixedPanel();
-	        $mainBody.off('scroll.detailMainH').on('scroll.detailMainH', function () {
-	            $mainHeader.scrollLeft($mainBody.scrollLeft());
-	        });
-	        ensureDetailVscrollRail();
+	        bindDetailHorizontalScroll();
+	        $bt.find('.detail-vscroll-rail').remove();
 	        ensureDetailHscrollRail();
 	        layoutDetailHscrollRail();
 	        syncDetailOperationPanelScroll();
 	        scheduleDetailOperationPanelSync();
 	        scheduleDetailHeaderAlign();
 	        updateDetailHscrollRailSize();
+	        setTimeout(function () {
+	            initDetailHeaderColumnResize();
+	            fixDetailTableHeaderAlign();
+	            scheduleDetailOperationPanelSync();
+	            initDetailCellTitles();
+	        }, 0);
+	        try {
+	            $table.bootstrapTable('hideLoading');
+	        } catch (e) { /* ignore */ }
+	    }
+
+	    function refreshDetailTableLayoutDebounced() {
+	        if (detailTableLayoutRefreshTimer) {
+	            clearTimeout(detailTableLayoutRefreshTimer);
+	        }
+	        detailTableLayoutRefreshTimer = setTimeout(function () {
+	            detailTableLayoutRefreshTimer = null;
+	            refreshDetailTableLayout();
+	        }, 60);
+	    }
+
+	    function calculateDeliveryAddDetailTableHeight() {
+	        var $wrap = $('#delivery-detail-list-section');
+	        if (!$wrap.length) {
+	            return 560;
+	        }
+	        var h = $wrap[0].clientHeight || Math.floor($wrap.innerHeight());
+	        return Math.max(h, 480);
+	    }
+
+	    var detailTableLayoutTimer = null;
+	    var detailTableLayoutRefreshTimer = null;
+	    var detailTableLayoutLock = false;
+
+	    /** 明细外包层：从当前位置铺满到窗口（标签页）底部 */
+	    function layoutDeliveryAddDetailWrapHeight() {
+	        var $page = $('.delivery-form-main');
+	        var $section = $page.children('.delivery-detail-section');
+	        var $wrap = $('#delivery-detail-list-section');
+	        var $toolbar = $section.find('.delivery-detail-toolbar');
+	        if (!$page.length || !$wrap.length || !$section.length) {
+	            return;
+	        }
+	        var el = $wrap[0];
+	        var docEl = document.documentElement;
+	        var viewH = (docEl && docEl.clientHeight) ? docEl.clientHeight : (window.innerHeight || 0);
+	        var wrapTop = el.getBoundingClientRect().top;
+	        var sectionTop = $section[0].getBoundingClientRect().top;
+	        var toolbarH = $toolbar.length ? $toolbar.outerHeight(true) : 0;
+	        var hByWrap = Math.floor(viewH - wrapTop - 10);
+	        var hBySection = Math.floor(viewH - sectionTop - toolbarH - 14);
+	        var h = Math.max(hByWrap, hBySection, 480);
+	        $section.css({
+	            display: 'flex',
+	            flexDirection: 'column',
+	            flex: '1 1 auto',
+	            minHeight: '0',
+	            overflow: 'hidden'
+	        });
+	        el.style.setProperty('flex', '1 1 auto', 'important');
+	        el.style.setProperty('height', h + 'px', 'important');
+	        el.style.setProperty('min-height', '480px', 'important');
+	        el.style.removeProperty('max-height');
+	        el.style.setProperty('box-sizing', 'border-box', 'important');
 	    }
 
 	    function relayoutDeliveryAddDetailTable() {
@@ -1128,6 +1509,14 @@
 	        } finally {
 	            detailTableLayoutLock = false;
 	        }
+	    }
+
+	    function reloadDetailTableData(allData) {
+	        $('#detail-table').bootstrapTable('load', allData || []);
+	        try {
+	            $('#detail-table').bootstrapTable('hideLoading');
+	        } catch (e) { /* ignore */ }
+	        refreshDetailTableLayoutDebounced();
 	    }
 
 	    function relayoutDeliveryDetailFull() {
@@ -1251,8 +1640,7 @@
 	                totalAmount += allData[i].amount;
 	            }
 	            $("input[name='deliveryAmount']").val(totalAmount.toFixed(2));
-	            $('#detail-table').bootstrapTable('load', allData);
-	            scheduleRelayoutDeliveryDetailTable();
+	            reloadDetailTableData(allData);
 	            setTimeout(function() {
 	                $('#detail-table').find('.date-input').data('laydate-init', false);
 	                if (typeof initDatePickers === 'function') initDatePickers();
@@ -1315,15 +1703,14 @@
 	    // 初始化详细信息列表表格
 	    $(function() {
 	        initDetailTable();
-	        setTimeout(relayoutDeliveryDetailFull, 120);
-	        setTimeout(relayoutDeliveryDetailFull, 400);
+	        setTimeout(relayoutDeliveryDetailFull, 150);
 	    });
 
 	    function initDetailTable() {
 	        layoutDeliveryAddDetailWrapHeight();
+	        seedDetailDefaultColumnWidths();
 	        var options = {
-	            url: '', // 暂时为空，后续可以添加数据源
-	            data: [], // 初始数据为空
+	            data: [], // 纯前端数据，不设 url，避免空地址 ajax 与长时间 loading
 	            pagination: false, // 不分页
 	            search: false, // 不显示搜索框
 	            showRefresh: false, // 不显示刷新按钮
@@ -1331,8 +1718,13 @@
 	            showColumns: false, // 不显示列选择按钮
 	            striped: true, // 斑马纹
 	            clickToSelect: true,
+	            /* 列宽拖动：表头 resizableColumns；操作列：右侧固定面板 */
+	            resizable: false,
+	            classes: 'table table-bordered table-hover delivery-detail-fixed-table',
 	            height: calculateDeliveryAddDetailTableHeight(),
 	            mobileResponsive: false,
+	            sidePagination: 'client',
+	            sortReset: false,
 	            rowStyle: function () {
 	                return { css: { height: DETAIL_ROW_HEIGHT + 'px', maxHeight: DETAIL_ROW_HEIGHT + 'px' } };
 	            },
@@ -1345,7 +1737,7 @@
 	                field: 'index',
 	                title: '序号',
 	                align: 'center',
-	                width: 48,
+	                width: 56,
 	                formatter: function(value, row, index) {
 	                    return index + 1;
 	                }
@@ -1353,38 +1745,50 @@
                 field: 'materialCode',
                 title: '产品编码',
                 align: 'center',
-                width: 108
+                width: 120,
+                sortable: true,
+                sorter: detailSortText,
+                formatter: function (value) { return detailCellTextHtml(value); }
             }, {
                 field: 'materialName',
                 title: '产品名称',
                 align: 'left',
-                width: 116
+                width: 156,
+                sortable: true,
+                sorter: detailSortText,
+                formatter: function (value) { return detailCellTextHtml(value); }
             }, {
                 field: 'specification',
                 title: '规格',
                 align: 'left',
-                width: 96
+                width: 120,
+                sortable: true,
+                sorter: detailSortText,
+                formatter: function (value) { return detailCellTextHtml(value); }
             }, {
 	                field: 'unit',
 	                title: '单位',
 	                align: 'center',
-	                width: 52
+	                width: 60,
+	                sortable: true,
+	                sorter: detailSortText,
+	                formatter: function (value) { return detailCellTextHtml(value); }
 	            }, {
 	                field: 'remainingQuantity',
 	                title: '可配数量',
-	                align: 'right',
-	                width: 78,
-	                formatter: function(value, row, index) {
-	                    if (value) {
-	                        return parseFloat(value).toFixed(2);
-	                    }
-	                    return '0.00';
+	                align: 'center',
+	                width: 108,
+	                formatter: function (value) {
+	                    var s = value ? parseFloat(value).toFixed(2) : '0.00';
+	                    return detailCellTextHtml(s);
 	                }
 	            }, {
 	                field: 'deliveryQuantity',
 	                title: '数量',
 	                align: 'right',
-	                width: 78,
+	                width: 80,
+	                sortable: true,
+	                sorter: detailSortNumber,
 	                formatter: function(value, row, index) {
 	                    var val = '';
 	                    if (value === '' || value === null || value === undefined) {
@@ -1393,7 +1797,8 @@
 	                        var n = parseFloat(value);
 	                        val = isNaN(n) ? '' : n.toFixed(2);
 	                    }
-	                    return '<input type="text" class="form-control input-sm" style="text-align:right;width:100%;" value="' + val + '" ' +
+	                    var titleAttr = val ? (' title="' + escapeAttrForInput(val) + '"') : '';
+	                    return '<input type="text" class="form-control input-sm" style="text-align:right;width:100%;" value="' + val + '"' + titleAttr + ' ' +
 	                           'onblur="updateQuantity(this, ' + index + ')" ' +
 	                           'onkeypress="if(event.keyCode==13){this.blur();return false;}" />';
 	                }
@@ -1401,38 +1806,28 @@
 	                field: 'price',
 	                title: '单价',
 	                align: 'right',
-	                width: 86,
-	                formatter: function(value, row, index) {
-	                    if (value) {
-	                        return '¥' + parseFloat(value).toFixed(2);
-	                    }
-	                    return '¥0.00';
+	                width: 92,
+	                sortable: true,
+	                sorter: detailSortNumber,
+	                formatter: function (value) {
+	                    var s = value ? ('¥' + parseFloat(value).toFixed(2)) : '¥0.00';
+	                    return detailCellTextHtml(s);
 	                }
 	            }, {
 	                field: 'amount',
 	                title: '金额',
 	                align: 'right',
-	                width: 96,
-	                formatter: function(value, row, index) {
+	                width: 100,
+	                sortable: true,
+	                sorter: detailSortAmount,
+	                formatter: function (value, row) {
+	                    var amt;
 	                    if (value) {
-	                        return '¥' + parseFloat(value).toFixed(2);
+	                        amt = parseFloat(value);
+	                    } else {
+	                        amt = parseFloat(row.deliveryQuantity || 0) * parseFloat(row.price || 0);
 	                    }
-	                    // 如果没有金额，计算：数量 * 单价
-	                    var qty = parseFloat(row.deliveryQuantity || 0);
-	                    var price = parseFloat(row.price || 0);
-	                    return '¥' + (qty * price).toFixed(2);
-	                }
-	            }, {
-	                field: 'packCoefficient',
-	                title: '打包系数',
-	                align: 'right',
-	                width: 68,
-	                formatter: function(value, row, index) {
-	                    if (value != null && value !== '' && !isNaN(parseFloat(value))) {
-	                        var s = parseFloat(value).toString();
-	                        return s;
-	                    }
-	                    return '-';
+	                    return detailCellTextHtml('¥' + (isNaN(amt) ? '0.00' : amt.toFixed(2)));
 	                }
 	            }, {
 	                field: 'batchNo',
@@ -1443,26 +1838,43 @@
 	                    return detailTextInputHtml(value, index, 50, 'updateBatchNo');
 	                }
 	            }, {
-	                field: 'expireDate',
-	                title: '有效期',
-	                align: 'center',
-	                width: 140,
-	                formatter: function(value, row, index) {
-	                    return detailDateInputHtml(value, index, 'expireDate', 'updateExpireDate');
-	                }
-	            }, {
 	                field: 'productionDate',
 	                title: '生产日期',
 	                align: 'center',
-	                width: 140,
+	                width: 118,
 	                formatter: function(value, row, index) {
 	                    return detailDateInputHtml(value, index, 'productionDate', 'updateProductionDate');
 	                }
 	            }, {
+	                field: 'expireDate',
+	                title: '有效期',
+	                align: 'center',
+	                width: 118,
+	                formatter: function(value, row, index) {
+	                    return detailDateInputHtml(value, index, 'expireDate', 'updateExpireDate');
+	                }
+	            }, {
+	                field: 'packCoefficient',
+	                title: '打包系数',
+	                align: 'center',
+	                width: 100,
+	                formatter: function (value) {
+	                    if (value != null && value !== '' && !isNaN(parseFloat(value))) {
+	                        return detailCellTextHtml(String(parseFloat(value)));
+	                    }
+	                    return detailCellTextHtml('-');
+	                }
+	            }, {
+	                field: 'manufacturer',
+	                title: '生产厂家',
+	                align: 'left',
+	                width: 160,
+	                formatter: function (value) { return detailCellTextHtml(value || '-'); }
+	            }, {
 	                field: 'mainBarcode',
 	                title: '主条码',
 	                align: 'left',
-	                width: 180,
+	                width: 150,
 	                formatter: function(value, row, index) {
 	                    return detailTextInputHtml(value, index, 128, 'updateMainBarcode');
 	                }
@@ -1470,37 +1882,30 @@
 	                field: 'auxBarcode',
 	                title: '辅条码',
 	                align: 'left',
-	                width: 180,
-	                formatter: function(value, row, index) {
-	                    return detailTextInputHtml(value, index, 128, 'updateAuxBarcode');
-	                }
-	            }, {
-	                field: 'manufacturer',
-	                title: '生产厂家',
-	                align: 'left',
 	                width: 150,
 	                formatter: function(value, row, index) {
-	                    return value || '-';
+	                    return detailTextInputHtml(value, index, 128, 'updateAuxBarcode');
 	                }
 	            }, {
 	                field: 'model',
 	                title: '型号',
 	                align: 'center',
-	                width: 120
+	                width: 80,
+	                formatter: function (value) { return detailCellTextHtml(value); }
 	            }, 	            {
 	                field: 'registerNo',
 	                title: '注册证号',
 	                align: 'center',
-	                width: 150,
-	                formatter: function(value, row, index) {
-	                    return value || '-';
+	                width: 200,
+	                formatter: function (value) {
+	                    return detailCellTextHtml(value || '-');
 	                }
 	            },
 	            {
 	                field: 'nationalInsuranceCode',
 	                title: '国家医保编码',
 	                align: 'left',
-	                width: 200,
+	                width: 160,
 	                formatter: function(value, row, index) {
 	                    return detailTextInputHtml(value, index, 128, 'updateNationalInsuranceCode');
 	                }
@@ -1509,7 +1914,7 @@
 	                field: 'remark',
 	                title: '备注',
 	                align: 'left',
-	                width: 200,
+	                width: 140,
 	                formatter: function(value, row, index) {
 	                    return detailTextInputHtml(value, index, 500, 'updateDetailRemark');
 	                }
@@ -1517,27 +1922,42 @@
 	                field: 'operation',
 	                title: '操作',
 	                align: 'center',
-	                width: 175,
+	                width: DETAIL_OPERATION_COL_WIDTH,
 	                formatter: function(value, row, index) {
 	                    return deliveryDetailOperationHtml(index);
 	                }
 	            }]
 	        };
+	        options.onSort = function () {
+	            refreshDetailTableLayoutDebounced();
+	        };
 	        options.onPostBody = function () {
 	            applyDetailTableRowHeight();
-	            refreshDetailTableLayout();
-	            applyDetailTableRowHeight();
+	            refreshDetailTableLayoutDebounced();
+	            initDetailCellTitles();
 	            if (typeof initDatePickers === 'function') {
 	                initDatePickers();
 	            }
 	        };
 	        options.onLoadSuccess = function () {
+	            try {
+	                $('#detail-table').bootstrapTable('hideLoading');
+	            } catch (e) { /* ignore */ }
 	            scheduleRelayoutDeliveryDetailTable();
-	            setTimeout(refreshDetailTableLayout, 50);
-	            setTimeout(refreshDetailTableLayout, 200);
-	            setTimeout(refreshDetailTableLayout, 450);
 	        };
         $('#detail-table').bootstrapTable(options);
+	        try {
+	            $('#detail-table').bootstrapTable('hideLoading');
+	        } catch (e) { /* ignore */ }
+	        scheduleRelayoutDeliveryDetailTable();
+	        setTimeout(refreshDetailTableLayout, 80);
+	        setTimeout(refreshDetailTableLayout, 250);
+	        setTimeout(refreshDetailTableLayout, 500);
+
+        $('#detail-table').on('refresh.bs.table post-header.bs.table reset-view.bs.table', function () {
+	            applyDetailTableRowHeight();
+	            refreshDetailTableLayoutDebounced();
+	        });
 
         setTimeout(function() {
             $('#detail-table [data-toggle="tooltip"]').tooltip();
@@ -1546,14 +1966,6 @@
         $(window).off('resize.deliveryDetailTable').on('resize.deliveryDetailTable', function () {
 	            layoutDeliveryAddDetailWrapHeight();
 	            scheduleRelayoutDeliveryDetailTable();
-	        });
-        scheduleRelayoutDeliveryDetailTable();
-        setTimeout(refreshDetailTableLayout, 80);
-        setTimeout(refreshDetailTableLayout, 250);
-        setTimeout(refreshDetailTableLayout, 500);
-	        $('#detail-table').on('refresh.bs.table post-header.bs.table reset-view.bs.table', function () {
-	            applyDetailTableRowHeight();
-	            refreshDetailTableLayout();
 	        });
 	        // 初始化日期选择器（延迟执行，等待表格渲染完成）
 	        function initDatePickers() {
@@ -1590,8 +2002,24 @@
 
 	        // 监听表格更新后重新初始化日期选择器
 	        $('#detail-table').on('load-success.bs.table post-body.bs.table', function() {
+	            $('#detail-table').find('.date-input').data('laydate-init', false);
 	            initDatePickers();
+	            initDetailCellTitles();
+	            try {
+	                $('#detail-table').bootstrapTable('hideLoading');
+	            } catch (e) { /* ignore */ }
+	            refreshDetailTableLayoutDebounced();
 	        });
+	        $('#delivery-detail-list-section').off('blur.detailCellTitle', '.fixed-table-body input')
+	            .on('blur.detailCellTitle', '.fixed-table-body input', function () {
+	                var v = ($(this).val() || '').trim();
+	                if (v) {
+	                    $(this).attr('title', v);
+	                    $(this).closest('td').attr('title', v);
+	                } else {
+	                    $(this).removeAttr('title');
+	                }
+	            });
 	    }
 
 	    // 更新数量
@@ -1784,7 +2212,7 @@
 	                console.log('Data after splice, new length:', allData.length);
 
 	                // 重新加载数据
-	                $('#detail-table').bootstrapTable('load', allData);
+	                reloadDetailTableData(allData);
 
 	                // 重新计算总金额
 	                var totalAmount = 0;
@@ -2003,13 +2431,35 @@
 	            width: "1280",
 	            height: "720",
 	            btn: 0,
-	            callBack: function(index, layero) {
-	                var body = $.modal.getChildFrame(index);
-	                var rowIds = body.find('#rowIds').val();
+	            callBack: function(index, layero, selectedRowIds) {
+	                var rowIds = selectedRowIds;
+	                if (!rowIds || rowIds === '') {
+	                    var body = $.modal.getChildFrame(index);
+	                    rowIds = body.find('#rowIds').val();
+	                }
 	                if (!rowIds || rowIds == '') {
 	                    $.modal.alertWarning("请至少选择一条第三方订单");
 	                    return false;
 	                }
+	                var closeLayer = function() {
+	                    var layerIndex = index || window.__deliveryZsOrderLayerIndex;
+	                    try {
+	                        if (!layerIndex && window.top) {
+	                            layerIndex = window.top.__deliveryZsOrderLayerIndex;
+	                        }
+	                    } catch (e) { /* ignore */ }
+	                    if (layerIndex) {
+	                        top.layer.close(layerIndex);
+	                    }
+	                    window.__deliveryZsOrderLayerIndex = null;
+	                    try {
+	                        window.top.__deliveryZsOrderLayerIndex = null;
+	                        delete window.top.__deliveryZsOrderCallBack;
+	                        delete window.top.__deliveryZsOrderOpenerWin;
+	                    } catch (e) { /* ignore */ }
+	                    delete window.__deliveryZsOrderCallBack;
+	                    delete window.__deliveryZsOrderOpenerWin;
+	                };
 	                var ids = rowIds.split(',');
 	                var selectedId = ids[0];
 	                $.ajax({
@@ -2094,12 +2544,11 @@
 	                                if (data.deliveryDetails.length > 0 && detailData.length === 0) {
 	                                    $.modal.msgWarning('该第三方订单无可配送明细（可配送数量均为0），未带入任何行');
 	                                }
-	                                $('#detail-table').bootstrapTable('load', detailData);
-	                                scheduleRelayoutDeliveryDetailTable();
+	                                reloadDetailTableData(detailData);
 	                            } else {
-	                                $('#detail-table').bootstrapTable('load', []);
+	                                reloadDetailTableData([]);
 	                            }
-	                            $.modal.close(index);
+	                            closeLayer();
 	                            $.modal.msgSuccess("已引入第三方订单数据，请核对后保存");
 	                        } else {
 	                            $.modal.alertError(result.msg || "加载第三方订单失败");
@@ -2112,6 +2561,11 @@
 	            }
 	        };
 	        window.__deliveryZsOrderCallBack = options.callBack;
+	        window.__deliveryZsOrderOpenerWin = window;
+	        try {
+	            window.top.__deliveryZsOrderCallBack = options.callBack;
+	            window.top.__deliveryZsOrderOpenerWin = window;
+	        } catch (e) { /* ignore */ }
 	        $.modal.openOptions(options);
 	    }
 
@@ -2120,15 +2574,38 @@
 	        var options = {
 	            title: '选择订单',
 	            url: ctx + "order/order/select",
-	            width: "1000",
-	            height: "600",
-	            callBack: function(index, layero) {
-	                var body = $.modal.getChildFrame(index);
-	                var orderId = body.find('#rowIds').val();
+	            width: "1280",
+	            height: "720",
+	            btn: 0,
+	            callBack: function(index, layero, selectedRowIds) {
+	                var orderId = selectedRowIds;
+	                if (!orderId || orderId === '') {
+	                    var body = $.modal.getChildFrame(index);
+	                    orderId = body.find('#rowIds').val();
+	                }
 	                if (!orderId || orderId == '') {
 	                    $.modal.alertWarning("请至少选择一条记录");
 	                    return false;
 	                }
+	                var closeLayer = function() {
+	                    var layerIndex = index || window.__deliveryOrderLayerIndex;
+	                    try {
+	                        if (!layerIndex && window.top) {
+	                            layerIndex = window.top.__deliveryOrderLayerIndex;
+	                        }
+	                    } catch (e) { /* ignore */ }
+	                    if (layerIndex) {
+	                        top.layer.close(layerIndex);
+	                    }
+	                    window.__deliveryOrderLayerIndex = null;
+	                    try {
+	                        window.top.__deliveryOrderLayerIndex = null;
+	                        delete window.top.__deliveryOrderCallBack;
+	                        delete window.top.__deliveryOrderOpenerWin;
+	                    } catch (e) { /* ignore */ }
+	                    delete window.__deliveryOrderCallBack;
+	                    delete window.__deliveryOrderOpenerWin;
+	                };
 
 	                // 获取选中的订单ID（只取第一个）
 	                var ids = orderId.split(',');
@@ -2228,14 +2705,12 @@
 	                                if (order.orderDetails.length > 0 && detailData.length === 0) {
 	                                    $.modal.msgWarning('该订单明细可配送数量均为0，未带入任何行');
 	                                }
-	                                $('#detail-table').bootstrapTable('load', detailData);
-	                                scheduleRelayoutDeliveryDetailTable();
+	                                reloadDetailTableData(detailData);
 	                            } else {
-	                                // 如果没有明细，清空表格
-	                                $('#detail-table').bootstrapTable('load', []);
+	                                reloadDetailTableData([]);
 	                            }
 
-	                            $.modal.close(index);
+	                            closeLayer();
 	                            $.modal.msgSuccess("订单信息已引入");
 	                        } else {
 	                            $.modal.alertError(result.msg || "获取订单信息失败");
@@ -2245,9 +2720,14 @@
 	                        $.modal.alertError("获取订单信息失败");
 	                    }
 	                });
-	                return false;
 	            }
 	        };
+	        window.__deliveryOrderCallBack = options.callBack;
+	        window.__deliveryOrderOpenerWin = window;
+	        try {
+	            window.top.__deliveryOrderCallBack = options.callBack;
+	            window.top.__deliveryOrderOpenerWin = window;
+	        } catch (e) { /* ignore */ }
 	        $.modal.openOptions(options);
 	    }
 
