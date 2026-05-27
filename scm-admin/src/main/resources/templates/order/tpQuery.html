@@ -22,6 +22,9 @@
 			flex: 1 1 0%;
 			min-height: 0;
 			height: auto !important;
+			width: 100%;
+			box-sizing: border-box;
+			padding: 0 28px;
 			display: flex;
 			flex-direction: column;
 			overflow: hidden;
@@ -30,9 +33,22 @@
 			flex: 1;
 			display: flex;
 			flex-direction: column;
-			margin: 0;
+			margin-left: -15px;
+			margin-right: -15px;
 			min-height: 0;
 			overflow: visible;
+			height: 100%;
+		}
+		.tp-query-page > .row.tp-query-main-row {
+			flex: 1;
+			min-height: 0;
+			height: 100%;
+		}
+		.tp-query-page .search-collapse,
+		.tp-query-page #toolbar,
+		.tp-query-page > .row > .col-sm-12 {
+			float: none;
+			width: 100%;
 		}
 		.tp-query-page .search-collapse,
 		.tp-query-page #toolbar {
@@ -232,14 +248,63 @@
 		#tp-query-form .select-time label {
 			white-space: nowrap;
 		}
+		/* 搜索区：上下内边距一致，条件分行对齐 */
+		.tp-query-page .search-collapse {
+			padding-top: 10px !important;
+			padding-bottom: 10px !important;
+		}
+		.tp-query-page .search-collapse .select-list ul {
+			margin-bottom: 0;
+			overflow: hidden;
+		}
+		.tp-query-page .search-collapse .tp-query-search-rows > ul {
+			display: block;
+			width: 100%;
+			overflow: hidden;
+		}
+		.tp-query-page .search-collapse .tp-query-search-rows > ul + ul {
+			margin-top: 2px;
+		}
+		.tp-query-page .search-collapse .select-list li {
+			margin: 4px 15px 4px 0;
+		}
+		.tp-query-page .search-collapse .select-list li.select-time label {
+			margin-top: 4px;
+			margin-bottom: 4px;
+		}
+		/* 选择框列：表头/表体居中，避免 overflow 裁切半选框 */
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th.bs-checkbox,
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td.bs-checkbox {
+			overflow: visible !important;
+			text-overflow: clip !important;
+			text-align: center !important;
+			vertical-align: middle !important;
+			min-width: 42px !important;
+			width: 42px !important;
+			max-width: 42px !important;
+			padding: 8px 4px !important;
+		}
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th.bs-checkbox .th-inner {
+			overflow: visible !important;
+			text-align: center !important;
+			justify-content: center;
+			align-items: center;
+			display: inline-flex;
+			width: 100%;
+			padding: 0 !important;
+			line-height: normal !important;
+		}
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td.bs-checkbox {
+			text-align: center !important;
+		}
 	</style>
 </head>
 <body class="gray-bg tp-query-body">
 	<div class="container-div tp-query-page">
-		<div class="row" style="margin: 0; display: flex; flex-direction: column; flex: 1; min-height: 0; height: 100%;">
+		<div class="row tp-query-main-row">
 			<div class="col-sm-12 search-collapse">
 				<form id="tp-query-form">
-					<div class="select-list">
+					<div class="select-list tp-query-search-rows">
 						<ul>
 							<li>
 								订单编号：<input type="text" name="dh" placeholder="模糊"/>
@@ -264,14 +329,6 @@
 									<option value="1">已作废</option>
 								</select>
 							</li>
-							<li>
-								配送进度：<select name="params[deliveryFilter]">
-									<option value="">全部</option>
-									<option value="none">未配送</option>
-									<option value="partial">部分配送</option>
-									<option value="done">已配送</option>
-								</select>
-							</li>
 							<li class="select-time">
 								<label>日期：</label>
 								<input type="text" class="time-input" id="startTime" placeholder="开始日期" name="params[pushBegin]" autocomplete="off"/>
@@ -279,8 +336,12 @@
 								<input type="text" class="time-input" id="endTime" placeholder="结束日期" name="params[pushEnd]" autocomplete="off"/>
 							</li>
 							<li>
-								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()" style="display: none;"><i class="fa fa-search"></i>&nbsp;搜索</a>
-								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()" style="display: none;"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+								配送进度：<select name="params[deliveryFilter]">
+									<option value="">全部</option>
+									<option value="none">未配送</option>
+									<option value="partial">部分配送</option>
+									<option value="done">已配送</option>
+								</select>
 							</li>
 						</ul>
 					</div>
@@ -790,7 +851,7 @@
 		        },
 		        columns: applyTpColumnSpacing([{
 		            checkbox: true,
-		            width: 40
+		            width: 42
 		        },
 		        {
 		            field: 'index',

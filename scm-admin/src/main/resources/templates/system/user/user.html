@@ -4,10 +4,196 @@
 	<th:block th:include="include :: header('用户列表')" />
 	<th:block th:include="include :: layout-latest-css" />
 	<th:block th:include="include :: ztree-css" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-css" />
 	<style>
 		/* 仅本页：隐藏左侧「医承云配送」标题栏及工具按钮，部门树整体上移 */
 		.ui-layout-west .box-main > .box-header {
 			display: none !important;
+		}
+		/* 搜索区：上下内边距一致 */
+		.ui-layout-center .container-div > .row > .search-collapse {
+			padding-top: 10px;
+			padding-bottom: 10px;
+		}
+		.ui-layout-center .container-div .search-collapse .select-list ul {
+			margin-bottom: 0;
+			overflow: hidden;
+		}
+		.ui-layout-center .container-div .search-collapse .select-list li {
+			margin: 4px 15px 4px 0;
+		}
+		.ui-layout-center .container-div .search-collapse .select-list li.select-time label {
+			margin-top: 4px;
+			margin-bottom: 4px;
+		}
+		/* 用户列表：横滚 + 不换行 + 仅冻结操作列（对齐 delivery.html） */
+		.user-table-wrap {
+			min-height: 400px;
+			position: relative;
+			padding-bottom: 6px;
+			overflow: hidden;
+		}
+		.user-table-wrap .bootstrap-table {
+			height: 100%;
+			padding-bottom: 60px;
+		}
+		.user-table-wrap .fixed-table-container {
+			padding-bottom: 46px;
+		}
+		.user-table-wrap .fixed-table-body {
+			overflow-x: hidden !important;
+			overflow-y: auto !important;
+		}
+		/* 底部分页上方的横向滚动条（与表头/表体联动） */
+		.user-table-wrap.user-list-table .tp-detail-hscroll {
+			position: absolute;
+			left: 10px;
+			right: 10px;
+			bottom: 46px;
+			z-index: 4;
+			overflow-x: auto;
+			overflow-y: hidden;
+			height: 14px;
+			min-height: 14px;
+			background: #f5f5f5;
+			border-top: 1px solid #e5e5e5;
+			box-sizing: border-box;
+			-webkit-overflow-scrolling: touch;
+			scrollbar-width: thin;
+		}
+		.user-table-wrap.user-list-table .tp-detail-hscroll::-webkit-scrollbar {
+			height: 10px;
+		}
+		.user-table-wrap.user-list-table .tp-detail-hscroll::-webkit-scrollbar-thumb {
+			background: rgba(0, 0, 0, 0.28);
+			border-radius: 5px;
+		}
+		.user-table-wrap.user-list-table .tp-detail-hscroll::-webkit-scrollbar-track {
+			background: #eee;
+		}
+		.user-table-wrap.user-list-table .tp-detail-hscroll-inner {
+			height: 1px;
+			pointer-events: none;
+		}
+		.user-table-wrap .fixed-table-pagination {
+			position: absolute;
+			left: 10px;
+			right: 10px;
+			bottom: 0;
+			background: #fff;
+			z-index: 3;
+			border-top: 1px solid #eee;
+			margin: 0 !important;
+			padding: 6px 0;
+		}
+		.user-table-wrap.user-list-table .fixed-table-pagination .pagination {
+			margin-right: 272px;
+		}
+		.user-table-wrap.user-list-table .fixed-table-header {
+			position: relative;
+			top: auto;
+			z-index: 2;
+			background: #fff;
+			overflow: hidden;
+		}
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-header table,
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body > table {
+			table-layout: fixed;
+		}
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-header th,
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body tbody td {
+			box-sizing: border-box;
+			padding: 8px 14px;
+			white-space: nowrap;
+			vertical-align: middle;
+			font-size: 14px;
+			line-height: 1.5;
+		}
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-header th {
+			font-size: 14px;
+			font-weight: 600;
+			background-color: #f5f5f5;
+			border-bottom: 2px solid #ddd;
+		}
+		/* 主表滚动区隐藏操作列内容，由右侧 fixed-columns-right 展示（保留列宽，避免冻结区 scroll 错位） */
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-header th[data-field="userOperate"],
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body td[data-field="userOperate"] {
+			padding: 0 !important;
+			border-left: 0 !important;
+			border-right: 0 !important;
+			font-size: 0;
+			line-height: 0;
+			color: transparent;
+			overflow: hidden;
+		}
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-header th[data-field="userOperate"] > *,
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body td[data-field="userOperate"] > * {
+			display: none;
+		}
+		.user-table-wrap.user-list-table .fixed-columns-right {
+			z-index: 5;
+			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
+		}
+		.user-table-wrap.user-list-table .fixed-columns-right .fixed-table-header th,
+		.user-table-wrap.user-list-table .fixed-columns-right .fixed-table-body td {
+			background-color: #fff;
+			vertical-align: middle;
+			white-space: nowrap;
+			font-size: 14px;
+			line-height: 1.5;
+		}
+		.user-table-wrap.user-list-table .fixed-columns-right .fixed-table-header th {
+			font-weight: 600;
+		}
+		.user-table-wrap.user-list-table .fixed-columns-right .fixed-table-header th[data-field="userOperate"] {
+			background-color: #f5f5f5;
+			min-width: 260px;
+			width: 260px;
+			text-align: center;
+		}
+		.user-table-wrap.user-list-table .fixed-columns-right .fixed-table-header th[data-field="userOperate"] .th-inner {
+			text-align: center;
+			justify-content: center;
+		}
+		.user-table-wrap.user-list-table .fixed-columns-right .fixed-table-body td[data-field="userOperate"] {
+			min-width: 260px;
+			width: 260px;
+			padding: 6px 8px;
+			text-align: center;
+			overflow: visible !important;
+		}
+		.user-table-wrap.user-list-table .fixed-columns-right .fixed-table-body td[data-field="userOperate"] .btn,
+		.user-table-wrap.user-list-table .fixed-columns-right .fixed-table-body td[data-field="userOperate"] a {
+			display: inline-block !important;
+			visibility: visible !important;
+		}
+		.user-table-wrap.user-list-table.table-striped .fixed-columns-right .fixed-table-body tbody tr:nth-of-type(odd) td {
+			background-color: #f9f9f9;
+		}
+		.user-table-wrap.user-list-table .fixed-columns-right .fixed-table-body {
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body tbody td {
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			vertical-align: middle !important;
+		}
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-header th[data-field="userSeq"],
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body td[data-field="userSeq"],
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-header th[data-field="status"],
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body td[data-field="status"] {
+			overflow: visible;
+			text-overflow: clip;
+		}
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-header th.bs-checkbox,
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body td.bs-checkbox {
+			text-align: center !important;
+			min-width: 42px !important;
+			width: 42px !important;
+			max-width: 42px !important;
+			padding: 8px 4px !important;
 		}
 	</style>
 </head>
@@ -88,7 +274,7 @@
 			        </a>
 		        </div>
 		        
-		        <div class="col-sm-12 select-table table-striped">
+		        <div class="col-sm-12 select-table table-striped user-table-wrap user-list-table">
 				    <table id="bootstrap-table"></table>
 				</div>
 			</div>
@@ -98,11 +284,411 @@
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
 	<th:block th:include="include :: ztree-js" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
 	<script th:inline="javascript">
 		var editFlag = [[${@permission.hasPermi('system:user:edit')}]];
 		var removeFlag = [[${@permission.hasPermi('system:user:remove')}]];
 		var resetPwdFlag = [[${@permission.hasPermi('system:user:resetPwd')}]];
 		var prefix = ctx + "system/user";
+		var userTableId = "bootstrap-table";
+
+		function calculateUserTableHeight() {
+			var $wrap = $('.user-table-wrap');
+			if ($wrap.length === 0) {
+				return 480;
+			}
+			var top = $wrap[0].getBoundingClientRect().top;
+			var viewH = window.innerHeight || document.documentElement.clientHeight || 600;
+			return Math.max(Math.floor(viewH - top - 20), 320);
+		}
+
+		function adjustUserTableHeight() {
+			var $table = $('#' + userTableId);
+			if ($table.length > 0 && $table.bootstrapTable('getOptions')) {
+				$table.bootstrapTable('resetView', { height: calculateUserTableHeight() });
+			}
+		}
+
+		function relayoutUserTable() {
+			adjustUserTableHeight();
+			setTimeout(function () {
+				adjustUserTableHeight();
+				refreshUserTableLayout();
+			}, 80);
+		}
+
+		function fixUserTableHeaderAlign() {
+			var $bt = $('#' + userTableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			if ($mainBody.length && $mainBody[0] && $mainHeader.length) {
+				var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
+				$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+			}
+		}
+
+		function bindUserMainHorizontalScroll() {
+			var $bt = $('#' + userTableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			$mainBody.off('scroll.userMainH').on('scroll.userMainH', function () {
+				var sl = $mainBody.scrollLeft();
+				$mainHeader.scrollLeft(sl);
+				var $bar = $bt.children('.tp-detail-hscroll');
+				if ($bar.length && $bar[0].scrollLeft !== sl) {
+					$bar[0].scrollLeft = sl;
+				}
+			});
+		}
+
+		function ensureUserDetailHScrollBar() {
+			var $bt = $('#' + userTableId).closest('.bootstrap-table');
+			if ($bt.length === 0) {
+				return $();
+			}
+			var $bar = $bt.children('.tp-detail-hscroll');
+			if ($bar.length === 0) {
+				$bar = $('<div class="tp-detail-hscroll"><div class="tp-detail-hscroll-inner"></div></div>');
+				var $pag = $bt.children('.fixed-table-pagination');
+				if ($pag.length) {
+					$bar.insertBefore($pag);
+				} else {
+					$bt.append($bar);
+				}
+			}
+			return $bar;
+		}
+
+		function syncUserDetailHScrollSize() {
+			var $bt = $('#' + userTableId).closest('.bootstrap-table');
+			var $bar = ensureUserDetailHScrollBar();
+			if ($bar.length === 0) {
+				return;
+			}
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $table = $mainBody.find('table').first();
+			if ($table.length === 0 || !$mainBody[0]) {
+				$bar.hide();
+				return;
+			}
+			var scrollW = $table[0].scrollWidth;
+			var clientW = $mainBody[0].clientWidth;
+			$bar.find('.tp-detail-hscroll-inner').width(Math.max(scrollW, clientW + 1));
+			var $right = $bt.find('.fixed-columns-right');
+			var rightW = ($right.length && $right.is(':visible')) ? Math.ceil($right.outerWidth()) : 0;
+			$bar.css({ marginRight: rightW + 'px', display: 'block' });
+			if (scrollW <= clientW + 2) {
+				$bar.css('overflow-x', 'hidden');
+			} else {
+				$bar.css('overflow-x', 'auto');
+			}
+			$bar[0].scrollLeft = $mainBody[0].scrollLeft;
+		}
+
+		function bindUserDetailHScroll() {
+			var $bt = $('#' + userTableId).closest('.bootstrap-table');
+			var $bar = ensureUserDetailHScrollBar();
+			if ($bar.length === 0) {
+				return;
+			}
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			$bar.off('scroll.userDetailH').on('scroll.userDetailH', function () {
+				var sl = this.scrollLeft;
+				$mainBody.scrollLeft(sl);
+				$mainHeader.scrollLeft(sl);
+			});
+		}
+
+		var userColWidths = {
+			userSeq: 72,
+			loginName: 120,
+			pwdPlain: 120,
+			userName: 180,
+			realName: 100,
+			supplierNames: 200,
+			hospitalNames: 200,
+			roleNames: 160,
+			'dept.deptName': 120,
+			phonenumber: 120,
+			status: 100,
+			userType: 100,
+			createTime: 160,
+			userOperate: 260
+		};
+
+		function getUserTableTotalWidth() {
+			var sum = 0;
+			var opt = $('#' + userTableId).bootstrapTable('getOptions');
+			if (opt && opt.columns && opt.columns[0]) {
+				$.each(opt.columns[0], function (_, col) {
+					if (!col || col.visible === false) {
+						return;
+					}
+					if (col.checkbox) {
+						sum += 42;
+					} else if (col.field && userColWidths[col.field] != null) {
+						sum += userColWidths[col.field];
+					} else if (col.width) {
+						sum += parseInt(col.width, 10) || 0;
+					} else {
+						sum += 100;
+					}
+				});
+			}
+			return Math.max(sum, 1200);
+		}
+
+		function applyUserMainTableMinWidth() {
+			var sum = getUserTableTotalWidth();
+			var w = sum + 'px';
+			var $container = $('#' + userTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $headerTable = $container.children('.fixed-table-header').find('table');
+			var $bodyTable = $container.children('.fixed-table-body').children('table');
+			$headerTable.css({ width: w, minWidth: w, maxWidth: w });
+			$bodyTable.css({ width: w, minWidth: w, maxWidth: w });
+		}
+
+		/** 按字段强制列宽（覆盖 fitHeader，保证表头/明细对齐） */
+		function applyUserFieldColumnWidth(field, widthPx) {
+			var w = widthPx + 'px';
+			var $container = $('#' + userTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $th = $mainHeader.find('th[data-field="' + field + '"]');
+			if ($th.length === 0) {
+				return;
+			}
+			var colIdx = $th[0].cellIndex;
+			var setW = function (el) {
+				el.style.setProperty('width', w, 'important');
+				el.style.setProperty('min-width', w, 'important');
+				el.style.setProperty('max-width', w, 'important');
+			};
+			$th.each(function () { setW(this); });
+			$mainBody.find('table tbody tr').each(function () {
+				var cell = this.cells[colIdx];
+				if (cell) {
+					setW(cell);
+				}
+			});
+			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+		}
+
+		function applyUserCheckboxColumnWidth() {
+			var w = '42px';
+			var $container = $('#' + userTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $th = $mainHeader.find('th.bs-checkbox');
+			if ($th.length === 0) {
+				return;
+			}
+			var colIdx = $th[0].cellIndex;
+			var setW = function (el) {
+				el.style.setProperty('width', w, 'important');
+				el.style.setProperty('min-width', w, 'important');
+				el.style.setProperty('max-width', w, 'important');
+			};
+			$th.each(function () { setW(this); });
+			$mainBody.find('table tbody tr').each(function () {
+				var cell = this.cells[colIdx];
+				if (cell) {
+					setW(cell);
+				}
+			});
+			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+		}
+
+		function syncUserHeaderBodyColumnWidths() {
+			var $container = $('#' + userTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $headerThs = $mainHeader.find('thead tr').first().children('th');
+			var $firstRow = $mainBody.find('tbody tr').first();
+			if ($firstRow.length === 0) {
+				return;
+			}
+			var setW = function (el, w) {
+				el.style.setProperty('width', w, 'important');
+				el.style.setProperty('min-width', w, 'important');
+				el.style.setProperty('max-width', w, 'important');
+			};
+			$headerThs.each(function (i) {
+				var bodyCell = $firstRow[0].cells[i];
+				if (!bodyCell) {
+					return;
+				}
+				var w = bodyCell.style.width;
+				if (!w) {
+					w = window.getComputedStyle(bodyCell).width;
+				}
+				if (w) {
+					setW(this, w);
+					$mainHeader.find('colgroup col').eq(i).each(function () { setW(this, w); });
+					$mainBody.find('colgroup col').eq(i).each(function () { setW(this, w); });
+				}
+			});
+		}
+
+		function scheduleUserColumnWidths() {
+			applyUserCheckboxColumnWidth();
+			$.each(userColWidths, function (field, width) {
+				applyUserFieldColumnWidth(field, width);
+			});
+			syncUserHeaderBodyColumnWidths();
+			requestAnimationFrame(function () {
+				applyUserCheckboxColumnWidth();
+				$.each(userColWidths, function (field, width) {
+					applyUserFieldColumnWidth(field, width);
+				});
+				syncUserHeaderBodyColumnWidths();
+			});
+		}
+
+		function syncUserHeaderBodyScrollLeft() {
+			var $container = $('#' + userTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			if ($mainBody.length && $mainHeader.length) {
+				var sl = $mainBody[0].scrollLeft;
+				$mainHeader.scrollLeft(sl);
+				var $bt = $('#' + userTableId).closest('.bootstrap-table');
+				var $bar = $bt.children('.tp-detail-hscroll');
+				if ($bar.length && $bar[0].scrollLeft !== sl) {
+					$bar[0].scrollLeft = sl;
+				}
+			}
+		}
+
+		function fixUserFixedColumnsScroll() {
+			var $bt = $('#' + userTableId).closest('.bootstrap-table');
+			var $right = $bt.find('.fixed-columns-right');
+			if ($right.length === 0 || !$right.is(':visible')) {
+				return;
+			}
+			var $rightBody = $right.find('.fixed-table-body');
+			var bodyEl = $rightBody[0];
+			var tableEl = $rightBody.find('table')[0];
+			if (!bodyEl || !tableEl) {
+				return;
+			}
+			var sl = Math.max(0, tableEl.scrollWidth - bodyEl.clientWidth);
+			bodyEl.scrollLeft = sl;
+			$right.find('.fixed-table-header').scrollLeft(sl);
+		}
+
+		function syncUserOperateColumnContent() {
+			var $bt = $('#' + userTableId).closest('.bootstrap-table');
+			var $right = $bt.find('.fixed-columns-right');
+			if ($right.length === 0) {
+				return;
+			}
+			var colIdx = -1;
+			$bt.find('.fixed-table-container > .fixed-table-header th').each(function (i) {
+				if ($(this).attr('data-field') === 'userOperate') {
+					colIdx = i;
+				}
+			});
+			if (colIdx < 0) {
+				return;
+			}
+			var $mainRows = $bt.find('.fixed-table-container > .fixed-table-body tbody tr');
+			var $rightRows = $right.find('.fixed-table-body tbody tr');
+			var len = Math.min($mainRows.length, $rightRows.length);
+			for (var i = 0; i < len; i++) {
+				var mainCell = $mainRows[i].cells[colIdx];
+				var rightCell = $rightRows[i].cells[colIdx];
+				if (!mainCell || !rightCell) {
+					continue;
+				}
+				rightCell.innerHTML = mainCell.innerHTML;
+				$(rightCell).find('.btn, a').css({ display: 'inline-block', visibility: 'visible', opacity: 1 });
+			}
+			initUserOperatePopovers();
+		}
+
+		function initUserOperatePopovers() {
+			var $scope = $('#' + userTableId).closest('.bootstrap-table').find('.fixed-columns-right');
+			$scope.find('[data-toggle="popover"]').each(function () {
+				var $el = $(this);
+				if ($el.data('bs.popover')) {
+					$el.popover('destroy');
+				}
+			});
+			$scope.find('[data-toggle="popover"]').popover({ container: 'body' });
+		}
+
+		function syncUserOperateColumnScroll() {
+			var $bt = $('#' + userTableId).closest('.bootstrap-table');
+			var $rightBody = $bt.find('.fixed-columns-right .fixed-table-body');
+			if ($rightBody.length === 0) {
+				return;
+			}
+			var $mainBody = $bt.find('.fixed-table-container').children('.fixed-table-body');
+			$mainBody.off('scroll.userOperateSync').on('scroll.userOperateSync', function () {
+				$rightBody.scrollTop($mainBody.scrollTop());
+			});
+		}
+
+		function syncUserOperateRowHeights() {
+			var $bt = $('#' + userTableId).closest('.bootstrap-table');
+			var $right = $bt.find('.fixed-columns-right');
+			if ($right.length === 0) {
+				return;
+			}
+			var $mainRows = $bt.find('.fixed-table-container').children('.fixed-table-body').find('table tbody tr');
+			var $rightRows = $right.find('.fixed-table-body table tbody tr');
+			var len = Math.min($mainRows.length, $rightRows.length);
+			$mainRows.add($rightRows).css({ height: '', minHeight: '' });
+			for (var i = 0; i < len; i++) {
+				var mainEl = $mainRows[i];
+				var rightEl = $rightRows[i];
+				var h = Math.max(mainEl.offsetHeight, rightEl.offsetHeight);
+				if (h > 0) {
+					var hs = h + 'px';
+					mainEl.style.height = hs;
+					mainEl.style.minHeight = hs;
+					rightEl.style.height = hs;
+					rightEl.style.minHeight = hs;
+				}
+			}
+			var $mainHead = $bt.find('.fixed-table-container > .fixed-table-header table thead tr');
+			var $rightHead = $right.find('.fixed-table-header table thead tr');
+			if ($mainHead.length && $rightHead.length) {
+				var hh = Math.max($mainHead[0].offsetHeight, $rightHead[0].offsetHeight);
+				if (hh > 0) {
+					var hhs = hh + 'px';
+					$mainHead.css({ height: hhs, minHeight: hhs });
+					$rightHead.css({ height: hhs, minHeight: hhs });
+				}
+			}
+		}
+
+		function scheduleUserOperateRowSync() {
+			syncUserOperateRowHeights();
+			requestAnimationFrame(syncUserOperateRowHeights);
+		}
+
+		function refreshUserTableLayout() {
+			fixUserTableHeaderAlign();
+			scheduleUserColumnWidths();
+			applyUserMainTableMinWidth();
+			syncUserHeaderBodyScrollLeft();
+			bindUserMainHorizontalScroll();
+			fixUserFixedColumnsScroll();
+			syncUserOperateColumnScroll();
+			syncUserDetailHScrollSize();
+			bindUserDetailHScroll();
+			scheduleUserOperateRowSync();
+			syncUserOperateColumnContent();
+		}
 
 		$(function() {
 		    var panehHidden = false;
@@ -120,10 +706,13 @@
 	    	}
 		    queryUserList();
 		    queryDeptTree();
+		    $(window).on('resize', relayoutUserTable);
+		    setTimeout(relayoutUserTable, 300);
 		});
 
 		function queryUserList() {
 		    var options = {
+		        id: userTableId,
 		        url: prefix + "/list",
 		        viewUrl: prefix + "/view/{id}",
 		        createUrl: prefix + "/add",
@@ -138,13 +727,45 @@
 		        uniqueId: "userId",
 		        rememberSelected: true,
 		        maintainSelected: true,
+		        mobileResponsive: false,
+		        fixedColumns: true,
+		        fixedNumber: 0,
+		        fixedRightNumber: 1,
+		        height: calculateUserTableHeight(),
+		        onLoadSuccess: function () {
+		            setTimeout(function () {
+		                adjustUserTableHeight();
+		                refreshUserTableLayout();
+		            }, 50);
+		            setTimeout(function () {
+		                var $t = $('#' + userTableId);
+		                if ($t.bootstrapTable('getOptions')) {
+		                    $t.bootstrapTable('resetView', { height: calculateUserTableHeight() });
+		                }
+		                refreshUserTableLayout();
+		                initUserOperatePopovers();
+		            }, 200);
+		            setTimeout(refreshUserTableLayout, 450);
+		        },
+		        onPostBody: function () {
+		            refreshUserTableLayout();
+		            /* 冻结列在 post-header 之后才 clone，需延迟再同步操作列 */
+		            setTimeout(refreshUserTableLayout, 0);
+		            setTimeout(refreshUserTableLayout, 120);
+		            setTimeout(function () {
+		                refreshUserTableLayout();
+		                initUserOperatePopovers();
+		            }, 280);
+		        },
 		        columns: [{
-		            checkbox: true
+		            checkbox: true,
+		            width: 42
 		        },
 		        {
+		            field: 'userSeq',
 		            title: '序号',
 		            align: 'center',
-		            width: 60,
+		            width: 72,
 		            formatter: function (value, row, index) {
 		                return $.table.serialNumber(index);
 		            }
@@ -158,9 +779,65 @@
 		            field: 'loginName',
 		            title: '登录名称',
 		            sortable: true,
+		            width: 120,
 		            formatter: function (value, row, index) {
 		                return '<a href="javascript:void(0)" onclick="$.operate.view(\'' + row.userId + '\')">' + value + '</a>';
 		            }
+		        },
+		        {
+		            field: 'pwdPlain',
+		            title: '明文密码',
+		            width: 120
+		        },
+		        {
+		            field: 'userName',
+		            title: '用户名称',
+		            width: 180
+		        },
+		        {
+		            field: 'realName',
+		            title: '姓名',
+		            width: 100
+		        },
+		        {
+		            field: 'supplierNames',
+		            title: '供应商',
+		            width: 200
+		        },
+		        {
+		            field: 'hospitalNames',
+		            title: '医院',
+		            width: 200
+		        },
+		        {
+		            field: 'roleNames',
+		            title: '角色',
+		            width: 160
+		        },
+		        {
+		            field: 'dept.deptName',
+		            title: '部门',
+		            width: 120
+		        },
+		        {
+		            field: 'email',
+		            title: '邮箱',
+		            visible: false
+		        },
+		        {
+		            field: 'phonenumber',
+		            title: '手机',
+		            width: 120
+		        },
+		        {
+		        	field: 'status',
+		        	visible: editFlag == 'hidden' ? false : true,
+		        	title: '用户状态',
+		        	align: 'center',
+		        	width: 100,
+		        	formatter: function (value, row, index) {
+		        		return statusTools(row);
+		        	}
 		        },
 		        {
 		            field: 'userType',
@@ -175,63 +852,16 @@
 		            }
 		        },
 		        {
-		            field: 'userName',
-		            title: '用户名称'
-		        },
-		        {
-		            field: 'realName',
-		            title: '姓名',
-		            width: 100
-		        },
-		        {
-		            field: 'supplierNames',
-		            title: '供应商',
-		            width: 160
-		        },
-		        {
-		            field: 'hospitalNames',
-		            title: '医院',
-		            width: 160
-		        },
-		        {
-		            field: 'roleNames',
-		            title: '角色',
-		            width: 160
-		        },
-		        {
-		            field: 'dept.deptName',
-		            title: '部门'
-		        },
-		        {
-		            field: 'email',
-		            title: '邮箱',
-		            visible: false
-		        },
-		        {
-		            field: 'phonenumber',
-		            title: '手机'
-		        },
-		        {
-		            field: 'pwdPlain',
-		            title: '明文密码',
-		            width: 140
-		        },
-		        {
-		        	visible: editFlag == 'hidden' ? false : true,
-		        	title: '用户状态',
-		        	align: 'center',
-		        	formatter: function (value, row, index) {
-		        		return statusTools(row);
-		        	}
-		        },
-		        {
 		            field: 'createTime',
 		            title: '创建时间',
-		            sortable: true
+		            sortable: true,
+		            width: 160
 		        },
 		        {
+		            field: 'userOperate',
 		            title: '操作',
 		            align: 'center',
+		            width: 260,
 		            formatter: function(value, row, index) {
 		                if (row.userId != 1) {
 		                	var actions = [];
@@ -240,7 +870,7 @@
 			                var more = [];
 			                more.push("<a class='btn btn-default btn-xs " + resetPwdFlag + "' href='javascript:void(0)' onclick='resetPwd(" + row.userId + ")'><i class='fa fa-key'></i>重置密码</a> ");
 			                more.push("<a class='btn btn-default btn-xs " + editFlag + "' href='javascript:void(0)' onclick='authRole(" + row.userId + ")'><i class='fa fa-check-square-o'></i>分配角色</a>");
-			                actions.push('<a tabindex="0" class="btn btn-info btn-xs" role="button" data-container="body" data-placement="left" data-toggle="popover" data-html="true" data-trigger="hover" data-content="' + more.join('') + '"><i class="fa fa-chevron-circle-right"></i>更多操作</a>');
+			                actions.push('<a tabindex="0" class="btn btn-info btn-xs" role="button" data-container="body" data-placement="left" data-toggle="popover" data-html="true" data-trigger="click" data-content="' + more.join('') + '"><i class="fa fa-chevron-circle-right"></i>更多操作</a>');
 			                return actions.join('');
 		            	} else {
 		                    return "";

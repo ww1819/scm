@@ -26,6 +26,18 @@
 			padding-right: 6px;
 			white-space: nowrap;
 		}
+		.delivery-info-box.search-collapse {
+			margin: 0 10px 15px 10px;
+			padding: 12px 10px 5px;
+			background: #fff !important;
+		}
+		.delivery-info-box .form-control[readonly] {
+			background-color: #fff;
+			border-color: #e5e6e7;
+		}
+		.delivery-basic-header-row {
+			margin-bottom: 12px !important;
+		}
 		.delivery-detail-table-section {
 			flex: 1;
 			min-height: 0;
@@ -93,10 +105,19 @@
         <div class="delivery-detail-basic">
         <form id="form-delivery-detail" class="form-horizontal delivery-basic-fields">
             <input type="hidden" id="deliveryId" th:value="${delivery.deliveryId}"/>
-            <div class="delivery-basic-header-row" style="display:flex;align-items:center;justify-content:space-between;margin:8px 10px 25px 10px;padding-bottom:5px;border-bottom:1px solid #ddd;">
+            <div class="delivery-basic-header-row" style="display:flex;align-items:center;justify-content:space-between;margin:8px 10px 12px 10px;padding-bottom:5px;border-bottom:1px solid #ddd;">
                 <h4 class="form-header h4" style="margin:0;border:0;padding:0;">基本信息</h4>
-                <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i> 关 闭</button>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <a class="btn btn-sm btn-default" id="btn-link-order" style="display:none;" href="javascript:void(0)" onclick="openOrderDetail(refOrderId)">
+                        <i class="fa fa-file-text-o"></i> 打开本系统订单
+                    </a>
+                    <a class="btn btn-sm btn-default" id="btn-link-zs" style="display:none;" href="javascript:void(0)" onclick="openZsOrderDetail(refZsOrderIdStr)">
+                        <i class="fa fa-file-text-o"></i> 打开第三方订单
+                    </a>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i> 关 闭</button>
+                </div>
             </div>
+            <div class="search-collapse delivery-info-box">
             <div class="row">
                 <div class="col-sm-4">
                     <div class="form-group">
@@ -151,19 +172,6 @@
                     </div>
                 </div>
             </div>
-            <div class="row" id="row-link-order" style="display:none;">
-                <div class="col-sm-12">
-                    <a class="btn btn-sm btn-default" href="javascript:void(0)" onclick="openOrderDetail(refOrderId)">
-                        <i class="fa fa-file-text-o"></i> 打开本系统订单
-                    </a>
-                </div>
-            </div>
-            <div class="row" id="row-link-zs" style="display:none;">
-                <div class="col-sm-12">
-                    <a class="btn btn-sm btn-default" href="javascript:void(0)" onclick="openZsOrderDetail(refZsOrderIdStr)">
-                        <i class="fa fa-file-text-o"></i> 打开第三方订单
-                    </a>
-                </div>
             </div>
         </form>
         </div>
@@ -242,10 +250,10 @@
 
 		$(function() {
 		    if (refOrderId != null) {
-		        $('#row-link-order').show();
+		        $('#btn-link-order').show();
 		    }
 		    if (refZsOrderIdStr != null && refZsOrderIdStr !== '') {
-		        $('#row-link-zs').show();
+		        $('#btn-link-zs').show();
 		    }
 		    layoutDetailTableWrap();
 		    $('#bootstrap-table').bootstrapTable({

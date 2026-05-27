@@ -7,17 +7,28 @@
 		.order-table-wrap {
 			min-height: 0;
 			position: relative;
-			padding-bottom: 6px;
+			padding-bottom: 0;
 			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.order-table-wrap > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
 		}
 
 		.order-table-wrap .bootstrap-table {
+			display: flex;
+			flex-direction: column;
 			height: 100%;
-			padding-bottom: 46px;
+			padding-bottom: 0;
 		}
 
 		.order-table-wrap .fixed-table-container {
-			padding-bottom: 46px;
+			flex: 1 1 auto;
+			min-height: 0;
+			padding-bottom: 0;
 		}
 
 		.order-table-wrap .fixed-table-body {
@@ -25,16 +36,22 @@
 			overflow-y: auto !important;
 		}
 
+		.order-table-wrap .fixed-table-body .fixed-table-border {
+			display: none !important;
+			height: 0 !important;
+		}
+
 		.order-table-wrap .fixed-table-pagination {
-			position: absolute;
-			left: 10px;
-			right: 10px;
-			bottom: 0;
+			position: relative;
+			flex-shrink: 0;
+			left: auto;
+			right: auto;
+			bottom: auto;
 			background: #fff;
-			z-index: 3;
+			z-index: 1;
 			border-top: 1px solid #eee;
 			margin: 0 !important;
-			padding: 6px 0;
+			padding: 6px 10px !important;
 		}
 
 		.order-table-wrap .fixed-table-pagination .pagination {
@@ -147,20 +164,36 @@
 
 		$(function() {
 		    queryOrderList();
+		    layoutOrderTableWrapHeight();
 		    $(window).resize(function() {
+		    	layoutOrderTableWrapHeight();
 		    	adjustTableHeight();
 		    });
 		});
 
-		function calculateTableHeight() {
-			var $detail = $('.order-table-wrap');
-			if ($detail.length === 0) {
-				return 380;
+		function layoutOrderTableWrapHeight() {
+			var $wrap = $('.order-table-wrap');
+			if (!$wrap.length) {
+				return;
 			}
-			var top = $detail[0].getBoundingClientRect().top;
-			var h = Math.floor(window.innerHeight - top - 52);
-			h = Math.min(h, 480);
-			return Math.max(h, 280);
+			var top = $wrap[0].getBoundingClientRect().top;
+			var h = Math.max(Math.floor(window.innerHeight - top - 14), 420);
+			$wrap[0].style.height = h + 'px';
+			$wrap[0].style.minHeight = h + 'px';
+		}
+
+		function calculateTableHeight() {
+			layoutOrderTableWrapHeight();
+			var $wrap = $('.order-table-wrap');
+			if (!$wrap.length) {
+				return 520;
+			}
+			var $bt = $wrap.find('.bootstrap-table');
+			var wrapH = $wrap[0].clientHeight || $wrap.innerHeight() || 0;
+			var toolbarH = $bt.find('.fixed-table-toolbar').outerHeight(true) || 0;
+			var pagH = $bt.find('.fixed-table-pagination').outerHeight(true) || 42;
+			var containerH = Math.floor(wrapH - toolbarH - pagH - 4);
+			return Math.max(containerH, 240);
 		}
 
 		function adjustTableHeight() {
@@ -182,7 +215,12 @@
 		        maintainSelected: true,
 		        height: calculateTableHeight(),
 		        onLoadSuccess: function () {
+		            layoutOrderTableWrapHeight();
 		            setTimeout(adjustTableHeight, 0);
+		            setTimeout(function () {
+		                layoutOrderTableWrapHeight();
+		                adjustTableHeight();
+		            }, 120);
 		        },
 		        columns: [{
 		            checkbox: true
