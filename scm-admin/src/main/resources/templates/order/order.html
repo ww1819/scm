@@ -5,7 +5,7 @@
 	<th:block th:include="include :: layout-latest-css" />
 	<style>
 		.order-table-wrap {
-			min-height: 730px;
+			min-height: 0;
 			position: relative;
 			padding-bottom: 6px;
 			overflow: hidden;
@@ -47,6 +47,31 @@
 			z-index: 2;
 			background: #fff;
 		}
+
+		/* 搜索区：上下内边距一致，条件分行对齐 */
+		.container-div > .row > .search-collapse {
+			padding-top: 10px;
+			padding-bottom: 10px;
+		}
+		.container-div .search-collapse .select-list ul {
+			margin-bottom: 0;
+			overflow: hidden;
+		}
+		.container-div .search-collapse .order-search-rows > ul {
+			display: block;
+			width: 100%;
+			overflow: hidden;
+		}
+		.container-div .search-collapse .order-search-rows > ul + ul {
+			margin-top: 2px;
+		}
+		.container-div .search-collapse .select-list li {
+			margin: 4px 15px 4px 0;
+		}
+		.container-div .search-collapse .select-list li.select-time label {
+			margin-top: 4px;
+			margin-bottom: 4px;
+		}
 	</style>
 </head>
 <body class="gray-bg">
@@ -54,7 +79,7 @@
 		<div class="row">
 			<div class="col-sm-12 search-collapse">
 				<form id="order-form">
-					<div class="select-list">
+					<div class="select-list order-search-rows">
 						<ul>
 							<li>
 								订单编号：<input type="text" name="orderNo"/>
@@ -75,15 +100,13 @@
 									<option value="4">已作废</option>
 								</select>
 							</li>
+						</ul>
+						<ul>
 							<li class="select-time">
-								<label>订单日期： </label>
+								<label>订单日期：</label>
 								<input type="text" class="time-input" id="startTime" placeholder="开始时间" name="params[beginTime]"/>
 								<span>-</span>
 								<input type="text" class="time-input" id="endTime" placeholder="结束时间" name="params[endTime]"/>
-							</li>
-							<li>
-								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()" style="display: none;"><i class="fa fa-search"></i>&nbsp;搜索</a>
-								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()" style="display: none;"><i class="fa fa-refresh"></i>&nbsp;重置</a>
 							</li>
 						</ul>
 					</div>
@@ -132,9 +155,12 @@
 		function calculateTableHeight() {
 			var $detail = $('.order-table-wrap');
 			if ($detail.length === 0) {
-				return 700;
+				return 380;
 			}
-			return Math.max($detail.innerHeight() - 8, 650);
+			var top = $detail[0].getBoundingClientRect().top;
+			var h = Math.floor(window.innerHeight - top - 52);
+			h = Math.min(h, 480);
+			return Math.max(h, 280);
 		}
 
 		function adjustTableHeight() {
@@ -155,6 +181,9 @@
 		        rememberSelected: true,
 		        maintainSelected: true,
 		        height: calculateTableHeight(),
+		        onLoadSuccess: function () {
+		            setTimeout(adjustTableHeight, 0);
+		        },
 		        columns: [{
 		            checkbox: true
 		        },
