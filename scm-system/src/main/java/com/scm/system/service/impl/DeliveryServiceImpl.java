@@ -717,6 +717,28 @@ public class DeliveryServiceImpl implements IDeliveryService
         orderDetailMapper.updateOrderDetail(orderDetail);
     }
 
+    /**
+     * 删除整单配送单前，将本系统订单明细的剩余可配送数量加回（与 {@link #removeDeliveryDetailAndSideEffects} 中单行删除一致）。
+     * 第三方订单引用状态由未删除配送明细实时汇总，无需回写。
+     */
+    private void restoreScmOrderRemainingBeforeDeliveryDelete(Delivery delivery)
+    {
+        if (delivery == null || delivery.getDeliveryId() == null || delivery.getOrderId() == null)
+        {
+            return;
+        }
+        List<DeliveryDetail> details = deliveryDetailMapper.selectDeliveryDetailListByDeliveryId(delivery.getDeliveryId());
+        if (details == null || details.isEmpty())
+        {
+            return;
+        }
+        Long orderId = delivery.getOrderId();
+        for (DeliveryDetail dd : details)
+        {
+            addBackOrderLineRemaining(orderId, dd);
+        }
+    }
+
     private void subtractOrderLineRemaining(Long orderId, DeliveryDetail deliveryDetail)
     {
         if (orderId == null || deliveryDetail == null || deliveryDetail.getOrderDetailId() == null)
@@ -869,6 +891,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         for (String deliveryId : deliveryIds)
         {
             Delivery d = deliveryMapper.selectDeliveryById(Long.parseLong(deliveryId));
+            restoreScmOrderRemainingBeforeDeliveryDelete(d);
             String delBy = StringUtils.trimToEmpty(d != null && StringUtils.isNotEmpty(d.getUpdateBy()) ? d.getUpdateBy()
                 : ShiroUtils.getLoginName());
             scmOrderDetailDeliveryRelMapper.deleteByDeliveryId(deliveryId);
@@ -892,6 +915,7 @@ public class DeliveryServiceImpl implements IDeliveryService
     {
         Delivery d = deliveryMapper.selectDeliveryById(deliveryId);
         assertDeliveryDeletable(d);
+        restoreScmOrderRemainingBeforeDeliveryDelete(d);
         String did = String.valueOf(deliveryId);
         scmOrderDetailDeliveryRelMapper.deleteByDeliveryId(did);
         zsTpOrderDetailDeliveryRelMapper.deleteByDeliveryId(did);
