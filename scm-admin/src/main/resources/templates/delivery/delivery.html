@@ -79,6 +79,10 @@
 			width: 240px;
 			text-align: center;
 		}
+		.delivery-table-wrap.delivery-list-table .fixed-columns-right .fixed-table-header th[data-field="deliveryOperate"] .th-inner {
+			text-align: center;
+			justify-content: center;
+		}
 		.delivery-table-wrap.delivery-list-table .fixed-columns-right .fixed-table-body td[data-field="deliveryOperate"] {
 			min-width: 240px;
 			width: 240px;
@@ -542,13 +546,6 @@
 		            }
 		        },
 		        {
-		            field: 'srcOrderDeptName',
-		            title: '订单申请科室',
-		            formatter: function(value, row, index) {
-		                return value || '-';
-		            }
-		        },
-		        {
 		            field: 'deliveryAmount',
 		            title: '配送金额'
 		        },
@@ -576,6 +573,11 @@
 		            }
 		        },
 		        {
+		            field: 'createTime',
+		            title: '制单日期',
+		            sortable: true
+		        },
+		        {
 		            field: 'auditByDisplay',
 		            title: '审核人',
 		            formatter: function(value, row, index) {
@@ -600,13 +602,15 @@
 		            }
 		        },
 		        {
-		            field: 'expectedDeliveryDate',
-		            title: '预计配送日期',
-		            sortable: true
+		            field: 'srcOrderDeptName',
+		            title: '订单申请科室',
+		            formatter: function(value, row, index) {
+		                return value || '-';
+		            }
 		        },
 		        {
-		            field: 'createTime',
-		            title: '创建时间',
+		            field: 'expectedDeliveryDate',
+		            title: '预计配送日期',
 		            sortable: true
 		        },
 		        {
