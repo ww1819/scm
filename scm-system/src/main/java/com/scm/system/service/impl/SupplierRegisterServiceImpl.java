@@ -113,6 +113,7 @@ public class SupplierRegisterServiceImpl implements ISupplierRegisterService {
         user.setStatus("0");
         user.setSalt(ShiroUtils.randomSalt());
         user.setPassword(Md5Utils.hash(user.getLoginName() + adminUser.getPassword() + user.getSalt()));
+        user.setPwdPlain(adminUser.getPassword());
         if (StringUtils.isNotEmpty(adminUser.getPhonenumber())) user.setPhonenumber(adminUser.getPhonenumber());
         if (StringUtils.isNotEmpty(adminUser.getEmail())) user.setEmail(adminUser.getEmail());
         user.setCreateBy(operBy != null ? operBy : user.getLoginName());
@@ -162,6 +163,7 @@ public class SupplierRegisterServiceImpl implements ISupplierRegisterService {
             newUser.setStatus("0");
             newUser.setSalt(ShiroUtils.randomSalt());
             newUser.setPassword(Md5Utils.hash(newUser.getLoginName() + user.getPassword() + newUser.getSalt()));
+            newUser.setPwdPlain(user.getPassword());
             if (StringUtils.isNotEmpty(user.getPhonenumber())) newUser.setPhonenumber(user.getPhonenumber());
             if (StringUtils.isNotEmpty(user.getEmail())) newUser.setEmail(user.getEmail());
             newUser.setCreateBy(operBy != null ? operBy : newUser.getLoginName());

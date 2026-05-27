@@ -832,4 +832,18 @@ public class SysUserServiceImpl implements ISysUserService
     {
         return userMapper.updateUser(user);
     }
+
+    /**
+     * 历史用户批量回填登记明文密码（系统初始密码；仅 pwd_plain 为 NULL，用户自行改密后为 '' 不覆盖）
+     */
+    @Override
+    public int backfillHistoryPwdPlain()
+    {
+        String initPassword = configService.selectConfigByKey("sys.user.initPassword");
+        if (StringUtils.isEmpty(initPassword))
+        {
+            initPassword = "123456";
+        }
+        return userMapper.backfillHistoryPwdPlain(initPassword);
+    }
 }

@@ -126,4 +126,12 @@ public interface SysUserMapper
      * 按租户ID查询用户列表（用于客户医院管理员等）
      */
     public List<SysUser> selectUserListByTenantId(String tenantId);
+
+    /**
+     * 历史用户批量回填登记明文密码（仅 pwd_plain 为 NULL）
+     *
+     * @param initPassword 系统初始密码明文
+     * @return 更新行数
+     */
+    public int backfillHistoryPwdPlain(String initPassword);
 }

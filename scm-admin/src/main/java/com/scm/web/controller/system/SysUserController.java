@@ -104,6 +104,19 @@ public class SysUserController extends BaseController
         return getDataTable(list);
     }
 
+    /**
+     * 历史用户批量回填登记明文密码（系统初始密码）
+     */
+    @RequiresPermissions("system:user:edit")
+    @Log(title = "用户管理", businessType = BusinessType.UPDATE)
+    @PostMapping("/backfillPwdPlain")
+    @ResponseBody
+    public AjaxResult backfillPwdPlain()
+    {
+        int rows = userService.backfillHistoryPwdPlain();
+        return success("已回填 " + rows + " 个历史用户的登记明文密码");
+    }
+
     @Log(title = "用户管理", businessType = BusinessType.EXPORT)
     @RequiresPermissions("system:user:export")
     @PostMapping("/export")

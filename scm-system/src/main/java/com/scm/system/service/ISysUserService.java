@@ -219,4 +219,11 @@ public interface ISysUserService
      * @return 结果
      */
     public int changeStatus(SysUser user);
+
+    /**
+     * 历史用户批量回填登记明文密码（系统初始密码；仅 pwd_plain 为 NULL）
+     *
+     * @return 更新行数
+     */
+    public int backfillHistoryPwdPlain();
 }

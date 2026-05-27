@@ -138,3 +138,17 @@ INSERT INTO sys_role_menu (id, role_id, menu_id, hospital_id, supplier_id)
 SELECT REPLACE(UUID(),'-',''), 110, 20041, '', '' FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM sys_role_menu WHERE role_id = 110 AND menu_id = 20041 AND hospital_id = '' AND supplier_id = '');
 /
+-- 历史用户：批量回填登记明文密码（系统参数 sys.user.initPassword；仅 pwd_plain 为 NULL，用户自行改密后为 '' 不覆盖）
+UPDATE sys_user u
+INNER JOIN (
+  SELECT config_value
+  FROM sys_config
+  WHERE config_key = 'sys.user.initPassword'
+  LIMIT 1
+) cfg
+SET u.pwd_plain = cfg.config_value,
+    u.update_time = sysdate()
+WHERE u.del_flag = '0'
+  AND u.pwd_plain IS NULL
+  AND u.user_id > 1;
+/

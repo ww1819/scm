@@ -44,7 +44,7 @@
 									登录名称：<input type="text" name="loginName"/>
 								</li>
 								<li>
-									手机号码：<input type="text" name="phonenumber"/>
+									供应商：<input type="text" name="params[supplierName]"/>
 								</li>
 								<li>
 									用户状态：<select name="status" th:with="type=${@dict.getType('sys_normal_disable')}">
@@ -82,6 +82,9 @@
 			        </a>
 		            <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="system:user:export">
 			            <i class="fa fa-download"></i> 导出
+			        </a>
+		            <a class="btn btn-default" onclick="backfillPwdPlain()" shiro:hasPermission="system:user:edit">
+			            <i class="fa fa-key"></i> 回填初始明文密码
 			        </a>
 		        </div>
 		        
@@ -211,12 +214,7 @@
 		        {
 		            field: 'pwdPlain',
 		            title: '明文密码',
-		            width: 140,
-		            formatter: function (value) {
-		                if (!value) return '<span class="text-muted">-</span>';
-		                var t = $('<div/>').text(value).html();
-		                return '<span title="' + t + '">' + t + '</span>';
-		            }
+		            width: 140
 		        },
 		        {
 		        	visible: editFlag == 'hidden' ? false : true,
@@ -315,6 +313,20 @@
 		function dept() {
 			var url = ctx + "system/dept";
 			$.modal.openTab("部门管理", url);
+		}
+
+		/* 历史用户批量回填登记明文密码 */
+		function backfillPwdPlain() {
+			$.modal.confirm("将为所有未登记明文密码的历史用户（pwd_plain 为空）回填系统初始密码；用户自行改密后已清空的记录不会覆盖。是否继续？", function() {
+				$.operate.post(prefix + "/backfillPwdPlain", {}, function(result) {
+					if (result.code == web_status.SUCCESS) {
+						$.modal.msgSuccess(result.msg);
+						$.table.refresh();
+					} else {
+						$.modal.alertError(result.msg);
+					}
+				});
+			});
 		}
 
 		/* 用户管理-重置密码 */

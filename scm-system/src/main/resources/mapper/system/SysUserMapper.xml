@@ -97,6 +97,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<if test="phonenumber != null and phonenumber != ''">
 			AND u.phonenumber like concat('%', #{phonenumber}, '%')
 		</if>
+		<if test="params.supplierName != null and params.supplierName != ''">
+			AND EXISTS (
+				SELECT 1 FROM scm_supplier_user su
+				INNER JOIN scm_supplier s ON su.supplier_id = s.supplier_id AND s.del_flag = '0'
+				WHERE su.user_id = u.user_id AND su.status = '0' AND (su.del_flag = '0' OR su.del_flag IS NULL)
+				AND s.company_name like concat('%', #{params.supplierName}, '%')
+			)
+		</if>
 		<if test="params.beginTime != null and params.beginTime != ''"><!-- 开始时间检索 -->
 			AND date_format(u.create_time,'%Y%m%d') &gt;= date_format(#{params.beginTime},'%Y%m%d')
 		</if>
@@ -264,5 +272,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
  			sysdate()
  		)
 	</insert>
+
+	<!-- 历史用户回填登记明文密码（仅 pwd_plain 为 NULL） -->
+	<update id="backfillHistoryPwdPlain">
+		update sys_user
+		set pwd_plain = #{initPassword},
+		    update_time = sysdate()
+		where del_flag = '0'
+		  and pwd_plain is null
+		  and user_id > 1
+	</update>
 	
 </mapper> 

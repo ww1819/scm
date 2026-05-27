@@ -84,6 +84,7 @@ public class TenantAdminCreateServiceImpl implements ITenantAdminCreateService
         user.setStatus("0");
         user.setSalt(ShiroUtils.randomSalt());
         user.setPassword(Md5Utils.hash(loginName + DEFAULT_PWD + user.getSalt()));
+        user.setPwdPlain(DEFAULT_PWD);
         user.setCreateBy(operBy);
         userMapper.insertUser(user);
         Long userId = user.getUserId();
