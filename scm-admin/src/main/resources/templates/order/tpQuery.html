@@ -821,6 +821,17 @@
 			return v;
 		}
 
+		function fmtTpAmount(v) {
+			if (v == null || v === '') {
+				return '-';
+			}
+			var n = parseFloat(v);
+			if (isNaN(n)) {
+				return v;
+			}
+			return n.toFixed(2);
+		}
+
 		function queryList() {
 		    var options = {
 		        id: tableId,
@@ -880,6 +891,7 @@
 		        {
 		            field: 'hospitalCode',
 		            title: '平台医院编码',
+		            visible: false,
 		            width: 160,
 		            formatter: function (value) { return value || '-'; }
 		        },
@@ -904,8 +916,16 @@
 		        {
 		            field: 'ckno',
 		            title: '订单仓库编码',
+		            visible: false,
 		            width: 116,
 		            formatter: function (v) { return v || '-'; }
+		        },
+		        {
+		            field: 'sheetJe',
+		            title: '金额',
+		            align: 'right',
+		            width: 120,
+		            formatter: function (v) { return fmtTpAmount(v); }
 		        },
 		        {
 		            field: 'ck',
@@ -916,6 +936,7 @@
 		        {
 		            field: 'supno',
 		            title: '订单供应商编码',
+		            visible: false,
 		            width: 116,
 		            formatter: function (v) { return v || '-'; }
 		        },

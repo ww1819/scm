@@ -152,9 +152,38 @@
 		}
 		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="index"],
 		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="index"] {
-			min-width: 60px !important;
-			width: 60px !important;
-			max-width: 60px !important;
+			min-width: 72px !important;
+			width: 72px !important;
+			max-width: 72px !important;
+			overflow: visible;
+			text-overflow: clip;
+		}
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="gg"],
+		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="gg"] {
+			min-width: 150px !important;
+			width: 150px !important;
+			max-width: 150px !important;
+		}
+		/* 明细行固定行高，避免仅一条数据时被撑满整块区域 */
+		.query-table-wrap.tp-query-table.tp-detail-lines-table .fixed-table-container > .fixed-table-body tbody tr,
+		.query-table-wrap.tp-query-table.tp-detail-lines-table .fixed-columns-right .fixed-table-body tbody tr {
+			height: 42px !important;
+			min-height: 42px !important;
+			max-height: 42px !important;
+		}
+		.query-table-wrap.tp-query-table.tp-detail-lines-table .fixed-table-container > .fixed-table-body tbody td,
+		.query-table-wrap.tp-query-table.tp-detail-lines-table .fixed-columns-right .fixed-table-body td {
+			padding: 6px 10px !important;
+			line-height: 1.35;
+			vertical-align: middle !important;
+		}
+		.query-table-wrap.tp-query-table .tp-gg-tip {
+			display: inline-block;
+			max-width: 100%;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			vertical-align: middle;
+			cursor: default;
 		}
 		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="code"],
 		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="code"] {
@@ -311,7 +340,7 @@
         <div class="row tp-detail-table-section">
             <div class="col-sm-12">
                 <h4 class="form-header h4">订单明细</h4>
-                <div class="col-sm-12 select-table table-striped query-table-wrap tp-query-table">
+                <div class="col-sm-12 select-table table-striped query-table-wrap tp-query-table tp-detail-lines-table">
                     <table id="bootstrap-table"></table>
                 </div>
             </div>
@@ -533,14 +562,18 @@
 			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
 		}
 
+		var tpDetailRowHeight = 42;
+
 		function scheduleTpFixedColumnWidths() {
-			applyTpFieldColumnWidth('index', 60);
+			applyTpFieldColumnWidth('index', 72);
+			applyTpFieldColumnWidth('gg', 150);
 			applyTpFieldColumnWidth('code', 120);
 			applyTpFieldColumnWidth('name', 180);
 			applyTpFieldColumnWidth('zcz', 160);
 			applyTpFieldColumnWidth('sccj', 160);
 			requestAnimationFrame(function () {
-				applyTpFieldColumnWidth('index', 60);
+				applyTpFieldColumnWidth('index', 72);
+				applyTpFieldColumnWidth('gg', 150);
 				applyTpFieldColumnWidth('code', 120);
 				applyTpFieldColumnWidth('name', 180);
 			});
@@ -576,43 +609,54 @@
 			});
 		}
 
-		function syncTpOperateRowHeights() {
+		function applyTpDetailFixedRowHeight() {
+			var rh = tpDetailRowHeight + 'px';
 			var $bt = $('#' + tableId).closest('.bootstrap-table');
-			var $right = $bt.find('.fixed-columns-right');
-			if ($right.length === 0) {
-				return;
-			}
-			var $mainRows = $bt.find('.fixed-table-container').children('.fixed-table-body').find('table tbody tr');
-			var $rightRows = $right.find('.fixed-table-body table tbody tr');
-			var len = Math.min($mainRows.length, $rightRows.length);
-			$mainRows.add($rightRows).css({ height: '', minHeight: '' });
-			for (var i = 0; i < len; i++) {
-				var mainEl = $mainRows[i];
-				var rightEl = $rightRows[i];
-				var h = Math.max(mainEl.offsetHeight, rightEl.offsetHeight);
-				if (h > 0) {
-					var hs = h + 'px';
-					mainEl.style.height = hs;
-					mainEl.style.minHeight = hs;
-					rightEl.style.height = hs;
-					rightEl.style.minHeight = hs;
-				}
-			}
-			var $mainHead = $bt.find('.fixed-table-container > .fixed-table-header table thead tr');
-			var $rightHead = $right.find('.fixed-table-header table thead tr');
-			if ($mainHead.length && $rightHead.length) {
-				var hh = Math.max($mainHead[0].offsetHeight, $rightHead[0].offsetHeight);
-				if (hh > 0) {
-					var hhs = hh + 'px';
-					$mainHead.css({ height: hhs, minHeight: hhs });
-					$rightHead.css({ height: hhs, minHeight: hhs });
-				}
-			}
+			$bt.find('.fixed-table-container > .fixed-table-body tbody tr, .fixed-columns-right .fixed-table-body tbody tr').css({
+				height: rh,
+				minHeight: rh,
+				maxHeight: rh
+			});
+		}
+
+		function syncTpOperateRowHeights() {
+			applyTpDetailFixedRowHeight();
 		}
 
 		function scheduleTpOperateRowSync() {
-			syncTpOperateRowHeights();
-			requestAnimationFrame(syncTpOperateRowHeights);
+			applyTpDetailFixedRowHeight();
+			requestAnimationFrame(applyTpDetailFixedRowHeight);
+		}
+
+		function escapeHtmlAttr(s) {
+			return String(s)
+				.replace(/&/g, '&amp;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;')
+				.replace(/"/g, '&quot;');
+		}
+
+		function fmtGgCell(value) {
+			var text = (value != null && value !== '') ? String(value) : '';
+			if (!text) {
+				return '';
+			}
+			var esc = escapeHtmlAttr(text);
+			return '<span class="tp-gg-tip" title="' + esc + '" data-toggle="tooltip" data-placement="top">' + esc + '</span>';
+		}
+
+		function initTpDetailTooltips() {
+			if (typeof $.fn.tooltip !== 'function') {
+				return;
+			}
+			var $bt = $('#' + tableId).closest('.bootstrap-table');
+			$bt.find('.tp-gg-tip').each(function () {
+				var $el = $(this);
+				if ($el.data('bs.tooltip')) {
+					$el.tooltip('destroy');
+				}
+			});
+			$bt.find('.tp-gg-tip').tooltip({ container: 'body', placement: 'top', trigger: 'hover' });
 		}
 
 		function refreshTpTableLayout() {
@@ -624,6 +668,7 @@
 			scheduleTpOperateRowSync();
 			syncTpDetailHScrollSize();
 			bindTpDetailHScroll();
+			initTpDetailTooltips();
 		}
 
 		function zstpDetailQueryParams(params) {
@@ -676,11 +721,11 @@
 		        onPostBody: function() {
 		            refreshTpTableLayout();
 		        },
-		        columns: applyTpColumnSpacing([{
+		        columns: applyTpColumnSpacing([		        {
 		            field: 'index',
 		            title: '序号',
 		            align: 'center',
-		            width: 60,
+		            width: 72,
 		            formatter: function(value, row, index) {
 		                var opt = $("#" + tableId).bootstrapTable("getOptions");
 		                var pn = opt.pageNumber || 1;
@@ -704,7 +749,8 @@
 		            field: 'gg',
 		            title: '规格',
 		            align: 'center',
-		            width: 100
+		            width: 150,
+		            formatter: fmtGgCell
 		        },
 		        {
 		            field: 'sl',

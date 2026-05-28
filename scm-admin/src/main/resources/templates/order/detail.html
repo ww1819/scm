@@ -2,20 +2,151 @@
 <html lang="zh" xmlns:th="http://www.thymeleaf.org">
 <head>
 	<th:block th:include="include :: header('订单明细')" />
+	<th:block th:include="include :: layout-latest-css" />
 	<style>
+		body.order-detail-page {
+			height: 100%;
+			overflow: hidden;
+		}
+		.order-detail-page .main-content {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			min-height: 480px;
+			overflow: hidden;
+			box-sizing: border-box;
+			padding: 4px 10px 8px 10px !important;
+		}
+		.order-detail-basic {
+			flex-shrink: 0;
+		}
 		.order-info-box.search-collapse {
-			margin: 0 10px 15px 10px;
-			padding: 12px 10px 5px;
+			margin: 0 0 0 0 !important;
+			padding: 6px 8px 0 !important;
+			box-shadow: none !important;
+			border-radius: 0 !important;
 		}
 		.order-basic-header-row {
-			margin-bottom: 12px !important;
+			margin: 2px 0 6px 0 !important;
+			padding-bottom: 4px !important;
+		}
+		.order-detail-table-section {
+			flex: 1;
+			min-height: 0;
+			display: flex;
+			flex-direction: column;
+			margin-top: 0 !important;
+			padding: 0 !important;
+			overflow: hidden;
+		}
+		.order-detail-table-section > .form-header.h4 {
+			flex-shrink: 0;
+			margin: 2px 0 4px 0 !important;
+			padding: 0 0 4px 0 !important;
+			border-bottom: 1px solid #ddd;
+		}
+		.order-detail-table-wrap.select-table {
+			margin-top: 0 !important;
+			padding-top: 0 !important;
+			padding-bottom: 0 !important;
+			box-shadow: none !important;
+			border-radius: 0 !important;
+		}
+		.order-detail-table-wrap {
+			flex: 1;
+			min-height: 0;
+			position: relative;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+		.order-detail-table-wrap > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
+			height: 100%;
+			display: flex;
+			flex-direction: column;
+		}
+		.order-detail-table-wrap .fixed-table-container {
+			flex: 1;
+			min-height: 0;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+		}
+		.order-detail-table-wrap .fixed-table-body {
+			flex: 1;
+			min-height: 0;
+			overflow-x: auto !important;
+			overflow-y: auto !important;
+		}
+		.order-detail-table-wrap .fixed-table-header {
+			background: #fff;
+		}
+		.order-detail-table-wrap .fixed-table-header th {
+			font-size: 15px !important;
+			font-weight: 600;
+		}
+		#bootstrap-table.order-detail-fixed-table {
+			table-layout: fixed !important;
+		}
+		.order-detail-table-wrap .fixed-table-header th,
+		.order-detail-table-wrap .fixed-table-body td {
+			box-sizing: border-box !important;
+			white-space: nowrap !important;
+			word-break: keep-all !important;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		/* 订单信息：每行五列 */
+		.order-info-box .row {
+			margin-left: -8px;
+			margin-right: -8px;
+		}
+		.order-info-box .row::after {
+			content: "";
+			display: table;
+			clear: both;
+		}
+		.order-info-box .col-order-5 {
+			position: relative;
+			min-height: 1px;
+			padding-left: 8px;
+			padding-right: 8px;
+		}
+		@media (min-width: 992px) {
+			.order-info-box .col-order-5 { width: 20%; float: left; }
+		}
+		@media (max-width: 991px) {
+			.order-info-box .col-order-5 { width: 50%; float: left; }
+		}
+		.order-info-box .form-group {
+			margin-bottom: 8px;
+		}
+		.order-info-box .form-control[readonly] {
+			background-color: #fff !important;
+			background-image: none !important;
+			border-color: #e5e6e7;
+			color: #333;
+			cursor: default;
+		}
+		.order-detail-table-wrap .order-detail-cell-text {
+			display: block;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+		.order-detail-table-wrap .fixed-table-body td[title],
+		.order-detail-table-wrap .order-detail-cell-text[title] {
+			cursor: help;
 		}
 	</style>
 </head>
-<body>
+<body class="gray-bg order-detail-page">
     <div class="main-content">
+        <div class="order-detail-basic">
         <form class="form-horizontal">
-            <div class="order-basic-header-row" style="display:flex;align-items:center;justify-content:space-between;margin:8px 10px 12px 10px;padding-bottom:5px;border-bottom:1px solid #ddd;">
+            <div class="order-basic-header-row" style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ddd;">
                 <h4 class="form-header h4" style="margin:0;border:0;padding:0;">订单信息</h4>
                 <div style="display:flex;align-items:center;gap:8px;">
                     <a class="btn btn-info btn-sm" href="javascript:void(0)" onclick="openOrderDeliveries()"><i class="fa fa-truck"></i> 关联配送单</a>
@@ -24,7 +155,7 @@
             </div>
             <div class="search-collapse order-info-box">
             <div class="row">
-            	<div class="col-sm-3">
+            	<div class="col-order-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">订单编号：</label>
                         <div class="col-sm-7">
@@ -32,7 +163,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-order-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">医院：</label>
                         <div class="col-sm-7">
@@ -40,7 +171,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-order-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">订单金额：</label>
                         <div class="col-sm-7">
@@ -48,7 +179,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-order-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">供应商：</label>
                         <div class="col-sm-7">
@@ -56,9 +187,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-3">
+                <div class="col-order-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">要货仓库：</label>
                         <div class="col-sm-7">
@@ -66,7 +195,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+            </div>
+            <div class="row">
+                <div class="col-order-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">订单日期：</label>
                         <div class="col-sm-7">
@@ -74,7 +205,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-order-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">订单状态：</label>
                         <div class="col-sm-7">
@@ -82,7 +213,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-order-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">申请科室：</label>
                         <div class="col-sm-7">
@@ -90,9 +221,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-3">
+                <div class="col-order-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">备注：</label>
                         <div class="col-sm-7">
@@ -100,21 +229,14 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
-                </div>
-                <div class="col-sm-3">
-                </div>
-                <div class="col-sm-3">
-                </div>
             </div>
             </div>
         </form>
-        <div class="row" style="margin-top: 20px;">
-            <div class="col-sm-12">
-                <h4 class="form-header h4">订单明细</h4>
-                <div class="table-responsive">
-                    <table id="bootstrap-table"></table>
-                </div>
+        </div>
+        <div class="order-detail-table-section">
+            <h4 class="form-header h4">订单明细</h4>
+            <div class="order-detail-table-wrap select-table table-striped">
+                <table id="bootstrap-table" class="order-detail-fixed-table"></table>
             </div>
         </div>
     </div>
@@ -125,8 +247,83 @@
 		var orderId = [[${order.orderId}]];
 		var prefix = ctx + "order/order";
 
+		function calculateOrderDetailTableHeight() {
+		    var $wrap = $('.order-detail-table-wrap');
+		    if ($wrap.length === 0) {
+		        return 400;
+		    }
+		    var h = $wrap[0].clientHeight || $wrap.innerHeight();
+		    h = Math.floor(h - 8);
+		    return Math.max(h, 200);
+		}
+
+		function layoutOrderDetailTableWrap() {
+		    var $section = $('.order-detail-table-section');
+		    var $page = $('.order-detail-page .main-content');
+		    if ($section.length === 0 || $page.length === 0) {
+		        return;
+		    }
+		    var bottom = $page[0].getBoundingClientRect().bottom;
+		    var $tc = $section.closest('.tab-content');
+		    if ($tc.length) {
+		        bottom = Math.min(bottom, $tc[0].getBoundingClientRect().bottom - 4);
+		    }
+		    var $pane = $section.closest('.tab-pane');
+		    if ($pane.length && $pane.is(':visible')) {
+		        bottom = Math.min(bottom, $pane[0].getBoundingClientRect().bottom - 4);
+		    }
+		    var top = $section[0].getBoundingClientRect().top;
+		    var $wrap = $section.find('.order-detail-table-wrap');
+		    var h = Math.floor(bottom - top - 28);
+		    if (h < 200) {
+		        h = 200;
+		    }
+		    $wrap.css({ height: h + 'px', minHeight: h + 'px', flex: '0 0 auto' });
+		}
+
+		function resetOrderDetailTableHeight() {
+		    var $table = $('#bootstrap-table');
+		    if ($table.length > 0 && $table.bootstrapTable('getOptions')) {
+		        $table.bootstrapTable('resetView', { height: calculateOrderDetailTableHeight() });
+		    }
+		}
+
+		function relayoutOrderDetailTable() {
+		    layoutOrderDetailTableWrap();
+		    resetOrderDetailTableHeight();
+		}
+
+		/** 单元格文字被截断时，悬停显示完整内容 */
+		function bindOrderDetailCellTitles() {
+		    $('.order-detail-table-wrap .fixed-table-body tbody td').each(function() {
+		        var $td = $(this);
+		        if ($td.find('a.btn, .btn').length) {
+		            $td.removeAttr('title');
+		            return;
+		        }
+		        var text = $.trim($td.text());
+		        if (!text) {
+		            $td.removeAttr('title');
+		            return;
+		        }
+		        var el = this;
+		        if (el.scrollWidth > el.clientWidth + 1) {
+		            $td.attr('title', text);
+		        } else {
+		            $td.removeAttr('title');
+		        }
+		    });
+		}
+
 		$(function() {
+		    layoutOrderDetailTableWrap();
 		    queryOrderDetailList();
+		    $(window).on('resize', function() {
+		        relayoutOrderDetailTable();
+		        bindOrderDetailCellTitles();
+		    });
+		    setTimeout(relayoutOrderDetailTable, 0);
+		    setTimeout(relayoutOrderDetailTable, 200);
 		});
 
 		function queryOrderDetailList() {
@@ -142,6 +339,14 @@
 		        showToggle: false,
 		        showColumns: false,
 		        striped: true,
+		        mobileResponsive: false,
+		        height: calculateOrderDetailTableHeight(),
+		        onPostBody: function() {
+		            setTimeout(function() {
+		                relayoutOrderDetailTable();
+		                bindOrderDetailCellTitles();
+		            }, 0);
+		        },
 		        columns: [{
 		            field: 'index',
 		            title: '序号',
@@ -154,22 +359,30 @@
 		        {
 		            field: 'materialCode',
 		            title: '产品编码',
-		            align: 'center'
+		            align: 'center',
+		            width: 130,
+		            formatter: fmtOrderDetailText
 		        },
 		        {
 		            field: 'materialName',
 		            title: '产品名称',
-		            align: 'left'
+		            align: 'left',
+		            width: 200,
+		            formatter: fmtOrderDetailText
 		        },
 		        {
 		            field: 'specification',
 		            title: '规格',
-		            align: 'center'
+		            align: 'center',
+		            width: 120,
+		            formatter: fmtOrderDetailText
 		        },
 		        {
 		            field: 'model',
 		            title: '型号',
-		            align: 'center'
+		            align: 'center',
+		            width: 100,
+		            formatter: fmtOrderDetailText
 		        },
 		        {
 		            field: 'unit',
@@ -263,6 +476,23 @@
 		        return parseFloat(value).toFixed(2);
 		    }
 		    return '0.00';
+		}
+
+		function escOrderDetailAttr(s) {
+		    return String(s == null ? '' : s)
+		        .replace(/&/g, '&amp;')
+		        .replace(/"/g, '&quot;')
+		        .replace(/'/g, '&#39;')
+		        .replace(/</g, '&lt;')
+		        .replace(/>/g, '&gt;');
+		}
+
+		function fmtOrderDetailText(value) {
+		    if (value == null || value === '') {
+		        return '-';
+		    }
+		    var s = String(value);
+		    return '<span class="order-detail-cell-text" title="' + escOrderDetailAttr(s) + '">' + escOrderDetailAttr(s) + '</span>';
 		}
 
 		function openOrderDeliveries() {
