@@ -100,6 +100,28 @@
 			white-space: nowrap;
 			vertical-align: middle !important;
 		}
+		/* 搜索区：上下内边距一致 */
+		.container-div > .row > .search-collapse {
+			padding-top: 10px !important;
+			padding-bottom: 10px !important;
+		}
+		.container-div .search-collapse .select-list ul {
+			margin-bottom: 0;
+		}
+		.container-div .search-collapse .select-list li {
+			margin: 4px 15px 4px 0;
+		}
+
+		#toolbar #btn-delivery-edit.disabled,
+		#toolbar #btn-delivery-audit.disabled,
+		#toolbar #btn-delivery-remove.disabled {
+			pointer-events: none;
+			cursor: not-allowed;
+			opacity: 1;
+			background-color: #e0e0e0 !important;
+			border-color: #ccc !important;
+			color: #999 !important;
+		}
 	</style>
 </head>
 <body class="gray-bg">
@@ -145,20 +167,20 @@
 	        	<a class="btn btn-success" onclick="$.operate.addTab()" shiro:hasPermission="delivery:delivery:add">
 	                <i class="fa fa-plus"></i> 新增
 	            </a>
-	             <a class="btn btn-primary single disabled" onclick="$.operate.editTab()" shiro:hasPermission="delivery:delivery:edit">
+	             <a class="btn btn-primary single disabled" id="btn-delivery-edit" onclick="editDeliveryTabGuard()" shiro:hasPermission="delivery:delivery:edit">
 		            <i class="fa fa-edit"></i> 修改
 		        </a>
-	            <a class="btn btn-info multiple disabled" onclick="auditDeliveries()" shiro:hasPermission="delivery:delivery:audit">
+	            <a class="btn btn-info multiple disabled" id="btn-delivery-audit" onclick="auditDeliveries()" shiro:hasPermission="delivery:delivery:audit">
 	                <i class="fa fa-check"></i> 审核
 	            </a>
 	            <a class="btn btn-warning multiple disabled" onclick="unAuditDeliveries()" shiro:hasPermission="delivery:delivery:unaudit">
 	                <i class="fa fa-undo"></i> 反审核
 	            </a>
-	            <a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="delivery:delivery:remove">
+	            <a class="btn btn-danger multiple disabled" id="btn-delivery-remove" onclick="removeDeliveriesGuard()" shiro:hasPermission="delivery:delivery:remove">
 	                <i class="fa fa-remove"></i> 删除
 	            </a>
 	            <a class="btn btn-default multiple disabled" id="toolbar-btn-delivery-print" href="javascript:void(0)" shiro:hasPermission="delivery:delivery:print">
-	                <i class="fa fa-print"></i> 打印
+	                <i class="fa fa-print"></i> 配送单打印
 	            </a>
 	            <a class="btn btn-default multiple disabled" id="toolbar-btn-delivery-print-acceptance" href="javascript:void(0)" shiro:hasPermission="delivery:delivery:print">
 	                <i class="fa fa-print"></i> 验收单打印
@@ -407,6 +429,57 @@
 			scheduleDeliveryOperateRowSync();
 		}
 
+		function isDeliveryAudited(row) {
+		    return row && ((row.auditStatus === '1') || (row.auditStatus == null && row.deliveryStatus === '1'));
+		}
+
+		function selectionHasAuditedDelivery(rows) {
+		    if (!rows || !rows.length) {
+		        return false;
+		    }
+		    for (var i = 0; i < rows.length; i++) {
+		        if (isDeliveryAudited(rows[i])) {
+		            return true;
+		        }
+		    }
+		    return false;
+		}
+
+		/** 仅控制：修改、审核、删除（选中已审核单时置灰） */
+		function updateDeliveryAuditSensitiveButtons() {
+		    var rows = $('#bootstrap-table').bootstrapTable('getSelections') || [];
+		    var n = rows.length;
+		    if (n === 0) {
+		        return;
+		    }
+		    if (selectionHasAuditedDelivery(rows)) {
+		        $('#btn-delivery-edit, #btn-delivery-audit, #btn-delivery-remove').addClass('disabled');
+		    } else {
+		        $('#btn-delivery-audit, #btn-delivery-remove').removeClass('disabled');
+		        $('#btn-delivery-edit').toggleClass('disabled', n !== 1);
+		    }
+		}
+
+		function editDeliveryTabGuard() {
+		    var rows = $('#bootstrap-table').bootstrapTable('getSelections') || [];
+		    if (rows.length === 1 && isDeliveryAudited(rows[0])) {
+		        $.modal.msgWarning("已审核的配送单不能修改");
+		        return;
+		    }
+		    $.operate.editTab();
+		}
+
+		function removeDeliveriesGuard() {
+		    var rows = $('#bootstrap-table').bootstrapTable('getSelections') || [];
+		    for (var i = 0; i < rows.length; i++) {
+		        if (isDeliveryAudited(rows[i])) {
+		            $.modal.msgWarning("所选记录中包含已审核配送单，不能删除");
+		            return;
+		        }
+		    }
+		    $.operate.removeAll();
+		}
+
 		function auditDeliveries() {
 		    var rows = $('#bootstrap-table').bootstrapTable('getSelections');
 		    if (!rows || rows.length === 0) {
@@ -414,7 +487,7 @@
 		        return;
 		    }
 		    for (var i = 0; i < rows.length; i++) {
-		        if (rows[i].auditStatus === '1') {
+		        if (isDeliveryAudited(rows[i])) {
 		            $.modal.msgWarning("所选记录中包含已审核配送单，请重新选择");
 		            return;
 		        }
@@ -480,6 +553,7 @@
 		            setTimeout(function () {
 		                adjustTableHeight();
 		                refreshDeliveryTableLayout();
+		                updateDeliveryAuditSensitiveButtons();
 		            }, 50);
 		            setTimeout(function () {
 		                var $t = $('#' + deliveryTableId);
@@ -637,6 +711,9 @@
 		        }]
 		    };
 		    $.table.init(options);
+		    $('#bootstrap-table').on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table load-success.bs.table', function () {
+		        setTimeout(updateDeliveryAuditSensitiveButtons, 0);
+		    });
 		}
 
 		function resetPre() {

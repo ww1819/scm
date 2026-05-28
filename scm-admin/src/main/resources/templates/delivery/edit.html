@@ -49,6 +49,33 @@
 			background-color: #f5f5f5 !important;
 			border-bottom: 2px solid #ddd !important;
 		}
+		#detail-table thead th[data-field="deliveryQuantity"] .th-inner,
+		#detail-table thead th[data-field="batchNo"] .th-inner,
+		#detail-table thead th[data-field="productionDate"] .th-inner,
+		#detail-table thead th[data-field="expireDate"] .th-inner,
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="deliveryQuantity"] .th-inner,
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="batchNo"] .th-inner,
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="productionDate"] .th-inner,
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="expireDate"] .th-inner {
+			color: #e74c3c !important;
+			font-weight: 600;
+		}
+		#detail-table tbody td[data-field="deliveryQuantity"],
+		#detail-table tbody td[data-field="productionDate"],
+		#detail-table tbody td[data-field="expireDate"],
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td[data-field="deliveryQuantity"],
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td[data-field="productionDate"],
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td[data-field="expireDate"] {
+			color: #e74c3c !important;
+		}
+		#detail-table tbody td[data-field="deliveryQuantity"] input,
+		#detail-table tbody td[data-field="productionDate"] input,
+		#detail-table tbody td[data-field="expireDate"] input,
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td[data-field="deliveryQuantity"] input,
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td[data-field="productionDate"] input,
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td[data-field="expireDate"] input {
+			color: #e74c3c !important;
+		}
 		#delivery-detail-list-section.query-table-wrap {
 			flex: 1 1 0%;
 			min-height: 0;
@@ -1831,15 +1858,54 @@
 	        }
 	    }
 	    
+	    function parseDetailDateOnly(str) {
+	        if (!str || !String(str).trim()) {
+	            return null;
+	        }
+	        var s = String(str).trim().substring(0, 10);
+	        var parts = s.split('-');
+	        if (parts.length < 3) {
+	            return null;
+	        }
+	        var y = parseInt(parts[0], 10);
+	        var m = parseInt(parts[1], 10);
+	        var d = parseInt(parts[2], 10);
+	        if (isNaN(y) || isNaN(m) || isNaN(d)) {
+	            return null;
+	        }
+	        var dt = new Date(y, m - 1, d);
+	        if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) {
+	            return null;
+	        }
+	        return dt;
+	    }
+
+	    function getDetailTodayDate() {
+	        var t = new Date();
+	        return new Date(t.getFullYear(), t.getMonth(), t.getDate());
+	    }
+
 	    // 更新生产日期
 	    function updateProductionDate(input, index) {
 	        var value = $(input).val();
 	        var $tr = $(input).closest('tr');
 	        var data = $('#detail-table').bootstrapTable('getData');
 	        var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : index;
-	        if (data[rowIndex]) {
-	            data[rowIndex].productionDate = value || '';
+	        if (!data[rowIndex]) {
+	            return;
 	        }
+	        var oldValue = data[rowIndex].productionDate || '';
+	        var parsed = parseDetailDateOnly(value);
+	        if (parsed) {
+	            var today = getDetailTodayDate();
+	            if (parsed.getTime() > today.getTime()) {
+	                if (!window.confirm('生产日期大于当前日期，是否要继续？')) {
+	                    $(input).val(formatDetailDateValue(oldValue));
+	                    return;
+	                }
+	            }
+	        }
+	        data[rowIndex].productionDate = value ? String(value).trim().substring(0, 10) : '';
 	    }
 	    
 	    // 更新有效期
@@ -1848,9 +1914,21 @@
 	        var $tr = $(input).closest('tr');
 	        var data = $('#detail-table').bootstrapTable('getData');
 	        var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : index;
-	        if (data[rowIndex]) {
-	            data[rowIndex].expireDate = value || '';
+	        if (!data[rowIndex]) {
+	            return;
 	        }
+	        var oldValue = data[rowIndex].expireDate || '';
+	        var parsed = parseDetailDateOnly(value);
+	        if (parsed) {
+	            var today = getDetailTodayDate();
+	            if (parsed.getTime() < today.getTime()) {
+	                if (!window.confirm('有效期小于当前日期，是否要继续？')) {
+	                    $(input).val(formatDetailDateValue(oldValue));
+	                    return;
+	                }
+	            }
+	        }
+	        data[rowIndex].expireDate = value ? String(value).trim().substring(0, 10) : '';
 	    }
 	    
 	    // 删除明细行 - 定义为全局函数
