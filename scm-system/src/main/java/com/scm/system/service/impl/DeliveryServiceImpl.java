@@ -995,7 +995,17 @@ public class DeliveryServiceImpl implements IDeliveryService
             }
             List<OrderDetail> details = orderDetailMapper.selectOrderDetailListByOrderId(orderId);
             enrichScmOrderDetailsDeliveryQty(details, orderId);
-            order.setOrderDetails(details);
+            // 引用订单时过滤掉「配送数量已达到订单申请数量」（可再配送数量<=0）的明细，避免显示并误导用户
+            List<OrderDetail> deliverable = new ArrayList<>();
+            for (OrderDetail od : details)
+            {
+                BigDecimal und = od.getUndeliveredQty();
+                if (und != null && und.compareTo(BigDecimal.ZERO) > 0)
+                {
+                    deliverable.add(od);
+                }
+            }
+            order.setOrderDetails(deliverable);
         }
         return order;
     }

@@ -2689,10 +2689,10 @@
 	                var ids = orderId.split(',');
 	                var selectedOrderId = ids[0];
 
-	                // 通过AJAX获取订单详细信息
-	                $.ajax({
-	                    url: ctx + "order/order/" + selectedOrderId,
-	                    type: "GET",
+                // 通过AJAX获取订单详细信息（专用引用订单接口：服务端已过滤掉配送数量达到申请数量的明细）
+                $.ajax({
+                    url: prefix + "/selectOrder/" + selectedOrderId,
+                    type: "GET",
 	                    dataType: "json",
 	                    success: function(result) {
 	                        if (result.code == 0 && result.data) {

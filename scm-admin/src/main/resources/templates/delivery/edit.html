@@ -2292,9 +2292,9 @@
 	                var ids = orderId.split(',');
 	                var selectedOrderId = ids[0];
 	                
-	                // 通过AJAX获取订单详细信息
+	                // 通过AJAX获取订单详细信息（专用引用订单接口：服务端已过滤掉配送数量达到申请数量的明细）
 	                $.ajax({
-	                    url: ctx + "order/order/" + selectedOrderId,
+	                    url: prefix + "/selectOrder/" + selectedOrderId,
 	                    type: "GET",
 	                    dataType: "json",
 	                    success: function(result) {
