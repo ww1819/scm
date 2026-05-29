@@ -23,16 +23,10 @@
 								</select>
 							</li>
 							<li>
-								绑定医院：<select name="hospitalId" class="form-control" style="min-width:160px;">
-									<option value="">全部</option>
-									<option th:each="h : ${hospitals}" th:value="${h.hospitalId}" th:text="${h.hospitalName}"></option>
-								</select>
+								绑定医院：<input type="text" name="params[hospitalName]" placeholder="编码/名称/首拼"/>
 							</li>
 							<li>
-								绑定供应商：<select name="supplierId" class="form-control" style="min-width:200px;">
-									<option value="">全部</option>
-									<option th:each="s : ${suppliers}" th:value="${s.supplierId}" th:text="${s.companyName}"></option>
-								</select>
+								绑定供应商：<input type="text" name="params[supplierCompanyName]" placeholder="编码/名称/首拼"/>
 							</li>
 							<li class="select-time">
 								<label>创建时间： </label>

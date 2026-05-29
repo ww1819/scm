@@ -59,14 +59,8 @@ public class SysRoleController extends BaseController
 
     @RequiresPermissions("system:role:view")
     @GetMapping()
-    public String role(ModelMap mmap)
+    public String role()
     {
-        Hospital hq = new Hospital();
-        hq.setStatus("0");
-        mmap.put("hospitals", hospitalService.selectHospitalList(hq));
-        Supplier sq = new Supplier();
-        sq.setStatus("0");
-        mmap.put("suppliers", supplierService.selectSupplierList(sq));
         return prefix + "/role";
     }
 
