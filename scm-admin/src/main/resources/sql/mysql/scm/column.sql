@@ -749,3 +749,23 @@ CREATE TABLE IF NOT EXISTS `scm_product_cert_license_snap` (
   KEY `idx_spcls_material_supplier` (`material_id`,`supplier_id`,`del_flag`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品证件扩展证照快照';
 /
+-- 配送单反审核(25009)：与审核同级仅供应商；修正归类并补齐存量赋权
+UPDATE sys_menu SET auth_type = 'supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all_supplier',
+  default_open_hospital = '0', default_open_supplier = '1', supplier_admin_only = '0', menu_biz_category = 'supply_chain'
+WHERE del_flag = '0' AND menu_id = '25009';
+/
+INSERT IGNORE INTO scm_supplier_menu_auth (id, supplier_id, hospital_id, menu_id, create_by, create_time)
+SELECT REPLACE(UUID(), '-', ''), CAST(s.supplier_id AS CHAR), NULL, '25009', 'migration-delivery-unaudit', NOW()
+FROM scm_supplier s
+WHERE s.del_flag = '0' AND s.status = '0';
+/
+INSERT IGNORE INTO sys_role_menu (id, role_id, menu_id, hospital_id, supplier_id)
+SELECT REPLACE(UUID(), '-', ''), r.role_id, 25009, '', CAST(r.supplier_id AS CHAR)
+FROM sys_role r
+INNER JOIN scm_supplier s ON s.supplier_id = r.supplier_id AND s.del_flag = '0' AND s.status = '0'
+WHERE r.del_flag = '0' AND r.role_type = 'supplier' AND r.supplier_id IS NOT NULL;
+/
+DELETE rm FROM sys_role_menu rm INNER JOIN sys_role r ON r.role_id = rm.role_id
+WHERE r.del_flag = '0' AND r.role_type = 'hospital' AND rm.menu_id = 25009;
+/
+DELETE FROM scm_hospital_menu_auth WHERE menu_id = 25009;
