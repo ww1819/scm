@@ -2329,6 +2329,19 @@
 	            // 获取表格中的所有明细数据
 	            var detailData = $('#detail-table').bootstrapTable('getData');
 
+	            // 校验：配送数量为0（或未填写）的明细行，提示具体行号，要求完善或删除后再保存
+	            var zeroQtyRows = [];
+	            for (var z = 0; z < detailData.length; z++) {
+	                var zq = parseFloat(detailData[z].deliveryQuantity);
+	                if (isNaN(zq) || zq === 0) {
+	                    zeroQtyRows.push(z + 1);
+	                }
+	            }
+	            if (zeroQtyRows.length > 0) {
+	                $.modal.alertWarning('第 ' + zeroQtyRows.join('、') + ' 行配送数量为0，请完善配送数量或删除明细后再进行保存操作');
+	                return;
+	            }
+
 	            // 转换字段名：quantity -> deliveryQuantity
 	            var caps = {};
 	            for (var j = 0; j < detailData.length; j++) {

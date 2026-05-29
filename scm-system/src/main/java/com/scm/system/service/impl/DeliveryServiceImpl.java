@@ -343,6 +343,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         enrichDeliverySnapshot(delivery);
         assertSupplierHospitalSubmit(delivery);
         enrichDeliveryDetailPackCoefficients(delivery);
+        validateDeliveryDetailQuantityNotZero(delivery.getDeliveryDetails(), "保存");
         validateDeliveryDetailPackQuantities(delivery.getDeliveryDetails());
         validateDeliveryRefLineQuantities(delivery, null);
         if (StringUtils.isEmpty(delivery.getDeliveryStatus()))
@@ -508,6 +509,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         enrichDeliverySnapshot(delivery);
         assertSupplierHospitalSubmit(delivery);
         enrichDeliveryDetailPackCoefficients(delivery);
+        validateDeliveryDetailQuantityNotZero(delivery.getDeliveryDetails(), "保存");
         validateDeliveryDetailPackQuantities(delivery.getDeliveryDetails());
         validateDeliveryRefLineQuantities(delivery, delivery.getDeliveryId());
 
@@ -1521,6 +1523,53 @@ public class DeliveryServiceImpl implements IDeliveryService
     }
 
     /**
+     * 查找配送数量为0（或为空）的明细行号。
+     *
+     * @param details 配送明细
+     * @return 形如 "2、5" 的行号串；不存在零数量明细时返回 null
+     */
+    private String findZeroQtyDetailRows(List<DeliveryDetail> details)
+    {
+        if (details == null || details.isEmpty())
+        {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        int row = 0;
+        int matched = 0;
+        for (DeliveryDetail d : details)
+        {
+            row++;
+            BigDecimal qty = d == null ? null : d.getDeliveryQuantity();
+            if (qty == null || qty.compareTo(BigDecimal.ZERO) == 0)
+            {
+                if (matched++ > 0)
+                {
+                    sb.append("、");
+                }
+                sb.append(row);
+            }
+        }
+        return matched > 0 ? sb.toString() : null;
+    }
+
+    /**
+     * 保存/审核前校验：存在配送数量为0的明细时，提示具体行号，要求完善数量或删除该行。
+     *
+     * @param details   配送明细
+     * @param operation 操作名称（保存/审核），用于提示文案
+     */
+    private void validateDeliveryDetailQuantityNotZero(List<DeliveryDetail> details, String operation)
+    {
+        String zeroRows = findZeroQtyDetailRows(details);
+        if (zeroRows != null)
+        {
+            throw new ServiceException(String.format(
+                "第 %s 行配送数量为0，请完善配送数量或删除明细后再进行%s操作", zeroRows, operation));
+        }
+    }
+
+    /**
      * 保存前校验：引用本系统订单或第三方订单时，各订单行上配送数量合计不得超过「订货量 − 已占用（已审核/待审核/已拒绝）」；
      * 修改配送单时排除本单历史占用后再比上限，避免编辑未审核单时误报。
      */
@@ -1998,6 +2047,14 @@ public class DeliveryServiceImpl implements IDeliveryService
         if ("1".equals(delivery.getAuditStatus()))
         {
             throw new ServiceException("配送单已审核，请勿重复审核");
+        }
+        List<DeliveryDetail> auditDetails = deliveryDetailMapper.selectDeliveryDetailListByDeliveryId(deliveryId);
+        String zeroRows = findZeroQtyDetailRows(auditDetails);
+        if (zeroRows != null)
+        {
+            throw new ServiceException(String.format(
+                "配送单【%s】第 %s 行配送数量为0，请完善配送数量或删除明细后再进行审核操作",
+                StringUtils.trimToEmpty(delivery.getDeliveryNo()), zeroRows));
         }
         delivery.setAuditStatus("1");
         delivery.setAuditBy(StringUtils.trimToEmpty(auditBy));
