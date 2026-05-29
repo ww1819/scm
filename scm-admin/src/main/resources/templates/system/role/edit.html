@@ -58,7 +58,7 @@
 					</select>
 				</div>
 			</div>
-			<div class="form-group" id="grpBindHospital">
+			<div class="form-group" id="grpBindHospital" style="display:none;">
 				<label class="col-sm-3 control-label">绑定医院：</label>
 				<div class="col-sm-8">
 					<select name="hospitalId" id="hospitalId" class="form-control" th:field="*{hospitalId}">
@@ -67,7 +67,7 @@
 					</select>
 				</div>
 			</div>
-			<div class="form-group" id="grpBindSupplier">
+			<div class="form-group" id="grpBindSupplier" style="display:none;">
 				<label class="col-sm-3 control-label">绑定供应商：</label>
 				<div class="col-sm-8">
 					<select name="supplierId" id="supplierId" class="form-control" th:field="*{supplierId}">
@@ -109,7 +109,12 @@
 	</div>
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: ztree-js" />
-	<script type="text/javascript">
+	<script type="text/javascript" th:inline="javascript">
+		/* 服务端已绑定值，用于下拉回显（避免 syncRoleTenantUi 初始化时清空） */
+		var roleBoundHospitalId = /*[[${role.hospitalId}]]*/ '';
+		var roleBoundSupplierId = /*[[${role.supplierId}]]*/ '';
+		var roleBoundOrgAdmin = /*[[${role.orgAdmin}]]*/ '0';
+
 	     $(function() {
 			var url = ctx + "system/menu/roleMenuTreeData?roleId=" + $("#roleId").val();
 			var options = {
@@ -120,29 +125,53 @@
 		    };
 			$.tree.init(options);
 			loadInvalidMenuSummary();
-			$("#roleType").on("change", syncRoleTenantUi);
-			syncRoleTenantUi();
+			$("#roleType").on("change", function() { syncRoleTenantUi(false); });
+			syncRoleTenantUi(true);
 		});
 
-		function syncRoleTenantUi() {
-			var t = $("#roleType").val() || "platform";
+		function syncRoleTenantUi(restoreBound) {
+			var t = $("#roleType").val();
+			if (!t) {
+				t = "platform";
+			}
 			if (t === "hospital") {
 				$("#grpBindHospital").show();
 				$("#grpBindSupplier").hide();
-				$("#supplierId").val("");
+				if (!restoreBound) {
+					$("#supplierId").val("");
+				}
 				$("#grpOrgAdmin").show();
 			} else if (t === "supplier") {
 				$("#grpBindHospital").hide();
-				$("#hospitalId").val("");
+				if (!restoreBound) {
+					$("#hospitalId").val("");
+				}
 				$("#grpBindSupplier").show();
 				$("#grpOrgAdmin").show();
 			} else {
 				$("#grpBindHospital").hide();
 				$("#grpBindSupplier").hide();
-				$("#hospitalId").val("");
-				$("#supplierId").val("");
-				$("#orgAdmin").val("0");
+				if (!restoreBound) {
+					$("#hospitalId").val("");
+					$("#supplierId").val("");
+					$("#orgAdmin").val("0");
+				}
 				$("#grpOrgAdmin").hide();
+			}
+			if (restoreBound) {
+				restoreRoleBindFields(t);
+			}
+		}
+
+		function restoreRoleBindFields(roleType) {
+			if (roleType === "hospital" && roleBoundHospitalId != null && roleBoundHospitalId !== '') {
+				$("#hospitalId").val(String(roleBoundHospitalId));
+			}
+			if (roleType === "supplier" && roleBoundSupplierId != null && roleBoundSupplierId !== '') {
+				$("#supplierId").val(String(roleBoundSupplierId));
+			}
+			if ((roleType === "hospital" || roleType === "supplier") && roleBoundOrgAdmin != null && roleBoundOrgAdmin !== '') {
+				$("#orgAdmin").val(String(roleBoundOrgAdmin));
 			}
 		}
 
