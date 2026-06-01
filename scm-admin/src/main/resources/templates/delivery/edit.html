@@ -1146,10 +1146,11 @@
 	            return DETAIL_WRAP_MIN_HEIGHT - DETAIL_HSCROLL_RAIL_HEIGHT;
 	        }
 	        void $wrap[0].offsetHeight;
-	        return Math.max($wrap[0].clientHeight - DETAIL_HSCROLL_RAIL_HEIGHT, 280);
+	        var slotH = Math.max($wrap[0].clientHeight - DETAIL_HSCROLL_RAIL_HEIGHT, 0);
+	        return slotH > 0 ? slotH : (DETAIL_WRAP_MIN_HEIGHT - DETAIL_HSCROLL_RAIL_HEIGHT);
 	    }
 
-	    /** 表体高度 = 表格区实际高度 - 表头；能放下全部行则全显示，否则保留滚动 */
+	    /** 表体始终占满明细区剩余高度；行少时在表体内留白，行多时纵向滚动 */
 	    function syncDetailTableViewportHeights() {
 	        var $wrap = $('#delivery-detail-list-section');
 	        var $bt = $wrap.children('.bootstrap-table');
@@ -1184,13 +1185,14 @@
 	        }
 	        var rowCount = $body.find('tbody tr').length;
 	        var needH = rowCount > 0 ? rowCount * DETAIL_ROW_HEIGHT : 0;
-	        var bodyH = (needH > 0 && needH <= maxBodyH) ? needH : maxBodyH;
-	        var totalH = headerH + borderH + bodyH;
+	        var bodyH = maxBodyH;
+	        var totalH = slotH;
+	        $container[0].style.setProperty('flex', '1', 'important');
 	        $container[0].style.setProperty('height', totalH + 'px', 'important');
 	        $container[0].style.setProperty('max-height', totalH + 'px', 'important');
 	        $body[0].style.setProperty('height', bodyH + 'px', 'important');
 	        $body[0].style.setProperty('max-height', bodyH + 'px', 'important');
-	        $body[0].style.setProperty('overflow-y', 'auto', 'important');
+	        $body[0].style.setProperty('overflow-y', needH > maxBodyH ? 'auto' : 'hidden', 'important');
 	    }
 
 	    function buildDetailOperationFixedPanel() {
