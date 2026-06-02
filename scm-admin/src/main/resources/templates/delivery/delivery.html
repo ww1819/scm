@@ -199,7 +199,12 @@
 
 		#toolbar #btn-delivery-edit.disabled,
 		#toolbar #btn-delivery-audit.disabled,
-		#toolbar #btn-delivery-remove.disabled {
+		#toolbar #btn-delivery-remove.disabled,
+		#toolbar #btn-delivery-unaudit.disabled,
+		#toolbar #toolbar-btn-delivery-print.disabled,
+		#toolbar #toolbar-btn-delivery-print-acceptance.disabled,
+		#toolbar #btn-delivery-print-export.disabled,
+		#toolbar #btn-delivery-acceptance-export.disabled {
 			pointer-events: none;
 			cursor: not-allowed;
 			opacity: 1;
@@ -258,7 +263,7 @@
 	            <a class="btn btn-info multiple disabled" id="btn-delivery-audit" onclick="auditDeliveries()" shiro:hasPermission="delivery:delivery:audit">
 	                <i class="fa fa-check"></i> 审核
 	            </a>
-	            <a class="btn btn-warning multiple disabled" onclick="unAuditDeliveries()" shiro:hasPermission="delivery:delivery:unaudit">
+	            <a class="btn btn-warning multiple disabled" id="btn-delivery-unaudit" onclick="unAuditDeliveries()" shiro:hasPermission="delivery:delivery:unaudit">
 	                <i class="fa fa-undo"></i> 反审核
 	            </a>
 	            <a class="btn btn-danger multiple disabled" id="btn-delivery-remove" onclick="removeDeliveriesGuard()" shiro:hasPermission="delivery:delivery:remove">
@@ -273,10 +278,10 @@
 	            <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="delivery:delivery:export">
 		            <i class="fa fa-download"></i> 导出
 		        </a>
-	            <a class="btn btn-default" onclick="openDeliveryPrintStyleExcelDialog()" shiro:hasPermission="delivery:delivery:export">
+	            <a class="btn btn-default multiple disabled" id="btn-delivery-print-export" onclick="openDeliveryPrintStyleExcelDialog()" shiro:hasPermission="delivery:delivery:export">
 		            <i class="fa fa-file-excel-o"></i> 打印导出
 		        </a>
-	            <a class="btn btn-default" onclick="openDeliveryAcceptancePrintStyleExcelDialog()" shiro:hasPermission="delivery:delivery:export">
+	            <a class="btn btn-default multiple disabled" id="btn-delivery-acceptance-export" onclick="openDeliveryAcceptancePrintStyleExcelDialog()" shiro:hasPermission="delivery:delivery:export">
 		            <i class="fa fa-file-excel-o"></i> 验收单导出
 		        </a>
 	            <a class="btn btn-primary" onclick="$.table.search()">
@@ -319,17 +324,20 @@
 
 		        // 如果按钮被禁用，提示用户
 		        if ($btn.hasClass('disabled')) {
-		            console.log('Button is disabled');
-		            $.modal.msgWarning("请至少选择一条记录进行打印");
+		            $.modal.msgWarning("未审核的配送单不能配送单打印，请仅选择已审核单据");
 		            return false;
 		        }
 
 		        // 直接执行打印逻辑
-		        var rows = $('#bootstrap-table').bootstrapTable('getSelections');
+		        var rows = getDeliveryTableSelections();
 		        console.log('Selected rows count:', rows ? rows.length : 0);
 
 		        if (!rows || rows.length === 0) {
 		            $.modal.msgWarning("请至少选择一条记录进行打印");
+		            return false;
+		        }
+		        if (selectionHasPendingAuditDelivery(rows)) {
+		            $.modal.msgWarning("未审核的配送单不能配送单打印，请仅选择已审核单据");
 		            return false;
 		        }
 
@@ -376,12 +384,16 @@
 		        e.stopPropagation();
 		        var $btn = $(this);
 		        if ($btn.hasClass('disabled')) {
+		            $.modal.msgWarning("未审核的配送单不能验收单打印，请仅选择已审核单据");
+		            return false;
+		        }
+		        var rows = getDeliveryTableSelections();
+		        if (!rows || rows.length === 0) {
 		            $.modal.msgWarning("请至少选择一条记录");
 		            return false;
 		        }
-		        var rows = $('#bootstrap-table').bootstrapTable('getSelections');
-		        if (!rows || rows.length === 0) {
-		            $.modal.msgWarning("请至少选择一条记录");
+		        if (selectionHasPendingAuditDelivery(rows)) {
+		            $.modal.msgWarning("未审核的配送单不能验收单打印，请仅选择已审核单据");
 		            return false;
 		        }
 		        if (rows.length > 1) {
@@ -696,11 +708,39 @@
 		    return false;
 		}
 
-		/** 仅控制：修改、审核、删除（选中已审核单时置灰） */
-		function updateDeliveryAuditSensitiveButtons() {
+		function selectionHasPendingAuditDelivery(rows) {
+		    if (!rows || !rows.length) {
+		        return false;
+		    }
+		    for (var i = 0; i < rows.length; i++) {
+		        if (!isDeliveryAudited(rows[i])) {
+		            return true;
+		        }
+		    }
+		    return false;
+		}
+
+		var deliveryPendingAuditDisableBtns = '#btn-delivery-unaudit, #toolbar-btn-delivery-print, #toolbar-btn-delivery-print-acceptance, #btn-delivery-print-export, #btn-delivery-acceptance-export';
+
+		function getDeliveryTableSelections() {
 		    var rows = $('#bootstrap-table').bootstrapTable('getSelections') || [];
+		    if (table.options && table.options.rememberSelected) {
+		        var remembered = table.rememberSelecteds[deliveryTableId];
+		        if (remembered && remembered.length) {
+		            rows = remembered;
+		        }
+		    }
+		    return rows;
+		}
+
+		/** 已审核单：禁用修改/审核/删除；未审核单：禁用反审核/打印/打印导出/验收单导出 */
+		function updateDeliveryAuditSensitiveButtons() {
+		    var rows = getDeliveryTableSelections();
 		    var n = rows.length;
+		    var hasPending = selectionHasPendingAuditDelivery(rows);
+		    $(deliveryPendingAuditDisableBtns).toggleClass('disabled', n > 0 && hasPending);
 		    if (n === 0) {
+		        $('#btn-delivery-edit').addClass('disabled');
 		        return;
 		    }
 		    if (selectionHasAuditedDelivery(rows)) {
@@ -753,7 +793,11 @@
 		}
 
 		function unAuditDeliveries() {
-		    var rows = $('#bootstrap-table').bootstrapTable('getSelections');
+		    if ($('#btn-delivery-unaudit').hasClass('disabled')) {
+		        $.modal.msgWarning("未审核的配送单不能反审核，请仅选择已审核单据");
+		        return;
+		    }
+		    var rows = getDeliveryTableSelections();
 		    if (!rows || rows.length === 0) {
 		        $.modal.msgWarning("请至少选择一条记录");
 		        return;
@@ -990,7 +1034,8 @@
 		    };
 		    $.table.init(options);
 		    $('#bootstrap-table').on('check.bs.table uncheck.bs.table check-all.bs.table uncheck-all.bs.table load-success.bs.table', function () {
-		        setTimeout(updateDeliveryAuditSensitiveButtons, 0);
+		        /* 延后执行，确保在 ry-ui 对 .multiple 按钮的启用/禁用之后再按审核状态细调 */
+		        setTimeout(updateDeliveryAuditSensitiveButtons, 1);
 		    });
 		}
 
@@ -1001,6 +1046,10 @@
 
 		/** 按「物资配送单」打印版式导出 Excel（每单一个 Sheet），支持已勾选 / 全部 */
 		function openDeliveryPrintStyleExcelDialog() {
+			if ($('#btn-delivery-print-export').hasClass('disabled')) {
+				$.modal.msgWarning("未审核的配送单不能打印导出，请仅选择已审核单据");
+				return;
+			}
 			if (typeof layer === 'undefined') {
 				$.modal.msgError('页面未加载完成，请刷新后重试');
 				return;
@@ -1039,6 +1088,10 @@
 
 		/** 按「医用耗材质量验收单」打印版式导出 Excel（每单一个 Sheet），支持已勾选 / 全部 */
 		function openDeliveryAcceptancePrintStyleExcelDialog() {
+			if ($('#btn-delivery-acceptance-export').hasClass('disabled')) {
+				$.modal.msgWarning("未审核的配送单不能验收单导出，请仅选择已审核单据");
+				return;
+			}
 			if (typeof layer === 'undefined') {
 				$.modal.msgError('页面未加载完成，请刷新后重试');
 				return;
