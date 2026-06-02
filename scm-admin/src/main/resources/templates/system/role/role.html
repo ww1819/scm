@@ -2,13 +2,211 @@
 <html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
 <head>
 	<th:block th:include="include :: header('角色列表')" />
+	<th:block th:include="include :: layout-latest-css" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-css" />
+	<style>
+		.role-table-wrap {
+			min-height: 0;
+			position: relative;
+			padding-bottom: 0;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.role-table-wrap > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
+		}
+
+		.role-table-wrap .bootstrap-table {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			padding-bottom: 0;
+		}
+
+		.role-table-wrap .fixed-table-container {
+			flex: 1 1 auto;
+			min-height: 0;
+			padding-bottom: 0;
+		}
+
+		.role-table-wrap .fixed-table-body {
+			overflow-x: auto !important;
+			overflow-y: auto !important;
+		}
+
+		.role-table-wrap.role-list-table .fixed-columns-right {
+			z-index: 5;
+			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
+		}
+
+		.role-table-wrap .fixed-table-body .fixed-table-border {
+			display: none !important;
+			height: 0 !important;
+		}
+
+		.role-table-wrap .fixed-table-pagination {
+			position: relative;
+			flex-shrink: 0;
+			left: auto;
+			right: auto;
+			bottom: auto;
+			background: #fff;
+			z-index: 3;
+			border-top: 1px solid #eee;
+			margin: 0 !important;
+			padding: 4px 10px 2px;
+		}
+
+		.role-table-wrap.role-list-table .fixed-table-pagination .pagination {
+			margin-right: 172px;
+		}
+
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-header th .th-inner,
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-header th .sortable {
+			text-align: center !important;
+			justify-content: center;
+		}
+
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-header th[data-field="orgAdmin"],
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-body td[data-field="orgAdmin"],
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-header th[data-field="roleSort"],
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-body td[data-field="roleSort"],
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-header th[data-field="status"],
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-body td[data-field="status"] {
+			text-align: center !important;
+		}
+
+		.role-table-wrap.role-list-table .fixed-table-header {
+			position: relative;
+			top: auto;
+			z-index: 2;
+			background: #fff;
+			overflow: hidden;
+		}
+
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-header table,
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-body > table {
+			table-layout: fixed;
+		}
+
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-header th,
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-body tbody td {
+			box-sizing: border-box;
+			vertical-align: middle;
+		}
+
+		/* 主表滚动区隐藏操作列内容，由右侧 fixed-columns-right 展示（与配送单据申请一致） */
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-header th[data-field="roleOperate"],
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-body td[data-field="roleOperate"] {
+			padding: 0 !important;
+			border-left: 0 !important;
+			border-right: 0 !important;
+			font-size: 0;
+			line-height: 0;
+			color: transparent;
+			overflow: hidden;
+		}
+
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-header th[data-field="roleOperate"] > *,
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-body td[data-field="roleOperate"] > * {
+			display: none;
+		}
+
+		.role-table-wrap.role-list-table .fixed-columns-right .fixed-table-header th,
+		.role-table-wrap.role-list-table .fixed-columns-right .fixed-table-body td {
+			background-color: #fff;
+			vertical-align: middle;
+			white-space: nowrap;
+		}
+
+		.role-table-wrap.role-list-table .fixed-columns-right .fixed-table-header th[data-field="roleOperate"] {
+			background-color: #f5f5f5;
+			min-width: 160px;
+			width: 160px;
+			text-align: center;
+		}
+
+		.role-table-wrap.role-list-table .fixed-columns-right .fixed-table-header th[data-field="roleOperate"] .th-inner {
+			text-align: center;
+			justify-content: center;
+		}
+
+		.role-table-wrap.role-list-table .fixed-columns-right .fixed-table-body td[data-field="roleOperate"] {
+			min-width: 160px;
+			width: 160px;
+			padding: 6px 8px;
+			text-align: center;
+		}
+
+		.role-table-wrap.role-list-table.table-striped .fixed-columns-right .fixed-table-body tbody tr:nth-of-type(odd) td {
+			background-color: #f9f9f9;
+		}
+
+		.role-table-wrap.role-list-table .fixed-columns-right .fixed-table-body {
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+
+		.role-table-wrap.role-list-table .fixed-table-body tbody td {
+			white-space: nowrap;
+			vertical-align: middle !important;
+		}
+
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-body td[data-field="roleName"],
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-body td[data-field="pinyinCode"],
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-body td[data-field="roleKey"],
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-body td[data-field="hospitalName"],
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierCompanyName"],
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-body td[data-field="tenantName"],
+		.role-table-wrap.role-list-table .fixed-table-container > .fixed-table-body td[data-field="createTime"] {
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.role-table-wrap.role-list-table .role-cell-ellipsis {
+			display: block;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			max-width: 100%;
+		}
+
+		/* 搜索区：与配送单据申请一致 */
+		.container-div > .row > .search-collapse {
+			padding-top: 10px !important;
+			padding-bottom: 10px !important;
+		}
+
+		.container-div .search-collapse .select-list ul {
+			margin-bottom: 0;
+			overflow: hidden;
+		}
+
+		.container-div .search-collapse .role-search-rows > ul {
+			display: block;
+			width: 100%;
+			overflow: hidden;
+		}
+
+		.container-div .search-collapse .select-list li {
+			margin: 4px 15px 4px 0;
+		}
+
+		.container-div .search-collapse .select-list li.select-time label {
+			margin-top: 4px;
+			margin-bottom: 4px;
+		}
+	</style>
 </head>
 <body class="gray-bg">
 	<div class="container-div">
 		<div class="row">
 			<div class="col-sm-12 search-collapse">
 				<form id="role-form">
-					<div class="select-list">
+					<div class="select-list role-search-rows">
 						<ul>
 							<li>
 								角色名称/首拼：<input type="text" name="roleName" placeholder="名称或拼音首字母"/>
@@ -29,20 +227,20 @@
 								绑定供应商：<input type="text" name="params[supplierCompanyName]" placeholder="编码/名称/首拼"/>
 							</li>
 							<li class="select-time">
-								<label>创建时间： </label>
+								<label>创建时间：</label>
 								<input type="text" class="time-input" id="startTime" placeholder="开始时间" name="params[beginTime]"/>
 								<span>-</span>
 								<input type="text" class="time-input" id="endTime" placeholder="结束时间" name="params[endTime]"/>
 							</li>
 							<li>
-								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
-							    <a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()" style="display: none;"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()" style="display: none;"><i class="fa fa-refresh"></i>&nbsp;重置</a>
 							</li>
 						</ul>
 					</div>
 				</form>
 			</div>
-		
+
 			<div class="btn-group-sm" id="toolbar" role="group">
 				<a class="btn btn-success" onclick="$.operate.add()" shiro:hasPermission="system:role:add">
 	                <i class="fa fa-plus"></i> 新增
@@ -62,21 +260,312 @@
 		        <a class="btn btn-default" onclick="backfillHospitalSupplierPinyin(true)" shiro:hasPermission="system:config:edit" title="覆盖已有首拼">
 		            <i class="fa fa-refresh"></i> 首拼强制重算
 		        </a>
+	            <a class="btn btn-primary" onclick="$.table.search()">
+		            <i class="fa fa-search"></i> 搜索
+		        </a>
+	            <a class="btn btn-warning" onclick="resetPre()">
+		            <i class="fa fa-refresh"></i> 重置
+		        </a>
 	        </div>
-	        
-	        <div class="col-sm-12 select-table table-striped">
+
+	        <div class="col-sm-12 select-table table-striped role-table-wrap role-list-table">
 			    <table id="bootstrap-table"></table>
 			</div>
 		</div>
 	</div>
 	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
 	<script th:inline="javascript">
 		var editFlag = [[${@permission.hasPermi('system:role:edit')}]];
 		var removeFlag = [[${@permission.hasPermi('system:role:remove')}]];
 		var prefix = ctx + "system/role";
-		
+		var roleTableId = 'bootstrap-table';
+
+		var roleColWidths = {
+			roleId: 90,
+			roleName: 120,
+			pinyinCode: 90,
+			roleKey: 110,
+			roleType: 90,
+			hospitalName: 150,
+			supplierCompanyName: 200,
+			orgAdmin: 90,
+			tenantName: 120,
+			dataScope: 150,
+			roleSort: 90,
+			status: 80,
+			createTime: 160,
+			roleOperate: 160
+		};
 
 		$(function() {
+		    layoutRoleTableWrapHeight();
+		    queryRoleList();
+		    $(window).resize(function() {
+		    	layoutRoleTableWrapHeight();
+		    	adjustTableHeight();
+		    	setTimeout(refreshRoleTableLayout, 100);
+		    });
+		});
+
+		function layoutRoleTableWrapHeight() {
+			var $wrap = $('.role-table-wrap');
+			if (!$wrap.length) {
+				return;
+			}
+			var top = $wrap[0].getBoundingClientRect().top;
+			var h = Math.floor(window.innerHeight - top - 14);
+			h = Math.min(Math.max(h, 400), 580);
+			$wrap[0].style.height = h + 'px';
+			$wrap[0].style.minHeight = h + 'px';
+		}
+
+		function calculateTableHeight() {
+			layoutRoleTableWrapHeight();
+			var $wrap = $('.role-table-wrap');
+			if ($wrap.length === 0) {
+				return 440;
+			}
+			var $bt = $wrap.find('.bootstrap-table');
+			var wrapH = $wrap[0].clientHeight || $wrap.innerHeight() || 0;
+			var toolbarH = $bt.find('.fixed-table-toolbar').outerHeight(true) || 0;
+			var pagH = $bt.find('.fixed-table-pagination').outerHeight(true) || 46;
+			var containerH = Math.floor(wrapH - toolbarH - pagH - 2);
+			return Math.max(containerH, 240);
+		}
+
+		function adjustTableHeight() {
+			var $table = $('#' + roleTableId);
+			if ($table.length > 0 && $table.bootstrapTable('getOptions')) {
+				$table.bootstrapTable('resetView', { height: calculateTableHeight() });
+			}
+		}
+
+		function escRoleCellAttr(s) {
+			return String(s == null ? '' : s)
+				.replace(/&/g, '&amp;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#39;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;');
+		}
+
+		/** 文本省略显示，鼠标悬停 title 显示完整内容，移开自动隐藏 */
+		function roleCellEllipsis(value) {
+			var s = (value == null || value === '') ? '-' : String(value);
+			if (s === '-') {
+				return s;
+			}
+			return '<span class="role-cell-ellipsis" title="' + escRoleCellAttr(s) + '">' + escRoleCellAttr(s) + '</span>';
+		}
+
+		function getRoleTableTotalWidth() {
+			var sum = 0;
+			var opt = $('#' + roleTableId).bootstrapTable('getOptions');
+			if (opt && opt.columns && opt.columns[0]) {
+				$.each(opt.columns[0], function (_, col) {
+					if (!col || col.visible === false) {
+						return;
+					}
+					if (col.checkbox) {
+						sum += 42;
+					} else if (col.field && roleColWidths[col.field] != null) {
+						sum += roleColWidths[col.field];
+					} else if (col.width) {
+						sum += parseInt(col.width, 10) || 0;
+					} else {
+						sum += 100;
+					}
+				});
+			}
+			return Math.max(sum, 1600);
+		}
+
+		function applyRoleFieldColumnWidth(field, widthPx) {
+			var w = widthPx + 'px';
+			var $container = $('#' + roleTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $th = $mainHeader.find('th[data-field="' + field + '"]');
+			if ($th.length === 0) {
+				return;
+			}
+			var colIdx = $th[0].cellIndex;
+			var setW = function (el) {
+				el.style.setProperty('width', w, 'important');
+				el.style.setProperty('min-width', w, 'important');
+				el.style.setProperty('max-width', w, 'important');
+			};
+			$th.each(function () { setW(this); });
+			$mainBody.find('table tbody tr').each(function () {
+				var cell = this.cells[colIdx];
+				if (cell) {
+					setW(cell);
+				}
+			});
+			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+		}
+
+		function applyRoleCheckboxColumnWidth() {
+			var w = '42px';
+			var $container = $('#' + roleTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $th = $mainHeader.find('th.bs-checkbox');
+			if ($th.length === 0) {
+				return;
+			}
+			var colIdx = $th[0].cellIndex;
+			var setW = function (el) {
+				el.style.setProperty('width', w, 'important');
+				el.style.setProperty('min-width', w, 'important');
+				el.style.setProperty('max-width', w, 'important');
+			};
+			$th.each(function () { setW(this); });
+			$mainBody.find('table tbody tr').each(function () {
+				var cell = this.cells[colIdx];
+				if (cell) {
+					setW(cell);
+				}
+			});
+			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+		}
+
+		function syncRoleHeaderBodyColumnWidths() {
+			var $container = $('#' + roleTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $headerThs = $mainHeader.find('thead tr').first().children('th');
+			var $firstRow = $mainBody.find('tbody tr').first();
+			if ($firstRow.length === 0) {
+				return;
+			}
+			var setW = function (el, widthVal) {
+				el.style.setProperty('width', widthVal, 'important');
+				el.style.setProperty('min-width', widthVal, 'important');
+				el.style.setProperty('max-width', widthVal, 'important');
+			};
+			$headerThs.each(function (i) {
+				var bodyCell = $firstRow[0].cells[i];
+				if (!bodyCell) {
+					return;
+				}
+				var w = bodyCell.style.width;
+				if (!w) {
+					w = window.getComputedStyle(bodyCell).width;
+				}
+				if (w) {
+					setW(this, w);
+					$mainHeader.find('colgroup col').eq(i).each(function () { setW(this, w); });
+					$mainBody.find('colgroup col').eq(i).each(function () { setW(this, w); });
+				}
+			});
+		}
+
+		function scheduleRoleColumnWidths() {
+			applyRoleCheckboxColumnWidth();
+			$.each(roleColWidths, function (field, width) {
+				applyRoleFieldColumnWidth(field, width);
+			});
+			syncRoleHeaderBodyColumnWidths();
+			requestAnimationFrame(function () {
+				applyRoleCheckboxColumnWidth();
+				$.each(roleColWidths, function (field, width) {
+					applyRoleFieldColumnWidth(field, width);
+				});
+				syncRoleHeaderBodyColumnWidths();
+			});
+		}
+
+		function fixRoleTableHeaderAlign() {
+			var $bt = $('#' + roleTableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			if (!$mainBody.length || !$mainHeader.length) {
+				return;
+			}
+			var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
+			$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+		}
+
+		function syncRoleHeaderBodyScrollLeft() {
+			var $container = $('#' + roleTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			if ($mainBody.length && $mainHeader.length) {
+				$mainHeader.scrollLeft($mainBody[0].scrollLeft);
+			}
+		}
+
+		function bindRoleMainHorizontalScroll() {
+			var $bt = $('#' + roleTableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			$mainBody.off('scroll.roleMainH').on('scroll.roleMainH', function () {
+				$mainHeader.scrollLeft($mainBody.scrollLeft());
+			});
+		}
+
+		function applyRoleMainTableMinWidth() {
+			var sum = getRoleTableTotalWidth();
+			var w = sum + 'px';
+			var $container = $('#' + roleTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $headerTable = $container.children('.fixed-table-header').find('table');
+			var $bodyTable = $container.children('.fixed-table-body').children('table');
+			$headerTable.css({ width: w, minWidth: w, maxWidth: w });
+			$bodyTable.css({ width: w, minWidth: w, maxWidth: w });
+		}
+
+		function syncRoleOperateColumnScroll() {
+			var $bt = $('#' + roleTableId).closest('.bootstrap-table');
+			var $rightBody = $bt.find('.fixed-columns-right .fixed-table-body');
+			if ($rightBody.length === 0) {
+				return;
+			}
+			var $mainBody = $bt.find('.fixed-table-container').children('.fixed-table-body');
+			$mainBody.off('scroll.roleOperateSync').on('scroll.roleOperateSync', function () {
+				$rightBody.scrollTop($mainBody.scrollTop());
+			});
+		}
+
+		function refreshRoleTableLayout() {
+			fixRoleTableHeaderAlign();
+			scheduleRoleColumnWidths();
+			applyRoleMainTableMinWidth();
+			syncRoleHeaderBodyScrollLeft();
+			bindRoleMainHorizontalScroll();
+			syncRoleOperateColumnScroll();
+			initRoleTablePopovers();
+		}
+
+		function initRoleTablePopovers() {
+			var $bt = $('#' + roleTableId).closest('.bootstrap-table');
+			$bt.find('[data-toggle="popover"]').popover('destroy');
+			$bt.find('[data-toggle="popover"]').popover({ html: true, trigger: 'hover', container: 'body' });
+		}
+
+		function buildRoleOperateHtml(row) {
+			if (!row || row.roleId == 1) {
+				return '';
+			}
+			var actions = [];
+			actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.operate.edit(\'' + row.roleId + '\')"><i class="fa fa-edit"></i>编辑</a> ');
+			actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.roleId + '\')"><i class="fa fa-remove"></i>删除</a> ');
+			var more = [];
+			more.push("<a class='btn btn-default btn-xs " + editFlag + "' href='javascript:void(0)' onclick='authMenu(" + row.roleId + ")'><i class='fa fa-sitemap'></i>授权菜单</a> ");
+			more.push("<a class='btn btn-default btn-xs " + editFlag + "' href='javascript:void(0)' onclick='authDataScope(" + row.roleId + ")'><i class='fa fa-check-square-o'></i>数据权限</a> ");
+			more.push("<a class='btn btn-default btn-xs " + editFlag + "' href='javascript:void(0)' onclick='authUser(" + row.roleId + ")'><i class='fa fa-user'></i>分配用户</a>");
+			var moreHtml = more.join('').replace(/"/g, '&quot;');
+			actions.push('<a tabindex="0" class="btn btn-info btn-xs" role="button" data-container="body" data-placement="left" data-toggle="popover" data-html="true" data-trigger="hover" data-content="' + moreHtml + '"><i class="fa fa-chevron-circle-right"></i>更多操作</a>');
+			return actions.join('');
+		}
+
+		function queryRoleList() {
 		    var options = {
 		        url: prefix + "/list",
 		        createUrl: prefix + "/add",
@@ -87,50 +576,95 @@
 		        modalName: "角色",
 		        rememberSelected: true,
 		        maintainSelected: true,
+		        mobileResponsive: false,
+		        fixedColumns: true,
+		        fixedNumber: 0,
+		        fixedRightNumber: 1,
+		        pageList: [10, 25, 50],
+		        height: calculateTableHeight(),
+		        onLoadSuccess: function () {
+		            layoutRoleTableWrapHeight();
+		            setTimeout(function () {
+		                adjustTableHeight();
+		                refreshRoleTableLayout();
+		            }, 50);
+		            setTimeout(function () {
+		                var $t = $('#' + roleTableId);
+		                if ($t.bootstrapTable('getOptions')) {
+		                    $t.bootstrapTable('resetView', { height: calculateTableHeight() });
+		                }
+		                refreshRoleTableLayout();
+		            }, 200);
+		            setTimeout(refreshRoleTableLayout, 450);
+		        },
+		        onPostBody: function () {
+		            refreshRoleTableLayout();
+		        },
 		        columns: [{
 		            checkbox: true
 		        },
 		        {
 		            field: 'roleId',
-		            title: '角色编号'
+		            title: '角色编号',
+		            width: 90
 		        },
 		        {
 		            field: 'roleName',
 		            title: '角色名称',
-		            sortable: true
+		            sortable: true,
+		            width: 120,
+		            formatter: function (value) {
+		                return roleCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'pinyinCode',
-		            title: '首拼简码'
+		            title: '首拼简码',
+		            width: 90,
+		            formatter: function (value) {
+		                return roleCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'roleKey',
 		            title: '权限字符',
-		            sortable: true
+		            sortable: true,
+		            width: 110,
+		            formatter: function (value) {
+		                return roleCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'roleType',
 		            title: '角色类型',
+		            width: 90,
 		            formatter: function(v) {
 		                if (!v || v === 'platform') return '<span class="label label-default">平台</span>';
 		                if (v === 'hospital') return '<span class="label label-info">医院</span>';
 		                if (v === 'supplier') return '<span class="label label-primary">供应商</span>';
-		                return v;
+		                return v || '-';
 		            }
 		        },
 		        {
 		            field: 'hospitalName',
 		            title: '绑定医院',
-		            formatter: function(v) { return v || '-'; }
+		            width: 150,
+		            formatter: function(v) {
+		                return roleCellEllipsis(v);
+		            }
 		        },
 		        {
 		            field: 'supplierCompanyName',
 		            title: '绑定供应商',
-		            formatter: function(v) { return v || '-'; }
+		            width: 200,
+		            formatter: function(v) {
+		                return roleCellEllipsis(v);
+		            }
 		        },
 		        {
 		            field: 'orgAdmin',
 		            title: '机构管理员',
+		            align: 'center',
 		            width: 90,
 		            formatter: function(v) {
 		                return (v === '1' || v === 1) ? '<span class="label label-warning">是</span>' : '<span class="text-muted">否</span>';
@@ -140,109 +674,113 @@
 		            field: 'tenantName',
 		            title: '对应客户',
 		            sortable: true,
-		            formatter: function(v) { return v || '-'; }
+		            width: 120,
+		            formatter: function(v) {
+		                return roleCellEllipsis(v);
+		            }
 		        },
 		        {
 		            field: 'dataScope',
 		            title: '数据权限',
-		            formatter: function(value, item, index) {
+		            width: 150,
+		            formatter: function(value, item) {
 		                if (item.dataScope == '1') {
 		                    return '<span class="badge badge-primary">全部数据权限</span>';
 		                }
-		                else if (item.dataScope == '2') {
+		                if (item.dataScope == '2') {
 		                    return '<span class="badge badge-success">自定义数据权限</span>';
 		                }
-		                else if (item.dataScope == '3') {
+		                if (item.dataScope == '3') {
 		                    return '<span class="badge badge-info">本部门数据权限</span>';
 		                }
-		                else if (item.dataScope == '4') {
+		                if (item.dataScope == '4') {
 		                    return '<span class="badge badge-warning">本部门及以下数据权限</span>';
 		                }
-		                else if (item.dataScope == '5') {
+		                if (item.dataScope == '5') {
 		                    return '<span class="badge badge-danger">仅本人数据权限</span>';
 		                }
+		                return '-';
 		            }
 		        },
 		        {
 		            field: 'roleSort',
 		            title: '显示顺序',
-		            sortable: true
+		            align: 'center',
+		            sortable: true,
+		            width: 90
 		        },
 		        {
-		        	visible: editFlag == 'hidden' ? false : true,
+		        	field: 'status',
 		        	title: '角色状态',
 		        	align: 'center',
-		        	formatter: function (value, row, index) {
+		        	width: 80,
+		        	visible: editFlag == 'hidden' ? false : true,
+		        	formatter: function (value, row) {
 		        		return statusTools(row);
 		        	}
 		        },
 		        {
 		            field: 'createTime',
 		            title: '创建时间',
-		            sortable: true
+		            sortable: true,
+		            width: 160,
+		            formatter: function (value) {
+		                return roleCellEllipsis(value);
+		            }
 		        },
 		        {
+		            field: 'roleOperate',
 		            title: '操作',
 		            align: 'center',
-		            formatter: function(value, row, index) {
-		            	if (row.roleId != 1) {
-		                    var actions = [];
-		                    actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.operate.edit(\'' + row.roleId + '\')"><i class="fa fa-edit"></i>编辑</a> ');
-		                    actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.roleId + '\')"><i class="fa fa-remove"></i>删除</a> ');
-		                    var more = [];
-		                    more.push("<a class='btn btn-default btn-xs " + editFlag + "' href='javascript:void(0)' onclick='authMenu(" + row.roleId + ")'><i class='fa fa-sitemap'></i>授权菜单</a> ");
-		                    more.push("<a class='btn btn-default btn-xs " + editFlag + "' href='javascript:void(0)' onclick='authDataScope(" + row.roleId + ")'><i class='fa fa-check-square-o'></i>数据权限</a> ");
-		                    more.push("<a class='btn btn-default btn-xs " + editFlag + "' href='javascript:void(0)' onclick='authUser(" + row.roleId + ")'><i class='fa fa-user'></i>分配用户</a>");
-		                    actions.push('<a tabindex="0" class="btn btn-info btn-xs" role="button" data-container="body" data-placement="left" data-toggle="popover" data-html="true" data-trigger="hover" data-content="' + more.join('') + '"><i class="fa fa-chevron-circle-right"></i>更多操作</a>');
-		                    return actions.join('');
-		            	} else {
-		                    return "";
-		                }
+		            width: 160,
+		            formatter: function (value, row) {
+		                return buildRoleOperateHtml(row);
 		            }
 		        }]
 		    };
 		    $.table.init(options);
-		});
-		
-		/* 角色管理-分配数据权限 */
+		}
+
+		function resetPre() {
+			if (typeof resetDate === 'function') {
+				resetDate();
+			}
+			$("#role-form")[0].reset();
+			$.table.search();
+		}
+
 		function authDataScope(roleId) {
 		    var url = prefix + '/authDataScope/' + roleId;
 		    $.modal.open("分配数据权限", url);
 		}
 
-		/* 角色管理-授权菜单 */
 		function authMenu(roleId) {
 		    var url = prefix + '/edit/' + roleId;
 		    $.modal.openTab("授权菜单", url);
 		}
-		
-		/* 角色管理-分配用户 */
+
 		function authUser(roleId) {
 		    var url = prefix + '/authUser/' + roleId;
 		    $.modal.openTab("分配用户", url);
 		}
-		
-		/* 角色状态显示 */
+
 		function statusTools(row) {
 		    if (row.status == 1) {
-    			return '<i class=\"fa fa-toggle-off text-info fa-2x\" onclick="enable(\'' + row.roleId + '\')"></i> ';
-    		} else {
-    			return '<i class=\"fa fa-toggle-on text-info fa-2x\" onclick="disable(\'' + row.roleId + '\')"></i> ';
+    			return '<i class="fa fa-toggle-off text-info fa-2x" onclick="enable(\'' + row.roleId + '\')"></i> ';
     		}
+    		return '<i class="fa fa-toggle-on text-info fa-2x" onclick="disable(\'' + row.roleId + '\')"></i> ';
 		}
-		
-		/* 角色管理-停用 */
+
 		function disable(roleId) {
 			$.modal.confirm("确认要停用角色吗？", function() {
 				$.operate.post(prefix + "/changeStatus", { "roleId": roleId, "status": 1 });
-		    })
+		    });
 		}
 
-		/* 角色管理启用 */
 		function enable(roleId) {
 			$.modal.confirm("确认要启用角色吗？", function() {
 				$.operate.post(prefix + "/changeStatus", { "roleId": roleId, "status": 0 });
-		    })
+		    });
 		}
 
 		function backfillHospitalSupplierPinyin(overwrite) {

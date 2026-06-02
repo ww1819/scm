@@ -476,6 +476,17 @@
             // 父节点属性列表
             var parentCodes = [];
             var rootFlag = false;
+            var parentIdExistsInData = function(pid) {
+                if (pid === 0 || pid === '0' || pid === null || pid === '' || pid === undefined) {
+                    return false;
+                }
+                for (var j = 0; j < data.length; j++) {
+                    if (data[j][options.code] == pid) {
+                        return true;
+                    }
+                }
+                return false;
+            };
             $.each(data, function(index, item) {
             	if($.inArray(item[options.parentCode], parentCodes) == -1){
             		parentCodes.push(item[options.parentCode]);
@@ -492,12 +503,12 @@
                         item.isTreeLeaf = (item["isTreeLeaf"] == 1 ? true: false) || ((item["isTreeLeaf"] == 'true' || item["isTreeLeaf"] == true) ? true: false);
                     }
                 }
-                // 顶级节点校验判断，兼容0,'0','',null
+                // 顶级节点校验判断，兼容0,'0','',null；上级已在当前结果集中则不得提升为虚拟根（避免「北京」与「天津」同级展示）
                 var _defaultRootFlag = item[options.parentCode] == '0' ||
                 item[options.parentCode] == 0 ||
                 item[options.parentCode] == null ||
                 item[options.parentCode] == '' ||
-                $.inArray(item[options.code], parentCodes) > 0 && !rootFlag;
+                ($.inArray(item[options.code], parentCodes) > 0 && !parentIdExistsInData(item[options.parentCode]) && !rootFlag);
                 if (!item[options.parentCode] || (_root ? (item[options.parentCode] == options.rootIdValue) : _defaultRootFlag)) {
                 	rootFlag = true;
                 	if (!target.data_list["_root_"]) {
@@ -606,7 +617,8 @@
                     	    if (item["isTreeLeaf"]) {
                     	        $td.prepend('<span class="treetable-expander ' + _icon + '"></span>');
                     	    } else {
-                    	        $td.prepend('<span class="treetable-expander"></span>')
+                    	        // 有下级时须带折叠图标，否则点击无法触发懒加载
+                    	        $td.prepend('<span class="treetable-expander ' + options.expanderCollapsedClass + '"></span>');
                     	    }
                     	} else {
 	                        if (!isP) {
