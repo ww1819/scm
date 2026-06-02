@@ -3,21 +3,33 @@
 <head>
 	<th:block th:include="include :: header('企业用户列表')" />
 	<th:block th:include="include :: layout-latest-css" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-css" />
 	<style>
 		.supplier-user-table-wrap {
-			min-height: 730px;
+			min-height: 0;
 			position: relative;
-			padding-bottom: 6px;
+			padding-bottom: 0;
 			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.supplier-user-table-wrap > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
 		}
 
 		.supplier-user-table-wrap .bootstrap-table {
+			display: flex;
+			flex-direction: column;
 			height: 100%;
-			padding-bottom: 46px;
+			padding-bottom: 0;
 		}
 
 		.supplier-user-table-wrap .fixed-table-container {
-			padding-bottom: 46px;
+			flex: 1 1 auto;
+			min-height: 0;
+			padding-bottom: 0;
 		}
 
 		.supplier-user-table-wrap .fixed-table-body {
@@ -25,27 +37,155 @@
 			overflow-y: auto !important;
 		}
 
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-columns-right {
+			z-index: 5;
+			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
+		}
+
+		.supplier-user-table-wrap .fixed-table-body .fixed-table-border {
+			display: none !important;
+			height: 0 !important;
+		}
+
 		.supplier-user-table-wrap .fixed-table-pagination {
-			position: absolute;
-			left: 10px;
-			right: 10px;
-			bottom: 0;
+			position: relative;
+			flex-shrink: 0;
+			left: auto;
+			right: auto;
+			bottom: auto;
 			background: #fff;
 			z-index: 3;
 			border-top: 1px solid #eee;
 			margin: 0 !important;
-			padding: 6px 0;
+			padding: 4px 10px 2px;
 		}
 
-		.supplier-user-table-wrap .fixed-table-pagination .pagination {
-			margin-right: 28px;
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-pagination .pagination {
+			margin-right: 172px;
 		}
 
-		.supplier-user-table-wrap .fixed-table-header {
-			position: sticky;
-			top: 0;
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th .th-inner,
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th .sortable {
+			text-align: center !important;
+			justify-content: center;
+		}
+
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th[data-field="rowIndex"],
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-body td[data-field="rowIndex"],
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th[data-field="isMain"],
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-body td[data-field="isMain"],
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th[data-field="status"],
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-body td[data-field="status"],
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th[data-field="phonenumber"],
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-body td[data-field="phonenumber"] {
+			text-align: center !important;
+		}
+
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-header {
+			position: relative;
+			top: auto;
 			z-index: 2;
 			background: #fff;
+			overflow: hidden;
+		}
+
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header table,
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-body > table {
+			table-layout: fixed;
+		}
+
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th,
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-body tbody td {
+			box-sizing: border-box;
+			vertical-align: middle;
+		}
+
+		/* 主表滚动区隐藏操作列内容，由右侧 fixed-columns-right 展示（与配送单据申请一致） */
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th[data-field="supplierUserOperate"],
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierUserOperate"] {
+			padding: 0 !important;
+			border-left: 0 !important;
+			border-right: 0 !important;
+			font-size: 0;
+			line-height: 0;
+			color: transparent;
+			overflow: hidden;
+		}
+
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th[data-field="supplierUserOperate"] > *,
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierUserOperate"] > * {
+			display: none;
+		}
+
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-columns-right .fixed-table-header th,
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-columns-right .fixed-table-body td {
+			background-color: #fff;
+			vertical-align: middle;
+			white-space: nowrap;
+		}
+
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-columns-right .fixed-table-header th[data-field="supplierUserOperate"] {
+			background-color: #f5f5f5;
+			min-width: 160px;
+			width: 160px;
+			text-align: center;
+		}
+
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-columns-right .fixed-table-header th[data-field="supplierUserOperate"] .th-inner {
+			text-align: center;
+			justify-content: center;
+		}
+
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-columns-right .fixed-table-body td[data-field="supplierUserOperate"] {
+			min-width: 160px;
+			width: 160px;
+			padding: 6px 8px;
+			text-align: center;
+		}
+
+		.supplier-user-table-wrap.supplier-user-list-table.table-striped .fixed-columns-right .fixed-table-body tbody tr:nth-of-type(odd) td {
+			background-color: #f9f9f9;
+		}
+
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-columns-right .fixed-table-body {
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-body tbody td {
+			white-space: nowrap;
+			vertical-align: middle !important;
+		}
+
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"],
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierCode"],
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-body td[data-field="loginName"],
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-body td[data-field="userName"],
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-body td[data-field="email"] {
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.supplier-user-table-wrap.supplier-user-list-table .supplier-user-cell-ellipsis {
+			display: block;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			max-width: 100%;
+		}
+
+		/* 搜索区：与配送单据申请一致 */
+		.container-div > .row > .search-collapse {
+			padding-top: 10px !important;
+			padding-bottom: 10px !important;
+		}
+
+		.container-div .search-collapse .select-list ul {
+			margin-bottom: 0;
+		}
+
+		.container-div .search-collapse .select-list li {
+			margin: 4px 15px 4px 0;
 		}
 	</style>
 </head>
@@ -84,7 +224,7 @@
 					</div>
 				</form>
 			</div>
-			
+
 	        <div class="btn-group-sm" id="toolbar" role="group">
 	        	<a class="btn btn-success" onclick="$.operate.addTab()" shiro:hasPermission="supplier:user:add">
 	                <i class="fa fa-plus"></i> 新增
@@ -105,40 +245,277 @@
 		            <i class="fa fa-refresh"></i> 重置
 		        </a>
 	        </div>
-	        
-	        <div class="col-sm-12 select-table table-striped supplier-user-table-wrap">
+
+	        <div class="col-sm-12 select-table table-striped supplier-user-table-wrap supplier-user-list-table">
 			    <table id="bootstrap-table"></table>
 			</div>
 		</div>
 	</div>
-	
+
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
 	<script th:inline="javascript">
 		var editFlag = [[${@permission.hasPermi('supplier:user:edit')}]];
 		var removeFlag = [[${@permission.hasPermi('supplier:user:remove')}]];
 		var prefix = ctx + "supplier/user";
+		var supplierUserTableId = 'bootstrap-table';
+
+		var supplierUserColWidths = {
+			rowIndex: 60,
+			supplierName: 180,
+			supplierCode: 130,
+			loginName: 120,
+			userName: 100,
+			phonenumber: 120,
+			email: 160,
+			isMain: 100,
+			status: 80,
+			createTime: 160,
+			supplierUserOperate: 160
+		};
 
 		$(function() {
+		    layoutSupplierUserTableWrapHeight();
 		    querySupplierUserList();
 		    $(window).resize(function() {
+		    	layoutSupplierUserTableWrapHeight();
 		    	adjustTableHeight();
+		    	setTimeout(refreshSupplierUserTableLayout, 100);
 		    });
 		});
 
-		function calculateTableHeight() {
-			var $detail = $('.supplier-user-table-wrap');
-			if ($detail.length === 0) {
-				return 700;
+		function layoutSupplierUserTableWrapHeight() {
+			var $wrap = $('.supplier-user-table-wrap');
+			if (!$wrap.length) {
+				return;
 			}
-			return Math.max($detail.innerHeight() - 8, 650);
+			var top = $wrap[0].getBoundingClientRect().top;
+			var h = Math.floor(window.innerHeight - top - 14);
+			h = Math.min(Math.max(h, 400), 580);
+			$wrap[0].style.height = h + 'px';
+			$wrap[0].style.minHeight = h + 'px';
+		}
+
+		function calculateTableHeight() {
+			layoutSupplierUserTableWrapHeight();
+			var $wrap = $('.supplier-user-table-wrap');
+			if ($wrap.length === 0) {
+				return 440;
+			}
+			var $bt = $wrap.find('.bootstrap-table');
+			var wrapH = $wrap[0].clientHeight || $wrap.innerHeight() || 0;
+			var toolbarH = $bt.find('.fixed-table-toolbar').outerHeight(true) || 0;
+			var pagH = $bt.find('.fixed-table-pagination').outerHeight(true) || 46;
+			var containerH = Math.floor(wrapH - toolbarH - pagH - 2);
+			return Math.max(containerH, 240);
 		}
 
 		function adjustTableHeight() {
-			var $table = $('#bootstrap-table');
+			var $table = $('#' + supplierUserTableId);
 			if ($table.length > 0 && $table.bootstrapTable('getOptions')) {
 				$table.bootstrapTable('resetView', { height: calculateTableHeight() });
 			}
+		}
+
+		function escSupplierUserCellAttr(s) {
+			return String(s == null ? '' : s)
+				.replace(/&/g, '&amp;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#39;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;');
+		}
+
+		/** 文本省略显示，鼠标悬停 title 显示完整内容，移开自动隐藏 */
+		function supplierUserCellEllipsis(value) {
+			var s = (value == null || value === '') ? '-' : String(value);
+			if (s === '-') {
+				return s;
+			}
+			return '<span class="supplier-user-cell-ellipsis" title="' + escSupplierUserCellAttr(s) + '">' + escSupplierUserCellAttr(s) + '</span>';
+		}
+
+		function getSupplierUserTableTotalWidth() {
+			var sum = 0;
+			var opt = $('#' + supplierUserTableId).bootstrapTable('getOptions');
+			if (opt && opt.columns && opt.columns[0]) {
+				$.each(opt.columns[0], function (_, col) {
+					if (!col || col.visible === false) {
+						return;
+					}
+					if (col.checkbox) {
+						sum += 42;
+					} else if (col.field && supplierUserColWidths[col.field] != null) {
+						sum += supplierUserColWidths[col.field];
+					} else if (col.width) {
+						sum += parseInt(col.width, 10) || 0;
+					} else {
+						sum += 100;
+					}
+				});
+			}
+			return Math.max(sum, 1200);
+		}
+
+		function applySupplierUserFieldColumnWidth(field, widthPx) {
+			var w = widthPx + 'px';
+			var $container = $('#' + supplierUserTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $th = $mainHeader.find('th[data-field="' + field + '"]');
+			if ($th.length === 0) {
+				return;
+			}
+			var colIdx = $th[0].cellIndex;
+			var setW = function (el) {
+				el.style.setProperty('width', w, 'important');
+				el.style.setProperty('min-width', w, 'important');
+				el.style.setProperty('max-width', w, 'important');
+			};
+			$th.each(function () { setW(this); });
+			$mainBody.find('table tbody tr').each(function () {
+				var cell = this.cells[colIdx];
+				if (cell) {
+					setW(cell);
+				}
+			});
+			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+		}
+
+		function applySupplierUserCheckboxColumnWidth() {
+			var w = '42px';
+			var $container = $('#' + supplierUserTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $th = $mainHeader.find('th.bs-checkbox');
+			if ($th.length === 0) {
+				return;
+			}
+			var colIdx = $th[0].cellIndex;
+			var setW = function (el) {
+				el.style.setProperty('width', w, 'important');
+				el.style.setProperty('min-width', w, 'important');
+				el.style.setProperty('max-width', w, 'important');
+			};
+			$th.each(function () { setW(this); });
+			$mainBody.find('table tbody tr').each(function () {
+				var cell = this.cells[colIdx];
+				if (cell) {
+					setW(cell);
+				}
+			});
+			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+		}
+
+		function syncSupplierUserHeaderBodyColumnWidths() {
+			var $container = $('#' + supplierUserTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $headerThs = $mainHeader.find('thead tr').first().children('th');
+			var $firstRow = $mainBody.find('tbody tr').first();
+			if ($firstRow.length === 0) {
+				return;
+			}
+			var setW = function (el, widthVal) {
+				el.style.setProperty('width', widthVal, 'important');
+				el.style.setProperty('min-width', widthVal, 'important');
+				el.style.setProperty('max-width', widthVal, 'important');
+			};
+			$headerThs.each(function (i) {
+				var bodyCell = $firstRow[0].cells[i];
+				if (!bodyCell) {
+					return;
+				}
+				var w = bodyCell.style.width;
+				if (!w) {
+					w = window.getComputedStyle(bodyCell).width;
+				}
+				if (w) {
+					setW(this, w);
+					$mainHeader.find('colgroup col').eq(i).each(function () { setW(this, w); });
+					$mainBody.find('colgroup col').eq(i).each(function () { setW(this, w); });
+				}
+			});
+		}
+
+		function scheduleSupplierUserColumnWidths() {
+			applySupplierUserCheckboxColumnWidth();
+			$.each(supplierUserColWidths, function (field, width) {
+				applySupplierUserFieldColumnWidth(field, width);
+			});
+			syncSupplierUserHeaderBodyColumnWidths();
+			requestAnimationFrame(function () {
+				applySupplierUserCheckboxColumnWidth();
+				$.each(supplierUserColWidths, function (field, width) {
+					applySupplierUserFieldColumnWidth(field, width);
+				});
+				syncSupplierUserHeaderBodyColumnWidths();
+			});
+		}
+
+		function fixSupplierUserTableHeaderAlign() {
+			var $bt = $('#' + supplierUserTableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			if (!$mainBody.length || !$mainHeader.length) {
+				return;
+			}
+			var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
+			$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+		}
+
+		function syncSupplierUserHeaderBodyScrollLeft() {
+			var $container = $('#' + supplierUserTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			if ($mainBody.length && $mainHeader.length) {
+				$mainHeader.scrollLeft($mainBody[0].scrollLeft);
+			}
+		}
+
+		function bindSupplierUserMainHorizontalScroll() {
+			var $bt = $('#' + supplierUserTableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			$mainBody.off('scroll.supplierUserMainH').on('scroll.supplierUserMainH', function () {
+				$mainHeader.scrollLeft($mainBody.scrollLeft());
+			});
+		}
+
+		function applySupplierUserMainTableMinWidth() {
+			var sum = getSupplierUserTableTotalWidth();
+			var w = sum + 'px';
+			var $container = $('#' + supplierUserTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $headerTable = $container.children('.fixed-table-header').find('table');
+			var $bodyTable = $container.children('.fixed-table-body').children('table');
+			$headerTable.css({ width: w, minWidth: w, maxWidth: w });
+			$bodyTable.css({ width: w, minWidth: w, maxWidth: w });
+		}
+
+		function syncSupplierUserOperateColumnScroll() {
+			var $bt = $('#' + supplierUserTableId).closest('.bootstrap-table');
+			var $rightBody = $bt.find('.fixed-columns-right .fixed-table-body');
+			if ($rightBody.length === 0) {
+				return;
+			}
+			var $mainBody = $bt.find('.fixed-table-container').children('.fixed-table-body');
+			$mainBody.off('scroll.supplierUserOperateSync').on('scroll.supplierUserOperateSync', function () {
+				$rightBody.scrollTop($mainBody.scrollTop());
+			});
+		}
+
+		function refreshSupplierUserTableLayout() {
+			fixSupplierUserTableHeaderAlign();
+			scheduleSupplierUserColumnWidths();
+			applySupplierUserMainTableMinWidth();
+			syncSupplierUserHeaderBodyScrollLeft();
+			bindSupplierUserMainHorizontalScroll();
+			syncSupplierUserOperateColumnScroll();
 		}
 
 		function querySupplierUserList() {
@@ -154,13 +531,38 @@
 		        uniqueId: "supplierUserId",
 		        rememberSelected: true,
 		        maintainSelected: true,
+		        mobileResponsive: false,
+		        fixedColumns: true,
+		        fixedNumber: 0,
+		        fixedRightNumber: 1,
+		        pageList: [10, 25, 50],
 		        height: calculateTableHeight(),
+		        onLoadSuccess: function () {
+		            layoutSupplierUserTableWrapHeight();
+		            setTimeout(function () {
+		                adjustTableHeight();
+		                refreshSupplierUserTableLayout();
+		            }, 50);
+		            setTimeout(function () {
+		                var $t = $('#' + supplierUserTableId);
+		                if ($t.bootstrapTable('getOptions')) {
+		                    $t.bootstrapTable('resetView', { height: calculateTableHeight() });
+		                }
+		                refreshSupplierUserTableLayout();
+		            }, 200);
+		            setTimeout(refreshSupplierUserTableLayout, 450);
+		        },
+		        onPostBody: function () {
+		            refreshSupplierUserTableLayout();
+		        },
 		        columns: [{
 		            checkbox: true
 		        },
 		        {
+		            field: 'rowIndex',
 		            title: '序号',
 		            align: 'center',
+		            width: 60,
 		            formatter: function (value, row, index) {
 		                return $.table.serialNumber(index);
 		            }
@@ -173,47 +575,76 @@
 		        {
 		            field: 'supplierName',
 		            title: '供应商名称',
-		            sortable: true
+		            sortable: true,
+		            width: 180,
+		            formatter: function (value) {
+		                return supplierUserCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'supplierCode',
-		            title: '供应商编码'
+		            title: '供应商编码',
+		            width: 130,
+		            formatter: function (value) {
+		                return supplierUserCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'loginName',
 		            title: '登录名称',
-		            sortable: true
+		            sortable: true,
+		            width: 120,
+		            formatter: function (value) {
+		                return supplierUserCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'userName',
-		            title: '用户名称'
+		            title: '用户名称',
+		            width: 100,
+		            formatter: function (value) {
+		                return supplierUserCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'phonenumber',
-		            title: '手机号码'
+		            title: '手机号码',
+		            width: 120,
+		            align: 'center',
+		            formatter: function (value) {
+		                return value || '-';
+		            }
 		        },
 		        {
 		            field: 'email',
-		            title: '邮箱'
+		            title: '邮箱',
+		            width: 160,
+		            formatter: function (value) {
+		                return supplierUserCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'isMain',
 		            title: '是否主账号',
-		            formatter: function(value, row, index) {
+		            align: 'center',
+		            width: 100,
+		            formatter: function(value) {
 		                if (value == '1') {
 		                    return '<span class="label label-success">是</span>';
-		                } else {
-		                    return '<span class="label label-default">否</span>';
 		                }
+		                return '<span class="label label-default">否</span>';
 		            }
 		        },
 		        {
 		            field: 'status',
 		            title: '状态',
-		            formatter: function(value, row, index) {
+		            align: 'center',
+		            width: 80,
+		            formatter: function(value) {
 		                if (value == '0') {
 		                    return '<span class="label label-success">正常</span>';
-		                } else if (value == '1') {
+		                }
+		                if (value == '1') {
 		                    return '<span class="label label-danger">停用</span>';
 		                }
 		                return '';
@@ -222,12 +653,15 @@
 		        {
 		            field: 'createTime',
 		            title: '创建时间',
-		            sortable: true
+		            sortable: true,
+		            width: 160
 		        },
 		        {
+		            field: 'supplierUserOperate',
 		            title: '操作',
 		            align: 'center',
-		            formatter: function(value, row, index) {
+		            width: 160,
+		            formatter: function (value, row) {
 		            	var actions = [];
 		                actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.operate.editTab(\'' + row.supplierUserId + '\')"><i class="fa fa-edit"></i>编辑</a> ');
 		                actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.supplierUserId + '\')"><i class="fa fa-remove"></i>删除</a> ');
@@ -237,14 +671,11 @@
 		    };
 		    $.table.init(options);
 		}
-		
-		/* 自定义重置 */
+
 		function resetPre() {
 			$("#supplier-user-form")[0].reset();
 			$.table.search();
 		}
-
 	</script>
 </body>
 </html>
-

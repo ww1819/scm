@@ -3,21 +3,33 @@
 <head>
 	<th:block th:include="include :: header('供应商列表')" />
 	<th:block th:include="include :: layout-latest-css" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-css" />
 	<style>
 		.supplier-table-wrap {
-			min-height: 730px;
+			min-height: 0;
 			position: relative;
-			padding-bottom: 6px;
+			padding-bottom: 0;
 			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.supplier-table-wrap > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
 		}
 
 		.supplier-table-wrap .bootstrap-table {
+			display: flex;
+			flex-direction: column;
 			height: 100%;
-			padding-bottom: 46px;
+			padding-bottom: 0;
 		}
 
 		.supplier-table-wrap .fixed-table-container {
-			padding-bottom: 46px;
+			flex: 1 1 auto;
+			min-height: 0;
+			padding-bottom: 0;
 		}
 
 		.supplier-table-wrap .fixed-table-body {
@@ -25,27 +37,155 @@
 			overflow-y: auto !important;
 		}
 
+		.supplier-table-wrap.supplier-list-table .fixed-columns-right {
+			z-index: 5;
+			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
+		}
+
+		.supplier-table-wrap .fixed-table-body .fixed-table-border {
+			display: none !important;
+			height: 0 !important;
+		}
+
 		.supplier-table-wrap .fixed-table-pagination {
-			position: absolute;
-			left: 10px;
-			right: 10px;
-			bottom: 0;
+			position: relative;
+			flex-shrink: 0;
+			left: auto;
+			right: auto;
+			bottom: auto;
 			background: #fff;
 			z-index: 3;
 			border-top: 1px solid #eee;
 			margin: 0 !important;
-			padding: 6px 0;
+			padding: 4px 10px 2px;
 		}
 
-		.supplier-table-wrap .fixed-table-pagination .pagination {
-			margin-right: 28px;
+		.supplier-table-wrap.supplier-list-table .fixed-table-pagination .pagination {
+			margin-right: 172px;
 		}
 
-		.supplier-table-wrap .fixed-table-header {
-			position: sticky;
-			top: 0;
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-header th .th-inner,
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-header th .sortable {
+			text-align: center !important;
+			justify-content: center;
+		}
+
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-header th[data-field="rowIndex"],
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="rowIndex"],
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-header th[data-field="status"],
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="status"],
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-header th[data-field="contactPhone"],
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="contactPhone"] {
+			text-align: center !important;
+		}
+
+		.supplier-table-wrap.supplier-list-table .fixed-table-header {
+			position: relative;
+			top: auto;
 			z-index: 2;
 			background: #fff;
+			overflow: hidden;
+		}
+
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-header table,
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body > table {
+			table-layout: fixed;
+		}
+
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-header th,
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body tbody td {
+			box-sizing: border-box;
+			vertical-align: middle;
+		}
+
+		/* 主表滚动区隐藏操作列内容，由右侧 fixed-columns-right 展示（与配送单据申请一致） */
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-header th[data-field="supplierOperate"],
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierOperate"] {
+			padding: 0 !important;
+			border-left: 0 !important;
+			border-right: 0 !important;
+			font-size: 0;
+			line-height: 0;
+			color: transparent;
+			overflow: hidden;
+		}
+
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-header th[data-field="supplierOperate"] > *,
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierOperate"] > * {
+			display: none;
+		}
+
+		.supplier-table-wrap.supplier-list-table .fixed-columns-right .fixed-table-header th,
+		.supplier-table-wrap.supplier-list-table .fixed-columns-right .fixed-table-body td {
+			background-color: #fff;
+			vertical-align: middle;
+			white-space: nowrap;
+		}
+
+		.supplier-table-wrap.supplier-list-table .fixed-columns-right .fixed-table-header th[data-field="supplierOperate"] {
+			background-color: #f5f5f5;
+			min-width: 160px;
+			width: 160px;
+			text-align: center;
+		}
+
+		.supplier-table-wrap.supplier-list-table .fixed-columns-right .fixed-table-header th[data-field="supplierOperate"] .th-inner {
+			text-align: center;
+			justify-content: center;
+		}
+
+		.supplier-table-wrap.supplier-list-table .fixed-columns-right .fixed-table-body td[data-field="supplierOperate"] {
+			min-width: 160px;
+			width: 160px;
+			padding: 6px 8px;
+			text-align: center;
+		}
+
+		.supplier-table-wrap.supplier-list-table.table-striped .fixed-columns-right .fixed-table-body tbody tr:nth-of-type(odd) td {
+			background-color: #f9f9f9;
+		}
+
+		.supplier-table-wrap.supplier-list-table .fixed-columns-right .fixed-table-body {
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+
+		.supplier-table-wrap.supplier-list-table .fixed-table-body tbody td {
+			white-space: nowrap;
+			vertical-align: middle !important;
+		}
+
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierCode"],
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="companyName"],
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="pinyinCode"],
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="deliveryHospitals"],
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="contactPerson"],
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="province"],
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="city"] {
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.supplier-table-wrap.supplier-list-table .supplier-cell-ellipsis {
+			display: block;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			max-width: 100%;
+		}
+
+		/* 搜索区：与配送单据申请一致 */
+		.container-div > .row > .search-collapse {
+			padding-top: 10px !important;
+			padding-bottom: 10px !important;
+		}
+
+		.container-div .search-collapse .select-list ul {
+			margin-bottom: 0;
+		}
+
+		.container-div .search-collapse .select-list li {
+			margin: 4px 15px 4px 0;
 		}
 	</style>
 </head>
@@ -78,7 +218,7 @@
 					</div>
 				</form>
 			</div>
-			
+
 	        <div class="btn-group-sm" id="toolbar" role="group">
 	        	<a class="btn btn-success" onclick="$.operate.addTab()" shiro:hasPermission="supplier:supplier:add">
 	                <i class="fa fa-plus"></i> 新增
@@ -105,40 +245,278 @@
 		            <i class="fa fa-refresh"></i> 重置
 		        </a>
 	        </div>
-	        
-	        <div class="col-sm-12 select-table table-striped supplier-table-wrap">
+
+	        <div class="col-sm-12 select-table table-striped supplier-table-wrap supplier-list-table">
 			    <table id="bootstrap-table"></table>
 			</div>
 		</div>
 	</div>
-	
+
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
 	<script th:inline="javascript">
 		var editFlag = [[${@permission.hasPermi('supplier:supplier:edit')}]];
 		var removeFlag = [[${@permission.hasPermi('supplier:supplier:remove')}]];
 		var prefix = ctx + "supplier/supplier";
+		var supplierTableId = 'bootstrap-table';
+
+		var supplierColWidths = {
+			rowIndex: 60,
+			supplierCode: 130,
+			companyName: 180,
+			pinyinCode: 90,
+			deliveryHospitals: 160,
+			contactPerson: 90,
+			contactPhone: 120,
+			province: 80,
+			city: 80,
+			status: 80,
+			createTime: 160,
+			supplierOperate: 160
+		};
 
 		$(function() {
+		    layoutSupplierTableWrapHeight();
 		    querySupplierList();
 		    $(window).resize(function() {
+		    	layoutSupplierTableWrapHeight();
 		    	adjustTableHeight();
+		    	setTimeout(refreshSupplierTableLayout, 100);
 		    });
 		});
 
-		function calculateTableHeight() {
-			var $detail = $('.supplier-table-wrap');
-			if ($detail.length === 0) {
-				return 700;
+		function layoutSupplierTableWrapHeight() {
+			var $wrap = $('.supplier-table-wrap');
+			if (!$wrap.length) {
+				return;
 			}
-			return Math.max($detail.innerHeight() - 8, 650);
+			var top = $wrap[0].getBoundingClientRect().top;
+			var h = Math.floor(window.innerHeight - top - 14);
+			h = Math.min(Math.max(h, 400), 580);
+			$wrap[0].style.height = h + 'px';
+			$wrap[0].style.minHeight = h + 'px';
+		}
+
+		function calculateTableHeight() {
+			layoutSupplierTableWrapHeight();
+			var $wrap = $('.supplier-table-wrap');
+			if ($wrap.length === 0) {
+				return 440;
+			}
+			var $bt = $wrap.find('.bootstrap-table');
+			var wrapH = $wrap[0].clientHeight || $wrap.innerHeight() || 0;
+			var toolbarH = $bt.find('.fixed-table-toolbar').outerHeight(true) || 0;
+			var pagH = $bt.find('.fixed-table-pagination').outerHeight(true) || 46;
+			var containerH = Math.floor(wrapH - toolbarH - pagH - 2);
+			return Math.max(containerH, 240);
 		}
 
 		function adjustTableHeight() {
-			var $table = $('#bootstrap-table');
+			var $table = $('#' + supplierTableId);
 			if ($table.length > 0 && $table.bootstrapTable('getOptions')) {
 				$table.bootstrapTable('resetView', { height: calculateTableHeight() });
 			}
+		}
+
+		function escSupplierCellAttr(s) {
+			return String(s == null ? '' : s)
+				.replace(/&/g, '&amp;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#39;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;');
+		}
+
+		/** 文本省略显示，鼠标悬停 title 显示完整内容，移开自动隐藏 */
+		function supplierCellEllipsis(value) {
+			var s = (value == null || value === '') ? '-' : String(value);
+			if (s === '-') {
+				return s;
+			}
+			return '<span class="supplier-cell-ellipsis" title="' + escSupplierCellAttr(s) + '">' + escSupplierCellAttr(s) + '</span>';
+		}
+
+		function getSupplierTableTotalWidth() {
+			var sum = 0;
+			var opt = $('#' + supplierTableId).bootstrapTable('getOptions');
+			if (opt && opt.columns && opt.columns[0]) {
+				$.each(opt.columns[0], function (_, col) {
+					if (!col || col.visible === false) {
+						return;
+					}
+					if (col.checkbox) {
+						sum += 42;
+					} else if (col.field && supplierColWidths[col.field] != null) {
+						sum += supplierColWidths[col.field];
+					} else if (col.width) {
+						sum += parseInt(col.width, 10) || 0;
+					} else {
+						sum += 100;
+					}
+				});
+			}
+			return Math.max(sum, 1200);
+		}
+
+		function applySupplierFieldColumnWidth(field, widthPx) {
+			var w = widthPx + 'px';
+			var $container = $('#' + supplierTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $th = $mainHeader.find('th[data-field="' + field + '"]');
+			if ($th.length === 0) {
+				return;
+			}
+			var colIdx = $th[0].cellIndex;
+			var setW = function (el) {
+				el.style.setProperty('width', w, 'important');
+				el.style.setProperty('min-width', w, 'important');
+				el.style.setProperty('max-width', w, 'important');
+			};
+			$th.each(function () { setW(this); });
+			$mainBody.find('table tbody tr').each(function () {
+				var cell = this.cells[colIdx];
+				if (cell) {
+					setW(cell);
+				}
+			});
+			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+		}
+
+		function applySupplierCheckboxColumnWidth() {
+			var w = '42px';
+			var $container = $('#' + supplierTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $th = $mainHeader.find('th.bs-checkbox');
+			if ($th.length === 0) {
+				return;
+			}
+			var colIdx = $th[0].cellIndex;
+			var setW = function (el) {
+				el.style.setProperty('width', w, 'important');
+				el.style.setProperty('min-width', w, 'important');
+				el.style.setProperty('max-width', w, 'important');
+			};
+			$th.each(function () { setW(this); });
+			$mainBody.find('table tbody tr').each(function () {
+				var cell = this.cells[colIdx];
+				if (cell) {
+					setW(cell);
+				}
+			});
+			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+		}
+
+		function syncSupplierHeaderBodyColumnWidths() {
+			var $container = $('#' + supplierTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $headerThs = $mainHeader.find('thead tr').first().children('th');
+			var $firstRow = $mainBody.find('tbody tr').first();
+			if ($firstRow.length === 0) {
+				return;
+			}
+			var setW = function (el, widthVal) {
+				el.style.setProperty('width', widthVal, 'important');
+				el.style.setProperty('min-width', widthVal, 'important');
+				el.style.setProperty('max-width', widthVal, 'important');
+			};
+			$headerThs.each(function (i) {
+				var bodyCell = $firstRow[0].cells[i];
+				if (!bodyCell) {
+					return;
+				}
+				var w = bodyCell.style.width;
+				if (!w) {
+					w = window.getComputedStyle(bodyCell).width;
+				}
+				if (w) {
+					setW(this, w);
+					$mainHeader.find('colgroup col').eq(i).each(function () { setW(this, w); });
+					$mainBody.find('colgroup col').eq(i).each(function () { setW(this, w); });
+				}
+			});
+		}
+
+		function scheduleSupplierColumnWidths() {
+			applySupplierCheckboxColumnWidth();
+			$.each(supplierColWidths, function (field, width) {
+				applySupplierFieldColumnWidth(field, width);
+			});
+			syncSupplierHeaderBodyColumnWidths();
+			requestAnimationFrame(function () {
+				applySupplierCheckboxColumnWidth();
+				$.each(supplierColWidths, function (field, width) {
+					applySupplierFieldColumnWidth(field, width);
+				});
+				syncSupplierHeaderBodyColumnWidths();
+			});
+		}
+
+		function fixSupplierTableHeaderAlign() {
+			var $bt = $('#' + supplierTableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			if (!$mainBody.length || !$mainHeader.length) {
+				return;
+			}
+			var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
+			$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+		}
+
+		function syncSupplierHeaderBodyScrollLeft() {
+			var $container = $('#' + supplierTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			if ($mainBody.length && $mainHeader.length) {
+				$mainHeader.scrollLeft($mainBody[0].scrollLeft);
+			}
+		}
+
+		function bindSupplierMainHorizontalScroll() {
+			var $bt = $('#' + supplierTableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			$mainBody.off('scroll.supplierMainH').on('scroll.supplierMainH', function () {
+				$mainHeader.scrollLeft($mainBody.scrollLeft());
+			});
+		}
+
+		function applySupplierMainTableMinWidth() {
+			var sum = getSupplierTableTotalWidth();
+			var w = sum + 'px';
+			var $container = $('#' + supplierTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $headerTable = $container.children('.fixed-table-header').find('table');
+			var $bodyTable = $container.children('.fixed-table-body').children('table');
+			$headerTable.css({ width: w, minWidth: w, maxWidth: w });
+			$bodyTable.css({ width: w, minWidth: w, maxWidth: w });
+		}
+
+		function syncSupplierOperateColumnScroll() {
+			var $bt = $('#' + supplierTableId).closest('.bootstrap-table');
+			var $rightBody = $bt.find('.fixed-columns-right .fixed-table-body');
+			if ($rightBody.length === 0) {
+				return;
+			}
+			var $mainBody = $bt.find('.fixed-table-container').children('.fixed-table-body');
+			$mainBody.off('scroll.supplierOperateSync').on('scroll.supplierOperateSync', function () {
+				$rightBody.scrollTop($mainBody.scrollTop());
+			});
+		}
+
+		function refreshSupplierTableLayout() {
+			fixSupplierTableHeaderAlign();
+			scheduleSupplierColumnWidths();
+			applySupplierMainTableMinWidth();
+			syncSupplierHeaderBodyScrollLeft();
+			bindSupplierMainHorizontalScroll();
+			syncSupplierOperateColumnScroll();
 		}
 
 		function querySupplierList() {
@@ -154,13 +532,38 @@
 		        uniqueId: "supplierId",
 		        rememberSelected: true,
 		        maintainSelected: true,
+		        mobileResponsive: false,
+		        fixedColumns: true,
+		        fixedNumber: 0,
+		        fixedRightNumber: 1,
+		        pageList: [10, 25, 50],
 		        height: calculateTableHeight(),
+		        onLoadSuccess: function () {
+		            layoutSupplierTableWrapHeight();
+		            setTimeout(function () {
+		                adjustTableHeight();
+		                refreshSupplierTableLayout();
+		            }, 50);
+		            setTimeout(function () {
+		                var $t = $('#' + supplierTableId);
+		                if ($t.bootstrapTable('getOptions')) {
+		                    $t.bootstrapTable('resetView', { height: calculateTableHeight() });
+		                }
+		                refreshSupplierTableLayout();
+		            }, 200);
+		            setTimeout(refreshSupplierTableLayout, 450);
+		        },
+		        onPostBody: function () {
+		            refreshSupplierTableLayout();
+		        },
 		        columns: [{
 		            checkbox: true
 		        },
 		        {
+		            field: 'rowIndex',
 		            title: '序号',
 		            align: 'center',
+		            width: 60,
 		            formatter: function (value, row, index) {
 		                return $.table.serialNumber(index);
 		            }
@@ -173,66 +576,94 @@
 		        {
 		            field: 'supplierCode',
 		            title: '供应商编码',
-		            sortable: true
+		            sortable: true,
+		            width: 130,
+		            formatter: function (value) {
+		                return supplierCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'companyName',
 		            title: '公司名称',
-		            formatter: function (value, row, index) {
-		                return '<a href="javascript:void(0)" onclick="$.operate.view(\'' + row.supplierId + '\')">' + value + '</a>';
+		            width: 180,
+		            formatter: function (value, row) {
+		                var displayValue = value || '-';
+		                if (displayValue === '-') {
+		                    return displayValue;
+		                }
+		                return '<a href="javascript:void(0)" onclick="$.operate.view(\'' + row.supplierId + '\')" title="' + escSupplierCellAttr(displayValue) + '">' + escSupplierCellAttr(displayValue) + '</a>';
 		            }
 		        },
 		        {
 		            field: 'pinyinCode',
-		            title: '首拼简码'
+		            title: '首拼简码',
+		            width: 90,
+		            formatter: function (value) {
+		                return supplierCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'deliveryHospitals',
 		            title: '配送公司',
-		            formatter: function (value, row, index) {
-		                if (value && value.length > 0) {
-		                    // 如果医院名称太长，截断并显示省略号
-		                    var displayText = value;
-		                    if (displayText.length > 30) {
-		                        displayText = displayText.substring(0, 30) + '...';
-		                    }
-		                    return '<span title="' + value + '">' + displayText + '</span>';
-		                }
-		                return '-';
+		            width: 160,
+		            formatter: function (value) {
+		                return supplierCellEllipsis(value);
 		            }
 		        },
 		        {
 		            field: 'contactPerson',
-		            title: '联系人'
+		            title: '联系人',
+		            width: 90,
+		            formatter: function (value) {
+		                return supplierCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'contactPhone',
-		            title: '联系电话'
+		            title: '联系电话',
+		            width: 120,
+		            align: 'center',
+		            formatter: function (value) {
+		                return value || '-';
+		            }
 		        },
 		        {
 		            field: 'province',
-		            title: '省份'
+		            title: '省份',
+		            width: 80,
+		            formatter: function (value) {
+		                return supplierCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'city',
-		            title: '城市'
+		            title: '城市',
+		            width: 80,
+		            formatter: function (value) {
+		                return supplierCellEllipsis(value);
+		            }
 		        },
 		        {
+		        	field: 'status',
 		        	title: '状态',
 		        	align: 'center',
-		        	formatter: function (value, row, index) {
+		        	width: 80,
+		        	formatter: function (value, row) {
 		        		return statusTools(row);
 		        	}
 		        },
 		        {
 		            field: 'createTime',
 		            title: '创建时间',
-		            sortable: true
+		            sortable: true,
+		            width: 160
 		        },
 		        {
+		            field: 'supplierOperate',
 		            title: '操作',
 		            align: 'center',
-		            formatter: function(value, row, index) {
+		            width: 160,
+		            formatter: function (value, row) {
 		            	var actions = [];
 		                actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.operate.editTab(\'' + row.supplierId + '\')"><i class="fa fa-edit"></i>编辑</a> ');
 		                actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.supplierId + '\')"><i class="fa fa-remove"></i>删除</a> ');
@@ -242,37 +673,30 @@
 		    };
 		    $.table.init(options);
 		}
-		
-		/* 自定义重置 */
+
 		function resetPre() {
 			$("#supplier-form")[0].reset();
 			$.table.search();
 		}
 
-		/* 供应商状态显示 */
 		function statusTools(row) {
 		    if (row.status == 1) {
     			return '<i class="fa fa-toggle-on text-info fa-2x" onclick="disableSupplier(\'' + row.supplierId + '\')"></i> ';
-    		} else {
-    			return '<i class="fa fa-toggle-off text-info fa-2x" onclick="enableSupplier(\'' + row.supplierId + '\')"></i> ';
     		}
+    		return '<i class="fa fa-toggle-off text-info fa-2x" onclick="enableSupplier(\'' + row.supplierId + '\')"></i> ';
 		}
-		
-		/* 供应商管理-停用 */
+
 		function disableSupplier(supplierId) {
 			$.modal.confirm("确认要停用供应商吗？", function() {
 				$.operate.post(prefix + "/changeStatus", { "supplierId": supplierId, "status": "2" });
-		    })
+		    });
 		}
 
-		/* 供应商管理-启用 */
 		function enableSupplier(supplierId) {
 			$.modal.confirm("确认要启用供应商吗？", function() {
 				$.operate.post(prefix + "/changeStatus", { "supplierId": supplierId, "status": "1" });
-		    })
+		    });
 		}
-
 	</script>
 </body>
 </html>
-
