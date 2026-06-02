@@ -155,15 +155,32 @@
 			vertical-align: middle !important;
 		}
 
-		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierCode"],
 		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="companyName"],
 		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="pinyinCode"],
 		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="deliveryHospitals"],
 		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="contactPerson"],
 		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="province"],
-		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="city"] {
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="city"],
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="createTime"] {
 			overflow: hidden;
 			text-overflow: ellipsis;
+		}
+
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-header th[data-field="status"],
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="status"] {
+			overflow: visible;
+			text-align: center !important;
+		}
+
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierCode"] {
+			white-space: nowrap;
+		}
+
+		.supplier-table-wrap.supplier-list-table .supplier-status-toggle {
+			display: inline-block;
+			line-height: 1;
+			vertical-align: middle;
+			cursor: pointer;
 		}
 
 		.supplier-table-wrap.supplier-list-table .supplier-cell-ellipsis {
@@ -172,6 +189,10 @@
 			text-overflow: ellipsis;
 			white-space: nowrap;
 			max-width: 100%;
+		}
+
+		.supplier-table-wrap.supplier-list-table .fixed-table-container > .fixed-table-body td[data-field="companyName"] a.supplier-cell-ellipsis {
+			color: #337ab7;
 		}
 
 		/* 搜索区：与配送单据申请一致 */
@@ -263,7 +284,7 @@
 
 		var supplierColWidths = {
 			rowIndex: 60,
-			supplierCode: 130,
+			supplierCode: 220,
 			companyName: 180,
 			pinyinCode: 90,
 			deliveryHospitals: 160,
@@ -271,7 +292,7 @@
 			contactPhone: 120,
 			province: 80,
 			city: 80,
-			status: 80,
+			status: 90,
 			createTime: 160,
 			supplierOperate: 160
 		};
@@ -337,6 +358,15 @@
 			return '<span class="supplier-cell-ellipsis" title="' + escSupplierCellAttr(s) + '">' + escSupplierCellAttr(s) + '</span>';
 		}
 
+		/** 可点击链接 + 文本省略（公司名称列） */
+		function supplierLinkCellEllipsis(value, onclick) {
+			var s = (value == null || value === '') ? '-' : String(value);
+			if (s === '-') {
+				return s;
+			}
+			return '<a class="supplier-cell-ellipsis" href="javascript:void(0)" onclick="' + onclick + '" title="' + escSupplierCellAttr(s) + '">' + escSupplierCellAttr(s) + '</a>';
+		}
+
 		function getSupplierTableTotalWidth() {
 			var sum = 0;
 			var opt = $('#' + supplierTableId).bootstrapTable('getOptions');
@@ -368,19 +398,14 @@
 			if ($th.length === 0) {
 				return;
 			}
-			var colIdx = $th[0].cellIndex;
 			var setW = function (el) {
 				el.style.setProperty('width', w, 'important');
 				el.style.setProperty('min-width', w, 'important');
 				el.style.setProperty('max-width', w, 'important');
 			};
 			$th.each(function () { setW(this); });
-			$mainBody.find('table tbody tr').each(function () {
-				var cell = this.cells[colIdx];
-				if (cell) {
-					setW(cell);
-				}
-			});
+			$mainBody.find('td[data-field="' + field + '"]').each(function () { setW(this); });
+			var colIdx = $th[0].cellIndex;
 			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
 			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
 		}
@@ -415,44 +440,30 @@
 			var $container = $('#' + supplierTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
 			var $mainHeader = $container.children('.fixed-table-header');
 			var $mainBody = $container.children('.fixed-table-body');
-			var $headerThs = $mainHeader.find('thead tr').first().children('th');
-			var $firstRow = $mainBody.find('tbody tr').first();
-			if ($firstRow.length === 0) {
-				return;
-			}
 			var setW = function (el, widthVal) {
 				el.style.setProperty('width', widthVal, 'important');
 				el.style.setProperty('min-width', widthVal, 'important');
 				el.style.setProperty('max-width', widthVal, 'important');
 			};
-			$headerThs.each(function (i) {
-				var bodyCell = $firstRow[0].cells[i];
-				if (!bodyCell) {
+			$.each(supplierColWidths, function (field, widthPx) {
+				var w = widthPx + 'px';
+				var $th = $mainHeader.find('th[data-field="' + field + '"]');
+				if ($th.length === 0) {
 					return;
 				}
-				var w = bodyCell.style.width;
-				if (!w) {
-					w = window.getComputedStyle(bodyCell).width;
-				}
-				if (w) {
-					setW(this, w);
-					$mainHeader.find('colgroup col').eq(i).each(function () { setW(this, w); });
-					$mainBody.find('colgroup col').eq(i).each(function () { setW(this, w); });
-				}
+				$th.each(function () { setW(this, w); });
+				$mainBody.find('td[data-field="' + field + '"]').each(function () { setW(this, w); });
+				var colIdx = $th[0].cellIndex;
+				$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this, w); });
+				$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this, w); });
 			});
 		}
 
 		function scheduleSupplierColumnWidths() {
 			applySupplierCheckboxColumnWidth();
-			$.each(supplierColWidths, function (field, width) {
-				applySupplierFieldColumnWidth(field, width);
-			});
 			syncSupplierHeaderBodyColumnWidths();
 			requestAnimationFrame(function () {
 				applySupplierCheckboxColumnWidth();
-				$.each(supplierColWidths, function (field, width) {
-					applySupplierFieldColumnWidth(field, width);
-				});
 				syncSupplierHeaderBodyColumnWidths();
 			});
 		}
@@ -577,9 +588,9 @@
 		            field: 'supplierCode',
 		            title: '供应商编码',
 		            sortable: true,
-		            width: 130,
+		            width: 220,
 		            formatter: function (value) {
-		                return supplierCellEllipsis(value);
+		                return value || '-';
 		            }
 		        },
 		        {
@@ -587,11 +598,7 @@
 		            title: '公司名称',
 		            width: 180,
 		            formatter: function (value, row) {
-		                var displayValue = value || '-';
-		                if (displayValue === '-') {
-		                    return displayValue;
-		                }
-		                return '<a href="javascript:void(0)" onclick="$.operate.view(\'' + row.supplierId + '\')" title="' + escSupplierCellAttr(displayValue) + '">' + escSupplierCellAttr(displayValue) + '</a>';
+		                return supplierLinkCellEllipsis(value, '$.operate.view(\'' + row.supplierId + '\')');
 		            }
 		        },
 		        {
@@ -647,7 +654,7 @@
 		        	field: 'status',
 		        	title: '状态',
 		        	align: 'center',
-		        	width: 80,
+		        	width: 90,
 		        	formatter: function (value, row) {
 		        		return statusTools(row);
 		        	}
@@ -681,9 +688,9 @@
 
 		function statusTools(row) {
 		    if (row.status == 1) {
-    			return '<i class="fa fa-toggle-on text-info fa-2x" onclick="disableSupplier(\'' + row.supplierId + '\')"></i> ';
+    			return '<i class="fa fa-toggle-on text-info fa-2x supplier-status-toggle" onclick="disableSupplier(\'' + row.supplierId + '\')"></i>';
     		}
-    		return '<i class="fa fa-toggle-off text-info fa-2x" onclick="enableSupplier(\'' + row.supplierId + '\')"></i> ';
+    		return '<i class="fa fa-toggle-off text-info fa-2x supplier-status-toggle" onclick="enableSupplier(\'' + row.supplierId + '\')"></i>';
 		}
 
 		function disableSupplier(supplierId) {

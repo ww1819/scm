@@ -1058,6 +1058,39 @@
 	        return escapeHtmlForBarcode(s).replace(/"/g, '&quot;');
 	    }
 
+	    /** 数量类字段：展示为非负整数 */
+	    function formatDetailInteger(value) {
+	        if (value === '' || value === null || value === undefined) {
+	            return '0';
+	        }
+	        var n = parseFloat(value);
+	        if (isNaN(n)) {
+	            return '0';
+	        }
+	        return String(Math.round(n));
+	    }
+
+	    function parseDetailInteger(value) {
+	        if (value === '' || value === null || value === undefined) {
+	            return null;
+	        }
+	        var n = parseFloat(value);
+	        if (isNaN(n)) {
+	            return null;
+	        }
+	        return Math.round(n);
+	    }
+
+	    function isDetailNonNegIntegerString(trimmed) {
+	        return trimmed === '' || /^\d+$/.test(trimmed);
+	    }
+
+	    function detailQuantityInputEvents(index) {
+	        return 'onblur="updateQuantity(this, ' + index + ')" ' +
+	               'oninput="this.value=this.value.replace(/[^\\d]/g,\'\')" ' +
+	               'onkeypress="if(event.keyCode==13){this.blur();return false;}"';
+	    }
+
 	    function detailCellTextHtml(value) {
 	        if (value == null || value === '') {
 	            return '';
@@ -1172,8 +1205,7 @@
 	                    }
 	                    title = '¥' + (isNaN(amt) ? 0 : amt).toFixed(2);
 	                } else if (field === 'remainingQuantity' || field === 'deliveryQuantity') {
-	                    var n = parseFloat(row[field]);
-	                    title = isNaN(n) ? '0.00' : n.toFixed(2);
+	                    title = formatDetailInteger(row[field]);
 	                } else if (field === 'packCoefficient') {
 	                    if (row.packCoefficient != null && row.packCoefficient !== '' && !isNaN(parseFloat(row.packCoefficient))) {
 	                        title = String(parseFloat(row.packCoefficient));
@@ -1999,7 +2031,7 @@
 	            allData[rowIndex].amount = (dq - pack) * parseFloat(row.price || 0);
 	            allData.splice(rowIndex + 1, 0, newRow);
 	            reloadAfterCopy();
-	            $.modal.msgSuccess('已拆行：原行保留数量 ' + (dq - pack).toFixed(2) + '，新行数量 ' + pack + '，请填写新行批号与效期');
+	            $.modal.msgSuccess('已拆行：原行保留数量 ' + formatDetailInteger(dq - pack) + '，新行数量 ' + formatDetailInteger(pack) + '，请填写新行批号与效期');
 	            return;
 	        }
 	        if (isNaN(dqNum)) {
@@ -2105,8 +2137,7 @@
 	                align: 'center',
 	                width: 108,
 	                formatter: function (value) {
-	                    var s = value ? parseFloat(value).toFixed(2) : '0.00';
-	                    return detailCellTextHtml(s);
+	                    return detailCellTextHtml(formatDetailInteger(value));
 	                }
 	            }, {
 	                field: 'deliveryQuantity',
@@ -2117,16 +2148,13 @@
 	                sorter: detailSortNumber,
 	                formatter: function(value, row, index) {
 	                    var val = '';
-	                    if (value === '' || value === null || value === undefined) {
-	                        val = '';
-	                    } else {
-	                        var n = parseFloat(value);
-	                        val = isNaN(n) ? '' : n.toFixed(2);
+	                    if (value !== '' && value !== null && value !== undefined) {
+	                        var n = parseDetailInteger(value);
+	                        val = n === null ? '' : String(n);
 	                    }
 	                    var titleAttr = val ? (' title="' + escapeAttrForInput(val) + '"') : '';
 	                    return '<input type="text" class="form-control input-sm" style="text-align:center;width:100%;" value="' + val + '"' + titleAttr + ' ' +
-	                           'onblur="updateQuantity(this, ' + index + ')" ' +
-	                           'onkeypress="if(event.keyCode==13){this.blur();return false;}" />';
+	                           detailQuantityInputEvents(index) + ' />';
 	                }
 	            }, {
 	                field: 'price',
@@ -2354,8 +2382,8 @@
 	    function updateQuantity(input, index) {
 	        var value = $(input).val();
 	        var trimmed = (value || '').trim();
-	        if (trimmed !== '' && (isNaN(trimmed) || parseFloat(trimmed) < 0)) {
-	            $.modal.alertWarning('数量必须是大于等于0的数字');
+	        if (trimmed !== '' && !isDetailNonNegIntegerString(trimmed)) {
+	            $.modal.alertWarning('数量必须是非负整数');
 	            $(input).focus();
 	            return;
 	        }
@@ -2364,7 +2392,7 @@
 	        var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : index;
 	        if (data[rowIndex]) {
 	            var oldQtyRaw = data[rowIndex].deliveryQuantity;
-	            var newVal = trimmed === '' ? '' : parseFloat(trimmed);
+	            var newVal = trimmed === '' ? '' : parseInt(trimmed, 10);
 	            data[rowIndex].deliveryQuantity = newVal;
 	            var gk = deliveryLineGroupKey(data[rowIndex]);
 	            if (gk && data[rowIndex].lineApplyQty != null && data[rowIndex].lineApplyQty !== '') {
@@ -2376,14 +2404,17 @@
 	                        if (oldQtyRaw === '' || oldQtyRaw === null || oldQtyRaw === undefined) {
 	                            $(input).val('');
 	                        } else {
-	                            $(input).val(parseFloat(oldQtyRaw).toFixed(2));
+	                            $(input).val(formatDetailInteger(oldQtyRaw));
 	                        }
-	                        $.modal.alertWarning('同一订单明细行配送数量合计不能超过申请数量（' + cap.toFixed(2) + '）');
+	                        $.modal.alertWarning('同一订单明细行配送数量合计不能超过申请数量（' + formatDetailInteger(cap) + '）');
 	                        return;
 	                    }
 	                }
 	            }
-	            var qty = (newVal === '' || newVal === null || newVal === undefined) ? 0 : parseFloat(newVal);
+	            if (trimmed !== '') {
+	                $(input).val(String(newVal));
+	            }
+	            var qty = (newVal === '' || newVal === null || newVal === undefined) ? 0 : parseInt(newVal, 10);
 	            if (isNaN(qty)) qty = 0;
 	            var price = parseFloat(data[rowIndex].price || 0);
 	            data[rowIndex].amount = qty * price;
@@ -2617,10 +2648,77 @@
             focusCleanup: true
         });
 
+        /** 保存前将批号/日期/条码等输入框当前值同步到行数据（避免未失焦时 getData 仍是旧值） */
+        function syncDetailEditableFieldsFromDom() {
+            var $table = $('#detail-table');
+            if (!$table.length) {
+                return [];
+            }
+            var data = [];
+            try {
+                data = $table.bootstrapTable('getData') || [];
+            } catch (e) {
+                return [];
+            }
+            var $mainBody = $table.closest('.bootstrap-table').find('.fixed-table-container > .fixed-table-body').first();
+            $mainBody.find('tbody tr').each(function () {
+                var idx = $(this).data('index');
+                if (idx === undefined || idx === null || !data[idx]) {
+                    return;
+                }
+                var row = data[idx];
+                var $tr = $(this);
+                var batchIn = $tr.find('td[data-field="batchNo"] input');
+                if (batchIn.length) {
+                    row.batchNo = batchIn.val() || '';
+                }
+                var prodIn = $tr.find('td[data-field="productionDate"] input');
+                if (prodIn.length) {
+                    row.productionDate = prodIn.val() ? String(prodIn.val()).trim().substring(0, 10) : '';
+                }
+                var expIn = $tr.find('td[data-field="expireDate"] input');
+                if (expIn.length) {
+                    row.expireDate = expIn.val() ? String(expIn.val()).trim().substring(0, 10) : '';
+                }
+                var mainIn = $tr.find('td[data-field="mainBarcode"] input');
+                if (mainIn.length) {
+                    row.mainBarcode = mainIn.val() || '';
+                }
+                var auxIn = $tr.find('td[data-field="auxBarcode"] input');
+                if (auxIn.length) {
+                    row.auxBarcode = auxIn.val() || '';
+                }
+            });
+            return data;
+        }
+
+        function normalizeDetailDateFieldsForSave(rows) {
+            if (!rows || !rows.length) {
+                return;
+            }
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                if (!row) {
+                    continue;
+                }
+                if (row.productionDate) {
+                    row.productionDate = String(row.productionDate).trim().substring(0, 10);
+                } else {
+                    row.productionDate = '';
+                }
+                if (row.expireDate) {
+                    row.expireDate = String(row.expireDate).trim().substring(0, 10);
+                } else {
+                    row.expireDate = '';
+                }
+            }
+        }
+
         function submitHandler() {
 	        if ($.validate.form()) {
-	            // 获取表格中的所有明细数据
-	            var detailData = $('#detail-table').bootstrapTable('getData');
+	            // 获取表格中的所有明细数据（含未失焦的批号/日期输入）
+	            var detailData = syncDetailEditableFieldsFromDom();
+	            normalizeDetailDateFieldsForSave(detailData);
 
 	            // 校验：配送数量为0（或未填写）的明细行，提示具体行号，要求完善或删除后再保存
 	            var zeroQtyRows = [];
@@ -2648,7 +2746,7 @@
 	                if (!isNaN(caps[gk1])) {
 	                    var s0 = sumDeliveryQtyForGroup(detailData, gk1);
 	                    if (s0 > caps[gk1] + 1e-6) {
-	                        $.modal.alertWarning('同一订单明细行配送数量合计不能超过申请数量（' + caps[gk1].toFixed(2) + '）');
+	                        $.modal.alertWarning('同一订单明细行配送数量合计不能超过申请数量（' + formatDetailInteger(caps[gk1]) + '）');
 	                        return;
 	                    }
 	                }
@@ -2892,6 +2990,7 @@
 	                                    var applyCap = detail.lineApplyQty != null && detail.lineApplyQty !== '' ? parseFloat(detail.lineApplyQty)
 	                                        : (detail.remainingQuantity != null && detail.remainingQuantity !== '' ? parseFloat(detail.remainingQuantity)
 	                                            : (detail.deliveryQuantity != null && detail.deliveryQuantity !== '' ? parseFloat(detail.deliveryQuantity) : 0));
+	                                    applyCap = Math.round(applyCap);
 	                                    if (isNaN(applyCap) || applyCap <= 0) {
 	                                        continue;
 	                                    }
@@ -2904,9 +3003,9 @@
 	                                        model: detail.model || '',
 	                                        unit: detail.unit || '',
 	                                        refZsLineQty: detail.refZsLineQty != null && detail.refZsLineQty !== '' ? parseFloat(detail.refZsLineQty) : null,
-	                                        remainingQuantity: detail.remainingQuantity != null && detail.remainingQuantity !== '' ? parseFloat(detail.remainingQuantity) : (detail.deliveryQuantity || 0),
-	                                        deliveryQuantity: detail.deliveryQuantity != null && detail.deliveryQuantity !== '' ? parseFloat(detail.deliveryQuantity) : 0,
-	                                        lineApplyQty: detail.lineApplyQty != null && detail.lineApplyQty !== '' ? parseFloat(detail.lineApplyQty) : parseFloat(detail.remainingQuantity || detail.deliveryQuantity || 0),
+	                                        remainingQuantity: parseDetailInteger(detail.remainingQuantity != null && detail.remainingQuantity !== '' ? detail.remainingQuantity : (detail.deliveryQuantity || 0)) || 0,
+	                                        deliveryQuantity: parseDetailInteger(detail.deliveryQuantity != null && detail.deliveryQuantity !== '' ? detail.deliveryQuantity : 0) || 0,
+	                                        lineApplyQty: parseDetailInteger(detail.lineApplyQty != null && detail.lineApplyQty !== '' ? detail.lineApplyQty : (detail.remainingQuantity || detail.deliveryQuantity || 0)) || applyCap,
 	                                        price: detail.price || 0,
 	                                        amount: detail.amount || 0,
 	                                        packCoefficient: detail.packCoefficient != null ? detail.packCoefficient : null,
@@ -3042,7 +3141,7 @@
 	                                var detailData = [];
 	                                for (var i = 0; i < order.orderDetails.length; i++) {
 	                                    var detail = order.orderDetails[i];
-	                                    var cap = scmOrderDetailDeliveryCap(detail);
+	                                    var cap = Math.round(scmOrderDetailDeliveryCap(detail));
 	                                    if (isNaN(cap) || cap <= 0) {
 	                                        continue;
 	                                    }
