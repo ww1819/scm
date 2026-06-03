@@ -332,7 +332,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
             <if test="zsOrderDetailId != null and zsOrderDetailId != ''">zs_order_detail_id,</if>
 
-            <if test="materialId != null">material_id,</if>
+            material_id,
 
             <if test="materialCode != null and materialCode != ''">material_code,</if>
 
@@ -384,7 +384,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
             <if test="zsOrderDetailId != null and zsOrderDetailId != ''">#{zsOrderDetailId},</if>
 
-            <if test="materialId != null">#{materialId},</if>
+            IFNULL(#{materialId}, 0),
 
             <if test="materialCode != null and materialCode != ''">#{materialCode},</if>
 

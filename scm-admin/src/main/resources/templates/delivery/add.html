@@ -3152,7 +3152,7 @@
 	                                    }
 	                                    var deliveryDetail = {
 	                                        orderDetailId: detail.detailId || null,
-	                                        materialId: detail.materialId || null,
+	                                        materialId: detail.materialId == null || detail.materialId === '' ? null : detail.materialId,
 	                                        materialCode: detail.materialCode || '',
 	                                        materialName: detail.materialName || '',
 	                                        specification: detail.specification || '',

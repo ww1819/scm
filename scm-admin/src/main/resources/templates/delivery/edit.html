@@ -1830,7 +1830,7 @@
 	                    detailId: detail.detailId || null,
 	                    orderDetailId: detail.orderDetailId || null,
 	                    zsOrderDetailId: detail.zsOrderDetailId || '',
-	                    materialId: detail.materialId || null,
+	                    materialId: detail.materialId == null || detail.materialId === '' ? null : detail.materialId,
 	                    materialCode: detail.materialCode || '',
 	                    materialName: detail.materialName || '',
 	                    specification: detail.specification || '',
@@ -2820,7 +2820,7 @@
 	                                    }
 	                                    var deliveryDetail = {
 	                                        orderDetailId: detail.detailId || null,
-	                                        materialId: detail.materialId || null,
+	                                        materialId: detail.materialId == null || detail.materialId === '' ? null : detail.materialId,
 	                                        materialCode: detail.materialCode || '',
 	                                        materialName: detail.materialName || '',
 	                                        specification: detail.specification || '',
