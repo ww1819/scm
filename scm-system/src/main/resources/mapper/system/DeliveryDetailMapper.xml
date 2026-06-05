@@ -444,7 +444,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
         <foreach collection="list" item="item" separator=",">
 
-            (#{item.deliveryId}, IFNULL(#{item.deliveryNo}, ''), #{item.orderDetailId}, #{item.materialId}, #{item.zsOrderDetailId}, #{item.materialCode},
+            (#{item.deliveryId}, IFNULL(#{item.deliveryNo}, ''), #{item.orderDetailId}, IFNULL(#{item.materialId}, 0), #{item.zsOrderDetailId}, #{item.materialCode},
 
              #{item.materialName}, #{item.specification}, #{item.model}, #{item.unit},
 

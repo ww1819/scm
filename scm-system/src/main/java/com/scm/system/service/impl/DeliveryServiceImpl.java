@@ -25,6 +25,7 @@ import com.scm.system.domain.Delivery;
 import com.scm.system.domain.DeliveryDownloadLog;
 import com.scm.system.domain.DeliveryDetail;
 import com.scm.system.domain.HospitalSupplier;
+import com.scm.system.domain.MaterialDict;
 import com.scm.system.domain.Order;
 import com.scm.system.domain.OrderDetail;
 import com.scm.common.core.domain.entity.SysRole;
@@ -48,6 +49,7 @@ import com.scm.system.mapper.SysRoleMapper;
 import com.scm.system.mapper.ZsTpOrderDetailDeliveryRelMapper;
 import com.scm.system.mapper.ZsTpOrderMapper;
 import com.scm.system.service.IDeliveryService;
+import com.scm.system.service.IMaterialDictService;
 import com.scm.system.service.IOrderService;
 import com.scm.system.service.IScmHospitalContextService;
 import com.scm.system.service.IScmHospitalSupplierMenuScopeService;
@@ -81,6 +83,9 @@ public class DeliveryServiceImpl implements IDeliveryService
 
     @Autowired
     private OrderDetailMapper orderDetailMapper;
+
+    @Autowired
+    private IMaterialDictService materialDictService;
 
     @Autowired
     private ZsTpOrderMapper zsTpOrderMapper;
@@ -343,6 +348,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         enrichDeliverySnapshot(delivery);
         assertSupplierHospitalSubmit(delivery);
         enrichDeliveryDetailPackCoefficients(delivery);
+        enrichDeliveryDetailMaterialIds(delivery);
         validateDeliveryDetailQuantityNotZero(delivery.getDeliveryDetails(), "保存");
         validateDeliveryDetailPackQuantities(delivery.getDeliveryDetails());
         validateDeliveryRefLineQuantities(delivery, null);
@@ -509,6 +515,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         enrichDeliverySnapshot(delivery);
         assertSupplierHospitalSubmit(delivery);
         enrichDeliveryDetailPackCoefficients(delivery);
+        enrichDeliveryDetailMaterialIds(delivery);
         validateDeliveryDetailQuantityNotZero(delivery.getDeliveryDetails(), "保存");
         validateDeliveryDetailPackQuantities(delivery.getDeliveryDetails());
         validateDeliveryRefLineQuantities(delivery, delivery.getDeliveryId());
@@ -1421,6 +1428,51 @@ public class DeliveryServiceImpl implements IDeliveryService
         }
         d.setLineApplyQty(available);
         return d;
+    }
+
+    /**
+     * 保存前补全 material_id：优先订单明细，其次按物资编码查字典；仍无则置 0（第三方订单行常见）。
+     */
+    private void enrichDeliveryDetailMaterialIds(Delivery delivery)
+    {
+        if (delivery == null || delivery.getDeliveryDetails() == null || delivery.getDeliveryDetails().isEmpty())
+        {
+            return;
+        }
+        for (DeliveryDetail d : delivery.getDeliveryDetails())
+        {
+            if (d == null)
+            {
+                continue;
+            }
+            if (d.getMaterialId() != null && d.getMaterialId() > 0)
+            {
+                continue;
+            }
+            if (d.getOrderDetailId() != null)
+            {
+                OrderDetail od = orderDetailMapper.selectOrderDetailById(d.getOrderDetailId());
+                if (od != null && od.getMaterialId() != null && od.getMaterialId() > 0)
+                {
+                    d.setMaterialId(od.getMaterialId());
+                    continue;
+                }
+            }
+            String code = StringUtils.trimToEmpty(d.getMaterialCode());
+            if (StringUtils.isNotEmpty(code))
+            {
+                MaterialDict md = materialDictService.selectMaterialDictByCode(code);
+                if (md != null && md.getMaterialId() != null && md.getMaterialId() > 0)
+                {
+                    d.setMaterialId(md.getMaterialId());
+                    continue;
+                }
+            }
+            if (d.getMaterialId() == null)
+            {
+                d.setMaterialId(0L);
+            }
+        }
     }
 
     /**
