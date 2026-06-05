@@ -3,14 +3,19 @@ package com.scm.framework.shiro.web.filter.online;
 import java.io.IOException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.session.Session;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.web.filter.AccessControlFilter;
 import org.apache.shiro.web.util.WebUtils;
 import org.springframework.beans.factory.annotation.Value;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.scm.common.constant.ShiroConstants;
+import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.domain.entity.SysUser;
 import com.scm.common.enums.OnlineStatus;
+import com.scm.common.utils.ServletUtils;
 import com.scm.common.utils.ShiroUtils;
 import com.scm.framework.shiro.session.OnlineSession;
 import com.scm.framework.shiro.session.OnlineSessionDAO;
@@ -22,6 +27,8 @@ import com.scm.framework.shiro.session.OnlineSessionDAO;
  */
 public class OnlineSessionFilter extends AccessControlFilter
 {
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     /**
      * 强制退出后重定向的地址
      */
@@ -81,7 +88,17 @@ public class OnlineSessionFilter extends AccessControlFilter
         {
             subject.logout();
         }
-        saveRequestAndRedirectToLogin(request, response);
+        HttpServletRequest req = (HttpServletRequest) request;
+        HttpServletResponse res = (HttpServletResponse) response;
+        if (ServletUtils.isAjaxRequest(req))
+        {
+            ServletUtils.renderString(res,
+                    OBJECT_MAPPER.writeValueAsString(AjaxResult.sessionExpired("用户会话已断开，请重新登录系统")));
+        }
+        else
+        {
+            saveRequestAndRedirectToLogin(request, response);
+        }
         return false;
     }
 

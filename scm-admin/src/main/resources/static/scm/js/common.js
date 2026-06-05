@@ -571,6 +571,69 @@ function _stopIt(e) {
 	return false;
 }
 
+/** 会话断开检测与统一提示（code=401 或登录页 HTML 被当作 JSON 解析） */
+var __scmSessionAlertTs = 0;
+function scmResolveLoginUrl() {
+    return (typeof ctx !== 'undefined' && ctx ? ctx : '/') + 'login';
+}
+function scmHandleSessionDisconnected(message) {
+    if (typeof $.modal !== 'undefined') {
+        $.modal.enable();
+        $.modal.closeLoading();
+    }
+    var now = Date.now();
+    if (now - __scmSessionAlertTs < 1200) {
+        return;
+    }
+    __scmSessionAlertTs = now;
+    var msg = message || '用户会话已断开，请重新登录系统';
+    var goLogin = function () {
+        var url = scmResolveLoginUrl();
+        if (window.top && window.top.location) {
+            window.top.location.href = url;
+        } else {
+            window.location.href = url;
+        }
+    };
+    if (typeof $.modal !== 'undefined' && $.modal.alertWarning) {
+        $.modal.alertWarning(msg, goLogin);
+    } else if (typeof layer !== 'undefined') {
+        layer.alert(msg, { title: '系统提示', closeBtn: 0, btn: ['确定'] }, goLogin);
+    } else {
+        alert(msg);
+        goLogin();
+    }
+}
+function scmIsSessionDisconnected(xhr, textStatus) {
+    if (!xhr) {
+        return false;
+    }
+    if (xhr.status === 401 || xhr.status === 403) {
+        return true;
+    }
+    try {
+        var json = xhr.responseJSON;
+        if (!json && xhr.responseText) {
+            json = JSON.parse(xhr.responseText);
+        }
+        if (json && json.code === 401) {
+            return true;
+        }
+        if (json && json.msg && (json.msg.indexOf('重新登录') >= 0 || json.msg.indexOf('会话') >= 0)) {
+            return true;
+        }
+    } catch (e) { /* ignore */ }
+    if (textStatus === 'parsererror') {
+        var text = xhr.responseText || '';
+        if (text.length > 0 && text.length < 500000 &&
+            (text.indexOf('login') >= 0 || text.indexOf('/login') >= 0) &&
+            (text.indexOf('登录') >= 0 || text.indexOf('kaptcha') >= 0 || text.indexOf('password') >= 0)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 /** 设置全局ajax处理 */
 $.ajaxSetup({
     beforeSend: function (xhr, settings) {
@@ -584,6 +647,15 @@ $.ajaxSetup({
             $.modal.alertWarning("服务器超时，请稍后再试！");
             $.modal.enable();
             $.modal.closeLoading();
+        } else if (scmIsSessionDisconnected(XMLHttpRequest, textStatus)) {
+            var msg = '用户会话已断开，请重新登录系统';
+            try {
+                var body = XMLHttpRequest.responseJSON || JSON.parse(XMLHttpRequest.responseText || '');
+                if (body && body.msg) {
+                    msg = body.msg;
+                }
+            } catch (e) { /* ignore */ }
+            scmHandleSessionDisconnected(msg);
         } else if (textStatus == "parsererror" || textStatus == "error") {
             $.modal.alertWarning("服务器错误，请联系管理员！");
             $.modal.enable();

@@ -1911,6 +1911,8 @@ web_status = {
     SUCCESS: 0,
     FAIL: 500,
     WARNING: 301,
+    /** 会话失效/未登录，与 AjaxResult.sessionExpired 一致 */
+    SESSION_TIMEOUT: 401,
     /** 须先完善个人信息（姓名或合规登录名），与 AjaxResult.profileGate 一致 */
     PROFILE_GATE: 602
 };
@@ -1922,7 +1924,7 @@ modal_status = {
     WARNING: "warning"
 };
 
-/** 全局：接口返回 602 时提示并回首页以打开强制完善弹窗 */
+/** 全局：接口返回 401/602 时统一提示 */
 var __scmProfileGateAlertTs = 0;
 $(document).ajaxComplete(function (event, xhr) {
     try {
@@ -1931,6 +1933,12 @@ $(document).ajaxComplete(function (event, xhr) {
             return;
         }
         var r = JSON.parse(xhr.responseText);
+        if (r && r.code === web_status.SESSION_TIMEOUT) {
+            if (typeof scmHandleSessionDisconnected === 'function') {
+                scmHandleSessionDisconnected(r.msg || '用户会话已断开，请重新登录系统');
+            }
+            return;
+        }
         if (!r || r.code !== web_status.PROFILE_GATE) {
             return;
         }
