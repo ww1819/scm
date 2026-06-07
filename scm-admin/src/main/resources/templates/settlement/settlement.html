@@ -3,49 +3,193 @@
 <head>
 	<th:block th:include="include :: header('结算单列表')" />
 	<th:block th:include="include :: layout-latest-css" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-css" />
 	<style>
-		.settlement-table-wrap {
-			min-height: 730px;
+		.delivery-table-wrap {
+			min-height: 0;
 			position: relative;
-			padding-bottom: 6px;
+			padding-bottom: 0;
 			overflow: hidden;
+			display: flex;
+			flex-direction: column;
 		}
 
-		.settlement-table-wrap .bootstrap-table {
+		.delivery-table-wrap > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
+		}
+
+		.delivery-table-wrap .bootstrap-table {
+			display: flex;
+			flex-direction: column;
 			height: 100%;
-			padding-bottom: 46px;
+			padding-bottom: 0;
 		}
 
-		.settlement-table-wrap .fixed-table-container {
-			padding-bottom: 46px;
+		.delivery-table-wrap .fixed-table-container {
+			flex: 1 1 auto;
+			min-height: 0;
+			padding-bottom: 0;
 		}
 
-		.settlement-table-wrap .fixed-table-body {
+		.delivery-table-wrap .fixed-table-body {
 			overflow-x: auto !important;
 			overflow-y: auto !important;
 		}
 
-		.settlement-table-wrap .fixed-table-pagination {
-			position: absolute;
-			left: 10px;
-			right: 10px;
-			bottom: 0;
+		.delivery-table-wrap.delivery-list-table .fixed-columns-right {
+			z-index: 5;
+			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
+		}
+
+		.delivery-table-wrap .fixed-table-body .fixed-table-border {
+			display: none !important;
+			height: 0 !important;
+		}
+
+		.delivery-table-wrap .fixed-table-pagination {
+			position: relative;
+			flex-shrink: 0;
+			left: auto;
+			right: auto;
+			bottom: auto;
 			background: #fff;
 			z-index: 3;
 			border-top: 1px solid #eee;
 			margin: 0 !important;
-			padding: 6px 0;
+			padding: 4px 10px 2px;
 		}
 
-		.settlement-table-wrap .fixed-table-pagination .pagination {
-			margin-right: 28px;
+		.delivery-table-wrap.delivery-list-table .fixed-table-pagination .pagination {
+			margin-right: 172px;
 		}
 
-		.settlement-table-wrap .fixed-table-header {
-			position: sticky;
-			top: 0;
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th .th-inner,
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th .sortable {
+			text-align: center !important;
+			justify-content: center;
+		}
+
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="settlementId"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="settlementId"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="invoiceDate"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="invoiceDate"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="totalAmount"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="totalAmount"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="auditStatus"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="auditStatus"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="createTime"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="createTime"] {
+			text-align: center !important;
+		}
+
+		.delivery-table-wrap.delivery-list-table .fixed-table-header {
+			position: relative;
+			top: auto;
 			z-index: 2;
 			background: #fff;
+			overflow: hidden;
+		}
+
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header table,
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body > table {
+			table-layout: fixed;
+		}
+
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th,
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body tbody td {
+			box-sizing: border-box;
+			vertical-align: middle;
+		}
+
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="settlementOperate"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="settlementOperate"] {
+			padding: 0 !important;
+			border-left: 0 !important;
+			border-right: 0 !important;
+			font-size: 0;
+			line-height: 0;
+			color: transparent;
+			overflow: hidden;
+		}
+
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="settlementOperate"] > *,
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="settlementOperate"] > * {
+			display: none;
+		}
+
+		.delivery-table-wrap.delivery-list-table .fixed-columns-right .fixed-table-header th,
+		.delivery-table-wrap.delivery-list-table .fixed-columns-right .fixed-table-body td {
+			background-color: #fff;
+			vertical-align: middle;
+			white-space: nowrap;
+		}
+
+		.delivery-table-wrap.delivery-list-table .fixed-columns-right .fixed-table-header th[data-field="settlementOperate"] {
+			background-color: #f5f5f5;
+			min-width: 160px;
+			width: 160px;
+			text-align: center;
+		}
+
+		.delivery-table-wrap.delivery-list-table .fixed-columns-right .fixed-table-header th[data-field="settlementOperate"] .th-inner {
+			text-align: center;
+			justify-content: center;
+		}
+
+		.delivery-table-wrap.delivery-list-table .fixed-columns-right .fixed-table-body td[data-field="settlementOperate"] {
+			min-width: 160px;
+			width: 160px;
+			padding: 6px 8px;
+			text-align: center;
+		}
+
+		.delivery-table-wrap.delivery-list-table.table-striped .fixed-columns-right .fixed-table-body tbody tr:nth-of-type(odd) td {
+			background-color: #f9f9f9;
+		}
+
+		.delivery-table-wrap.delivery-list-table .fixed-columns-right .fixed-table-body {
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+
+		.delivery-table-wrap.delivery-list-table .fixed-table-body tbody td {
+			white-space: nowrap;
+			vertical-align: middle !important;
+		}
+
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="settlementNo"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="invoiceNo"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="customerName"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"] {
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="customerName"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"] {
+			max-width: 180px;
+		}
+
+		.delivery-table-wrap.delivery-list-table .delivery-cell-ellipsis {
+			display: block;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			max-width: 100%;
+		}
+
+		.container-div > .row > .search-collapse {
+			padding-top: 10px !important;
+			padding-bottom: 10px !important;
+		}
+
+		.container-div .search-collapse .select-list ul {
+			margin-bottom: 0;
+		}
+
+		.container-div .search-collapse .select-list li {
+			margin: 4px 15px 4px 0;
 		}
 	</style>
 </head>
@@ -78,7 +222,7 @@
 					</div>
 				</form>
 			</div>
-			
+
 	        <div class="btn-group-sm" id="toolbar" role="group">
 	        	<a class="btn btn-success" onclick="$.operate.addTab()" shiro:hasPermission="settlement:settlement:add">
 	                <i class="fa fa-plus"></i> 新增
@@ -99,40 +243,282 @@
 		            <i class="fa fa-refresh"></i> 重置
 		        </a>
 	        </div>
-	        
-	        <div class="col-sm-12 select-table table-striped settlement-table-wrap">
+
+	        <div class="col-sm-12 select-table table-striped delivery-table-wrap delivery-list-table">
 			    <table id="bootstrap-table"></table>
 			</div>
 		</div>
 	</div>
-	
+
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
 	<script th:inline="javascript">
 		var editFlag = [[${@permission.hasPermi('settlement:settlement:edit')}]];
 		var removeFlag = [[${@permission.hasPermi('settlement:settlement:remove')}]];
 		var prefix = ctx + "settlement/settlement";
+		var settlementTableId = 'bootstrap-table';
+
+		var settlementColWidths = {
+			settlementId: 100,
+			settlementNo: 150,
+			invoiceNo: 140,
+			invoiceDate: 110,
+			customerName: 180,
+			supplierName: 180,
+			totalAmount: 100,
+			auditStatus: 100,
+			createTime: 105,
+			settlementOperate: 160
+		};
 
 		$(function() {
+		    layoutSettlementTableWrapHeight();
 		    querySettlementList();
 		    $(window).resize(function() {
+		    	layoutSettlementTableWrapHeight();
 		    	adjustTableHeight();
+		    	setTimeout(refreshSettlementTableLayout, 100);
 		    });
 		});
 
-		function calculateTableHeight() {
-			var $detail = $('.settlement-table-wrap');
-			if ($detail.length === 0) {
-				return 700;
+		function layoutSettlementTableWrapHeight() {
+			var $wrap = $('.delivery-table-wrap');
+			if (!$wrap.length) {
+				return;
 			}
-			return Math.max($detail.innerHeight() - 8, 650);
+			var top = $wrap[0].getBoundingClientRect().top;
+			var h = Math.floor(window.innerHeight - top - 14);
+			h = Math.min(Math.max(h, 400), 580);
+			$wrap[0].style.height = h + 'px';
+			$wrap[0].style.minHeight = h + 'px';
+		}
+
+		function calculateTableHeight() {
+			layoutSettlementTableWrapHeight();
+			var $wrap = $('.delivery-table-wrap');
+			if ($wrap.length === 0) {
+				return 440;
+			}
+			var $bt = $wrap.find('.bootstrap-table');
+			var wrapH = $wrap[0].clientHeight || $wrap.innerHeight() || 0;
+			var toolbarH = $bt.find('.fixed-table-toolbar').outerHeight(true) || 0;
+			var pagH = $bt.find('.fixed-table-pagination').outerHeight(true) || 46;
+			var containerH = Math.floor(wrapH - toolbarH - pagH - 2);
+			return Math.max(containerH, 240);
 		}
 
 		function adjustTableHeight() {
-			var $table = $('#bootstrap-table');
+			var $table = $('#' + settlementTableId);
 			if ($table.length > 0 && $table.bootstrapTable('getOptions')) {
 				$table.bootstrapTable('resetView', { height: calculateTableHeight() });
 			}
+		}
+
+		function getSettlementTableTotalWidth() {
+			var sum = 42;
+			var opt = $('#' + settlementTableId).bootstrapTable('getOptions');
+			if (opt && opt.columns && opt.columns[0]) {
+				$.each(opt.columns[0], function (_, col) {
+					if (!col || col.visible === false || col.checkbox) {
+						return;
+					}
+					if (col.field && settlementColWidths[col.field] != null) {
+						sum += settlementColWidths[col.field];
+					} else if (col.width) {
+						sum += parseInt(col.width, 10) || 0;
+					} else {
+						sum += 100;
+					}
+				});
+			}
+			return Math.max(sum, 1200);
+		}
+
+		function applySettlementFieldColumnWidth(field, widthPx) {
+			var w = widthPx + 'px';
+			var $container = $('#' + settlementTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $th = $mainHeader.find('th[data-field="' + field + '"]');
+			if ($th.length === 0) {
+				return;
+			}
+			var colIdx = $th[0].cellIndex;
+			var setW = function (el) {
+				el.style.setProperty('width', w, 'important');
+				el.style.setProperty('min-width', w, 'important');
+				el.style.setProperty('max-width', w, 'important');
+			};
+			$th.each(function () { setW(this); });
+			$mainBody.find('table tbody tr').each(function () {
+				var cell = this.cells[colIdx];
+				if (cell) {
+					setW(cell);
+				}
+			});
+			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+		}
+
+		function applySettlementCheckboxColumnWidth() {
+			var w = '42px';
+			var $container = $('#' + settlementTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $th = $mainHeader.find('th.bs-checkbox');
+			if ($th.length === 0) {
+				return;
+			}
+			var colIdx = $th[0].cellIndex;
+			var setW = function (el) {
+				el.style.setProperty('width', w, 'important');
+				el.style.setProperty('min-width', w, 'important');
+				el.style.setProperty('max-width', w, 'important');
+			};
+			$th.each(function () { setW(this); });
+			$mainBody.find('table tbody tr').each(function () {
+				var cell = this.cells[colIdx];
+				if (cell) {
+					setW(cell);
+				}
+			});
+			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+		}
+
+		function syncSettlementHeaderBodyColumnWidths() {
+			var $container = $('#' + settlementTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $headerThs = $mainHeader.find('thead tr').first().children('th');
+			var $firstRow = $mainBody.find('tbody tr').first();
+			if ($firstRow.length === 0) {
+				return;
+			}
+			var setW = function (el, widthVal) {
+				el.style.setProperty('width', widthVal, 'important');
+				el.style.setProperty('min-width', widthVal, 'important');
+				el.style.setProperty('max-width', widthVal, 'important');
+			};
+			$headerThs.each(function (i) {
+				var bodyCell = $firstRow[0].cells[i];
+				if (!bodyCell) {
+					return;
+				}
+				var w = bodyCell.style.width;
+				if (!w) {
+					w = window.getComputedStyle(bodyCell).width;
+				}
+				if (w) {
+					setW(this, w);
+					$mainHeader.find('colgroup col').eq(i).each(function () { setW(this, w); });
+					$mainBody.find('colgroup col').eq(i).each(function () { setW(this, w); });
+				}
+			});
+		}
+
+		function scheduleSettlementColumnWidths() {
+			applySettlementCheckboxColumnWidth();
+			$.each(settlementColWidths, function (field, width) {
+				applySettlementFieldColumnWidth(field, width);
+			});
+			syncSettlementHeaderBodyColumnWidths();
+			requestAnimationFrame(function () {
+				applySettlementCheckboxColumnWidth();
+				$.each(settlementColWidths, function (field, width) {
+					applySettlementFieldColumnWidth(field, width);
+				});
+				syncSettlementHeaderBodyColumnWidths();
+			});
+		}
+
+		function fixSettlementTableHeaderAlign() {
+			var $bt = $('#' + settlementTableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			if (!$mainBody.length || !$mainHeader.length) {
+				return;
+			}
+			var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
+			$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+		}
+
+		function syncSettlementHeaderBodyScrollLeft() {
+			var $container = $('#' + settlementTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			if ($mainBody.length && $mainHeader.length) {
+				$mainHeader.scrollLeft($mainBody[0].scrollLeft);
+			}
+		}
+
+		function bindSettlementMainHorizontalScroll() {
+			var $bt = $('#' + settlementTableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			$mainBody.off('scroll.settlementMainH').on('scroll.settlementMainH', function () {
+				$mainHeader.scrollLeft($mainBody.scrollLeft());
+			});
+		}
+
+		function applySettlementMainTableMinWidth() {
+			var sum = getSettlementTableTotalWidth();
+			var w = sum + 'px';
+			var $container = $('#' + settlementTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $headerTable = $container.children('.fixed-table-header').find('table');
+			var $bodyTable = $container.children('.fixed-table-body').children('table');
+			$headerTable.css({ width: w, minWidth: w, maxWidth: w });
+			$bodyTable.css({ width: w, minWidth: w, maxWidth: w });
+		}
+
+		function syncSettlementOperateColumnScroll() {
+			var $bt = $('#' + settlementTableId).closest('.bootstrap-table');
+			var $rightBody = $bt.find('.fixed-columns-right .fixed-table-body');
+			if ($rightBody.length === 0) {
+				return;
+			}
+			var $mainBody = $bt.find('.fixed-table-container').children('.fixed-table-body');
+			$mainBody.off('scroll.settlementOperateSync').on('scroll.settlementOperateSync', function () {
+				$rightBody.scrollTop($mainBody.scrollTop());
+			});
+		}
+
+		function escSettlementCellAttr(s) {
+			return String(s == null ? '' : s)
+				.replace(/&/g, '&amp;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#39;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;');
+		}
+
+		function settlementCellEllipsis(value) {
+			var s = (value == null || value === '') ? '-' : String(value);
+			if (s === '-') {
+				return s;
+			}
+			var esc = escSettlementCellAttr(s);
+			return '<span class="delivery-cell-ellipsis" title="' + esc + '">' + esc + '</span>';
+		}
+
+		function formatSettlementDateOnly(value) {
+			if (value == null || value === '') {
+				return '-';
+			}
+			var s = String(value).trim();
+			return s.length >= 10 ? s.substring(0, 10) : s;
+		}
+
+		function refreshSettlementTableLayout() {
+			fixSettlementTableHeaderAlign();
+			scheduleSettlementColumnWidths();
+			applySettlementMainTableMinWidth();
+			syncSettlementHeaderBodyScrollLeft();
+			bindSettlementMainHorizontalScroll();
+			syncSettlementOperateColumnScroll();
 		}
 
 		function querySettlementList() {
@@ -145,74 +531,120 @@
 		        sortName: "createTime",
 		        sortOrder: "desc",
 		        modalName: "结算单",
+		        formId: "settlement-form",
 		        uniqueId: "settlementId",
 		        rememberSelected: true,
 		        maintainSelected: true,
+		        mobileResponsive: false,
+		        fixedColumns: true,
+		        fixedNumber: 0,
+		        fixedRightNumber: 1,
+		        pageList: [10, 25, 50],
 		        height: calculateTableHeight(),
+		        escape: false,
+		        onLoadSuccess: function () {
+		            layoutSettlementTableWrapHeight();
+		            setTimeout(function () {
+		                adjustTableHeight();
+		                refreshSettlementTableLayout();
+		            }, 50);
+		            setTimeout(function () {
+		                var $t = $('#' + settlementTableId);
+		                if ($t.bootstrapTable('getOptions')) {
+		                    $t.bootstrapTable('resetView', { height: calculateTableHeight() });
+		                }
+		                refreshSettlementTableLayout();
+		            }, 200);
+		            setTimeout(refreshSettlementTableLayout, 450);
+		        },
+		        onPostBody: function () {
+		            refreshSettlementTableLayout();
+		        },
 		        columns: [{
 		            checkbox: true
 		        },
 		        {
 		            field: 'settlementId',
-		            title: '结算单ID'
+		            title: '结算单ID',
+		            align: 'center',
+		            width: 100
 		        },
 		        {
 		            field: 'settlementNo',
 		            title: '结算单号',
-		            sortable: true
+		            width: 150,
+		            sortable: true,
+		            formatter: function(value) {
+		                return settlementCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'invoiceNo',
-		            title: '发票号'
+		            title: '发票号',
+		            width: 140,
+		            formatter: function(value) {
+		                return settlementCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'invoiceDate',
 		            title: '发票日期',
+		            align: 'center',
+		            width: 110,
 		            sortable: true,
-		            formatter: function(value, row, index) {
-		                if (value) {
-		                    // 如果value是日期字符串，直接返回日期部分
-		                    if (typeof value === 'string' && value.indexOf(' ') > -1) {
-		                        return value.split(' ')[0];
-		                    }
-		                    // 如果是Date对象，格式化
-		                    if (value instanceof Date) {
-		                        return $.common.formatDate(value, 'yyyy-MM-dd');
-		                    }
-		                    return value;
-		                }
-		                return '-';
+		            formatter: function(value) {
+		                return formatSettlementDateOnly(value);
 		            }
 		        },
 		        {
 		            field: 'customerName',
-		            title: '客户名称'
+		            title: '客户名称',
+		            width: 180,
+		            formatter: function(value) {
+		                return settlementCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'supplierName',
-		            title: '供应商名称'
+		            title: '供应商名称',
+		            width: 180,
+		            formatter: function(value) {
+		                return settlementCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'totalAmount',
-		            title: '总金额'
+		            title: '总金额',
+		            align: 'center',
+		            width: 100
 		        },
 		        {
 		            field: 'auditStatus',
 		            title: '审核状态',
-		            formatter: function(value, row, index) {
-		            	var statusMap = {'0': '待审核', '1': '已审核', '2': '已拒绝'};
-		            	return statusMap[value] || '';
+		            align: 'center',
+		            width: 100,
+		            formatter: function(value) {
+		            	var m = {
+		            	    '0': '<span class="label label-warning">待审核</span>',
+		            	    '1': '<span class="label label-success">已审核</span>',
+		            	    '2': '<span class="label label-danger">已拒绝</span>'
+		            	};
+		            	return m[value] || (value != null ? value : '<span class="label label-default">-</span>');
 		            }
 		        },
 		        {
 		            field: 'createTime',
 		            title: '创建时间',
+		            align: 'center',
+		            width: 105,
 		            sortable: true
 		        },
 		        {
+		            field: 'settlementOperate',
 		            title: '操作',
 		            align: 'center',
-		            formatter: function(value, row, index) {
+		            width: 160,
+		            formatter: function(value, row) {
 		            	var actions = [];
 		                actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.operate.editTab(\'' + row.settlementId + '\')"><i class="fa fa-edit"></i>编辑</a> ');
 		                actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.settlementId + '\')"><i class="fa fa-remove"></i>删除</a> ');
@@ -222,7 +654,7 @@
 		    };
 		    $.table.init(options);
 		}
-		
+
 		function resetPre() {
 			$("#settlement-form")[0].reset();
 			$.table.search();
@@ -230,4 +662,3 @@
 	</script>
 </body>
 </html>
-

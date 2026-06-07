@@ -61,7 +61,7 @@
 		        dataUrl: prefix + "/list",
 		        pagination: true,
 		        pageSize: 10,
-		        pageList: [10],
+		        pageList: [10, 25, 50],
 		        expandAll: false,
 		        expandFirst: true,
 		        createUrl: prefix + "/add/{id}",
@@ -80,12 +80,36 @@
 		        {
 		            field: 'orderNum',
 		            title: '排序',
-		            align: "left"
+		            align: "center"
+		        },
+		        {
+		            field: 'leader',
+		            title: '负责人',
+		            align: "left",
+		            formatter: function(value) {
+		            	return value ? value : '-';
+		            }
+		        },
+		        {
+		            field: 'phone',
+		            title: '联系电话',
+		            align: "left",
+		            formatter: function(value) {
+		            	return value ? value : '-';
+		            }
+		        },
+		        {
+		            field: 'email',
+		            title: '邮箱',
+		            align: "left",
+		            formatter: function(value) {
+		            	return value ? value : '-';
+		            }
 		        },
 		        {
 		            field: 'status',
 		            title: '状态',
-		            align: "left",
+		            align: "center",
 		            formatter: function(value, item, index) {
 		            	return $.table.selectDictLabel(datas, item.status);
 		            }

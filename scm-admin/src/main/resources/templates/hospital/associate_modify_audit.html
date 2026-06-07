@@ -3,6 +3,196 @@
 <head>
 	<th:block th:include="include :: header('医院关联修改审核')" />
 	<th:block th:include="include :: layout-latest-css" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-css" />
+	<style>
+		.associate-modify-audit-table-wrap {
+			min-height: 0;
+			position: relative;
+			padding-bottom: 0;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.associate-modify-audit-table-wrap > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
+		}
+
+		.associate-modify-audit-table-wrap .bootstrap-table {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			padding-bottom: 0;
+		}
+
+		.associate-modify-audit-table-wrap .fixed-table-container {
+			flex: 1 1 auto;
+			min-height: 0;
+			padding-bottom: 0;
+		}
+
+		.associate-modify-audit-table-wrap .fixed-table-body {
+			overflow-x: auto !important;
+			overflow-y: auto !important;
+		}
+
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-columns-right {
+			z-index: 5;
+			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
+		}
+
+		.associate-modify-audit-table-wrap .fixed-table-body .fixed-table-border {
+			display: none !important;
+			height: 0 !important;
+		}
+
+		.associate-modify-audit-table-wrap .fixed-table-pagination {
+			position: relative;
+			flex-shrink: 0;
+			left: auto;
+			right: auto;
+			bottom: auto;
+			background: #fff;
+			z-index: 3;
+			border-top: 1px solid #eee;
+			margin: 0 !important;
+			padding: 4px 10px 2px;
+		}
+
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-pagination .pagination {
+			margin-right: 172px;
+		}
+
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-header th .th-inner,
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-header th .sortable {
+			text-align: center !important;
+			justify-content: center;
+		}
+
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-header th[data-field="rowIndex"],
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-body td[data-field="rowIndex"],
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-header th[data-field="relationId"],
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-body td[data-field="relationId"],
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-header th[data-field="auditStatus"],
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-body td[data-field="auditStatus"] {
+			text-align: center !important;
+		}
+
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-header {
+			position: relative;
+			top: auto;
+			z-index: 2;
+			background: #fff;
+			overflow: hidden;
+		}
+
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-header table,
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-body > table {
+			table-layout: fixed;
+		}
+
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-header th,
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-body tbody td {
+			box-sizing: border-box;
+			vertical-align: middle;
+		}
+
+		/* 主表滚动区隐藏操作列内容，由右侧 fixed-columns-right 展示（与配送单据申请一致） */
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-header th[data-field="associateModifyAuditOperate"],
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-body td[data-field="associateModifyAuditOperate"] {
+			padding: 0 !important;
+			border-left: 0 !important;
+			border-right: 0 !important;
+			font-size: 0;
+			line-height: 0;
+			color: transparent;
+			overflow: hidden;
+		}
+
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-header th[data-field="associateModifyAuditOperate"] > *,
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-body td[data-field="associateModifyAuditOperate"] > * {
+			display: none;
+		}
+
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-columns-right .fixed-table-header th,
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-columns-right .fixed-table-body td {
+			background-color: #fff;
+			vertical-align: middle;
+			white-space: nowrap;
+		}
+
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-columns-right .fixed-table-header th[data-field="associateModifyAuditOperate"] {
+			background-color: #f5f5f5;
+			min-width: 160px;
+			width: 160px;
+			text-align: center;
+		}
+
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-columns-right .fixed-table-header th[data-field="associateModifyAuditOperate"] .th-inner {
+			text-align: center;
+			justify-content: center;
+		}
+
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-columns-right .fixed-table-body td[data-field="associateModifyAuditOperate"] {
+			min-width: 160px;
+			width: 160px;
+			padding: 6px 8px;
+			text-align: center;
+		}
+
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table.table-striped .fixed-columns-right .fixed-table-body tbody tr:nth-of-type(odd) td {
+			background-color: #f9f9f9;
+		}
+
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-columns-right .fixed-table-body {
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-body tbody td {
+			white-space: nowrap;
+			vertical-align: middle !important;
+		}
+
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-body td[data-field="hospitalCode"],
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-body td[data-field="hospitalName"],
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierCode"],
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"],
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-body td[data-field="prevSupplyStartDate"],
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-body td[data-field="prevSupplyEndDate"],
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-body td[data-field="supplyStartDate"],
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-body td[data-field="supplyEndDate"],
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-body td[data-field="contractNo"],
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-body td[data-field="auditByDisplay"],
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-body td[data-field="auditTime"],
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .fixed-table-container > .fixed-table-body td[data-field="auditRemark"] {
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.associate-modify-audit-table-wrap.associate-modify-audit-list-table .associate-modify-audit-cell-ellipsis {
+			display: block;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			max-width: 100%;
+		}
+
+		/* 搜索区：与配送单据申请一致 */
+		.container-div > .row > .search-collapse {
+			padding-top: 10px !important;
+			padding-bottom: 10px !important;
+		}
+
+		.container-div .search-collapse .select-list ul {
+			margin-bottom: 0;
+		}
+
+		.container-div .search-collapse .select-list li {
+			margin: 4px 15px 4px 0;
+		}
+	</style>
 </head>
 <body class="gray-bg">
 	<div class="container-div">
@@ -11,50 +201,319 @@
 				<form id="audit-modify-form">
 					<div class="select-list">
 						<ul>
-							<li>审核状态：
-								<select name="auditStatus">
+							<li>
+								审核状态：<select name="auditStatus">
 									<option value="" selected>全部</option>
 									<option value="0">待审核</option>
 									<option value="1">已通过</option>
 									<option value="2">已拒绝</option>
 								</select>
 							</li>
-							<li>医院：
-								<input type="text" name="hospitalKeyword" placeholder="编码/名称/拼音简码"/>
-							</li>
-							<li>供应商：
-								<input type="text" name="supplierKeyword" placeholder="编码/名称/拼音简码"/>
+							<li>
+								医院：<input type="text" name="hospitalKeyword" placeholder="编码/名称/拼音简码"/>
 							</li>
 							<li>
-								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								供应商：<input type="text" name="supplierKeyword" placeholder="编码/名称/拼音简码"/>
+							</li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()" style="display: none;"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()" style="display: none;"><i class="fa fa-refresh"></i>&nbsp;重置</a>
 							</li>
 						</ul>
 					</div>
 				</form>
 			</div>
+
 			<div class="btn-group-sm" id="toolbar" role="group">
 				<a class="btn btn-warning" onclick="$.table.exportExcel('audit-modify-form')" shiro:hasPermission="hospital:associateModify:export">
 					<i class="fa fa-download"></i> 导出
 				</a>
+				<a class="btn btn-primary" onclick="$.table.search()">
+					<i class="fa fa-search"></i> 搜索
+				</a>
+				<a class="btn btn-warning" onclick="resetPre()">
+					<i class="fa fa-refresh"></i> 重置
+				</a>
 			</div>
-			<div class="col-sm-12 select-table table-striped">
+
+			<div class="col-sm-12 select-table table-striped associate-modify-audit-table-wrap associate-modify-audit-list-table">
 				<table id="bootstrap-table"></table>
 			</div>
 		</div>
 	</div>
+
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
 	<script th:inline="javascript">
 		var auditModifyFlag = [[${@permission.hasPermi('hospital:associateModify:audit')}]];
 		var prefix = ctx + "hospital/associateModifyAudit";
+		var associateModifyAuditTableId = 'bootstrap-table';
+
+		var associateModifyAuditColWidths = {
+			rowIndex: 60,
+			relationId: 90,
+			hospitalCode: 130,
+			hospitalName: 160,
+			supplierCode: 130,
+			supplierName: 160,
+			prevSupplyStartDate: 130,
+			prevSupplyEndDate: 130,
+			supplyStartDate: 130,
+			supplyEndDate: 130,
+			contractNo: 120,
+			auditStatus: 100,
+			auditByDisplay: 90,
+			auditTime: 160,
+			auditRemark: 120,
+			associateModifyAuditOperate: 160
+		};
+
+		$(function() {
+			layoutAssociateModifyAuditTableWrapHeight();
+			queryAssociateModifyAuditList();
+			$(window).resize(function() {
+				layoutAssociateModifyAuditTableWrapHeight();
+				adjustTableHeight();
+				setTimeout(refreshAssociateModifyAuditTableLayout, 100);
+			});
+		});
 
 		function fmtDate(v) {
-			if (v == null || v === '') return '-';
-			if (typeof v === 'string' && v.length >= 10) return v.substring(0, 10);
+			if (v == null || v === '') {
+				return null;
+			}
+			if (typeof v === 'string' && v.length >= 10) {
+				return v.substring(0, 10);
+			}
 			return v;
 		}
 
-		$(function() {
+		function layoutAssociateModifyAuditTableWrapHeight() {
+			var $wrap = $('.associate-modify-audit-table-wrap');
+			if (!$wrap.length) {
+				return;
+			}
+			var top = $wrap[0].getBoundingClientRect().top;
+			var h = Math.floor(window.innerHeight - top - 14);
+			h = Math.min(Math.max(h, 400), 580);
+			$wrap[0].style.height = h + 'px';
+			$wrap[0].style.minHeight = h + 'px';
+		}
+
+		function calculateTableHeight() {
+			layoutAssociateModifyAuditTableWrapHeight();
+			var $wrap = $('.associate-modify-audit-table-wrap');
+			if ($wrap.length === 0) {
+				return 440;
+			}
+			var $bt = $wrap.find('.bootstrap-table');
+			var wrapH = $wrap[0].clientHeight || $wrap.innerHeight() || 0;
+			var toolbarH = $bt.find('.fixed-table-toolbar').outerHeight(true) || 0;
+			var pagH = $bt.find('.fixed-table-pagination').outerHeight(true) || 46;
+			var containerH = Math.floor(wrapH - toolbarH - pagH - 2);
+			return Math.max(containerH, 240);
+		}
+
+		function adjustTableHeight() {
+			var $table = $('#' + associateModifyAuditTableId);
+			if ($table.length > 0 && $table.bootstrapTable('getOptions')) {
+				$table.bootstrapTable('resetView', { height: calculateTableHeight() });
+			}
+		}
+
+		function escAssociateModifyAuditCellAttr(s) {
+			return String(s == null ? '' : s)
+				.replace(/&/g, '&amp;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#39;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;');
+		}
+
+		/** 文本省略显示，鼠标悬停 title 显示完整内容，移开自动隐藏 */
+		function associateModifyAuditCellEllipsis(value, titleValue) {
+			var display = (value == null || value === '') ? '-' : String(value);
+			if (display === '-') {
+				return display;
+			}
+			var title = (titleValue != null && titleValue !== '') ? String(titleValue) : display;
+			return '<span class="associate-modify-audit-cell-ellipsis" title="' + escAssociateModifyAuditCellAttr(title) + '">' + escAssociateModifyAuditCellAttr(display) + '</span>';
+		}
+
+		function associateModifyAuditDateCell(value) {
+			if (value == null || value === '') {
+				return '-';
+			}
+			var display = fmtDate(value);
+			return associateModifyAuditCellEllipsis(display, value);
+		}
+
+		function getAssociateModifyAuditTableTotalWidth() {
+			var sum = 0;
+			var opt = $('#' + associateModifyAuditTableId).bootstrapTable('getOptions');
+			if (opt && opt.columns && opt.columns[0]) {
+				$.each(opt.columns[0], function (_, col) {
+					if (!col || col.visible === false) {
+						return;
+					}
+					if (col.checkbox) {
+						sum += 42;
+					} else if (col.field && associateModifyAuditColWidths[col.field] != null) {
+						sum += associateModifyAuditColWidths[col.field];
+					} else if (col.width) {
+						sum += parseInt(col.width, 10) || 0;
+					} else {
+						sum += 100;
+					}
+				});
+			}
+			return Math.max(sum, 1400);
+		}
+
+		function applyAssociateModifyAuditFieldColumnWidth(field, widthPx) {
+			var w = widthPx + 'px';
+			var $container = $('#' + associateModifyAuditTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $th = $mainHeader.find('th[data-field="' + field + '"]');
+			if ($th.length === 0) {
+				return;
+			}
+			var colIdx = $th[0].cellIndex;
+			var setW = function (el) {
+				el.style.setProperty('width', w, 'important');
+				el.style.setProperty('min-width', w, 'important');
+				el.style.setProperty('max-width', w, 'important');
+			};
+			$th.each(function () { setW(this); });
+			$mainBody.find('table tbody tr').each(function () {
+				var cell = this.cells[colIdx];
+				if (cell) {
+					setW(cell);
+				}
+			});
+			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+		}
+
+		function syncAssociateModifyAuditHeaderBodyColumnWidths() {
+			var $container = $('#' + associateModifyAuditTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $headerThs = $mainHeader.find('thead tr').first().children('th');
+			var $firstRow = $mainBody.find('tbody tr').first();
+			if ($firstRow.length === 0) {
+				return;
+			}
+			var setW = function (el, widthVal) {
+				el.style.setProperty('width', widthVal, 'important');
+				el.style.setProperty('min-width', widthVal, 'important');
+				el.style.setProperty('max-width', widthVal, 'important');
+			};
+			$headerThs.each(function (i) {
+				var bodyCell = $firstRow[0].cells[i];
+				if (!bodyCell) {
+					return;
+				}
+				var w = bodyCell.style.width;
+				if (!w) {
+					w = window.getComputedStyle(bodyCell).width;
+				}
+				if (w) {
+					setW(this, w);
+					$mainHeader.find('colgroup col').eq(i).each(function () { setW(this, w); });
+					$mainBody.find('colgroup col').eq(i).each(function () { setW(this, w); });
+				}
+			});
+		}
+
+		function scheduleAssociateModifyAuditColumnWidths() {
+			$.each(associateModifyAuditColWidths, function (field, width) {
+				applyAssociateModifyAuditFieldColumnWidth(field, width);
+			});
+			syncAssociateModifyAuditHeaderBodyColumnWidths();
+			requestAnimationFrame(function () {
+				$.each(associateModifyAuditColWidths, function (field, width) {
+					applyAssociateModifyAuditFieldColumnWidth(field, width);
+				});
+				syncAssociateModifyAuditHeaderBodyColumnWidths();
+			});
+		}
+
+		function fixAssociateModifyAuditTableHeaderAlign() {
+			var $bt = $('#' + associateModifyAuditTableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			if (!$mainBody.length || !$mainHeader.length) {
+				return;
+			}
+			var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
+			$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+		}
+
+		function syncAssociateModifyAuditHeaderBodyScrollLeft() {
+			var $container = $('#' + associateModifyAuditTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			if ($mainBody.length && $mainHeader.length) {
+				$mainHeader.scrollLeft($mainBody[0].scrollLeft);
+			}
+		}
+
+		function bindAssociateModifyAuditMainHorizontalScroll() {
+			var $bt = $('#' + associateModifyAuditTableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			$mainBody.off('scroll.associateModifyAuditMainH').on('scroll.associateModifyAuditMainH', function () {
+				$mainHeader.scrollLeft($mainBody.scrollLeft());
+			});
+		}
+
+		function applyAssociateModifyAuditMainTableMinWidth() {
+			var sum = getAssociateModifyAuditTableTotalWidth();
+			var w = sum + 'px';
+			var $container = $('#' + associateModifyAuditTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $headerTable = $container.children('.fixed-table-header').find('table');
+			var $bodyTable = $container.children('.fixed-table-body').children('table');
+			$headerTable.css({ width: w, minWidth: w, maxWidth: w });
+			$bodyTable.css({ width: w, minWidth: w, maxWidth: w });
+		}
+
+		function syncAssociateModifyAuditOperateColumnScroll() {
+			var $bt = $('#' + associateModifyAuditTableId).closest('.bootstrap-table');
+			var $rightBody = $bt.find('.fixed-columns-right .fixed-table-body');
+			if ($rightBody.length === 0) {
+				return;
+			}
+			var $mainBody = $bt.find('.fixed-table-container').children('.fixed-table-body');
+			$mainBody.off('scroll.associateModifyAuditOperateSync').on('scroll.associateModifyAuditOperateSync', function () {
+				$rightBody.scrollTop($mainBody.scrollTop());
+			});
+		}
+
+		function refreshAssociateModifyAuditTableLayout() {
+			fixAssociateModifyAuditTableHeaderAlign();
+			scheduleAssociateModifyAuditColumnWidths();
+			applyAssociateModifyAuditMainTableMinWidth();
+			syncAssociateModifyAuditHeaderBodyScrollLeft();
+			bindAssociateModifyAuditMainHorizontalScroll();
+			syncAssociateModifyAuditOperateColumnScroll();
+		}
+
+		function buildAssociateModifyAuditOperateHtml(row) {
+			if (!row || row.auditStatus != '0') {
+				return '-';
+			}
+			var actions = [];
+			actions.push('<a class="btn btn-success btn-xs ' + auditModifyFlag + '" href="javascript:void(0)" onclick="doAuditModify(\'' + row.modifyApplyId + '\',\'1\')"><i class="fa fa-check"></i>通过</a> ');
+			actions.push('<a class="btn btn-danger btn-xs ' + auditModifyFlag + '" href="javascript:void(0)" onclick="doAuditModify(\'' + row.modifyApplyId + '\',\'2\')"><i class="fa fa-remove"></i>拒绝</a> ');
+			return actions.join('');
+		}
+
+		function queryAssociateModifyAuditList() {
 			var options = {
 				url: prefix + "/list",
 				exportUrl: prefix + "/export",
@@ -72,6 +531,30 @@
 				sortName: "createTime",
 				sortOrder: "desc",
 				modalName: "医院关联修改审核",
+				mobileResponsive: false,
+				fixedColumns: true,
+				fixedNumber: 0,
+				fixedRightNumber: 1,
+				pageList: [10, 25, 50],
+				height: calculateTableHeight(),
+				onLoadSuccess: function () {
+					layoutAssociateModifyAuditTableWrapHeight();
+					setTimeout(function () {
+						adjustTableHeight();
+						refreshAssociateModifyAuditTableLayout();
+					}, 50);
+					setTimeout(function () {
+						var $t = $('#' + associateModifyAuditTableId);
+						if ($t.bootstrapTable('getOptions')) {
+							$t.bootstrapTable('resetView', { height: calculateTableHeight() });
+						}
+						refreshAssociateModifyAuditTableLayout();
+					}, 200);
+					setTimeout(refreshAssociateModifyAuditTableLayout, 450);
+				},
+				onPostBody: function () {
+					refreshAssociateModifyAuditTableLayout();
+				},
 				columns: [{
 					field: 'modifyApplyId',
 					title: '申请ID',
@@ -79,46 +562,87 @@
 				}, {
 					field: 'relationId',
 					title: '关联ID',
-					width: 90
+					align: 'center',
+					width: 90,
+					formatter: function (value) {
+						return associateModifyAuditCellEllipsis(value);
+					}
 				}, {
+					field: 'rowIndex',
 					title: '序号',
 					align: 'center',
-					formatter: function (value, row, index) { return $.table.serialNumber(index); }
+					width: 60,
+					formatter: function (value, row, index) {
+						return $.table.serialNumber(index);
+					}
 				}, {
 					field: 'hospitalCode',
-					title: '医院编码'
+					title: '医院编码',
+					width: 130,
+					formatter: function (value) {
+						return associateModifyAuditCellEllipsis(value);
+					}
 				}, {
 					field: 'hospitalName',
-					title: '医院名称'
+					title: '医院名称',
+					width: 160,
+					formatter: function (value) {
+						return associateModifyAuditCellEllipsis(value);
+					}
 				}, {
 					field: 'supplierCode',
-					title: '供应商编码'
+					title: '供应商编码',
+					width: 130,
+					formatter: function (value) {
+						return associateModifyAuditCellEllipsis(value);
+					}
 				}, {
 					field: 'supplierName',
-					title: '供应商名称'
+					title: '供应商名称',
+					width: 160,
+					formatter: function (value) {
+						return associateModifyAuditCellEllipsis(value);
+					}
 				}, {
 					field: 'prevSupplyStartDate',
 					title: '变更前供货开始',
-					formatter: function(v) { return fmtDate(v); }
+					width: 130,
+					formatter: function (value) {
+						return associateModifyAuditDateCell(value);
+					}
 				}, {
 					field: 'prevSupplyEndDate',
 					title: '变更前供货结束',
-					formatter: function(v) { return fmtDate(v); }
+					width: 130,
+					formatter: function (value) {
+						return associateModifyAuditDateCell(value);
+					}
 				}, {
 					field: 'supplyStartDate',
 					title: '申请供货开始',
-					formatter: function(v) { return fmtDate(v); }
+					width: 130,
+					formatter: function (value) {
+						return associateModifyAuditDateCell(value);
+					}
 				}, {
 					field: 'supplyEndDate',
 					title: '申请供货结束',
-					formatter: function(v) { return fmtDate(v); }
+					width: 130,
+					formatter: function (value) {
+						return associateModifyAuditDateCell(value);
+					}
 				}, {
 					field: 'contractNo',
 					title: '合同编号',
-					formatter: function(v) { return v || '-'; }
+					width: 120,
+					formatter: function (value) {
+						return associateModifyAuditCellEllipsis(value);
+					}
 				}, {
 					field: 'auditStatus',
 					title: '审核状态',
+					align: 'center',
+					width: 100,
 					formatter: function(v) {
 						if (v == '0') return '<span class="label label-warning">待审核</span>';
 						if (v == '1') return '<span class="label label-success">已通过</span>';
@@ -128,27 +652,41 @@
 				}, {
 					field: 'auditByDisplay',
 					title: '审核人',
-					formatter: function(v, row) { return v || row.auditBy || '-'; }
+					width: 90,
+					formatter: function(v, row) {
+						return associateModifyAuditCellEllipsis(v || row.auditBy);
+					}
 				}, {
 					field: 'auditTime',
-					title: '审核时间'
+					title: '审核时间',
+					width: 160,
+					formatter: function (value) {
+						return associateModifyAuditCellEllipsis(value);
+					}
 				}, {
 					field: 'auditRemark',
-					title: '审核备注'
+					title: '审核备注',
+					width: 120,
+					formatter: function (value) {
+						return associateModifyAuditCellEllipsis(value);
+					}
 				}, {
+					field: 'associateModifyAuditOperate',
 					title: '操作',
 					align: 'center',
-					formatter: function(value, row) {
-						if (row.auditStatus != '0') return '-';
-						var a = [];
-						a.push('<a class="btn btn-success btn-xs ' + auditModifyFlag + '" href="javascript:void(0)" onclick="doAuditModify(\'' + row.modifyApplyId + '\',\'1\')"><i class="fa fa-check"></i>通过</a> ');
-						a.push('<a class="btn btn-danger btn-xs ' + auditModifyFlag + '" href="javascript:void(0)" onclick="doAuditModify(\'' + row.modifyApplyId + '\',\'2\')"><i class="fa fa-remove"></i>拒绝</a>');
-						return a.join('');
+					width: 160,
+					formatter: function (value, row) {
+						return buildAssociateModifyAuditOperateHtml(row);
 					}
 				}]
 			};
 			$.table.init(options);
-		});
+		}
+
+		function resetPre() {
+			$("#audit-modify-form")[0].reset();
+			$.table.search();
+		}
 
 		function doAuditModify(modifyApplyId, approved) {
 			var msg = approved === '1' ? '确认审核通过？通过后关联表供货期限等将按申请更新。' : '确认拒绝该修改申请吗？';

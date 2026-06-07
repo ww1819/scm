@@ -80,6 +80,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
         <result property="deliveryNo"       column="delivery_no"         />
 
+        <result property="hospitalName"     column="hospital_name"       />
+
+        <result property="supplierName"     column="supplier_name"       />
+
         <result property="deliveryAuditStatus" column="delivery_audit_status"/>
 
         <result property="refOrderId"      column="ref_order_id"/>
@@ -114,11 +118,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
                d.expire_date, d.manufacturer_name, d.register_no, d.remark, d.national_insurance_code,
 
-               IFNULL(NULLIF(TRIM(d.delivery_no), ''), IFNULL(del.delivery_no, '')) AS delivery_no
+               IFNULL(NULLIF(TRIM(d.delivery_no), ''), IFNULL(del.delivery_no, '')) AS delivery_no,
+
+               h.hospital_name, s.company_name as supplier_name,
+
+               del.audit_status as delivery_audit_status
 
         from scm_delivery_detail d
 
         left join scm_delivery del on d.delivery_id = del.delivery_id
+
+        left join scm_hospital h on del.hospital_id = h.hospital_id
+
+        left join scm_supplier s on del.supplier_id = s.supplier_id
 
     </sql>
 
@@ -135,6 +147,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                d.expire_date, d.manufacturer_name, d.register_no, d.remark, d.national_insurance_code,
 
                IFNULL(NULLIF(TRIM(d.delivery_no), ''), IFNULL(del.delivery_no, '')) AS delivery_no,
+
+               h.hospital_name, s.company_name as supplier_name,
 
                del.audit_status as delivery_audit_status,
 
@@ -159,6 +173,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         from scm_delivery_detail d
 
         left join scm_delivery del on d.delivery_id = del.delivery_id
+
+        left join scm_hospital h on del.hospital_id = h.hospital_id
+
+        left join scm_supplier s on del.supplier_id = s.supplier_id
 
         left join scm_order_detail sod on sod.detail_id = d.order_detail_id
 
@@ -314,7 +332,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
             <if test="zsOrderDetailId != null and zsOrderDetailId != ''">zs_order_detail_id,</if>
 
-            <if test="materialId != null">material_id,</if>
+            material_id,
 
             <if test="materialCode != null and materialCode != ''">material_code,</if>
 
@@ -366,7 +384,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
             <if test="zsOrderDetailId != null and zsOrderDetailId != ''">#{zsOrderDetailId},</if>
 
-            <if test="materialId != null">#{materialId},</if>
+            IFNULL(#{materialId}, 0),
 
             <if test="materialCode != null and materialCode != ''">#{materialCode},</if>
 
@@ -426,7 +444,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
         <foreach collection="list" item="item" separator=",">
 
-            (#{item.deliveryId}, IFNULL(#{item.deliveryNo}, ''), #{item.orderDetailId}, #{item.materialId}, #{item.zsOrderDetailId}, #{item.materialCode},
+            (#{item.deliveryId}, IFNULL(#{item.deliveryNo}, ''), #{item.orderDetailId}, IFNULL(#{item.materialId}, 0), #{item.zsOrderDetailId}, #{item.materialCode},
 
              #{item.materialName}, #{item.specification}, #{item.model}, #{item.unit},
 

@@ -688,11 +688,11 @@ WHERE del_flag = '0'
 -- D) 2026-05-02 配送单据申请：页面级对院商可见；新增/修改/删除/审核按钮仅供应商
 UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '1', default_open_scope = 'all_hospital',
   default_open_hospital = '1', default_open_supplier = '1', menu_biz_category = 'supply_chain'
-WHERE del_flag = '0' AND menu_id IN ('2501','25001','25005','25007','25008','25009');
+WHERE del_flag = '0' AND menu_id IN ('2501','25001','25005','25007','25008');
 /
 UPDATE sys_menu SET auth_type = 'supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all_supplier',
   default_open_hospital = '0', default_open_supplier = '1', menu_biz_category = 'supply_chain'
-WHERE del_flag = '0' AND menu_id IN ('25002','25003','25004','25006');
+WHERE del_flag = '0' AND menu_id IN ('25002','25003','25004','25006','25009');
 /
 DELETE rm FROM sys_role_menu rm INNER JOIN sys_role r ON r.role_id = rm.role_id
 WHERE r.del_flag = '0' AND r.role_type = 'hospital' AND rm.menu_id IN ('25002','25003','25004','25006');
@@ -732,4 +732,25 @@ WHERE r.del_flag = '0'
   AND m.del_flag = '0'
   AND r.role_type IN ('hospital','supplier')
   AND m.auth_type = 'platform';
+/
+-- G) 配送单反审核(25009)：与审核同级仅供应商；修正归类并补齐存量供应商白名单与角色菜单
+UPDATE sys_menu SET auth_type = 'supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all_supplier',
+  default_open_hospital = '0', default_open_supplier = '1', supplier_admin_only = '0', menu_biz_category = 'supply_chain'
+WHERE del_flag = '0' AND menu_id = '25009';
+/
+INSERT IGNORE INTO scm_supplier_menu_auth (id, supplier_id, hospital_id, menu_id, create_by, create_time)
+SELECT REPLACE(UUID(), '-', ''), CAST(s.supplier_id AS CHAR), NULL, '25009', 'migration-delivery-unaudit', NOW()
+FROM scm_supplier s
+WHERE s.del_flag = '0' AND s.status = '0';
+/
+INSERT IGNORE INTO sys_role_menu (id, role_id, menu_id, hospital_id, supplier_id)
+SELECT REPLACE(UUID(), '-', ''), r.role_id, 25009, '', CAST(r.supplier_id AS CHAR)
+FROM sys_role r
+INNER JOIN scm_supplier s ON s.supplier_id = r.supplier_id AND s.del_flag = '0' AND s.status = '0'
+WHERE r.del_flag = '0' AND r.role_type = 'supplier' AND r.supplier_id IS NOT NULL;
+/
+DELETE rm FROM sys_role_menu rm INNER JOIN sys_role r ON r.role_id = rm.role_id
+WHERE r.del_flag = '0' AND r.role_type = 'hospital' AND rm.menu_id = 25009;
+/
+DELETE FROM scm_hospital_menu_auth WHERE menu_id = 25009;
 /

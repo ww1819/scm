@@ -1,45 +1,220 @@
 <!DOCTYPE html>
-<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" class="delivery-form-root">
 <head>
 	<th:block th:include="include :: header('新增配送单')" />
 	<style>
-		/* 单据录入：每行五列 */
-		.delivery-doc-form .row {
-			margin-left: -8px;
-			margin-right: -8px;
+		/* 单据录入：flex 五列，贴容器左缘对齐 */
+		.delivery-form-main .form-card.delivery-doc-form {
+			margin-top: 0;
+			margin-bottom: 0 !important;
+			padding: 8px 12px !important;
+			box-sizing: border-box;
 		}
-		.delivery-doc-form .row::after {
-			content: "";
-			display: table;
-			clear: both;
+		.delivery-doc-form > .form-header.h4 {
+			margin-left: 0 !important;
+			padding-left: 0 !important;
+			margin-bottom: 8px;
+			padding-bottom: 6px;
+		}
+		.delivery-doc-form > .row {
+			display: flex;
+			flex-wrap: nowrap;
+			align-items: stretch;
+			width: 100%;
+			margin-left: 0 !important;
+			margin-right: 0 !important;
+			margin-bottom: 0;
+		}
+		.delivery-doc-form > .row + .row {
+			margin-top: 5px;
 		}
 		.delivery-doc-form .col-doc-5,
 		.delivery-doc-form .col-doc-10 {
 			position: relative;
 			min-height: 1px;
-			padding-left: 8px;
-			padding-right: 8px;
+			box-sizing: border-box;
+			float: none !important;
+			padding-left: 4px !important;
+			padding-right: 4px !important;
+		}
+		.delivery-doc-form > .row > :first-child {
+			padding-left: 0 !important;
+		}
+		.delivery-doc-form > .row > :last-child {
+			padding-right: 0 !important;
 		}
 		@media (min-width: 992px) {
-			.delivery-doc-form .col-doc-5 { width: 20%; float: left; }
-			.delivery-doc-form .col-doc-10 { width: 40%; float: left; }
+			.delivery-doc-form .col-doc-5 {
+				flex: 0 0 20%;
+				max-width: 20%;
+				width: 20%;
+			}
+			.delivery-doc-form .col-doc-wide {
+				flex: 0 0 23%;
+				max-width: 23%;
+				width: 23%;
+			}
+			.delivery-doc-form .col-doc-delivery-no {
+				flex: 0 0 18.5%;
+				max-width: 18.5%;
+				width: 18.5%;
+			}
+			.delivery-doc-form .col-doc-hospital {
+				flex: 0 0 18%;
+				max-width: 18%;
+				width: 18%;
+			}
+			.delivery-doc-form .col-doc-narrow {
+				flex: 0 0 14%;
+				max-width: 14%;
+				width: 14%;
+			}
+			.delivery-doc-form .col-doc-supplier {
+				flex: 0 0 20%;
+				max-width: 20%;
+				width: 20%;
+			}
+			.delivery-doc-form .col-doc-invoice {
+				flex: 0 0 14%;
+				max-width: 14%;
+				width: 14%;
+			}
+			.delivery-doc-form .col-doc-mid {
+				flex: 0 0 14%;
+				max-width: 14%;
+				width: 14%;
+			}
+			.delivery-doc-form .col-doc-order-no {
+				flex: 0 0 18%;
+				max-width: 18%;
+				width: 18%;
+			}
+			.delivery-doc-form .col-doc-date {
+				flex: 0 0 16%;
+				max-width: 16%;
+				width: 16%;
+			}
+			.delivery-doc-form .col-doc-person {
+				flex: 0 0 12%;
+				max-width: 12%;
+				width: 12%;
+				padding-left: 12px !important;
+			}
+			.delivery-doc-form .col-doc-address {
+				flex: 0 0 30%;
+				max-width: 30%;
+				width: 30%;
+			}
+			.delivery-doc-form .col-doc-10 {
+				flex: 0 0 40%;
+				max-width: 40%;
+				width: 40%;
+			}
 		}
 		@media (max-width: 991px) {
-			.delivery-doc-form .col-doc-5 { width: 50%; float: left; }
-			.delivery-doc-form .col-doc-10 { width: 100%; float: left; }
+			.delivery-doc-form > .row {
+				flex-wrap: wrap;
+			}
+			.delivery-doc-form .col-doc-5 {
+				flex: 0 0 50%;
+				max-width: 50%;
+				width: 50%;
+			}
+			.delivery-doc-form .col-doc-10 {
+				flex: 0 0 100%;
+				max-width: 100%;
+				width: 100%;
+			}
 		}
 		.delivery-doc-form .form-group {
-			margin-bottom: 8px;
+			margin-bottom: 0 !important;
+			margin-left: 0 !important;
+			display: flex;
+			flex-wrap: nowrap;
+			align-items: center;
+			width: 100%;
+		}
+		.delivery-doc-form .form-group::before,
+		.delivery-doc-form .form-group::after {
+			display: none !important;
+		}
+		.delivery-doc-form .form-group .control-label,
+		.delivery-doc-form .form-group .col-sm-5,
+		.delivery-doc-form .form-group .col-sm-7,
+		.delivery-doc-form .form-group .col-sm-2,
+		.delivery-doc-form .form-group .col-sm-10 {
+			float: none !important;
+			width: auto !important;
+			padding-left: 0 !important;
+			padding-right: 0 !important;
+			margin-left: 0 !important;
+			text-align: left !important;
 		}
 		.delivery-doc-form .control-label {
 			font-size: 14px;
-			padding-top: 7px;
+			flex: 0 0 auto;
+			padding-top: 0;
+			padding-right: 2px;
+			margin-bottom: 0;
+			white-space: nowrap;
+		}
+		.delivery-doc-form .form-group.doc-label-gap-4 .control-label {
+			padding-right: 4px !important;
+		}
+		.delivery-doc-form .col-doc-hospital .form-group.doc-label-gap-4 .control-label {
+			padding-right: 8px !important;
+		}
+		.delivery-doc-form .col-doc-narrow .form-group.doc-label-gap-4 .control-label {
+			padding-right: 10px !important;
+		}
+		.delivery-doc-form .col-doc-supplier .form-group.doc-label-gap-4 .control-label,
+		.delivery-doc-form .col-doc-invoice .form-group.doc-label-gap-4 .control-label {
+			padding-right: 20px !important;
+		}
+		.delivery-doc-form .col-doc-mid .form-group.doc-label-gap-4 .control-label {
+			padding-right: 30px !important;
+		}
+		.delivery-doc-form .col-doc-order-no .form-group.doc-label-gap-4 .control-label {
+			padding-right: 10px !important;
+		}
+		.delivery-doc-form .col-doc-date .form-group.doc-label-gap-4 .control-label {
+			padding-right: 20px !important;
+		}
+		.delivery-doc-form .col-doc-person .form-group.doc-label-gap-4 .control-label {
+			padding-right: 10image.pngpx !important;
+		}
+		.delivery-doc-form .col-doc-address .form-group.doc-label-gap-4 .control-label {
+			padding-right: 5px !important;
+		}
+		.delivery-doc-form .col-doc-10 .form-group.doc-label-gap-4 .control-label {
+			padding-right: 5px !important;
+		}
+		.delivery-doc-form .form-group > [class*="col-sm-"] {
+			flex: 1 1 auto;
+			min-width: 0;
+		}
+		.delivery-doc-form .col-doc-address .form-group > label.control-label,
+		.delivery-doc-form .col-doc-10 .form-group > label.control-label {
+			flex: 0 0 auto !important;
+		}
+		.delivery-doc-form .col-doc-address .form-group > div[class*="col-sm-"],
+		.delivery-doc-form .col-doc-10 .form-group > div[class*="col-sm-"] {
+			flex: 1 1 auto !important;
+			min-width: 0;
 		}
 		.delivery-doc-form .form-control {
-			height: 34px;
-			padding: 6px 10px;
+			height: 32px;
+			padding: 4px 6px;
 			font-size: 14px;
 			line-height: 20px;
+			width: 100%;
+			max-width: 100%;
+			box-sizing: border-box;
+		}
+		.delivery-doc-form input[name="deliveryAmount"],
+		.delivery-doc-form input[name="invoiceDate"],
+		.delivery-doc-form input[name="expectedDeliveryDate"] {
+			background-color: #fff !important;
 		}
 		/* ========== 详细信息列表：样式对齐配送信息查询-配送明细表 ========== */
 		#delivery-detail-list-section.query-table-wrap {
@@ -47,13 +222,13 @@
 			min-height: 0;
 			position: relative;
 			padding-bottom: 0;
-			overflow-x: hidden;
-			overflow-y: visible;
+			overflow: hidden;
 			display: flex;
 			flex-direction: column;
 			border: none;
 			border-radius: 0;
 			background: #fff;
+			box-sizing: border-box;
 		}
 		/* 与 ry-ui .select-table 白底一致，避免外层再叠一层阴影/圆角 */
 		#delivery-detail-list-section.select-table {
@@ -69,23 +244,24 @@
 			background: #fff;
 		}
 		#delivery-detail-list-section.query-table-wrap.select-table {
-			overflow-x: hidden !important;
-			overflow-y: visible !important;
+			overflow: hidden !important;
 		}
 		#delivery-detail-list-section.query-table-wrap > .bootstrap-table {
-			flex: 1 1 auto;
+			position: relative;
+			flex: 1 1 0%;
 			min-height: 0;
 			width: 100%;
 			display: flex;
 			flex-direction: column;
-			height: 100%;
-			position: relative;
+			overflow: hidden;
+			box-sizing: border-box;
+			align-self: stretch;
 		}
 		#delivery-detail-list-section .fixed-columns-right {
 			display: none !important;
 		}
 		#delivery-detail-list-section .bootstrap-table {
-			padding-bottom: 14px !important;
+			box-sizing: border-box;
 		}
 		#delivery-detail-list-section .fixed-table-body {
 			overflow-x: hidden !important;
@@ -97,19 +273,29 @@
 			width: 8px;
 		}
 		#delivery-detail-list-section .detail-hscroll-rail {
-			position: absolute;
-			left: 0;
-			bottom: 0;
-			height: 14px;
-			overflow-x: auto;
+			position: relative;
+			flex: 0 0 16px;
+			flex-shrink: 0;
+			width: 100%;
+			height: 16px;
+			min-height: 16px;
+			overflow-x: scroll;
 			overflow-y: hidden;
-			z-index: 8;
+			z-index: 1;
 			background: #f1f1f1;
 			scrollbar-width: thin;
 			box-sizing: border-box;
+			display: block;
 		}
 		#delivery-detail-list-section .detail-hscroll-rail-inner {
 			height: 1px;
+		}
+		#delivery-detail-list-section .detail-hscroll-rail::-webkit-scrollbar {
+			height: 14px;
+		}
+		#delivery-detail-list-section .detail-hscroll-rail::-webkit-scrollbar-thumb {
+			background: rgba(0, 0, 0, 0.28);
+			border-radius: 5px;
 		}
 		#delivery-detail-list-section.detail-has-fixed-op .fixed-table-body {
 			overflow-y: auto !important;
@@ -135,18 +321,12 @@
 		}
 		#delivery-detail-list-section.detail-has-fixed-op .fixed-table-container > .fixed-table-header th[data-field="operation"],
 		#delivery-detail-list-section.detail-has-fixed-op .fixed-table-container > .fixed-table-body td[data-field="operation"] {
+			display: none !important;
 			padding: 0 !important;
 			border: 0 !important;
-			font-size: 0;
-			line-height: 0;
-			overflow: hidden;
-			min-width: 0 !important;
 			width: 0 !important;
+			min-width: 0 !important;
 			max-width: 0 !important;
-		}
-		#delivery-detail-list-section.detail-has-fixed-op .fixed-table-container > .fixed-table-header th[data-field="operation"] > *,
-		#delivery-detail-list-section.detail-has-fixed-op .fixed-table-container > .fixed-table-body td[data-field="operation"] > * {
-			display: none !important;
 		}
 		#delivery-detail-list-section .detail-op-fixed-panel {
 			position: absolute;
@@ -232,7 +412,9 @@
 			flex-direction: column;
 			flex: 1;
 			min-height: 0;
+			max-height: 100% !important;
 			padding-bottom: 0;
+			overflow: hidden;
 		}
 		#delivery-detail-list-section .bootstrap-table {
 			position: relative;
@@ -245,8 +427,8 @@
 			padding-bottom: 0 !important;
 		}
 		.delivery-detail-section #delivery-detail-list-section {
-			flex: 1 1 auto !important;
-			min-height: 480px !important;
+			flex: 1 1 0% !important;
+			min-height: 0 !important;
 			height: auto !important;
 		}
 		#detail-table.delivery-detail-fixed-table {
@@ -275,13 +457,13 @@
 			line-height: 1.42857143;
 			font-weight: normal;
 			text-align: center !important;
-			overflow: visible !important;
-			text-overflow: clip !important;
+			overflow: hidden !important;
+			text-overflow: ellipsis !important;
 			white-space: nowrap !important;
 		}
 		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th {
-			overflow: visible !important;
-			text-overflow: clip !important;
+			overflow: hidden !important;
+			text-overflow: ellipsis !important;
 		}
 		#detail-table thead th[data-field="operation"],
 		#detail-table tbody td[data-field="operation"] {
@@ -344,6 +526,7 @@
 			background-color: #fff;
 			font-size: 13px !important;
 			color: #333;
+			text-align: center !important;
 		}
 		#delivery-detail-list-section.table-striped .fixed-table-container > .fixed-table-body tbody tr:nth-of-type(odd) td,
 		#delivery-detail-list-section.table-striped #detail-table tbody tr:nth-of-type(odd) td {
@@ -352,17 +535,6 @@
 		#delivery-detail-list-section.table-striped .fixed-table-container > .fixed-table-body tbody tr:hover td,
 		#delivery-detail-list-section.table-striped #detail-table tbody tr:hover td {
 			background-color: #f5f5f5 !important;
-		}
-		#detail-table tbody td[data-field="materialName"],
-		#detail-table tbody td[data-field="specification"],
-		#detail-table tbody td[data-field="materialCode"],
-		#detail-table tbody td[data-field="manufacturer"],
-		#detail-table tbody td[data-field="registerNo"],
-		#detail-table tbody td[data-field="nationalInsuranceCode"],
-		#detail-table tbody td[data-field="remark"],
-		#detail-table tbody td[data-field="mainBarcode"],
-		#detail-table tbody td[data-field="auxBarcode"] {
-			text-align: left !important;
 		}
 		#detail-table thead th[data-field="batchNo"],
 		#detail-table tbody td[data-field="batchNo"],
@@ -422,6 +594,7 @@
 			text-overflow: ellipsis;
 			white-space: nowrap;
 			max-width: 100%;
+			text-align: center !important;
 		}
 		#delivery-detail-list-section .barcode-cell-wrap {
 			white-space: normal !important;
@@ -457,6 +630,7 @@
 			box-sizing: border-box;
 			font-size: 12px;
 			margin: 0;
+			text-align: center !important;
 		}
 		#delivery-detail-list-section .detail-op-btns {
 			display: inline-flex;
@@ -505,18 +679,26 @@
 			font-size: 12px;
 			line-height: 1;
 		}
-				/* 页面布局：表单固定高度，明细区 flex 占满剩余空间，避免横向滚动条被裁切 */
-		body.delivery-form-page {
-			overflow: hidden;
+				/* iframe 内：100vh 常大于 iframe 可视高度，底部会被 #content-main{overflow:hidden} 裁掉 */
+		html.delivery-form-root,
+		html.delivery-form-root body.delivery-form-page {
 			height: 100%;
-			min-height: 100%;
+			margin: 0;
+			overflow: hidden;
+			box-sizing: border-box;
+		}
+		body.delivery-form-page {
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
 		}
 		.main-content.delivery-form-main {
 			display: flex;
 			flex-direction: column;
-			height: calc(100vh - 24px);
-			min-height: calc(100vh - 24px);
-			max-height: calc(100vh - 24px);
+			flex: 1 1 0%;
+			min-height: 0;
+			height: auto !important;
+			max-height: none !important;
 			overflow: hidden;
 			padding: 6px 10px 12px 10px;
 			background-color: #f5f5f5;
@@ -525,22 +707,12 @@
 		/* form 包住单据录入，勿用 > .form-card（否则匹配不到，会落回 .form-card{margin-bottom:20px}） */
 		.delivery-form-main > form.form-horizontal {
 			flex: 0 0 auto;
-			margin: 0 0 8px 0;
-			padding: 0;
-		}
-		.delivery-form-main .form-card.delivery-doc-form {
-			margin-top: 0;
-			margin-bottom: 0 !important;
-			padding: 14px 16px 16px;
-		}
-		.delivery-form-main .form-card.delivery-doc-form .form-header {
-			margin-top: 0;
-			margin-bottom: 14px;
-			padding-bottom: 8px;
+			margin: 0 0 6px 0;
+			padding: 0 !important;
 		}
 		.delivery-form-main > .delivery-detail-section {
-			flex: 1 1 auto;
-			min-height: 480px;
+			flex: 1 1 0%;
+			min-height: 0;
 			display: flex;
 			flex-direction: column;
 			overflow: hidden;
@@ -585,6 +757,28 @@
 		/* 表单组间距优化 */
 		.form-horizontal .form-group {
 			margin-bottom: 15px;
+		}
+		.form-horizontal .delivery-doc-form .form-group {
+			margin-bottom: 0 !important;
+		}
+		/* 单据录入：最终覆盖 bootstrap .row / .col-sm 默认左右间距 */
+		.delivery-form-main .form-card.delivery-doc-form {
+			padding: 8px 12px !important;
+		}
+		.delivery-doc-form > .row {
+			margin-left: 0 !important;
+			margin-right: 0 !important;
+		}
+		.delivery-doc-form .form-group .col-sm-5,
+		.delivery-doc-form .form-group .col-sm-7,
+		.delivery-doc-form .form-group .col-sm-2,
+		.delivery-doc-form .form-group .col-sm-10 {
+			padding-left: 0 !important;
+			padding-right: 0 !important;
+		}
+		.delivery-doc-form .col-doc-address .form-group.doc-label-gap-4 .control-label,
+		.delivery-doc-form .col-doc-10 .form-group.doc-label-gap-4 .control-label {
+			padding-right: 5px !important;
 		}
 		/* 按钮组样式优化 */
 		.btn-group-custom {
@@ -633,16 +827,16 @@
             <div class="form-card delivery-doc-form">
                 <h4 class="form-header h4">单据录入</h4>
             <div class="row">
-            	<div class="col-doc-5">
-                    <div class="form-group">
+            	<div class="col-doc-5 col-doc-delivery-no">
+                    <div class="form-group doc-label-gap-4">
                         <label class="col-sm-5 control-label">配送单号：</label>
                         <div class="col-sm-7">
                             <input name="deliveryNo" class="form-control" type="text" readonly placeholder="系统自动生成">
                         </div>
                     </div>
                 </div>
-                <div class="col-doc-5">
-                    <div class="form-group">
+                <div class="col-doc-5 col-doc-hospital">
+                    <div class="form-group doc-label-gap-4">
                         <label class="col-sm-5 control-label">医院：</label>
                         <div class="col-sm-7">
                             <select name="hospitalId" id="hospitalId" class="form-control">
@@ -655,16 +849,16 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-doc-5">
-                    <div class="form-group">
+                <div class="col-doc-5 col-doc-narrow">
+                    <div class="form-group doc-label-gap-4">
                         <label class="col-sm-5 control-label">总金额：</label>
                         <div class="col-sm-7">
-                            <input name="deliveryAmount" placeholder="请输入总金额" class="form-control" type="number" step="0.01" min="0">
+                            <input name="deliveryAmount" class="form-control" type="text" readonly value="0.00">
                         </div>
                     </div>
                 </div>
-                <div class="col-doc-5">
-                    <div class="form-group">
+                <div class="col-doc-5 col-doc-supplier">
+                    <div class="form-group doc-label-gap-4">
                         <label class="col-sm-5 control-label">配送商：</label>
                         <div class="col-sm-7">
                             <select name="supplierId" id="supplierId" class="form-control">
@@ -677,50 +871,50 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-doc-5">
-                    <div class="form-group">
+                <div class="col-doc-5 col-doc-invoice">
+                    <div class="form-group doc-label-gap-4">
                         <label class="col-sm-5 control-label">发票号：</label>
                         <div class="col-sm-7">
                             <input name="invoiceNo" placeholder="请输入发票号" class="form-control" type="text" maxlength="100">
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-doc-5">
-                    <div class="form-group">
+                <div class="col-doc-5 col-doc-mid">
+                    <div class="form-group doc-label-gap-4">
                         <label class="col-sm-5 control-label">发票日期：</label>
                         <div class="col-sm-7">
-                            <input name="invoiceDate" id="invoiceDate" placeholder="年/月/日" class="form-control" type="text" readonly>
+                            <input name="invoiceDate" id="invoiceDate" placeholder="请输入发票日期" class="form-control" type="text" maxlength="20">
                         </div>
                     </div>
                 </div>
-                <div class="col-doc-5">
-                    <div class="form-group">
+            </div>
+            <div class="row">
+                <div class="col-doc-5 col-doc-order-no">
+                    <div class="form-group doc-label-gap-4">
                         <label class="col-sm-5 control-label">订单号：</label>
                         <div class="col-sm-7">
-                            <input name="orderNo" placeholder="请输入订单号" class="form-control" type="text" maxlength="50">
+                            <input name="orderNo" class="form-control" type="text" readonly>
                         </div>
                     </div>
                 </div>
-                <div class="col-doc-5">
-                    <div class="form-group">
+                <div class="col-doc-5 col-doc-date">
+                    <div class="form-group doc-label-gap-4">
                         <label class="col-sm-5 control-label">预计配送日期：</label>
                         <div class="col-sm-7">
                             <input name="expectedDeliveryDate" id="expectedDeliveryDate" placeholder="年/月/日" class="form-control" type="text" readonly>
                         </div>
                     </div>
                 </div>
-                <div class="col-doc-5">
-                    <div class="form-group">
+                <div class="col-doc-5 col-doc-person">
+                    <div class="form-group doc-label-gap-4">
                         <label class="col-sm-5 control-label">配送员：</label>
                         <div class="col-sm-7">
                             <input name="deliveryPerson" placeholder="请输入配送员" class="form-control" type="text" maxlength="50">
                         </div>
                     </div>
                 </div>
-                <div class="col-doc-5">
-                    <div class="form-group">
+                <div class="col-doc-5 col-doc-address">
+                    <div class="form-group doc-label-gap-4">
                         <label class="col-sm-5 control-label">配送地址：</label>
                         <div class="col-sm-7">
                             <input name="deliveryAddress" placeholder="请输入配送地址" class="form-control" type="text" maxlength="500">
@@ -730,7 +924,7 @@
             </div>
             <div class="row">
                 <div class="col-doc-10">
-                    <div class="form-group">
+                    <div class="form-group doc-label-gap-4">
                         <label class="col-sm-2 control-label">备注：</label>
                         <div class="col-sm-10">
                             <input name="remark" maxlength="500" class="form-control" type="text" placeholder="请输入备注">
@@ -770,6 +964,38 @@
 	    var DETAIL_HSCROLL_GUTTER = 14;
 	    var detailColumnWidths = {};
 	    var DETAIL_COL_RESIZE_SKIP = { btSelectItem: 1, index: 1, operation: 1 };
+
+	    /** 顶部总金额 = 明细金额合计（只读展示） */
+	    function syncDeliveryAmountFromDetails() {
+	        var $table = $('#detail-table');
+	        if (!$table.length) {
+	            return;
+	        }
+	        var opt = $table.bootstrapTable('getOptions');
+	        if (!opt) {
+	            return;
+	        }
+	        var data = $table.bootstrapTable('getData') || [];
+	        var totalAmount = 0;
+	        for (var i = 0; i < data.length; i++) {
+	            var row = data[i];
+	            var amt = parseFloat(row.amount);
+	            if (isNaN(amt)) {
+	                var q = parseFloat(row.deliveryQuantity);
+	                var p = parseFloat(row.price);
+	                if (isNaN(q)) {
+	                    q = 0;
+	                }
+	                if (isNaN(p)) {
+	                    p = 0;
+	                }
+	                amt = q * p;
+	            }
+	            totalAmount += amt;
+	        }
+	        $("input[name='deliveryAmount']").val(totalAmount.toFixed(2));
+	    }
+
 	    /** 默认列宽（保证表头完整显示；含排序图标预留） */
 	    var DETAIL_DEFAULT_COL_WIDTHS = {
 	        btSelectItem: 42,
@@ -830,6 +1056,39 @@
 
 	    function escapeAttrForInput(s) {
 	        return escapeHtmlForBarcode(s).replace(/"/g, '&quot;');
+	    }
+
+	    /** 数量类字段：展示为非负整数 */
+	    function formatDetailInteger(value) {
+	        if (value === '' || value === null || value === undefined) {
+	            return '0';
+	        }
+	        var n = parseFloat(value);
+	        if (isNaN(n)) {
+	            return '0';
+	        }
+	        return String(Math.round(n));
+	    }
+
+	    function parseDetailInteger(value) {
+	        if (value === '' || value === null || value === undefined) {
+	            return null;
+	        }
+	        var n = parseFloat(value);
+	        if (isNaN(n)) {
+	            return null;
+	        }
+	        return Math.round(n);
+	    }
+
+	    function isDetailNonNegIntegerString(trimmed) {
+	        return trimmed === '' || /^\d+$/.test(trimmed);
+	    }
+
+	    function detailQuantityInputEvents(index) {
+	        return 'onblur="updateQuantity(this, ' + index + ')" ' +
+	               'oninput="this.value=this.value.replace(/[^\\d]/g,\'\')" ' +
+	               'onkeypress="if(event.keyCode==13){this.blur();return false;}"';
 	    }
 
 	    function detailCellTextHtml(value) {
@@ -946,8 +1205,7 @@
 	                    }
 	                    title = '¥' + (isNaN(amt) ? 0 : amt).toFixed(2);
 	                } else if (field === 'remainingQuantity' || field === 'deliveryQuantity') {
-	                    var n = parseFloat(row[field]);
-	                    title = isNaN(n) ? '0.00' : n.toFixed(2);
+	                    title = formatDetailInteger(row[field]);
 	                } else if (field === 'packCoefficient') {
 	                    if (row.packCoefficient != null && row.packCoefficient !== '' && !isNaN(parseFloat(row.packCoefficient))) {
 	                        title = String(parseFloat(row.packCoefficient));
@@ -1186,12 +1444,15 @@
 	        var $mainHeader = $container.children('.fixed-table-header');
 	        var $mainBody = $container.children('.fixed-table-body');
 	        var top = $container.position().top;
-	        var h = $container.outerHeight();
-	        var headH = $mainHeader.outerHeight() || 38;
-	        var panelH = Math.max((h || 0) - DETAIL_HSCROLL_GUTTER, 0);
+	        var headH = Math.ceil($mainHeader.outerHeight(true) || 0);
+	        var bodyVisH = $mainBody[0].clientHeight;
+	        if (bodyVisH < 1) {
+	            bodyVisH = Math.max(($container[0].clientHeight || 0) - headH, 0);
+	        }
+	        var panelH = headH + bodyVisH;
 	        $panel.css({
 	            top: top + 'px',
-	            height: (panelH > 0 ? panelH : '') + (panelH > 0 ? 'px' : ''),
+	            height: panelH + 'px',
 	            width: DETAIL_OPERATION_COL_WIDTH + 'px',
 	            right: DETAIL_OP_PANEL_RIGHT + 'px'
 	        });
@@ -1199,36 +1460,40 @@
 	            height: headH + 'px',
 	            lineHeight: headH + 'px'
 	        });
+	        $panel.find('.detail-op-fixed-body').css({
+	            height: bodyVisH + 'px',
+	            maxHeight: bodyVisH + 'px',
+	            flex: 'none'
+	        });
 	        layoutDetailHscrollRail();
 	        scheduleDetailOperationPanelSync();
 	        syncDetailOperationPanelScrollOffset();
 	    }
 
 	    function layoutDetailHscrollRail() {
-	        var $bt = $('#detail-table').closest('.bootstrap-table');
-	        var $rail = $bt.children('.detail-hscroll-rail');
+	        var $wrap = $('#delivery-detail-list-section');
+	        var $rail = $wrap.children('.detail-hscroll-rail');
 	        if (!$rail.length) {
 	            return;
 	        }
-	        var $wrap = $('#delivery-detail-list-section');
 	        var rightReserve = $wrap.hasClass('detail-has-fixed-op')
 	            ? (DETAIL_OPERATION_COL_WIDTH + DETAIL_OP_PANEL_RIGHT) : 0;
 	        $rail.css({
-	            left: '0',
-	            bottom: '0',
-	            height: DETAIL_HSCROLL_GUTTER + 'px',
-	            right: rightReserve + 'px',
-	            width: 'auto'
+	            flex: '0 0 ' + DETAIL_HSCROLL_RAIL_HEIGHT + 'px',
+	            width: 'auto',
+	            marginRight: rightReserve + 'px',
+	            height: DETAIL_HSCROLL_RAIL_HEIGHT + 'px'
 	        });
 	    }
 
 	    /** 表头、表体、底部横滚条 scrollLeft 保持一致 */
 	    function syncDetailHorizontalScroll(scrollLeft, source) {
 	        var $bt = $('#detail-table').closest('.bootstrap-table');
+	        var $wrap = $('#delivery-detail-list-section');
 	        var $container = $bt.find('.fixed-table-container').first();
 	        var $mainBody = $container.children('.fixed-table-body');
 	        var $mainHeader = $container.children('.fixed-table-header');
-	        var $rail = $bt.children('.detail-hscroll-rail');
+	        var $rail = $wrap.children('.detail-hscroll-rail');
 	        if (!$mainBody.length) {
 	            return;
 	        }
@@ -1249,26 +1514,24 @@
 
 	    function updateDetailHscrollRailSize() {
 	        var $bt = $('#detail-table').closest('.bootstrap-table');
+	        var $wrap = $('#delivery-detail-list-section');
 	        var $mainBody = $bt.find('.fixed-table-container > .fixed-table-body');
-	        var $rail = $bt.children('.detail-hscroll-rail');
+	        var $rail = $wrap.children('.detail-hscroll-rail');
 	        if (!$mainBody.length || !$rail.length) {
 	            return;
 	        }
 	        var bodyEl = $mainBody[0];
 	        var innerEl = $rail.find('.detail-hscroll-rail-inner')[0];
-	        if (bodyEl && innerEl) {
-	            innerEl.style.width = Math.max(bodyEl.scrollWidth, bodyEl.clientWidth) + 'px';
+	        var scrollW = getDetailTableScrollWidth($mainBody);
+	        var clientW = $rail[0].clientWidth || bodyEl.clientWidth;
+	        if (innerEl) {
+	            innerEl.style.width = scrollW + 'px';
 	        }
-	        var scrollW = bodyEl.scrollWidth;
-	        var clientW = bodyEl.clientWidth;
-	        if (scrollW <= clientW + 2) {
-	            $rail.css('overflow-x', 'hidden');
-	        } else {
-	            $rail.css('overflow-x', 'auto');
-	        }
+	        $rail.css('overflow-x', scrollW > clientW + 1 ? 'scroll' : 'hidden');
 	    }
 
 	    function ensureDetailHscrollRail() {
+	        var $wrap = $('#delivery-detail-list-section');
 	        var $bt = $('#detail-table').closest('.bootstrap-table');
 	        var $container = $bt.find('.fixed-table-container').first();
 	        var $mainBody = $container.children('.fixed-table-body');
@@ -1276,10 +1539,11 @@
 	        if (!$mainBody.length) {
 	            return;
 	        }
-	        var $rail = $bt.children('.detail-hscroll-rail');
+	        $bt.children('.detail-hscroll-rail').appendTo($wrap);
+	        var $rail = $wrap.children('.detail-hscroll-rail');
 	        if (!$rail.length) {
 	            $rail = $('<div class="detail-hscroll-rail"><div class="detail-hscroll-rail-inner"></div></div>');
-	            $bt.append($rail);
+	            $wrap.append($rail);
 	        }
 	        updateDetailHscrollRailSize();
 	        $rail.off('scroll.detailHscrollRail').on('scroll.detailHscrollRail', function () {
@@ -1438,9 +1702,10 @@
 	        var $container = $bt.find('.fixed-table-container').first();
 	        var $mainBody = $container.children('.fixed-table-body');
 	        var $mainHeader = $container.children('.fixed-table-header');
-	        applyDeliveryDetailTableMinWidth();
+	        syncDetailTableViewportHeights();
 	        seedDetailDefaultColumnWidths();
 	        syncDetailTableHeaderColumnWidths();
+	        applyDeliveryDetailTableMinWidth();
 	        buildDetailOperationFixedPanel();
 	        bindDetailHorizontalScroll();
 	        $bt.find('.detail-vscroll-rail').remove();
@@ -1459,6 +1724,8 @@
 	        try {
 	            $table.bootstrapTable('hideLoading');
 	        } catch (e) { /* ignore */ }
+	        syncDetailTableViewportHeights();
+	        layoutDetailOperationFixedPanel();
 	    }
 
 	    function refreshDetailTableLayoutDebounced() {
@@ -1471,48 +1738,114 @@
 	        }, 60);
 	    }
 
+	    var DETAIL_WRAP_MIN_HEIGHT = 620;
+	    var DETAIL_HSCROLL_RAIL_HEIGHT = 16;
+
+	    function getDetailTableScrollWidth($mainBody) {
+	        var $table = $mainBody.children('table');
+	        if ($table.length) {
+	            return Math.max($table[0].scrollWidth, $table[0].offsetWidth);
+	        }
+	        return $mainBody[0].scrollWidth;
+	    }
+
 	    function calculateDeliveryAddDetailTableHeight() {
 	        var $wrap = $('#delivery-detail-list-section');
 	        if (!$wrap.length) {
-	            return 560;
+	            return DETAIL_WRAP_MIN_HEIGHT - DETAIL_HSCROLL_RAIL_HEIGHT;
 	        }
-	        var h = $wrap[0].clientHeight || Math.floor($wrap.innerHeight());
-	        return Math.max(h, 480);
+	        void $wrap[0].offsetHeight;
+	        var slotH = Math.max($wrap[0].clientHeight - DETAIL_HSCROLL_RAIL_HEIGHT, 0);
+	        return slotH > 0 ? slotH : (DETAIL_WRAP_MIN_HEIGHT - DETAIL_HSCROLL_RAIL_HEIGHT);
+	    }
+
+	    /** 表体始终占满明细区剩余高度；行少时在表体内留白，行多时纵向滚动 */
+	    function syncDetailTableViewportHeights() {
+	        var $wrap = $('#delivery-detail-list-section');
+	        var $bt = $wrap.children('.bootstrap-table');
+	        if (!$bt.length) {
+	            return;
+	        }
+	        $bt[0].style.setProperty('flex', '1 1 0%', 'important');
+	        $bt[0].style.setProperty('min-height', '0', 'important');
+	        $bt[0].style.removeProperty('height');
+	        $bt[0].style.removeProperty('max-height');
+	        void $wrap[0].offsetHeight;
+	        void $bt[0].offsetHeight;
+	        var slotH = $bt[0].clientHeight;
+	        if (slotH < 1) {
+	            slotH = $wrap[0].clientHeight - DETAIL_HSCROLL_RAIL_HEIGHT;
+	        }
+	        if (slotH < 1) {
+	            return;
+	        }
+	        var $container = $bt.find('.fixed-table-container').first();
+	        var $header = $container.children('.fixed-table-header');
+	        var $body = $container.children('.fixed-table-body');
+	        if (!$container.length || !$body.length) {
+	            return;
+	        }
+	        var headerH = Math.ceil($header.outerHeight(true) || 0);
+	        var cs = window.getComputedStyle($container[0]);
+	        var borderH = (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0);
+	        var maxBodyH = slotH - headerH - borderH;
+	        if (maxBodyH < 1) {
+	            return;
+	        }
+	        var rowCount = $body.find('tbody tr').length;
+	        var needH = rowCount > 0 ? rowCount * DETAIL_ROW_HEIGHT : 0;
+	        var bodyH = maxBodyH;
+	        var totalH = slotH;
+	        $container[0].style.setProperty('flex', '1', 'important');
+	        $container[0].style.setProperty('height', totalH + 'px', 'important');
+	        $container[0].style.setProperty('max-height', totalH + 'px', 'important');
+	        $body[0].style.setProperty('height', bodyH + 'px', 'important');
+	        $body[0].style.setProperty('max-height', bodyH + 'px', 'important');
+	        $body[0].style.setProperty('overflow-y', needH > maxBodyH ? 'auto' : 'hidden', 'important');
 	    }
 
 	    var detailTableLayoutTimer = null;
 	    var detailTableLayoutRefreshTimer = null;
 	    var detailTableLayoutLock = false;
 
-	    /** 明细外包层：从当前位置铺满到窗口（标签页）底部 */
+	    /** 明细区：按 iframe 可视底边计算高度，避免 100vh / 最小高度把底部横滚条挤出可视区 */
 	    function layoutDeliveryAddDetailWrapHeight() {
 	        var $page = $('.delivery-form-main');
 	        var $section = $page.children('.delivery-detail-section');
 	        var $wrap = $('#delivery-detail-list-section');
-	        var $toolbar = $section.find('.delivery-detail-toolbar');
 	        if (!$page.length || !$wrap.length || !$section.length) {
 	            return;
 	        }
-	        var el = $wrap[0];
 	        var docEl = document.documentElement;
 	        var viewH = (docEl && docEl.clientHeight) ? docEl.clientHeight : (window.innerHeight || 0);
-	        var wrapTop = el.getBoundingClientRect().top;
+	        var pageBottom = Math.min($page[0].getBoundingClientRect().bottom, viewH);
 	        var sectionTop = $section[0].getBoundingClientRect().top;
-	        var toolbarH = $toolbar.length ? $toolbar.outerHeight(true) : 0;
-	        var hByWrap = Math.floor(viewH - wrapTop - 10);
-	        var hBySection = Math.floor(viewH - sectionTop - toolbarH - 14);
-	        var h = Math.max(hByWrap, hBySection, 480);
+	        var sectionH = Math.floor(pageBottom - sectionTop - 4);
+	        if (sectionH < 100) {
+	            sectionH = 100;
+	        }
 	        $section.css({
 	            display: 'flex',
 	            flexDirection: 'column',
-	            flex: '1 1 auto',
+	            flex: '1 1 0%',
 	            minHeight: '0',
-	            overflow: 'hidden'
+	            height: sectionH + 'px',
+	            maxHeight: sectionH + 'px',
+	            overflow: 'hidden',
+	            boxSizing: 'border-box'
 	        });
-	        el.style.setProperty('flex', '1 1 auto', 'important');
-	        el.style.setProperty('height', h + 'px', 'important');
-	        el.style.setProperty('min-height', '480px', 'important');
-	        el.style.removeProperty('max-height');
+	        var secStyle = window.getComputedStyle($section[0]);
+	        var wrapTop = $wrap[0].getBoundingClientRect().top;
+	        var wrapBottom = Math.min(sectionTop + sectionH, viewH) - (parseFloat(secStyle.paddingBottom) || 0);
+	        var wrapH = Math.floor(wrapBottom - wrapTop - 2);
+	        if (wrapH < 80) {
+	            wrapH = 80;
+	        }
+	        var el = $wrap[0];
+	        el.style.setProperty('flex', '1 1 0%', 'important');
+	        el.style.setProperty('min-height', '0', 'important');
+	        el.style.setProperty('height', wrapH + 'px', 'important');
+	        el.style.setProperty('max-height', wrapH + 'px', 'important');
 	        el.style.setProperty('box-sizing', 'border-box', 'important');
 	    }
 
@@ -1523,6 +1856,7 @@
 	        detailTableLayoutLock = true;
 	        try {
 	            layoutDeliveryAddDetailWrapHeight();
+	            void $('#delivery-detail-list-section')[0].offsetHeight;
 	            var $table = $('#detail-table');
 	            var hd = calculateDeliveryAddDetailTableHeight();
 	            try {
@@ -1530,8 +1864,11 @@
 	                    $table.bootstrapTable('resetView', { height: hd });
 	                }
 	            } catch (e) { /* ignore */ }
+	            syncDetailTableViewportHeights();
 	            applyDetailTableRowHeight();
 	            refreshDetailTableLayout();
+	            syncDetailTableViewportHeights();
+	            layoutDetailOperationFixedPanel();
 	            applyDetailTableRowHeight();
 	        } finally {
 	            detailTableLayoutLock = false;
@@ -1540,6 +1877,7 @@
 
 	    function reloadDetailTableData(allData) {
 	        $('#detail-table').bootstrapTable('load', allData || []);
+	        syncDeliveryAmountFromDetails();
 	        try {
 	            $('#detail-table').bootstrapTable('hideLoading');
 	        } catch (e) { /* ignore */ }
@@ -1569,12 +1907,6 @@
 	        // 预计配送日期
 	        laydate.render({
 	            elem: '#expectedDeliveryDate',
-	            type: 'date'
-	        });
-
-	        // 发票日期
-	        laydate.render({
-	            elem: '#invoiceDate',
 	            type: 'date'
 	        });
 	    });
@@ -1658,15 +1990,14 @@
 	        var dqNum = (rawDq === '' || rawDq === null || rawDq === undefined) ? NaN : parseFloat(rawDq);
 	        var eps = 1e-6;
 	        function reloadAfterCopy() {
-	            var totalAmount = 0;
 	            for (var i = 0; i < allData.length; i++) {
 	                var q = parseFloat(allData[i].deliveryQuantity);
-	                if (isNaN(q)) q = 0;
+	                if (isNaN(q)) {
+	                    q = 0;
+	                }
 	                var p = parseFloat(allData[i].price || 0);
 	                allData[i].amount = q * p;
-	                totalAmount += allData[i].amount;
 	            }
-	            $("input[name='deliveryAmount']").val(totalAmount.toFixed(2));
 	            reloadDetailTableData(allData);
 	            setTimeout(function() {
 	                $('#detail-table').find('.date-input').data('laydate-init', false);
@@ -1700,7 +2031,7 @@
 	            allData[rowIndex].amount = (dq - pack) * parseFloat(row.price || 0);
 	            allData.splice(rowIndex + 1, 0, newRow);
 	            reloadAfterCopy();
-	            $.modal.msgSuccess('已拆行：原行保留数量 ' + (dq - pack).toFixed(2) + '，新行数量 ' + pack + '，请填写新行批号与效期');
+	            $.modal.msgSuccess('已拆行：原行保留数量 ' + formatDetailInteger(dq - pack) + '，新行数量 ' + formatDetailInteger(pack) + '，请填写新行批号与效期');
 	            return;
 	        }
 	        if (isNaN(dqNum)) {
@@ -1779,7 +2110,7 @@
             }, {
                 field: 'materialName',
                 title: '产品名称',
-                align: 'left',
+                align: 'center',
                 width: 156,
                 sortable: true,
                 sorter: detailSortText,
@@ -1787,7 +2118,7 @@
             }, {
                 field: 'specification',
                 title: '规格',
-                align: 'left',
+                align: 'center',
                 width: 120,
                 sortable: true,
                 sorter: detailSortText,
@@ -1806,33 +2137,29 @@
 	                align: 'center',
 	                width: 108,
 	                formatter: function (value) {
-	                    var s = value ? parseFloat(value).toFixed(2) : '0.00';
-	                    return detailCellTextHtml(s);
+	                    return detailCellTextHtml(formatDetailInteger(value));
 	                }
 	            }, {
 	                field: 'deliveryQuantity',
 	                title: '数量',
-	                align: 'right',
+	                align: 'center',
 	                width: 80,
 	                sortable: true,
 	                sorter: detailSortNumber,
 	                formatter: function(value, row, index) {
 	                    var val = '';
-	                    if (value === '' || value === null || value === undefined) {
-	                        val = '';
-	                    } else {
-	                        var n = parseFloat(value);
-	                        val = isNaN(n) ? '' : n.toFixed(2);
+	                    if (value !== '' && value !== null && value !== undefined) {
+	                        var n = parseDetailInteger(value);
+	                        val = n === null ? '' : String(n);
 	                    }
 	                    var titleAttr = val ? (' title="' + escapeAttrForInput(val) + '"') : '';
-	                    return '<input type="text" class="form-control input-sm" style="text-align:right;width:100%;" value="' + val + '"' + titleAttr + ' ' +
-	                           'onblur="updateQuantity(this, ' + index + ')" ' +
-	                           'onkeypress="if(event.keyCode==13){this.blur();return false;}" />';
+	                    return '<input type="text" class="form-control input-sm" style="text-align:center;width:100%;" value="' + val + '"' + titleAttr + ' ' +
+	                           detailQuantityInputEvents(index) + ' />';
 	                }
 	            }, {
 	                field: 'price',
 	                title: '单价',
-	                align: 'right',
+	                align: 'center',
 	                width: 92,
 	                sortable: true,
 	                sorter: detailSortNumber,
@@ -1843,7 +2170,7 @@
 	            }, {
 	                field: 'amount',
 	                title: '金额',
-	                align: 'right',
+	                align: 'center',
 	                width: 100,
 	                sortable: true,
 	                sorter: detailSortAmount,
@@ -1859,7 +2186,7 @@
 	            }, {
 	                field: 'batchNo',
 	                title: '批号',
-	                align: 'left',
+	                align: 'center',
 	                width: 160,
 	                formatter: function(value, row, index) {
 	                    return detailTextInputHtml(value, index, 50, 'updateBatchNo');
@@ -1881,26 +2208,15 @@
 	                    return detailDateInputHtml(value, index, 'expireDate', 'updateExpireDate');
 	                }
 	            }, {
-	                field: 'packCoefficient',
-	                title: '打包系数',
-	                align: 'center',
-	                width: 100,
-	                formatter: function (value) {
-	                    if (value != null && value !== '' && !isNaN(parseFloat(value))) {
-	                        return detailCellTextHtml(String(parseFloat(value)));
-	                    }
-	                    return detailCellTextHtml('-');
-	                }
-	            }, {
 	                field: 'manufacturer',
 	                title: '生产厂家',
-	                align: 'left',
+	                align: 'center',
 	                width: 160,
 	                formatter: function (value) { return detailCellTextHtml(value || '-'); }
 	            }, {
 	                field: 'mainBarcode',
 	                title: '主条码',
-	                align: 'left',
+	                align: 'center',
 	                width: 150,
 	                formatter: function(value, row, index) {
 	                    return detailTextInputHtml(value, index, 128, 'updateMainBarcode');
@@ -1908,7 +2224,7 @@
 	            }, {
 	                field: 'auxBarcode',
 	                title: '辅条码',
-	                align: 'left',
+	                align: 'center',
 	                width: 150,
 	                formatter: function(value, row, index) {
 	                    return detailTextInputHtml(value, index, 128, 'updateAuxBarcode');
@@ -1931,16 +2247,28 @@
 	            {
 	                field: 'nationalInsuranceCode',
 	                title: '国家医保编码',
-	                align: 'left',
+	                align: 'center',
 	                width: 160,
 	                formatter: function(value, row, index) {
 	                    return detailTextInputHtml(value, index, 128, 'updateNationalInsuranceCode');
 	                }
 	            },
 	            {
+	                field: 'packCoefficient',
+	                title: '打包系数',
+	                align: 'center',
+	                width: 100,
+	                formatter: function (value) {
+	                    if (value != null && value !== '' && !isNaN(parseFloat(value))) {
+	                        return detailCellTextHtml(String(parseFloat(value)));
+	                    }
+	                    return detailCellTextHtml('-');
+	                }
+	            },
+	            {
 	                field: 'remark',
 	                title: '备注',
-	                align: 'left',
+	                align: 'center',
 	                width: 140,
 	                formatter: function(value, row, index) {
 	                    return detailTextInputHtml(value, index, 500, 'updateDetailRemark');
@@ -1970,6 +2298,7 @@
 	            try {
 	                $('#detail-table').bootstrapTable('hideLoading');
 	            } catch (e) { /* ignore */ }
+	            syncDeliveryAmountFromDetails();
 	            scheduleRelayoutDeliveryDetailTable();
 	        };
         $('#detail-table').bootstrapTable(options);
@@ -2053,8 +2382,8 @@
 	    function updateQuantity(input, index) {
 	        var value = $(input).val();
 	        var trimmed = (value || '').trim();
-	        if (trimmed !== '' && (isNaN(trimmed) || parseFloat(trimmed) < 0)) {
-	            $.modal.alertWarning('数量必须是大于等于0的数字');
+	        if (trimmed !== '' && !isDetailNonNegIntegerString(trimmed)) {
+	            $.modal.alertWarning('数量必须是非负整数');
 	            $(input).focus();
 	            return;
 	        }
@@ -2063,7 +2392,7 @@
 	        var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : index;
 	        if (data[rowIndex]) {
 	            var oldQtyRaw = data[rowIndex].deliveryQuantity;
-	            var newVal = trimmed === '' ? '' : parseFloat(trimmed);
+	            var newVal = trimmed === '' ? '' : parseInt(trimmed, 10);
 	            data[rowIndex].deliveryQuantity = newVal;
 	            var gk = deliveryLineGroupKey(data[rowIndex]);
 	            if (gk && data[rowIndex].lineApplyQty != null && data[rowIndex].lineApplyQty !== '') {
@@ -2075,19 +2404,23 @@
 	                        if (oldQtyRaw === '' || oldQtyRaw === null || oldQtyRaw === undefined) {
 	                            $(input).val('');
 	                        } else {
-	                            $(input).val(parseFloat(oldQtyRaw).toFixed(2));
+	                            $(input).val(formatDetailInteger(oldQtyRaw));
 	                        }
-	                        $.modal.alertWarning('同一订单明细行配送数量合计不能超过申请数量（' + cap.toFixed(2) + '）');
+	                        $.modal.alertWarning('同一订单明细行配送数量合计不能超过申请数量（' + formatDetailInteger(cap) + '）');
 	                        return;
 	                    }
 	                }
 	            }
-	            var qty = (newVal === '' || newVal === null || newVal === undefined) ? 0 : parseFloat(newVal);
+	            if (trimmed !== '') {
+	                $(input).val(String(newVal));
+	            }
+	            var qty = (newVal === '' || newVal === null || newVal === undefined) ? 0 : parseInt(newVal, 10);
 	            if (isNaN(qty)) qty = 0;
 	            var price = parseFloat(data[rowIndex].price || 0);
 	            data[rowIndex].amount = qty * price;
 	            var amountCell = $tr.find('td[data-field="amount"]');
 	            amountCell.text('¥' + (qty * price).toFixed(2));
+	            syncDeliveryAmountFromDetails();
 	        }
 	    }
 
@@ -2292,15 +2625,6 @@
 	                // 重新加载数据
 	                reloadDetailTableData(allData);
 
-	                // 重新计算总金额
-	                var totalAmount = 0;
-	                for (var i = 0; i < allData.length; i++) {
-	                    if (allData[i].amount) {
-	                        totalAmount += parseFloat(allData[i].amount);
-	                    }
-	                }
-	                $("input[name='deliveryAmount']").val(totalAmount.toFixed(2));
-
 	                // 重新初始化日期选择器
 	                setTimeout(function() {
 	                    $('#detail-table').find('.date-input').data('laydate-init', false);
@@ -2324,10 +2648,90 @@
             focusCleanup: true
         });
 
+        /** 保存前将批号/日期/条码等输入框当前值同步到行数据（避免未失焦时 getData 仍是旧值） */
+        function syncDetailEditableFieldsFromDom() {
+            var $table = $('#detail-table');
+            if (!$table.length) {
+                return [];
+            }
+            var data = [];
+            try {
+                data = $table.bootstrapTable('getData') || [];
+            } catch (e) {
+                return [];
+            }
+            var $mainBody = $table.closest('.bootstrap-table').find('.fixed-table-container > .fixed-table-body').first();
+            $mainBody.find('tbody tr').each(function () {
+                var idx = $(this).data('index');
+                if (idx === undefined || idx === null || !data[idx]) {
+                    return;
+                }
+                var row = data[idx];
+                var $tr = $(this);
+                var batchIn = $tr.find('td[data-field="batchNo"] input');
+                if (batchIn.length) {
+                    row.batchNo = batchIn.val() || '';
+                }
+                var prodIn = $tr.find('td[data-field="productionDate"] input');
+                if (prodIn.length) {
+                    row.productionDate = prodIn.val() ? String(prodIn.val()).trim().substring(0, 10) : '';
+                }
+                var expIn = $tr.find('td[data-field="expireDate"] input');
+                if (expIn.length) {
+                    row.expireDate = expIn.val() ? String(expIn.val()).trim().substring(0, 10) : '';
+                }
+                var mainIn = $tr.find('td[data-field="mainBarcode"] input');
+                if (mainIn.length) {
+                    row.mainBarcode = mainIn.val() || '';
+                }
+                var auxIn = $tr.find('td[data-field="auxBarcode"] input');
+                if (auxIn.length) {
+                    row.auxBarcode = auxIn.val() || '';
+                }
+            });
+            return data;
+        }
+
+        function normalizeDetailDateFieldsForSave(rows) {
+            if (!rows || !rows.length) {
+                return;
+            }
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                if (!row) {
+                    continue;
+                }
+                if (row.productionDate) {
+                    row.productionDate = String(row.productionDate).trim().substring(0, 10);
+                } else {
+                    row.productionDate = '';
+                }
+                if (row.expireDate) {
+                    row.expireDate = String(row.expireDate).trim().substring(0, 10);
+                } else {
+                    row.expireDate = '';
+                }
+            }
+        }
+
         function submitHandler() {
 	        if ($.validate.form()) {
-	            // 获取表格中的所有明细数据
-	            var detailData = $('#detail-table').bootstrapTable('getData');
+	            // 获取表格中的所有明细数据（含未失焦的批号/日期输入）
+	            var detailData = syncDetailEditableFieldsFromDom();
+	            normalizeDetailDateFieldsForSave(detailData);
+
+	            // 校验：配送数量为0（或未填写）的明细行，提示具体行号，要求完善或删除后再保存
+	            var zeroQtyRows = [];
+	            for (var z = 0; z < detailData.length; z++) {
+	                var zq = parseFloat(detailData[z].deliveryQuantity);
+	                if (isNaN(zq) || zq === 0) {
+	                    zeroQtyRows.push(z + 1);
+	                }
+	            }
+	            if (zeroQtyRows.length > 0) {
+	                $.modal.alertWarning('第 ' + zeroQtyRows.join('、') + ' 行配送数量为0，请完善配送数量或删除明细后再进行保存操作');
+	                return;
+	            }
 
 	            // 转换字段名：quantity -> deliveryQuantity
 	            var caps = {};
@@ -2342,7 +2746,7 @@
 	                if (!isNaN(caps[gk1])) {
 	                    var s0 = sumDeliveryQtyForGroup(detailData, gk1);
 	                    if (s0 > caps[gk1] + 1e-6) {
-	                        $.modal.alertWarning('同一订单明细行配送数量合计不能超过申请数量（' + caps[gk1].toFixed(2) + '）');
+	                        $.modal.alertWarning('同一订单明细行配送数量合计不能超过申请数量（' + formatDetailInteger(caps[gk1]) + '）');
 	                        return;
 	                    }
 	                }
@@ -2550,9 +2954,6 @@
 	                            if (data.orderNo) {
 	                                $("input[name='orderNo']").val(data.orderNo);
 	                            }
-	                            if (data.orderAmount != null && data.orderAmount !== '') {
-	                                $("input[name='deliveryAmount']").val(parseFloat(data.orderAmount).toFixed(2));
-	                            }
 	                            if (data.remark) {
 	                                $("input[name='remark']").val(data.remark);
 	                            }
@@ -2577,7 +2978,6 @@
 	                                var formattedDate = orderDate.getFullYear() + '-' +
 	                                    String(orderDate.getMonth() + 1).padStart(2, '0') + '-' +
 	                                    String(orderDate.getDate()).padStart(2, '0');
-	                                $("#expectedDeliveryDate").val(formattedDate);
 	                                $("#orderDateField").val(formattedDate);
 	                            } else {
 	                                $("#orderDateField").val('');
@@ -2590,6 +2990,7 @@
 	                                    var applyCap = detail.lineApplyQty != null && detail.lineApplyQty !== '' ? parseFloat(detail.lineApplyQty)
 	                                        : (detail.remainingQuantity != null && detail.remainingQuantity !== '' ? parseFloat(detail.remainingQuantity)
 	                                            : (detail.deliveryQuantity != null && detail.deliveryQuantity !== '' ? parseFloat(detail.deliveryQuantity) : 0));
+	                                    applyCap = Math.round(applyCap);
 	                                    if (isNaN(applyCap) || applyCap <= 0) {
 	                                        continue;
 	                                    }
@@ -2602,9 +3003,9 @@
 	                                        model: detail.model || '',
 	                                        unit: detail.unit || '',
 	                                        refZsLineQty: detail.refZsLineQty != null && detail.refZsLineQty !== '' ? parseFloat(detail.refZsLineQty) : null,
-	                                        remainingQuantity: detail.remainingQuantity != null && detail.remainingQuantity !== '' ? parseFloat(detail.remainingQuantity) : (detail.deliveryQuantity || 0),
-	                                        deliveryQuantity: detail.deliveryQuantity != null && detail.deliveryQuantity !== '' ? parseFloat(detail.deliveryQuantity) : 0,
-	                                        lineApplyQty: detail.lineApplyQty != null && detail.lineApplyQty !== '' ? parseFloat(detail.lineApplyQty) : parseFloat(detail.remainingQuantity || detail.deliveryQuantity || 0),
+	                                        remainingQuantity: parseDetailInteger(detail.remainingQuantity != null && detail.remainingQuantity !== '' ? detail.remainingQuantity : (detail.deliveryQuantity || 0)) || 0,
+	                                        deliveryQuantity: parseDetailInteger(detail.deliveryQuantity != null && detail.deliveryQuantity !== '' ? detail.deliveryQuantity : 0) || 0,
+	                                        lineApplyQty: parseDetailInteger(detail.lineApplyQty != null && detail.lineApplyQty !== '' ? detail.lineApplyQty : (detail.remainingQuantity || detail.deliveryQuantity || 0)) || applyCap,
 	                                        price: detail.price || 0,
 	                                        amount: detail.amount || 0,
 	                                        packCoefficient: detail.packCoefficient != null ? detail.packCoefficient : null,
@@ -2721,15 +3122,11 @@
 	                            if (order.supplierId) {
 	                                $("#supplierId").val(order.supplierId);
 	                            }
-	                            if (order.orderAmount) {
-	                                $("input[name='deliveryAmount']").val(order.orderAmount);
-	                            }
 	                            if (order.orderDate) {
 	                                var orderDate = new Date(order.orderDate);
 	                                var formattedDate = orderDate.getFullYear() + '-' +
 	                                    String(orderDate.getMonth() + 1).padStart(2, '0') + '-' +
 	                                    String(orderDate.getDate()).padStart(2, '0');
-	                                $("#expectedDeliveryDate").val(formattedDate);
 	                                $("#orderDateField").val(formattedDate);
 	                            } else {
 	                                $("#orderDateField").val('');
@@ -2744,7 +3141,7 @@
 	                                var detailData = [];
 	                                for (var i = 0; i < order.orderDetails.length; i++) {
 	                                    var detail = order.orderDetails[i];
-	                                    var cap = scmOrderDetailDeliveryCap(detail);
+	                                    var cap = Math.round(scmOrderDetailDeliveryCap(detail));
 	                                    if (isNaN(cap) || cap <= 0) {
 	                                        continue;
 	                                    }
@@ -2755,7 +3152,7 @@
 	                                    }
 	                                    var deliveryDetail = {
 	                                        orderDetailId: detail.detailId || null,
-	                                        materialId: detail.materialId || null,
+	                                        materialId: detail.materialId == null || detail.materialId === '' ? null : detail.materialId,
 	                                        materialCode: detail.materialCode || '',
 	                                        materialName: detail.materialName || '',
 	                                        specification: detail.specification || '',

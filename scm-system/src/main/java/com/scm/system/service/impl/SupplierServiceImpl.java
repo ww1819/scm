@@ -131,7 +131,7 @@ public class SupplierServiceImpl implements ISupplierService
         }
         if (StringUtils.isEmpty(supplier.getCompanyName()))
         {
-            supplier.setPinyinCode("");
+            // 未传公司名称时不改写拼音（如仅更新状态）
             return;
         }
         String raw = PinyinUtils.getShortCode(supplier.getCompanyName().trim());

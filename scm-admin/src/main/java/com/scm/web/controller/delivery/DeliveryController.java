@@ -3,6 +3,8 @@ package com.scm.web.controller.delivery;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -321,6 +323,10 @@ public class DeliveryController extends BaseController
     {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        dateFormat.setTimeZone(TimeZone.getTimeZone("GMT+8"));
+        objectMapper.setDateFormat(dateFormat);
         return objectMapper.readValue(deliveryDetailsJson, new TypeReference<List<DeliveryDetail>>() {});
     }
 

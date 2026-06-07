@@ -6,6 +6,7 @@ import java.util.List;
 import javax.validation.constraints.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.scm.common.annotation.Excel;
 import com.scm.common.annotation.Excel.ColumnType;
 import com.scm.common.core.domain.BaseEntity;
@@ -88,10 +89,12 @@ public class DeliveryDetail extends BaseEntity
 
     /** 生产日期 */
     @Excel(name = "生产日期", width = 30, dateFormat = "yyyy-MM-dd")
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date productionDate;
 
     /** 有效期 */
     @Excel(name = "有效期", width = 30, dateFormat = "yyyy-MM-dd")
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
     private Date expireDate;
 
     /** 生产厂家 */
@@ -113,6 +116,14 @@ public class DeliveryDetail extends BaseEntity
     /** 配送单号（冗余落库 scm_delivery_detail.delivery_no，便于直接 SQL 按单号查明细；查询时若为空仍回退主表） */
     @Excel(name = "配送单号")
     private String deliveryNo;
+
+    /** 医院名称（主表关联查询，不落库） */
+    @Excel(name = "医院名称")
+    private String hospitalName;
+
+    /** 供应商名称（主表关联查询，不落库） */
+    @Excel(name = "供应商名称")
+    private String supplierName;
 
     /** 所属配送单审核状态（主表 audit_status） */
     private String deliveryAuditStatus;
@@ -389,6 +400,26 @@ public class DeliveryDetail extends BaseEntity
     public void setDeliveryNo(String deliveryNo)
     {
         this.deliveryNo = deliveryNo;
+    }
+
+    public String getHospitalName()
+    {
+        return hospitalName;
+    }
+
+    public void setHospitalName(String hospitalName)
+    {
+        this.hospitalName = hospitalName;
+    }
+
+    public String getSupplierName()
+    {
+        return supplierName;
+    }
+
+    public void setSupplierName(String supplierName)
+    {
+        this.supplierName = supplierName;
     }
 
     public String getDeliveryAuditStatus()

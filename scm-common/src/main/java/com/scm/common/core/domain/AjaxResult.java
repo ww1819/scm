@@ -193,6 +193,17 @@ public class AjaxResult extends HashMap<String, Object>
     }
 
     /**
+     * 会话失效/未登录，与前端 web_status.SESSION_TIMEOUT 对应。
+     */
+    public static AjaxResult sessionExpired(String msg)
+    {
+        AjaxResult json = new AjaxResult();
+        json.put(CODE_TAG, 401);
+        json.put(MSG_TAG, msg);
+        return json;
+    }
+
+    /**
      * 是否为成功消息
      *
      * @return 结果

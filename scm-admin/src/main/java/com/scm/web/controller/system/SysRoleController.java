@@ -1,5 +1,6 @@
 package com.scm.web.controller.system;
 
+import java.util.ArrayList;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -20,6 +21,7 @@ import com.scm.common.core.domain.entity.SysRole;
 import com.scm.common.core.domain.entity.SysUser;
 import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.enums.BusinessType;
+import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.poi.ExcelUtil;
 import com.scm.framework.shiro.util.AuthorizationUtils;
 import com.scm.system.domain.Hospital;
@@ -59,14 +61,8 @@ public class SysRoleController extends BaseController
 
     @RequiresPermissions("system:role:view")
     @GetMapping()
-    public String role(ModelMap mmap)
+    public String role()
     {
-        Hospital hq = new Hospital();
-        hq.setStatus("0");
-        mmap.put("hospitals", hospitalService.selectHospitalList(hq));
-        Supplier sq = new Supplier();
-        sq.setStatus("0");
-        mmap.put("suppliers", supplierService.selectSupplierList(sq));
         return prefix + "/role";
     }
 
@@ -137,13 +133,11 @@ public class SysRoleController extends BaseController
     public String edit(@PathVariable("roleId") Long roleId, ModelMap mmap)
     {
         roleService.checkRoleDataScope(roleId);
-        mmap.put("role", roleService.selectRoleById(roleId));
-        Hospital hq = new Hospital();
-        hq.setStatus("0");
-        mmap.put("hospitals", hospitalService.selectHospitalList(hq));
-        Supplier sq = new Supplier();
-        sq.setStatus("0");
-        mmap.put("suppliers", supplierService.selectSupplierList(sq));
+        SysRole role = roleService.selectRoleById(roleId);
+        normalizeRoleTypeForEditForm(role);
+        mmap.put("role", role);
+        mmap.put("hospitals", loadHospitalsForRoleForm(role != null ? role.getHospitalId() : null));
+        mmap.put("suppliers", loadSuppliersForRoleForm(role != null ? role.getSupplierId() : null));
         return prefix + "/edit";
     }
 
@@ -350,5 +344,86 @@ public class SysRoleController extends BaseController
     {
         List<Ztree> ztrees = deptService.roleDeptTreeData(role);
         return ztrees;
+    }
+
+    /** 历史数据 role_type 为空时，按已绑定机构推断类型，保证编辑页下拉与回显一致 */
+    private static void normalizeRoleTypeForEditForm(SysRole role)
+    {
+        if (role == null || StringUtils.isNotEmpty(role.getRoleType()))
+        {
+            return;
+        }
+        if (role.getSupplierId() != null && role.getSupplierId() > 0)
+        {
+            role.setRoleType("supplier");
+        }
+        else if (role.getHospitalId() != null && role.getHospitalId() > 0)
+        {
+            role.setRoleType("hospital");
+        }
+    }
+
+    /**
+     * 角色表单医院下拉：在营医院 + 当前角色已绑定医院（避免编辑时选项缺失导致无法回显）
+     */
+    private List<Hospital> loadHospitalsForRoleForm(Long boundHospitalId)
+    {
+        Hospital hq = new Hospital();
+        hq.setStatus("0");
+        List<Hospital> list = new ArrayList<>(hospitalService.selectHospitalList(hq));
+        appendBoundHospitalIfMissing(list, boundHospitalId);
+        return list;
+    }
+
+    /**
+     * 角色表单供应商下拉：在营供应商 + 当前角色已绑定供应商（避免编辑时选项缺失导致无法回显）
+     */
+    private List<Supplier> loadSuppliersForRoleForm(Long boundSupplierId)
+    {
+        Supplier sq = new Supplier();
+        sq.setStatus("0");
+        List<Supplier> list = new ArrayList<>(supplierService.selectSupplierList(sq));
+        appendBoundSupplierIfMissing(list, boundSupplierId);
+        return list;
+    }
+
+    private void appendBoundHospitalIfMissing(List<Hospital> list, Long boundHospitalId)
+    {
+        if (boundHospitalId == null || boundHospitalId <= 0 || list == null)
+        {
+            return;
+        }
+        for (Hospital h : list)
+        {
+            if (h != null && boundHospitalId.equals(h.getHospitalId()))
+            {
+                return;
+            }
+        }
+        Hospital bound = hospitalService.selectHospitalById(boundHospitalId);
+        if (bound != null)
+        {
+            list.add(0, bound);
+        }
+    }
+
+    private void appendBoundSupplierIfMissing(List<Supplier> list, Long boundSupplierId)
+    {
+        if (boundSupplierId == null || boundSupplierId <= 0 || list == null)
+        {
+            return;
+        }
+        for (Supplier s : list)
+        {
+            if (s != null && boundSupplierId.equals(s.getSupplierId()))
+            {
+                return;
+            }
+        }
+        Supplier bound = supplierService.selectSupplierById(boundSupplierId);
+        if (bound != null)
+        {
+            list.add(0, bound);
+        }
     }
 }

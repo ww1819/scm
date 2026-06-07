@@ -173,6 +173,30 @@
 		            }
 		        },
 		        {
+		            field: 'supplierName',
+		            title: '供应商',
+		            width: 180,
+		            sortable: true
+		        },
+		        {
+		            field: 'hospitalName',
+		            title: '医院',
+		            width: 180,
+		            sortable: true
+		        },
+		        {
+		            field: 'deliveryAuditStatus',
+		            title: '状态',
+		            width: 90,
+		            align: 'center',
+		            formatter: function(value, row) {
+		                if (value === '1' || (row && row.deliveryAuditStatus === '1')) {
+		                    return '<span class="label label-success">已审核</span>';
+		                }
+		                return '<span class="label label-warning">未审核</span>';
+		            }
+		        },
+		        {
 		            field: 'mainBarcode',
 		            title: '主条码',
 		            width: 260,

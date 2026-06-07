@@ -34,6 +34,7 @@ import com.scm.framework.shiro.web.CustomShiroFilterFactoryBean;
 import com.scm.framework.shiro.web.filter.LogoutFilter;
 import com.scm.framework.shiro.web.filter.captcha.CaptchaValidateFilter;
 import com.scm.framework.shiro.web.filter.csrf.CsrfValidateFilter;
+import com.scm.framework.shiro.web.filter.authc.ScmUserFilter;
 import com.scm.framework.shiro.web.filter.kickout.KickoutSessionFilter;
 import com.scm.framework.shiro.web.filter.online.OnlineSessionFilter;
 import com.scm.framework.shiro.web.filter.sync.SyncOnlineSessionFilter;
@@ -338,6 +339,7 @@ public class ShiroConfig
         filters.put("syncOnlineSession", syncOnlineSessionFilter());
         filters.put("captchaValidate", captchaValidateFilter());
         filters.put("csrfValidateFilter", csrfValidateFilter());
+        filters.put("user", scmUserFilter());
         filters.put("kickout", kickoutSessionFilter());
         // 注销成功，则跳转到指定页面
         filters.put("logout", logoutFilter());
@@ -353,6 +355,11 @@ public class ShiroConfig
     /**
      * 自定义在线用户处理过滤器
      */
+    public ScmUserFilter scmUserFilter()
+    {
+        return new ScmUserFilter();
+    }
+
     public OnlineSessionFilter onlineSessionFilter()
     {
         OnlineSessionFilter onlineSessionFilter = new OnlineSessionFilter();

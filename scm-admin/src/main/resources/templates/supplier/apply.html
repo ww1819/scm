@@ -3,21 +3,33 @@
 <head>
 	<th:block th:include="include :: header('业务员审核')" />
 	<th:block th:include="include :: layout-latest-css" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-css" />
 	<style>
 		.apply-table-wrap {
-			min-height: 730px;
+			min-height: 0;
 			position: relative;
-			padding-bottom: 6px;
+			padding-bottom: 0;
 			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.apply-table-wrap > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
 		}
 
 		.apply-table-wrap .bootstrap-table {
+			display: flex;
+			flex-direction: column;
 			height: 100%;
-			padding-bottom: 46px;
+			padding-bottom: 0;
 		}
 
 		.apply-table-wrap .fixed-table-container {
-			padding-bottom: 46px;
+			flex: 1 1 auto;
+			min-height: 0;
+			padding-bottom: 0;
 		}
 
 		.apply-table-wrap .fixed-table-body {
@@ -25,27 +37,151 @@
 			overflow-y: auto !important;
 		}
 
+		.apply-table-wrap.apply-list-table .fixed-columns-right {
+			z-index: 5;
+			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
+		}
+
+		.apply-table-wrap .fixed-table-body .fixed-table-border {
+			display: none !important;
+			height: 0 !important;
+		}
+
 		.apply-table-wrap .fixed-table-pagination {
-			position: absolute;
-			left: 10px;
-			right: 10px;
-			bottom: 0;
+			position: relative;
+			flex-shrink: 0;
+			left: auto;
+			right: auto;
+			bottom: auto;
 			background: #fff;
 			z-index: 3;
 			border-top: 1px solid #eee;
 			margin: 0 !important;
-			padding: 6px 0;
+			padding: 4px 10px 2px;
 		}
 
-		.apply-table-wrap .fixed-table-pagination .pagination {
-			margin-right: 28px;
+		.apply-table-wrap.apply-list-table .fixed-table-pagination .pagination {
+			margin-right: 172px;
 		}
 
-		.apply-table-wrap .fixed-table-header {
-			position: sticky;
-			top: 0;
+		.apply-table-wrap.apply-list-table .fixed-table-container > .fixed-table-header th .th-inner,
+		.apply-table-wrap.apply-list-table .fixed-table-container > .fixed-table-header th .sortable {
+			text-align: center !important;
+			justify-content: center;
+		}
+
+		.apply-table-wrap.apply-list-table .fixed-table-container > .fixed-table-header th[data-field="rowIndex"],
+		.apply-table-wrap.apply-list-table .fixed-table-container > .fixed-table-body td[data-field="rowIndex"],
+		.apply-table-wrap.apply-list-table .fixed-table-container > .fixed-table-header th[data-field="status"],
+		.apply-table-wrap.apply-list-table .fixed-table-container > .fixed-table-body td[data-field="status"] {
+			text-align: center !important;
+		}
+
+		.apply-table-wrap.apply-list-table .fixed-table-header {
+			position: relative;
+			top: auto;
 			z-index: 2;
 			background: #fff;
+			overflow: hidden;
+		}
+
+		.apply-table-wrap.apply-list-table .fixed-table-container > .fixed-table-header table,
+		.apply-table-wrap.apply-list-table .fixed-table-container > .fixed-table-body > table {
+			table-layout: fixed;
+		}
+
+		.apply-table-wrap.apply-list-table .fixed-table-container > .fixed-table-header th,
+		.apply-table-wrap.apply-list-table .fixed-table-container > .fixed-table-body tbody td {
+			box-sizing: border-box;
+			vertical-align: middle;
+		}
+
+		/* 主表滚动区隐藏操作列内容，由右侧 fixed-columns-right 展示（与配送单据申请一致） */
+		.apply-table-wrap.apply-list-table .fixed-table-container > .fixed-table-header th[data-field="applyAuditOperate"],
+		.apply-table-wrap.apply-list-table .fixed-table-container > .fixed-table-body td[data-field="applyAuditOperate"] {
+			padding: 0 !important;
+			border-left: 0 !important;
+			border-right: 0 !important;
+			font-size: 0;
+			line-height: 0;
+			color: transparent;
+			overflow: hidden;
+		}
+
+		.apply-table-wrap.apply-list-table .fixed-table-container > .fixed-table-header th[data-field="applyAuditOperate"] > *,
+		.apply-table-wrap.apply-list-table .fixed-table-container > .fixed-table-body td[data-field="applyAuditOperate"] > * {
+			display: none;
+		}
+
+		.apply-table-wrap.apply-list-table .fixed-columns-right .fixed-table-header th,
+		.apply-table-wrap.apply-list-table .fixed-columns-right .fixed-table-body td {
+			background-color: #fff;
+			vertical-align: middle;
+			white-space: nowrap;
+		}
+
+		.apply-table-wrap.apply-list-table .fixed-columns-right .fixed-table-header th[data-field="applyAuditOperate"] {
+			background-color: #f5f5f5;
+			min-width: 160px;
+			width: 160px;
+			text-align: center;
+		}
+
+		.apply-table-wrap.apply-list-table .fixed-columns-right .fixed-table-header th[data-field="applyAuditOperate"] .th-inner {
+			text-align: center;
+			justify-content: center;
+		}
+
+		.apply-table-wrap.apply-list-table .fixed-columns-right .fixed-table-body td[data-field="applyAuditOperate"] {
+			min-width: 160px;
+			width: 160px;
+			padding: 6px 8px;
+			text-align: center;
+		}
+
+		.apply-table-wrap.apply-list-table.table-striped .fixed-columns-right .fixed-table-body tbody tr:nth-of-type(odd) td {
+			background-color: #f9f9f9;
+		}
+
+		.apply-table-wrap.apply-list-table .fixed-columns-right .fixed-table-body {
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+
+		.apply-table-wrap.apply-list-table .fixed-table-body tbody td {
+			white-space: nowrap;
+			vertical-align: middle !important;
+		}
+
+		.apply-table-wrap.apply-list-table .fixed-table-container > .fixed-table-body td[data-field="loginName"],
+		.apply-table-wrap.apply-list-table .fixed-table-container > .fixed-table-body td[data-field="userName"],
+		.apply-table-wrap.apply-list-table .fixed-table-container > .fixed-table-body td[data-field="applyTime"],
+		.apply-table-wrap.apply-list-table .fixed-table-container > .fixed-table-body td[data-field="auditTime"],
+		.apply-table-wrap.apply-list-table .fixed-table-container > .fixed-table-body td[data-field="auditRemark"] {
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.apply-table-wrap.apply-list-table .apply-cell-ellipsis {
+			display: block;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			max-width: 100%;
+		}
+
+		/* 搜索区：与配送单据申请一致 */
+		.container-div > .row > .search-collapse {
+			padding-top: 10px !important;
+			padding-bottom: 10px !important;
+		}
+
+		.container-div .search-collapse .select-list ul {
+			margin-bottom: 0;
+		}
+
+		.container-div .search-collapse .select-list li {
+			margin: 4px 15px 4px 0;
 		}
 	</style>
 </head>
@@ -56,37 +192,311 @@
 				<form id="apply-form">
 					<div class="select-list">
 						<ul>
-							<li>状态：<select name="status">
-								<option value="">全部</option>
-								<option value="0" selected>待审核</option>
-								<option value="1">已通过</option>
-								<option value="2">已拒绝</option>
-							</select></li>
-							<li><a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()" style="display: none;"><i class="fa fa-search"></i>&nbsp;搜索</a></li>
+							<li>
+								状态：<select name="status">
+									<option value="">全部</option>
+									<option value="0" selected>待审核</option>
+									<option value="1">已通过</option>
+									<option value="2">已拒绝</option>
+								</select>
+							</li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()" style="display: none;"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()" style="display: none;"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
 						</ul>
 					</div>
 				</form>
 			</div>
+
 	        <div class="btn-group-sm" id="toolbar" role="group">
 	            <a class="btn btn-primary" onclick="$.table.search()">
 		            <i class="fa fa-search"></i> 搜索
 		        </a>
+	            <a class="btn btn-warning" onclick="resetPre()">
+		            <i class="fa fa-refresh"></i> 重置
+		        </a>
 	        </div>
-	        <div class="col-sm-12 select-table table-striped apply-table-wrap">
+
+	        <div class="col-sm-12 select-table table-striped apply-table-wrap apply-list-table">
 			    <table id="bootstrap-table"></table>
 			</div>
 		</div>
 	</div>
+
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
 	<script th:inline="javascript">
 		var auditFlag = [[${@permission.hasPermi('supplier:apply:audit')}]];
 		var prefix = ctx + "supplier/apply";
+		var applyTableId = 'bootstrap-table';
+
+		var applyColWidths = {
+			rowIndex: 60,
+			loginName: 120,
+			userName: 100,
+			status: 100,
+			applyTime: 160,
+			auditTime: 160,
+			auditRemark: 150,
+			applyAuditOperate: 160
+		};
 
 		$(function() {
+		    layoutApplyTableWrapHeight();
+		    queryApplyList();
 		    $(window).resize(function() {
+		    	layoutApplyTableWrapHeight();
 		    	adjustTableHeight();
+		    	setTimeout(refreshApplyTableLayout, 100);
 		    });
+		});
+
+		function layoutApplyTableWrapHeight() {
+			var $wrap = $('.apply-table-wrap');
+			if (!$wrap.length) {
+				return;
+			}
+			var top = $wrap[0].getBoundingClientRect().top;
+			var h = Math.floor(window.innerHeight - top - 14);
+			h = Math.min(Math.max(h, 400), 580);
+			$wrap[0].style.height = h + 'px';
+			$wrap[0].style.minHeight = h + 'px';
+		}
+
+		function calculateTableHeight() {
+			layoutApplyTableWrapHeight();
+			var $wrap = $('.apply-table-wrap');
+			if ($wrap.length === 0) {
+				return 440;
+			}
+			var $bt = $wrap.find('.bootstrap-table');
+			var wrapH = $wrap[0].clientHeight || $wrap.innerHeight() || 0;
+			var toolbarH = $bt.find('.fixed-table-toolbar').outerHeight(true) || 0;
+			var pagH = $bt.find('.fixed-table-pagination').outerHeight(true) || 46;
+			var containerH = Math.floor(wrapH - toolbarH - pagH - 2);
+			return Math.max(containerH, 240);
+		}
+
+		function adjustTableHeight() {
+			var $table = $('#' + applyTableId);
+			if ($table.length > 0 && $table.bootstrapTable('getOptions')) {
+				$table.bootstrapTable('resetView', { height: calculateTableHeight() });
+			}
+		}
+
+		function escApplyCellAttr(s) {
+			return String(s == null ? '' : s)
+				.replace(/&/g, '&amp;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#39;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;');
+		}
+
+		/** 文本省略显示，鼠标悬停 title 显示完整内容，移开自动隐藏 */
+		function applyCellEllipsis(value) {
+			var s = (value == null || value === '') ? '-' : String(value);
+			if (s === '-') {
+				return s;
+			}
+			return '<span class="apply-cell-ellipsis" title="' + escApplyCellAttr(s) + '">' + escApplyCellAttr(s) + '</span>';
+		}
+
+		function getApplyTableTotalWidth() {
+			var sum = 0;
+			var opt = $('#' + applyTableId).bootstrapTable('getOptions');
+			if (opt && opt.columns && opt.columns[0]) {
+				$.each(opt.columns[0], function (_, col) {
+					if (!col || col.visible === false) {
+						return;
+					}
+					if (col.checkbox) {
+						sum += 42;
+					} else if (col.field && applyColWidths[col.field] != null) {
+						sum += applyColWidths[col.field];
+					} else if (col.width) {
+						sum += parseInt(col.width, 10) || 0;
+					} else {
+						sum += 100;
+					}
+				});
+			}
+			return Math.max(sum, 1200);
+		}
+
+		function applyApplyFieldColumnWidth(field, widthPx) {
+			var w = widthPx + 'px';
+			var $container = $('#' + applyTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $th = $mainHeader.find('th[data-field="' + field + '"]');
+			if ($th.length === 0) {
+				return;
+			}
+			var colIdx = $th[0].cellIndex;
+			var setW = function (el) {
+				el.style.setProperty('width', w, 'important');
+				el.style.setProperty('min-width', w, 'important');
+				el.style.setProperty('max-width', w, 'important');
+			};
+			$th.each(function () { setW(this); });
+			$mainBody.find('table tbody tr').each(function () {
+				var cell = this.cells[colIdx];
+				if (cell) {
+					setW(cell);
+				}
+			});
+			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+		}
+
+		function applyApplyCheckboxColumnWidth() {
+			var w = '42px';
+			var $container = $('#' + applyTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $th = $mainHeader.find('th.bs-checkbox');
+			if ($th.length === 0) {
+				return;
+			}
+			var colIdx = $th[0].cellIndex;
+			var setW = function (el) {
+				el.style.setProperty('width', w, 'important');
+				el.style.setProperty('min-width', w, 'important');
+				el.style.setProperty('max-width', w, 'important');
+			};
+			$th.each(function () { setW(this); });
+			$mainBody.find('table tbody tr').each(function () {
+				var cell = this.cells[colIdx];
+				if (cell) {
+					setW(cell);
+				}
+			});
+			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+		}
+
+		function syncApplyHeaderBodyColumnWidths() {
+			var $container = $('#' + applyTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $headerThs = $mainHeader.find('thead tr').first().children('th');
+			var $firstRow = $mainBody.find('tbody tr').first();
+			if ($firstRow.length === 0) {
+				return;
+			}
+			var setW = function (el, widthVal) {
+				el.style.setProperty('width', widthVal, 'important');
+				el.style.setProperty('min-width', widthVal, 'important');
+				el.style.setProperty('max-width', widthVal, 'important');
+			};
+			$headerThs.each(function (i) {
+				var bodyCell = $firstRow[0].cells[i];
+				if (!bodyCell) {
+					return;
+				}
+				var w = bodyCell.style.width;
+				if (!w) {
+					w = window.getComputedStyle(bodyCell).width;
+				}
+				if (w) {
+					setW(this, w);
+					$mainHeader.find('colgroup col').eq(i).each(function () { setW(this, w); });
+					$mainBody.find('colgroup col').eq(i).each(function () { setW(this, w); });
+				}
+			});
+		}
+
+		function scheduleApplyColumnWidths() {
+			applyApplyCheckboxColumnWidth();
+			$.each(applyColWidths, function (field, width) {
+				applyApplyFieldColumnWidth(field, width);
+			});
+			syncApplyHeaderBodyColumnWidths();
+			requestAnimationFrame(function () {
+				applyApplyCheckboxColumnWidth();
+				$.each(applyColWidths, function (field, width) {
+					applyApplyFieldColumnWidth(field, width);
+				});
+				syncApplyHeaderBodyColumnWidths();
+			});
+		}
+
+		function fixApplyTableHeaderAlign() {
+			var $bt = $('#' + applyTableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			if (!$mainBody.length || !$mainHeader.length) {
+				return;
+			}
+			var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
+			$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+		}
+
+		function syncApplyHeaderBodyScrollLeft() {
+			var $container = $('#' + applyTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			if ($mainBody.length && $mainHeader.length) {
+				$mainHeader.scrollLeft($mainBody[0].scrollLeft);
+			}
+		}
+
+		function bindApplyMainHorizontalScroll() {
+			var $bt = $('#' + applyTableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			$mainBody.off('scroll.applyMainH').on('scroll.applyMainH', function () {
+				$mainHeader.scrollLeft($mainBody.scrollLeft());
+			});
+		}
+
+		function applyApplyMainTableMinWidth() {
+			var sum = getApplyTableTotalWidth();
+			var w = sum + 'px';
+			var $container = $('#' + applyTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $headerTable = $container.children('.fixed-table-header').find('table');
+			var $bodyTable = $container.children('.fixed-table-body').children('table');
+			$headerTable.css({ width: w, minWidth: w, maxWidth: w });
+			$bodyTable.css({ width: w, minWidth: w, maxWidth: w });
+		}
+
+		function syncApplyOperateColumnScroll() {
+			var $bt = $('#' + applyTableId).closest('.bootstrap-table');
+			var $rightBody = $bt.find('.fixed-columns-right .fixed-table-body');
+			if ($rightBody.length === 0) {
+				return;
+			}
+			var $mainBody = $bt.find('.fixed-table-container').children('.fixed-table-body');
+			$mainBody.off('scroll.applyOperateSync').on('scroll.applyOperateSync', function () {
+				$rightBody.scrollTop($mainBody.scrollTop());
+			});
+		}
+
+		function refreshApplyTableLayout() {
+			fixApplyTableHeaderAlign();
+			scheduleApplyColumnWidths();
+			applyApplyMainTableMinWidth();
+			syncApplyHeaderBodyScrollLeft();
+			bindApplyMainHorizontalScroll();
+			syncApplyOperateColumnScroll();
+		}
+
+		function buildApplyAuditOperateHtml(row) {
+			if (!row || row.status != '0') {
+				return '-';
+			}
+			var s = [];
+			s.push('<a class="btn btn-success btn-xs ' + auditFlag + '" href="javascript:void(0)" onclick="doAudit(' + row.applyId + ', \'1\')"><i class="fa fa-check"></i>通过</a> ');
+			s.push('<a class="btn btn-danger btn-xs ' + auditFlag + '" href="javascript:void(0)" onclick="doAudit(' + row.applyId + ', \'2\')"><i class="fa fa-remove"></i>拒绝</a> ');
+			return s.join('');
+		}
+
+		function queryApplyList() {
 			var options = {
 				url: prefix + "/list",
 				queryParams: function(params) {
@@ -95,72 +505,111 @@
 				},
 				sortName: "createTime",
 				sortOrder: "desc",
-				height: calculateTableHeight(),
+				modalName: "业务员审核",
 				uniqueId: "applyId",
 				rememberSelected: true,
 				maintainSelected: true,
+				mobileResponsive: false,
+				fixedColumns: true,
+				fixedNumber: 0,
+				fixedRightNumber: 1,
+				pageList: [10, 25, 50],
+				height: calculateTableHeight(),
+				onLoadSuccess: function () {
+					layoutApplyTableWrapHeight();
+					setTimeout(function () {
+						adjustTableHeight();
+						refreshApplyTableLayout();
+					}, 50);
+					setTimeout(function () {
+						var $t = $('#' + applyTableId);
+						if ($t.bootstrapTable('getOptions')) {
+							$t.bootstrapTable('resetView', { height: calculateTableHeight() });
+						}
+						refreshApplyTableLayout();
+					}, 200);
+					setTimeout(refreshApplyTableLayout, 450);
+				},
+				onPostBody: function () {
+					refreshApplyTableLayout();
+				},
 				columns: [{
 					checkbox: true
 				}, {
+					field: 'rowIndex',
 					title: '序号',
 					align: 'center',
-					formatter: function(value, row, index) { return $.table.serialNumber(index); }
+					width: 60,
+					formatter: function (value, row, index) {
+						return $.table.serialNumber(index);
+					}
 				}, {
 					field: 'applyId',
 					title: '申请ID',
 					visible: false
 				}, {
 					field: 'loginName',
-					title: '登录账号'
+					title: '登录账号',
+					width: 120,
+					formatter: function (value) {
+						return applyCellEllipsis(value);
+					}
 				}, {
 					field: 'userName',
-					title: '申请人姓名'
+					title: '申请人姓名',
+					width: 100,
+					formatter: function (value) {
+						return applyCellEllipsis(value);
+					}
 				}, {
 					field: 'status',
 					title: '状态',
+					align: 'center',
+					width: 100,
 					formatter: function(value) {
 						if (value == '0') return '<span class="label label-warning">待审核</span>';
 						if (value == '1') return '<span class="label label-success">已通过</span>';
 						if (value == '2') return '<span class="label label-danger">已拒绝</span>';
-						return value;
+						return value || '-';
 					}
 				}, {
 					field: 'applyTime',
-					title: '申请时间'
+					title: '申请时间',
+					width: 160,
+					formatter: function (value) {
+						return applyCellEllipsis(value);
+					}
 				}, {
 					field: 'auditTime',
-					title: '审核时间'
+					title: '审核时间',
+					width: 160,
+					formatter: function (value) {
+						return applyCellEllipsis(value);
+					}
 				}, {
 					field: 'auditRemark',
-					title: '审核备注'
+					title: '审核备注',
+					width: 150,
+					formatter: function (value) {
+						return applyCellEllipsis(value);
+					}
 				}, {
+					field: 'applyAuditOperate',
 					title: '操作',
 					align: 'center',
-					formatter: function(value, row) {
-						if (row.status != '0') return '-';
-						var s = [];
-						s.push('<a class="btn btn-success btn-xs ' + auditFlag + '" href="javascript:void(0)" onclick="doAudit(' + row.applyId + ', \'1\')"><i class="fa fa-check"></i>通过</a> ');
-						s.push('<a class="btn btn-danger btn-xs ' + auditFlag + '" href="javascript:void(0)" onclick="doAudit(' + row.applyId + ', \'2\')"><i class="fa fa-remove"></i>拒绝</a>');
-						return s.join('');
+					width: 160,
+					formatter: function (value, row) {
+						return buildApplyAuditOperateHtml(row);
 					}
 				}]
 			};
 			$.table.init(options);
-		});
-
-		function calculateTableHeight() {
-			var $detail = $('.apply-table-wrap');
-			if ($detail.length === 0) {
-				return 700;
-			}
-			return Math.max($detail.innerHeight() - 8, 650);
 		}
 
-		function adjustTableHeight() {
-			var $table = $('#bootstrap-table');
-			if ($table.length > 0 && $table.bootstrapTable('getOptions')) {
-				$table.bootstrapTable('resetView', { height: calculateTableHeight() });
-			}
+		function resetPre() {
+			$("#apply-form")[0].reset();
+			$("#apply-form select[name='status']").val('0');
+			$.table.search();
 		}
 
 		function doAudit(applyId, approved) {

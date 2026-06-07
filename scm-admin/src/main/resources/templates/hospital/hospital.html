@@ -3,21 +3,33 @@
 <head>
 	<th:block th:include="include :: header('医院列表')" />
 	<th:block th:include="include :: layout-latest-css" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-css" />
 	<style>
 		.hospital-table-wrap {
-			min-height: 730px;
+			min-height: 0;
 			position: relative;
-			padding-bottom: 6px;
+			padding-bottom: 0;
 			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.hospital-table-wrap > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
 		}
 
 		.hospital-table-wrap .bootstrap-table {
+			display: flex;
+			flex-direction: column;
 			height: 100%;
-			padding-bottom: 46px;
+			padding-bottom: 0;
 		}
 
 		.hospital-table-wrap .fixed-table-container {
-			padding-bottom: 46px;
+			flex: 1 1 auto;
+			min-height: 0;
+			padding-bottom: 0;
 		}
 
 		.hospital-table-wrap .fixed-table-body {
@@ -25,27 +37,154 @@
 			overflow-y: auto !important;
 		}
 
+		.hospital-table-wrap.hospital-list-table .fixed-columns-right {
+			z-index: 5;
+			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
+		}
+
+		.hospital-table-wrap .fixed-table-body .fixed-table-border {
+			display: none !important;
+			height: 0 !important;
+		}
+
 		.hospital-table-wrap .fixed-table-pagination {
-			position: absolute;
-			left: 10px;
-			right: 10px;
-			bottom: 0;
+			position: relative;
+			flex-shrink: 0;
+			left: auto;
+			right: auto;
+			bottom: auto;
 			background: #fff;
 			z-index: 3;
 			border-top: 1px solid #eee;
 			margin: 0 !important;
-			padding: 6px 0;
+			padding: 4px 10px 2px;
 		}
 
-		.hospital-table-wrap .fixed-table-pagination .pagination {
-			margin-right: 28px;
+		.hospital-table-wrap.hospital-list-table .fixed-table-pagination .pagination {
+			margin-right: 172px;
 		}
 
-		.hospital-table-wrap .fixed-table-header {
-			position: sticky;
-			top: 0;
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header th .th-inner,
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header th .sortable {
+			text-align: center !important;
+			justify-content: center;
+		}
+
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header th[data-field="rowIndex"],
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="rowIndex"],
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header th[data-field="status"],
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="status"],
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header th[data-field="contactPhone"],
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="contactPhone"] {
+			text-align: center !important;
+		}
+
+		.hospital-table-wrap.hospital-list-table .fixed-table-header {
+			position: relative;
+			top: auto;
 			z-index: 2;
 			background: #fff;
+			overflow: hidden;
+		}
+
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header table,
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body > table {
+			table-layout: fixed;
+		}
+
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header th,
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body tbody td {
+			box-sizing: border-box;
+			vertical-align: middle;
+		}
+
+		/* 主表滚动区隐藏操作列内容，由右侧 fixed-columns-right 展示（与配送单据申请一致） */
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header th[data-field="hospitalOperate"],
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="hospitalOperate"] {
+			padding: 0 !important;
+			border-left: 0 !important;
+			border-right: 0 !important;
+			font-size: 0;
+			line-height: 0;
+			color: transparent;
+			overflow: hidden;
+		}
+
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header th[data-field="hospitalOperate"] > *,
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="hospitalOperate"] > * {
+			display: none;
+		}
+
+		.hospital-table-wrap.hospital-list-table .fixed-columns-right .fixed-table-header th,
+		.hospital-table-wrap.hospital-list-table .fixed-columns-right .fixed-table-body td {
+			background-color: #fff;
+			vertical-align: middle;
+			white-space: nowrap;
+		}
+
+		.hospital-table-wrap.hospital-list-table .fixed-columns-right .fixed-table-header th[data-field="hospitalOperate"] {
+			background-color: #f5f5f5;
+			min-width: 160px;
+			width: 160px;
+			text-align: center;
+		}
+
+		.hospital-table-wrap.hospital-list-table .fixed-columns-right .fixed-table-header th[data-field="hospitalOperate"] .th-inner {
+			text-align: center;
+			justify-content: center;
+		}
+
+		.hospital-table-wrap.hospital-list-table .fixed-columns-right .fixed-table-body td[data-field="hospitalOperate"] {
+			min-width: 160px;
+			width: 160px;
+			padding: 6px 8px;
+			text-align: center;
+		}
+
+		.hospital-table-wrap.hospital-list-table.table-striped .fixed-columns-right .fixed-table-body tbody tr:nth-of-type(odd) td {
+			background-color: #f9f9f9;
+		}
+
+		.hospital-table-wrap.hospital-list-table .fixed-columns-right .fixed-table-body {
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+
+		.hospital-table-wrap.hospital-list-table .fixed-table-body tbody td {
+			white-space: nowrap;
+			vertical-align: middle !important;
+		}
+
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="hospitalName"],
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="hospitalShortName"],
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="pinyinCode"],
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="contactPerson"],
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="province"],
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="city"] {
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.hospital-table-wrap.hospital-list-table .hospital-cell-ellipsis {
+			display: block;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			max-width: 100%;
+		}
+
+		/* 搜索区：与配送单据申请一致 */
+		.container-div > .row > .search-collapse {
+			padding-top: 10px !important;
+			padding-bottom: 10px !important;
+		}
+
+		.container-div .search-collapse .select-list ul {
+			margin-bottom: 0;
+		}
+
+		.container-div .search-collapse .select-list li {
+			margin: 4px 15px 4px 0;
 		}
 	</style>
 </head>
@@ -77,7 +216,7 @@
 					</div>
 				</form>
 			</div>
-			
+
 	        <div class="btn-group-sm" id="toolbar" role="group">
 	        	<a class="btn btn-success" onclick="$.operate.addTab()" shiro:hasPermission="hospital:hospital:add">
 	                <i class="fa fa-plus"></i> 新增
@@ -98,40 +237,278 @@
 		            <i class="fa fa-refresh"></i> 重置
 		        </a>
 	        </div>
-	        
-	        <div class="col-sm-12 select-table table-striped hospital-table-wrap">
+
+	        <div class="col-sm-12 select-table table-striped hospital-table-wrap hospital-list-table">
 			    <table id="bootstrap-table"></table>
 			</div>
 		</div>
 	</div>
-	
+
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
 	<script th:inline="javascript">
 		var editFlag = [[${@permission.hasPermi('hospital:hospital:edit')}]];
 		var removeFlag = [[${@permission.hasPermi('hospital:hospital:remove')}]];
 		var prefix = ctx + "hospital/hospital";
+		var hospitalTableId = 'bootstrap-table';
+
+		var hospitalColWidths = {
+			rowIndex: 60,
+			hospitalCode: 120,
+			hospitalName: 180,
+			hospitalShortName: 100,
+			pinyinCode: 90,
+			hospitalLevel: 90,
+			contactPerson: 90,
+			contactPhone: 120,
+			province: 80,
+			city: 80,
+			status: 80,
+			createTime: 160,
+			hospitalOperate: 160
+		};
 
 		$(function() {
+		    layoutHospitalTableWrapHeight();
 		    queryHospitalList();
 		    $(window).resize(function() {
+		    	layoutHospitalTableWrapHeight();
 		    	adjustTableHeight();
+		    	setTimeout(refreshHospitalTableLayout, 100);
 		    });
 		});
 
-		function calculateTableHeight() {
-			var $detail = $('.hospital-table-wrap');
-			if ($detail.length === 0) {
-				return 700;
+		function layoutHospitalTableWrapHeight() {
+			var $wrap = $('.hospital-table-wrap');
+			if (!$wrap.length) {
+				return;
 			}
-			return Math.max($detail.innerHeight() - 8, 650);
+			var top = $wrap[0].getBoundingClientRect().top;
+			var h = Math.floor(window.innerHeight - top - 14);
+			h = Math.min(Math.max(h, 400), 580);
+			$wrap[0].style.height = h + 'px';
+			$wrap[0].style.minHeight = h + 'px';
+		}
+
+		function calculateTableHeight() {
+			layoutHospitalTableWrapHeight();
+			var $wrap = $('.hospital-table-wrap');
+			if ($wrap.length === 0) {
+				return 440;
+			}
+			var $bt = $wrap.find('.bootstrap-table');
+			var wrapH = $wrap[0].clientHeight || $wrap.innerHeight() || 0;
+			var toolbarH = $bt.find('.fixed-table-toolbar').outerHeight(true) || 0;
+			var pagH = $bt.find('.fixed-table-pagination').outerHeight(true) || 46;
+			var containerH = Math.floor(wrapH - toolbarH - pagH - 2);
+			return Math.max(containerH, 240);
 		}
 
 		function adjustTableHeight() {
-			var $table = $('#bootstrap-table');
+			var $table = $('#' + hospitalTableId);
 			if ($table.length > 0 && $table.bootstrapTable('getOptions')) {
 				$table.bootstrapTable('resetView', { height: calculateTableHeight() });
 			}
+		}
+
+		function escHospitalCellAttr(s) {
+			return String(s == null ? '' : s)
+				.replace(/&/g, '&amp;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#39;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;');
+		}
+
+		function hospitalCellEllipsis(value) {
+			var s = (value == null || value === '') ? '-' : String(value);
+			if (s === '-') {
+				return s;
+			}
+			return '<span class="hospital-cell-ellipsis" title="' + escHospitalCellAttr(s) + '">' + escHospitalCellAttr(s) + '</span>';
+		}
+
+		function getHospitalTableTotalWidth() {
+			var sum = 0;
+			var opt = $('#' + hospitalTableId).bootstrapTable('getOptions');
+			if (opt && opt.columns && opt.columns[0]) {
+				$.each(opt.columns[0], function (_, col) {
+					if (!col || col.visible === false) {
+						return;
+					}
+					if (col.checkbox) {
+						sum += 42;
+					} else if (col.field && hospitalColWidths[col.field] != null) {
+						sum += hospitalColWidths[col.field];
+					} else if (col.width) {
+						sum += parseInt(col.width, 10) || 0;
+					} else {
+						sum += 100;
+					}
+				});
+			}
+			return Math.max(sum, 1200);
+		}
+
+		function applyHospitalFieldColumnWidth(field, widthPx) {
+			var w = widthPx + 'px';
+			var $container = $('#' + hospitalTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $th = $mainHeader.find('th[data-field="' + field + '"]');
+			if ($th.length === 0) {
+				return;
+			}
+			var colIdx = $th[0].cellIndex;
+			var setW = function (el) {
+				el.style.setProperty('width', w, 'important');
+				el.style.setProperty('min-width', w, 'important');
+				el.style.setProperty('max-width', w, 'important');
+			};
+			$th.each(function () { setW(this); });
+			$mainBody.find('table tbody tr').each(function () {
+				var cell = this.cells[colIdx];
+				if (cell) {
+					setW(cell);
+				}
+			});
+			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+		}
+
+		function applyHospitalCheckboxColumnWidth() {
+			var w = '42px';
+			var $container = $('#' + hospitalTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $th = $mainHeader.find('th.bs-checkbox');
+			if ($th.length === 0) {
+				return;
+			}
+			var colIdx = $th[0].cellIndex;
+			var setW = function (el) {
+				el.style.setProperty('width', w, 'important');
+				el.style.setProperty('min-width', w, 'important');
+				el.style.setProperty('max-width', w, 'important');
+			};
+			$th.each(function () { setW(this); });
+			$mainBody.find('table tbody tr').each(function () {
+				var cell = this.cells[colIdx];
+				if (cell) {
+					setW(cell);
+				}
+			});
+			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+		}
+
+		function syncHospitalHeaderBodyColumnWidths() {
+			var $container = $('#' + hospitalTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var $headerThs = $mainHeader.find('thead tr').first().children('th');
+			var $firstRow = $mainBody.find('tbody tr').first();
+			if ($firstRow.length === 0) {
+				return;
+			}
+			var setW = function (el, widthVal) {
+				el.style.setProperty('width', widthVal, 'important');
+				el.style.setProperty('min-width', widthVal, 'important');
+				el.style.setProperty('max-width', widthVal, 'important');
+			};
+			$headerThs.each(function (i) {
+				var bodyCell = $firstRow[0].cells[i];
+				if (!bodyCell) {
+					return;
+				}
+				var w = bodyCell.style.width;
+				if (!w) {
+					w = window.getComputedStyle(bodyCell).width;
+				}
+				if (w) {
+					setW(this, w);
+					$mainHeader.find('colgroup col').eq(i).each(function () { setW(this, w); });
+					$mainBody.find('colgroup col').eq(i).each(function () { setW(this, w); });
+				}
+			});
+		}
+
+		function scheduleHospitalColumnWidths() {
+			applyHospitalCheckboxColumnWidth();
+			$.each(hospitalColWidths, function (field, width) {
+				applyHospitalFieldColumnWidth(field, width);
+			});
+			syncHospitalHeaderBodyColumnWidths();
+			requestAnimationFrame(function () {
+				applyHospitalCheckboxColumnWidth();
+				$.each(hospitalColWidths, function (field, width) {
+					applyHospitalFieldColumnWidth(field, width);
+				});
+				syncHospitalHeaderBodyColumnWidths();
+			});
+		}
+
+		function fixHospitalTableHeaderAlign() {
+			var $bt = $('#' + hospitalTableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			if (!$mainBody.length || !$mainHeader.length) {
+				return;
+			}
+			var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
+			$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+		}
+
+		function syncHospitalHeaderBodyScrollLeft() {
+			var $container = $('#' + hospitalTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			if ($mainBody.length && $mainHeader.length) {
+				$mainHeader.scrollLeft($mainBody[0].scrollLeft);
+			}
+		}
+
+		function bindHospitalMainHorizontalScroll() {
+			var $bt = $('#' + hospitalTableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			$mainBody.off('scroll.hospitalMainH').on('scroll.hospitalMainH', function () {
+				$mainHeader.scrollLeft($mainBody.scrollLeft());
+			});
+		}
+
+		function applyHospitalMainTableMinWidth() {
+			var sum = getHospitalTableTotalWidth();
+			var w = sum + 'px';
+			var $container = $('#' + hospitalTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $headerTable = $container.children('.fixed-table-header').find('table');
+			var $bodyTable = $container.children('.fixed-table-body').children('table');
+			$headerTable.css({ width: w, minWidth: w, maxWidth: w });
+			$bodyTable.css({ width: w, minWidth: w, maxWidth: w });
+		}
+
+		function syncHospitalOperateColumnScroll() {
+			var $bt = $('#' + hospitalTableId).closest('.bootstrap-table');
+			var $rightBody = $bt.find('.fixed-columns-right .fixed-table-body');
+			if ($rightBody.length === 0) {
+				return;
+			}
+			var $mainBody = $bt.find('.fixed-table-container').children('.fixed-table-body');
+			$mainBody.off('scroll.hospitalOperateSync').on('scroll.hospitalOperateSync', function () {
+				$rightBody.scrollTop($mainBody.scrollTop());
+			});
+		}
+
+		function refreshHospitalTableLayout() {
+			fixHospitalTableHeaderAlign();
+			scheduleHospitalColumnWidths();
+			applyHospitalMainTableMinWidth();
+			syncHospitalHeaderBodyScrollLeft();
+			bindHospitalMainHorizontalScroll();
+			syncHospitalOperateColumnScroll();
 		}
 
 		function queryHospitalList() {
@@ -147,13 +524,38 @@
 		        uniqueId: "hospitalId",
 		        rememberSelected: true,
 		        maintainSelected: true,
+		        mobileResponsive: false,
+		        fixedColumns: true,
+		        fixedNumber: 0,
+		        fixedRightNumber: 1,
+		        pageList: [10, 25, 50],
 		        height: calculateTableHeight(),
+		        onLoadSuccess: function () {
+		            layoutHospitalTableWrapHeight();
+		            setTimeout(function () {
+		                adjustTableHeight();
+		                refreshHospitalTableLayout();
+		            }, 50);
+		            setTimeout(function () {
+		                var $t = $('#' + hospitalTableId);
+		                if ($t.bootstrapTable('getOptions')) {
+		                    $t.bootstrapTable('resetView', { height: calculateTableHeight() });
+		                }
+		                refreshHospitalTableLayout();
+		            }, 200);
+		            setTimeout(refreshHospitalTableLayout, 450);
+		        },
+		        onPostBody: function () {
+		            refreshHospitalTableLayout();
+		        },
 		        columns: [{
 		            checkbox: true
 		        },
 		        {
+		            field: 'rowIndex',
 		            title: '序号',
 		            align: 'center',
+		            width: 60,
 		            formatter: function (value, row, index) {
 		                return $.table.serialNumber(index);
 		            }
@@ -166,60 +568,99 @@
 		        {
 		            field: 'hospitalCode',
 		            title: '医院编码',
-		            sortable: true
+		            sortable: true,
+		            width: 120,
+		            formatter: function (value) {
+		                return hospitalCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'hospitalName',
 		            title: '医院名称',
-		            formatter: function (value, row, index) {
-		                return '<a href="javascript:void(0)" onclick="$.operate.view(\'' + row.hospitalId + '\')">' + value + '</a>';
+		            width: 180,
+		            formatter: function (value, row) {
+		                var displayValue = value || '-';
+		                return '<a href="javascript:void(0)" onclick="$.operate.view(\'' + row.hospitalId + '\')" title="' + escHospitalCellAttr(displayValue) + '">' + escHospitalCellAttr(displayValue) + '</a>';
 		            }
 		        },
 		        {
 		            field: 'hospitalShortName',
-		            title: '医院简称'
+		            title: '医院简称',
+		            width: 100,
+		            formatter: function (value) {
+		                return hospitalCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'pinyinCode',
 		            title: '首拼简码',
-		            visible: true
+		            width: 90,
+		            formatter: function (value) {
+		                return hospitalCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'hospitalLevel',
-		            title: '医院等级'
+		            title: '医院等级',
+		            width: 90,
+		            formatter: function (value) {
+		                return value || '-';
+		            }
 		        },
 		        {
 		            field: 'contactPerson',
-		            title: '联系人'
+		            title: '联系人',
+		            width: 90,
+		            formatter: function (value) {
+		                return hospitalCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'contactPhone',
-		            title: '联系电话'
+		            title: '联系电话',
+		            width: 120,
+		            align: 'center',
+		            formatter: function (value) {
+		                return value || '-';
+		            }
 		        },
 		        {
 		            field: 'province',
-		            title: '省份'
+		            title: '省份',
+		            width: 80,
+		            formatter: function (value) {
+		                return hospitalCellEllipsis(value);
+		            }
 		        },
 		        {
 		            field: 'city',
-		            title: '城市'
+		            title: '城市',
+		            width: 80,
+		            formatter: function (value) {
+		                return hospitalCellEllipsis(value);
+		            }
 		        },
 		        {
+		        	field: 'status',
 		        	title: '状态',
 		        	align: 'center',
-		        	formatter: function (value, row, index) {
+		        	width: 80,
+		        	formatter: function (value, row) {
 		        		return statusTools(row);
 		        	}
 		        },
 		        {
 		            field: 'createTime',
 		            title: '创建时间',
-		            sortable: true
+		            sortable: true,
+		            width: 160
 		        },
 		        {
+		            field: 'hospitalOperate',
 		            title: '操作',
 		            align: 'center',
-		            formatter: function(value, row, index) {
+		            width: 160,
+		            formatter: function (value, row) {
 		            	var actions = [];
 		                actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.operate.editTab(\'' + row.hospitalId + '\')"><i class="fa fa-edit"></i>编辑</a> ');
 		                actions.push('<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.hospitalId + '\')"><i class="fa fa-remove"></i>删除</a> ');
@@ -229,7 +670,7 @@
 		    };
 		    $.table.init(options);
 		}
-		
+
 		function resetPre() {
 			$("#hospital-form")[0].reset();
 			$.table.search();
@@ -238,23 +679,21 @@
 		function statusTools(row) {
 		    if (row.status == 0) {
     			return '<i class="fa fa-toggle-on text-info fa-2x" onclick="disableHospital(\'' + row.hospitalId + '\')"></i> ';
-    		} else {
-    			return '<i class="fa fa-toggle-off text-info fa-2x" onclick="enableHospital(\'' + row.hospitalId + '\')"></i> ';
     		}
+    		return '<i class="fa fa-toggle-off text-info fa-2x" onclick="enableHospital(\'' + row.hospitalId + '\')"></i> ';
 		}
-		
+
 		function disableHospital(hospitalId) {
 			$.modal.confirm("确认要停用医院吗？", function() {
 				$.operate.post(prefix + "/changeStatus", { "hospitalId": hospitalId, "status": "1" });
-		    })
+		    });
 		}
 
 		function enableHospital(hospitalId) {
 			$.modal.confirm("确认要启用医院吗？", function() {
 				$.operate.post(prefix + "/changeStatus", { "hospitalId": hospitalId, "status": "0" });
-		    })
+		    });
 		}
 	</script>
 </body>
 </html>
-

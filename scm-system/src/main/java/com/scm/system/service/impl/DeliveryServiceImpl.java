@@ -25,6 +25,7 @@ import com.scm.system.domain.Delivery;
 import com.scm.system.domain.DeliveryDownloadLog;
 import com.scm.system.domain.DeliveryDetail;
 import com.scm.system.domain.HospitalSupplier;
+import com.scm.system.domain.MaterialDict;
 import com.scm.system.domain.Order;
 import com.scm.system.domain.OrderDetail;
 import com.scm.common.core.domain.entity.SysRole;
@@ -48,6 +49,7 @@ import com.scm.system.mapper.SysRoleMapper;
 import com.scm.system.mapper.ZsTpOrderDetailDeliveryRelMapper;
 import com.scm.system.mapper.ZsTpOrderMapper;
 import com.scm.system.service.IDeliveryService;
+import com.scm.system.service.IMaterialDictService;
 import com.scm.system.service.IOrderService;
 import com.scm.system.service.IScmHospitalContextService;
 import com.scm.system.service.IScmHospitalSupplierMenuScopeService;
@@ -81,6 +83,9 @@ public class DeliveryServiceImpl implements IDeliveryService
 
     @Autowired
     private OrderDetailMapper orderDetailMapper;
+
+    @Autowired
+    private IMaterialDictService materialDictService;
 
     @Autowired
     private ZsTpOrderMapper zsTpOrderMapper;
@@ -343,6 +348,8 @@ public class DeliveryServiceImpl implements IDeliveryService
         enrichDeliverySnapshot(delivery);
         assertSupplierHospitalSubmit(delivery);
         enrichDeliveryDetailPackCoefficients(delivery);
+        enrichDeliveryDetailMaterialIds(delivery);
+        validateDeliveryDetailQuantityNotZero(delivery.getDeliveryDetails(), "保存");
         validateDeliveryDetailPackQuantities(delivery.getDeliveryDetails());
         validateDeliveryRefLineQuantities(delivery, null);
         if (StringUtils.isEmpty(delivery.getDeliveryStatus()))
@@ -508,6 +515,8 @@ public class DeliveryServiceImpl implements IDeliveryService
         enrichDeliverySnapshot(delivery);
         assertSupplierHospitalSubmit(delivery);
         enrichDeliveryDetailPackCoefficients(delivery);
+        enrichDeliveryDetailMaterialIds(delivery);
+        validateDeliveryDetailQuantityNotZero(delivery.getDeliveryDetails(), "保存");
         validateDeliveryDetailPackQuantities(delivery.getDeliveryDetails());
         validateDeliveryRefLineQuantities(delivery, delivery.getDeliveryId());
 
@@ -1422,6 +1431,51 @@ public class DeliveryServiceImpl implements IDeliveryService
     }
 
     /**
+     * 保存前补全 material_id：优先订单明细，其次按物资编码查字典；仍无则置 0（第三方订单行常见）。
+     */
+    private void enrichDeliveryDetailMaterialIds(Delivery delivery)
+    {
+        if (delivery == null || delivery.getDeliveryDetails() == null || delivery.getDeliveryDetails().isEmpty())
+        {
+            return;
+        }
+        for (DeliveryDetail d : delivery.getDeliveryDetails())
+        {
+            if (d == null)
+            {
+                continue;
+            }
+            if (d.getMaterialId() != null && d.getMaterialId() > 0)
+            {
+                continue;
+            }
+            if (d.getOrderDetailId() != null)
+            {
+                OrderDetail od = orderDetailMapper.selectOrderDetailById(d.getOrderDetailId());
+                if (od != null && od.getMaterialId() != null && od.getMaterialId() > 0)
+                {
+                    d.setMaterialId(od.getMaterialId());
+                    continue;
+                }
+            }
+            String code = StringUtils.trimToEmpty(d.getMaterialCode());
+            if (StringUtils.isNotEmpty(code))
+            {
+                MaterialDict md = materialDictService.selectMaterialDictByCode(code);
+                if (md != null && md.getMaterialId() != null && md.getMaterialId() > 0)
+                {
+                    d.setMaterialId(md.getMaterialId());
+                    continue;
+                }
+            }
+            if (d.getMaterialId() == null)
+            {
+                d.setMaterialId(0L);
+            }
+        }
+    }
+
+    /**
      * 引用本系统订单时，若前端未带打包系数，则按订单明细行补全。
      */
     private void enrichDeliveryDetailPackCoefficients(Delivery delivery)
@@ -1517,6 +1571,53 @@ public class DeliveryServiceImpl implements IDeliveryService
                     qty.stripTrailingZeros().toPlainString()));
             }
             row++;
+        }
+    }
+
+    /**
+     * 查找配送数量为0（或为空）的明细行号。
+     *
+     * @param details 配送明细
+     * @return 形如 "2、5" 的行号串；不存在零数量明细时返回 null
+     */
+    private String findZeroQtyDetailRows(List<DeliveryDetail> details)
+    {
+        if (details == null || details.isEmpty())
+        {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        int row = 0;
+        int matched = 0;
+        for (DeliveryDetail d : details)
+        {
+            row++;
+            BigDecimal qty = d == null ? null : d.getDeliveryQuantity();
+            if (qty == null || qty.compareTo(BigDecimal.ZERO) == 0)
+            {
+                if (matched++ > 0)
+                {
+                    sb.append("、");
+                }
+                sb.append(row);
+            }
+        }
+        return matched > 0 ? sb.toString() : null;
+    }
+
+    /**
+     * 保存/审核前校验：存在配送数量为0的明细时，提示具体行号，要求完善数量或删除该行。
+     *
+     * @param details   配送明细
+     * @param operation 操作名称（保存/审核），用于提示文案
+     */
+    private void validateDeliveryDetailQuantityNotZero(List<DeliveryDetail> details, String operation)
+    {
+        String zeroRows = findZeroQtyDetailRows(details);
+        if (zeroRows != null)
+        {
+            throw new ServiceException(String.format(
+                "第 %s 行配送数量为0，请完善配送数量或删除明细后再进行%s操作", zeroRows, operation));
         }
     }
 
@@ -1998,6 +2099,14 @@ public class DeliveryServiceImpl implements IDeliveryService
         if ("1".equals(delivery.getAuditStatus()))
         {
             throw new ServiceException("配送单已审核，请勿重复审核");
+        }
+        List<DeliveryDetail> auditDetails = deliveryDetailMapper.selectDeliveryDetailListByDeliveryId(deliveryId);
+        String zeroRows = findZeroQtyDetailRows(auditDetails);
+        if (zeroRows != null)
+        {
+            throw new ServiceException(String.format(
+                "配送单【%s】第 %s 行配送数量为0，请完善配送数量或删除明细后再进行审核操作",
+                StringUtils.trimToEmpty(delivery.getDeliveryNo()), zeroRows));
         }
         delivery.setAuditStatus("1");
         delivery.setAuditBy(StringUtils.trimToEmpty(auditBy));
