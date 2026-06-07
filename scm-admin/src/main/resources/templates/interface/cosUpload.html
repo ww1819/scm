@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <th:block th:include="include :: header('COS文件上传')" />
+    <th:block th:include="include :: bootstrap-fileinput-css" />
+    <style>
+        .config-label { color: #888; width: 120px; display: inline-block; }
+        .result-box { word-break: break-all; margin-top: 10px; }
+        .result-box a { color: #1ab394; }
+    </style>
+</head>
+<body class="gray-bg">
+<div class="wrapper wrapper-content animated fadeInRight">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>COS 配置状态</h5>
+                </div>
+                <div class="ibox-content">
+                    <p><span class="config-label">启用状态</span>
+                        <span th:if="${cosStatus.enabled}" class="label label-primary">已启用</span>
+                        <span th:unless="${cosStatus.enabled}" class="label label-warning">未启用</span>
+                    </p>
+                    <p><span class="config-label">配置完整</span>
+                        <span th:if="${cosStatus.configured}" class="label label-success">是</span>
+                        <span th:unless="${cosStatus.configured}" class="label label-danger">否</span>
+                    </p>
+                    <p><span class="config-label">SecretId</span><span th:text="${cosStatus.secretIdMask}"></span></p>
+                    <p><span class="config-label">Region</span><span th:text="${cosStatus.region}"></span></p>
+                    <p><span class="config-label">Bucket</span><span th:text="${cosStatus.bucketName}"></span></p>
+                    <p><span class="config-label">路径前缀</span><span th:text="${cosStatus.basePath}"></span></p>
+                    <p><span class="config-label">自定义域名</span>
+                        <span th:text="${#strings.isEmpty(cosStatus.domain) ? '未配置' : cosStatus.domain}"></span>
+                    </p>
+                    <p class="text-muted">上传记录写入 scm_file 表，其他业务可通过 file_id 关联。</p>
+                </div>
+            </div>
+
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>文件上传测试</h5>
+                </div>
+                <div class="ibox-content">
+                    <div class="form-group">
+                        <label class="font-noraml">选择文件上传到 COS</label>
+                        <div class="file-loading">
+                            <input id="cosFile" name="file" type="file">
+                        </div>
+                    </div>
+                    <div id="uploadResult" class="result-box alert alert-info" style="display:none;"></div>
+                </div>
+            </div>
+
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h5>已上传文件</h5>
+                </div>
+                <div class="ibox-content">
+                    <div class="col-sm-12 select-table table-striped">
+                        <table id="bootstrap-table"></table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<th:block th:include="include :: footer" />
+<th:block th:include="include :: bootstrap-fileinput-js" />
+<script th:inline="javascript">
+    var downloadFlag = [[${@permission.hasPermi('common:file:download')}]];
+    var prefix = ctx + "interface/cosUpload";
+
+    function formatFileSize(size) {
+        if (!size && size !== 0) return '-';
+        if (size < 1024) return size + ' B';
+        if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB';
+        return (size / 1024 / 1024).toFixed(2) + ' MB';
+    }
+
+    $(function () {
+        $("#cosFile").fileinput({
+            uploadUrl: prefix + '/upload',
+            maxFileCount: 1,
+            autoReplace: true,
+            showUpload: true,
+            showRemove: true,
+            language: 'zh'
+        }).on('fileuploaded', function (event, data) {
+            var rsp = data.response;
+            if (rsp.code === 0 || rsp.code === 200) {
+                var html = '<strong>上传成功</strong><br/>'
+                    + '文件ID：' + (rsp.fileId || '') + '<br/>'
+                    + '原始文件名：' + (rsp.originalFilename || '') + '<br/>'
+                    + 'Object Key：' + (rsp.objectKey || '') + '<br/>'
+                    + 'ETag：' + (rsp.etag || '') + '<br/>'
+                    + '访问地址：<a href="' + (rsp.url || rsp.fileUrl || '#') + '" target="_blank">' + (rsp.url || rsp.fileUrl || '') + '</a>';
+                $("#uploadResult").html(html).show();
+                $.table.refresh();
+            } else {
+                $.modal.msgError(rsp.msg || '上传失败');
+            }
+        }).on('fileuploaderror', function (event, data, msg) {
+            var rsp = data && data.response ? data.response : null;
+            $.modal.msgError((rsp && rsp.msg) ? rsp.msg : (msg || '上传失败'));
+        });
+
+        var options = {
+            url: prefix + "/list",
+            showSearch: false,
+            showRefresh: true,
+            showToggle: false,
+            showColumns: false,
+            sortName: "createTime",
+            sortOrder: "desc",
+            modalName: "文件",
+            uniqueId: "fileId",
+            columns: [{
+                field: 'fileId',
+                title: '文件ID',
+                visible: false
+            }, {
+                field: 'originalName',
+                title: '文件名'
+            }, {
+                field: 'fileSize',
+                title: '大小',
+                formatter: function(value) { return formatFileSize(value); }
+            }, {
+                field: 'objectKey',
+                title: 'Object Key',
+                formatter: function(value) {
+                    if (!value) return '-';
+                    return '<span title="' + value + '">' + (value.length > 40 ? value.substring(0, 40) + '...' : value) + '</span>';
+                }
+            }, {
+                field: 'createBy',
+                title: '上传人'
+            }, {
+                field: 'createTime',
+                title: '上传时间',
+                sortable: true
+            }, {
+                title: '操作',
+                align: 'center',
+                formatter: function(value, row) {
+                    var actions = [];
+                    if (downloadFlag !== 'hidden') {
+                        actions.push('<a class="btn btn-primary btn-xs" href="' + ctx + 'common/file/download/' + row.fileId + '"><i class="fa fa-download"></i> 下载</a>');
+                    }
+                    if (row.fileUrl) {
+                        actions.push(' <a class="btn btn-info btn-xs" href="' + row.fileUrl + '" target="_blank"><i class="fa fa-external-link"></i> 外链</a>');
+                    }
+                    return actions.join('');
+                }
+            }]
+        };
+        $.table.init(options);
+    });
+</script>
+</body>
+</html>

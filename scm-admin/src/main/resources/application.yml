@@ -6,6 +6,8 @@ scm:
   demoEnabled: false
   profile: D:/scm/uploadPath
   addressEnabled: false
+  # 敏感配置 ENC(...) 加解密密钥；生产环境务必用环境变量 SCM_CONFIG_CIPHER_KEY，勿与密文同文件明文存放
+  config-cipher-key: ${SCM_CONFIG_CIPHER_KEY:ScmLocalDevCipherKey2025!}
   legacy:
     scope-repair:
       # 是否在启动时执行补齐任务（关闭则完全不跑）
@@ -20,6 +22,14 @@ scm:
       enabled: true
       location: classpath:sql/mysql/
       fail-on-error: false
+  cos:
+    enabled: true
+    secret-id: ENC(fmNwNkER0gQ8miAjitef1T17AQdp0H99YYn0PpX6xq6Jm3uO9fI4a5o2PU4xcgQ33QqbWuxZHNPMSYICudT5Iw==)
+    secret-key: ENC(0TaIU8WG7MfPaq4VDunS4h436cyUU2K4Mgs3bH4NMgn+Xwke24uBxobD58wE50tOkSmSXx5G8/0ubNO8p84bLg==)
+    region: ap-guangzhou
+    bucket-name: aisipu-1409620366
+    base-path: scm-test/
+    domain:
 
 # ??????
 server:

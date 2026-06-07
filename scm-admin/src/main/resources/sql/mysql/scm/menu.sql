@@ -183,6 +183,54 @@ INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, targ
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2912', '推送订单查询', '2911', '1', '#', '', 'F', '0', '1', 'interface:zsTp:query', '#', 'admin', sysdate(), '', null, '', '0');
 /
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2913', 'COS文件上传', '2910', '2', '/interface/cosUpload', '', 'C', '0', '1', 'interface:cos:view', 'fa fa-cloud-upload', 'admin', sysdate(), '', null, '腾讯云 COS 文件上传测试', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('29131', 'COS上传', '2913', '1', '#', '', 'F', '0', '1', 'common:file:upload', '#', 'admin', sysdate(), '', null, '', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('29132', 'COS下载', '2913', '2', '#', '', 'F', '0', '1', 'common:file:download', '#', 'admin', sysdate(), '', null, '', '0');
+/
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('29133', 'COS文件列表', '2913', '3', '#', '', 'F', '0', '1', 'common:file:list', '#', 'admin', sysdate(), '', null, '', '0');
+/
+INSERT IGNORE INTO sys_role_menu (id, role_id, menu_id, hospital_id, supplier_id)
+SELECT REPLACE(UUID(), '-', ''), rm.role_id, 2913, rm.hospital_id, rm.supplier_id
+FROM sys_role_menu rm
+WHERE rm.menu_id = 2911
+  AND NOT EXISTS (
+    SELECT 1 FROM sys_role_menu r2
+    WHERE r2.role_id = rm.role_id AND r2.menu_id = 2913
+      AND r2.hospital_id = rm.hospital_id AND r2.supplier_id = rm.supplier_id
+  );
+/
+INSERT IGNORE INTO sys_role_menu (id, role_id, menu_id, hospital_id, supplier_id)
+SELECT REPLACE(UUID(), '-', ''), rm.role_id, 29131, rm.hospital_id, rm.supplier_id
+FROM sys_role_menu rm
+WHERE rm.menu_id = 2913
+  AND NOT EXISTS (
+    SELECT 1 FROM sys_role_menu r2
+    WHERE r2.role_id = rm.role_id AND r2.menu_id = 29131
+      AND r2.hospital_id = rm.hospital_id AND r2.supplier_id = rm.supplier_id
+  );
+/
+INSERT IGNORE INTO sys_role_menu (id, role_id, menu_id, hospital_id, supplier_id)
+SELECT REPLACE(UUID(), '-', ''), rm.role_id, 29132, rm.hospital_id, rm.supplier_id
+FROM sys_role_menu rm
+WHERE rm.menu_id = 2913
+  AND NOT EXISTS (
+    SELECT 1 FROM sys_role_menu r2
+    WHERE r2.role_id = rm.role_id AND r2.menu_id = 29132
+      AND r2.hospital_id = rm.hospital_id AND r2.supplier_id = rm.supplier_id
+  );
+/
+INSERT IGNORE INTO sys_role_menu (id, role_id, menu_id, hospital_id, supplier_id)
+SELECT REPLACE(UUID(), '-', ''), rm.role_id, 29133, rm.hospital_id, rm.supplier_id
+FROM sys_role_menu rm
+WHERE rm.menu_id = 2913
+  AND NOT EXISTS (
+    SELECT 1 FROM sys_role_menu r2
+    WHERE r2.role_id = rm.role_id AND r2.menu_id = 29133
+      AND r2.hospital_id = rm.hospital_id AND r2.supplier_id = rm.supplier_id
+  );
+/
 -- 增量补齐（来自 scm_menu.sql 缺失项）
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('20011', '企业用户查询', '2002', '1', '#', '', 'F', '0', '1', 'supplier:user:list', '#', 'admin', sysdate(), '', null, '', '0');
 /
@@ -374,6 +422,11 @@ WHERE del_flag = '0' AND perms LIKE 'tenant:%';
 /
 UPDATE sys_menu SET auth_type = 'platform', hospital_grant_supplier_flag = '0', default_open_scope = 'none', menu_biz_category = 'integration'
 WHERE del_flag = '0' AND perms LIKE 'interface:%';
+/
+UPDATE sys_menu SET auth_type = 'platform', hospital_grant_supplier_flag = '0', default_open_scope = 'none', menu_biz_category = 'integration'
+WHERE del_flag = '0' AND perms LIKE 'common:file:%';
+/
+UPDATE sys_menu SET perms = 'common:file:upload' WHERE menu_id = '29131' AND perms = 'interface:cos:upload';
 /
 -- 主数据：仅平台维护
 UPDATE sys_menu SET auth_type = 'platform', hospital_grant_supplier_flag = '0', default_open_scope = 'none', menu_biz_category = 'master_data'

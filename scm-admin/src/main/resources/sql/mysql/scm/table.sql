@@ -1628,3 +1628,29 @@ CREATE TABLE IF NOT EXISTS `scm_user_print_setting` (
   UNIQUE KEY `uk_sups_user_type` (`user_id`,`print_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户打印版式设置';
 /
+-- 统一文件存储表（COS/本地等；业务表通过 file_id 关联）
+CREATE TABLE IF NOT EXISTS `scm_file` (
+  `file_id` varchar(36) NOT NULL COMMENT '文件ID（UUID7）',
+  `storage_type` varchar(20) NOT NULL DEFAULT 'cos' COMMENT '存储类型 cos/local',
+  `bucket_name` varchar(128) DEFAULT NULL COMMENT '存储桶名称',
+  `region` varchar(64) DEFAULT NULL COMMENT '地域',
+  `object_key` varchar(512) NOT NULL COMMENT '对象键/相对路径',
+  `original_name` varchar(255) NOT NULL COMMENT '原始文件名',
+  `file_name` varchar(255) DEFAULT NULL COMMENT '存储文件名',
+  `file_ext` varchar(32) DEFAULT NULL COMMENT '扩展名',
+  `content_type` varchar(128) DEFAULT NULL COMMENT 'MIME类型',
+  `file_size` bigint(20) DEFAULT NULL COMMENT '文件大小(字节)',
+  `file_url` varchar(1024) DEFAULT NULL COMMENT '访问URL',
+  `etag` varchar(128) DEFAULT NULL COMMENT 'ETag',
+  `source_module` varchar(64) DEFAULT NULL COMMENT '上传来源模块',
+  `del_flag` char(1) NOT NULL DEFAULT '0' COMMENT '删除标志（0存在 2删除）',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`file_id`),
+  KEY `idx_scm_file_source` (`source_module`,`create_time`),
+  KEY `idx_scm_file_object_key` (`object_key`(191))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='统一文件存储表';
+/

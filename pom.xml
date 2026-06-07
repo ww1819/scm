@@ -30,6 +30,7 @@
         <commons.io.version>2.19.0</commons.io.version>
         <poi.version>4.1.2</poi.version>
         <velocity.version>2.3</velocity.version>
+        <cos-api.version>5.6.227</cos-api.version>
         <!-- override dependency version -->
         <tomcat.version>9.0.102</tomcat.version>
         <logback.version>1.2.13</logback.version>
@@ -227,6 +228,13 @@
                 <groupId>com.scm</groupId>
                 <artifactId>scm-common</artifactId>
                 <version>${scm.version}</version>
+            </dependency>
+
+            <!-- 腾讯云 COS SDK -->
+            <dependency>
+                <groupId>com.qcloud</groupId>
+                <artifactId>cos_api</artifactId>
+                <version>${cos-api.version}</version>
             </dependency>
 
         </dependencies>

@@ -34,6 +34,19 @@ public class ScmConfig
     /** 获取地址开关 */
     private static boolean addressEnabled;
 
+    /** 配置项加解密密钥（敏感配置 ENC(...) 用；生产建议环境变量 SCM_CONFIG_CIPHER_KEY） */
+    private String configCipherKey;
+
+    public String getConfigCipherKey()
+    {
+        return configCipherKey;
+    }
+
+    public void setConfigCipherKey(String configCipherKey)
+    {
+        this.configCipherKey = configCipherKey;
+    }
+
     public static String getName()
     {
         return name;

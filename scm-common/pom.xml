@@ -102,6 +102,12 @@
             <version>2.5.1</version>
         </dependency>
 
+        <!-- 腾讯云 COS SDK -->
+        <dependency>
+            <groupId>com.qcloud</groupId>
+            <artifactId>cos_api</artifactId>
+        </dependency>
+
     </dependencies>
 
 </project>

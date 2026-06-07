@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.ScmFileMapper">
+    <resultMap type="com.scm.system.domain.ScmFile" id="ScmFileResult">
+        <id property="fileId" column="file_id"/>
+        <result property="storageType" column="storage_type"/>
+        <result property="bucketName" column="bucket_name"/>
+        <result property="region" column="region"/>
+        <result property="objectKey" column="object_key"/>
+        <result property="originalName" column="original_name"/>
+        <result property="fileName" column="file_name"/>
+        <result property="fileExt" column="file_ext"/>
+        <result property="contentType" column="content_type"/>
+        <result property="fileSize" column="file_size"/>
+        <result property="fileUrl" column="file_url"/>
+        <result property="etag" column="etag"/>
+        <result property="sourceModule" column="source_module"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+    </resultMap>
+
+    <sql id="selectScmFileVo">
+        select file_id, storage_type, bucket_name, region, object_key, original_name, file_name, file_ext,
+               content_type, file_size, file_url, etag, source_module, del_flag,
+               create_by, create_time, update_by, update_time, remark
+        from scm_file
+    </sql>
+
+    <select id="selectScmFileById" resultMap="ScmFileResult">
+        <include refid="selectScmFileVo"/>
+        where file_id = #{fileId} and del_flag = '0'
+    </select>
+
+    <select id="selectScmFileList" resultMap="ScmFileResult">
+        <include refid="selectScmFileVo"/>
+        <where>
+            del_flag = '0'
+            <if test="sourceModule != null and sourceModule != ''"> and source_module = #{sourceModule}</if>
+            <if test="storageType != null and storageType != ''"> and storage_type = #{storageType}</if>
+            <if test="originalName != null and originalName != ''"> and original_name like concat('%', #{originalName}, '%')</if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <insert id="insertScmFile" parameterType="com.scm.system.domain.ScmFile">
+        insert into scm_file (
+            file_id, storage_type, bucket_name, region, object_key, original_name, file_name, file_ext,
+            content_type, file_size, file_url, etag, source_module, del_flag, create_by, create_time, remark
+        ) values (
+            #{fileId}, #{storageType}, #{bucketName}, #{region}, #{objectKey}, #{originalName}, #{fileName}, #{fileExt},
+            #{contentType}, #{fileSize}, #{fileUrl}, #{etag}, #{sourceModule}, '0', #{createBy}, now(), #{remark}
+        )
+    </insert>
+
+    <update id="deleteScmFileById">
+        update scm_file set del_flag = '2', update_time = now() where file_id = #{fileId}
+    </update>
+</mapper>
