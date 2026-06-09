@@ -15,6 +15,7 @@ import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.enums.BusinessType;
 import com.scm.common.utils.StringUtils;
+import com.scm.framework.shiro.util.AuthorizationUtils;
 import com.scm.system.domain.SysConfig;
 import com.scm.system.service.IScmScopeBootstrapService;
 import com.scm.system.service.ISysConfigService;
@@ -71,6 +72,7 @@ public class ScmLegacyScopeRepairController extends BaseController
         }
 
         Map<String, Integer> stat = scmScopeBootstrapService.repairLegacyAdminScopes(getLoginName());
+        AuthorizationUtils.clearAllCachedAuthorizationInfo();
         upsertLastManualRunMs(String.valueOf(System.currentTimeMillis()));
 
         int sum = 0;

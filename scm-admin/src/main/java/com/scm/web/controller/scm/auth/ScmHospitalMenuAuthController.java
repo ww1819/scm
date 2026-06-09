@@ -26,6 +26,7 @@ import com.scm.common.enums.BusinessType;
 import com.scm.system.domain.Hospital;
 import com.scm.system.mapper.ScmHospitalMenuAuthMapper;
 import com.scm.system.mapper.SysMenuMapper;
+import com.scm.framework.shiro.util.AuthorizationUtils;
 import com.scm.system.service.IHospitalService;
 import com.scm.system.service.IScmScopeBootstrapService;
 import com.scm.system.service.ISysMenuService;
@@ -110,6 +111,7 @@ public class ScmHospitalMenuAuthController extends BaseController
             }
         }
         scmScopeBootstrapService.replaceHospitalMenuAuth(hospitalId, ids, getLoginName());
+        AuthorizationUtils.clearAllCachedAuthorizationInfo();
         return AjaxResult.success();
     }
 
@@ -120,6 +122,7 @@ public class ScmHospitalMenuAuthController extends BaseController
     public AjaxResult reset(@RequestParam("hospitalId") Long hospitalId)
     {
         scmScopeBootstrapService.resetHospitalMenuAuth(hospitalId, getLoginName());
+        AuthorizationUtils.clearAllCachedAuthorizationInfo();
         return AjaxResult.success();
     }
 
@@ -131,6 +134,7 @@ public class ScmHospitalMenuAuthController extends BaseController
     public AjaxResult resetBuiltinRoles(@RequestParam("hospitalId") Long hospitalId)
     {
         scmScopeBootstrapService.resetHospitalBuiltinRoleMenus(hospitalId, getLoginName());
+        AuthorizationUtils.clearAllCachedAuthorizationInfo();
         return AjaxResult.success();
     }
 }

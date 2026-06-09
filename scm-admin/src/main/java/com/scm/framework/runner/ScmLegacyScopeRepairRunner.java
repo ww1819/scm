@@ -12,6 +12,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import com.alibaba.fastjson.JSONObject;
 import com.scm.common.utils.StringUtils;
+import com.scm.framework.shiro.util.AuthorizationUtils;
 import com.scm.system.domain.SysConfig;
 import com.scm.system.service.IScmScopeBootstrapService;
 import com.scm.system.service.ISysConfigService;
@@ -81,6 +82,7 @@ public class ScmLegacyScopeRepairRunner implements ApplicationRunner
         try
         {
             Map<String, Integer> stat = scmScopeBootstrapService.repairLegacyAdminScopes("system_upgrade");
+            AuthorizationUtils.clearAllCachedAuthorizationInfo();
             log.info("Legacy admin scope repair finished: {}", stat);
 
             String now = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());

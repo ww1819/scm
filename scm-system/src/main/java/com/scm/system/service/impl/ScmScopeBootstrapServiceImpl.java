@@ -284,8 +284,8 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
             {
                 stat.put("createdHospitalStaffRole", stat.get("createdHospitalStaffRole") + 1);
             }
-            SysRole admin = ensureHospitalAdminRole(hospitalId, realOper);
-            SysRole staff = ensureHospitalStaffRole(hospitalId, realOper);
+            ensureHospitalAdminRole(hospitalId, realOper);
+            ensureHospitalStaffRole(hospitalId, realOper);
             Set<Long> existingAuth = new HashSet<>(hospitalMenuAuthMapper.selectMenuIdsByHospitalId(hospitalId));
             Set<Long> needAuth = new HashSet<>(hospitalSeedExpanded);
             needAuth.removeAll(existingAuth);
@@ -294,25 +294,7 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
                 batchInsertHospitalAuth(hospitalId, needAuth, realOper);
                 stat.put("addedHospitalMenuAuth", stat.get("addedHospitalMenuAuth") + needAuth.size());
             }
-            Set<Long> existingRoleMenus = new HashSet<>(
-                sysRoleMenuMapper.selectMenuIdsByRoleAndScope(admin.getRoleId(), String.valueOf(hospitalId), ""));
-            Set<Long> needRoleMenus = new HashSet<>(hospitalSeedExpanded);
-            needRoleMenus.removeAll(existingRoleMenus);
-            if (!needRoleMenus.isEmpty())
-            {
-                batchInsertRoleMenus(admin.getRoleId(), needRoleMenus, String.valueOf(hospitalId), "");
-                stat.put("addedHospitalRoleMenu", stat.get("addedHospitalRoleMenu") + needRoleMenus.size());
-            }
-            Set<Long> nonAdminExpanded = buildNonAdminHospitalExpandedWhitelist(collectRawHospitalDefaultGrantSeeds());
-            Set<Long> existingStaffRoleMenus = new HashSet<>(
-                sysRoleMenuMapper.selectMenuIdsByRoleAndScope(staff.getRoleId(), String.valueOf(hospitalId), ""));
-            Set<Long> needStaffRoleMenus = new HashSet<>(nonAdminExpanded);
-            needStaffRoleMenus.removeAll(existingStaffRoleMenus);
-            if (!needStaffRoleMenus.isEmpty())
-            {
-                batchInsertRoleMenus(staff.getRoleId(), needStaffRoleMenus, String.valueOf(hospitalId), "");
-                stat.put("addedHospitalStaffRoleMenu", stat.get("addedHospitalStaffRoleMenu") + needStaffRoleMenus.size());
-            }
+            repairHospitalRoleMenusFromWhitelist(hospitalId, stat);
         }
 
         for (Long supplierId : supplierIds)
@@ -1048,5 +1030,69 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
     private void addMenuChain(Set<Long> acc, Long menuId, Map<Long, SysMenu> byId)
     {
         addMenuChainStatic(acc, menuId, byId);
+    }
+
+    /**
+     * 按医院菜单白名单（scm_hospital_menu_auth）为该院全部医院角色补缺 sys_role_menu。
+     * 白名单仅 migration 写入、未点「保存」时，界面已勾选但用户会话无 order:order:void 等权限，需由此同步。
+     */
+    private void repairHospitalRoleMenusFromWhitelist(Long hospitalId, Map<String, Integer> stat)
+    {
+        if (hospitalId == null || stat == null)
+        {
+            return;
+        }
+        List<Long> whitelistRaw = hospitalMenuAuthMapper.selectMenuIdsByHospitalId(hospitalId);
+        Set<Long> rawSeeds = new HashSet<>();
+        if (whitelistRaw != null && !whitelistRaw.isEmpty())
+        {
+            for (Long id : whitelistRaw)
+            {
+                if (id != null)
+                {
+                    rawSeeds.add(id);
+                }
+            }
+        }
+        if (rawSeeds.isEmpty())
+        {
+            rawSeeds = collectRawHospitalDefaultGrantSeeds();
+        }
+        List<SysMenu> all = sysMenuMapper.selectMenuAll();
+        Map<Long, SysMenu> byId = indexMenusById(all);
+        Set<Long> adminExpanded = expandSeedsWithAncestors(rawSeeds, byId);
+        Set<Long> nonAdminRaw = filterHospitalSeedsExcludeAdminOnly(rawSeeds, byId);
+        Set<Long> nonAdminExpanded = expandSeedsWithAncestors(nonAdminRaw, byId);
+        String hid = String.valueOf(hospitalId);
+        List<SysRole> roles = sysRoleMapper.selectRolesByHospitalId(hospitalId);
+        if (roles == null)
+        {
+            return;
+        }
+        for (SysRole r : roles)
+        {
+            if (r == null || r.getRoleId() == null
+                || !ScmAuthConstants.ROLE_TYPE_HOSPITAL.equalsIgnoreCase(StringUtils.trimToEmpty(r.getRoleType())))
+            {
+                continue;
+            }
+            Set<Long> target = isOrgAdminRole(r) ? adminExpanded : nonAdminExpanded;
+            Set<Long> existing = new HashSet<>(sysRoleMenuMapper.selectMenuIdsByRoleAndScope(r.getRoleId(), hid, ""));
+            Set<Long> need = new HashSet<>(target);
+            need.removeAll(existing);
+            if (need.isEmpty())
+            {
+                continue;
+            }
+            batchInsertRoleMenus(r.getRoleId(), need, hid, "");
+            if (isOrgAdminRole(r))
+            {
+                stat.put("addedHospitalRoleMenu", stat.get("addedHospitalRoleMenu") + need.size());
+            }
+            else
+            {
+                stat.put("addedHospitalStaffRoleMenu", stat.get("addedHospitalStaffRoleMenu") + need.size());
+            }
+        }
     }
 }

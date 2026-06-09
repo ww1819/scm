@@ -723,6 +723,13 @@ FROM scm_hospital_user hu
 JOIN sys_menu m ON m.menu_id IN ('24008') AND (m.del_flag = '0' OR m.del_flag IS NULL)
 WHERE (hu.del_flag = '0' OR hu.del_flag IS NULL);
 /
+-- F2) 订单作废：白名单 migration 未写 sys_role_menu，补齐后医院用户才有 order:order:void
+INSERT IGNORE INTO sys_role_menu (id, role_id, menu_id, hospital_id, supplier_id)
+SELECT REPLACE(UUID(), '-', ''), r.role_id, 24008, CAST(r.hospital_id AS CHAR), ''
+FROM sys_role r
+INNER JOIN scm_hospital_menu_auth ha ON CAST(ha.hospital_id AS UNSIGNED) = r.hospital_id AND ha.menu_id = '24008'
+WHERE r.del_flag = '0' AND r.role_type = 'hospital' AND r.hospital_id IS NOT NULL;
+/
 -- C) 平台菜单回收：医院/供应商角色不应持有 auth_type=platform 的菜单
 DELETE rm
 FROM sys_role_menu rm
