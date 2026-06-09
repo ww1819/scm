@@ -5,8 +5,8 @@
     <title>物资配送单</title>
     <style th:inline="css">
         :root {
-            --ps-pw: [[${printStyle.paperWidthMm}]]mm;
-            --ps-ph: [[${printStyle.paperHeightMm}]]mm;
+            --ps-pw: [[${printStyle.printWidthMm}]]mm;
+            --ps-ph: [[${printStyle.printHeightMm}]]mm;
             --ps-title: [[${printStyle.titleFontPx}]]px;
             --ps-hf: [[${printStyle.headerFooterFontPx}]]px;
             --ps-ct: [[${printStyle.contentFontPx}]]px;
@@ -15,7 +15,7 @@
         }
         @media print {
             @page {
-                size: [[${printStyle.pageWidthMm}]]mm [[${printStyle.pageHeightMm}]]mm;
+                size: [[${printStyle.printWidthMm}]]mm [[${printStyle.printHeightMm}]]mm;
                 margin: 3mm;
             }
         }

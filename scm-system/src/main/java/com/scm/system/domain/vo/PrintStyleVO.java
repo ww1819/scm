@@ -1,9 +1,11 @@
 package com.scm.system.domain.vo;
 
 import java.io.Serializable;
+import com.scm.common.utils.StringUtils;
 
 /**
- * 打印预览页用：纸张、方向、字号（已含方向换算后的 @page 宽高）
+ * 打印预览页用：用户保存的纸张宽高、方向、字号等。
+ * 横向时 {@link #getPrintWidthMm()} / {@link #getPrintHeightMm()} 与用户录入的宽高互换。
  */
 public class PrintStyleVO implements Serializable
 {
@@ -11,14 +13,10 @@ public class PrintStyleVO implements Serializable
 
     /** portrait / landscape */
     private String orientation;
-    /** 用户录入的纸张宽 mm（竖向时的“宽”） */
+    /** 用户设置的纸张宽 mm */
     private int paperWidthMm;
-    /** 用户录入的纸张高 mm */
+    /** 用户设置的纸张高 mm */
     private int paperHeightMm;
-    /** CSS @page size 第一维 mm（已按方向换算） */
-    private int pageWidthMm;
-    /** CSS @page size 第二维 mm */
-    private int pageHeightMm;
     private int titleFontPx;
     private int headerFooterFontPx;
     private int contentFontPx;
@@ -28,6 +26,23 @@ public class PrintStyleVO implements Serializable
     private int offsetYMm;
     /** 每页明细行数 */
     private int rowsPerPage;
+
+    public boolean isLandscape()
+    {
+        return "landscape".equalsIgnoreCase(StringUtils.trim(orientation));
+    }
+
+    /** 实际排版/打印宽度 mm：竖向=纸宽，横向=纸高 */
+    public int getPrintWidthMm()
+    {
+        return isLandscape() ? paperHeightMm : paperWidthMm;
+    }
+
+    /** 实际排版/打印高度 mm：竖向=纸高，横向=纸宽 */
+    public int getPrintHeightMm()
+    {
+        return isLandscape() ? paperWidthMm : paperHeightMm;
+    }
 
     public String getOrientation()
     {
@@ -57,26 +72,6 @@ public class PrintStyleVO implements Serializable
     public void setPaperHeightMm(int paperHeightMm)
     {
         this.paperHeightMm = paperHeightMm;
-    }
-
-    public int getPageWidthMm()
-    {
-        return pageWidthMm;
-    }
-
-    public void setPageWidthMm(int pageWidthMm)
-    {
-        this.pageWidthMm = pageWidthMm;
-    }
-
-    public int getPageHeightMm()
-    {
-        return pageHeightMm;
-    }
-
-    public void setPageHeightMm(int pageHeightMm)
-    {
-        this.pageHeightMm = pageHeightMm;
     }
 
     public int getTitleFontPx()

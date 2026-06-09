@@ -45,22 +45,6 @@ public class ScmUserPrintSettingServiceImpl implements IScmUserPrintSettingServi
         return d;
     }
 
-    private static void applyPageDimensions(PrintStyleVO vo)
-    {
-        int w = Math.max(1, vo.getPaperWidthMm());
-        int h = Math.max(1, vo.getPaperHeightMm());
-        if ("landscape".equalsIgnoreCase(StringUtils.trim(vo.getOrientation())))
-        {
-            vo.setPageWidthMm(Math.max(w, h));
-            vo.setPageHeightMm(Math.min(w, h));
-        }
-        else
-        {
-            vo.setPageWidthMm(w);
-            vo.setPageHeightMm(h);
-        }
-    }
-
     private static PrintStyleVO toView(ScmUserPrintSetting s)
     {
         PrintStyleVO vo = new PrintStyleVO();
@@ -73,7 +57,6 @@ public class ScmUserPrintSettingServiceImpl implements IScmUserPrintSettingServi
         vo.setOffsetXMm(s.getOffsetXMm() != null ? s.getOffsetXMm() : 0);
         vo.setOffsetYMm(s.getOffsetYMm() != null ? s.getOffsetYMm() : 0);
         vo.setRowsPerPage(s.getRowsPerPage() != null ? s.getRowsPerPage() : 10);
-        applyPageDimensions(vo);
         return vo;
     }
 
