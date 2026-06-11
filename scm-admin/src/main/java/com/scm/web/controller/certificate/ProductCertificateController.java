@@ -28,6 +28,7 @@ import com.scm.common.enums.BusinessType;
 import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.poi.ExcelUtil;
+import com.scm.system.domain.Hospital;
 import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.MaterialDict;
 import com.scm.system.domain.ProductCertificate;
@@ -36,6 +37,7 @@ import com.scm.system.domain.Supplier;
 import com.scm.system.domain.SupplierUser;
 import com.scm.system.domain.vo.ProductMaterialArchiveVo;
 import com.scm.system.service.IHospitalSupplierService;
+import com.scm.system.service.IHospitalService;
 import com.scm.system.service.ISupplierUserService;
 import com.scm.system.service.IProductCertificateService;
 import com.scm.system.service.IProductCertLicenseSnapService;
@@ -73,6 +75,9 @@ public class ProductCertificateController extends BaseController
 
     @Autowired
     private IHospitalSupplierService hospitalSupplierService;
+
+    @Autowired
+    private IHospitalService hospitalService;
 
     @Autowired
     private IProductCertLicenseSnapService productCertLicenseSnapService;
@@ -146,6 +151,40 @@ public class ProductCertificateController extends BaseController
             }
         }
         return nodes;
+    }
+
+    /**
+     * 左侧医院列表：平台账号返回全部医院；供应商账号仅返回已关联且有效的医院
+     */
+    @RequiresPermissions(value = { "certificate:product:view", "certificate:product:list" }, logical = Logical.OR)
+    @GetMapping("/linkedHospitals")
+    @ResponseBody
+    public AjaxResult linkedHospitals()
+    {
+        Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
+        if (bindSid != null)
+        {
+            List<HospitalSupplier> relations = hospitalSupplierService.selectSupplierLinkedHospitalsForProduct(bindSid);
+            List<Map<String, Object>> hospitals = new ArrayList<>();
+            if (relations != null)
+            {
+                for (HospitalSupplier hs : relations)
+                {
+                    if (hs.getHospitalId() == null)
+                    {
+                        continue;
+                    }
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("hospitalId", hs.getHospitalId());
+                    row.put("hospitalCode", hs.getHospitalCode());
+                    row.put("hospitalName", hs.getHospitalName());
+                    hospitals.add(row);
+                }
+            }
+            return success(hospitals);
+        }
+        List<Hospital> list = hospitalService.selectHospitalList(new Hospital());
+        return success(list);
     }
 
     /**

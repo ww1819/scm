@@ -94,6 +94,9 @@ public class SupplierCertificate extends BaseEntity
     @Excel(name = "状态", readConverterExp = "0=正常,1=停用")
     private String status;
 
+    /** 是否已上传证照（查询条件：1是 0否） */
+    private String uploadedFlag;
+
     @NotNull(message = "供应商ID不能为空")
     public Long getSupplierId()
     {
@@ -308,6 +311,16 @@ public class SupplierCertificate extends BaseEntity
     public void setStatus(String status)
     {
         this.status = status;
+    }
+
+    public String getUploadedFlag()
+    {
+        return uploadedFlag;
+    }
+
+    public void setUploadedFlag(String uploadedFlag)
+    {
+        this.uploadedFlag = uploadedFlag;
     }
 
     public Long getCertificateId()

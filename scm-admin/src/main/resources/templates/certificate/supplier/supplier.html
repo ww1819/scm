@@ -211,6 +211,7 @@
 			border-top: 1px solid #eee;
 			background: #fff;
 			z-index: 3;
+			overflow: visible;
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination::after {
@@ -227,10 +228,20 @@
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination > .pagination-detail {
-			flex: 1 1 auto;
+			flex: 0 0 auto;
 			min-width: 0;
-			overflow: hidden;
-			text-overflow: ellipsis;
+			overflow: visible;
+			white-space: nowrap;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination .page-list {
+			position: relative;
+			z-index: 12;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination .page-list select {
+			min-width: 62px;
+			cursor: pointer;
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-body .fixed-table-border {
@@ -344,12 +355,45 @@
 			vertical-align: middle !important;
 		}
 
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"] {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			padding-right: 12px !important;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="supplierName"] {
+			padding-right: 12px !important;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateType"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="certificateType"] {
+			padding-left: 16px !important;
+			padding-right: 10px !important;
+			max-width: 0;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateNo"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="certificateNo"] {
+			padding-left: 8px !important;
+			max-width: 0;
+		}
+
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateType"],
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateNo"],
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="createBy"] {
 			overflow: hidden;
 			text-overflow: ellipsis;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"] .tooltip-show,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateType"] .tooltip-show,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateNo"] .tooltip-show {
+			display: inline-block;
+			max-width: 100%;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			vertical-align: middle;
 		}
 
 		.audit-page-wrap > .audit-search-area.search-collapse {
@@ -420,6 +464,14 @@
 							</select>
 						</li>
 						<li>
+							上传：
+							<select name="uploadedFlag" style="width: 120px; display: inline-block; height: 30px; padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px;">
+								<option value="">所有</option>
+								<option value="1">是</option>
+								<option value="0">否</option>
+							</select>
+						</li>
+						<li>
 							<a class="btn btn-primary btn-rounded btn-sm" onclick="searchCertList()"><i class="fa fa-search"></i>&nbsp;搜索</a>
 							<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
 						</li>
@@ -479,19 +531,18 @@
 		var editFlag = [[${@permission.hasPermi('certificate:supplier:edit')}]];
 		var removeFlag = [[${@permission.hasPermi('certificate:supplier:remove')}]];
 		var prefix = ctx + "certificate/supplier";
-		var hospitalPrefix = ctx + "hospital/hospital";
 		var supplierSelfService = /*[[${supplierSelfService}]]*/ false;
 		var bindSupplierId = /*[[${bindSupplierId}]]*/ null;
 		var selectedHospitalId = null;
-		var linkedSupplierIds = null;
+		var ensuredHospitalMap = {};
 		var allHospitals = [];
 		var certTableId = 'bootstrap-table';
 
 		var regColWidths = {
 			serialNumber: 60,
-			supplierName: 150,
-			certificateType: 120,
-			certificateNo: 150,
+			supplierName: 190,
+			certificateType: 160,
+			certificateNo: 140,
 			expireDate: 110,
 			certificateName: 90,
 			auditStatus: 90,
@@ -795,6 +846,9 @@
 				uniqueId: "certificateId",
 				rememberSelected: true,
 				maintainSelected: true,
+				firstLoad: false,
+				pageSize: 10,
+				pageList: [10, 25, 50, 100],
 				height: calculateCertTableHeight(),
 				mobileResponsive: false,
 				fixedColumns: true,
@@ -804,24 +858,20 @@
 					var curParams = $.table.queryParams(params);
 					if (supplierSelfService && bindSupplierId != null) {
 						curParams.supplierIds = String(bindSupplierId);
-						if (selectedHospitalId) {
-							curParams.hospitalId = selectedHospitalId;
-						}
-					} else {
-						var supplierName = $.common.trim(curParams.supplierName || '');
-						if (!supplierName) {
-							if (linkedSupplierIds) {
-								curParams.supplierIds = linkedSupplierIds;
-							}
-							if (selectedHospitalId) {
-								curParams.hospitalId = selectedHospitalId;
-							}
+					}
+					var supplierName = $.common.trim(curParams.supplierName || '');
+					if (selectedHospitalId) {
+						curParams.hospitalId = selectedHospitalId;
+						if (!supplierName && !ensuredHospitalMap[selectedHospitalId]) {
+							curParams.ensureMissing = '1';
 						}
 					}
 					return curParams;
 				},
 				onLoadSuccess: function() {
-					$.modal.closeLoading();
+					if (selectedHospitalId) {
+						ensuredHospitalMap[selectedHospitalId] = true;
+					}
 					setTimeout(function() {
 						adjustCertTableHeight();
 						refreshCertTableLayout();
@@ -836,7 +886,6 @@
 					refreshCertTableLayout();
 				},
 				onLoadError: function() {
-					$.modal.closeLoading();
 				},
 				columns: [{
 					checkbox: true
@@ -876,7 +925,7 @@
 					field: 'supplierName',
 					title: '供应商',
 					align: 'left',
-					width: 150,
+					width: 190,
 					formatter: function(value, row, index) {
 						if (!value) {
 							return '-';
@@ -888,13 +937,25 @@
 					field: 'certificateType',
 					title: '证件类型',
 					align: 'left',
-					width: 120
+					width: 160,
+					formatter: function(value, row, index) {
+						if (!value) {
+							return '-';
+						}
+						return $.table.tooltip(value, 10);
+					}
 				},
 				{
 					field: 'certificateNo',
 					title: '证件编码',
 					align: 'left',
-					width: 150
+					width: 140,
+					formatter: function(value, row, index) {
+						if (!value) {
+							return '-';
+						}
+						return $.table.tooltip(value, 12);
+					}
 				},
 				{
 					field: 'expireDate',
@@ -959,45 +1020,13 @@
 		function resetPre() {
 			$("#supplier-certificate-form")[0].reset();
 			selectedHospitalId = null;
-			linkedSupplierIds = null;
+			ensuredHospitalMap = {};
 			updateHospitalTable(allHospitals);
-			$.table.search('supplier-certificate-form', certTableId);
+			$('#' + certTableId).bootstrapTable('removeAll');
 		}
 
 		function searchCertList() {
 			$.table.search('supplier-certificate-form', certTableId);
-		}
-
-		function loadLinkedSupplierIds(hospitalId, callback) {
-			if (!hospitalId) {
-				linkedSupplierIds = null;
-				if (callback) {
-					callback();
-				}
-				return;
-			}
-			$.ajax({
-				url: hospitalPrefix + '/suppliers/' + hospitalId,
-				type: 'GET',
-				dataType: 'json',
-				cache: false,
-				success: function(result) {
-					if (result && result.code == 0 && result.data && result.data.length) {
-						linkedSupplierIds = result.data.join(',');
-					} else {
-						linkedSupplierIds = null;
-					}
-					if (callback) {
-						callback();
-					}
-				},
-				error: function() {
-					linkedSupplierIds = null;
-					if (callback) {
-						callback();
-					}
-				}
-			});
 		}
 
 		function initLeftHospitalTable() {
@@ -1132,9 +1161,8 @@
 		function selectHospital(hospitalId) {
 			if (!hospitalId) {
 				selectedHospitalId = null;
-				linkedSupplierIds = null;
 				updateHospitalTable(allHospitals);
-				$('#' + certTableId).bootstrapTable('refresh');
+				$('#' + certTableId).bootstrapTable('removeAll');
 				return;
 			}
 			if (selectedHospitalId == hospitalId) {
@@ -1142,10 +1170,6 @@
 			}
 			selectedHospitalId = hospitalId;
 			updateHospitalTable(allHospitals);
-			$.modal.loading("正在加载证件...");
-			if (!supplierSelfService) {
-				loadLinkedSupplierIds(hospitalId);
-			}
 			$('#' + certTableId).bootstrapTable('refresh');
 		}
 

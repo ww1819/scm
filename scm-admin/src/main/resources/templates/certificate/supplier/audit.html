@@ -350,6 +350,19 @@
 			vertical-align: middle !important;
 		}
 
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateType"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="certificateType"] {
+			padding-left: 8px !important;
+			padding-right: 10px !important;
+			max-width: 0;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateNo"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="certificateNo"] {
+			padding-left: 8px !important;
+			max-width: 0;
+		}
+
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierCode"],
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"],
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateType"],
@@ -359,6 +372,16 @@
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="address"] {
 			overflow: hidden;
 			text-overflow: ellipsis;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateType"] .tooltip-show,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateNo"] .tooltip-show {
+			display: inline-block;
+			max-width: 100%;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			vertical-align: middle;
 		}
 
 		/* 原 audit-right-panel / audit-content-area 双层容器已移除，明细区直接使用 select-table */
@@ -423,6 +446,14 @@
 							</select>
 						</li>
 						<li>
+							上传：
+							<select name="uploadedFlag" style="width: 120px; display: inline-block; height: 30px; padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px;">
+								<option value="">全部</option>
+								<option value="1">是</option>
+								<option value="0">否</option>
+							</select>
+						</li>
+						<li>
 							<a class="btn btn-primary btn-rounded btn-sm" onclick="searchAudit()"><i class="fa fa-search"></i>&nbsp;搜索</a>
 							<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
 						</li>
@@ -453,7 +484,7 @@
 				<!-- 右侧：供应商证件审核列表（工具栏 + 表格，单层 select-table 容器） -->
 				<div class="audit-right-area">
 			        <div class="btn-group-sm" id="toolbar" role="group">
-			            <button type="button" class="btn btn-info single disabled" onclick="auditCertificate()" shiro:hasPermission="certificate:supplier:audit">
+			            <button type="button" id="btn-audit-cert" class="btn btn-info multiple disabled" onclick="auditCertificate()" shiro:hasPermission="certificate:supplier:audit">
 			                <i class="fa fa-check"></i> 审核
 			            </button>
 			        </div>
@@ -491,11 +522,12 @@
 
 		var auditColWidths = {
 			auditStatus: 80,
+			uploadedFlag: 70,
 			serialNumber: 60,
 			supplierCode: 150,
 			supplierName: 200,
-			certificateType: 120,
-			certificateNo: 150,
+			certificateType: 160,
+			certificateNo: 140,
 			expireDate: 110,
 			contactPerson: 120,
 			address: 260,
@@ -653,6 +685,10 @@
 		        el.style.setProperty('max-width', widthVal, 'important');
 		    };
 		    $headerThs.each(function (i) {
+		        var field = $(this).attr('data-field');
+		        if (field && auditColWidths[field] != null) {
+		            return;
+		        }
 		        var bodyCell = $firstRow[0].cells[i];
 		        if (!bodyCell) {
 		            return;
@@ -737,7 +773,7 @@
 		    var actions = [];
 		    var fileUrls = (row.certificateFile && row.certificateFile.trim() !== '') ? row.certificateFile.trim() : '';
 		    var escapedUrls = fileUrls.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-		    actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="previewCertificateImage(\'' + escapedUrls + '\')" title="预览证件图片"><i class="fa fa-eye"></i> 预览</a>');
+		    actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="previewCertificateImage(\'' + escapedUrls + '\')" title="查看证件图片"><i class="fa fa-eye"></i> 查看</a>');
 		    if (uploadFlag !== 'hidden') {
 		        var cid = row.certificateId;
 		        actions.push(' <a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="openUploadImagesTab(' + cid + ')" title="上传或删除证照图片"><i class="fa fa-cloud-upload"></i> 上传</a>');
@@ -771,10 +807,10 @@
 		                curParams.auditStatus = auditStatusFilter;
 		            }
 		            delete curParams.auditStatusFilter;
-		            // 顶部未输入供应商名称时，按左侧选中的供应商过滤
-		            var supplierName = $.common.trim(curParams.supplierName || '');
-		            if (!supplierName && selectedSupplierId) {
-		                curParams.supplierIds = selectedSupplierId;
+		            // 左侧已选中供应商时，右侧按 supplierIds 过滤（审核页无 hospitalId，不能只靠 supplierName）
+		            if (selectedSupplierId) {
+		                curParams.supplierIds = String(selectedSupplierId);
+		                delete curParams.supplierName;
 		            }
 		            return curParams;
 		        },
@@ -787,6 +823,7 @@
 		        fixedNumber: 0,
 		        fixedRightNumber: 1,
 		        onLoadSuccess: function () {
+		            updateToolbarState();
 		            setTimeout(function () {
 		                adjustSupplierTableHeight();
 		                refreshAuditTableLayout();
@@ -835,6 +872,18 @@
 		            }
 		        },
 		        {
+		            field: 'uploadedFlag',
+		            title: '上传',
+		            align: 'center',
+		            width: 70,
+		            formatter: function(value, row, index) {
+		                if (row.certificateFile && row.certificateFile.trim() !== '') {
+		                    return '<span class="label label-success">是</span>';
+		                }
+		                return '<span class="label label-default">否</span>';
+		            }
+		        },
+		        {
 		            field: 'serialNumber',
 		            title: '序号',
 		            align: 'center',
@@ -875,18 +924,24 @@
 		            field: 'certificateType',
 		            title: '证件类型',
 		            align: 'left',
-		            width: 120,
+		            width: 160,
 		            formatter: function (value, row, index) {
-		                return value || '-';
+		                if (!value) {
+		                    return '-';
+		                }
+		                return $.table.tooltip(value, 10);
 		            }
 		        },
 		        {
 		            field: 'certificateNo',
 		            title: '证件编号',
 		            align: 'left',
-		            width: 150,
+		            width: 140,
 		            formatter: function (value, row, index) {
-		                return value || '-';
+		                if (!value) {
+		                    return '-';
+		                }
+		                return $.table.tooltip(value, 12);
 		            }
 		        },
 		        {
@@ -1257,29 +1312,16 @@
 		    $('#bootstrap-table').bootstrapTable('refresh');
 		}
 		
-		// 审核
-		function auditCertificate() {
-		    console.log("审核按钮被点击");
-		    
+		// 获取明细表选中行
+		function getAuditSelections() {
 		    var $table = $('#bootstrap-table');
-		    
 		    if ($table.length === 0) {
-		        console.error("表格元素不存在");
-		        $.modal.alertError("表格未初始化");
-		        return;
+		        return [];
 		    }
-		    
-		    // 尝试多种方式获取选中行
 		    var selections = $table.bootstrapTable('getSelections');
-		    console.log("getSelections结果:", selections);
-		    
-		    // 如果getSelections为空，尝试通过复选框获取
 		    if (!selections || selections.length === 0) {
 		        var checkedRows = $table.find('tbody input[type="checkbox"]:checked').closest('tr');
-		        console.log("通过复选框找到的行数:", checkedRows.length);
-		        
 		        if (checkedRows.length > 0) {
-		            // 从表格数据中查找对应的行
 		            var allData = $table.bootstrapTable('getData');
 		            var checkedIndexes = [];
 		            checkedRows.each(function() {
@@ -1288,50 +1330,54 @@
 		                    checkedIndexes.push(index);
 		                }
 		            });
-		            
 		            if (checkedIndexes.length > 0) {
 		                selections = allData.filter(function(row, idx) {
 		                    return checkedIndexes.indexOf(idx) !== -1;
 		                });
-		                console.log("通过索引找到的选中行:", selections);
 		            }
 		        }
 		    }
-		    
-		    if (!selections || selections.length === 0) {
-		        $.modal.alertWarning("请选择一条记录");
+		    return selections || [];
+		}
+
+		// 审核（支持批量）
+		function auditCertificate() {
+		    var selections = getAuditSelections();
+		    if (selections.length === 0) {
+		        $.modal.alertWarning("请至少选择一条记录");
 		        return;
 		    }
-		    
-		    if (selections.length > 1) {
-		        $.modal.alertWarning("请只选择一条记录");
-		        return;
+		    var certificateIds = [];
+		    for (var i = 0; i < selections.length; i++) {
+		        if (selections[i].certificateId) {
+		            certificateIds.push(selections[i].certificateId);
+		        }
 		    }
-		    
-		    var row = selections[0];
-		    var certificateId = row.certificateId;
-		    console.log("证件ID:", certificateId);
-		    
-		    if (!certificateId) {
-		        console.error("无法获取证件ID，行数据:", row);
+		    if (certificateIds.length === 0) {
 		        $.modal.alertError("无法获取证件ID");
 		        return;
 		    }
-		    
-		    // 弹出审核对话框
-		    showAuditDialog(certificateId, row);
+		    showAuditDialog(selections, certificateIds);
 		}
-		
+
 		// 显示审核对话框
-		function showAuditDialog(certificateId, row) {
-		    var supplierName = row.supplierName || '未知供应商';
-		    
-		    // 创建审核对话框HTML
-		    var dialogHtml = '<div style="padding: 20px;">' +
-		        '<div class="form-group">' +
-		        '<label>供应商：</label>' +
-		        '<input type="text" class="form-control" value="' + supplierName + '" readonly style="margin-bottom: 10px;">' +
-		        '</div>' +
+		function showAuditDialog(selections, certificateIds) {
+		    var count = certificateIds.length;
+		    var infoHtml = '';
+		    if (count === 1) {
+		        var supplierName = (selections[0].supplierName || '未知供应商').replace(/"/g, '&quot;');
+		        infoHtml = '<div class="form-group">' +
+		            '<label>供应商：</label>' +
+		            '<input type="text" class="form-control" value="' + supplierName + '" readonly style="margin-bottom: 10px;">' +
+		            '</div>';
+		    } else {
+		        infoHtml = '<div class="form-group">' +
+		            '<label>审核范围：</label>' +
+		            '<input type="text" class="form-control" value="已选择 ' + count + ' 条证件记录" readonly style="margin-bottom: 10px;">' +
+		            '</div>';
+		    }
+
+		    var dialogHtml = '<div style="padding: 20px;">' + infoHtml +
 		        '<div class="form-group">' +
 		        '<label>审核状态：<span style="color: red;">*</span></label>' +
 		        '<select id="audit-status-select" class="form-control" style="margin-bottom: 10px;">' +
@@ -1344,110 +1390,99 @@
 		        '<textarea id="audit-remark-textarea" class="form-control" rows="3" placeholder="请输入审核备注（可选）" maxlength="500"></textarea>' +
 		        '</div>' +
 		        '</div>';
-		    
+
 		    layer.open({
 		        type: 1,
-		        title: '审核供应商证件',
+		        title: count === 1 ? '审核供应商证件' : '批量审核供应商证件',
 		        area: ['500px', '350px'],
 		        content: dialogHtml,
 		        btn: ['确定', '取消'],
-		        yes: function(index, layero) {
+		        yes: function(index) {
 		            var auditStatus = $('#audit-status-select').val();
 		            var auditRemark = $('#audit-remark-textarea').val();
-		            
 		            if (!auditStatus) {
 		                $.modal.alertWarning("请选择审核状态");
-		                return false; // 阻止关闭弹窗
+		                return false;
 		            }
-		            
-		            // 执行审核
-		            doAudit(certificateId, auditStatus, auditRemark, index);
+		            doBatchAudit(certificateIds, auditStatus, auditRemark, index);
 		        },
 		        btn2: function(index) {
 		            layer.close(index);
 		        }
 		    });
 		}
-		
-		// 执行审核
-		function doAudit(certificateId, auditStatus, auditRemark, layerIndex) {
-		    console.log("执行审核，参数:", {
-		        certificateId: certificateId,
-		        auditStatus: auditStatus,
-		        auditRemark: auditRemark
-		    });
-		    
-		    $.ajax({
-		        url: prefix + "/audit",
-		        type: "POST",
-		        data: {
-		            certificateId: certificateId,
-		            auditStatus: auditStatus,
-		            auditRemark: auditRemark || ''
-		        },
-		        success: function(result) {
-		            console.log("审核接口返回结果:", result);
-		            if (result.code == 0) {
-		                // 关闭弹窗
-		                if (layerIndex !== undefined) {
-		                    layer.close(layerIndex);
-		                }
-		                $.modal.msgSuccess("审核成功");
-		                // 刷新表格（延迟一下，确保数据库已更新）
-		                setTimeout(function() {
-		                    $('#bootstrap-table').bootstrapTable('refresh');
-		                }, 500);
-		            } else {
-		                $.modal.alertError(result.msg || "审核失败");
-		            }
-		        },
-		        error: function(xhr, status, error) {
-		            console.error("审核失败:", error, xhr.responseText);
-		            var errorMsg = "审核失败";
-		            if (xhr.responseJSON && xhr.responseJSON.msg) {
-		                errorMsg = xhr.responseJSON.msg;
-		            } else if (xhr.responseText) {
-		                errorMsg = xhr.responseText;
-		            }
-		            $.modal.alertError(errorMsg);
+
+		// 批量执行审核
+		function doBatchAudit(certificateIds, auditStatus, auditRemark, layerIndex) {
+		    var total = certificateIds.length;
+		    var completed = 0;
+		    var failed = 0;
+		    var showLoading = total > 1;
+
+		    function finish() {
+		        if (showLoading) {
+		            $.modal.closeLoading();
 		        }
-		    });
+		        if (layerIndex !== undefined) {
+		            layer.close(layerIndex);
+		        }
+		        if (failed === 0) {
+		            $.modal.msgSuccess(total === 1 ? "审核成功" : ("成功审核 " + completed + " 条记录"));
+		        } else if (completed === 0) {
+		            $.modal.alertError("审核失败");
+		        } else {
+		            $.modal.alertWarning("成功 " + completed + " 条，失败 " + failed + " 条");
+		        }
+		        setTimeout(function() {
+		            $('#bootstrap-table').bootstrapTable('refresh');
+		        }, 300);
+		    }
+
+		    function auditNext(i) {
+		        if (i >= total) {
+		            finish();
+		            return;
+		        }
+		        $.ajax({
+		            url: prefix + "/audit",
+		            type: "POST",
+		            data: {
+		                certificateId: certificateIds[i],
+		                auditStatus: auditStatus,
+		                auditRemark: auditRemark || ''
+		            },
+		            success: function(result) {
+		                if (result.code == 0) {
+		                    completed++;
+		                } else {
+		                    failed++;
+		                }
+		                auditNext(i + 1);
+		            },
+		            error: function() {
+		                failed++;
+		                auditNext(i + 1);
+		            }
+		        });
+		    }
+
+		    if (showLoading) {
+		        $.modal.loading("正在批量审核，请稍候...");
+		    }
+		    auditNext(0);
 		}
 		
 		// 更新工具栏状态
 		function updateToolbarState() {
-		    var $table = $('#bootstrap-table');
-		    if ($table.length === 0) {
+		    var selections = getAuditSelections();
+		    var $auditBtn = $('#btn-audit-cert');
+		    if ($auditBtn.length === 0) {
 		        return;
 		    }
-		    
-		    // 尝试多种方式获取选中行
-		    var selections = $table.bootstrapTable('getSelections');
-		    
-		    // 如果getSelections为空，尝试通过复选框获取
-		    if (!selections || selections.length === 0) {
-		        var checkedCount = $table.find('tbody input[type="checkbox"]:checked').length;
-		        console.log("通过复选框找到的选中数:", checkedCount);
-		        
-		        if (checkedCount === 1) {
-		            // 如果只有一个复选框被选中，尝试从表格数据中获取
-		            var allData = $table.bootstrapTable('getData');
-		            var checkedIndex = $table.find('tbody input[type="checkbox"]:checked').closest('tr').first().data('index');
-		            if (checkedIndex !== undefined && allData[checkedIndex]) {
-		                selections = [allData[checkedIndex]];
-		            }
-		        }
-		    }
-		    
-		    console.log("更新工具栏状态，选中行数:", selections ? selections.length : 0);
-		    
-		    var $auditBtn = $('.single');
-		    if (selections && selections.length === 1) {
+		    if (selections.length >= 1) {
 		        $auditBtn.removeClass('disabled').prop('disabled', false);
-		        console.log("启用审核按钮");
 		    } else {
 		        $auditBtn.addClass('disabled').prop('disabled', true);
-		        console.log("禁用审核按钮");
 		    }
 		}
 		

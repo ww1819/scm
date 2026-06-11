@@ -530,16 +530,22 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
     @Override
     public void ensureMissingCertificatesForSupplierAtHospital(Long supplierId, Long hospitalId, String createBy)
     {
+        List<CertificateType> types = certificateTypeService.selectSupplierExtensionTypesForSnap();
+        int expectedCount = (types == null || types.isEmpty()) ? 0 : countUniqueSupplierTypeNames(types);
+        ensureMissingCertificatesForSupplierAtHospital(supplierId, hospitalId, createBy, types, expectedCount);
+    }
+
+    private void ensureMissingCertificatesForSupplierAtHospital(Long supplierId, Long hospitalId, String createBy,
+        List<CertificateType> types, int expectedCount)
+    {
         if (supplierId == null || hospitalId == null)
         {
             return;
         }
-        List<CertificateType> types = certificateTypeService.selectSupplierExtensionTypesForSnap();
-        if (types == null || types.isEmpty())
+        if (types == null || types.isEmpty() || expectedCount <= 0)
         {
             return;
         }
-        int expectedCount = countUniqueSupplierTypeNames(types);
         int existingCount = supplierCertificateMapper.countBySupplierAndHospital(supplierId, hospitalId);
         if (existingCount >= expectedCount)
         {
@@ -669,9 +675,11 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
                 }
             }
         }
+        List<CertificateType> types = certificateTypeService.selectSupplierExtensionTypesForSnap();
+        int expectedCount = (types == null || types.isEmpty()) ? 0 : countUniqueSupplierTypeNames(types);
         for (Long supplierId : targetIds)
         {
-            ensureMissingCertificatesForSupplierAtHospital(supplierId, hospitalId, createBy);
+            ensureMissingCertificatesForSupplierAtHospital(supplierId, hospitalId, createBy, types, expectedCount);
         }
     }
 }

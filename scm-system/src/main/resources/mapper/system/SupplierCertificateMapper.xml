@@ -98,6 +98,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                     </otherwise>
                 </choose>
             </if>
+            <if test="uploadedFlag != null and uploadedFlag != ''">
+                <choose>
+                    <when test='uploadedFlag == "1"'>
+                        AND c.certificate_file IS NOT NULL AND c.certificate_file != ''
+                    </when>
+                    <when test='uploadedFlag == "0"'>
+                        AND (c.certificate_file IS NULL OR c.certificate_file = '')
+                    </when>
+                </choose>
+            </if>
             <if test="isExpired != null and isExpired != ''">
                 AND c.is_expired = #{isExpired}
             </if>
@@ -168,6 +178,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                     <otherwise>
                         AND c.audit_status = #{supplierCertificate.auditStatus}
                     </otherwise>
+                </choose>
+            </if>
+            <if test="supplierCertificate.uploadedFlag != null and supplierCertificate.uploadedFlag != ''">
+                <choose>
+                    <when test='supplierCertificate.uploadedFlag == "1"'>
+                        AND c.certificate_file IS NOT NULL AND c.certificate_file != ''
+                    </when>
+                    <when test='supplierCertificate.uploadedFlag == "0"'>
+                        AND (c.certificate_file IS NULL OR c.certificate_file = '')
+                    </when>
                 </choose>
             </if>
             <if test="supplierCertificate.isExpired != null and supplierCertificate.isExpired != ''">

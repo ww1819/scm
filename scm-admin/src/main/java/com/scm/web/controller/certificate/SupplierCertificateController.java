@@ -93,11 +93,29 @@ public class SupplierCertificateController extends BaseController
         logical = Logical.OR)
     @PostMapping("/list")
     @ResponseBody
-    public TableDataInfo list(SupplierCertificate supplierCertificate, String supplierIds, Long hospitalId)
+    public TableDataInfo list(SupplierCertificate supplierCertificate, String supplierIds, Long hospitalId,
+        @RequestParam(value = "ensureMissing", required = false, defaultValue = "0") String ensureMissing)
     {
         Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
-        supplierCertificateService.ensureMissingCertificatesForListContext(bindSid, supplierIds, hospitalId,
-            getLoginName());
+        if ("-1".equals(supplierIds))
+        {
+            return getDataTable(new ArrayList<>());
+        }
+        if (hospitalId != null && bindSid == null
+            && (supplierIds == null || supplierIds.isEmpty())
+            && (supplierCertificate.getSupplierName() == null || supplierCertificate.getSupplierName().isEmpty()))
+        {
+            supplierIds = resolveLinkedSupplierIdsCsv(hospitalId);
+            if ("-1".equals(supplierIds))
+            {
+                return getDataTable(new ArrayList<>());
+            }
+        }
+        if ("1".equals(ensureMissing))
+        {
+            supplierCertificateService.ensureMissingCertificatesForListContext(bindSid, supplierIds, hospitalId,
+                getLoginName());
+        }
         startPage();
         if (hospitalId == null)
         {
@@ -176,6 +194,32 @@ public class SupplierCertificateController extends BaseController
         supplierCertificate.setHospitalId(hospitalId);
         List<SupplierCertificate> list = supplierCertificateService.selectSupplierCertificateList(supplierCertificate);
         return getDataTable(list);
+    }
+
+    /** 按医院解析已关联供应商 ID（逗号分隔）；无关联时返回 "-1" */
+    private String resolveLinkedSupplierIdsCsv(Long hospitalId)
+    {
+        HospitalSupplier q = new HospitalSupplier();
+        q.setHospitalId(hospitalId);
+        q.setStatus("0");
+        List<HospitalSupplier> relations = hospitalSupplierService.selectHospitalSupplierList(q);
+        if (relations == null || relations.isEmpty())
+        {
+            return "-1";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (HospitalSupplier hs : relations)
+        {
+            if (hs.getSupplierId() != null)
+            {
+                if (sb.length() > 0)
+                {
+                    sb.append(',');
+                }
+                sb.append(hs.getSupplierId());
+            }
+        }
+        return sb.length() > 0 ? sb.toString() : "-1";
     }
 
     /**
