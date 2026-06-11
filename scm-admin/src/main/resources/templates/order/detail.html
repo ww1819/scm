@@ -87,6 +87,32 @@
 			font-size: 15px !important;
 			font-weight: 600;
 		}
+		/* 明细行固定行高，避免仅一条数据时被撑满整块区域 */
+		.order-detail-table-wrap .fixed-table-container > .fixed-table-header thead tr {
+			height: 42px !important;
+		}
+		.order-detail-table-wrap .fixed-table-container > .fixed-table-header thead th {
+			height: 42px !important;
+			padding: 6px 10px !important;
+			line-height: 1.35;
+			vertical-align: middle !important;
+		}
+		.order-detail-table-wrap .fixed-table-container > .fixed-table-body tbody tr {
+			height: 42px !important;
+			min-height: 42px !important;
+			max-height: 42px !important;
+		}
+		.order-detail-table-wrap .fixed-table-container > .fixed-table-body tbody td {
+			height: 42px !important;
+			max-height: 42px !important;
+			padding: 6px 10px !important;
+			line-height: 1.35;
+			vertical-align: middle !important;
+		}
+		.order-detail-table-wrap .fixed-table-body table,
+		.order-detail-table-wrap .fixed-table-body tbody {
+			height: auto !important;
+		}
 		#bootstrap-table.order-detail-fixed-table {
 			table-layout: fixed !important;
 		}
