@@ -3,323 +3,727 @@
 <head>
 	<th:block th:include="include :: header('供应商资质审核')" />
 	<th:block th:include="include :: layout-latest-css" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-css" />
 	<style>
-		/* 表格列不换行 */
-		#bootstrap-table td,
-		#bootstrap-table th {
+		/* 左侧供应商表格列不换行（右侧主表样式见 .audit-list-table） */
+		#bootstrap-table-supplier td,
+		#bootstrap-table-supplier th {
 			white-space: nowrap !important;
 			overflow: hidden;
 			text-overflow: ellipsis;
 		}
 		
-		/* 表格容器支持水平滚动 */
-		.select-table {
-			overflow-x: auto !important;
-			overflow-y: auto;
+		/* 页面整体布局：顶部搜索 + 下方左右分栏 */
+		.audit-page-wrap.container-div {
+			--audit-page-gap: 10px;
+			height: 100%;
+			overflow: hidden;
+			padding: 0 var(--audit-page-gap);
+			display: flex;
+			flex-direction: column;
+			box-sizing: border-box;
 		}
-		
-		/* 表格固定最小宽度，确保列不会被压缩 */
-		#bootstrap-table {
-			min-width: 1200px;
+
+		body.gray-bg:has(.audit-page-wrap) {
+			height: 100%;
+			overflow: hidden;
 		}
-		
-		/* Bootstrap Table 固定表头时也支持横向滚动 */
-		.fixed-table-body {
-			overflow-x: auto !important;
+
+		/* 整个搜索白底容器：与下方分栏同宽 */
+		.audit-page-wrap > .audit-search-area.search-collapse {
+			flex: 0 0 auto;
+			width: 100%;
+			max-width: 100%;
+			margin: var(--audit-page-gap) 0 0;
+			padding: 10px 15px 13px;
+			box-sizing: border-box;
+			border-radius: 6px;
+			float: none;
 		}
-		
-		/* 确保表格内容区域可以横向滚动 */
-		.bootstrap-table .fixed-table-container {
-			overflow-x: auto !important;
+
+		.audit-page-row {
+			display: flex;
+			flex-direction: column;
+			flex: 1 1 auto;
+			min-height: 0;
+			height: auto;
+			margin: 0;
+			width: 100%;
 		}
-		
-		/* 固定表头样式 */
-		.fixed-table-header {
+
+		.audit-page-row > .audit-split-area {
+			padding-left: 0;
+			padding-right: 0;
+			float: none;
+			width: 100%;
+		}
+
+		.audit-split-area {
+			flex: 1;
+			display: flex;
+			min-height: 0;
+			overflow: hidden;
+			margin-top: var(--audit-page-gap);
+			padding: 0 0 var(--audit-page-gap);
+			width: 100%;
+			box-sizing: border-box;
+		}
+
+		.audit-left-panel {
+			width: 25%;
+			flex-shrink: 0;
+			border-right: 1px solid #e7eaec;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+			background: #fff;
+			border-radius: 6px;
+			box-shadow: 1px 1px 3px rgba(0,0,0,.2);
+			margin-right: 10px;
+		}
+
+		.audit-left-panel .audit-left-panel-heading {
+			background-color: #3c8dbc;
+			border-color: #3c8dbc;
+			color: #fff;
+			padding: 6px 10px;
+			flex-shrink: 0;
+			border-radius: 6px 6px 0 0;
+		}
+
+		.audit-left-panel .audit-left-panel-heading .panel-title {
+			color: #fff;
+		}
+
+		.audit-left-panel .audit-left-panel-body {
+			padding: 0 5px 5px;
+			flex: 1;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+		}
+
+		.audit-left-panel .audit-left-table-wrap {
+			flex: 1;
+			overflow: hidden;
+			min-height: 0;
+			width: 100%;
+			margin-top: 0 !important;
+			box-shadow: none;
+			border-radius: 0;
+			padding-top: 0;
+		}
+
+		.audit-left-panel .fixed-table-header {
 			position: sticky !important;
 			top: 0 !important;
-			z-index: 10 !important;
-			background-color: #fff !important;
+			z-index: 2;
+			background: #fff;
 		}
-		
-		.fixed-table-header thead th {
+
+		.audit-left-panel .fixed-table-header thead th {
 			background-color: #f5f5f5 !important;
-			border-bottom: 2px solid #ddd !important;
+			border-bottom: 1px solid #e7eaec !important;
+			padding-top: 6px !important;
+			padding-bottom: 6px !important;
 		}
-		
-		/* 确保固定表头在滚动时保持可见 */
-		.bootstrap-table .fixed-table-container .fixed-table-header {
-			position: relative;
+
+		.audit-left-panel .fixed-table-container {
+			padding-top: 0 !important;
 		}
-		
-		.bootstrap-table .fixed-table-container.has-fixed-columns .fixed-table-header {
-			position: sticky;
-			top: 0;
-			z-index: 10;
-		}
-		
-		/* 详情框样式 */
-		#detail-panel {
-			transition: all 0.3s ease;
-			height: calc(100vh - 500px) !important;
-			min-height: 300px;
-			max-height: none !important;
-			display: flex;
-			flex-direction: column;
-		}
-		
-		/* 详情框表格容器，固定表头 */
-		#detail-panel .row {
+
+		/* 右侧主表：外层不滚动，仅表格体内部滚动 */
+		.audit-right-area {
+			--audit-inner-padding: 10px;
 			flex: 1;
+			min-width: 0;
 			display: flex;
 			flex-direction: column;
 			overflow: hidden;
+			min-height: 0;
 		}
-		
-		#detail-panel .col-sm-12 {
-			flex: 1;
-			display: flex;
-			flex-direction: column;
-			overflow: hidden;
-		}
-		
-		/* 详情框表格，固定表头 */
-		#detail-panel table {
+
+		.audit-right-area #toolbar {
+			flex-shrink: 0;
+			padding: 0 var(--audit-inner-padding) 5px;
 			margin-bottom: 0;
+		}
+
+		.audit-right-area .audit-table-wrap {
+			position: relative;
+			flex: 1;
+			min-height: 200px;
+			overflow: hidden !important;
+			padding: 0 var(--audit-inner-padding) var(--audit-inner-padding);
+			margin-top: 0 !important;
+			margin-bottom: 0;
+			box-sizing: border-box;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.audit-right-area .audit-table-wrap > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
+		}
+
+		.audit-right-area .audit-table-wrap .bootstrap-table {
 			display: flex;
 			flex-direction: column;
 			height: 100%;
+			padding-bottom: 0;
 		}
-		
-		#detail-panel thead {
-			display: block;
-			flex-shrink: 0;
+
+		.audit-right-area .audit-table-wrap .fixed-table-toolbar {
+			padding-right: 2px;
 		}
-		
-		#detail-panel thead tr {
-			display: table;
-			width: 100%;
-			table-layout: fixed;
+
+		.audit-right-area .audit-table-wrap .fixed-table-toolbar .columns,
+		.audit-right-area .audit-table-wrap .fixed-table-toolbar .pull-right {
+			margin-right: 0;
 		}
-		
-		#detail-panel tbody {
-			display: block;
-			flex: 1;
-			overflow-y: auto;
-			overflow-x: hidden;
+
+		.audit-right-area .audit-table-wrap .fixed-table-container {
+			flex: 1 1 auto;
+			min-height: 0;
+			overflow: hidden !important;
+			padding-bottom: 0;
 		}
-		
-		#detail-panel tbody tr {
-			display: table;
-			width: 100%;
-			table-layout: fixed;
+
+		.audit-right-area .audit-table-wrap .fixed-table-body {
+			overflow-x: auto !important;
+			overflow-y: auto !important;
 		}
-		
-		/* 确保表头和表体列宽一致 */
-		#detail-panel thead th,
-		#detail-panel tbody td {
-			width: auto;
-		}
-		
-		/* 优化间距 */
-		.search-collapse {
-			margin-bottom: 10px;
-		}
-		
-		/* 表格容器固定高度 */
-		.select-table {
+
+		.audit-right-area .audit-table-wrap .fixed-table-pagination {
 			position: relative;
+			flex-shrink: 0;
+			left: auto;
+			right: auto;
+			bottom: auto;
+			margin: 0 !important;
+		}
+
+		/* 右侧固定操作列（参考订单查询 / 医院关联审核） */
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-body .fixed-table-border {
+			display: none !important;
+			height: 0 !important;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-header {
+			position: relative !important;
+			top: auto !important;
+			z-index: 2;
+			background: #fff;
+			overflow: hidden;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right {
+			z-index: 5;
+			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-header {
+			position: relative !important;
+			top: auto !important;
+			z-index: 6;
+			background: #fff;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th .th-inner,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th .sortable {
+			text-align: center !important;
+			justify-content: center;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body tbody td {
+			box-sizing: border-box;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="auditOperate"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="auditOperate"] {
+			padding: 0 !important;
+			border-left: 0 !important;
+			border-right: 0 !important;
+			font-size: 0;
+			line-height: 0;
+			color: transparent;
+			overflow: hidden;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="auditOperate"] > *,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="auditOperate"] > * {
+			display: none;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-header th,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-body td {
+			background-color: #fff;
+			vertical-align: middle;
+			white-space: nowrap;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-header th[data-field="auditOperate"] {
+			background-color: #f5f5f5;
+			min-width: 160px;
+			width: 160px;
+			text-align: center;
+			font-size: 14px;
+			line-height: normal;
+			color: #333;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-header th[data-field="auditOperate"] .th-inner {
+			text-align: center;
+			justify-content: center;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-body td[data-field="auditOperate"] {
+			min-width: 160px;
+			width: 160px;
+			padding: 6px 8px;
+			text-align: center;
+			font-size: 12px;
+			line-height: 1.42857143;
+			color: inherit;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-body td[data-field="auditOperate"] .btn {
+			display: inline-block !important;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-body td[data-field="auditOperate"] > * {
+			display: inline-block !important;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table.table-striped .fixed-columns-right .fixed-table-body tbody tr:nth-of-type(odd) td {
+			background-color: #f9f9f9;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-body {
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination .pagination {
+			margin-right: 172px;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header table,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body > table {
+			table-layout: fixed;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-body tbody td {
+			white-space: nowrap;
+			vertical-align: middle !important;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierCode"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="hospitalCode"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="hospitalName"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="contactPerson"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="address"] {
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		/* 原 audit-right-panel / audit-content-area 双层容器已移除，明细区直接使用 select-table */
+
+		.audit-page-wrap > .audit-search-area.search-collapse {
+			padding-top: 10px !important;
+			padding-bottom: 10px !important;
+		}
+
+		.container-div .audit-search-area .select-list ul {
+			margin-bottom: 0;
+		}
+
+		.container-div .audit-search-area .select-list li {
+			margin: 4px 15px 4px 0;
 		}
 		
-		/* 医院表格样式 */
-		#bootstrap-table-hospital {
+		/* 左侧供应商表格样式 */
+		#bootstrap-table-supplier {
 			visibility: visible !important;
 		}
-		
-		/* 医院表格容器样式 */
-		#bootstrap-table-hospital + .fixed-table-container {
+
+		#bootstrap-table-supplier + .fixed-table-container {
 			visibility: visible !important;
 			display: block !important;
 		}
-		
-		/* 确保医院表格容器可见 */
-		.col-sm-3 .select-table {
+		.audit-left-panel .select-table {
 			overflow: auto !important;
 			visibility: visible !important;
 		}
-		
-		/* 医院表格固定表头容器 */
-		.col-sm-3 .fixed-table-container {
+
+		.audit-left-panel .fixed-table-container {
 			height: 100% !important;
 			overflow: visible !important;
 		}
-		
-		.col-sm-3 .fixed-table-body {
+
+		.audit-left-panel .fixed-table-body {
 			overflow-y: auto !important;
 			overflow-x: hidden !important;
-		}
-		
-		/* 确保左侧医院面板可见 */
-		.col-sm-3 {
-			display: block !important;
-			visibility: visible !important;
-			position: fixed !important;
-			left: 0 !important;
-			top: 0 !important;
-			bottom: 0 !important;
-			width: 25% !important;
-			z-index: 100 !important;
-		}
-		
-		/* 确保医院表格元素存在且可见 */
-		#bootstrap-table-hospital {
-			display: table !important;
-			visibility: visible !important;
 		}
 	</style>
 </head>
 <body class="gray-bg">
-	<div class="container-div" style="position: relative;">
-		<div class="row">
-			<!-- 左侧：医院列表 -->
-			<div class="col-sm-3" style="border-right: 1px solid #e7eaec; padding-right: 10px; position: fixed; left: 0; top: 0; bottom: 0; width: 25%; overflow: hidden; z-index: 100;">
-				<div class="panel panel-default" style="margin-bottom: 0; display: flex; flex-direction: column; height: 100%;">
-					<div class="panel-heading" style="padding: 5px 10px; flex-shrink: 0;">
-						<h5 class="panel-title" style="margin: 0; font-size: 14px;">
-							<i class="fa fa-hospital-o"></i> 医院
-						</h5>
-					</div>
-					<!-- 搜索框 -->
-					<div style="padding: 8px 10px; flex-shrink: 0; border-bottom: 1px solid #e7eaec; background: #f5f5f5;">
-						<div class="input-group" style="width: 100%;">
-							<input type="text" id="hospital-search-input" class="form-control" placeholder="搜索医院名称或编码..." style="height: 30px; font-size: 12px; padding: 5px 10px;">
-							<span class="input-group-btn" style="width: auto;">
-								<button class="btn btn-default" type="button" onclick="searchHospital()" style="height: 30px; padding: 0 10px; font-size: 12px;">
-									<i class="fa fa-search"></i>
-								</button>
-								<button class="btn btn-default" type="button" onclick="clearHospitalSearch()" style="height: 30px; padding: 0 10px; font-size: 12px;">
-									<i class="fa fa-times"></i>
-								</button>
-							</span>
+	<div class="container-div audit-page-wrap">
+		<!-- 顶部搜索：整个白底容器独立占满宽度 -->
+		<div class="search-collapse audit-search-area">
+			<form id="supplier-certificate-form">
+				<div class="select-list">
+					<ul>
+						<li>
+							供应商名称：<input type="text" name="supplierName"/>
+						</li>
+						<li>
+							证件类型：<input type="text" name="certificateType"/>
+						</li>
+						<li>
+							状态：
+							<select name="auditStatusFilter" id="auditStatusFilter" style="width: 120px; display: inline-block; height: 30px; padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px;">
+								<option value="">全部</option>
+								<option value="1">已审核</option>
+								<option value="0">待审核</option>
+							</select>
+						</li>
+						<li>
+							<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+							<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+						</li>
+					</ul>
+				</div>
+			</form>
+		</div>
+
+		<div class="row audit-page-row">
+			<!-- 下方主体：左供应商 + 右明细 -->
+			<div class="audit-split-area">
+				<!-- 左侧：供应商列表 -->
+				<div class="audit-left-panel">
+					<div class="panel panel-default" style="margin-bottom: 0; display: flex; flex-direction: column; height: 100%; border: none; box-shadow: none;">
+						<div class="panel-heading audit-left-panel-heading">
+							<h5 class="panel-title" style="margin: 0; font-size: 14px;">
+								<i class="fa fa-building"></i> 供应商
+							</h5>
 						</div>
-					</div>
-					<div class="panel-body" style="padding: 5px; flex: 1; overflow: auto; display: flex; flex-direction: column; min-height: 0;">
-						<div class="select-table table-striped" style="flex: 1; overflow: visible; min-height: 0; width: 100%; position: relative;">
-							<table id="bootstrap-table-hospital" style="width: 100%;"></table>
+						<div class="panel-body audit-left-panel-body">
+							<div class="select-table table-striped audit-left-table-wrap">
+								<table id="bootstrap-table-supplier" style="width: 100%;"></table>
+							</div>
 						</div>
 					</div>
 				</div>
-			</div>
-			
-			<!-- 右侧：供应商证件审核列表 -->
-			<div class="col-sm-9" style="position: fixed; left: 25%; top: 0; bottom: 0; right: 0; width: 75%; overflow: hidden; z-index: 99; display: flex; flex-direction: column; background: #fff;">
-				<div class="col-sm-12 search-collapse" style="flex-shrink: 0;">
-					<form id="supplier-certificate-form">
-						<div class="select-list">
-							<ul>
-								<li>
-									供应商名称：<input type="text" name="supplierName"/>
-								</li>
-								<li>
-									证件类型：<input type="text" name="certificateType"/>
-								</li>
-								<li>
-									状态：
-									<select name="auditStatusFilter" id="auditStatusFilter" style="width: 120px; display: inline-block; height: 30px; padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px;">
-										<option value="">全部</option>
-										<option value="1">已审核</option>
-										<option value="0">待审核</option>
-									</select>
-								</li>
-								<li>
-									<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
-									<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
-								</li>
-							</ul>
-						</div>
-					</form>
-				</div>
-				
-		        <div class="btn-group-sm" id="toolbar" role="group" style="flex-shrink: 0; padding: 5px 10px; margin-bottom: 10px;">
-		            <button type="button" class="btn btn-info single disabled" onclick="auditCertificate()" shiro:hasPermission="certificate:supplier:audit">
-		                <i class="fa fa-check"></i> 审核
-		            </button>
-		        </div>
-		        
-		        <div class="col-sm-12 select-table table-striped" style="height: 400px; overflow: hidden; padding: 0 10px; margin-bottom: 5px;">
-			    <table id="bootstrap-table"></table>
-			    <!-- 详情框将动态插入到这里，在分页信息之后 -->
-			</div>
-			
-			<!-- 详情框（初始位置，将通过JS移动到分页信息下方） -->
-			<div id="detail-panel" class="col-sm-12" style="flex-shrink: 0; border: 1px solid #e7eaec; border-radius: 4px; padding: 15px; background: #f9f9f9; display: none; height: calc(100vh - 500px); min-height: 300px; overflow-y: auto; margin-bottom: 10px; margin-top: 0;">
-				<h5 style="margin-top: 0; margin-bottom: 15px; font-weight: bold;">
-					<i class="fa fa-info-circle"></i> 证件详情
-				</h5>
-				<div class="row">
-					<div class="col-sm-12">
-						<table class="table table-bordered table-condensed" style="margin-bottom: 0;">
-							<thead>
-								<tr style="background-color: #f5f5f5;">
-									<th style="width: 80px; text-align: center;">序号</th>
-									<th style="width: 150px; text-align: center;">证件类型</th>
-									<th style="width: 200px; text-align: center;">证件编码</th>
-									<th style="width: 120px; text-align: center;">有效期</th>
-									<th style="width: 100px; text-align: center;">是否长期</th>
-									<th style="text-align: center;">证件图片</th>
-								</tr>
-							</thead>
-							<tbody id="detail-tbody">
-								<tr>
-									<td colspan="6" style="text-align: center; color: #999;">请选择一行查看详情</td>
-								</tr>
-							</tbody>
-						</table>
+
+				<!-- 右侧：供应商证件审核列表（工具栏 + 表格，单层 select-table 容器） -->
+				<div class="audit-right-area">
+			        <div class="btn-group-sm" id="toolbar" role="group">
+			            <button type="button" class="btn btn-info single disabled" onclick="auditCertificate()" shiro:hasPermission="certificate:supplier:audit">
+			                <i class="fa fa-check"></i> 审核
+			            </button>
+			        </div>
+			        
+			        <div class="select-table table-striped audit-table-wrap audit-list-table">
+					    <table id="bootstrap-table"></table>
 					</div>
+					
+					<!-- 证件详情（与主表功能重复，暂隐藏）
+					<div id="detail-panel">...</div>
+					-->
 				</div>
-			</div>
+				<!--
+				原双层父容器（功能重复，已移除）：
+				<div class="audit-right-panel">
+					<div class="audit-content-area">...</div>
+				</div>
+				-->
 			</div>
 		</div>
 	</div>
 	
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
 	<script th:inline="javascript">
 		var prefix = ctx + "certificate/supplier";
-		var hospitalPrefix = ctx + "hospital/hospital";
-		var selectedHospitalId = null; // 当前选中的医院ID
-		var selectedHospitalCode = null; // 当前选中的医院编码（用于资质记录筛选）
+		var supplierPrefix = ctx + "supplier/supplier";
+		var editFlag = [[${@permission.hasPermi('certificate:supplier:edit')}]];
+		var auditFlag = [[${@permission.hasPermi('certificate:supplier:audit')}]];
+		var uploadFlag = (editFlag !== 'hidden' || auditFlag !== 'hidden') ? '' : 'hidden';
+		var selectedSupplierId = null; // 当前选中的供应商ID
+		var auditTableId = 'bootstrap-table';
+
+		var auditColWidths = {
+			auditStatus: 80,
+			serialNumber: 60,
+			supplierCode: 150,
+			supplierName: 200,
+			hospitalCode: 150,
+			hospitalName: 200,
+			contactPerson: 120,
+			address: 300,
+			auditOperate: 160
+		};
 
 		$(function() {
-		    // 先初始化医院列表（与supplier.html保持一致）
-		    initHospitalTable();
-		    
-		    // 然后初始化供应商证件审核列表（只显示待审核的）
+		    initLeftSupplierTable();
 		    querySupplierCertificateAuditList();
 		    
-		    // 监听窗口大小改变事件
 		    $(window).resize(function() {
 		        adjustSupplierTableHeight();
+		        setTimeout(refreshAuditTableLayout, 100);
+		        var $supplierTable = $('#bootstrap-table-supplier');
+		        if ($supplierTable.length && $supplierTable.bootstrapTable('getOptions')) {
+		            $supplierTable.bootstrapTable('resetView', { height: calculateLeftSupplierTableHeight() });
+		        }
 		    });
 		    
-		    // 初始化时调整表格高度
 		    setTimeout(function() {
 		        adjustSupplierTableHeight();
 		    }, 300);
 		});
 		
-		// 调整供应商证件表格高度（固定高度，不再动态调整）
+		// 计算右侧主表高度（仅表格体滚动，外层容器不滚动）
+		function calculateAuditTableHeight() {
+		    var $wrap = $('.audit-right-area .audit-table-wrap');
+		    if ($wrap.length === 0) {
+		        return 400;
+		    }
+		    var wrapH = $wrap[0].clientHeight;
+		    if (!wrapH) {
+		        var $contentArea = $('.audit-right-area');
+		        var outerToolbarH = $('#toolbar').outerHeight(true) || 40;
+		        wrapH = $contentArea.height() - outerToolbarH - 10;
+		    }
+		    var $bt = $wrap.find('.bootstrap-table');
+		    if ($bt.length === 0) {
+		        return Math.max(wrapH - 50, 200);
+		    }
+		    var btToolbarH = $bt.find('.fixed-table-toolbar').outerHeight(true) || 0;
+		    var pagH = $bt.find('.fixed-table-pagination').outerHeight(true) || 46;
+		    return Math.max(Math.floor(wrapH - btToolbarH - pagH - 2), 200);
+		}
+		
+		// 调整供应商证件表格高度
 		function adjustSupplierTableHeight() {
-		    // 表格高度固定为400px，不再动态调整
-		    $('#bootstrap-table').bootstrapTable('resetView', {
-		        height: 400
+		    var $table = $('#bootstrap-table');
+		    if ($table.length === 0 || !$table.bootstrapTable('getOptions')) {
+		        return;
+		    }
+		    $table.bootstrapTable('resetView', {
+		        height: calculateAuditTableHeight()
+		    });
+		    refreshAuditTableLayout();
+		}
+
+		function syncAuditOperateColumnContent() {
+		    var $bt = $('#' + auditTableId).closest('.bootstrap-table');
+		    var $rightWrap = $bt.find('.fixed-columns-right');
+		    if ($rightWrap.length === 0) {
+		        return;
+		    }
+		    var $container = $bt.find('.fixed-table-container').first();
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    var $mainBody = $container.children('.fixed-table-body');
+		    var $rightHeader = $rightWrap.find('.fixed-table-header');
+		    var $rightBody = $rightWrap.find('.fixed-table-body');
+		    var $mainHeadInner = $mainHeader.find('th[data-field="auditOperate"] .th-inner');
+		    var $rightHeadInner = $rightHeader.find('th[data-field="auditOperate"] .th-inner');
+		    if ($mainHeadInner.length && $rightHeadInner.length) {
+		        $rightHeadInner.html($mainHeadInner.html());
+		    }
+		    $mainBody.find('tbody tr').each(function (rowIdx) {
+		        var html = $(this).find('td[data-field="auditOperate"]').html();
+		        var $rightCell = $rightBody.find('tbody tr').eq(rowIdx).find('td[data-field="auditOperate"]');
+		        if (html && $rightCell.length) {
+		            $rightCell.html(html);
+		        }
 		    });
 		}
 
+		function syncAuditOperateColumnScroll() {
+		    var $bt = $('#' + auditTableId).closest('.bootstrap-table');
+		    var $rightBody = $bt.find('.fixed-columns-right .fixed-table-body');
+		    if ($rightBody.length === 0) {
+		        return;
+		    }
+		    var $mainBody = $bt.find('.fixed-table-container').children('.fixed-table-body');
+		    $mainBody.off('scroll.auditOperateSync').on('scroll.auditOperateSync', function () {
+		        $rightBody.scrollTop($mainBody.scrollTop());
+		    });
+		}
+
+		function getAuditTableTotalWidth() {
+		    var sum = 0;
+		    var opt = $('#' + auditTableId).bootstrapTable('getOptions');
+		    if (opt && opt.columns && opt.columns[0]) {
+		        $.each(opt.columns[0], function (_, col) {
+		            if (!col || col.visible === false) {
+		                return;
+		            }
+		            if (col.checkbox) {
+		                sum += 42;
+		            } else if (col.field && auditColWidths[col.field] != null) {
+		                sum += auditColWidths[col.field];
+		            } else if (col.width) {
+		                sum += parseInt(col.width, 10) || 0;
+		            } else {
+		                sum += 100;
+		            }
+		        });
+		    }
+		    return Math.max(sum, 1200);
+		}
+
+		function applyAuditFieldColumnWidth(field, widthPx) {
+		    var w = widthPx + 'px';
+		    var $container = $('#' + auditTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    var $mainBody = $container.children('.fixed-table-body');
+		    var $th = $mainHeader.find('th[data-field="' + field + '"]');
+		    if ($th.length === 0) {
+		        return;
+		    }
+		    var colIdx = $th[0].cellIndex;
+		    var setW = function (el) {
+		        el.style.setProperty('width', w, 'important');
+		        el.style.setProperty('min-width', w, 'important');
+		        el.style.setProperty('max-width', w, 'important');
+		    };
+		    $th.each(function () { setW(this); });
+		    $mainBody.find('table tbody tr').each(function () {
+		        var cell = this.cells[colIdx];
+		        if (cell) {
+		            setW(cell);
+		        }
+		    });
+		    $mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+		    $mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+		}
+
+		function syncAuditHeaderBodyColumnWidths() {
+		    var $container = $('#' + auditTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    var $mainBody = $container.children('.fixed-table-body');
+		    var $headerThs = $mainHeader.find('thead tr').first().children('th');
+		    var $firstRow = $mainBody.find('tbody tr').first();
+		    if ($firstRow.length === 0) {
+		        return;
+		    }
+		    var setW = function (el, widthVal) {
+		        el.style.setProperty('width', widthVal, 'important');
+		        el.style.setProperty('min-width', widthVal, 'important');
+		        el.style.setProperty('max-width', widthVal, 'important');
+		    };
+		    $headerThs.each(function (i) {
+		        var bodyCell = $firstRow[0].cells[i];
+		        if (!bodyCell) {
+		            return;
+		        }
+		        var w = bodyCell.style.width;
+		        if (!w) {
+		            w = window.getComputedStyle(bodyCell).width;
+		        }
+		        if (w) {
+		            setW(this, w);
+		            $mainHeader.find('colgroup col').eq(i).each(function () { setW(this, w); });
+		            $mainBody.find('colgroup col').eq(i).each(function () { setW(this, w); });
+		        }
+		    });
+		}
+
+		function scheduleAuditColumnWidths() {
+		    $.each(auditColWidths, function (field, width) {
+		        applyAuditFieldColumnWidth(field, width);
+		    });
+		    syncAuditHeaderBodyColumnWidths();
+		    requestAnimationFrame(function () {
+		        $.each(auditColWidths, function (field, width) {
+		            applyAuditFieldColumnWidth(field, width);
+		        });
+		        syncAuditHeaderBodyColumnWidths();
+		    });
+		}
+
+		function fixAuditTableHeaderAlign() {
+		    var $bt = $('#' + auditTableId).closest('.bootstrap-table');
+		    var $container = $bt.find('.fixed-table-container').first();
+		    var $mainBody = $container.children('.fixed-table-body');
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    if (!$mainBody.length || !$mainHeader.length) {
+		        return;
+		    }
+		    var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
+		    $mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+		}
+
+		function syncAuditHeaderBodyScrollLeft() {
+		    var $container = $('#' + auditTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+		    var $mainBody = $container.children('.fixed-table-body');
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    if ($mainBody.length && $mainHeader.length) {
+		        $mainHeader.scrollLeft($mainBody[0].scrollLeft);
+		    }
+		}
+
+		function bindAuditMainHorizontalScroll() {
+		    var $bt = $('#' + auditTableId).closest('.bootstrap-table');
+		    var $container = $bt.find('.fixed-table-container').first();
+		    var $mainBody = $container.children('.fixed-table-body');
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    $mainBody.off('scroll.auditMainH').on('scroll.auditMainH', function () {
+		        $mainHeader.scrollLeft($mainBody.scrollLeft());
+		    });
+		}
+
+		function applyAuditMainTableMinWidth() {
+		    var sum = getAuditTableTotalWidth();
+		    var w = sum + 'px';
+		    var $container = $('#' + auditTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+		    var $headerTable = $container.children('.fixed-table-header').find('table');
+		    var $bodyTable = $container.children('.fixed-table-body').children('table');
+		    $headerTable.css({ width: w, minWidth: w, maxWidth: w });
+		    $bodyTable.css({ width: w, minWidth: w, maxWidth: w });
+		}
+
+		function refreshAuditTableLayout() {
+		    fixAuditTableHeaderAlign();
+		    scheduleAuditColumnWidths();
+		    applyAuditMainTableMinWidth();
+		    syncAuditHeaderBodyScrollLeft();
+		    bindAuditMainHorizontalScroll();
+		    syncAuditOperateColumnScroll();
+		    syncAuditOperateColumnContent();
+		}
+
+		function buildAuditOperateHtml(row) {
+		    var actions = [];
+		    var fileUrls = (row.certificateFile && row.certificateFile.trim() !== '') ? row.certificateFile.trim() : '';
+		    var escapedUrls = fileUrls.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+		    actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="previewCertificateImage(\'' + escapedUrls + '\')" title="预览证件图片"><i class="fa fa-eye"></i> 预览</a>');
+		    if (uploadFlag !== 'hidden') {
+		        var cid = row.certificateId;
+		        actions.push(' <a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="openUploadImagesTab(' + cid + ')" title="上传或删除证照图片"><i class="fa fa-cloud-upload"></i> 上传</a>');
+		    }
+		    return actions.join('');
+		}
+
+		function openUploadImagesTab(certificateId) {
+		    if (certificateId == null || certificateId === '') {
+		        $.modal.alertWarning('无法打开上传页：缺少证件ID');
+		        return;
+		    }
+		    $.modal.openTab('上传证照', prefix + '/upload/' + certificateId);
+		}
+
 		function querySupplierCertificateAuditList() {
-		    // 计算表格高度（固定高度，不再动态计算）
 		    var calculateTableHeight = function() {
-		        // 固定表格高度为400px
-		        return 400;
+		        return calculateAuditTableHeight();
 		    };
 		    
 		    var options = {
@@ -333,9 +737,9 @@
 		            if (auditStatusFilter !== '') {
 		                params.auditStatus = auditStatusFilter;
 		            }
-		            // 如果选中了医院，按医院编码筛选资质记录
-		            if (selectedHospitalCode) {
-		                params.hospitalCode = selectedHospitalCode;
+		            // 如果选中了供应商，按供应商ID筛选资质记录
+		            if (selectedSupplierId) {
+		                params.supplierIds = selectedSupplierId;
 		            }
 		            return params;
 		        },
@@ -343,8 +747,24 @@
 		        sortOrder: "desc",
 		        modalName: "供应商证件",
 		        height: calculateTableHeight(),
-		        fixedColumns: false,
+		        mobileResponsive: false,
+		        fixedColumns: true,
 		        fixedNumber: 0,
+		        fixedRightNumber: 1,
+		        onLoadSuccess: function () {
+		            setTimeout(function () {
+		                adjustSupplierTableHeight();
+		                refreshAuditTableLayout();
+		            }, 50);
+		            setTimeout(function () {
+		                adjustSupplierTableHeight();
+		                refreshAuditTableLayout();
+		            }, 200);
+		            setTimeout(refreshAuditTableLayout, 450);
+		        },
+		        onPostBody: function () {
+		            refreshAuditTableLayout();
+		        },
 		        onCheck: function(row) {
 		            updateToolbarState();
 		        },
@@ -358,17 +778,14 @@
 		            updateToolbarState();
 		        },
 		        onClickRow: function(row, $element) {
-		            // 移除其他行的选中样式
 		            $('#bootstrap-table tbody tr').removeClass('selected');
-		            // 添加当前行的选中样式
 		            $element.addClass('selected');
-		            // 显示选中行的详情
-		            showDetail(row);
 		        },
 		        columns: [{
 		            checkbox: true
 		        },
 		        {
+		            field: 'auditStatus',
 		            title: '审核',
 		            align: 'center',
 		            width: 80,
@@ -454,52 +871,130 @@
 		            formatter: function (value, row, index) {
 		                return value || '-';
 		            }
+		        },
+		        {
+		            field: 'auditOperate',
+		            title: '操作',
+		            align: 'center',
+		            width: 160,
+		            formatter: function (value, row, index) {
+		                return buildAuditOperateHtml(row);
+		            }
 		        }]
-		    };
-		    
-		    // 在表格初始化后，将详情框移动到分页信息下方
-		    options.onPostBody = function() {
-		        moveDetailPanelToPagination();
-		    };
-		    
-		    // 监听表格加载成功事件
-		    options.onLoadSuccess = function(data) {
-		        moveDetailPanelToPagination();
 		    };
 		    
 		    $.table.init(options);
 		    
-		    // 延迟执行一次，确保分页信息已渲染
 		    setTimeout(function() {
-		        moveDetailPanelToPagination();
+		        adjustSupplierTableHeight();
+		        refreshAuditTableLayout();
 		    }, 500);
 		}
 		
-		// 将详情框移动到分页信息下方
-		function moveDetailPanelToPagination() {
-		    var $table = $('#bootstrap-table');
-		    var $tableContainer = $table.closest('.select-table');
-		    var $pagination = $tableContainer.find('.fixed-table-pagination');
-		    var $detailPanel = $('#detail-panel');
+		// 预览证件图片（支持多图片切换）
+		function previewCertificateImage(imageUrls) {
+		    function escapeHtml(text) {
+		        var map = {
+		            '&': '&amp;',
+		            '<': '&lt;',
+		            '>': '&gt;',
+		            '"': '&quot;',
+		            "'": '&#039;'
+		        };
+		        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+		    }
 		    
-		    if ($pagination.length > 0 && $detailPanel.length > 0) {
-		        // 如果详情框已经在分页信息之后，就不需要移动
-		        if ($detailPanel.prev().hasClass('fixed-table-pagination')) {
-		            return;
+		    var urlArray = [];
+		    if (imageUrls && imageUrls.trim() !== '') {
+		        var urls = imageUrls.split(',');
+		        for (var i = 0; i < urls.length; i++) {
+		            var url = urls[i].trim();
+		            if (url) {
+		                if (url.indexOf('http://') === 0 || url.indexOf('https://') === 0) {
+		                    urlArray.push(url);
+		                } else if (url.indexOf('/') === 0) {
+		                    urlArray.push(ctx + url.substring(1));
+		                } else {
+		                    urlArray.push(ctx + url);
+		                }
+		            }
 		        }
-		        
-		        // 将详情框移动到分页信息之后（在表格容器内）
-		        $pagination.after($detailPanel);
-		        
-		        // 调整详情框样式，确保它在表格容器内正确显示
-		        $detailPanel.css({
-		            'margin-top': '10px',
-		            'margin-bottom': '10px',
-		            'width': '100%',
-		            'height': 'calc(100vh - 500px)',
-		            'min-height': '300px',
-		            'max-height': 'none'
+		    }
+		    
+		    if (urlArray.length === 0) {
+		        $.modal.alertWarning("没有可预览的图片");
+		        return;
+		    }
+		    
+		    var currentIndex = 0;
+		    
+		    function buildPreviewContent() {
+		        var currentUrl = escapeHtml(urlArray[currentIndex]);
+		        var html = '<div style="text-align: center; padding: 20px; overflow: auto; height: 100%; position: relative;">';
+		        if (urlArray.length > 1) {
+		            html += '<div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 5px 15px; border-radius: 15px; z-index: 1000; font-size: 14px;">';
+		            html += '第 ' + (currentIndex + 1) + ' 张 / 共 ' + urlArray.length + ' 张';
+		            html += '</div>';
+		            if (currentIndex > 0) {
+		                html += '<button id="prev-image-btn" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.7); color: white; border: none; padding: 15px 20px; border-radius: 5px; cursor: pointer; font-size: 18px; z-index: 1000;">‹</button>';
+		            }
+		            if (currentIndex < urlArray.length - 1) {
+		                html += '<button id="next-image-btn" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.7); color: white; border: none; padding: 15px 20px; border-radius: 5px; cursor: pointer; font-size: 18px; z-index: 1000;">›</button>';
+		            }
+		        }
+		        html += '<img id="preview-image" src="' + currentUrl + '" style="max-width: 100%; max-height: calc(100% - 40px); cursor: pointer; margin-top: 30px;" ';
+		        html += 'onclick="var img = this; if(img.style.maxWidth === \'none\') { img.style.maxWidth=\'100%\'; img.style.maxHeight=\'calc(100% - 40px)\'; } else { img.style.maxWidth=\'none\'; img.style.maxHeight=\'none\'; }" ';
+		        html += 'onerror="this.onerror=null; this.src=\'' + ctx + 'img/error.png\';" />';
+		        html += '</div>';
+		        return html;
+		    }
+		    
+		    if (typeof layer !== 'undefined') {
+		        layer.open({
+		            type: 1,
+		            title: '证件图片预览' + (urlArray.length > 1 ? '（' + urlArray.length + '张）' : ''),
+		            shadeClose: true,
+		            shade: 0.8,
+		            area: ['90%', '90%'],
+		            content: buildPreviewContent(),
+		            success: function(layero, index) {
+		                function updatePreview() {
+		                    layero.find('.layui-layer-content').html(buildPreviewContent());
+		                    bindButtonEvents();
+		                }
+		                function bindButtonEvents() {
+		                    layero.find('#prev-image-btn').off('click').on('click', function() {
+		                        if (currentIndex > 0) {
+		                            currentIndex--;
+		                            updatePreview();
+		                        }
+		                    });
+		                    layero.find('#next-image-btn').off('click').on('click', function() {
+		                        if (currentIndex < urlArray.length - 1) {
+		                            currentIndex++;
+		                            updatePreview();
+		                        }
+		                    });
+		                }
+		                if (urlArray.length > 1) {
+		                    bindButtonEvents();
+		                    $(document).on('keydown.preview', function(e) {
+		                        if (e.keyCode === 37 && currentIndex > 0) {
+		                            currentIndex--;
+		                            updatePreview();
+		                        } else if (e.keyCode === 39 && currentIndex < urlArray.length - 1) {
+		                            currentIndex++;
+		                            updatePreview();
+		                        }
+		                    });
+		                }
+		            },
+		            end: function() {
+		                $(document).off('keydown.preview');
+		            }
 		        });
+		    } else {
+		        window.open(urlArray[0], '_blank');
 		    }
 		}
 		
@@ -510,30 +1005,30 @@
 			$.table.search();
 		}
 		
-		// 计算医院表格高度
-		function calculateHospitalTableHeight() {
-		    var windowHeight = $(window).height();
-		    var panelHeaderHeight = 35;
-		    var searchHeight = 46;
+		// 计算左侧供应商表格高度
+		function calculateLeftSupplierTableHeight() {
+		    var $leftPanel = $('.audit-left-panel');
+		    if ($leftPanel.length === 0) {
+		        return 400;
+		    }
+		    var panelHeaderHeight = $leftPanel.find('.audit-left-panel-heading').outerHeight(true) || 35;
 		    var bodyPadding = 10;
-		    return windowHeight - panelHeaderHeight - searchHeight - bodyPadding - 20;
+		    var height = $leftPanel.height() - panelHeaderHeight - bodyPadding - 20;
+		    return height > 100 ? height : 100;
 		}
 		
-		// 初始化医院表格（与supplier.html的initSupplierTable保持一致）
-		function initHospitalTable() {
-		    var $table = $('#bootstrap-table-hospital');
-		    console.log("初始化医院表格，表格元素数量:", $table.length);
+		// 初始化左侧供应商表格
+		function initLeftSupplierTable() {
+		    var $table = $('#bootstrap-table-supplier');
 		    
 		    if ($table.length === 0) {
-		        console.warn("医院表格元素不存在，300ms后重试");
 		        setTimeout(function() {
-		            initHospitalTable();
+		            initLeftSupplierTable();
 		        }, 300);
 		        return;
 		    }
 		    
-		    var tableHeight = calculateHospitalTableHeight();
-		    console.log("医院表格高度:", tableHeight);
+		    var tableHeight = calculateLeftSupplierTableHeight();
 		    
 		    try {
 		        $table.bootstrapTable({
@@ -550,446 +1045,125 @@
 		        showHeader: true,
 		        showEmptyRows: false,
 		        columns: [{
-		            field: 'hospitalCode',
-		            title: '医院编码',
+		            field: 'serialNumber',
+		            title: '序号',
+		            align: 'center',
+		            width: 50,
+		            cellStyle: {fontSize: '12px', padding: '4px'},
+		            formatter: function(value, row, index) {
+		                return index + 1;
+		            }
+		        },
+		        {
+		            field: 'supplierCode',
+		            title: '编码',
 		            sortable: true,
-		            width: 120,
+		            width: 80,
 		            cellStyle: {fontSize: '12px', padding: '4px'},
 		            formatter: function(value, row, index) {
 		                return value || '-';
 		            }
 		        },
 		        {
-		            field: 'hospitalName',
-		            title: '医院名称',
+		            field: 'companyName',
+		            title: '供应商名称',
 		            cellStyle: {fontSize: '12px', padding: '4px'},
 		            formatter: function(value, row, index) {
 		                if (!value) return '-';
-		                var hospitalId = row.hospitalId || '';
-		                return '<a href="javascript:void(0)" onclick="selectHospital(\'' + hospitalId + '\')" title="' + value + '" style="font-size: 12px; cursor: pointer;">' + value + '</a>';
+		                var name = value.length > 15 ? value.substring(0, 15) + '...' : value;
+		                var supplierId = row.supplierId || '';
+		                return '<a href="javascript:void(0)" onclick="selectSupplier(\'' + supplierId + '\')" title="' + value + '" style="font-size: 12px; cursor: pointer;">' + name + '</a>';
 		            }
 		        }],
 		        onClickRow: function(row, $element) {
-		            if (row.hospitalId) {
-		                selectHospital(row.hospitalId);
+		            if (row.supplierId) {
+		                selectSupplier(row.supplierId);
 		            }
 		        },
 		        rowStyle: function(row, index) {
-		            if (selectedHospitalId && row.hospitalId == selectedHospitalId) {
+		            if (selectedSupplierId && row.supplierId == selectedSupplierId) {
 		                return {classes: 'info'};
 		            }
 		            return {};
 		        }
 		    });
 		    
-		    console.log("医院表格初始化完成");
-		    
-		    // 初始化完成后加载数据（与supplier.html保持一致）
-		    queryHospitalList();
+		    querySupplierList();
 		    } catch(e) {
-		        console.error("初始化医院表格失败:", e);
-		        console.error("错误堆栈:", e.stack);
+		        console.error("初始化供应商表格失败:", e);
 		    }
 		}
 		
-		// 查询所有医院列表（与supplier.html的querySupplierList保持一致）
-		function queryHospitalList() {
-		    var url = hospitalPrefix + "/all";
-		    console.log("查询医院列表，URL:", url);
-		    
+		// 查询所有供应商列表
+		function querySupplierList() {
 		    $.ajax({
-		        url: url,
+		        url: supplierPrefix + "/all",
 		        type: "GET",
 		        dataType: "json",
 		        cache: false,
 		        success: function(result) {
-		            console.log("医院列表响应:", result);
 		            if (result && result.code == 0) {
-		                var hospitals = result.data || [];
-		                console.log("医院数据数量:", hospitals.length);
-		                if (hospitals.length > 0) {
-		                    console.log("第一条医院数据:", hospitals[0]);
-		                }
-		                updateHospitalTable(hospitals);
+		                updateSupplierTable(result.data || []);
 		            } else {
-		                console.warn("医院列表响应code不为0:", result);
-		                updateHospitalTable([]);
+		                updateSupplierTable([]);
 		            }
 		        },
-		        error: function(xhr, status, error) {
-		            console.error("获取医院列表失败:", {
-		                status: status,
-		                error: error,
-		                statusCode: xhr.status,
-		                responseText: xhr.responseText
-		            });
-		            updateHospitalTable([]);
+		        error: function() {
+		            updateSupplierTable([]);
 		        }
 		    });
 		}
 		
-		// 清除医院搜索，显示所有医院
-		function clearHospitalSearch() {
-		    $('#hospital-search-input').val('');
-		    queryHospitalList();
-		}
-		
-		// 更新医院表格数据（与supplier.html的updateSupplierTable保持一致）
-		function updateHospitalTable(hospitals) {
-		    var $table = $('#bootstrap-table-hospital');
-		    console.log("更新医院表格，表格元素数量:", $table.length, "医院数据数量:", hospitals ? hospitals.length : 0);
+		// 更新左侧供应商表格数据
+		function updateSupplierTable(suppliers) {
+		    var $table = $('#bootstrap-table-supplier');
 		    
 		    if ($table.length === 0) {
-		        console.warn("医院表格元素不存在，300ms后重试");
 		        setTimeout(function() {
-		            updateHospitalTable(hospitals);
+		            updateSupplierTable(suppliers);
 		        }, 300);
 		        return;
 		    }
 		    
 		    try {
 		        var tableOptions = $table.bootstrapTable('getOptions');
-		        console.log("表格选项:", tableOptions ? "存在" : "不存在");
 		        if (tableOptions) {
-		            console.log("加载医院数据到表格，数量:", hospitals ? hospitals.length : 0);
-		            $table.bootstrapTable('load', hospitals || []);
-		            
-		            // 验证数据是否加载成功
+		            $table.bootstrapTable('load', suppliers || []);
 		            setTimeout(function() {
-		                var loadedData = $table.bootstrapTable('getData');
-		                console.log("表格加载后的数据数量:", loadedData ? loadedData.length : 0);
-		                
-		                // 加载后高亮选中的行
-		                if (selectedHospitalId) {
+		                if (selectedSupplierId) {
 		                    $table.find('tbody tr').each(function() {
 		                        var rowData = $table.bootstrapTable('getData');
 		                        var rowIndex = $(this).index();
-		                        if (rowIndex >= 0 && rowIndex < rowData.length && rowData[rowIndex].hospitalId == selectedHospitalId) {
+		                        if (rowIndex >= 0 && rowIndex < rowData.length && rowData[rowIndex].supplierId == selectedSupplierId) {
 		                            $(this).addClass('info');
 		                        }
 		                    });
 		                }
 		            }, 100);
 		        } else {
-		            console.warn("表格未初始化，先初始化");
-		            initHospitalTable();
+		            initLeftSupplierTable();
 		            setTimeout(function() {
 		                if ($table.bootstrapTable('getOptions')) {
-		                    console.log("初始化后加载医院数据");
-		                    $table.bootstrapTable('load', hospitals || []);
+		                    $table.bootstrapTable('load', suppliers || []);
 		                }
 		            }, 500);
 		        }
 		    } catch(e) {
-		        console.error("更新医院表格失败:", e);
-		        console.error("错误堆栈:", e.stack);
+		        console.error("更新供应商表格失败:", e);
 		    }
 		}
 		
-		// 搜索医院
-		function searchHospital() {
-		    var searchText = $('#hospital-search-input').val().trim();
-		    
-		    if (!searchText) {
-		        queryHospitalList();
-		        return;
-		    }
-		    
-		    var $table = $('#bootstrap-table-hospital');
-		    if ($table.length === 0 || !$table.bootstrapTable('getOptions')) {
-		        return;
-		    }
-		    
-		    var allData = $table.bootstrapTable('getData');
-		    var filteredData = allData.filter(function(row) {
-		        var code = (row.hospitalCode || '').toLowerCase();
-		        var name = (row.hospitalName || '').toLowerCase();
-		        var keyword = searchText.toLowerCase();
-		        return code.indexOf(keyword) !== -1 || name.indexOf(keyword) !== -1;
-		    });
-		    
-		    $table.bootstrapTable('load', filteredData);
-		}
-		
-		// 清空搜索
-		function clearHospitalSearch() {
-		    $('#hospital-search-input').val('');
-		    queryHospitalList();
-		}
-		
-		// 搜索框回车事件
-		$(document).on('keypress', '#hospital-search-input', function(e) {
-		    if (e.which === 13) {
-		        searchHospital();
-		    }
-		});
-
-		// 选择医院，加载该医院绑定的供应商证件
-		function selectHospital(hospitalId) {
-		    if (!hospitalId) {
-		        // 取消选择，显示所有待审核的证件
-		        selectedHospitalId = null;
-		        selectedHospitalCode = null;
+		// 选择供应商，加载该供应商的证件
+		function selectSupplier(supplierId) {
+		    if (!supplierId) {
+		        selectedSupplierId = null;
 		        $('#bootstrap-table').bootstrapTable('refresh');
 		        return;
 		    }
 		    
-		    selectedHospitalId = hospitalId;
-		    // 从左侧医院表格数据中找到当前医院编码
-		    var hospitalData = $('#bootstrap-table-hospital').bootstrapTable('getData') || [];
-		    selectedHospitalCode = null;
-		    for (var i = 0; i < hospitalData.length; i++) {
-		        if (String(hospitalData[i].hospitalId) === String(hospitalId)) {
-		            selectedHospitalCode = hospitalData[i].hospitalCode || null;
-		            break;
-		        }
-		    }
-		    
-		    // 刷新右侧列表，按医院编码过滤
+		    selectedSupplierId = supplierId;
+		    querySupplierList();
 		    $('#bootstrap-table').bootstrapTable('refresh');
-		    // 刷新左侧高亮
-		    queryHospitalList();
-		}
-		
-		// 显示详情
-		function showDetail(row) {
-		    if (!row) {
-		        $('#detail-panel').hide();
-		        adjustSupplierTableHeight();
-		        return;
-		    }
-		    
-		    var tbody = $('#detail-tbody');
-		    tbody.empty();
-		    
-		    // 格式化日期
-		    function formatDate(value) {
-		        if (!value) return '-';
-		        if (typeof value === 'string' && value.indexOf('-') > -1) {
-		            return value.split(' ')[0];
-		        }
-		        try {
-		            var date = new Date(value);
-		            if (isNaN(date.getTime())) return '-';
-		            var year = date.getFullYear();
-		            var month = String(date.getMonth() + 1).padStart(2, '0');
-		            var day = String(date.getDate()).padStart(2, '0');
-		            return year + '-' + month + '-' + day;
-		        } catch(e) {
-		            return '-';
-		        }
-		    }
-		    
-		    // 获取当前行的供应商ID和医院编码
-		    var currentSupplierId = row.supplierId;
-		    var currentHospitalCode = row.hospitalCode;
-		    
-		    // 从表格数据中筛选出供应商和医院完全一致的所有证件记录
-		    var tableData = $('#bootstrap-table').bootstrapTable('getData');
-		    var matchedCertificates = tableData.filter(function(item) {
-		        return item.supplierId === currentSupplierId && 
-		               item.hospitalCode === currentHospitalCode;
-		    });
-		    
-		    // 如果没有匹配的记录，只显示当前行
-		    if (matchedCertificates.length === 0) {
-		        matchedCertificates = [row];
-		    }
-		    
-		    // 生成详情表格的HTML
-		    var html = '';
-		    var options = $('#bootstrap-table').bootstrapTable('getOptions');
-		    var pageSize = options.pageSize || 10;
-		    var pageNumber = options.pageNumber || 1;
-		    
-		    for (var i = 0; i < matchedCertificates.length; i++) {
-		        var cert = matchedCertificates[i];
-		        
-		        // 计算序号（基于当前行在表格中的位置）
-		        var serialNumber = '-';
-		        for (var j = 0; j < tableData.length; j++) {
-		            if (tableData[j].certificateId === cert.certificateId) {
-		                serialNumber = (pageNumber - 1) * pageSize + j + 1;
-		                break;
-		            }
-		        }
-		        
-		        // 判断是否长期
-		        var isLongTerm = '-';
-		        if (cert.certificateName === '是' || (!cert.expireDate || cert.expireDate === '' || cert.expireDate === null)) {
-		            isLongTerm = '是';
-		        } else if (cert.certificateName === '否') {
-		            isLongTerm = '否';
-		        }
-		        
-		        // 证件图片预览按钮
-		        var imageHtml = '-';
-		        if (cert.certificateFile && cert.certificateFile.trim() !== '') {
-		            var fileUrls = cert.certificateFile.trim();
-		            var escapedUrls = fileUrls.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-		            imageHtml = '<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="previewCertificateImage(\'' + escapedUrls + '\')" title="预览证件图片"><i class="fa fa-eye"></i> 预览</a>';
-		        } else {
-		            imageHtml = '<span class="text-muted">未上传</span>';
-		        }
-		        
-		        html += '<tr>';
-		        html += '<td style="text-align: center;">' + serialNumber + '</td>';
-		        html += '<td style="text-align: center;">' + (cert.certificateType || '-') + '</td>';
-		        html += '<td style="text-align: center;">' + (cert.certificateNo || '-') + '</td>';
-		        html += '<td style="text-align: center;">' + formatDate(cert.expireDate) + '</td>';
-		        html += '<td style="text-align: center;">' + isLongTerm + '</td>';
-		        html += '<td style="text-align: center;">' + imageHtml + '</td>';
-		        html += '</tr>';
-		    }
-		    
-		    tbody.html(html);
-		    $('#detail-panel').show();
-		}
-		
-		// 预览证件图片（支持多图片切换）
-		function previewCertificateImage(imageUrls) {
-		    // 转义HTML特殊字符，防止XSS攻击
-		    function escapeHtml(text) {
-		        var map = {
-		            '&': '&amp;',
-		            '<': '&lt;',
-		            '>': '&gt;',
-		            '"': '&quot;',
-		            "'": '&#039;'
-		        };
-		        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-		    }
-		    
-		    // 解析图片URL（支持逗号分隔的多个URL）
-		    var urlArray = [];
-		    if (imageUrls && imageUrls.trim() !== '') {
-		        var urls = imageUrls.split(',');
-		        for (var i = 0; i < urls.length; i++) {
-		            var url = urls[i].trim();
-		            if (url) {
-		                // 构建完整的图片URL
-		                if (url.indexOf('http://') === 0 || url.indexOf('https://') === 0) {
-		                    // 已经是绝对路径，直接使用
-		                    urlArray.push(url);
-		                } else if (url.indexOf('/') === 0) {
-		                    // 相对路径（以/开头），添加上下文路径
-		                    urlArray.push(ctx + url.substring(1));
-		                } else {
-		                    // 其他情况，添加上下文路径
-		                    urlArray.push(ctx + url);
-		                }
-		            }
-		        }
-		    }
-		    
-		    if (urlArray.length === 0) {
-		        $.modal.alertWarning("没有可预览的图片");
-		        return;
-		    }
-		    
-		    // 当前显示的图片索引
-		    var currentIndex = 0;
-		    
-		    // 构建预览内容HTML
-		    function buildPreviewContent() {
-		        var currentUrl = escapeHtml(urlArray[currentIndex]);
-		        var html = '<div style="text-align: center; padding: 20px; overflow: auto; height: 100%; position: relative;">';
-		        
-		        // 如果有多张图片，显示切换按钮和图片计数
-		        if (urlArray.length > 1) {
-		            html += '<div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 5px 15px; border-radius: 15px; z-index: 1000; font-size: 14px;">';
-		            html += '第 ' + (currentIndex + 1) + ' 张 / 共 ' + urlArray.length + ' 张';
-		            html += '</div>';
-		            
-		            // 上一张按钮
-		            if (currentIndex > 0) {
-		                html += '<button id="prev-image-btn" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.7); color: white; border: none; padding: 15px 20px; border-radius: 5px; cursor: pointer; font-size: 18px; z-index: 1000;" onmouseover="this.style.background=\'rgba(0,0,0,0.9)\'" onmouseout="this.style.background=\'rgba(0,0,0,0.7)\'">‹</button>';
-		            }
-		            
-		            // 下一张按钮
-		            if (currentIndex < urlArray.length - 1) {
-		                html += '<button id="next-image-btn" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.7); color: white; border: none; padding: 15px 20px; border-radius: 5px; cursor: pointer; font-size: 18px; z-index: 1000;" onmouseover="this.style.background=\'rgba(0,0,0,0.9)\'" onmouseout="this.style.background=\'rgba(0,0,0,0.7)\'">›</button>';
-		            }
-		        }
-		        
-		        // 图片
-		        html += '<img id="preview-image" src="' + currentUrl + '" style="max-width: 100%; max-height: calc(100% - 40px); cursor: pointer; margin-top: 30px;" ';
-		        html += 'onclick="var img = this; if(img.style.maxWidth === \'none\') { img.style.maxWidth=\'100%\'; img.style.maxHeight=\'calc(100% - 40px)\'; } else { img.style.maxWidth=\'none\'; img.style.maxHeight=\'none\'; }" ';
-		        html += 'onerror="this.onerror=null; this.src=\'' + ctx + 'img/error.png\';" />';
-		        html += '</div>';
-		        
-		        return html;
-		    }
-		    
-		    // 使用layer弹窗显示图片
-		    if (typeof layer !== 'undefined') {
-		        var layerIndex = layer.open({
-		            type: 1,
-		            title: '证件图片预览' + (urlArray.length > 1 ? '（' + urlArray.length + '张）' : ''),
-		            shadeClose: true,
-		            shade: 0.8,
-		            area: ['90%', '90%'],
-		            content: buildPreviewContent(),
-		            success: function(layero, index) {
-		                // 更新预览内容的函数
-		                function updatePreview() {
-		                    layero.find('.layui-layer-content').html(buildPreviewContent());
-		                    // 重新绑定按钮事件
-		                    bindButtonEvents();
-		                }
-		                
-		                // 绑定切换按钮事件
-		                function bindButtonEvents() {
-		                    // 移除旧的事件监听
-		                    layero.find('#prev-image-btn').off('click');
-		                    layero.find('#next-image-btn').off('click');
-		                    
-		                    // 上一张
-		                    layero.find('#prev-image-btn').on('click', function() {
-		                        if (currentIndex > 0) {
-		                            currentIndex--;
-		                            updatePreview();
-		                        }
-		                    });
-		                    
-		                    // 下一张
-		                    layero.find('#next-image-btn').on('click', function() {
-		                        if (currentIndex < urlArray.length - 1) {
-		                            currentIndex++;
-		                            updatePreview();
-		                        }
-		                    });
-		                }
-		                
-		                // 绑定切换按钮事件
-		                if (urlArray.length > 1) {
-		                    bindButtonEvents();
-		                    
-		                    // 键盘左右箭头切换
-		                    $(document).on('keydown.preview', function(e) {
-		                        if (e.keyCode === 37) { // 左箭头
-		                            if (currentIndex > 0) {
-		                                currentIndex--;
-		                                updatePreview();
-		                            }
-		                        } else if (e.keyCode === 39) { // 右箭头
-		                            if (currentIndex < urlArray.length - 1) {
-		                                currentIndex++;
-		                                updatePreview();
-		                            }
-		                        }
-		                    });
-		                }
-		            },
-		            end: function() {
-		                // 关闭后移除键盘事件监听
-		                $(document).off('keydown.preview');
-		            }
-		        });
-		    } else {
-		        // 如果layer不可用，使用新窗口打开第一张图片
-		        window.open(urlArray[0], '_blank');
-		    }
 		}
 		
 		// 审核

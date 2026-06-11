@@ -206,9 +206,9 @@ public class SupplierCertificateController extends BaseController
     }
 
     /**
-     * 列表页「上传证照」：仅维护证件图片
+     * 列表页「上传证照」：仅维护证件图片（登记页 edit；审核页 audit 亦可上传）
      */
-    @RequiresPermissions("certificate:supplier:edit")
+    @RequiresPermissions(value = { "certificate:supplier:edit", "certificate:supplier:audit" }, logical = Logical.OR)
     @GetMapping("/upload/{certificateId}")
     public String uploadImages(@PathVariable("certificateId") Long certificateId, ModelMap mmap)
     {
@@ -232,7 +232,7 @@ public class SupplierCertificateController extends BaseController
     /**
      * 保存证照图片（可清空）
      */
-    @RequiresPermissions("certificate:supplier:edit")
+    @RequiresPermissions(value = { "certificate:supplier:edit", "certificate:supplier:audit" }, logical = Logical.OR)
     @Log(title = "供应商证件管理", businessType = BusinessType.UPDATE)
     @PostMapping("/updateCertificateFile")
     @ResponseBody
