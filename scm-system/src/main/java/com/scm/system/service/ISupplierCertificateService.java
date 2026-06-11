@@ -66,6 +66,11 @@ public interface ISupplierCertificateService
     public int updateCertificateFile(Long certificateId, String certificateFile, String updateBy);
 
     /**
+     * 上传/修改页：更新证照信息与图片（未审核方可修改）
+     */
+    public int updateSupplierCertificateUpload(SupplierCertificate supplierCertificate);
+
+    /**
      * 批量删除供应商证件信息
      * 
      * @param ids 需要删除的数据ID
@@ -95,8 +100,19 @@ public interface ISupplierCertificateService
     public void checkAndUpdateExpiredStatus();
 
     /**
-     * 按「证件配置 supplier_certificate」与 scm_certificate_type 为供应商补齐缺失的证件占位行
+     * 按「证件配置 supplier_certificate」与 scm_certificate_type 为供应商在各关联医院补齐缺失的证件占位行
      */
     public void ensureMissingCertificatesForSupplier(Long supplierId, String createBy);
+
+    /**
+     * 为指定供应商在指定医院补齐缺失的企业证件占位行
+     */
+    public void ensureMissingCertificatesForSupplierAtHospital(Long supplierId, Long hospitalId, String createBy);
+
+    /**
+     * 登记/查询列表前，按当前筛选上下文为相关供应商补齐企业证件占位行
+     */
+    public void ensureMissingCertificatesForListContext(Long bindSupplierId, String supplierIdsCsv, Long hospitalId,
+        String createBy);
 }
 

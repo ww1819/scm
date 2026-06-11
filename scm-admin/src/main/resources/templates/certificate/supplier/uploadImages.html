@@ -1,11 +1,172 @@
 <!DOCTYPE html>
-<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" class="cert-upload-root">
 <head>
 	<th:block th:include="include :: header('上传证照图片')" />
 	<th:block th:include="include :: bootstrap-fileinput-css" />
+	<style>
+		html.cert-upload-root,
+		html.cert-upload-root body.cert-upload-body {
+			height: 100%;
+			margin: 0;
+			overflow: hidden;
+			box-sizing: border-box;
+		}
+		body.cert-upload-body {
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+		}
+		.cert-upload-body .main-content {
+			flex: 1 1 0%;
+			min-height: 0;
+			overflow: hidden;
+			padding-bottom: 0 !important;
+			display: flex;
+			flex-direction: column;
+		}
+		#form-cert-upload {
+			flex: 1 1 0%;
+			min-height: 0;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+		}
+		#form-cert-upload > .form-header.h4 {
+			margin-bottom: 6px;
+		}
+		.cert-section-header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			flex-shrink: 0;
+			margin: 0 15px 6px;
+		}
+		.cert-section-header .form-header.h4 {
+			margin: 0;
+		}
+		.cert-section-actions {
+			flex-shrink: 0;
+			white-space: nowrap;
+		}
+		.cert-info-panel {
+			margin: 0 15px 12px;
+			padding: 10px 15px 8px;
+			background: #fff;
+			border: 1px solid #e7eaec;
+			border-radius: 4px;
+			flex-shrink: 0;
+		}
+		.cert-readonly-form .cert-inline-field {
+			display: flex;
+			align-items: center;
+			margin-bottom: 8px;
+		}
+		.cert-readonly-form .cert-inline-field > label {
+			flex-shrink: 0;
+			width: 68px;
+			text-align: right;
+			margin: 0 6px 0 0;
+			font-size: 12px;
+			font-weight: normal;
+			color: #666;
+			white-space: nowrap;
+		}
+		.cert-readonly-form .cert-inline-field > .form-control {
+			flex: 0 0 auto;
+			width: 118px;
+			height: 28px;
+			padding: 2px 6px;
+			font-size: 12px;
+			background-color: #fff;
+			border-color: #e5e6e7;
+		}
+		.cert-readonly-form .cert-inline-field > .form-control.input-wide {
+			width: 168px;
+		}
+		.cert-readonly-form .cert-inline-field > select.form-control {
+			flex: 0 0 auto;
+			width: 118px;
+			height: 28px;
+			padding: 2px 6px;
+			font-size: 12px;
+		}
+		.cert-readonly-form .cert-inline-field > select.form-control.input-wide {
+			width: 168px;
+		}
+		.cert-readonly-form .cert-inline-field > .form-control[readonly],
+		.cert-readonly-form .cert-inline-field > .form-control:disabled,
+		.cert-readonly-form .cert-inline-field > select.form-control:disabled {
+			background-color: #fff;
+		}
+		.cert-audited-tip {
+			margin: 0 15px 8px;
+			flex-shrink: 0;
+		}
+		.cert-image-header {
+			display: flex;
+			align-items: center;
+			flex-wrap: wrap;
+			gap: 10px;
+			margin-bottom: 10px;
+			flex-shrink: 0;
+		}
+		.cert-image-header .cert-image-tip {
+			font-size: 12px;
+			font-weight: normal;
+			color: #e74c3c;
+			line-height: 1.4;
+		}
+		.cert-upload-area .file-preview .fileinput-remove {
+			display: none !important;
+		}
+		.cert-upload-body #scroll-up {
+			display: none !important;
+		}
+		#form-cert-upload > .row {
+			flex: 1 1 0%;
+			min-height: 0;
+			overflow: hidden;
+			margin-left: 0;
+			margin-right: 0;
+		}
+		.cert-upload-area {
+			padding: 0 15px;
+			height: 100%;
+			overflow: hidden;
+		}
+		#form-cert-upload > .row > .col-sm-12 {
+			height: 100%;
+			padding-left: 0;
+			padding-right: 0;
+		}
+		.cert-upload-area .file-input {
+			height: 100%;
+		}
+		.cert-upload-area .file-preview {
+			overflow: hidden;
+		}
+		.cert-upload-area .file-drop-zone {
+			min-height: 120px;
+			margin: 0;
+			padding: 6px 8px;
+		}
+		.cert-upload-area .krajee-default.file-preview-frame {
+			margin: 4px;
+		}
+		.cert-upload-area .krajee-default.file-preview-frame .kv-file-content {
+			width: 160px;
+			height: 100px;
+		}
+		.cert-upload-area .krajee-default.file-preview-frame .file-thumbnail-footer {
+			height: 56px;
+		}
+		.cert-upload-area .file-preview-image {
+			max-height: 100px;
+		}
+	</style>
 </head>
-<body>
-    <div class="main-content" style="padding-bottom: 100px;">
+<body class="cert-upload-body">
+    <div class="main-content">
         <div th:if="${uploadLoadError != null}" class="alert alert-warning" style="margin: 15px;">
             <i class="fa fa-warning"></i> [[${uploadLoadError}]]
         </div>
@@ -15,144 +176,124 @@
             <!-- 用 data 传递图片路径，避免内联 JS 字符串被路径中的引号/反斜杠截断导致整页脚本失效 -->
             <div id="cert-upload-data" th:data-current-file="${supplierCertificate.certificateFile}" style="display:none"></div>
 
-            <h4 class="form-header h4">证照信息（只读）</h4>
-            <p class="text-muted" style="padding: 0 15px 10px;">以下信息仅供核对，不可编辑；仅可在下方维护证照图片。后续可与「新增/修改」权限拆分。</p>
-
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">证件ID</label>
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" readonly th:value="${supplierCertificate.certificateId}">
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">供应商</label>
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" readonly
-                                   th:value="${(supplierCertificate.supplierName != null and !#strings.isEmpty(supplierCertificate.supplierName)) ? (supplierCertificate.supplierName + '（' + (supplierCertificate.supplierCode != null ? supplierCertificate.supplierCode : '-') + '）') : '-'}">
-                        </div>
-                    </div>
+            <div class="cert-section-header" th:if="${supplierCertificate != null}">
+                <h4 class="form-header h4">证照信息</h4>
+                <div class="cert-section-actions">
+                    <button type="button" class="btn btn-sm btn-primary" th:if="${certEditable}" onclick="submitUpload()"><i class="fa fa-check"></i> 保 存</button>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i> 关 闭</button>
                 </div>
             </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">证件类型</label>
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" readonly th:value="${supplierCertificate.certificateType != null ? supplierCertificate.certificateType : '-'}">
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">证件编号</label>
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" readonly th:value="${supplierCertificate.certificateNo != null ? supplierCertificate.certificateNo : '-'}">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">是否长期</label>
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" readonly
-                                   th:value="${(supplierCertificate.certificateName == '是' or supplierCertificate.certificateName == '1') ? '是' : '否'}">
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">审核状态</label>
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" readonly
-                                   th:value="${supplierCertificate.auditStatus == '1' ? '已审核' : (supplierCertificate.auditStatus == '2' ? '已拒绝' : '待审核')}">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">发证日期</label>
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" readonly
-                                   th:value="${supplierCertificate.issueDate != null ? #dates.format(supplierCertificate.issueDate, 'yyyy-MM-dd') : '-'}">
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">有效期至</label>
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" readonly
-                                   th:value="${supplierCertificate.expireDate != null ? #dates.format(supplierCertificate.expireDate, 'yyyy-MM-dd') : '-'}">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">创建人</label>
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" readonly th:value="${supplierCertificate.createBy != null ? supplierCertificate.createBy : '-'}">
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">创建时间</label>
-                        <div class="col-sm-8">
-                            <input type="text" class="form-control" readonly
-                                   th:value="${supplierCertificate.createTime != null ? #dates.format(supplierCertificate.createTime, 'yyyy-MM-dd HH:mm:ss') : '-'}">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-12">
-                    <div class="form-group">
-                        <label class="col-xs-2 control-label">备注</label>
-                        <div class="col-xs-10">
-                            <textarea class="form-control" rows="2" readonly th:text="${supplierCertificate.remark != null ? supplierCertificate.remark : ''}"></textarea>
-                        </div>
-                    </div>
-                </div>
+            <h4 class="form-header h4" th:if="${supplierCertificate == null}">证照信息</h4>
+            <div class="alert alert-info cert-audited-tip" th:if="${supplierCertificate != null and !certEditable}">
+                <i class="fa fa-info-circle"></i> 该证件已审核，不可修改。
             </div>
 
-            <h4 class="form-header h4">证照图片（可维护）</h4>
-            <p class="text-muted" style="padding: 0 15px;">可上传多张图片；在预览中删除图片后点保存，即可从系统中移除对应图片。</p>
+            <div class="cert-info-panel cert-readonly-form">
             <div class="row">
-                <div class="col-sm-12">
-                    <div class="form-group">
-                        <label class="col-xs-2 control-label">图片</label>
-                        <div class="col-xs-10">
-                            <div class="file-loading">
-                                <input id="certificateFile" name="certificateFile" type="file" accept="image/*">
-                            </div>
-                            <input type="hidden" name="certificateFile" id="certificateFileUrl" th:value="${supplierCertificate.certificateFile}">
-                        </div>
+                <div class="col-sm-3">
+                    <div class="cert-inline-field">
+                        <label>供应商</label>
+                        <input type="text" class="form-control input-wide" readonly
+                               th:title="${(supplierCertificate.supplierName != null and !#strings.isEmpty(supplierCertificate.supplierName)) ? (supplierCertificate.supplierName + '（' + (supplierCertificate.supplierCode != null ? supplierCertificate.supplierCode : '-') + '）') : '-'}"
+                               th:value="${(supplierCertificate.supplierName != null and !#strings.isEmpty(supplierCertificate.supplierName)) ? (supplierCertificate.supplierName + '（' + (supplierCertificate.supplierCode != null ? supplierCertificate.supplierCode : '-') + '）') : '-'}">
                     </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="cert-inline-field">
+                        <label>证件类型</label>
+                        <input type="text" class="form-control input-wide" readonly
+                               th:title="${supplierCertificate.certificateType != null ? supplierCertificate.certificateType : '-'}"
+                               th:value="${supplierCertificate.certificateType != null ? supplierCertificate.certificateType : '-'}">
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="cert-inline-field">
+                        <label>证件编号</label>
+                        <input name="certificateNo" id="certificateNo" type="text" class="form-control" maxlength="100"
+                               th:readonly="${!certEditable}"
+                               th:value="${supplierCertificate.certificateNo != null ? supplierCertificate.certificateNo : ''}">
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="cert-inline-field">
+                        <label>长期</label>
+                        <select name="certificateName" id="certificateName" class="form-control"
+                                th:disabled="${!certEditable}">
+                            <option value="否" th:selected="${supplierCertificate.certificateName == null or supplierCertificate.certificateName == '' or supplierCertificate.certificateName == '否'}">否</option>
+                            <option value="是" th:selected="${supplierCertificate.certificateName == '是' or supplierCertificate.certificateName == '1'}">是</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3">
+                    <div class="cert-inline-field">
+                        <label>审核状态</label>
+                        <input type="text" class="form-control" readonly
+                               th:value="${supplierCertificate.auditStatus == '1' ? '已审核' : (supplierCertificate.auditStatus == '2' ? '已拒绝' : '待审核')}">
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="cert-inline-field">
+                        <label>发证日期</label>
+                        <input name="issueDate" type="date" class="form-control"
+                               th:readonly="${!certEditable}"
+                               th:value="${supplierCertificate.issueDate != null ? #dates.format(supplierCertificate.issueDate, 'yyyy-MM-dd') : ''}">
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="cert-inline-field">
+                        <label>有效期至</label>
+                        <input name="expireDate" id="expireDate" type="date" class="form-control"
+                               th:readonly="${!certEditable}"
+                               th:value="${supplierCertificate.expireDate != null ? #dates.format(supplierCertificate.expireDate, 'yyyy-MM-dd') : ''}">
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="cert-inline-field">
+                        <label>创建人</label>
+                        <input type="text" class="form-control" readonly th:value="${supplierCertificate.createBy != null ? supplierCertificate.createBy : '-'}">
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3">
+                    <div class="cert-inline-field">
+                        <label>创建时间</label>
+                        <input type="text" class="form-control input-wide" readonly
+                               th:value="${supplierCertificate.createTime != null ? #dates.format(supplierCertificate.createTime, 'yyyy-MM-dd HH:mm:ss') : '-'}">
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="cert-inline-field">
+                        <label>备注</label>
+                        <input name="remark" id="remark" type="text" class="form-control input-wide" maxlength="500"
+                               th:readonly="${!certEditable}"
+                               th:value="${supplierCertificate.remark != null ? supplierCertificate.remark : ''}">
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <h4 class="form-header h4 cert-image-header">
+                证照图片
+                <span class="cert-image-tip">可上传多张图片；在预览中删除图片后点保存，即可从系统中移除对应图片！</span>
+            </h4>
+            <div class="row">
+                <div class="col-sm-12 cert-upload-area">
+                    <div class="file-loading">
+                        <input id="certificateFile" name="certificateFile" type="file" accept="image/*">
+                    </div>
+                    <input type="hidden" name="certificateFile" id="certificateFileUrl" th:value="${supplierCertificate.certificateFile}">
                 </div>
             </div>
         </form>
     </div>
-    <div class="row" th:if="${supplierCertificate != null}" style="position: fixed; bottom: 0; left: 0; right: 0; background-color: #fff; padding: 15px 20px; border-top: 1px solid #ddd; z-index: 1000; box-shadow: 0 -2px 8px rgba(0,0,0,0.1);">
-        <div class="col-sm-offset-5 col-sm-10">
-            <button type="button" class="btn btn-sm btn-primary" onclick="submitUpload()"><i class="fa fa-check"></i> 保 存</button>&nbsp;
-            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i> 关 闭</button>
-        </div>
-    </div>
-    <div style="height: 70px;" th:if="${supplierCertificate != null}"></div>
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: bootstrap-fileinput-js" />
 	<script th:inline="javascript" th:if="${supplierCertificate != null}">
 	    var prefix = ctx + "certificate/supplier";
+	    var certEditable = /*[[${certEditable}]]*/ true;
 	    var currentFile = (function() {
 	        var el = document.getElementById("cert-upload-data");
 	        return el ? (el.getAttribute("data-current-file") || "") : "";
@@ -162,6 +303,21 @@
 	    var updateFileUrlsArray = function() {};
 
 	    $(function() {
+	        if (certEditable) {
+	            $("#certificateName").on('change', function() {
+	                var isLongTerm = $(this).val();
+	                var $expireDateInput = $("#expireDate");
+	                if (isLongTerm === '是') {
+	                    $expireDateInput.val('').prop('readonly', true);
+	                } else {
+	                    $expireDateInput.prop('readonly', false);
+	                }
+	            });
+	            if ($("#certificateName").val() === '是') {
+	                $("#expireDate").val('').prop('readonly', true);
+	            }
+	        }
+
 	        var initialPreview = [];
 	        var initialPreviewConfig = [];
 	        if (currentFile && currentFile !== '') {
@@ -189,7 +345,7 @@
 	            }
 	        }
 
-	        $("#certificateFile").fileinput({
+	        var fileInputOptions = {
 	            uploadUrl: ctx + 'common/upload',
 	            paramName: 'file',
 	            maxFileCount: 2,
@@ -197,10 +353,14 @@
 	            allowedFileTypes: ['image'],
 	            allowedFileExtensions: ['jpg', 'jpeg', 'png', 'gif', 'bmp'],
 	            maxFileSize: 5120,
-	            showUpload: true,
-	            showRemove: true,
+	            showUpload: certEditable,
+	            showRemove: certEditable,
 	            showPreview: true,
+	            showClose: false,
 	            showCaption: true,
+	            previewSettings: {
+	                image: { width: 'auto', height: '100px', 'max-width': '100%', 'max-height': '100px' }
+	            },
 	            browseClass: "btn btn-primary",
 	            uploadClass: "btn btn-success",
 	            removeClass: "btn btn-danger",
@@ -210,10 +370,11 @@
 	            initialPreviewAsData: true,
 	            overwriteInitial: false,
 	            initialPreviewFileType: 'image',
-	            initialPreviewShowDelete: true,
+	            initialPreviewShowDelete: certEditable,
 	            previewFileType: 'image',
 	            uploadAsync: true,
 	            autoUpload: true,
+	            dropZoneEnabled: certEditable,
 	            ajaxSettings: {
 	                xhrFields: { withCredentials: true },
 	                beforeSend: function(xhr) {
@@ -223,7 +384,12 @@
 	                    }
 	                }
 	            }
-	        }).on('fileuploaded', function (event, data, previewId, index) {
+	        };
+	        if (!certEditable) {
+	            fileInputOptions.showBrowse = false;
+	        }
+
+	        $("#certificateFile").fileinput(fileInputOptions).on('fileuploaded', function (event, data, previewId, index) {
 	            var rsp = data.response;
 	            if (typeof rsp === 'string') {
 	                try { rsp = JSON.parse(rsp); } catch(e) {}
@@ -283,6 +449,10 @@
 	    });
 
 	    function submitUpload() {
+	        if (!certEditable) {
+	            $.modal.alertWarning("该证件已审核，不可修改");
+	            return;
+	        }
 	        updateFileUrlsArray();
 	        var $fileInput = $("#certificateFile");
 	        var filesCount = $fileInput.fileinput('getFilesCount') || 0;
@@ -306,8 +476,16 @@
 	    function doPost() {
 	        var certId = $("#certificateId").val();
 	        var urls = $("#certificateFileUrl").val() || '';
-	        var data = { certificateId: certId, certificateFile: urls };
-	        $.operate.saveTab(prefix + "/updateCertificateFile", data);
+	        var data = {
+	            certificateId: certId,
+	            certificateFile: urls,
+	            certificateNo: $("#certificateNo").val() || '',
+	            certificateName: $("#certificateName").val() || '否',
+	            issueDate: $("input[name='issueDate']").val() || '',
+	            expireDate: $("#expireDate").val() || '',
+	            remark: $("#remark").val() || ''
+	        };
+	        $.operate.saveTab(prefix + "/updateUpload", data);
 	    }
 	</script>
 </body>

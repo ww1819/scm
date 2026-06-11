@@ -1,7 +1,9 @@
 package com.scm.web.controller.certificate;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.Logical;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -22,9 +24,13 @@ import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.enums.BusinessType;
 import com.scm.common.utils.poi.ExcelUtil;
+import com.scm.system.domain.Hospital;
+import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.Supplier;
 import com.scm.system.domain.SupplierCertificate;
 import com.scm.system.domain.CertificateType;
+import com.scm.system.service.IHospitalService;
+import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.IScmSupplierContextService;
 import com.scm.system.service.ISupplierCertificateService;
 import com.scm.system.service.ICertificateTypeService;
@@ -52,6 +58,12 @@ public class SupplierCertificateController extends BaseController
 
     @Autowired
     private IScmSupplierContextService scmSupplierContextService;
+
+    @Autowired
+    private IHospitalSupplierService hospitalSupplierService;
+
+    @Autowired
+    private IHospitalService hospitalService;
 
     /** 登记页：view 或 list 任一即可（与产品证件登记页策略一致） */
     @RequiresPermissions(value = { "certificate:supplier:view", "certificate:supplier:list" }, logical = Logical.OR)
@@ -83,12 +95,56 @@ public class SupplierCertificateController extends BaseController
     @ResponseBody
     public TableDataInfo list(SupplierCertificate supplierCertificate, String supplierIds, Long hospitalId)
     {
-        startPage();
         Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
+        supplierCertificateService.ensureMissingCertificatesForListContext(bindSid, supplierIds, hospitalId,
+            getLoginName());
+        startPage();
+        if (hospitalId == null)
+        {
+            // 审核页等场景：未选医院时按供应商查看全部医院的资质
+            if (bindSid != null)
+            {
+                supplierCertificate.setSupplierId(bindSid);
+                return getDataTable(supplierCertificateService.selectSupplierCertificateList(supplierCertificate));
+            }
+            if (supplierIds != null && !supplierIds.isEmpty())
+            {
+                String[] idArray = supplierIds.split(",");
+                List<Long> supplierIdList = new ArrayList<>();
+                for (String id : idArray)
+                {
+                    if (!id.isEmpty())
+                    {
+                        try
+                        {
+                            supplierIdList.add(Long.parseLong(id));
+                        }
+                        catch (NumberFormatException e)
+                        {
+                            // 忽略无效的ID
+                        }
+                    }
+                }
+                if (supplierIdList.size() == 1)
+                {
+                    supplierCertificate.setSupplierId(supplierIdList.get(0));
+                    return getDataTable(supplierCertificateService.selectSupplierCertificateList(supplierCertificate));
+                }
+                if (supplierIdList.size() > 1)
+                {
+                    return getDataTable(supplierCertificateService.selectSupplierCertificateListBySupplierIds(
+                        supplierCertificate, supplierIdList, null));
+                }
+            }
+            return getDataTable(new ArrayList<>());
+        }
         if (bindSid != null)
         {
             supplierCertificate.setSupplierId(bindSid);
-            List<SupplierCertificate> scoped = supplierCertificateService.selectSupplierCertificateList(supplierCertificate);
+            List<Long> supplierIdList = new ArrayList<>();
+            supplierIdList.add(bindSid);
+            List<SupplierCertificate> scoped = supplierCertificateService
+                .selectSupplierCertificateListBySupplierIds(supplierCertificate, supplierIdList, hospitalId);
             return getDataTable(scoped);
         }
         // 如果传入了供应商ID列表（逗号分隔），则只查询这些供应商的证件
@@ -110,26 +166,50 @@ public class SupplierCertificateController extends BaseController
                     }
                 }
             }
-            // 医院筛选场景下，无论供应商数量多少都统一走按供应商ID列表+医院ID查询，
-            // 避免单供应商时遗漏hospitalId过滤导致结果不一致。
-            if (hospitalId != null && supplierIdList.size() > 0)
+            if (supplierIdList.size() > 0)
             {
-                List<SupplierCertificate> list = supplierCertificateService.selectSupplierCertificateListBySupplierIds(supplierCertificate, supplierIdList, hospitalId);
-                return getDataTable(list);
-            }
-            // 如果只有一个供应商ID，直接设置
-            if (supplierIdList.size() == 1)
-            {
-                supplierCertificate.setSupplierId(supplierIdList.get(0));
-            }
-            else if (supplierIdList.size() > 1)
-            {
-                List<SupplierCertificate> list = supplierCertificateService.selectSupplierCertificateListBySupplierIds(supplierCertificate, supplierIdList, hospitalId);
+                List<SupplierCertificate> list = supplierCertificateService.selectSupplierCertificateListBySupplierIds(
+                    supplierCertificate, supplierIdList, hospitalId);
                 return getDataTable(list);
             }
         }
+        supplierCertificate.setHospitalId(hospitalId);
         List<SupplierCertificate> list = supplierCertificateService.selectSupplierCertificateList(supplierCertificate);
         return getDataTable(list);
+    }
+
+    /**
+     * 左侧医院列表：平台账号返回全部医院；供应商账号仅返回已关联且有效的医院
+     */
+    @RequiresPermissions(value = { "certificate:supplier:view", "certificate:supplier:list" }, logical = Logical.OR)
+    @GetMapping("/linkedHospitals")
+    @ResponseBody
+    public AjaxResult linkedHospitals()
+    {
+        Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
+        if (bindSid != null)
+        {
+            List<HospitalSupplier> relations = hospitalSupplierService.selectSupplierLinkedHospitalsForProduct(bindSid);
+            List<Map<String, Object>> hospitals = new ArrayList<>();
+            if (relations != null)
+            {
+                for (HospitalSupplier hs : relations)
+                {
+                    if (hs.getHospitalId() == null)
+                    {
+                        continue;
+                    }
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("hospitalId", hs.getHospitalId());
+                    row.put("hospitalCode", hs.getHospitalCode());
+                    row.put("hospitalName", hs.getHospitalName());
+                    hospitals.add(row);
+                }
+            }
+            return success(hospitals);
+        }
+        List<Hospital> list = hospitalService.selectHospitalList(new Hospital());
+        return success(list);
     }
 
     /**
@@ -226,7 +306,21 @@ public class SupplierCertificateController extends BaseController
             mmap.put("uploadLoadError", "证件不存在。");
         }
         mmap.put("supplierCertificate", supplierCertificate);
+        mmap.put("certEditable", supplierCertificate != null && !"1".equals(supplierCertificate.getAuditStatus()));
         return prefix + "/uploadImages";
+    }
+
+    /**
+     * 上传/修改页保存：证照信息与图片（未审核方可修改）
+     */
+    @RequiresPermissions(value = { "certificate:supplier:edit", "certificate:supplier:audit" }, logical = Logical.OR)
+    @Log(title = "供应商证件管理", businessType = BusinessType.UPDATE)
+    @PostMapping("/updateUpload")
+    @ResponseBody
+    public AjaxResult updateUpload(SupplierCertificate supplierCertificate)
+    {
+        supplierCertificate.setUpdateBy(getLoginName());
+        return toAjax(supplierCertificateService.updateSupplierCertificateUpload(supplierCertificate));
     }
 
     /**

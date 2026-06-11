@@ -4,7 +4,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.alibaba.fastjson.JSON;
@@ -15,6 +18,7 @@ import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.uuid.IdUtils;
 import com.scm.system.domain.CertificateType;
+import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.ScmSupplierCertChangeLog;
 import com.scm.system.domain.SupplierCertificate;
 import com.scm.system.mapper.HospitalSupplierMapper;
@@ -109,7 +113,6 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         if (ctx != null)
         {
             supplierIds = new ArrayList<>(Collections.singletonList(ctx));
-            hospitalId = null;
         }
         return supplierCertificateMapper.selectSupplierCertificateListBySupplierIds(supplierCertificate, supplierIds, hospitalId);
     }
@@ -174,6 +177,7 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         if (before != null)
         {
             assertSupplierCertificateViewScope(before);
+            assertCertificateEditable(before);
         }
         Long sid = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
         if (sid != null)
@@ -201,6 +205,7 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
             throw new ServiceException("证件不存在");
         }
         assertSupplierCertificateViewScope(before);
+        assertCertificateEditable(before);
         SupplierCertificate row = new SupplierCertificate();
         row.setCertificateId(certificateId);
         row.setCertificateFile(certificateFile != null ? certificateFile : "");
@@ -212,6 +217,70 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
             writeCertChangeLogs("UPDATE", before, after, updateBy);
         }
         return rows;
+    }
+
+    @Override
+    public int updateSupplierCertificateUpload(SupplierCertificate supplierCertificate)
+    {
+        if (supplierCertificate.getCertificateId() == null)
+        {
+            throw new ServiceException("证件ID不能为空");
+        }
+        SupplierCertificate before = supplierCertificateMapper.selectSupplierCertificateById(supplierCertificate.getCertificateId());
+        if (before == null)
+        {
+            throw new ServiceException("证件不存在");
+        }
+        assertSupplierCertificateViewScope(before);
+        assertCertificateEditable(before);
+
+        SupplierCertificate row = new SupplierCertificate();
+        row.setCertificateId(supplierCertificate.getCertificateId());
+        row.setCertificateNo(supplierCertificate.getCertificateNo() != null ? supplierCertificate.getCertificateNo() : "");
+        String longTerm = supplierCertificate.getCertificateName();
+        if (StringUtils.isEmpty(longTerm))
+        {
+            longTerm = "否";
+        }
+        row.setCertificateName(longTerm);
+        row.setIssueDate(supplierCertificate.getIssueDate());
+        if ("是".equals(longTerm) || "1".equals(longTerm))
+        {
+            row.setExpireDate(null);
+            row.setIsExpired("0");
+            row.setIsWarning("0");
+        }
+        else
+        {
+            row.setExpireDate(supplierCertificate.getExpireDate());
+            if (row.getExpireDate() != null)
+            {
+                checkExpiredStatus(row);
+            }
+            else
+            {
+                row.setIsExpired("0");
+                row.setIsWarning("0");
+            }
+        }
+        row.setCertificateFile(supplierCertificate.getCertificateFile() != null ? supplierCertificate.getCertificateFile() : "");
+        row.setRemark(supplierCertificate.getRemark() != null ? supplierCertificate.getRemark() : "");
+        row.setUpdateBy(supplierCertificate.getUpdateBy());
+        int rows = supplierCertificateMapper.updateSupplierCertificateUpload(row);
+        if (rows > 0)
+        {
+            SupplierCertificate after = supplierCertificateMapper.selectSupplierCertificateById(supplierCertificate.getCertificateId());
+            writeCertChangeLogs("UPDATE", before, after, supplierCertificate.getUpdateBy());
+        }
+        return rows;
+    }
+
+    private void assertCertificateEditable(SupplierCertificate certificate)
+    {
+        if (certificate != null && "1".equals(certificate.getAuditStatus()))
+        {
+            throw new ServiceException("已审核的证件不允许修改");
+        }
     }
 
     /**
@@ -410,6 +479,21 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         }
         String bj = before != null ? JSON.toJSONString(before) : null;
         String aj = after != null ? JSON.toJSONString(after) : null;
+        Long certHospitalId = after != null ? after.getHospitalId() : (before != null ? before.getHospitalId() : null);
+        if (certHospitalId != null)
+        {
+            ScmSupplierCertChangeLog log = new ScmSupplierCertChangeLog();
+            log.setLogId(IdUtils.dashedUuid7());
+            log.setSupplierId(supplierId);
+            log.setHospitalId(certHospitalId);
+            log.setCertificateId(certificateId);
+            log.setChangeType(changeType);
+            log.setBeforeJson(bj);
+            log.setAfterJson(aj);
+            log.setCreateBy(operBy);
+            scmSupplierCertChangeLogMapper.insertChangeLog(log);
+            return;
+        }
         for (Long hid : hospitalIds)
         {
             ScmSupplierCertChangeLog log = new ScmSupplierCertChangeLog();
@@ -432,12 +516,53 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         {
             return;
         }
+        List<Long> hospitalIds = hospitalSupplierMapper.selectHospitalIdsInActiveSupplyForSupplier(supplierId);
+        if (hospitalIds == null || hospitalIds.isEmpty())
+        {
+            return;
+        }
+        for (Long hospitalId : hospitalIds)
+        {
+            ensureMissingCertificatesForSupplierAtHospital(supplierId, hospitalId, createBy);
+        }
+    }
+
+    @Override
+    public void ensureMissingCertificatesForSupplierAtHospital(Long supplierId, Long hospitalId, String createBy)
+    {
+        if (supplierId == null || hospitalId == null)
+        {
+            return;
+        }
         List<CertificateType> types = certificateTypeService.selectSupplierExtensionTypesForSnap();
         if (types == null || types.isEmpty())
         {
             return;
         }
+        int expectedCount = countUniqueSupplierTypeNames(types);
+        int existingCount = supplierCertificateMapper.countBySupplierAndHospital(supplierId, hospitalId);
+        if (existingCount >= expectedCount)
+        {
+            return;
+        }
+        if (existingCount == 0)
+        {
+            supplierCertificateMapper.assignNullHospitalCertificates(supplierId, hospitalId);
+            existingCount = supplierCertificateMapper.countBySupplierAndHospital(supplierId, hospitalId);
+        }
+        if (existingCount > expectedCount)
+        {
+            supplierCertificateMapper.deleteDuplicateCertificatesBySupplierId(supplierId, hospitalId);
+            existingCount = supplierCertificateMapper.countBySupplierAndHospital(supplierId, hospitalId);
+        }
+        if (existingCount >= expectedCount)
+        {
+            return;
+        }
+        Set<String> existingTypes = new HashSet<>(
+            supplierCertificateMapper.selectCertificateTypeNamesBySupplierAndHospital(supplierId, hospitalId));
         String oper = StringUtils.isNotEmpty(createBy) ? createBy : "system";
+        Set<String> seenTypeNames = new HashSet<>();
         for (CertificateType t : types)
         {
             if (t == null || StringUtils.isEmpty(t.getTypeCode()))
@@ -445,25 +570,108 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
                 continue;
             }
             String code = t.getTypeCode().trim();
-            int cnt = supplierCertificateMapper.countBySupplierIdAndCertificateType(supplierId, code);
-            if (cnt > 0)
+            String name = StringUtils.isNotEmpty(t.getTypeName()) ? t.getTypeName().trim() : code;
+            if (seenTypeNames.contains(name))
             {
                 continue;
             }
-            SupplierCertificate row = new SupplierCertificate();
-            row.setSupplierId(supplierId);
-            row.setCertificateType(code);
-            row.setCertificateName(StringUtils.isNotEmpty(t.getTypeName()) ? t.getTypeName() : code);
-            row.setCreateBy(oper);
-            try
+            seenTypeNames.add(name);
+            if (existingTypes.contains(name) || existingTypes.contains(code))
             {
-                insertSupplierCertificate(row);
+                continue;
             }
-            catch (Exception ignored)
+            insertPlaceholderCertificate(supplierId, hospitalId, name, oper);
+        }
+    }
+
+    private int countUniqueSupplierTypeNames(List<CertificateType> types)
+    {
+        Set<String> names = new HashSet<>();
+        for (CertificateType t : types)
+        {
+            if (t == null || StringUtils.isEmpty(t.getTypeCode()))
             {
-                // 单条失败不影响其它类型
+                continue;
             }
+            String name = StringUtils.isNotEmpty(t.getTypeName()) ? t.getTypeName().trim() : t.getTypeCode().trim();
+            names.add(name);
+        }
+        return names.size();
+    }
+
+    /** 登记页自动补齐占位行：不写变更日志，避免切换医院时拖慢列表 */
+    private void insertPlaceholderCertificate(Long supplierId, Long hospitalId, String typeName, String createBy)
+    {
+        SupplierCertificate row = new SupplierCertificate();
+        row.setSupplierId(supplierId);
+        row.setHospitalId(hospitalId);
+        row.setCertificateType(typeName);
+        row.setCertificateName("否");
+        row.setAuditStatus("0");
+        row.setStatus("0");
+        row.setCreateBy(createBy);
+        row.setCreateTime(DateUtils.getNowDate());
+        try
+        {
+            supplierCertificateMapper.insertSupplierCertificate(row);
+        }
+        catch (Exception ignored)
+        {
+            // 单条失败不影响其它类型
+        }
+    }
+
+    @Override
+    public void ensureMissingCertificatesForListContext(Long bindSupplierId, String supplierIdsCsv, Long hospitalId,
+        String createBy)
+    {
+        if (hospitalId == null)
+        {
+            return;
+        }
+        Set<Long> targetIds = new LinkedHashSet<>();
+        if (bindSupplierId != null)
+        {
+            targetIds.add(bindSupplierId);
+        }
+        else if (StringUtils.isNotEmpty(supplierIdsCsv))
+        {
+            for (String part : supplierIdsCsv.split(","))
+            {
+                String idStr = part != null ? part.trim() : "";
+                if (idStr.isEmpty() || "-1".equals(idStr))
+                {
+                    continue;
+                }
+                try
+                {
+                    targetIds.add(Long.parseLong(idStr));
+                }
+                catch (NumberFormatException ignored)
+                {
+                }
+            }
+        }
+        else
+        {
+            HospitalSupplier q = new HospitalSupplier();
+            q.setHospitalId(hospitalId);
+            q.setStatus("0");
+            List<HospitalSupplier> relations = hospitalSupplierMapper.selectHospitalSupplierList(q);
+            if (relations != null)
+            {
+                for (HospitalSupplier hs : relations)
+                {
+                    if (hs.getSupplierId() != null)
+                    {
+                        targetIds.add(hs.getSupplierId());
+                    }
+                }
+            }
+        }
+        for (Long supplierId : targetIds)
+        {
+            ensureMissingCertificatesForSupplierAtHospital(supplierId, hospitalId, createBy);
         }
     }
 }
-

@@ -205,6 +205,39 @@
 			margin: 0 !important;
 		}
 
+		/* 分页栏：记录信息与页码同一行，避免 float 换行 */
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination {
+			display: flex;
+			flex-wrap: nowrap;
+			align-items: center;
+			justify-content: space-between;
+			gap: 8px;
+			padding: 4px 172px 4px 10px;
+			border-top: 1px solid #eee;
+			background: #fff;
+			z-index: 3;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination::after {
+			display: none;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination > .pagination-detail,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination > .pagination {
+			float: none !important;
+			margin-top: 0 !important;
+			margin-bottom: 0 !important;
+			flex: 0 0 auto;
+			white-space: nowrap;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination > .pagination-detail {
+			flex: 1 1 auto;
+			min-width: 0;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
 		/* 右侧固定操作列（参考订单查询 / 医院关联审核） */
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-body .fixed-table-border {
 			display: none !important;
@@ -307,10 +340,6 @@
 			overflow-y: hidden !important;
 		}
 
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination .pagination {
-			margin-right: 172px;
-		}
-
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header table,
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body > table {
 			table-layout: fixed;
@@ -323,8 +352,9 @@
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierCode"],
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"],
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="hospitalCode"],
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="hospitalName"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateType"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateNo"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="expireDate"],
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="contactPerson"],
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="address"] {
 			overflow: hidden;
@@ -393,7 +423,7 @@
 							</select>
 						</li>
 						<li>
-							<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+							<a class="btn btn-primary btn-rounded btn-sm" onclick="searchAudit()"><i class="fa fa-search"></i>&nbsp;搜索</a>
 							<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
 						</li>
 					</ul>
@@ -456,6 +486,7 @@
 		var auditFlag = [[${@permission.hasPermi('certificate:supplier:audit')}]];
 		var uploadFlag = (editFlag !== 'hidden' || auditFlag !== 'hidden') ? '' : 'hidden';
 		var selectedSupplierId = null; // 当前选中的供应商ID
+		var allSuppliers = []; // 左侧供应商全量数据（用于搜索过滤）
 		var auditTableId = 'bootstrap-table';
 
 		var auditColWidths = {
@@ -463,10 +494,11 @@
 			serialNumber: 60,
 			supplierCode: 150,
 			supplierName: 200,
-			hospitalCode: 150,
-			hospitalName: 200,
+			certificateType: 120,
+			certificateNo: 150,
+			expireDate: 110,
 			contactPerson: 120,
-			address: 300,
+			address: 260,
 			auditOperate: 160
 		};
 
@@ -728,20 +760,23 @@
 		    
 		    var options = {
 		        url: prefix + "/list",
+		        formId: "supplier-certificate-form",
 		        uniqueId: "certificateId",  // 设置唯一ID字段，用于复选框选择
 		        rememberSelected: true,
 		        maintainSelected: true,
 		        queryParams: function(params) {
-		            // 根据状态筛选框的值进行筛选
+		            var curParams = $.table.queryParams(params);
 		            var auditStatusFilter = $('#auditStatusFilter').val();
 		            if (auditStatusFilter !== '') {
-		                params.auditStatus = auditStatusFilter;
+		                curParams.auditStatus = auditStatusFilter;
 		            }
-		            // 如果选中了供应商，按供应商ID筛选资质记录
-		            if (selectedSupplierId) {
-		                params.supplierIds = selectedSupplierId;
+		            delete curParams.auditStatusFilter;
+		            // 顶部未输入供应商名称时，按左侧选中的供应商过滤
+		            var supplierName = $.common.trim(curParams.supplierName || '');
+		            if (!supplierName && selectedSupplierId) {
+		                curParams.supplierIds = selectedSupplierId;
 		            }
-		            return params;
+		            return curParams;
 		        },
 		        sortName: "createTime",
 		        sortOrder: "desc",
@@ -837,8 +872,17 @@
 		            }
 		        },
 		        {
-		            field: 'hospitalCode',
-		            title: '医院编码',
+		            field: 'certificateType',
+		            title: '证件类型',
+		            align: 'left',
+		            width: 120,
+		            formatter: function (value, row, index) {
+		                return value || '-';
+		            }
+		        },
+		        {
+		            field: 'certificateNo',
+		            title: '证件编号',
 		            align: 'left',
 		            width: 150,
 		            formatter: function (value, row, index) {
@@ -846,12 +890,18 @@
 		            }
 		        },
 		        {
-		            field: 'hospitalName',
-		            title: '医院名称',
-		            align: 'left',
-		            width: 200,
+		            field: 'expireDate',
+		            title: '有效期至',
+		            align: 'center',
+		            width: 110,
 		            formatter: function (value, row, index) {
-		                return value || '-';
+		                if (!value) {
+		                    return '-';
+		                }
+		                if (typeof value === 'string' && value.indexOf('-') > -1) {
+		                    return value.split(' ')[0];
+		                }
+		                return $.common.dateFormat(value, 'yyyy-MM-dd');
 		            }
 		        },
 		        {
@@ -1000,9 +1050,46 @@
 		
 		function resetPre() {
 			$("#supplier-certificate-form")[0].reset();
-			// 重置状态筛选框为"全部"
 			$("#auditStatusFilter").val('');
-			$.table.search();
+			selectedSupplierId = null;
+			applyLeftSupplierFilter();
+			$.table.search('supplier-certificate-form', auditTableId);
+		}
+
+		function searchAudit() {
+			syncLeftSupplierOnSearch();
+			$.table.search('supplier-certificate-form', auditTableId);
+		}
+
+		function getSupplierSearchKeyword() {
+			return $.common.trim($('input[name="supplierName"]').val() || '');
+		}
+
+		function filterSuppliersByKeyword(suppliers, keyword) {
+			if (!keyword) {
+				return suppliers || [];
+			}
+			var lowerKeyword = keyword.toLowerCase();
+			return (suppliers || []).filter(function(row) {
+				var code = (row.supplierCode || '').toLowerCase();
+				var name = (row.companyName || '').toLowerCase();
+				return code.indexOf(lowerKeyword) !== -1 || name.indexOf(lowerKeyword) !== -1;
+			});
+		}
+
+		function applyLeftSupplierFilter() {
+			var keyword = getSupplierSearchKeyword();
+			var filtered = filterSuppliersByKeyword(allSuppliers, keyword);
+			updateSupplierTable(filtered);
+		}
+
+		function syncLeftSupplierOnSearch() {
+			var keyword = getSupplierSearchKeyword();
+			var filtered = filterSuppliersByKeyword(allSuppliers, keyword);
+			updateSupplierTable(filtered);
+			if (keyword) {
+				selectedSupplierId = filtered.length > 0 ? filtered[0].supplierId : null;
+			}
 		}
 		
 		// 计算左侧供应商表格高度
@@ -1103,12 +1190,15 @@
 		        cache: false,
 		        success: function(result) {
 		            if (result && result.code == 0) {
-		                updateSupplierTable(result.data || []);
+		                allSuppliers = result.data || [];
+		                applyLeftSupplierFilter();
 		            } else {
+		                allSuppliers = [];
 		                updateSupplierTable([]);
 		            }
 		        },
 		        error: function() {
+		            allSuppliers = [];
 		            updateSupplierTable([]);
 		        }
 		    });
@@ -1157,12 +1247,13 @@
 		function selectSupplier(supplierId) {
 		    if (!supplierId) {
 		        selectedSupplierId = null;
+		        applyLeftSupplierFilter();
 		        $('#bootstrap-table').bootstrapTable('refresh');
 		        return;
 		    }
 		    
 		    selectedSupplierId = supplierId;
-		    querySupplierList();
+		    applyLeftSupplierFilter();
 		    $('#bootstrap-table').bootstrapTable('refresh');
 		}
 		

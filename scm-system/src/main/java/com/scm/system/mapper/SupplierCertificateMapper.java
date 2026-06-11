@@ -66,6 +66,11 @@ public interface SupplierCertificateMapper
     public int updateSupplierCertificateFile(SupplierCertificate supplierCertificate);
 
     /**
+     * 上传/修改页：更新证照信息与图片（不含证件类型、审核状态）
+     */
+    public int updateSupplierCertificateUpload(SupplierCertificate supplierCertificate);
+
+    /**
      * 删除供应商证件信息
      * 
      * @param certificateId 证件主键
@@ -81,6 +86,17 @@ public interface SupplierCertificateMapper
      */
     public int deleteSupplierCertificateByIds(String[] certificateIds);
 
-    int countBySupplierIdAndCertificateType(@Param("supplierId") Long supplierId, @Param("certificateType") String certificateType);
+    int countBySupplierIdAndCertificateType(@Param("supplierId") Long supplierId,
+        @Param("hospitalId") Long hospitalId, @Param("certificateType") String certificateType);
+
+    int deleteDuplicateCertificatesBySupplierId(@Param("supplierId") Long supplierId,
+        @Param("hospitalId") Long hospitalId);
+
+    int assignNullHospitalCertificates(@Param("supplierId") Long supplierId, @Param("hospitalId") Long hospitalId);
+
+    int countBySupplierAndHospital(@Param("supplierId") Long supplierId, @Param("hospitalId") Long hospitalId);
+
+    List<String> selectCertificateTypeNamesBySupplierAndHospital(@Param("supplierId") Long supplierId,
+        @Param("hospitalId") Long hospitalId);
 }
 

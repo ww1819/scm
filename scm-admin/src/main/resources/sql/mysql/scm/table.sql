@@ -314,6 +314,7 @@ CREATE TABLE IF NOT EXISTS `scm_manufacturer` (
 CREATE TABLE IF NOT EXISTS `scm_supplier_certificate` (
   `certificate_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '证件ID',
   `supplier_id` bigint(20) NOT NULL COMMENT '供应商ID',
+  `hospital_id` bigint(20) DEFAULT NULL COMMENT '医院ID（按医院维护资质）',
   `certificate_type` varchar(50) NOT NULL COMMENT '证件类型',
   `certificate_name` varchar(200) DEFAULT '' COMMENT '证件名称',
   `certificate_no` varchar(100) DEFAULT '' COMMENT '证件编号',
@@ -334,6 +335,8 @@ CREATE TABLE IF NOT EXISTS `scm_supplier_certificate` (
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
   PRIMARY KEY (`certificate_id`),
   KEY `idx_supplier_id` (`supplier_id`),
+  KEY `idx_hospital_id` (`hospital_id`),
+  KEY `idx_supplier_hospital` (`supplier_id`, `hospital_id`),
   KEY `idx_expire_date` (`expire_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='供应商证件表';
 /

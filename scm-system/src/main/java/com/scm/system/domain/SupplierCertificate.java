@@ -24,6 +24,9 @@ public class SupplierCertificate extends BaseEntity
     /** 供应商ID */
     private Long supplierId;
 
+    /** 医院ID（按医院维护资质） */
+    private Long hospitalId;
+
     /** 供应商名称 */
     private String supplierName;
 
@@ -100,6 +103,16 @@ public class SupplierCertificate extends BaseEntity
     public void setSupplierId(Long supplierId)
     {
         this.supplierId = supplierId;
+    }
+
+    public Long getHospitalId()
+    {
+        return hospitalId;
+    }
+
+    public void setHospitalId(Long hospitalId)
+    {
+        this.hospitalId = hospitalId;
     }
 
     public String getSupplierName()
@@ -312,6 +325,7 @@ public class SupplierCertificate extends BaseEntity
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
             .append("certificateId", getCertificateId())
             .append("supplierId", getSupplierId())
+            .append("hospitalId", getHospitalId())
             .append("supplierName", getSupplierName())
             .append("certificateType", getCertificateType())
             .append("certificateName", getCertificateName())
