@@ -37,6 +37,11 @@ public interface ZsTpOrderMapper
     List<ZsTpOrderDetail> selectZsTpOrderDetailListByOrderId(String orderId);
 
     /**
+     * 按明细主键查询所属第三方订单主键（去重，用于配送单保存时反推 zs_order_id）
+     */
+    List<String> selectDistinctOrderIdsByDetailIds(@Param("detailIds") List<String> detailIds);
+
+    /**
      * 供应商确认（未确认、未作废、未删除）
      */
     int updateZsTpOrderConfirm(@Param("id") String id, @Param("confirmBy") String confirmBy,

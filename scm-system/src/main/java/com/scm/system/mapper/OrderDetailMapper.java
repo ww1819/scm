@@ -1,6 +1,7 @@
 package com.scm.system.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.scm.system.domain.OrderDetail;
 
 /**
@@ -33,6 +34,11 @@ public interface OrderDetailMapper
      * @return 明细集合
      */
     public List<OrderDetail> selectOrderDetailListByOrderId(Long orderId);
+
+    /**
+     * 按明细主键查询所属第一方订单主键（去重，用于配送单保存时反推 order_id）
+     */
+    List<Long> selectDistinctOrderIdsByDetailIds(@Param("detailIds") List<Long> detailIds);
 
     /**
      * 新增订单明细信息

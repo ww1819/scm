@@ -21,9 +21,11 @@ import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.ZsTpOrder;
+import com.scm.system.domain.vo.ZsTpOrderDeliveryRepairResultVo;
 import com.scm.system.service.IDeliveryService;
 import com.scm.system.service.IScmHospitalContextService;
 import com.scm.system.service.IScmSupplierContextService;
+import com.scm.system.service.IZsTpOrderDeliveryRepairService;
 
 /**
  * 第三方订单查询（列表、详情、确认、作废）
@@ -42,6 +44,9 @@ public class TpOrderQueryController extends BaseController
 
     @Autowired
     private IScmSupplierContextService scmSupplierContextService;
+
+    @Autowired
+    private IZsTpOrderDeliveryRepairService zsTpOrderDeliveryRepairService;
 
     @RequiresPermissions("order:tpOrder:view")
     @GetMapping()
@@ -110,6 +115,31 @@ public class TpOrderQueryController extends BaseController
     public AjaxResult voidBatch(@RequestParam("ids") String ids)
     {
         return runTpOrderBatch(ids, false);
+    }
+
+    @RequiresPermissions("order:tpOrder:repair")
+    @Log(title = "订单配送关联修复", businessType = BusinessType.UPDATE)
+    @PostMapping("/repairDeliveryLink")
+    @ResponseBody
+    public AjaxResult repairDeliveryLink()
+    {
+        String operator = ShiroUtils.getLoginName();
+        ZsTpOrderDeliveryRepairResultVo result = zsTpOrderDeliveryRepairService.repairDeliveryLinks(operator);
+        StringBuilder msg = new StringBuilder();
+        msg.append("第三方：回填配送单 ").append(result.getDeliveryHeaderBackfilled()).append(" 条，补写关联 ")
+            .append(result.getDeliveryRelInserted()).append(" 条；");
+        msg.append("第一方：回填配送单 ").append(result.getScmDeliveryHeaderBackfilled()).append(" 条，补写关联 ")
+            .append(result.getScmDeliveryRelInserted()).append(" 条。");
+        if (result.getAnomalyDoneWithoutDelivery() > 0)
+        {
+            msg.append("仍有 ").append(result.getAnomalyDoneWithoutDelivery())
+                .append(" 条订单显示已全部配送但查不到有效配送明细（需人工核查）。");
+            if (result.getAnomalySamples() != null && !result.getAnomalySamples().isEmpty())
+            {
+                msg.append("示例：").append(String.join("；", result.getAnomalySamples()));
+            }
+        }
+        return AjaxResult.success(msg.toString(), result);
     }
 
     private AjaxResult runTpOrderBatch(String ids, boolean confirm)

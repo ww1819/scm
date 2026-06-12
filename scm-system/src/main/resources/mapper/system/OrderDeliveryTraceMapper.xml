@@ -67,91 +67,156 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         left join scm_supplier s on d.supplier_id = s.supplier_id
     </sql>
 
+    <!-- 第一方订单行配送占用：明细直挂 order_detail_id + rel 表双通道 -->
+    <sql id="scmDetailDeliveryJoin">
+        from scm_order_detail od
+        inner join scm_delivery_detail dd on (
+            dd.order_detail_id = od.detail_id
+            or exists (
+                select 1 from scm_order_detail_delivery_rel r0
+                where r0.order_detail_id = cast(od.detail_id as char)
+                  and r0.delivery_detail_id = cast(dd.detail_id as char)
+            )
+        ) and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
+        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
+    </sql>
+
     <select id="selectScmOrderLineDeliveryQtyByOrderId" parameterType="long" resultMap="OrderLineQtyResult">
-        select r.order_detail_id as line_key,
+        select cast(od.detail_id as char) as line_key,
                sum(case when d.audit_status = '1' then ifnull(dd.delivery_quantity, 0) else 0 end) as audited_qty,
                sum(case when d.audit_status is null or d.audit_status = '0' then ifnull(dd.delivery_quantity, 0) else 0 end) as pending_qty,
                sum(case when d.audit_status = '2' then ifnull(dd.delivery_quantity, 0) else 0 end) as rejected_qty
-        from scm_order_detail_delivery_rel r
-        inner join scm_delivery_detail dd on dd.detail_id = r.delivery_detail_id and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
-        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
-        where r.order_id = cast(#{orderId} as char)
-        group by r.order_detail_id
+        <include refid="scmDetailDeliveryJoin"/>
+        where od.order_id = #{orderId}
+        group by od.detail_id
     </select>
 
     <select id="selectScmOrderLineDeliveryQtyByOrderIdExcludeDelivery" resultMap="OrderLineQtyResult">
-        select r.order_detail_id as line_key,
+        select cast(od.detail_id as char) as line_key,
                sum(case when d.audit_status = '1' then ifnull(dd.delivery_quantity, 0) else 0 end) as audited_qty,
                sum(case when d.audit_status is null or d.audit_status = '0' then ifnull(dd.delivery_quantity, 0) else 0 end) as pending_qty,
                sum(case when d.audit_status = '2' then ifnull(dd.delivery_quantity, 0) else 0 end) as rejected_qty
-        from scm_order_detail_delivery_rel r
-        inner join scm_delivery_detail dd on dd.detail_id = r.delivery_detail_id and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
-        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
-        where r.order_id = cast(#{orderId} as char)
+        <include refid="scmDetailDeliveryJoin"/>
+        where od.order_id = #{orderId}
         <if test="excludeDeliveryId != null">
           and d.delivery_id != #{excludeDeliveryId}
         </if>
-        group by r.order_detail_id
+        group by od.detail_id
     </select>
 
+    <!-- 第三方订单行配送占用：明细直挂 zs_order_detail_id + rel 表（与配送进度计算一致） -->
+    <sql id="zsTpDetailDeliveryJoin">
+        from zs_tp_order_detail l
+        inner join scm_delivery_detail dd on (
+            dd.zs_order_detail_id = l.id
+            or exists (
+                select 1 from zs_tp_order_detail_delivery_rel r0
+                where r0.order_detail_id = l.id
+                  and r0.delivery_detail_id = cast(dd.detail_id as char)
+            )
+        ) and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
+        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
+    </sql>
+
     <select id="selectZsOrderLineDeliveryQtyByZsOrderId" parameterType="String" resultMap="OrderLineQtyResult">
-        select r.order_detail_id as line_key,
+        select l.id as line_key,
                sum(case when d.audit_status = '1' then ifnull(dd.delivery_quantity, 0) else 0 end) as audited_qty,
                sum(case when d.audit_status is null or d.audit_status = '0' then ifnull(dd.delivery_quantity, 0) else 0 end) as pending_qty,
                sum(case when d.audit_status = '2' then ifnull(dd.delivery_quantity, 0) else 0 end) as rejected_qty
-        from zs_tp_order_detail_delivery_rel r
-        inner join scm_delivery_detail dd on dd.detail_id = r.delivery_detail_id and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
-        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
-        where r.order_id = #{zsOrderId}
-        group by r.order_detail_id
+        <include refid="zsTpDetailDeliveryJoin"/>
+        where l.order_id = #{zsOrderId}
+          and (l.del_flag is null or l.del_flag = '' or l.del_flag = '0')
+        group by l.id
     </select>
 
     <select id="selectZsOrderLineDeliveryQtyByZsOrderIdExcludeDelivery" resultMap="OrderLineQtyResult">
-        select r.order_detail_id as line_key,
+        select l.id as line_key,
                sum(case when d.audit_status = '1' then ifnull(dd.delivery_quantity, 0) else 0 end) as audited_qty,
                sum(case when d.audit_status is null or d.audit_status = '0' then ifnull(dd.delivery_quantity, 0) else 0 end) as pending_qty,
                sum(case when d.audit_status = '2' then ifnull(dd.delivery_quantity, 0) else 0 end) as rejected_qty
-        from zs_tp_order_detail_delivery_rel r
-        inner join scm_delivery_detail dd on dd.detail_id = r.delivery_detail_id and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
-        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
-        where r.order_id = #{zsOrderId}
+        <include refid="zsTpDetailDeliveryJoin"/>
+        where l.order_id = #{zsOrderId}
+          and (l.del_flag is null or l.del_flag = '' or l.del_flag = '0')
         <if test="excludeDeliveryId != null">
           and d.delivery_id != #{excludeDeliveryId}
         </if>
-        group by r.order_detail_id
+        group by l.id
     </select>
 
     <select id="selectDeliveriesByOrderId" parameterType="long" resultMap="TraceDeliveryResult">
         <include refid="selectDeliveryVoTrace"/>
-        where d.order_id = #{orderId}
-          and (d.del_flag is null or d.del_flag = '0')
+        where (d.del_flag is null or d.del_flag = '' or d.del_flag = '0')
+          and (
+            d.order_id = #{orderId}
+            or exists (
+                select 1 from scm_delivery_detail dd
+                inner join scm_order_detail od on od.detail_id = dd.order_detail_id
+                where dd.delivery_id = d.delivery_id
+                  and od.order_id = #{orderId}
+                  and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
+            )
+            or exists (
+                select 1 from scm_order_detail_delivery_rel r
+                where r.order_id = cast(#{orderId} as char)
+                  and r.delivery_id = cast(d.delivery_id as char)
+            )
+          )
         order by d.create_time desc
     </select>
 
     <select id="selectDeliveriesByZsOrderId" parameterType="String" resultMap="TraceDeliveryResult">
         <include refid="selectDeliveryVoTrace"/>
-        where d.zs_order_id = #{zsOrderId}
-          and (d.del_flag is null or d.del_flag = '0')
+        where (d.del_flag is null or d.del_flag = '' or d.del_flag = '0')
+          and (
+            d.zs_order_id = #{zsOrderId}
+            or exists (
+                select 1 from scm_delivery_detail dd
+                inner join zs_tp_order_detail l on l.id = dd.zs_order_detail_id
+                    and (l.del_flag is null or l.del_flag = '' or l.del_flag = '0')
+                where dd.delivery_id = d.delivery_id
+                  and l.order_id = #{zsOrderId}
+                  and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
+            )
+            or exists (
+                select 1 from zs_tp_order_detail_delivery_rel r
+                where r.order_id = #{zsOrderId}
+                  and r.delivery_id = cast(d.delivery_id as char)
+            )
+          )
         order by d.create_time desc
     </select>
 
     <select id="selectTracesByScmOrderDetailId" parameterType="long" resultMap="DetailTraceResult">
         select d.delivery_id, d.delivery_no, dd.detail_id as delivery_detail_id,
                d.audit_status, d.delivery_status, dd.delivery_quantity
-        from scm_order_detail_delivery_rel r
-        inner join scm_delivery_detail dd on dd.detail_id = r.delivery_detail_id and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
+        from scm_delivery_detail dd
         inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
-        where r.order_detail_id = cast(#{orderDetailId} as char)
+        where (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
+          and (
+            dd.order_detail_id = #{orderDetailId}
+            or exists (
+                select 1 from scm_order_detail_delivery_rel r
+                where r.order_detail_id = cast(#{orderDetailId} as char)
+                  and r.delivery_detail_id = cast(dd.detail_id as char)
+            )
+          )
         order by d.create_time desc, dd.detail_id
     </select>
 
     <select id="selectTracesByZsOrderDetailId" parameterType="String" resultMap="DetailTraceResult">
         select d.delivery_id, d.delivery_no, dd.detail_id as delivery_detail_id,
                d.audit_status, d.delivery_status, dd.delivery_quantity
-        from zs_tp_order_detail_delivery_rel r
-        inner join scm_delivery_detail dd on dd.detail_id = r.delivery_detail_id and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
+        from scm_delivery_detail dd
         inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
-        where r.order_detail_id = #{zsOrderDetailId}
+        where (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
+          and (
+            dd.zs_order_detail_id = #{zsOrderDetailId}
+            or exists (
+                select 1 from zs_tp_order_detail_delivery_rel r
+                where r.order_detail_id = #{zsOrderDetailId}
+                  and r.delivery_detail_id = cast(dd.detail_id as char)
+            )
+          )
         order by d.create_time desc, dd.detail_id
     </select>
 </mapper>

@@ -1813,6 +1813,8 @@ public class DeliveryServiceImpl implements IDeliveryService
         {
             return;
         }
+        inferZsOrderIdFromDetails(d);
+        inferScmOrderIdFromDetails(d);
         if (StringUtils.isEmpty(d.getZsOrderId()))
         {
             d.setZsJsfs(null);
@@ -1893,6 +1895,14 @@ public class DeliveryServiceImpl implements IDeliveryService
                 {
                     throw new ServiceException("该订单已作废，不可生成配送单");
                 }
+                if (d.getHospitalId() == null && o.getHospitalId() != null)
+                {
+                    d.setHospitalId(o.getHospitalId());
+                }
+                if (StringUtils.isEmpty(d.getOrderNo()))
+                {
+                    d.setOrderNo(StringUtils.trimToEmpty(o.getOrderNo()));
+                }
                 if (StringUtils.isEmpty(d.getZsCustomerId()))
                 {
                     d.setZsCustomerId("");
@@ -1953,6 +1963,92 @@ public class DeliveryServiceImpl implements IDeliveryService
             }
         }
         fillRefOrderSource(d);
+    }
+
+    /**
+     * 配送单主表未带 order_id 时，从明细 order_detail_id 反推第一方订单主键并补 order_no。
+     */
+    private void inferScmOrderIdFromDetails(Delivery d)
+    {
+        if (d == null || d.getOrderId() != null || StringUtils.isNotEmpty(d.getZsOrderId())
+            || d.getDeliveryDetails() == null || d.getDeliveryDetails().isEmpty())
+        {
+            return;
+        }
+        List<Long> detailIds = new ArrayList<>();
+        for (DeliveryDetail dd : d.getDeliveryDetails())
+        {
+            if (dd != null && dd.getOrderDetailId() != null)
+            {
+                detailIds.add(dd.getOrderDetailId());
+            }
+        }
+        if (detailIds.isEmpty())
+        {
+            return;
+        }
+        List<Long> orderIds = orderDetailMapper.selectDistinctOrderIdsByDetailIds(detailIds);
+        if (orderIds == null || orderIds.isEmpty())
+        {
+            return;
+        }
+        if (orderIds.size() > 1)
+        {
+            throw new ServiceException("配送明细引用了多个不同的第一方订单，请分开保存");
+        }
+        Long orderId = orderIds.get(0);
+        d.setOrderId(orderId);
+        if (StringUtils.isEmpty(d.getOrderNo()))
+        {
+            Order head = orderMapper.selectOrderById(orderId);
+            if (head != null)
+            {
+                d.setOrderNo(StringUtils.trimToEmpty(head.getOrderNo()));
+            }
+        }
+    }
+
+    /**
+     * 配送单主表未带 zs_order_id 时，从明细 zs_order_detail_id 反推第三方订单主键并补 order_no。
+     */
+    private void inferZsOrderIdFromDetails(Delivery d)
+    {
+        if (d == null || StringUtils.isNotEmpty(d.getZsOrderId())
+            || d.getDeliveryDetails() == null || d.getDeliveryDetails().isEmpty())
+        {
+            return;
+        }
+        List<String> detailIds = new ArrayList<>();
+        for (DeliveryDetail dd : d.getDeliveryDetails())
+        {
+            if (dd != null && StringUtils.isNotEmpty(dd.getZsOrderDetailId()))
+            {
+                detailIds.add(dd.getZsOrderDetailId().trim());
+            }
+        }
+        if (detailIds.isEmpty())
+        {
+            return;
+        }
+        List<String> orderIds = zsTpOrderMapper.selectDistinctOrderIdsByDetailIds(detailIds);
+        if (orderIds == null || orderIds.isEmpty())
+        {
+            return;
+        }
+        if (orderIds.size() > 1)
+        {
+            throw new ServiceException("配送明细引用了多个不同的第三方订单，请分开保存");
+        }
+        String zsOrderId = orderIds.get(0);
+        d.setZsOrderId(zsOrderId);
+        if (StringUtils.isEmpty(d.getOrderNo()))
+        {
+            ZsTpOrder head = zsTpOrderMapper.selectZsTpOrderById(zsOrderId);
+            if (head != null)
+            {
+                d.setOrderNo(StringUtils.trimToEmpty(head.getDh()));
+            }
+        }
     }
 
     /**

@@ -275,6 +275,9 @@
 				<a class="btn btn-danger multiple disabled" onclick="tpBatchVoid()" shiro:hasPermission="order:tpOrder:void" th:if="${tpQueryHospitalCtx}">
 					<i class="fa fa-ban"></i> 作废
 				</a>
+				<a class="btn btn-info" onclick="tpRepairDeliveryLink()" shiro:hasPermission="order:tpOrder:repair">
+					<i class="fa fa-wrench"></i> 修复配送关联
+				</a>
 	        </div>
 
 	        <div class="col-sm-12 select-table table-striped tp-query-table-wrap tp-query-list-table">
@@ -914,6 +917,20 @@
 			}
 			$.modal.confirm("确认选中的 " + ids.length + " 条第三方订单？确认后将记录确认人与确认时间。", function() {
 				$.operate.post(prefix + "/confirmBatch", { ids: ids.join(",") }, function() {
+					$.table.refresh();
+				});
+			});
+		}
+
+		function tpRepairDeliveryLink() {
+			$.modal.confirm("将按配送明细回填配送单主表上的订单关联（含第三方与第一方），并补写缺失的明细关联记录。是否继续？", function() {
+				$.operate.post(prefix + "/repairDeliveryLink", {}, function(res) {
+					var msg = (res && res.msg) ? res.msg : "修复完成";
+					if (res && res.data && res.data.anomalyDoneWithoutDelivery > 0) {
+						$.modal.alertWarning(msg);
+					} else {
+						$.modal.alertSuccess(msg);
+					}
 					$.table.refresh();
 				});
 			});

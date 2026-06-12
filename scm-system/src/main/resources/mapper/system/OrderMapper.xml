@@ -46,8 +46,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <sql id="orderScmHasDelivery">
         EXISTS (
             SELECT 1 FROM scm_delivery d
-            WHERE d.order_id = o.order_id
-            AND (d.del_flag IS NULL OR d.del_flag = '' OR d.del_flag = '0')
+            WHERE (d.del_flag IS NULL OR d.del_flag = '' OR d.del_flag = '0')
+              AND (
+                d.order_id = o.order_id
+                OR EXISTS (
+                    SELECT 1 FROM scm_delivery_detail dd
+                    INNER JOIN scm_order_detail od ON od.detail_id = dd.order_detail_id
+                    WHERE dd.delivery_id = d.delivery_id
+                      AND od.order_id = o.order_id
+                      AND (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
+                )
+                OR EXISTS (
+                    SELECT 1 FROM scm_order_detail_delivery_rel r
+                    WHERE r.order_id = CAST(o.order_id AS CHAR)
+                      AND r.delivery_id = CAST(d.delivery_id AS CHAR)
+                )
+              )
         )
     </sql>
     <sql id="orderSheetTabBlock">

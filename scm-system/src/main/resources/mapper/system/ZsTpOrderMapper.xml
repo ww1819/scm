@@ -86,37 +86,56 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         from zs_tp_order z
     </sql>
 
+    <!-- 订单行已配送数量：配送明细直挂 + rel 关联表（与回查配送单逻辑一致） -->
+    <sql id="zsTpLineDeliveredQtySubquery">
+        (SELECT COALESCE(SUM(IFNULL(dd.delivery_quantity, 0)), 0)
+         FROM scm_delivery_detail dd
+         INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id AND (d.del_flag IS NULL OR d.del_flag = '0')
+         WHERE (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
+         AND (
+             dd.zs_order_detail_id = l.id
+             OR EXISTS (
+                 SELECT 1 FROM zs_tp_order_detail_delivery_rel r
+                 WHERE r.order_detail_id = l.id
+                   AND r.delivery_detail_id = CAST(dd.detail_id AS CHAR)
+             )
+         ))
+    </sql>
+
+    <sql id="zsTpOrderHasAnyDeliveryDetail">
+        EXISTS (
+            SELECT 1 FROM scm_delivery_detail dd
+            INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id AND (d.del_flag IS NULL OR d.del_flag = '0')
+            INNER JOIN zs_tp_order_detail l ON l.order_id = z.id
+                AND (l.del_flag IS NULL OR l.del_flag = '' OR l.del_flag = '0')
+            WHERE (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
+              AND (
+                  dd.zs_order_detail_id = l.id
+                  OR EXISTS (
+                      SELECT 1 FROM zs_tp_order_detail_delivery_rel r
+                      WHERE r.order_detail_id = l.id
+                        AND r.delivery_detail_id = CAST(dd.detail_id AS CHAR)
+                  )
+              )
+        )
+    </sql>
+
     <sql id="zsTpOrderDeliveryProgressColumn">
         ( CASE
             WHEN NOT EXISTS (
                 SELECT 1 FROM zs_tp_order_detail l
-                WHERE l.order_id = z.id AND (l.del_flag IS NULL OR l.del_flag = '0') AND IFNULL(l.sl, 0) &gt; 0
-                AND (
-                    SELECT COALESCE(SUM(dd.delivery_quantity), 0)
-                    FROM scm_delivery_detail dd
-                    INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id AND (d.del_flag IS NULL OR d.del_flag = '0')
-                    WHERE dd.zs_order_detail_id = l.id AND (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
-                ) &lt; IFNULL(l.sl, 0)
+                WHERE l.order_id = z.id AND (l.del_flag IS NULL OR l.del_flag = '' OR l.del_flag = '0') AND IFNULL(l.sl, 0) &gt; 0
+                AND <include refid="zsTpLineDeliveredQtySubquery"/> &lt; IFNULL(l.sl, 0)
             )
             AND EXISTS (
                 SELECT 1 FROM zs_tp_order_detail l2
-                WHERE l2.order_id = z.id AND (l2.del_flag IS NULL OR l2.del_flag = '0') AND IFNULL(l2.sl, 0) &gt; 0
+                WHERE l2.order_id = z.id AND (l2.del_flag IS NULL OR l2.del_flag = '' OR l2.del_flag = '0') AND IFNULL(l2.sl, 0) &gt; 0
             ) THEN 'done'
-            WHEN EXISTS (
-                SELECT 1 FROM scm_delivery_detail dd
-                INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id AND (d.del_flag IS NULL OR d.del_flag = '0')
-                INNER JOIN zs_tp_order_detail l ON l.id = dd.zs_order_detail_id
-                WHERE l.order_id = z.id AND (l.del_flag IS NULL OR l.del_flag = '0') AND (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
-            )
+            WHEN <include refid="zsTpOrderHasAnyDeliveryDetail"/>
             AND EXISTS (
                 SELECT 1 FROM zs_tp_order_detail l
-                WHERE l.order_id = z.id AND (l.del_flag IS NULL OR l.del_flag = '0') AND IFNULL(l.sl, 0) &gt; 0
-                AND (
-                    SELECT COALESCE(SUM(dd.delivery_quantity), 0)
-                    FROM scm_delivery_detail dd
-                    INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id AND (d.del_flag IS NULL OR d.del_flag = '0')
-                    WHERE dd.zs_order_detail_id = l.id AND (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
-                ) &lt; IFNULL(l.sl, 0)
+                WHERE l.order_id = z.id AND (l.del_flag IS NULL OR l.del_flag = '' OR l.del_flag = '0') AND IFNULL(l.sl, 0) &gt; 0
+                AND <include refid="zsTpLineDeliveredQtySubquery"/> &lt; IFNULL(l.sl, 0)
             ) THEN 'partial'
             ELSE 'none'
         END )
@@ -226,57 +245,32 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <!-- 配送进度筛选：none=未配送 partial=部分配送 done=已配送（与列表 delivery_progress 语义一致） -->
     <sql id="zsTpOrderDeliveryFilterBlock">
             <if test="params != null and params.deliveryFilter != null and params.deliveryFilter == 'none'">
-                and not exists (
-                    select 1 from scm_delivery_detail dd
-                    inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
-                    inner join zs_tp_order_detail l on l.id = dd.zs_order_detail_id
-                    where l.order_id = z.id and l.del_flag = '0' and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
-                )
+                and not <include refid="zsTpOrderHasAnyDeliveryDetail"/>
             </if>
             <if test="params != null and params.deliveryFilter != null and params.deliveryFilter == 'partial'">
-                and exists (
-                    select 1 from scm_delivery_detail dd
-                    inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
-                    inner join zs_tp_order_detail l on l.id = dd.zs_order_detail_id
-                    where l.order_id = z.id and l.del_flag = '0' and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
-                )
+                and <include refid="zsTpOrderHasAnyDeliveryDetail"/>
                 and exists (
                     select 1 from zs_tp_order_detail l
-                    where l.order_id = z.id and l.del_flag = '0' and ifnull(l.sl, 0) &gt; 0
-                    and (
-                        select coalesce(sum(dd.delivery_quantity), 0)
-                        from scm_delivery_detail dd
-                        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
-                        where dd.zs_order_detail_id = l.id and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
-                    ) &lt; ifnull(l.sl, 0)
+                    where l.order_id = z.id and (l.del_flag is null or l.del_flag = '' or l.del_flag = '0') and ifnull(l.sl, 0) &gt; 0
+                    and <include refid="zsTpLineDeliveredQtySubquery"/> &lt; ifnull(l.sl, 0)
                 )
             </if>
             <if test="params != null and params.deliveryFilter != null and params.deliveryFilter == 'done'">
                 and not exists (
                     select 1 from zs_tp_order_detail l
-                    where l.order_id = z.id and l.del_flag = '0' and ifnull(l.sl, 0) &gt; 0
-                    and (
-                        select coalesce(sum(dd.delivery_quantity), 0)
-                        from scm_delivery_detail dd
-                        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
-                        where dd.zs_order_detail_id = l.id and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
-                    ) &lt; ifnull(l.sl, 0)
+                    where l.order_id = z.id and (l.del_flag is null or l.del_flag = '' or l.del_flag = '0') and ifnull(l.sl, 0) &gt; 0
+                    and <include refid="zsTpLineDeliveredQtySubquery"/> &lt; ifnull(l.sl, 0)
                 )
                 and exists (
                     select 1 from zs_tp_order_detail l2
-                    where l2.order_id = z.id and l2.del_flag = '0' and ifnull(l2.sl, 0) &gt; 0
+                    where l2.order_id = z.id and (l2.del_flag is null or l2.del_flag = '' or l2.del_flag = '0') and ifnull(l2.sl, 0) &gt; 0
                 )
             </if>
     </sql>
 
     <!-- 第三方订单是否存在配送明细 -->
     <sql id="zsTpOrderHasDelivery">
-        exists (
-            select 1 from scm_delivery_detail dd
-            inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
-            inner join zs_tp_order_detail l on l.id = dd.zs_order_detail_id
-            where l.order_id = z.id and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
-        )
+        <include refid="zsTpOrderHasAnyDeliveryDetail"/>
     </sql>
 
     <!-- 选择第三方订单弹窗 sheet 页 -->
@@ -292,48 +286,28 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </when>
             <when test="params.sheetTab == 'partial'">
                 and IFNULL(NULLIF(TRIM(z.void_status), ''), '0') = '0'
-                and exists (
-                    select 1 from scm_delivery_detail dd
-                    inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
-                    inner join zs_tp_order_detail l on l.id = dd.zs_order_detail_id
-                    where l.order_id = z.id and l.del_flag = '0' and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
-                )
+                and <include refid="zsTpOrderHasAnyDeliveryDetail"/>
                 and exists (
                     select 1 from zs_tp_order_detail l
-                    where l.order_id = z.id and l.del_flag = '0' and ifnull(l.sl, 0) &gt; 0
-                    and (
-                        select coalesce(sum(dd.delivery_quantity), 0)
-                        from scm_delivery_detail dd
-                        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
-                        where dd.zs_order_detail_id = l.id and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
-                    ) &lt; ifnull(l.sl, 0)
+                    where l.order_id = z.id and (l.del_flag is null or l.del_flag = '' or l.del_flag = '0') and ifnull(l.sl, 0) &gt; 0
+                    and <include refid="zsTpLineDeliveredQtySubquery"/> &lt; ifnull(l.sl, 0)
                 )
             </when>
             <when test="params.sheetTab == 'done'">
                 and IFNULL(NULLIF(TRIM(z.void_status), ''), '0') = '0'
                 and not exists (
                     select 1 from zs_tp_order_detail l
-                    where l.order_id = z.id and l.del_flag = '0' and ifnull(l.sl, 0) &gt; 0
-                    and (
-                        select coalesce(sum(dd.delivery_quantity), 0)
-                        from scm_delivery_detail dd
-                        inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
-                        where dd.zs_order_detail_id = l.id and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
-                    ) &lt; ifnull(l.sl, 0)
+                    where l.order_id = z.id and (l.del_flag is null or l.del_flag = '' or l.del_flag = '0') and ifnull(l.sl, 0) &gt; 0
+                    and <include refid="zsTpLineDeliveredQtySubquery"/> &lt; ifnull(l.sl, 0)
                 )
                 and exists (
                     select 1 from zs_tp_order_detail l2
-                    where l2.order_id = z.id and l2.del_flag = '0' and ifnull(l2.sl, 0) &gt; 0
+                    where l2.order_id = z.id and (l2.del_flag is null or l2.del_flag = '' or l2.del_flag = '0') and ifnull(l2.sl, 0) &gt; 0
                 )
             </when>
             <otherwise>
                 and IFNULL(NULLIF(TRIM(z.void_status), ''), '0') = '0'
-                and not exists (
-                    select 1 from scm_delivery_detail dd
-                    inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')
-                    inner join zs_tp_order_detail l on l.id = dd.zs_order_detail_id
-                    where l.order_id = z.id and l.del_flag = '0' and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
-                )
+                and not <include refid="zsTpOrderHasAnyDeliveryDetail"/>
             </otherwise>
         </choose>
     </sql>
@@ -414,6 +388,17 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         from zs_tp_order_detail
         where order_id = #{orderId} and del_flag = '0'
         order by create_time
+    </select>
+
+    <select id="selectDistinctOrderIdsByDetailIds" resultType="String">
+        select distinct l.order_id
+        from zs_tp_order_detail l
+        where (l.del_flag is null or l.del_flag = '' or l.del_flag = '0')
+          and l.order_id is not null and trim(l.order_id) != ''
+          and l.id in
+        <foreach collection="detailIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
     </select>
 
     <update id="updateZsTpOrderConfirm">

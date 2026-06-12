@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.ZsTpOrderDeliveryRepairMapper">
+
+    <!-- 与 ZsTpOrderMapper 配送进度一致：明细直挂 + rel 表双通道 -->
+    <sql id="zsTpDetailLinkedToDelivery">
+        (
+            dd.zs_order_detail_id = l.id
+            OR EXISTS (
+                SELECT 1 FROM zs_tp_order_detail_delivery_rel r
+                WHERE r.order_detail_id = l.id
+                  AND r.delivery_detail_id = CAST(dd.detail_id AS CHAR)
+            )
+        )
+    </sql>
+
+    <update id="backfillDeliveryHeaderFromDetails">
+        UPDATE scm_delivery d
+        INNER JOIN (
+            SELECT dd.delivery_id,
+                   MIN(l.order_id) AS zs_order_id,
+                   MIN(o.dh) AS order_no,
+                   MIN(o.hospital_id) AS hospital_id,
+                   MIN(o.supplier_id) AS supplier_id,
+                   MIN(o.ck) AS warehouse_name
+            FROM scm_delivery_detail dd
+            INNER JOIN zs_tp_order_detail l ON l.id = dd.zs_order_detail_id
+                AND (l.del_flag IS NULL OR l.del_flag = '' OR l.del_flag = '0')
+            INNER JOIN zs_tp_order o ON o.id = l.order_id AND o.del_flag = '0'
+            WHERE dd.zs_order_detail_id IS NOT NULL AND TRIM(dd.zs_order_detail_id) != ''
+              AND (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
+            GROUP BY dd.delivery_id
+        ) x ON x.delivery_id = d.delivery_id
+        SET d.zs_order_id = x.zs_order_id,
+            d.order_no = CASE WHEN d.order_no IS NULL OR TRIM(d.order_no) = '' THEN x.order_no ELSE d.order_no END,
+            d.hospital_id = COALESCE(d.hospital_id, x.hospital_id),
+            d.supplier_id = COALESCE(d.supplier_id, x.supplier_id),
+            d.warehouse_name = CASE WHEN d.warehouse_name IS NULL OR TRIM(d.warehouse_name) = '' THEN x.warehouse_name ELSE d.warehouse_name END,
+            d.ref_order_source = 'ZS',
+            d.update_by = #{operator},
+            d.update_time = NOW()
+        WHERE (d.del_flag IS NULL OR d.del_flag = '' OR d.del_flag = '0')
+          AND (
+            d.zs_order_id IS NULL OR TRIM(d.zs_order_id) = '' OR d.zs_order_id != x.zs_order_id
+            OR d.supplier_id IS NULL OR d.hospital_id IS NULL
+          )
+    </update>
+
+    <update id="backfillScmDeliveryHeaderFromDetails">
+        UPDATE scm_delivery d
+        INNER JOIN (
+            SELECT dd.delivery_id,
+                   MIN(od.order_id) AS order_id
+            FROM scm_delivery_detail dd
+            INNER JOIN scm_order_detail od ON od.detail_id = dd.order_detail_id
+            WHERE dd.order_detail_id IS NOT NULL
+              AND (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
+            GROUP BY dd.delivery_id
+        ) x ON x.delivery_id = d.delivery_id
+        INNER JOIN scm_order o ON o.order_id = x.order_id
+        SET d.order_id = x.order_id,
+            d.order_no = CASE WHEN d.order_no IS NULL OR TRIM(d.order_no) = '' THEN o.order_no ELSE d.order_no END,
+            d.hospital_id = COALESCE(d.hospital_id, o.hospital_id),
+            d.supplier_id = COALESCE(d.supplier_id, o.supplier_id),
+            d.warehouse_name = CASE WHEN d.warehouse_name IS NULL OR TRIM(d.warehouse_name) = '' THEN o.warehouse_name ELSE d.warehouse_name END,
+            d.ref_order_source = 'SCM',
+            d.src_order_supplier_id = CASE WHEN d.src_order_supplier_id IS NULL OR TRIM(d.src_order_supplier_id) = ''
+                THEN CAST(o.supplier_id AS CHAR) ELSE d.src_order_supplier_id END,
+            d.src_order_supplier_name = CASE WHEN d.src_order_supplier_name IS NULL OR TRIM(d.src_order_supplier_name) = ''
+                THEN COALESCE(NULLIF(TRIM(o.order_supplier_name), ''), '') ELSE d.src_order_supplier_name END,
+            d.src_order_warehouse_id = CASE WHEN d.src_order_warehouse_id IS NULL OR TRIM(d.src_order_warehouse_id) = ''
+                AND o.warehouse_id IS NOT NULL THEN CAST(o.warehouse_id AS CHAR) ELSE d.src_order_warehouse_id END,
+            d.src_order_warehouse_name = CASE WHEN d.src_order_warehouse_name IS NULL OR TRIM(d.src_order_warehouse_name) = ''
+                THEN COALESCE(o.warehouse_name, '') ELSE d.src_order_warehouse_name END,
+            d.src_order_dept_id = CASE WHEN d.src_order_dept_id IS NULL OR TRIM(d.src_order_dept_id) = ''
+                AND o.order_dept_id IS NOT NULL THEN CAST(o.order_dept_id AS CHAR) ELSE d.src_order_dept_id END,
+            d.src_order_dept_name = CASE WHEN d.src_order_dept_name IS NULL OR TRIM(d.src_order_dept_name) = ''
+                THEN COALESCE(NULLIF(TRIM(o.order_dept_name), ''), '') ELSE d.src_order_dept_name END,
+            d.spd_supplier_id = CASE WHEN d.spd_supplier_id IS NULL OR TRIM(d.spd_supplier_id) = ''
+                THEN COALESCE(o.spd_supplier_id, '') ELSE d.spd_supplier_id END,
+            d.spd_tenant_id = CASE WHEN d.spd_tenant_id IS NULL OR TRIM(d.spd_tenant_id) = ''
+                THEN COALESCE(o.tenant_id, '') ELSE d.spd_tenant_id END,
+            d.order_date = COALESCE(d.order_date, o.order_date),
+            d.update_by = #{operator},
+            d.update_time = NOW()
+        WHERE (d.del_flag IS NULL OR d.del_flag = '' OR d.del_flag = '0')
+          AND (d.zs_order_id IS NULL OR TRIM(d.zs_order_id) = '')
+          AND (
+            d.order_id IS NULL OR d.order_id != x.order_id
+            OR d.supplier_id IS NULL OR d.hospital_id IS NULL
+          )
+    </update>
+
+    <select id="selectMissingScmDeliveryRelRows" resultType="com.scm.system.domain.ScmOrderDetailDeliveryRel">
+        SELECT
+            CAST(od.detail_id AS CHAR) AS orderDetailId,
+            CAST(o.order_id AS CHAR) AS orderId,
+            o.order_no AS orderNo,
+            CAST(d.delivery_id AS CHAR) AS deliveryId,
+            d.delivery_no AS deliveryNo,
+            CAST(dd.detail_id AS CHAR) AS deliveryDetailId,
+            d.tenant_id AS tenantId,
+            d.create_by AS createBy
+        FROM scm_delivery_detail dd
+        INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id
+            AND (d.del_flag IS NULL OR d.del_flag = '' OR d.del_flag = '0')
+        INNER JOIN scm_order_detail od ON od.detail_id = dd.order_detail_id
+        INNER JOIN scm_order o ON o.order_id = od.order_id
+        WHERE dd.order_detail_id IS NOT NULL
+          AND (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
+          AND (d.zs_order_id IS NULL OR TRIM(d.zs_order_id) = '')
+          AND NOT EXISTS (
+              SELECT 1 FROM scm_order_detail_delivery_rel r
+              WHERE r.delivery_detail_id = CAST(dd.detail_id AS CHAR)
+          )
+    </select>
+
+    <select id="selectMissingDeliveryRelRows" resultType="com.scm.system.domain.ZsTpOrderDetailDeliveryRel">
+        SELECT
+            dd.zs_order_detail_id AS orderDetailId,
+            l.order_id AS orderId,
+            o.dh AS orderNo,
+            CAST(d.delivery_id AS CHAR) AS deliveryId,
+            d.delivery_no AS deliveryNo,
+            CAST(dd.detail_id AS CHAR) AS deliveryDetailId,
+            d.tenant_id AS tenantId,
+            d.create_by AS createBy
+        FROM scm_delivery_detail dd
+        INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id
+            AND (d.del_flag IS NULL OR d.del_flag = '' OR d.del_flag = '0')
+        INNER JOIN zs_tp_order_detail l ON l.id = dd.zs_order_detail_id
+            AND (l.del_flag IS NULL OR l.del_flag = '' OR l.del_flag = '0')
+        INNER JOIN zs_tp_order o ON o.id = l.order_id AND o.del_flag = '0'
+        WHERE dd.zs_order_detail_id IS NOT NULL AND TRIM(dd.zs_order_detail_id) != ''
+          AND (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
+          AND NOT EXISTS (
+              SELECT 1 FROM zs_tp_order_detail_delivery_rel r
+              WHERE r.delivery_detail_id = CAST(dd.detail_id AS CHAR)
+          )
+    </select>
+
+    <sql id="zsTpOrderDoneWithoutDeliveryWhere">
+        z.del_flag = '0'
+        AND (z.void_status IS NULL OR z.void_status = '' OR z.void_status = '0')
+        AND EXISTS (
+            SELECT 1 FROM zs_tp_order_detail l2
+            WHERE l2.order_id = z.id
+              AND (l2.del_flag IS NULL OR l2.del_flag = '' OR l2.del_flag = '0')
+              AND IFNULL(l2.sl, 0) &gt; 0
+        )
+        AND NOT EXISTS (
+            SELECT 1 FROM zs_tp_order_detail l
+            WHERE l.order_id = z.id
+              AND (l.del_flag IS NULL OR l.del_flag = '' OR l.del_flag = '0')
+              AND IFNULL(l.sl, 0) &gt; 0
+              AND (
+                  SELECT COALESCE(SUM(IFNULL(dd.delivery_quantity, 0)), 0)
+                  FROM scm_delivery_detail dd
+                  INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id
+                      AND (d.del_flag IS NULL OR d.del_flag = '' OR d.del_flag = '0')
+                  WHERE (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
+                    AND <include refid="zsTpDetailLinkedToDelivery"/>
+              ) &lt; IFNULL(l.sl, 0)
+        )
+        AND NOT EXISTS (
+            SELECT 1 FROM scm_delivery_detail dd
+            INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id
+                AND (d.del_flag IS NULL OR d.del_flag = '' OR d.del_flag = '0')
+            INNER JOIN zs_tp_order_detail l ON l.order_id = z.id
+                AND (l.del_flag IS NULL OR l.del_flag = '' OR l.del_flag = '0')
+            WHERE (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
+              AND <include refid="zsTpDetailLinkedToDelivery"/>
+        )
+    </sql>
+
+    <select id="countDoneOrdersWithoutDelivery" resultType="int">
+        SELECT COUNT(*) FROM zs_tp_order z
+        WHERE <include refid="zsTpOrderDoneWithoutDeliveryWhere"/>
+    </select>
+
+    <select id="selectDoneOrdersWithoutDeliverySample" resultType="String">
+        SELECT CONCAT(z.dh, ' (', z.id, ')') FROM zs_tp_order z
+        WHERE <include refid="zsTpOrderDoneWithoutDeliveryWhere"/>
+        ORDER BY z.create_time DESC
+        LIMIT #{limit}
+    </select>
+</mapper>
