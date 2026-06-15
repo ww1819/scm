@@ -9,7 +9,15 @@
 		<div class="row">
 			<div class="col-sm-12">
 				<div class="panel panel-default">
-					<div class="panel-heading">新增医院关联</div>
+					<div class="panel-heading" style="display:flex;align-items:center;justify-content:space-between;">
+						<span>新增医院关联</span>
+						<div style="display:flex;align-items:center;gap:8px;">
+							<button type="submit" form="associate-form" class="btn btn-sm btn-primary" id="btnSubmit" shiro:hasPermission="supplier:associate:add">
+								<i class="fa fa-check"></i> 提交关联申请
+							</button>
+							<button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i> 关 闭</button>
+						</div>
+					</div>
 					<div class="panel-body">
 						<p class="text-muted">供应商向医院发起关联申请，需填写供货合同起止日期，提交后等待医院审核。</p>
 						<p class="text-info" style="margin-top:-8px;"><i class="fa fa-info-circle"></i> 若关联<strong>已审核通过</strong>后发现信息有误，请前往 <a href="javascript:void(0)" onclick="$.modal.openTab('关联关系修改', ctx + 'supplier/associate/modify')">关联关系修改</a> 发起修改申请。</p>
@@ -52,13 +60,6 @@
 								<label class="col-sm-2 control-label">申请说明</label>
 								<div class="col-sm-6">
 									<textarea class="form-control" id="applyReason" name="applyReason" rows="3" placeholder="可填写合作背景、供货范围等"></textarea>
-								</div>
-							</div>
-							<div class="form-group">
-								<div class="col-sm-offset-2 col-sm-6">
-									<button type="submit" class="btn btn-primary" id="btnSubmit" shiro:hasPermission="supplier:associate:add">
-										<i class="fa fa-check"></i> 提交关联申请
-									</button>
 								</div>
 							</div>
 						</form>

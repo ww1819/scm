@@ -11,7 +11,12 @@
 				<div class="panel panel-default">
 					<div class="panel-heading" style="display:flex;align-items:center;justify-content:space-between;">
 						<span>关联关系修改申请</span>
-						<button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i> 关 闭</button>
+						<div style="display:flex;align-items:center;gap:8px;">
+							<button type="submit" form="modify-form" class="btn btn-sm btn-primary" id="btnSubmitModify" shiro:hasPermission="supplier:associateModify:add">
+								<i class="fa fa-check"></i> 提交修改申请
+							</button>
+							<button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i> 关 闭</button>
+						</div>
 					</div>
 					<div class="panel-body">
 						<p class="text-muted">请选择<strong>已审核通过</strong>的医院关联，系统将带出当前供货期限等信息；修改后提交，由医院审核通过后生效至关联数据。</p>
@@ -60,13 +65,6 @@
 								<label class="col-sm-2 control-label">申请说明</label>
 								<div class="col-sm-6">
 									<textarea class="form-control" id="applyReason" name="applyReason" rows="3" placeholder="请说明需修改的原因或更正内容"></textarea>
-								</div>
-							</div>
-							<div class="form-group">
-								<div class="col-sm-offset-2 col-sm-6">
-									<button type="submit" class="btn btn-primary" id="btnSubmitModify" shiro:hasPermission="supplier:associateModify:add">
-										<i class="fa fa-check"></i> 提交修改申请
-									</button>
 								</div>
 							</div>
 						</form>
