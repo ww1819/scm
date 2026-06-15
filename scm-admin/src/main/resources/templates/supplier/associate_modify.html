@@ -3,15 +3,214 @@
 <head>
 	<th:block th:include="include :: header('关联关系修改申请')" />
 	<th:block th:include="include :: layout-latest-css" />
+	<style>
+		.container-div.associate-page {
+			padding: 0;
+		}
+		.container-div.associate-page > .row {
+			margin-left: 0;
+			margin-right: 0;
+		}
+		.container-div.associate-page > .row > .col-sm-12 {
+			padding-left: 0;
+			padding-right: 0;
+		}
+		.container-div.associate-page .associate-page-panel {
+			margin-left: 10px;
+			margin-right: 10px;
+			margin-bottom: 0;
+		}
+		.associate-form-panel {
+			margin-top: 10px;
+		}
+		.associate-list-section {
+			margin-top: 10px;
+		}
+		.associate-page-panel > .panel-heading {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			box-sizing: border-box;
+			height: 40px;
+			min-height: 40px;
+			max-height: 40px;
+			padding: 0 15px;
+			line-height: 20px;
+			overflow: hidden;
+		}
+		.associate-form-panel > .panel-heading .panel-heading-meta {
+			display: flex;
+			align-items: center;
+			flex: 1;
+			min-width: 0;
+			gap: 12px;
+			overflow: hidden;
+			white-space: nowrap;
+		}
+		.associate-form-panel > .panel-heading .panel-heading-meta > span:first-child {
+			flex-shrink: 0;
+		}
+		.associate-form-panel > .panel-heading .panel-heading-meta .text-muted {
+			font-weight: normal;
+			font-size: 13px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+		.associate-form-panel > .panel-heading .panel-heading-actions {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			flex-shrink: 0;
+			margin-left: 12px;
+		}
+		.associate-form-panel > .panel-heading .panel-heading-actions .btn {
+			height: 26px;
+			padding: 2px 8px;
+			font-size: 12px;
+			line-height: 1.42857143;
+		}
+		#modify-form .associate-row {
+			display: flex;
+			flex-wrap: nowrap;
+			gap: 12px;
+			margin-bottom: 10px;
+		}
+		#modify-form .associate-row:last-child {
+			margin-bottom: 0;
+		}
+		#modify-form .associate-field {
+			flex: 0 0 calc((100% - 36px) / 4);
+			min-width: 0;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+		#modify-form .associate-field label {
+			flex-shrink: 0;
+			margin: 0;
+			font-weight: normal;
+			color: #333;
+			font-size: 13px;
+			white-space: nowrap;
+		}
+		#modify-form .associate-field .form-control {
+			flex: 1 1 0;
+			min-width: 0;
+		}
+		.apply-list-panel {
+			overflow: hidden;
+		}
+		.apply-list-panel > .panel-body {
+			padding: 0;
+		}
+		.apply-list-panel .apply-table-wrap {
+			margin: 0 -1px -1px !important;
+			width: calc(100% + 2px);
+			border-radius: 0 !important;
+			box-shadow: none !important;
+			padding: 0 !important;
+			background: #fff;
+			min-height: 0;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+		.apply-list-panel .apply-table-wrap > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+		}
+		.apply-list-panel .apply-table-wrap .fixed-table-container {
+			flex: 1 1 auto;
+			min-height: 0;
+			margin-top: 0;
+		}
+		.apply-list-panel .apply-table-wrap .fixed-table-body {
+			overflow-x: auto !important;
+			overflow-y: auto !important;
+		}
+		.apply-list-panel .apply-table-wrap .fixed-table-pagination {
+			flex-shrink: 0;
+			position: relative;
+			margin: 0 !important;
+			padding: 4px 10px;
+			background: #fff;
+			border-top: 1px solid #eee;
+		}
+		.apply-list-panel .apply-table-wrap .fixed-table-toolbar {
+			padding: 0 10px;
+			margin-top: 0;
+			margin-bottom: 0;
+			flex-shrink: 0;
+		}
+		#toolbar.apply-toolbar-row {
+			display: flex;
+			align-items: center;
+			flex-wrap: nowrap;
+			gap: 8px;
+			width: 100%;
+		}
+		#toolbar .apply-search-form {
+			display: flex;
+			align-items: center;
+			flex-wrap: nowrap;
+			gap: 8px;
+			margin: 0;
+			flex: 1;
+			min-width: 0;
+		}
+		#toolbar .apply-search-item {
+			display: inline-flex;
+			align-items: center;
+			gap: 4px;
+			margin: 0;
+			white-space: nowrap;
+			font-weight: normal;
+			font-size: 13px;
+		}
+		#toolbar .apply-search-item select,
+		#toolbar .apply-search-item input {
+			width: 130px;
+			min-width: 0;
+			height: 30px;
+			padding: 4px 8px;
+			font-size: 13px;
+		}
+		.apply-table-wrap .fixed-table-toolbar {
+			display: flex;
+			align-items: center;
+			flex-wrap: nowrap;
+		}
+		.apply-table-wrap .fixed-table-toolbar .columns,
+		.apply-table-wrap .fixed-table-toolbar .pull-right,
+		.apply-table-wrap .fixed-table-toolbar .bs-bars {
+			float: none;
+		}
+		.apply-table-wrap .fixed-table-toolbar .bs-bars {
+			flex: 1;
+			min-width: 0;
+			margin-right: 8px;
+		}
+		.apply-table-wrap .fixed-table-toolbar .columns {
+			margin-left: auto;
+			flex-shrink: 0;
+		}
+	</style>
 </head>
 <body class="gray-bg">
-	<div class="container-div">
+	<div class="container-div associate-page">
 		<div class="row">
 			<div class="col-sm-12">
-				<div class="panel panel-default">
-					<div class="panel-heading" style="display:flex;align-items:center;justify-content:space-between;">
-						<span>关联关系修改申请</span>
-						<div style="display:flex;align-items:center;gap:8px;">
+				<div class="panel panel-default associate-page-panel associate-form-panel">
+					<div class="panel-heading">
+						<div class="panel-heading-meta">
+							<span>关联关系修改申请</span>
+							<span class="text-muted">请选择<strong>已审核通过</strong>的医院关联，系统将带出当前供货期限等信息；修改后提交，由医院审核通过后生效至关联数据。</span>
+						</div>
+						<div class="panel-heading-actions">
 							<button type="submit" form="modify-form" class="btn btn-sm btn-primary" id="btnSubmitModify" shiro:hasPermission="supplier:associateModify:add">
 								<i class="fa fa-check"></i> 提交修改申请
 							</button>
@@ -19,93 +218,78 @@
 						</div>
 					</div>
 					<div class="panel-body">
-						<p class="text-muted">请选择<strong>已审核通过</strong>的医院关联，系统将带出当前供货期限等信息；修改后提交，由医院审核通过后生效至关联数据。</p>
-						<form id="modify-form" class="form-horizontal">
-							<div class="form-group">
-								<label class="col-sm-2 control-label">引用关联</label>
-								<div class="col-sm-6">
+						<form id="modify-form">
+							<div class="associate-row">
+								<div class="associate-field">
+									<label>引用关联</label>
 									<select name="relationId" id="relationId" class="form-control" required>
 										<option value="">请选择已审核的医院关联</option>
 									</select>
 								</div>
-							</div>
-							<div class="form-group">
-								<label class="col-sm-2 control-label">医院</label>
-								<div class="col-sm-6">
-									<p class="form-control-static" id="hospitalDisplay">-</p>
+								<div class="associate-field">
+									<label>医院</label>
+									<input type="text" class="form-control" id="hospitalDisplay" readonly placeholder="选择关联后自动带出" />
 								</div>
-							</div>
-							<div class="form-group">
-								<label class="col-sm-2 control-label">供货开始日期</label>
-								<div class="col-sm-3">
+								<div class="associate-field">
+									<label>供货开始日期</label>
 									<input type="date" class="form-control" id="supplyStartDate" name="supplyStartDate" required />
 								</div>
-								<label class="col-sm-1 control-label">至</label>
-								<div class="col-sm-3">
+								<div class="associate-field">
+									<label>供货结束日期</label>
 									<input type="date" class="form-control" id="supplyEndDate" name="supplyEndDate" required />
 								</div>
 							</div>
-							<div class="form-group">
-								<label class="col-sm-2 control-label">合同编号</label>
-								<div class="col-sm-6">
+							<div class="associate-row">
+								<div class="associate-field">
+									<label>合同编号</label>
 									<input type="text" class="form-control" id="contractNo" name="contractNo" placeholder="可选" />
 								</div>
-							</div>
-							<div class="form-group">
-								<label class="col-sm-2 control-label">联系人</label>
-								<div class="col-sm-3">
+								<div class="associate-field">
+									<label>联系人</label>
 									<input type="text" class="form-control" id="contactPerson" name="contactPerson" placeholder="可选" />
 								</div>
-								<label class="col-sm-1 control-label">联系电话</label>
-								<div class="col-sm-3">
+								<div class="associate-field">
+									<label>联系电话</label>
 									<input type="text" class="form-control" id="contactPhone" name="contactPhone" placeholder="可选" />
 								</div>
-							</div>
-							<div class="form-group">
-								<label class="col-sm-2 control-label">申请说明</label>
-								<div class="col-sm-6">
-									<textarea class="form-control" id="applyReason" name="applyReason" rows="3" placeholder="请说明需修改的原因或更正内容"></textarea>
+								<div class="associate-field">
+									<label>申请说明</label>
+									<input type="text" class="form-control" id="applyReason" name="applyReason" placeholder="可选" />
 								</div>
 							</div>
 						</form>
 					</div>
 				</div>
 			</div>
-			<div class="col-sm-12" style="margin-top: 10px;">
-				<div class="panel panel-default">
+			<div class="col-sm-12 associate-list-section">
+				<div class="panel panel-default associate-page-panel apply-list-panel">
 					<div class="panel-heading">我的关联修改申请</div>
 					<div class="panel-body">
-						<div class="col-sm-12 search-collapse" style="padding-left: 0; padding-right: 0;">
-							<form id="modify-search-form">
-								<div class="select-list">
-									<ul>
-										<li>审核状态：
-											<select name="auditStatus">
-												<option value="" selected>全部</option>
-												<option value="0">待审核</option>
-												<option value="1">已通过</option>
-												<option value="2">已拒绝</option>
-											</select>
-										</li>
-										<li>医院：
-											<input type="text" name="hospitalKeyword" placeholder="编码/名称/拼音简码"/>
-										</li>
-										<li>供应商：
-											<input type="text" name="supplierKeyword" placeholder="编码/名称/拼音简码"/>
-										</li>
-										<li>
-											<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search('modify-search-form', 'modify-apply-table')"><i class="fa fa-search"></i>&nbsp;搜索</a>
-										</li>
-									</ul>
-								</div>
-							</form>
+						<div class="table-striped apply-table-wrap">
+							<div class="btn-group-sm apply-toolbar-row" id="toolbar" role="group">
+								<form id="modify-search-form" class="apply-search-form">
+									<label class="apply-search-item">审核状态：
+										<select name="auditStatus" class="form-control input-sm">
+											<option value="" selected>全部</option>
+											<option value="0">待审核</option>
+											<option value="1">已通过</option>
+											<option value="2">已拒绝</option>
+										</select>
+									</label>
+									<label class="apply-search-item">医院：
+										<input type="text" name="hospitalKeyword" class="form-control input-sm" placeholder="编码/名称/拼音简码"/>
+									</label>
+									<label class="apply-search-item">供应商：
+										<input type="text" name="supplierKeyword" class="form-control input-sm" placeholder="编码/名称/拼音简码"/>
+									</label>
+									<a class="btn btn-primary btn-sm" onclick="$.table.search('modify-search-form', 'modify-apply-table')"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								</form>
+								<a class="btn btn-danger btn-sm" onclick="withdrawModifyApply()" shiro:hasPermission="supplier:associateModify:withdraw">
+									<i class="fa fa-undo"></i> 撤回申请
+								</a>
+							</div>
+							<table id="modify-apply-table"></table>
 						</div>
-						<div class="btn-group-sm" role="group" style="margin-bottom: 10px;">
-							<a class="btn btn-danger" onclick="withdrawModifyApply()" shiro:hasPermission="supplier:associateModify:withdraw">
-								<i class="fa fa-undo"></i> 撤回申请
-							</a>
-						</div>
-						<table id="modify-apply-table"></table>
 					</div>
 				</div>
 			</div>
@@ -116,13 +300,54 @@
 	<script th:inline="javascript">
 		var prefix = ctx + "supplier/associate";
 		var withdrawModifyFlag = [[${@permission.hasPermi('supplier:associateModify:withdraw')}]];
+		var modifyApplyTableId = "modify-apply-table";
+
+		function layoutAssociateTableWrapHeight() {
+			var $wrap = $('.apply-list-panel .apply-table-wrap');
+			if (!$wrap.length) {
+				return;
+			}
+			var top = $wrap[0].getBoundingClientRect().top;
+			var bottomGap = 10;
+			var h = Math.floor(window.innerHeight - top - bottomGap);
+			h = Math.max(h, 260);
+			$wrap[0].style.height = h + 'px';
+			$wrap[0].style.minHeight = h + 'px';
+			$wrap[0].style.maxHeight = h + 'px';
+		}
+
+		function calculateAssociateTableHeight() {
+			layoutAssociateTableWrapHeight();
+			var $wrap = $('.apply-list-panel .apply-table-wrap');
+			if (!$wrap.length) {
+				return 240;
+			}
+			var $bt = $wrap.find('.bootstrap-table');
+			var wrapH = $wrap[0].clientHeight || $wrap.innerHeight() || 0;
+			var toolbarH = $bt.find('.fixed-table-toolbar').outerHeight(true) || 0;
+			var pagH = $bt.find('.fixed-table-pagination').outerHeight(true) || 46;
+			return Math.max(Math.floor(wrapH - toolbarH - pagH - 2), 160);
+		}
+
+		function adjustAssociateTableHeight() {
+			var $table = $('#' + modifyApplyTableId);
+			if ($table.length && $table.bootstrapTable('getOptions')) {
+				$table.bootstrapTable('resetView', { height: calculateAssociateTableHeight() });
+			}
+		}
+
 		$(function() {
+			layoutAssociateTableWrapHeight();
 			loadApprovedRelations();
 			initModifyApplyTable();
+			$(window).resize(function() {
+				layoutAssociateTableWrapHeight();
+				adjustAssociateTableHeight();
+			});
 			$("#relationId").on("change", function() {
 				var rid = $(this).val();
 				if (!rid) {
-					$("#hospitalDisplay").text("-");
+					$("#hospitalDisplay").val("");
 					$("#supplyStartDate").val("");
 					$("#supplyEndDate").val("");
 					return;
@@ -130,7 +355,7 @@
 				$.get(prefix + "/relationPrefill", { relationId: rid }, function(res) {
 					if (res.code == 0 && res.data) {
 						var d = res.data;
-						$("#hospitalDisplay").text((d.hospitalName || "") + (d.hospitalCode ? ("（" + d.hospitalCode + "）") : ""));
+						$("#hospitalDisplay").val((d.hospitalName || "") + (d.hospitalCode ? ("（" + d.hospitalCode + "）") : ""));
 						$("#supplyStartDate").val(d.supplyStartDateStr || "");
 						$("#supplyEndDate").val(d.supplyEndDateStr || "");
 					} else {
@@ -172,7 +397,7 @@
 						if (result.code == 0) {
 							$.modal.msgSuccess(result.msg);
 							$("#modify-form")[0].reset();
-							$("#hospitalDisplay").text("-");
+							$("#hospitalDisplay").val("");
 							$.table.refresh('modify-apply-table');
 						} else {
 							$.modal.msgError(result.msg);
@@ -206,9 +431,19 @@
 				sortName: "createTime",
 				sortOrder: "desc",
 				modalName: "关联修改申请",
+				showSearch: false,
+				mobileResponsive: false,
+				height: calculateAssociateTableHeight(),
 				rememberSelected: true,
 				maintainSelected: true,
 				uniqueId: "modifyApplyId",
+				onLoadSuccess: function() {
+					layoutAssociateTableWrapHeight();
+					setTimeout(adjustAssociateTableHeight, 50);
+				},
+				onPostBody: function() {
+					adjustAssociateTableHeight();
+				},
 				queryParams: function(params) {
 					var curParams = {
 						pageSize: params.limit,
@@ -283,6 +518,10 @@
 				}]
 			};
 			$.table.init(options);
+			setTimeout(function() {
+				layoutAssociateTableWrapHeight();
+				adjustAssociateTableHeight();
+			}, 0);
 		}
 		function withdrawModifyApply(modifyApplyId) {
 			var targetId = modifyApplyId;
