@@ -9,7 +9,10 @@
 		<div class="row">
 			<div class="col-sm-12">
 				<div class="panel panel-default">
-					<div class="panel-heading">关联关系修改申请</div>
+					<div class="panel-heading" style="display:flex;align-items:center;justify-content:space-between;">
+						<span>关联关系修改申请</span>
+						<button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i> 关 闭</button>
+					</div>
 					<div class="panel-body">
 						<p class="text-muted">请选择<strong>已审核通过</strong>的医院关联，系统将带出当前供货期限等信息；修改后提交，由医院审核通过后生效至关联数据。</p>
 						<form id="modify-form" class="form-horizontal">
