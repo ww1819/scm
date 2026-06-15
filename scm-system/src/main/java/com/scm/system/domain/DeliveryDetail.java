@@ -128,6 +128,15 @@ public class DeliveryDetail extends BaseEntity
     /** 所属配送单审核状态（主表 audit_status） */
     private String deliveryAuditStatus;
 
+    /** 所属配送单审核人展示名（主表关联，不落库） */
+    @Excel(name = "审核人")
+    private String deliveryAuditByDisplay;
+
+    /** 所属配送单审核时间（主表 audit_time） */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Excel(name = "审核日期", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
+    private Date deliveryAuditTime;
+
     /** 本系统订单ID（主表快照） */
     private Long refOrderId;
 
@@ -430,6 +439,26 @@ public class DeliveryDetail extends BaseEntity
     public void setDeliveryAuditStatus(String deliveryAuditStatus)
     {
         this.deliveryAuditStatus = deliveryAuditStatus;
+    }
+
+    public String getDeliveryAuditByDisplay()
+    {
+        return deliveryAuditByDisplay;
+    }
+
+    public void setDeliveryAuditByDisplay(String deliveryAuditByDisplay)
+    {
+        this.deliveryAuditByDisplay = deliveryAuditByDisplay;
+    }
+
+    public Date getDeliveryAuditTime()
+    {
+        return deliveryAuditTime;
+    }
+
+    public void setDeliveryAuditTime(Date deliveryAuditTime)
+    {
+        this.deliveryAuditTime = deliveryAuditTime;
     }
 
     public Long getRefOrderId()

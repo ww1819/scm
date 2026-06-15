@@ -196,6 +196,15 @@
 		.container-div .search-collapse .select-list li {
 			margin: 4px 15px 4px 0;
 		}
+		#delivery-form .select-list li.select-time label {
+			margin-bottom: 0;
+		}
+		#delivery-form .select-list li.delivery-filter-text input {
+			width: 160px;
+		}
+		#delivery-form .select-list li.delivery-filter-short select {
+			width: 96px;
+		}
 
 		#toolbar #btn-delivery-edit.disabled,
 		#toolbar #btn-delivery-audit.disabled,
@@ -221,13 +230,19 @@
 				<form id="delivery-form">
 					<div class="select-list">
 						<ul>
-							<li>
+							<li class="select-time">
+								<label>制单日期：</label>
+								<input type="text" class="time-input" id="deliveryStartTime" placeholder="开始时间" name="params[beginTime]"/>
+								<span>-</span>
+								<input type="text" class="time-input" id="deliveryEndTime" placeholder="结束时间" name="params[endTime]"/>
+							</li>
+							<li class="delivery-filter-text">
 								配送单号：<input type="text" name="deliveryNo"/>
 							</li>
-							<li>
+							<li class="delivery-filter-text">
 								医院名称：<input type="text" name="hospitalName"/>
 							</li>
-							<li>
+							<li class="delivery-filter-short">
 								单据状态：<select name="deliveryStatus">
 									<option value="">所有</option>
 									<option value="0">未审核</option>
@@ -236,7 +251,7 @@
 									<option value="3">已入库</option>
 								</select>
 							</li>
-							<li>
+							<li class="delivery-filter-short">
 								审核状态：<select name="auditStatus">
 									<option value="">所有</option>
 									<option value="0">待审核</option>
@@ -307,6 +322,7 @@
 		var prefix = ctx + "delivery/delivery";
 
 		$(function() {
+		    initDefaultDeliveryDateRange();
 		    layoutDeliveryTableWrapHeight();
 		    queryDeliveryList();
 		    $(window).resize(function() {
@@ -1039,8 +1055,28 @@
 		    });
 		}
 
+		function formatDeliveryDate(date) {
+			var y = date.getFullYear();
+			var m = String(date.getMonth() + 1).padStart(2, '0');
+			var d = String(date.getDate()).padStart(2, '0');
+			return y + '-' + m + '-' + d;
+		}
+
+		/** 默认：结束日期为当天，开始日期为当天往前 7 天 */
+		function initDefaultDeliveryDateRange() {
+			var end = new Date();
+			var start = new Date();
+			start.setDate(end.getDate() - 7);
+			$('#deliveryEndTime').val(formatDeliveryDate(end));
+			$('#deliveryStartTime').val(formatDeliveryDate(start));
+		}
+
 		function resetPre() {
+			if (typeof resetDate === 'function') {
+				resetDate();
+			}
 			$("#delivery-form")[0].reset();
+			initDefaultDeliveryDateRange();
 			$.table.search();
 		}
 

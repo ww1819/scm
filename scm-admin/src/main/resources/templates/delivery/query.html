@@ -366,6 +366,9 @@
 		.delivery-query-page .search-collapse .select-list li {
 			margin: 4px 15px 4px 0;
 		}
+		.delivery-query-page .search-collapse .select-list li.select-time label {
+			margin-bottom: 0;
+		}
 	</style>
 </head>
 <body class="gray-bg delivery-query-body">
@@ -393,6 +396,12 @@
 						<form id="delivery-detail-form">
 							<div class="select-list">
 								<ul>
+									<li class="select-time">
+										<label>审核日期：</label>
+										<input type="text" class="time-input" id="detailAuditStartTime" placeholder="开始时间" name="params[beginAuditTime]"/>
+										<span>-</span>
+										<input type="text" class="time-input" id="detailAuditEndTime" placeholder="结束时间" name="params[endAuditTime]"/>
+									</li>
 									<li>
 										配送单号：<input type="text" name="deliveryNo"/>
 									</li>
@@ -430,6 +439,12 @@
 						<form id="delivery-summary-form">
 							<div class="select-list">
 								<ul>
+									<li class="select-time">
+										<label>审核日期：</label>
+										<input type="text" class="time-input" id="summaryAuditStartTime" placeholder="开始时间" name="params[beginAuditTime]"/>
+										<span>-</span>
+										<input type="text" class="time-input" id="summaryAuditEndTime" placeholder="结束时间" name="params[endAuditTime]"/>
+									</li>
 									<li>
 										配送单号：<input type="text" name="deliveryNo"/>
 									</li>
@@ -543,7 +558,33 @@
 		    return null;
 		}
 
+		function formatQueryAuditDate(date) {
+			var y = date.getFullYear();
+			var m = String(date.getMonth() + 1).padStart(2, '0');
+			var d = String(date.getDate()).padStart(2, '0');
+			return y + '-' + m + '-' + d;
+		}
+
+		/** 默认：结束日期为当天，开始日期为当天往前 7 天 */
+		function initDefaultDetailAuditDateRange() {
+			var end = new Date();
+			var start = new Date();
+			start.setDate(end.getDate() - 7);
+			$('#detailAuditEndTime').val(formatQueryAuditDate(end));
+			$('#detailAuditStartTime').val(formatQueryAuditDate(start));
+		}
+
+		function initDefaultSummaryAuditDateRange() {
+			var end = new Date();
+			var start = new Date();
+			start.setDate(end.getDate() - 7);
+			$('#summaryAuditEndTime').val(formatQueryAuditDate(end));
+			$('#summaryAuditStartTime').val(formatQueryAuditDate(start));
+		}
+
 		$(function() {
+		    initDefaultDetailAuditDateRange();
+		    initDefaultSummaryAuditDateRange();
 		    // 初始化明细表
 		    initDetailTable();
 		    $(window).on('resize', function() {
@@ -576,7 +617,9 @@
 			mainBarcode: 240,
 			auxBarcode: 240,
 			manufacturer: 150,
-			registerNo: 160
+			registerNo: 160,
+			deliveryAuditByDisplay: 90,
+			deliveryAuditTime: 110
 		};
 
 		function escDeliveryCellAttr(s) {
@@ -1185,6 +1228,23 @@
 		            formatter: function(value) {
 		                return deliveryCellEllipsis(value);
 		            }
+		        },
+		        {
+		            field: 'deliveryAuditByDisplay',
+		            title: '审核人',
+		            align: 'center',
+		            width: 90,
+		            formatter: function(value) {
+		                return value || '-';
+		            }
+		        },
+		        {
+		            field: 'deliveryAuditTime',
+		            title: '审核日期',
+		            width: 110,
+		            formatter: function(value) {
+		                return formatDate(value, 'yyyy-MM-dd HH:mm:ss');
+		            }
 		        }]
 		    };
 		    
@@ -1407,7 +1467,11 @@
 
 		// 明细表重置
 		function resetDetail() {
+		    if (typeof resetDate === 'function') {
+		        resetDate();
+		    }
 		    $("#delivery-detail-form")[0].reset();
+		    initDefaultDetailAuditDateRange();
 		    $.table.search("delivery-detail-form", "bootstrap-table-detail");
 		}
 
@@ -1416,7 +1480,9 @@
 		    var params = {
 		        deliveryNo: $('input[name="deliveryNo"]', '#delivery-detail-form').val(),
 		        materialCode: $('input[name="materialCode"]', '#delivery-detail-form').val(),
-		        materialName: $('input[name="materialName"]', '#delivery-detail-form').val()
+		        materialName: $('input[name="materialName"]', '#delivery-detail-form').val(),
+		        'params[beginAuditTime]': $('#detailAuditStartTime').val(),
+		        'params[endAuditTime]': $('#detailAuditEndTime').val()
 		    };
 		    var form = $('<form></form>');
 		    form.attr('method', 'post');
@@ -1442,7 +1508,11 @@
 
 		// 汇总表重置
 		function resetSummary() {
+		    if (typeof resetDate === 'function') {
+		        resetDate();
+		    }
 		    $("#delivery-summary-form")[0].reset();
+		    initDefaultSummaryAuditDateRange();
 		    $.table.search("delivery-summary-form", "bootstrap-table-summary");
 		}
 
@@ -1452,7 +1522,9 @@
 		        deliveryNo: $('input[name="deliveryNo"]', '#delivery-summary-form').val(),
 		        hospitalName: $('input[name="hospitalName"]', '#delivery-summary-form').val(),
 		        supplierName: $('input[name="supplierName"]', '#delivery-summary-form').val(),
-		        deliveryStatus: $('select[name="deliveryStatus"]', '#delivery-summary-form').val()
+		        deliveryStatus: $('select[name="deliveryStatus"]', '#delivery-summary-form').val(),
+		        'params[beginAuditTime]': $('#summaryAuditStartTime').val(),
+		        'params[endAuditTime]': $('#summaryAuditEndTime').val()
 		    };
 		    var form = $('<form></form>');
 		    form.attr('method', 'post');

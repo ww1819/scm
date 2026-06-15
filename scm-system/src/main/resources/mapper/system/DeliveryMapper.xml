@@ -137,6 +137,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="params.endTime != null and params.endTime != ''">
                 AND date(d.create_time) &lt;= date(#{params.endTime})
             </if>
+            <if test="params.beginAuditTime != null and params.beginAuditTime != ''">
+                AND date(d.audit_time) &gt;= date(#{params.beginAuditTime})
+            </if>
+            <if test="params.endAuditTime != null and params.endAuditTime != ''">
+                AND date(d.audit_time) &lt;= date(#{params.endAuditTime})
+            </if>
             <if test="params != null and params.excludeHospitalIds != null and params.excludeHospitalIds.size() &gt; 0">
                 AND d.hospital_id NOT IN
                 <foreach collection="params.excludeHospitalIds" item="hid" open="(" separator="," close=")">
