@@ -3,6 +3,27 @@
 <head>
 	<th:block th:include="include :: header('新增医院关联')" />
 	<th:block th:include="include :: layout-latest-css" />
+	<style>
+		#associate-form .associate-row-5 {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+			margin-bottom: 10px;
+		}
+		#associate-form .associate-row-5 .associate-field {
+			flex: 1 1 0;
+			min-width: 120px;
+		}
+		#associate-form .associate-field label {
+			display: block;
+			margin-bottom: 4px;
+			font-weight: normal;
+			color: #333;
+		}
+		#associate-form .associate-field .form-control {
+			width: 100%;
+		}
+	</style>
 </head>
 <body class="gray-bg">
 	<div class="container-div">
@@ -21,45 +42,39 @@
 					<div class="panel-body">
 						<p class="text-muted">供应商向医院发起关联申请，需填写供货合同起止日期，提交后等待医院审核。</p>
 						<p class="text-info" style="margin-top:-8px;"><i class="fa fa-info-circle"></i> 若关联<strong>已审核通过</strong>后发现信息有误，请前往 <a href="javascript:void(0)" onclick="$.modal.openTab('关联关系修改', ctx + 'supplier/associate/modify')">关联关系修改</a> 发起修改申请。</p>
-						<form id="associate-form" class="form-horizontal">
-							<div class="form-group">
-								<label class="col-sm-2 control-label">选择医院</label>
-								<div class="col-sm-6">
+						<form id="associate-form">
+							<div class="associate-row-5">
+								<div class="associate-field">
+									<label>选择医院</label>
 									<select name="hospitalId" id="hospitalId" class="form-control" required>
 										<option value="">请选择医院</option>
 									</select>
 								</div>
-							</div>
-							<div class="form-group">
-								<label class="col-sm-2 control-label">供货开始日期</label>
-								<div class="col-sm-3">
+								<div class="associate-field">
+									<label>供货开始日期</label>
 									<input type="date" class="form-control" id="supplyStartDate" name="supplyStartDate" required />
 								</div>
-								<label class="col-sm-1 control-label">至</label>
-								<div class="col-sm-3">
+								<div class="associate-field">
+									<label>供货结束日期</label>
 									<input type="date" class="form-control" id="supplyEndDate" name="supplyEndDate" required />
 								</div>
-							</div>
-							<div class="form-group">
-								<label class="col-sm-2 control-label">合同编号</label>
-								<div class="col-sm-6">
-									<input type="text" class="form-control" id="contractNo" name="contractNo" placeholder="可选，便于医院核对合同" />
+								<div class="associate-field">
+									<label>合同编号</label>
+									<input type="text" class="form-control" id="contractNo" name="contractNo" placeholder="可选" />
 								</div>
-							</div>
-							<div class="form-group">
-								<label class="col-sm-2 control-label">联系人</label>
-								<div class="col-sm-3">
+								<div class="associate-field">
+									<label>联系人</label>
 									<input type="text" class="form-control" id="contactPerson" name="contactPerson" placeholder="可选" />
 								</div>
-								<label class="col-sm-1 control-label">联系电话</label>
-								<div class="col-sm-3">
+							</div>
+							<div class="row">
+								<div class="col-sm-2 associate-field">
+									<label>联系电话</label>
 									<input type="text" class="form-control" id="contactPhone" name="contactPhone" placeholder="可选" />
 								</div>
-							</div>
-							<div class="form-group">
-								<label class="col-sm-2 control-label">申请说明</label>
-								<div class="col-sm-6">
-									<textarea class="form-control" id="applyReason" name="applyReason" rows="3" placeholder="可填写合作背景、供货范围等"></textarea>
+								<div class="col-sm-10 associate-field">
+									<label>申请说明</label>
+									<textarea class="form-control" id="applyReason" name="applyReason" rows="2" placeholder="可填写合作背景、供货范围等"></textarea>
 								</div>
 							</div>
 						</form>
