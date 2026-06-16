@@ -657,9 +657,7 @@ $.ajaxSetup({
             } catch (e) { /* ignore */ }
             scmHandleSessionDisconnected(msg);
         } else if (textStatus == "parsererror" || textStatus == "error") {
-            $.modal.alertWarning("服务器错误，请联系管理员！");
-            $.modal.enable();
-            $.modal.closeLoading();
+            scmHandleSessionDisconnected("系统登录超时，请重新登录！");
         }
     }
 });
