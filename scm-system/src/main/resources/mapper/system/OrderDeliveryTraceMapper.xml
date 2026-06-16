@@ -112,7 +112,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             or exists (
                 select 1 from zs_tp_order_detail_delivery_rel r0
                 where r0.order_detail_id = l.id
-                  and r0.delivery_detail_id = cast(dd.detail_id as char)
+                  and r0.delivery_detail_id = cast(dd.detail_id as char) collate utf8mb4_0900_ai_ci
             )
         ) and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
         inner join scm_delivery d on d.delivery_id = dd.delivery_id and (d.del_flag is null or d.del_flag = '0')

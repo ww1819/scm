@@ -1134,7 +1134,8 @@ public class DeliveryServiceImpl implements IDeliveryService
         Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());
         if (hospitalCtx != null)
         {
-            if (head.getHospitalId() == null || !hospitalCtx.equals(head.getHospitalId()))
+            Long orderHospitalId = resolveZsTpOrderHospitalId(head);
+            if (orderHospitalId == null || !hospitalCtx.equals(orderHospitalId))
             {
                 throw new ServiceException("无权查看其他医院订单");
             }
@@ -1142,11 +1143,38 @@ public class DeliveryServiceImpl implements IDeliveryService
         Long supplierCtx = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
         if (supplierCtx != null)
         {
-            if (head.getSupplierId() == null || !supplierCtx.equals(head.getSupplierId()))
+            Long orderSupplierId = resolveZsTpOrderSupplierId(head);
+            if (orderSupplierId == null || !supplierCtx.equals(orderSupplierId))
             {
                 throw new ServiceException("无权查看其他供应商订单");
             }
         }
+    }
+
+    private static Long resolveZsTpOrderHospitalId(ZsTpOrder head)
+    {
+        if (head == null)
+        {
+            return null;
+        }
+        if (head.getHospitalId() != null)
+        {
+            return head.getHospitalId();
+        }
+        return parseLongOrNull(head.getScmHospitalId());
+    }
+
+    private static Long resolveZsTpOrderSupplierId(ZsTpOrder head)
+    {
+        if (head == null)
+        {
+            return null;
+        }
+        if (head.getSupplierId() != null)
+        {
+            return head.getSupplierId();
+        }
+        return parseLongOrNull(head.getScmSupplierId());
     }
 
     private void applyZsTpOrderQueryDataScope(ZsTpOrder query)

@@ -392,6 +392,23 @@
 			return s;
 		}
 
+		function initDefaultZsPushDateRange() {
+			var end = new Date();
+			var start = new Date();
+			start.setDate(end.getDate() - 5);
+			$('#zsPushEnd').val(formatZsPushDisplayDate(end, true));
+			$('#zsPushBegin').val(formatZsPushDisplayDate(start, false));
+		}
+
+		/** laydate 中文显示格式 */
+		function formatZsPushDisplayDate(date, endOfDay) {
+			var y = date.getFullYear();
+			var m = padDatePart(date.getMonth() + 1);
+			var d = padDatePart(date.getDate());
+			var time = endOfDay ? '23:59:59' : '00:00:00';
+			return y + '年' + m + '月' + d + '日 ' + time;
+		}
+
 		function normalizePushRangeParams(obj, beginSel, endSel) {
 			if (!obj || typeof obj !== 'object') {
 				return;
@@ -671,6 +688,7 @@
 		}
 
 		$(function() {
+			initDefaultZsPushDateRange();
 			initZsPushRangeLaydate();
 			layoutZsOrderTableWrapHeight();
 		    initZsTable();
@@ -1014,6 +1032,7 @@
 				resetDate();
 			}
 			$("#zs-order-form")[0].reset();
+			initDefaultZsPushDateRange();
 			$('#sheetTab').val(sheet);
 			currentSheetTab = sheet;
 			$('#zsOrderSheetTabs li').removeClass('active');

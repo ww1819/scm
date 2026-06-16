@@ -771,3 +771,24 @@ DELETE rm FROM sys_role_menu rm INNER JOIN sys_role r ON r.role_id = rm.role_id
 WHERE r.del_flag = '0' AND r.role_type = 'hospital' AND rm.menu_id = 25009;
 /
 DELETE FROM scm_hospital_menu_auth WHERE menu_id = 25009;
+/
+-- 第三方订单：将 scm_hospital_id / scm_supplier_id 回填到平台主键列，供数据权限与关联查询使用
+UPDATE zs_tp_order
+SET hospital_id = CAST(NULLIF(TRIM(scm_hospital_id), '') AS UNSIGNED)
+WHERE hospital_id IS NULL
+  AND scm_hospital_id IS NOT NULL AND TRIM(scm_hospital_id) != ''
+  AND scm_hospital_id REGEXP '^[0-9]+$';
+/
+UPDATE zs_tp_order
+SET supplier_id = CAST(NULLIF(TRIM(scm_supplier_id), '') AS UNSIGNED)
+WHERE supplier_id IS NULL
+  AND scm_supplier_id IS NOT NULL AND TRIM(scm_supplier_id) != ''
+  AND scm_supplier_id REGEXP '^[0-9]+$';
+/
+ALTER TABLE zs_tp_order ADD INDEX idx_zs_tp_order_create_time (create_time);
+/
+ALTER TABLE zs_tp_order ADD INDEX idx_zs_tp_order_supplier_time (supplier_id, create_time);
+/
+ALTER TABLE scm_delivery_detail ADD INDEX idx_dd_zs_order_detail_id (zs_order_detail_id);
+/
+ALTER TABLE zs_tp_order_detail ADD INDEX idx_zs_tp_detail_order_id (order_id);

@@ -11,7 +11,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             OR EXISTS (
                 SELECT 1 FROM zs_tp_order_detail_delivery_rel r
                 WHERE r.order_detail_id = l.id
-                  AND r.delivery_detail_id = CAST(dd.detail_id AS CHAR)
+                  AND r.delivery_detail_id = CAST(dd.detail_id AS CHAR) COLLATE utf8mb4_0900_ai_ci
             )
         )
     </sql>
@@ -100,7 +100,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             o.order_no AS orderNo,
             CAST(d.delivery_id AS CHAR) AS deliveryId,
             d.delivery_no AS deliveryNo,
-            CAST(dd.detail_id AS CHAR) AS deliveryDetailId,
+            CAST(dd.detail_id AS CHAR) COLLATE utf8mb4_0900_ai_ci AS deliveryDetailId,
             d.tenant_id AS tenantId,
             d.create_by AS createBy
         FROM scm_delivery_detail dd
@@ -113,7 +113,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
           AND (d.zs_order_id IS NULL OR TRIM(d.zs_order_id) = '')
           AND NOT EXISTS (
               SELECT 1 FROM scm_order_detail_delivery_rel r
-              WHERE r.delivery_detail_id = CAST(dd.detail_id AS CHAR)
+              WHERE r.delivery_detail_id = CAST(dd.detail_id AS CHAR) COLLATE utf8mb4_0900_ai_ci
           )
     </select>
 
@@ -124,7 +124,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             o.dh AS orderNo,
             CAST(d.delivery_id AS CHAR) AS deliveryId,
             d.delivery_no AS deliveryNo,
-            CAST(dd.detail_id AS CHAR) AS deliveryDetailId,
+            CAST(dd.detail_id AS CHAR) COLLATE utf8mb4_0900_ai_ci AS deliveryDetailId,
             d.tenant_id AS tenantId,
             d.create_by AS createBy
         FROM scm_delivery_detail dd
@@ -137,7 +137,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
           AND (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
           AND NOT EXISTS (
               SELECT 1 FROM zs_tp_order_detail_delivery_rel r
-              WHERE r.delivery_detail_id = CAST(dd.detail_id AS CHAR)
+              WHERE r.delivery_detail_id = CAST(dd.detail_id AS CHAR) COLLATE utf8mb4_0900_ai_ci
           )
     </select>
 
