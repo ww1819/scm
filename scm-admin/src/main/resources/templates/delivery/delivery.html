@@ -689,8 +689,9 @@
 				titleParts.push(orderLabel);
 			}
 			if (row.zsOrderId) {
-				parts.push('<a href="javascript:void(0)" onclick="$.modal.openTab(\'第三方订单\',\'' + ctx + 'order/zstp/detail/' + row.zsOrderId + '\')">' + escDeliveryCellAttr(row.zsOrderId) + '</a>');
-				titleParts.push(row.zsOrderId);
+				var zsLabel = row.orderNo ? row.orderNo : '第三方订单';
+				parts.push('<a href="javascript:void(0)" onclick="$.modal.openTab(\'第三方订单\',\'' + ctx + 'order/zstp/detail/' + row.zsOrderId + '\')">' + escDeliveryCellAttr(zsLabel) + '</a>');
+				titleParts.push(zsLabel);
 			}
 			if (!parts.length) {
 				return '<span class="text-muted">-</span>';
