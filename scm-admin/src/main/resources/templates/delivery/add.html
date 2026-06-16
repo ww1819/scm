@@ -965,6 +965,51 @@
 	    var detailColumnWidths = {};
 	    var DETAIL_COL_RESIZE_SKIP = { btSelectItem: 1, index: 1, operation: 1 };
 
+	    /** 明细行金额：始终按 数量×单价（复制拆行后避免沿用旧 amount） */
+	    function detailRowAmountValue(row) {
+	        if (!row) {
+	            return 0;
+	        }
+	        var q = parseFloat(row.deliveryQuantity);
+	        var p = parseFloat(row.price || 0);
+	        if (isNaN(q)) {
+	            q = 0;
+	        }
+	        if (isNaN(p)) {
+	            p = 0;
+	        }
+	        return q * p;
+	    }
+
+	    function normalizeDetailRowAmount(row) {
+	        if (!row) {
+	            return;
+	        }
+	        row.amount = detailRowAmountValue(row);
+	    }
+
+	    function refreshDetailRowAmountDisplay(rowIndex) {
+	        var $table = $('#detail-table');
+	        if (!$table.length) {
+	            return;
+	        }
+	        var data = $table.bootstrapTable('getData') || [];
+	        if (rowIndex < 0 || rowIndex >= data.length || !data[rowIndex]) {
+	            return;
+	        }
+	        normalizeDetailRowAmount(data[rowIndex]);
+	        try {
+	            $table.bootstrapTable('updateRow', { index: rowIndex, row: data[rowIndex] });
+	        } catch (e) {
+	            var amtText = '¥' + detailRowAmountValue(data[rowIndex]).toFixed(2);
+	            var $tr = $table.closest('.bootstrap-table')
+	                .find('.fixed-table-container > .fixed-table-body tbody tr[data-index="' + rowIndex + '"]').first();
+	            if ($tr.length) {
+	                $tr.find('td[data-field="amount"]').html(detailCellTextHtml(amtText));
+	            }
+	        }
+	    }
+
 	    /** 顶部总金额 = 明细金额合计（只读展示） */
 	    function syncDeliveryAmountFromDetails() {
 	        var $table = $('#detail-table');
@@ -978,20 +1023,8 @@
 	        var data = $table.bootstrapTable('getData') || [];
 	        var totalAmount = 0;
 	        for (var i = 0; i < data.length; i++) {
-	            var row = data[i];
-	            var amt = parseFloat(row.amount);
-	            if (isNaN(amt)) {
-	                var q = parseFloat(row.deliveryQuantity);
-	                var p = parseFloat(row.price);
-	                if (isNaN(q)) {
-	                    q = 0;
-	                }
-	                if (isNaN(p)) {
-	                    p = 0;
-	                }
-	                amt = q * p;
-	            }
-	            totalAmount += amt;
+	            normalizeDetailRowAmount(data[i]);
+	            totalAmount += detailRowAmountValue(data[i]);
 	        }
 	        $("input[name='deliveryAmount']").val(totalAmount.toFixed(2));
 	    }
@@ -1087,7 +1120,7 @@
 
 	    function detailQuantityInputEvents(index) {
 	        return 'onblur="updateQuantity(this, ' + index + ')" ' +
-	               'oninput="this.value=this.value.replace(/[^\\d]/g,\'\')" ' +
+	               'oninput="previewQuantityAmount(this, ' + index + ')" ' +
 	               'onkeypress="if(event.keyCode==13){this.blur();return false;}"';
 	    }
 
@@ -1115,17 +1148,6 @@
 	            nb = 0;
 	        }
 	        return na - nb;
-	    }
-
-	    function detailRowAmountValue(row) {
-	        if (!row) {
-	            return 0;
-	        }
-	        var amt = parseFloat(row.amount);
-	        if (!isNaN(amt)) {
-	            return amt;
-	        }
-	        return parseFloat(row.deliveryQuantity || 0) * parseFloat(row.price || 0) || 0;
 	    }
 
 	    function detailSortAmount(a, b, rowA, rowB) {
@@ -1199,11 +1221,8 @@
 	                } else if (field === 'price') {
 	                    title = row.price ? ('¥' + parseFloat(row.price).toFixed(2)) : '¥0.00';
 	                } else if (field === 'amount') {
-	                    var amt = parseFloat(row.amount);
-	                    if (isNaN(amt)) {
-	                        amt = parseFloat(row.deliveryQuantity || 0) * parseFloat(row.price || 0);
-	                    }
-	                    title = '¥' + (isNaN(amt) ? 0 : amt).toFixed(2);
+	                    var amt = detailRowAmountValue(row);
+	                    title = '¥' + amt.toFixed(2);
 	                } else if (field === 'remainingQuantity' || field === 'deliveryQuantity') {
 	                    title = formatDetailInteger(row[field]);
 	                } else if (field === 'packCoefficient') {
@@ -1991,12 +2010,7 @@
 	        var eps = 1e-6;
 	        function reloadAfterCopy() {
 	            for (var i = 0; i < allData.length; i++) {
-	                var q = parseFloat(allData[i].deliveryQuantity);
-	                if (isNaN(q)) {
-	                    q = 0;
-	                }
-	                var p = parseFloat(allData[i].price || 0);
-	                allData[i].amount = q * p;
+	                normalizeDetailRowAmount(allData[i]);
 	            }
 	            reloadDetailTableData(allData);
 	            setTimeout(function() {
@@ -2175,13 +2189,8 @@
 	                sortable: true,
 	                sorter: detailSortAmount,
 	                formatter: function (value, row) {
-	                    var amt;
-	                    if (value) {
-	                        amt = parseFloat(value);
-	                    } else {
-	                        amt = parseFloat(row.deliveryQuantity || 0) * parseFloat(row.price || 0);
-	                    }
-	                    return detailCellTextHtml('¥' + (isNaN(amt) ? '0.00' : amt.toFixed(2)));
+	                    var amt = detailRowAmountValue(row);
+	                    return detailCellTextHtml('¥' + amt.toFixed(2));
 	                }
 	            }, {
 	                field: 'batchNo',
@@ -2378,6 +2387,28 @@
 	            });
 	    }
 
+	    // 数量输入时实时刷新本行金额与表头总金额（完整校验在 blur 时执行）
+	    function previewQuantityAmount(input, index) {
+	        var raw = (input.value || '').replace(/[^\d]/g, '');
+	        if (input.value !== raw) {
+	            input.value = raw;
+	        }
+	        var $tr = $(input).closest('tr');
+	        var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : index;
+	        var data = $('#detail-table').bootstrapTable('getData') || [];
+	        if (!data[rowIndex]) {
+	            return;
+	        }
+	        var trimmed = raw.trim();
+	        var qty = trimmed === '' ? 0 : parseInt(trimmed, 10);
+	        if (isNaN(qty) || qty < 0) {
+	            qty = 0;
+	        }
+	        data[rowIndex].deliveryQuantity = trimmed === '' ? '' : qty;
+	        refreshDetailRowAmountDisplay(rowIndex);
+	        syncDeliveryAmountFromDetails();
+	    }
+
 	    // 更新数量
 	    function updateQuantity(input, index) {
 	        var value = $(input).val();
@@ -2407,6 +2438,8 @@
 	                            $(input).val(formatDetailInteger(oldQtyRaw));
 	                        }
 	                        $.modal.alertWarning('同一订单明细行配送数量合计不能超过申请数量（' + formatDetailInteger(cap) + '）');
+	                        refreshDetailRowAmountDisplay(rowIndex);
+	                        syncDeliveryAmountFromDetails();
 	                        return;
 	                    }
 	                }
@@ -2416,10 +2449,8 @@
 	            }
 	            var qty = (newVal === '' || newVal === null || newVal === undefined) ? 0 : parseInt(newVal, 10);
 	            if (isNaN(qty)) qty = 0;
-	            var price = parseFloat(data[rowIndex].price || 0);
-	            data[rowIndex].amount = qty * price;
-	            var amountCell = $tr.find('td[data-field="amount"]');
-	            amountCell.text('¥' + (qty * price).toFixed(2));
+	            data[rowIndex].deliveryQuantity = (trimmed === '' ? '' : qty);
+	            refreshDetailRowAmountDisplay(rowIndex);
 	            syncDeliveryAmountFromDetails();
 	        }
 	    }
