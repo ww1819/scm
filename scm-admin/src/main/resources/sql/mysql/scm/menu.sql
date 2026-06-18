@@ -95,6 +95,7 @@ INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, targ
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('24033', '第三方订单-确认', '2403', '3', '#', '', 'F', '0', '1', 'order:tpOrder:confirm', '#', 'admin', sysdate(), '', null, '供应商确认', '0');
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('24034', '第三方订单-作废', '2403', '4', '#', '', 'F', '0', '1', 'order:tpOrder:void', '#', 'admin', sysdate(), '', null, '医院作废', '0');
+/
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('24035', '第三方订单-修复配送关联', '2403', '5', '#', '', 'F', '0', '1', 'order:tpOrder:repair', '#', 'admin', sysdate(), '', null, '回填配送单主表关联并补写明细关联', '0');
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2500', '配送管理', '0', '10', '#', '', 'M', '0', '1', '', 'fa fa-truck', 'admin', sysdate(), '', null, '配送管理目录', '0');

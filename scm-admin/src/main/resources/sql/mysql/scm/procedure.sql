@@ -1,5 +1,5 @@
 -- ========== SCM 模块 存储过程（SqlInitRunner 须在 column.sql 之前执行本文件） ==========
--- add_table_column、upgrade_uuid_column_if_varchar32；按「/」分段执行
+-- add_table_column、add_table_index、upgrade_uuid_column_if_varchar32；按「/」分段执行
 -- 从 column.sql 拆出：保证先建过程再执行 column.sql 中的 CALL，避免出现「PROCEDURE scm.add_table_column does not exist」
 /
 DROP PROCEDURE IF EXISTS `add_table_column`;
@@ -48,6 +48,54 @@ BEGIN
     DEALLOCATE PREPARE stmt;
     SELECT CONCAT('成功：字段【', p_column_name, '】已成功添加到表【', p_table_name, '】') AS 执行结果;
     SET @dynamic_sql = '';
+END;
+/
+DROP PROCEDURE IF EXISTS `add_table_index`;
+/
+/*
+ * 存储过程：add_table_index
+ * 功能：安全地为指定数据表添加索引，避免重复添加（Duplicate key name）
+ */
+CREATE PROCEDURE `add_table_index`(
+    IN p_table_name VARCHAR(64),
+    IN p_index_name VARCHAR(64),
+    IN p_index_columns VARCHAR(512)
+)
+add_index_block:
+BEGIN
+    DECLARE v_index_exists INT DEFAULT 0;
+    DECLARE v_table_exists INT DEFAULT 0;
+    IF p_table_name IS NULL OR p_table_name = ''
+        OR p_index_name IS NULL OR p_index_name = ''
+        OR p_index_columns IS NULL OR p_index_columns = '' THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = '错误：表名、索引名、索引列为必填参数，不能为空！';
+    END IF;
+    SELECT COUNT(*) INTO v_table_exists
+    FROM information_schema.TABLES
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = p_table_name;
+    IF v_table_exists = 0 THEN
+        SELECT CONCAT('跳过：表【', p_table_name, '】不存在') AS add_table_index_result;
+        LEAVE add_index_block;
+    END IF;
+    SELECT COUNT(*) INTO v_index_exists
+    FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = p_table_name
+      AND INDEX_NAME = p_index_name;
+    IF v_index_exists > 0 THEN
+        SELECT CONCAT('提示：索引【', p_index_name, '】已存在于表【', p_table_name, '】，无需重复添加') AS add_table_index_result;
+        LEAVE add_index_block;
+    END IF;
+    SET @dynamic_sql = CONCAT(
+        'ALTER TABLE `', p_table_name, '` ADD INDEX `', p_index_name, '` (', p_index_columns, ')'
+    );
+    PREPARE stmt FROM @dynamic_sql;
+    EXECUTE stmt;
+    DEALLOCATE PREPARE stmt;
+    SELECT CONCAT('成功：索引【', p_index_name, '】已添加到表【', p_table_name, '】') AS add_table_index_result;
+    SET @dynamic_sql = NULL;
 END;
 /
 DROP PROCEDURE IF EXISTS `upgrade_uuid_column_if_varchar32`;

@@ -785,10 +785,10 @@ WHERE supplier_id IS NULL
   AND scm_supplier_id IS NOT NULL AND TRIM(scm_supplier_id) != ''
   AND scm_supplier_id REGEXP '^[0-9]+$';
 /
-ALTER TABLE zs_tp_order ADD INDEX idx_zs_tp_order_create_time (create_time);
+CALL add_table_index('zs_tp_order', 'idx_zs_tp_order_create_time', 'create_time');
 /
-ALTER TABLE zs_tp_order ADD INDEX idx_zs_tp_order_supplier_time (supplier_id, create_time);
+CALL add_table_index('zs_tp_order', 'idx_zs_tp_order_supplier_time', 'supplier_id, create_time');
 /
-ALTER TABLE scm_delivery_detail ADD INDEX idx_dd_zs_order_detail_id (zs_order_detail_id);
+CALL add_table_index('scm_delivery_detail', 'idx_dd_zs_order_detail_id', 'zs_order_detail_id');
 /
-ALTER TABLE zs_tp_order_detail ADD INDEX idx_zs_tp_detail_order_id (order_id);
+CALL add_table_index('zs_tp_order_detail', 'idx_zs_tp_detail_order_id', 'order_id');
