@@ -25,6 +25,12 @@ public class ScmConfig
     /** 版权年份 */
     private static String copyrightYear;
 
+    /** ICP 备案号 */
+    private static String icpNo;
+
+    /** ICP 备案查询链接 */
+    private static String icpLink;
+
     /** 实例演示开关 */
     private static boolean demoEnabled;
 
@@ -75,6 +81,26 @@ public class ScmConfig
     public void setCopyrightYear(String copyrightYear)
     {
         ScmConfig.copyrightYear = copyrightYear;
+    }
+
+    public static String getIcpNo()
+    {
+        return icpNo;
+    }
+
+    public void setIcpNo(String icpNo)
+    {
+        ScmConfig.icpNo = icpNo;
+    }
+
+    public static String getIcpLink()
+    {
+        return icpLink;
+    }
+
+    public void setIcpLink(String icpLink)
+    {
+        ScmConfig.icpLink = icpLink;
     }
 
     public static boolean isDemoEnabled()

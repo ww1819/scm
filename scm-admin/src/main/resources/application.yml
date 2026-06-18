@@ -3,6 +3,8 @@ scm:
   name: Scm
   version: 4.8.0
   copyrightYear: 2025
+  icpNo: 冀ICP备2026009090号-1
+  icpLink: https://beian.miit.gov.cn/
   demoEnabled: false
   profile: D:/scm/uploadPath
   addressEnabled: false

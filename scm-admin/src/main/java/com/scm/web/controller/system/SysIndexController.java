@@ -107,7 +107,7 @@ public class SysIndexController extends BaseController
         mmap.put("mainClass", contentMainClass(footer, tagsView));
         mmap.put("copyrightYear", ScmConfig.getCopyrightYear());
         // 首页「版本信息」弹窗文案（与原底部版权一致；若需随配置变更可改为读取 scm.version 等）
-        mmap.put("appVersionLine", "©医承云配供应链云平台 V-3.21");
+        mmap.put("appVersionLine", buildAppVersionLine());
         mmap.put("demoEnabled", ScmConfig.isDemoEnabled());
         mmap.put("isDefaultModifyPwd", initPasswordIsModify(user.getPwdUpdateDate()));
         mmap.put("isPasswordExpired", passwordIsExpiration(user.getPwdUpdateDate()));
@@ -293,6 +293,16 @@ public class SysIndexController extends BaseController
         mmap.put("dashboardNotices", noticeService.selectDashboardNoticesByUserId(getUserId()));
         mmap.put("dashboard", dashboardService.getDashboardStats(getUserId()));
         return "main";
+    }
+
+    private static String buildAppVersionLine()
+    {
+        String line = "©医承云配供应链云平台 V-3.21";
+        if (StringUtils.isNotEmpty(ScmConfig.getIcpNo()))
+        {
+            line = line + "<br/>" + ScmConfig.getIcpNo();
+        }
+        return line;
     }
 
     // content-main class

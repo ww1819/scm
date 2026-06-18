@@ -229,3 +229,49 @@
 <div th:fragment="bootstrap-table-cookie-js">
 	<script th:src="@{/ajax/libs/bootstrap-table/extensions/cookie/bootstrap-table-cookie.js?v=1.24.1}"></script>
 </div>
+
+<!-- ICP 备案（dark=true 用于深色背景登录页，false 用于浅色页，main 用于后台主框架） -->
+<style th:fragment="icpFooterStyle">
+.scm-icp-footer {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 8px;
+	text-align: center;
+	font-size: 12px;
+	line-height: 1.5;
+	z-index: 50;
+	pointer-events: none;
+}
+.scm-icp-footer a {
+	pointer-events: auto;
+	text-decoration: none;
+}
+.scm-icp-footer a:hover {
+	text-decoration: underline;
+}
+.scm-icp-footer.is-dark {
+	color: rgba(255, 255, 255, 0.72);
+}
+.scm-icp-footer.is-dark a {
+	color: rgba(255, 255, 255, 0.85);
+}
+.scm-icp-footer.is-light {
+	color: rgba(0, 0, 0, 0.45);
+}
+.scm-icp-footer.is-light a {
+	color: rgba(0, 0, 0, 0.55);
+}
+.scm-icp-footer.is-main {
+	color: #999;
+}
+.scm-icp-footer.is-main a {
+	color: #888;
+}
+</style>
+<div th:fragment="icpFooter(theme)" th:if="${!#strings.isEmpty(icpNo)}"
+     class="scm-icp-footer"
+     th:classappend="${theme == 'dark'} ? ' is-dark' : (${theme == 'main'} ? ' is-main' : ' is-light')">
+	<a th:href="${!#strings.isEmpty(icpLink) ? icpLink : 'https://beian.miit.gov.cn/'}"
+	   target="_blank" rel="noopener noreferrer" th:text="${icpNo}">冀ICP备2026009090号-1</a>
+</div>

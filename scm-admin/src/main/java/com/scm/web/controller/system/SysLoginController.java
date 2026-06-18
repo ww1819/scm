@@ -13,6 +13,7 @@ import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import com.scm.common.config.ScmConfig;
 import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.text.Convert;
@@ -71,7 +72,20 @@ public class SysLoginController extends BaseController
         mmap.put("isRemembered", rememberMe);
         // 是否开启用户注册
         mmap.put("isAllowRegister", Convert.toBool(configService.getKey("sys.account.registerUser"), false));
+        putIcpModel(mmap);
         return "login";
+    }
+
+    private static void putIcpModel(ModelMap mmap)
+    {
+        String icpNo = ScmConfig.getIcpNo();
+        if (StringUtils.isEmpty(icpNo))
+        {
+            icpNo = "冀ICP备2026009090号-1";
+        }
+        mmap.put("icpNo", icpNo);
+        String icpLink = ScmConfig.getIcpLink();
+        mmap.put("icpLink", StringUtils.isNotEmpty(icpLink) ? icpLink : "https://beian.miit.gov.cn/");
     }
 
     @PostMapping("/login")

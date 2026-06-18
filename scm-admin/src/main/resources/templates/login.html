@@ -79,9 +79,10 @@
         .login-entry-bar {
             position: fixed;
             left: 50%;
-            bottom: 42px;
+            bottom: 52px;
             transform: translateX(-50%);
             z-index: 30;
+            text-align: center;
         }
         .login-entry-bar .btn-open-login {
             min-width: 210px;
@@ -136,6 +137,26 @@
             opacity: 1;
             transform: translateY(0) scale(1);
         }
+        /* ICP 备案：固定底部，层级高于遮罩与登录卡片 */
+        .login-icp-footer {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 12px;
+            text-align: center;
+            font-size: 12px;
+            line-height: 1.5;
+            z-index: 50;
+        }
+        .login-icp-footer a {
+            color: rgba(255, 255, 255, 0.92);
+            text-decoration: none;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+        }
+        .login-icp-footer a:hover {
+            color: #fff;
+            text-decoration: underline;
+        }
     </style>
     <script>
         if(window.top!==window.self){alert('未登录或登录超时。请重新登录');window.top.location=window.location};
@@ -184,6 +205,9 @@
                 </div>
             </div>
         </div>
+    </div>
+    <div class="login-icp-footer">
+        <a th:href="${icpLink}" target="_blank" rel="noopener noreferrer" th:text="${icpNo}">冀ICP备2026009090号-1</a>
     </div>
 <script th:inline="javascript"> var ctx = [[@{/}]]; var captchaType = [[${captchaType}]]; var captchaEnabled = [[${captchaEnabled}]];</script>
 <!--[if lte IE 8]><script>window.location.href=ctx+'html/ie.html';</script><![endif]-->

@@ -325,6 +325,8 @@
     </div>
     <!--右侧部分结束-->
 </div>
+<th:block th:replace="include :: icpFooterStyle" />
+<th:block th:replace="include :: icpFooter('main')" />
 <!-- 全局js -->
 <script th:src="@{/js/jquery.min.js}"></script>
 <script th:src="@{/js/bootstrap.min.js}"></script>
