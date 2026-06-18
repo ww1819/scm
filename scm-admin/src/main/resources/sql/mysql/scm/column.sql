@@ -791,4 +791,6 @@ CALL add_table_index('zs_tp_order', 'idx_zs_tp_order_supplier_time', 'supplier_i
 /
 CALL add_table_index('scm_delivery_detail', 'idx_dd_zs_order_detail_id', 'zs_order_detail_id');
 /
+CALL add_table_index('zs_tp_order_detail_delivery_rel', 'idx_zsoddr_delivery_detail', 'delivery_detail_id');
+/
 CALL add_table_index('zs_tp_order_detail', 'idx_zs_tp_detail_order_id', 'order_id');

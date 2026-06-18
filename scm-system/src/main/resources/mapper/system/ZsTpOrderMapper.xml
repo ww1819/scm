@@ -130,21 +130,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         )
     </sql>
 
+    <!-- 按订单行汇总已配送数量：每条 scm_delivery_detail 只计一次（优先直挂 zs_order_detail_id，否则取 rel） -->
     <sql id="zsTpLineDeliveredQtyByLine">
-        SELECT t.line_id, SUM(t.qty) AS delivered_qty
+        SELECT t.line_id,
+               COALESCE(SUM(t.qty), 0) AS delivered_qty
         FROM (
-            SELECT dd.zs_order_detail_id AS line_id, IFNULL(dd.delivery_quantity, 0) AS qty
+            SELECT COALESCE(NULLIF(TRIM(dd.zs_order_detail_id), ''), r.order_detail_id) AS line_id,
+                   IFNULL(dd.delivery_quantity, 0) AS qty
             FROM scm_delivery_detail dd
             INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id AND (d.del_flag IS NULL OR d.del_flag = '0')
-            WHERE (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
-              AND dd.zs_order_detail_id IS NOT NULL AND TRIM(dd.zs_order_detail_id) &lt;&gt; ''
-            UNION ALL
-            SELECT r.order_detail_id AS line_id, IFNULL(dd.delivery_quantity, 0) AS qty
-            FROM zs_tp_order_detail_delivery_rel r
-            INNER JOIN scm_delivery_detail dd ON r.delivery_detail_id = <include refid="zsTpDeliveryDetailIdChar"/>
-            INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id AND (d.del_flag IS NULL OR d.del_flag = '0')
+            LEFT JOIN zs_tp_order_detail_delivery_rel r ON r.delivery_detail_id = <include refid="zsTpDeliveryDetailIdChar"/>
             WHERE (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
         ) t
+        WHERE t.line_id IS NOT NULL AND TRIM(t.line_id) &lt;&gt; ''
         GROUP BY t.line_id
     </sql>
 
