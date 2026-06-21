@@ -14,11 +14,13 @@ import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.ProductCertificate;
+import com.scm.system.domain.ScmFile;
 import com.scm.system.domain.vo.ProductMaterialArchiveVo;
 import com.scm.system.mapper.ProductCertificateMapper;
 import com.scm.system.service.IHospitalSupplierService;
-import com.scm.system.service.IProductCertificateService;
 import com.scm.system.service.IProductCertLicenseSnapService;
+import com.scm.system.service.IProductCertificateService;
+import com.scm.system.service.IScmProductCertificateFileService;
 import com.scm.system.service.IScmSupplierContextService;
 
 /**
@@ -44,6 +46,37 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
     @Autowired
     @Lazy
     private IProductCertLicenseSnapService productCertLicenseSnapService;
+
+    @Autowired
+    private IScmProductCertificateFileService scmProductCertificateFileService;
+
+    private void enrichCertificateFiles(ProductCertificate certificate)
+    {
+        if (certificate == null || certificate.getCertificateId() == null)
+        {
+            return;
+        }
+        List<ScmFile> files = scmProductCertificateFileService.selectFilesByCertificateId(certificate.getCertificateId());
+        certificate.setCertificateFiles(files);
+        if (files != null && !files.isEmpty())
+        {
+            certificate.setCertificateFileIds(scmProductCertificateFileService.buildFileIdsCsv(files));
+            certificate.setCertificateFile(scmProductCertificateFileService.buildFileUrlsCsv(files));
+        }
+    }
+
+    private void saveCertificateFilesIfNeeded(ProductCertificate certificate, String operBy)
+    {
+        if (certificate == null || certificate.getCertificateId() == null)
+        {
+            return;
+        }
+        if (certificate.getCertificateFileIds() != null)
+        {
+            scmProductCertificateFileService.replaceCertificateFiles(
+                    certificate.getCertificateId(), certificate.getCertificateFileIds(), operBy);
+        }
+    }
 
     private void ensureSnapStubsAfterCertChange(Long certificateId, String createOrUpdateBy)
     {
@@ -150,6 +183,7 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
         if (c != null)
         {
             assertProductCertificateSupplierScope(c);
+            enrichCertificateFiles(c);
         }
         return c;
     }
@@ -164,7 +198,21 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
     public List<ProductCertificate> selectProductCertificateList(ProductCertificate productCertificate)
     {
         applySupplierListScope(productCertificate);
-        return productCertificateMapper.selectProductCertificateList(productCertificate);
+        List<ProductCertificate> list = productCertificateMapper.selectProductCertificateList(productCertificate);
+        enrichCertificateFilesBatch(list);
+        return list;
+    }
+
+    private void enrichCertificateFilesBatch(List<ProductCertificate> list)
+    {
+        if (list == null || list.isEmpty())
+        {
+            return;
+        }
+        for (ProductCertificate certificate : list)
+        {
+            enrichCertificateFiles(certificate);
+        }
     }
 
     @Override
@@ -272,6 +320,7 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
         int rows = productCertificateMapper.insertProductCertificate(productCertificate);
         if (rows > 0 && productCertificate.getCertificateId() != null)
         {
+            saveCertificateFilesIfNeeded(productCertificate, productCertificate.getCreateBy());
             ensureSnapStubsAfterCertChange(productCertificate.getCertificateId(), productCertificate.getCreateBy());
         }
         return rows;
@@ -465,6 +514,7 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
         }
         if (result > 0 && productCertificate.getCertificateId() != null)
         {
+            saveCertificateFilesIfNeeded(productCertificate, productCertificate.getUpdateBy());
             ensureSnapStubsAfterCertChange(productCertificate.getCertificateId(), productCertificate.getUpdateBy());
         }
         return result;
@@ -488,6 +538,7 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
             {
                 assertProductCertificateSupplierScope(before);
             }
+            scmProductCertificateFileService.deleteByCertificateId(certId);
         }
         return productCertificateMapper.deleteProductCertificateByIds(arr);
     }
@@ -506,6 +557,7 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
         {
             assertProductCertificateSupplierScope(before);
         }
+        scmProductCertificateFileService.deleteByCertificateId(certificateId);
         return productCertificateMapper.deleteProductCertificateById(certificateId);
     }
 
@@ -529,7 +581,7 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
     }
 
     @Override
-    public int updateProductCertificateFile(Long certificateId, String certificateFile, String updateBy)
+    public int updateProductCertificateFile(Long certificateId, String certificateFileIds, String updateBy)
     {
         ProductCertificate before = productCertificateMapper.selectProductCertificateById(certificateId);
         if (before == null)
@@ -537,11 +589,11 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
             throw new ServiceException("产品证件不存在");
         }
         assertProductCertificateSupplierScope(before);
-        ProductCertificate row = new ProductCertificate();
-        row.setCertificateId(certificateId);
-        row.setCertificateFile(certificateFile != null ? certificateFile : "");
-        row.setUpdateBy(updateBy);
-        return productCertificateMapper.updateProductCertificateFile(row);
+        ProductCertificate bind = new ProductCertificate();
+        bind.setCertificateId(certificateId);
+        bind.setCertificateFileIds(certificateFileIds != null ? certificateFileIds : "");
+        saveCertificateFilesIfNeeded(bind, updateBy);
+        return 1;
     }
 
     /**

@@ -3,10 +3,13 @@ package com.scm.system.service.impl;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.FilenameUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import com.scm.common.config.CosProperties;
 import com.scm.common.constant.ScmFileConstants;
 import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.StringUtils;
@@ -22,11 +25,16 @@ import com.scm.system.service.IScmFileService;
 @Service
 public class ScmFileServiceImpl implements IScmFileService
 {
+    private static final Logger log = LoggerFactory.getLogger(ScmFileServiceImpl.class);
+
     @Autowired
     private ScmFileMapper scmFileMapper;
 
     @Autowired
     private TencentCosService tencentCosService;
+
+    @Autowired
+    private CosProperties cosProperties;
 
     @Override
     public ScmFile selectScmFileById(String fileId)
@@ -70,19 +78,58 @@ public class ScmFileServiceImpl implements IScmFileService
     }
 
     @Override
+    public String getPresignedDownloadUrl(String fileId) throws Exception
+    {
+        ScmFile scmFile = requireCosFile(fileId);
+        if (cosProperties.isPublicRead() && StringUtils.isNotEmpty(scmFile.getFileUrl()))
+        {
+            return tencentCosService.normalizePublicFileUrl(scmFile.getFileUrl());
+        }
+        return tencentCosService.generatePresignedDownloadUrl(scmFile.getObjectKey(), scmFile.getOriginalName());
+    }
+
+    @Override
     public void download(String fileId, HttpServletResponse response) throws Exception
+    {
+        ScmFile scmFile = requireCosFile(fileId);
+        if (cosProperties.isPublicRead() && StringUtils.isNotEmpty(scmFile.getFileUrl()))
+        {
+            log.info("公有读桶下载, fileId={}, url={}", fileId, scmFile.getFileUrl());
+            tencentCosService.downloadFromPublicUrl(scmFile.getFileUrl(), scmFile.getOriginalName(), response);
+            return;
+        }
+        try
+        {
+            tencentCosService.download(scmFile.getObjectKey(), scmFile.getOriginalName(), response);
+        }
+        catch (Exception sdkEx)
+        {
+            log.warn("COS SDK GetObject 下载失败, fileId={}, key={}, 尝试公网 URL 拉取",
+                    fileId, scmFile.getObjectKey(), sdkEx);
+            if (response.isCommitted() || StringUtils.isEmpty(scmFile.getFileUrl()))
+            {
+                throw sdkEx;
+            }
+            response.reset();
+            tencentCosService.downloadFromPublicUrl(scmFile.getFileUrl(), scmFile.getOriginalName(), response);
+        }
+    }
+
+    private ScmFile requireCosFile(String fileId)
     {
         ScmFile scmFile = scmFileMapper.selectScmFileById(fileId);
         if (scmFile == null)
         {
             throw new ServiceException("文件不存在或已删除");
         }
-        if (ScmFileConstants.STORAGE_COS.equals(scmFile.getStorageType()))
+        if (!ScmFileConstants.STORAGE_COS.equals(scmFile.getStorageType()))
         {
-            tencentCosService.download(scmFile.getObjectKey(), scmFile.getOriginalName(),
-                    scmFile.getContentType(), response);
-            return;
+            throw new ServiceException("暂不支持的存储类型：" + scmFile.getStorageType());
         }
-        throw new ServiceException("暂不支持的存储类型：" + scmFile.getStorageType());
+        if (StringUtils.isEmpty(scmFile.getObjectKey()))
+        {
+            throw new ServiceException("文件 objectKey 为空，无法下载");
+        }
+        return scmFile;
     }
 }

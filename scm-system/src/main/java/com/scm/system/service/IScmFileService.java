@@ -23,4 +23,9 @@ public interface IScmFileService
      * 按 fileId 下载文件
      */
     void download(String fileId, HttpServletResponse response) throws Exception;
+
+    /**
+     * 获取 COS 预签名下载地址
+     */
+    String getPresignedDownloadUrl(String fileId) throws Exception;
 }

@@ -33,6 +33,10 @@
                     <p><span class="config-label">自定义域名</span>
                         <span th:text="${#strings.isEmpty(cosStatus.domain) ? '未配置' : cosStatus.domain}"></span>
                     </p>
+                    <p><span class="config-label">公有读</span>
+                        <span th:if="${cosStatus.publicRead}" class="label label-success">是（预览直链，下载走 SDK GetObject）</span>
+                        <span th:unless="${cosStatus.publicRead}" class="label label-default">否（下载走 SDK GetObject）</span>
+                    </p>
                     <p class="text-muted">上传记录写入 scm_file 表，其他业务可通过 file_id 关联。</p>
                 </div>
             </div>
@@ -67,8 +71,8 @@
 </div>
 <th:block th:include="include :: footer" />
 <th:block th:include="include :: bootstrap-fileinput-js" />
+<script th:src="@{/js/common/scmCosDownload.js}"></script>
 <script th:inline="javascript">
-    var downloadFlag = [[${@permission.hasPermi('common:file:download')}]];
     var prefix = ctx + "interface/cosUpload";
 
     function formatFileSize(size) {
@@ -76,6 +80,14 @@
         if (size < 1024) return size + ' B';
         if (size < 1024 * 1024) return (size / 1024).toFixed(1) + ' KB';
         return (size / 1024 / 1024).toFixed(2) + ' MB';
+    }
+
+    function downloadCosFile(fileId) {
+        if (!fileId) {
+            $.modal.alertError('缺少文件ID');
+            return;
+        }
+        triggerFileDownload(prefix + '/download/' + fileId);
     }
 
     $(function () {
@@ -145,11 +157,12 @@
                 align: 'center',
                 formatter: function(value, row) {
                     var actions = [];
-                    if (downloadFlag !== 'hidden') {
-                        actions.push('<a class="btn btn-primary btn-xs" href="' + ctx + 'common/file/download/' + row.fileId + '"><i class="fa fa-download"></i> 下载</a>');
-                    }
+                    var safeName = (row.originalName || 'download').replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                    actions.push('<a class="btn btn-primary btn-xs" href="javascript:void(0)" onclick="downloadCosFile(\''
+                        + row.fileId + '\')"><i class="fa fa-download"></i> 下载</a>');
                     if (row.fileUrl) {
-                        actions.push(' <a class="btn btn-info btn-xs" href="' + row.fileUrl + '" target="_blank"><i class="fa fa-external-link"></i> 外链</a>');
+                        var viewUrl = window.normalizeCosFileUrl ? normalizeCosFileUrl(row.fileUrl) : row.fileUrl;
+                        actions.push(' <a class="btn btn-info btn-xs" href="' + viewUrl + '" target="_blank"><i class="fa fa-external-link"></i> 外链</a>');
                     }
                     return actions.join('');
                 }

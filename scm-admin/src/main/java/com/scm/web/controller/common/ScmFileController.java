@@ -2,6 +2,7 @@ package com.scm.web.controller.common;
 
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.shiro.authz.annotation.Logical;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.page.TableDataInfo;
+import com.scm.common.utils.ServletUtils;
 import com.scm.system.domain.ScmFile;
 import com.scm.system.service.IScmFileService;
 
@@ -67,7 +69,26 @@ public class ScmFileController extends BaseController
         }
     }
 
-    @RequiresPermissions("common:file:download")
+    @RequiresPermissions(value = { "common:file:download", "interface:cos:view" }, logical = Logical.OR)
+    @GetMapping("/downloadUrl/{fileId}")
+    @ResponseBody
+    public AjaxResult downloadUrl(@PathVariable("fileId") String fileId)
+    {
+        try
+        {
+            String url = scmFileService.getPresignedDownloadUrl(fileId);
+            AjaxResult ajax = AjaxResult.success();
+            ajax.put("url", url);
+            return ajax;
+        }
+        catch (Exception e)
+        {
+            log.error("获取预签名下载地址失败, fileId={}", fileId, e);
+            return error(e.getMessage());
+        }
+    }
+
+    @RequiresPermissions(value = { "common:file:download", "interface:cos:view" }, logical = Logical.OR)
     @GetMapping("/download/{fileId}")
     public void download(@PathVariable("fileId") String fileId, HttpServletResponse response)
     {
@@ -78,6 +99,13 @@ public class ScmFileController extends BaseController
         catch (Exception e)
         {
             log.error("文件下载失败, fileId={}", fileId, e);
+            if (!response.isCommitted())
+            {
+                response.reset();
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.setContentType("text/plain;charset=UTF-8");
+                ServletUtils.renderString(response, "文件下载失败：" + e.getMessage());
+            }
         }
     }
 

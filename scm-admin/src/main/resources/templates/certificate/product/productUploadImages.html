@@ -12,10 +12,10 @@
 
         <form id="form-cert-upload" class="form-horizontal" enctype="multipart/form-data" th:if="${productCertificate != null}">
             <input type="hidden" name="certificateId" id="certificateId" th:value="${productCertificate.certificateId}"/>
-            <div id="cert-upload-data" th:data-current-file="${productCertificate.certificateFile}" style="display:none"></div>
+            <div id="cert-files-data" th:attr="data-file-ids=${productCertificate.certificateFileIds},data-file-urls=${productCertificate.certificateFile}" style="display:none"></div>
 
             <h4 class="form-header h4">证照信息（只读）</h4>
-            <p class="text-muted" style="padding: 0 15px 10px;">以下信息仅供核对；请在下方维护证照图片。</p>
+            <p class="text-muted" style="padding: 0 15px 10px;">以下信息仅供核对；请在下方维护证照图片（COS 存储）。</p>
 
             <div class="row">
                 <div class="col-sm-6">
@@ -93,6 +93,7 @@
             </div>
 
             <h4 class="form-header h4">证照图片（可维护）</h4>
+            <p class="text-muted" style="padding: 0 15px 10px;">单张图片不超过500KB；上传或删除图片后将自动保存，无需再点保存。</p>
             <div class="row">
                 <div class="col-sm-12">
                     <div class="form-group">
@@ -101,6 +102,7 @@
                             <div class="file-loading">
                                 <input id="certificateFile" name="certificateFile" type="file" accept="image/*">
                             </div>
+                            <input type="hidden" name="certificateFileIds" id="certificateFileIds" th:value="${productCertificate.certificateFileIds}">
                             <input type="hidden" name="certificateFile" id="certificateFileUrl" th:value="${productCertificate.certificateFile}">
                         </div>
                     </div>
@@ -110,171 +112,76 @@
     </div>
     <div class="row" th:if="${productCertificate != null}" style="position: fixed; bottom: 0; left: 0; right: 0; background-color: #fff; padding: 15px 20px; border-top: 1px solid #ddd; z-index: 1000; box-shadow: 0 -2px 8px rgba(0,0,0,0.1);">
         <div class="col-sm-offset-5 col-sm-10">
-            <button type="button" class="btn btn-sm btn-primary" onclick="submitUpload()"><i class="fa fa-check"></i> 保 存</button>&nbsp;
             <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i> 关 闭</button>
         </div>
     </div>
     <div style="height: 70px;" th:if="${productCertificate != null}"></div>
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: bootstrap-fileinput-js" />
+	<script th:src="@{/js/common/scmCosDownload.js}"></script>
+	<script th:src="@{/js/certificate/productCertCosUpload.js}"></script>
 	<script th:inline="javascript" th:if="${productCertificate != null}">
 	    var prefix = ctx + "certificate/product";
-	    var currentFile = (function() {
-	        var el = document.getElementById("cert-upload-data");
-	        return el ? (el.getAttribute("data-current-file") || "") : "";
-	    })();
-	    var uploadedFileUrls = [];
-	    var fileIdToUrlMap = {};
-	    var updateFileUrlsArray = function() {};
+	    var certFileHelper;
+	    var autoSaveInFlight = false;
 
-	    $(function() {
-	        var initialPreview = [];
-	        var initialPreviewConfig = [];
-	        if (currentFile && currentFile !== '') {
-	            var fileUrls = currentFile.split(',').filter(function(url) { return url && url.trim() !== ''; });
-	            uploadedFileUrls = fileUrls;
-	            for (var i = 0; i < fileUrls.length; i++) {
-	                var fileUrl = fileUrls[i].trim();
-	                var fullUrl = '';
-	                if (fileUrl.indexOf('http://') === 0 || fileUrl.indexOf('https://') === 0) {
-	                    fullUrl = fileUrl;
-	                } else if (fileUrl.indexOf('/') === 0) {
-	                    var ctxPath = ctx.endsWith('/') ? ctx.substring(0, ctx.length - 1) : ctx;
-	                    fullUrl = ctxPath + fileUrl;
-	                } else {
-	                    var ctxPath2 = ctx.endsWith('/') ? ctx : (ctx + '/');
-	                    fullUrl = ctxPath2 + fileUrl;
+	    function refreshSiblingListTables() {
+	        try {
+	            $(window.parent.document).find('iframe.Scm_iframe').each(function () {
+	                var w = this.contentWindow;
+	                if (w && w.$ && w.$.table && w.table && w.table.options) {
+	                    w.$.table.refresh();
 	                }
-	                initialPreview.push(fullUrl);
-	                initialPreviewConfig.push({
-	                    caption: fileUrl.substring(fileUrl.lastIndexOf('/') + 1),
-	                    url: ctx + 'common/download/resource',
-	                    key: fileUrl,
-	                    extra: { fileUrl: fileUrl }
-	                });
-	            }
+	            });
+	        } catch (e) {
 	        }
+	    }
 
-	        $("#certificateFile").fileinput({
-	            uploadUrl: ctx + 'common/upload',
-	            paramName: 'file',
-	            maxFileCount: 10,
-	            autoReplace: false,
-	            allowedFileTypes: ['image'],
-	            allowedFileExtensions: ['jpg', 'jpeg', 'png', 'gif', 'bmp'],
-	            maxFileSize: 5120,
-	            showUpload: true,
-	            showRemove: true,
-	            showPreview: true,
-	            showCaption: true,
-	            browseClass: "btn btn-primary",
-	            uploadClass: "btn btn-success",
-	            removeClass: "btn btn-danger",
-	            previewFileIcon: '<i class="fa fa-image"></i>',
-	            initialPreview: initialPreview,
-	            initialPreviewConfig: initialPreviewConfig,
-	            initialPreviewAsData: true,
-	            overwriteInitial: false,
-	            initialPreviewFileType: 'image',
-	            initialPreviewShowDelete: true,
-	            previewFileType: 'image',
-	            uploadAsync: true,
-	            autoUpload: true,
-	            ajaxSettings: {
-	                xhrFields: { withCredentials: true },
-	                beforeSend: function(xhr) {
-	                    var csrftoken = $('meta[name=csrf-token]').attr('content');
-	                    if (csrftoken) {
-	                        xhr.setRequestHeader("X-CSRF-Token", csrftoken);
-	                    }
-	                }
-	            }
-	        }).on('fileuploaded', function (event, data, previewId, index) {
-	            var rsp = data.response;
-	            if (typeof rsp === 'string') {
-	                try { rsp = JSON.parse(rsp); } catch(e) {}
-	            }
-	            var ok = rsp && (rsp.code == 0 || rsp.code === 0 || rsp.code === '0' || rsp.success === true);
-	            if (ok) {
-	                var uploadedUrl = rsp.url || rsp.fileName;
-	                if (!uploadedUrl && rsp.data) {
-	                    if (typeof rsp.data === 'string') uploadedUrl = rsp.data;
-	                    else if (rsp.data.url) uploadedUrl = rsp.data.url;
-	                    else if (rsp.data.fileName) uploadedUrl = rsp.data.fileName;
-	                }
-	                if (uploadedUrl) {
-	                    if (uploadedFileUrls.indexOf(uploadedUrl) === -1) {
-	                        uploadedFileUrls.push(uploadedUrl);
-	                    }
-	                    $("#certificateFileUrl").val(uploadedFileUrls.join(','));
-	                    $.modal.msgSuccess("图片上传成功");
-	                }
-	            } else {
-	                $.modal.alertError(rsp && rsp.msg ? rsp.msg : "上传失败");
-	            }
-	        }).on('fileremoved', function (event, id, index) {
-	            if (id && fileIdToUrlMap[id]) {
-	                var removedUrl = fileIdToUrlMap[id];
-	                var ix = uploadedFileUrls.indexOf(removedUrl);
-	                if (ix > -1) uploadedFileUrls.splice(ix, 1);
-	                delete fileIdToUrlMap[id];
-	            }
-	            setTimeout(function() { updateFileUrlsArray(); }, 200);
-	        }).on('filecleared', function () {
-	            uploadedFileUrls = [];
-	            fileIdToUrlMap = {};
-	            $("#certificateFileUrl").val('');
-	        }).on('filesorted', function () { updateFileUrlsArray(); });
-
-	        updateFileUrlsArray = function() {
-	            var fileUrls = [];
-	            var $fileInput = $("#certificateFile");
-	            try {
-	                var previewConfig = $fileInput.fileinput('getPreviewConfig');
-	                if (previewConfig && previewConfig.length > 0) {
-	                    for (var i = 0; i < previewConfig.length; i++) {
-	                        var config = previewConfig[i];
-	                        var fileUrl = (config && config.extra && config.extra.fileUrl) ? config.extra.fileUrl
-	                            : (config && config.key) ? config.key : null;
-	                        if (fileUrl && fileUrls.indexOf(fileUrl) === -1) {
-	                            fileUrls.push(fileUrl);
-	                            if (config.id) fileIdToUrlMap[config.id] = fileUrl;
-	                        }
-	                    }
-	                }
-	            } catch(e) {}
-	            uploadedFileUrls = fileUrls.length > 0 ? fileUrls : uploadedFileUrls;
-	            $("#certificateFileUrl").val(uploadedFileUrls.join(','));
-	        };
-	    });
-
-	    function submitUpload() {
-	        updateFileUrlsArray();
-	        var $fileInput = $("#certificateFile");
-	        var filesCount = $fileInput.fileinput('getFilesCount') || 0;
-	        if (filesCount > 0 && (!$("#certificateFileUrl").val() || $("#certificateFileUrl").val().trim() === '')) {
-	            setTimeout(function() {
-	                updateFileUrlsArray();
-	                if (!$("#certificateFileUrl").val()) {
-	                    $.modal.alertWarning("请等待图片上传完成后再保存");
-	                    return;
-	                }
-	                doPost();
-	            }, 500);
+	    function autoSaveCertFiles() {
+	        if (autoSaveInFlight) {
 	            return;
 	        }
-	        setTimeout(function() {
-	            updateFileUrlsArray();
-	            doPost();
-	        }, 100);
+	        certFileHelper.updateFileState();
+	        autoSaveInFlight = true;
+	        var data = {
+	            certificateId: $("#certificateId").val(),
+	            certificateFileIds: $("#certificateFileIds").val() || '',
+	            certificateFile: $("#certificateFileUrl").val() || ''
+	        };
+	        $.ajax({
+	            url: prefix + "/updateCertificateFile",
+	            type: "post",
+	            dataType: "json",
+	            data: data,
+	            beforeSend: function (xhr) {
+	                var csrftoken = $('meta[name=csrf-token]').attr('content');
+	                if (csrftoken) {
+	                    xhr.setRequestHeader("X-CSRF-Token", csrftoken);
+	                }
+	            },
+	            success: function (result) {
+	                if (result.code == web_status.SUCCESS) {
+	                    refreshSiblingListTables();
+	                } else if (result.code == web_status.WARNING) {
+	                    $.modal.alertWarning(result.msg);
+	                } else {
+	                    $.modal.alertError(result.msg || '保存失败');
+	                }
+	            },
+	            complete: function () {
+	                autoSaveInFlight = false;
+	            }
+	        });
 	    }
 
-	    function doPost() {
-	        var certId = $("#certificateId").val();
-	        var urls = $("#certificateFileUrl").val() || '';
-	        var data = { certificateId: certId, certificateFile: urls };
-	        $.operate.saveTab(prefix + "/updateCertificateFile", data);
-	    }
+	    $(function () {
+	        certFileHelper = initProductCertCosUpload({
+	            certEditable: true,
+	            initialFiles: readProductCertInitialFilesFromDom('cert-files-data'),
+	            legacyFileCsv: (document.getElementById('cert-files-data') || {}).getAttribute('data-file-urls') || '',
+	            autoSaveOnChange: autoSaveCertFiles
+	        });
+	    });
 
 	    function closeItem() {
 	        if (window.parent && window.parent !== window && typeof window.parent.closeItem === 'function') {

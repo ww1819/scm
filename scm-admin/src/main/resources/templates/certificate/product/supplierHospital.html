@@ -121,6 +121,8 @@
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
 	<th:block th:include="include :: ztree-js" />
+	<script th:src="@{/js/common/scmCosDownload.js}"></script>
+	<script th:src="@{/js/certificate/certCosPreview.js}"></script>
 	<script th:inline="javascript">
 		var editFlag = [[${@permission.hasPermi('certificate:product:edit')}]];
 		var removeFlag = [[${@permission.hasPermi('certificate:product:remove')}]];
@@ -161,78 +163,6 @@
 				return;
 			}
 			$.modal.openTab("上传产品证照", prefix + "/upload/" + certificateId);
-		}
-
-		function previewCertificateImage(imageUrls) {
-			function escapeHtml(text) {
-				var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-				return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-			}
-			var urlArray = [];
-			if (imageUrls && imageUrls.trim() !== '') {
-				var urls = imageUrls.split(',');
-				for (var i = 0; i < urls.length; i++) {
-					var url = urls[i].trim();
-					if (url) {
-						if (url.indexOf('http://') === 0 || url.indexOf('https://') === 0) {
-							urlArray.push(url);
-						} else if (url.indexOf('/') === 0) {
-							urlArray.push(ctx + url.substring(1));
-						} else {
-							urlArray.push(ctx + url);
-						}
-					}
-				}
-			}
-			if (urlArray.length === 0) {
-				$.modal.alertWarning("没有可预览的图片");
-				return;
-			}
-			var currentIndex = 0;
-			function buildPreviewContent() {
-				var currentUrl = escapeHtml(urlArray[currentIndex]);
-				var html = '<div style="text-align: center; padding: 20px; overflow: auto; height: 100%; position: relative;">';
-				if (urlArray.length > 1) {
-					html += '<div style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 5px 15px; border-radius: 15px; z-index: 1000; font-size: 14px;">';
-					html += '第 ' + (currentIndex + 1) + ' 张 / 共 ' + urlArray.length + ' 张</div>';
-					if (currentIndex > 0) {
-						html += '<button id="prev-image-btn" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.7); color: white; border: none; padding: 15px 20px; border-radius: 5px; cursor: pointer; font-size: 18px; z-index: 1000;">‹</button>';
-					}
-					if (currentIndex < urlArray.length - 1) {
-						html += '<button id="next-image-btn" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.7); color: white; border: none; padding: 15px 20px; border-radius: 5px; cursor: pointer; font-size: 18px; z-index: 1000;">›</button>';
-					}
-				}
-				html += '<img id="preview-image" src="' + currentUrl + '" style="max-width: 100%; max-height: calc(100% - 40px); margin-top: 30px;" onerror="this.onerror=null;this.src=\'' + ctx + 'img/error.png\';" />';
-				html += '</div>';
-				return html;
-			}
-			if (typeof layer !== 'undefined') {
-				var layerIndex = layer.open({
-					type: 1,
-					title: '证照图片预览' + (urlArray.length > 1 ? '（' + urlArray.length + '张）' : ''),
-					shadeClose: true,
-					shade: 0.8,
-					area: ['90%', '90%'],
-					content: buildPreviewContent(),
-					success: function(layero) {
-						function updatePreview() {
-							layero.find('.layui-layer-content').html(buildPreviewContent());
-							bind(layero);
-						}
-						function bind(layero) {
-							layero.find('#prev-image-btn').off('click').on('click', function() {
-								if (currentIndex > 0) { currentIndex--; updatePreview(); }
-							});
-							layero.find('#next-image-btn').off('click').on('click', function() {
-								if (currentIndex < urlArray.length - 1) { currentIndex++; updatePreview(); }
-							});
-						}
-						if (urlArray.length > 1) { bind(layero); }
-					}
-				});
-			} else {
-				window.open(urlArray[0], '_blank');
-			}
 		}
 
 		var __certArchiveFiles = {};
@@ -377,7 +307,11 @@
 		}
 
 		function previewCertRow(certificateId) {
-			previewCertificateImage(__certArchiveFiles[certificateId] || '');
+			previewCertById(certificateId, prefix + '/');
+		}
+
+		function downloadCertRow(certificateId) {
+			downloadCertById(certificateId, prefix + '/');
 		}
 
 		function initHospitalTree() {
@@ -475,6 +409,7 @@
 						var r = rows[i];
 						if (r && r.certificateId != null) {
 							__certArchiveFiles[r.certificateId] = r.certificateFile || '';
+							cacheCertRowFiles(r.certificateId, r.certificateFile || '', r.certificateFileIds || '');
 						}
 					}
 				},
@@ -559,8 +494,10 @@
 							parts.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="openEditCertTab(' + cid + ')" title="修改"><i class="fa fa-edit"></i></a>');
 							parts.push('<a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="openProductUploadTab(' + cid + ')" title="上传"><i class="fa fa-cloud-upload"></i></a>');
 						}
-						if (row.certificateFile && row.certificateFile.trim() !== '') {
+						if ((row.certificateFile && row.certificateFile.trim() !== '')
+							|| (row.certificateFileIds && row.certificateFileIds.trim() !== '')) {
 							parts.push('<a class="btn btn-default btn-xs" href="javascript:void(0)" onclick="previewCertRow(' + cid + ')" title="预览"><i class="fa fa-eye"></i></a>');
+							parts.push('<a class="btn btn-warning btn-xs" href="javascript:void(0)" onclick="downloadCertRow(' + cid + ')" title="下载"><i class="fa fa-download"></i></a>');
 						}
 						if (removeFlag !== 'hidden') {
 							parts.push('<a class="btn btn-danger btn-xs" href="javascript:void(0)" onclick="removeCertSingle(' + cid + ')" title="删除"><i class="fa fa-remove"></i></a>');

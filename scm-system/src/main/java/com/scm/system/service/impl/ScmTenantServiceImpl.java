@@ -115,10 +115,14 @@ public class ScmTenantServiceImpl implements IScmTenantService
     }
 
     @Override
+    @SuppressWarnings("unused")
     public int deleteScmTenantByIds(String ids, String delBy)
     {
         String[] arr = Convert.toStrArray(ids);
-        if (arr.length == 0) return 0;
+        if (arr.length == 0)
+        {
+            return 0;
+        }
         scmTenantMapper.deleteScmTenantByIds(arr);
         return arr.length;
     }

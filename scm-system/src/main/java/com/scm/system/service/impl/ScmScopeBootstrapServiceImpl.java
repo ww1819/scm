@@ -436,14 +436,6 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         }
     }
 
-    private Set<Long> buildNonAdminHospitalExpandedWhitelist(Set<Long> rawHospitalSeeds)
-    {
-        List<SysMenu> all = sysMenuMapper.selectMenuAll();
-        Map<Long, SysMenu> byId = indexMenusById(all);
-        Set<Long> nonAdminRaw = filterHospitalSeedsExcludeAdminOnly(rawHospitalSeeds, byId);
-        return expandSeedsWithAncestors(nonAdminRaw, byId);
-    }
-
     private Set<Long> buildNonAdminSupplierExpandedWhitelist(Set<Long> rawSupplierSeeds)
     {
         List<SysMenu> all = sysMenuMapper.selectMenuAll();

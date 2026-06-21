@@ -10,7 +10,6 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.scm.common.core.text.Convert;
 import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.PageUtils;
@@ -32,7 +31,6 @@ import com.scm.system.service.IScmHospitalContextService;
 import com.scm.system.service.IScmHospitalSupplierMenuScopeService;
 import com.scm.system.service.IScmHospitalSupplierPermissionService;
 import com.scm.system.service.IScmSupplierContextService;
-import com.scm.system.service.ScmBarcodeSeedService;
 
 /**
  * 订单 服务层实现
@@ -53,9 +51,6 @@ public class OrderServiceImpl implements IOrderService
 
     @Autowired
     private DeliveryMapper deliveryMapper;
-
-    @Autowired
-    private ScmBarcodeSeedService scmBarcodeSeedService;
 
     @Autowired
     private IScmSupplierContextService scmSupplierContextService;
@@ -419,38 +414,6 @@ public class OrderServiceImpl implements IOrderService
             }
             od.setUndeliveredQty(und);
         }
-    }
-
-    /**
-     * 生成唯一的订单编号
-     * 
-     * @return 订单编号
-     */
-    private String generateOrderNo()
-    {
-        String code;
-        int maxAttempts = 10;
-        int attempt = 0;
-        do
-        {
-            // 使用时间戳+随机数生成编号
-            code = "ORD" + System.currentTimeMillis() + (int)(Math.random() * 1000);
-            if (code.length() > 50)
-            {
-                code = code.substring(0, 50);
-            }
-            attempt++;
-        }
-        while (orderMapper.selectOrderByOrderNo(code) != null && attempt < maxAttempts);
-        
-        if (attempt >= maxAttempts)
-        {
-            // 如果10次尝试都失败，使用UUID
-            String uuid = java.util.UUID.randomUUID().toString().replace("-", "");
-            code = "ORD" + uuid.substring(0, Math.min(20, uuid.length()));
-        }
-        
-        return code;
     }
 }
 

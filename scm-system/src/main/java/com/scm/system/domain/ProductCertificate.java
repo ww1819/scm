@@ -1,6 +1,7 @@
 package com.scm.system.domain;
 
 import java.util.Date;
+import java.util.List;
 import javax.validation.constraints.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -105,8 +106,14 @@ public class ProductCertificate extends BaseEntity
     @Excel(name = "产品类别")
     private String productCategory;
 
-    /** 证件文件路径 */
+    /** 证件文件路径（URL 逗号分隔，冗余便于列表展示） */
     private String certificateFile;
+
+    /** 证件文件 ID（逗号分隔，表单提交用，非 DB 列） */
+    private String certificateFileIds;
+
+    /** 关联文件列表（查询填充，非 DB 列） */
+    private List<ScmFile> certificateFiles;
 
     /** 审核状态（0待审核 1已审核 2已拒绝） */
     @Excel(name = "审核状态", readConverterExp = "0=待审核,1=已审核,2=已拒绝")
@@ -261,7 +268,7 @@ public class ProductCertificate extends BaseEntity
         this.expireDate = expireDate;
     }
 
-    @Size(min = 0, max = 500, message = "证件文件路径不能超过500个字符")
+    @Size(min = 0, max = 2000, message = "证件文件路径不能超过2000个字符")
     public String getCertificateFile()
     {
         return certificateFile;
@@ -270,6 +277,26 @@ public class ProductCertificate extends BaseEntity
     public void setCertificateFile(String certificateFile)
     {
         this.certificateFile = certificateFile;
+    }
+
+    public String getCertificateFileIds()
+    {
+        return certificateFileIds;
+    }
+
+    public void setCertificateFileIds(String certificateFileIds)
+    {
+        this.certificateFileIds = certificateFileIds;
+    }
+
+    public List<ScmFile> getCertificateFiles()
+    {
+        return certificateFiles;
+    }
+
+    public void setCertificateFiles(List<ScmFile> certificateFiles)
+    {
+        this.certificateFiles = certificateFiles;
     }
 
     public String getAuditStatus()

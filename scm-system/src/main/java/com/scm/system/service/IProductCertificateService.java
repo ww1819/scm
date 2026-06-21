@@ -121,8 +121,8 @@ public interface IProductCertificateService
     public void checkAndUpdateExpiredStatus();
 
     /**
-     * 仅更新产品证照图片
+     * 仅更新产品证照图片（certificateFileIds 逗号分隔 file_id）
      */
-    public int updateProductCertificateFile(Long certificateId, String certificateFile, String updateBy);
+    public int updateProductCertificateFile(Long certificateId, String certificateFileIds, String updateBy);
 }
 

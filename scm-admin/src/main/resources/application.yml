@@ -31,7 +31,8 @@ scm:
     region: ap-guangzhou
     bucket-name: aisipu-1409620366
     base-path: scm-test/
-    domain:
+    domain: https://cos.sjzaspt.top
+    public-read: true
 
 # ??????
 server:

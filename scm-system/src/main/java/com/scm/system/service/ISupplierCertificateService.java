@@ -63,7 +63,7 @@ public interface ISupplierCertificateService
     /**
      * 仅更新证照图片（可清空）
      */
-    public int updateCertificateFile(Long certificateId, String certificateFile, String updateBy);
+    public int updateCertificateFile(Long certificateId, String certificateFileIds, String updateBy);
 
     /**
      * 上传/修改页：更新证照信息与图片（未审核方可修改）

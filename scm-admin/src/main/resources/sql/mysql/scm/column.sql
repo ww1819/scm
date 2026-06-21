@@ -794,3 +794,60 @@ CALL add_table_index('scm_delivery_detail', 'idx_dd_zs_order_detail_id', 'zs_ord
 CALL add_table_index('zs_tp_order_detail_delivery_rel', 'idx_zsoddr_delivery_detail', 'delivery_detail_id');
 /
 CALL add_table_index('zs_tp_order_detail', 'idx_zs_tp_detail_order_id', 'order_id');
+/
+-- COS 统一文件表及证件关联（增量）
+CREATE TABLE IF NOT EXISTS `scm_file` (
+  `file_id` varchar(36) NOT NULL,
+  `storage_type` varchar(20) NOT NULL DEFAULT 'cos',
+  `bucket_name` varchar(128) DEFAULT NULL,
+  `region` varchar(64) DEFAULT NULL,
+  `object_key` varchar(512) NOT NULL,
+  `original_name` varchar(255) NOT NULL,
+  `file_name` varchar(255) DEFAULT NULL,
+  `file_ext` varchar(32) DEFAULT NULL,
+  `content_type` varchar(128) DEFAULT NULL,
+  `file_size` bigint(20) DEFAULT NULL,
+  `file_url` varchar(1024) DEFAULT NULL,
+  `etag` varchar(128) DEFAULT NULL,
+  `source_module` varchar(64) DEFAULT NULL,
+  `del_flag` char(1) NOT NULL DEFAULT '0',
+  `create_by` varchar(64) DEFAULT '',
+  `create_time` datetime DEFAULT NULL,
+  `update_by` varchar(64) DEFAULT '',
+  `update_time` datetime DEFAULT NULL,
+  `remark` varchar(500) DEFAULT NULL,
+  PRIMARY KEY (`file_id`),
+  KEY `idx_scm_file_source` (`source_module`,`create_time`),
+  KEY `idx_scm_file_object_key` (`object_key`(191))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='统一文件存储表';
+/
+CREATE TABLE IF NOT EXISTS `scm_supplier_certificate_file` (
+  `id` varchar(36) NOT NULL,
+  `certificate_id` bigint(20) NOT NULL,
+  `file_id` varchar(36) NOT NULL,
+  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `del_flag` char(1) NOT NULL DEFAULT '0',
+  `create_by` varchar(64) DEFAULT '',
+  `create_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_sccf_certificate` (`certificate_id`),
+  KEY `idx_sccf_file` (`file_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='供应商证件文件关联表';
+/
+CREATE TABLE IF NOT EXISTS `scm_product_certificate_file` (
+  `id` varchar(36) NOT NULL,
+  `certificate_id` bigint(20) NOT NULL,
+  `file_id` varchar(36) NOT NULL,
+  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `del_flag` char(1) NOT NULL DEFAULT '0',
+  `create_by` varchar(64) DEFAULT '',
+  `create_time` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_spcf_certificate` (`certificate_id`),
+  KEY `idx_spcf_file` (`file_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品证件文件关联表';
+/
+ALTER TABLE scm_supplier_certificate MODIFY COLUMN certificate_file varchar(2000) DEFAULT NULL COMMENT '证件文件URL(逗号分隔)';
+/
+ALTER TABLE scm_product_certificate MODIFY COLUMN certificate_file varchar(2000) DEFAULT NULL COMMENT '证件文件URL(逗号分隔)';
+/

@@ -17,8 +17,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 import com.scm.common.annotation.Log;
+import com.scm.common.constant.ScmFileConstants;
 import com.scm.common.exception.ServiceException;
+import com.scm.common.utils.ServletUtils;
 import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.page.TableDataInfo;
@@ -29,6 +32,8 @@ import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.Supplier;
 import com.scm.system.domain.SupplierCertificate;
 import com.scm.system.domain.CertificateType;
+import com.scm.system.domain.ScmFile;
+import com.scm.system.service.IScmFileService;
 import com.scm.system.service.IHospitalService;
 import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.IScmSupplierContextService;
@@ -64,6 +69,9 @@ public class SupplierCertificateController extends BaseController
 
     @Autowired
     private IHospitalService hospitalService;
+
+    @Autowired
+    private IScmFileService scmFileService;
 
     /** 登记页：view 或 list 任一即可（与产品证件登记页策略一致） */
     @RequiresPermissions(value = { "certificate:supplier:view", "certificate:supplier:list" }, logical = Logical.OR)
@@ -374,9 +382,114 @@ public class SupplierCertificateController extends BaseController
     @Log(title = "供应商证件管理", businessType = BusinessType.UPDATE)
     @PostMapping("/updateCertificateFile")
     @ResponseBody
-    public AjaxResult updateCertificateFile(Long certificateId, String certificateFile)
+    public AjaxResult updateCertificateFile(Long certificateId, String certificateFileIds)
     {
-        return toAjax(supplierCertificateService.updateCertificateFile(certificateId, certificateFile, getLoginName()));
+        return toAjax(supplierCertificateService.updateCertificateFile(certificateId, certificateFileIds, getLoginName()));
+    }
+
+    /**
+     * 上传证照图片到 COS（供应商资质登记专用）
+     */
+    @RequiresPermissions(value = { "certificate:supplier:add", "certificate:supplier:edit", "certificate:supplier:audit" },
+        logical = Logical.OR)
+    @PostMapping("/uploadFile")
+    @ResponseBody
+    public AjaxResult uploadFile(@RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "certificateFile", required = false) MultipartFile certificateFile)
+    {
+        MultipartFile uploadFile = file != null && !file.isEmpty() ? file : certificateFile;
+        if (uploadFile == null || uploadFile.isEmpty())
+        {
+            return error("请选择要上传的文件");
+        }
+        if (uploadFile.getSize() > ScmFileConstants.MAX_CERTIFICATE_IMAGE_BYTES)
+        {
+            return error("图片大小不能超过500KB");
+        }
+        try
+        {
+            ScmFile scmFile = scmFileService.uploadToCos(uploadFile, ScmFileConstants.MODULE_SUPPLIER_CERTIFICATE, getLoginName());
+            AjaxResult ajax = AjaxResult.success("上传成功");
+            ajax.put("fileId", scmFile.getFileId());
+            ajax.put("fileUrl", scmFile.getFileUrl());
+            ajax.put("url", scmFile.getFileUrl());
+            ajax.put("originalFilename", scmFile.getOriginalName());
+            return ajax;
+        }
+        catch (Exception e)
+        {
+            return error(e.getMessage());
+        }
+    }
+
+    @RequiresPermissions(value = { "certificate:supplier:view", "certificate:supplier:list", "certificate:supplier:audit" },
+        logical = Logical.OR)
+    @GetMapping("/downloadUrl/{fileId}")
+    @ResponseBody
+    public AjaxResult downloadUrl(@PathVariable("fileId") String fileId)
+    {
+        try
+        {
+            String url = scmFileService.getPresignedDownloadUrl(fileId);
+            AjaxResult ajax = AjaxResult.success();
+            ajax.put("url", url);
+            return ajax;
+        }
+        catch (Exception e)
+        {
+            logger.error("获取证照预签名下载地址失败, fileId={}", fileId, e);
+            return error(e.getMessage());
+        }
+    }
+
+    /**
+     * 下载证照关联文件（302 到 COS 预签名 URL）
+     */
+    @RequiresPermissions(value = { "certificate:supplier:view", "certificate:supplier:list", "certificate:supplier:audit" },
+        logical = Logical.OR)
+    @GetMapping("/downloadFile/{fileId}")
+    public void downloadFile(@PathVariable("fileId") String fileId, HttpServletResponse response)
+    {
+        try
+        {
+            scmFileService.download(fileId, response);
+        }
+        catch (Exception e)
+        {
+            logger.error("证照文件下载失败, fileId={}", fileId, e);
+            if (!response.isCommitted())
+            {
+                response.reset();
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                ServletUtils.renderString(response, "文件下载失败：" + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * 查询证件关联文件（COS）
+     */
+    @RequiresPermissions(value = { "certificate:supplier:view", "certificate:supplier:list", "certificate:supplier:audit" },
+        logical = Logical.OR)
+    @GetMapping("/files/{certificateId}")
+    @ResponseBody
+    public AjaxResult listCertificateFiles(@PathVariable("certificateId") Long certificateId)
+    {
+        SupplierCertificate certificate = supplierCertificateService.selectSupplierCertificateById(certificateId);
+        if (certificate == null)
+        {
+            return error("证件不存在");
+        }
+        return buildCertificateFilesResult(certificate);
+    }
+
+    private AjaxResult buildCertificateFilesResult(SupplierCertificate certificate)
+    {
+        AjaxResult ajax = AjaxResult.success();
+        ajax.put("files", certificate.getCertificateFiles());
+        ajax.put("fileIds", certificate.getCertificateFileIds());
+        ajax.put("fileUrls", certificate.getCertificateFile());
+        return ajax;
     }
 
     private void fillSupplierCertificateFormModel(ModelMap mmap, Long preSupplierId)

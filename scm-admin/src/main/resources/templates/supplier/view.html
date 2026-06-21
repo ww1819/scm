@@ -269,7 +269,7 @@
                                 <td th:text="${#dates.format(cert.expireDate, 'yyyy-MM-dd')}"></td>
                                 <td>
                                     <a th:if="${cert.certificateFile != null and cert.certificateFile != ''}" 
-                                       th:href="@{${cert.certificateFile}}" 
+                                       th:href="${cert.certificateFile}" 
                                        target="_blank" 
                                        class="btn btn-xs btn-info">
                                         <i class="fa fa-download"></i> 下载

@@ -1657,3 +1657,31 @@ CREATE TABLE IF NOT EXISTS `scm_file` (
   KEY `idx_scm_file_object_key` (`object_key`(191))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='统一文件存储表';
 /
+-- 供应商证件-文件关联（scm_file.file_id）
+CREATE TABLE IF NOT EXISTS `scm_supplier_certificate_file` (
+  `id` varchar(36) NOT NULL COMMENT '主键UUID7',
+  `certificate_id` bigint(20) NOT NULL COMMENT '证件ID scm_supplier_certificate.certificate_id',
+  `file_id` varchar(36) NOT NULL COMMENT '文件ID scm_file.file_id',
+  `sort_order` int(11) NOT NULL DEFAULT 0 COMMENT '排序',
+  `del_flag` char(1) NOT NULL DEFAULT '0' COMMENT '删除标志（0存在 2删除）',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_sccf_certificate` (`certificate_id`),
+  KEY `idx_sccf_file` (`file_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='供应商证件文件关联表';
+/
+-- 产品证件-文件关联（scm_file.file_id）
+CREATE TABLE IF NOT EXISTS `scm_product_certificate_file` (
+  `id` varchar(36) NOT NULL COMMENT '主键UUID7',
+  `certificate_id` bigint(20) NOT NULL COMMENT '证件ID scm_product_certificate.certificate_id',
+  `file_id` varchar(36) NOT NULL COMMENT '文件ID scm_file.file_id',
+  `sort_order` int(11) NOT NULL DEFAULT 0 COMMENT '排序',
+  `del_flag` char(1) NOT NULL DEFAULT '0' COMMENT '删除标志（0存在 2删除）',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_spcf_certificate` (`certificate_id`),
+  KEY `idx_spcf_file` (`file_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='产品证件文件关联表';
+/

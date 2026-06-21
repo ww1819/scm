@@ -1,6 +1,7 @@
 package com.scm.system.domain;
 
 import java.util.Date;
+import java.util.List;
 import javax.validation.constraints.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
@@ -67,6 +68,12 @@ public class SupplierCertificate extends BaseEntity
 
     /** 证件文件路径 */
     private String certificateFile;
+
+    /** 关联文件ID（逗号分隔，表单提交用） */
+    private String certificateFileIds;
+
+    /** 关联文件明细（查询展示用） */
+    private List<ScmFile> certificateFiles;
 
     /** 审核状态（0待审核 1已审核 2已拒绝） */
     @Excel(name = "审核状态", readConverterExp = "0=待审核,1=已审核,2=已拒绝")
@@ -241,6 +248,26 @@ public class SupplierCertificate extends BaseEntity
     public void setCertificateFile(String certificateFile)
     {
         this.certificateFile = certificateFile;
+    }
+
+    public String getCertificateFileIds()
+    {
+        return certificateFileIds;
+    }
+
+    public void setCertificateFileIds(String certificateFileIds)
+    {
+        this.certificateFileIds = certificateFileIds;
+    }
+
+    public List<ScmFile> getCertificateFiles()
+    {
+        return certificateFiles;
+    }
+
+    public void setCertificateFiles(List<ScmFile> certificateFiles)
+    {
+        this.certificateFiles = certificateFiles;
     }
 
     public String getAuditStatus()

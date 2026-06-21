@@ -20,11 +20,13 @@ import com.scm.common.utils.uuid.IdUtils;
 import com.scm.system.domain.CertificateType;
 import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.ScmSupplierCertChangeLog;
+import com.scm.system.domain.ScmFile;
 import com.scm.system.domain.SupplierCertificate;
 import com.scm.system.mapper.HospitalSupplierMapper;
 import com.scm.system.mapper.ScmSupplierCertChangeLogMapper;
 import com.scm.system.mapper.SupplierCertificateMapper;
 import com.scm.system.service.ICertificateTypeService;
+import com.scm.system.service.IScmSupplierCertificateFileService;
 import com.scm.system.service.IScmSupplierContextService;
 import com.scm.system.service.ISupplierCertificateService;
 
@@ -51,6 +53,37 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
     @Autowired
     private ICertificateTypeService certificateTypeService;
 
+    @Autowired
+    private IScmSupplierCertificateFileService scmSupplierCertificateFileService;
+
+    private void enrichCertificateFiles(SupplierCertificate certificate)
+    {
+        if (certificate == null || certificate.getCertificateId() == null)
+        {
+            return;
+        }
+        List<ScmFile> files = scmSupplierCertificateFileService.selectFilesByCertificateId(certificate.getCertificateId());
+        certificate.setCertificateFiles(files);
+        if (files != null && !files.isEmpty())
+        {
+            certificate.setCertificateFileIds(scmSupplierCertificateFileService.buildFileIdsCsv(files));
+            certificate.setCertificateFile(scmSupplierCertificateFileService.buildFileUrlsCsv(files));
+        }
+    }
+
+    private void saveCertificateFilesIfNeeded(SupplierCertificate certificate, String operBy)
+    {
+        if (certificate == null || certificate.getCertificateId() == null)
+        {
+            return;
+        }
+        if (certificate.getCertificateFileIds() != null)
+        {
+            scmSupplierCertificateFileService.replaceCertificateFiles(
+                    certificate.getCertificateId(), certificate.getCertificateFileIds(), operBy);
+        }
+    }
+
     /**
      * 查询供应商证件信息
      * 
@@ -64,6 +97,7 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         if (c != null)
         {
             assertSupplierCertificateViewScope(c);
+            enrichCertificateFiles(c);
         }
         return c;
     }
@@ -87,7 +121,9 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
     public List<SupplierCertificate> selectSupplierCertificateList(SupplierCertificate supplierCertificate)
     {
         applySupplierListScope(supplierCertificate);
-        return supplierCertificateMapper.selectSupplierCertificateList(supplierCertificate);
+        List<SupplierCertificate> list = supplierCertificateMapper.selectSupplierCertificateList(supplierCertificate);
+        enrichCertificateFilesBatch(list);
+        return list;
     }
 
     private void applySupplierListScope(SupplierCertificate supplierCertificate)
@@ -114,7 +150,22 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         {
             supplierIds = new ArrayList<>(Collections.singletonList(ctx));
         }
-        return supplierCertificateMapper.selectSupplierCertificateListBySupplierIds(supplierCertificate, supplierIds, hospitalId);
+        List<SupplierCertificate> list = supplierCertificateMapper.selectSupplierCertificateListBySupplierIds(
+                supplierCertificate, supplierIds, hospitalId);
+        enrichCertificateFilesBatch(list);
+        return list;
+    }
+
+    private void enrichCertificateFilesBatch(List<SupplierCertificate> list)
+    {
+        if (list == null || list.isEmpty())
+        {
+            return;
+        }
+        for (SupplierCertificate certificate : list)
+        {
+            enrichCertificateFiles(certificate);
+        }
     }
 
     /**
@@ -127,7 +178,9 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
     public List<SupplierCertificate> selectExpiringCertificateList(SupplierCertificate supplierCertificate)
     {
         applySupplierListScope(supplierCertificate);
-        return supplierCertificateMapper.selectExpiringCertificateList(supplierCertificate);
+        List<SupplierCertificate> list = supplierCertificateMapper.selectExpiringCertificateList(supplierCertificate);
+        enrichCertificateFilesBatch(list);
+        return list;
     }
 
     /**
@@ -158,7 +211,9 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         int rows = supplierCertificateMapper.insertSupplierCertificate(supplierCertificate);
         if (rows > 0 && supplierCertificate.getCertificateId() != null)
         {
+            saveCertificateFilesIfNeeded(supplierCertificate, supplierCertificate.getCreateBy());
             SupplierCertificate after = supplierCertificateMapper.selectSupplierCertificateById(supplierCertificate.getCertificateId());
+            enrichCertificateFiles(after);
             writeCertChangeLogs("INSERT", null, after, supplierCertificate.getCreateBy());
         }
         return rows;
@@ -190,14 +245,16 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         int rows = supplierCertificateMapper.updateSupplierCertificate(supplierCertificate);
         if (rows > 0)
         {
+            saveCertificateFilesIfNeeded(supplierCertificate, supplierCertificate.getUpdateBy());
             SupplierCertificate after = supplierCertificateMapper.selectSupplierCertificateById(supplierCertificate.getCertificateId());
+            enrichCertificateFiles(after);
             writeCertChangeLogs("UPDATE", before, after, supplierCertificate.getUpdateBy());
         }
         return rows;
     }
 
     @Override
-    public int updateCertificateFile(Long certificateId, String certificateFile, String updateBy)
+    public int updateCertificateFile(Long certificateId, String certificateFileIds, String updateBy)
     {
         SupplierCertificate before = supplierCertificateMapper.selectSupplierCertificateById(certificateId);
         if (before == null)
@@ -206,17 +263,15 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         }
         assertSupplierCertificateViewScope(before);
         assertCertificateEditable(before);
-        SupplierCertificate row = new SupplierCertificate();
-        row.setCertificateId(certificateId);
-        row.setCertificateFile(certificateFile != null ? certificateFile : "");
-        row.setUpdateBy(updateBy);
-        int rows = supplierCertificateMapper.updateSupplierCertificateFile(row);
-        if (rows > 0)
-        {
-            SupplierCertificate after = supplierCertificateMapper.selectSupplierCertificateById(certificateId);
-            writeCertChangeLogs("UPDATE", before, after, updateBy);
-        }
-        return rows;
+
+        SupplierCertificate bind = new SupplierCertificate();
+        bind.setCertificateId(certificateId);
+        bind.setCertificateFileIds(certificateFileIds != null ? certificateFileIds : "");
+        saveCertificateFilesIfNeeded(bind, updateBy);
+
+        SupplierCertificate after = supplierCertificateMapper.selectSupplierCertificateById(certificateId);
+        writeCertChangeLogs("UPDATE", before, after, updateBy);
+        return 1;
     }
 
     @Override
@@ -269,7 +324,9 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         int rows = supplierCertificateMapper.updateSupplierCertificateUpload(row);
         if (rows > 0)
         {
+            saveCertificateFilesIfNeeded(supplierCertificate, supplierCertificate.getUpdateBy());
             SupplierCertificate after = supplierCertificateMapper.selectSupplierCertificateById(supplierCertificate.getCertificateId());
+            enrichCertificateFiles(after);
             writeCertChangeLogs("UPDATE", before, after, supplierCertificate.getUpdateBy());
         }
         return rows;
@@ -308,6 +365,7 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
             Long certId = Long.parseLong(id);
             SupplierCertificate before = supplierCertificateMapper.selectSupplierCertificateById(certId);
             rows += supplierCertificateMapper.deleteSupplierCertificateById(certId);
+            scmSupplierCertificateFileService.deleteByCertificateId(certId);
             if (before != null)
             {
                 writeCertChangeLogs("DELETE", before, null, ShiroUtils.getLoginName());

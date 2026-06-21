@@ -67,9 +67,9 @@
                     <div class="form-group">
                         <label class="col-xs-2 control-label">证件图片：</label>
                         <div class="col-xs-10">
-                            <a th:href="@{${supplierCertificate.certificateFile}}" target="_blank" class="btn btn-xs btn-info">
-                                <i class="fa fa-image"></i> 查看证件图片
-                            </a>
+                            <button type="button" class="btn btn-xs btn-info" th:attr="data-file-urls=${supplierCertificate.certificateFile}" onclick="previewCertificateImage(this.getAttribute('data-file-urls'))">
+                                <i class="fa fa-image"></i> 预览证件图片
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -109,6 +109,8 @@
     </div>
     <div style="height: 70px;"></div>
 	<th:block th:include="include :: footer" />
+	<script th:src="@{/js/common/scmCosDownload.js}"></script>
+	<script th:src="@{/js/certificate/certCosPreview.js}"></script>
 	<script>
 	    var prefix = ctx + "certificate/supplier";
 	

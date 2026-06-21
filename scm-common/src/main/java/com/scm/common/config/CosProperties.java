@@ -33,6 +33,9 @@ public class CosProperties
     /** 自定义访问域名（可选） */
     private String domain;
 
+    /** 桶是否为公有读（下载时优先重定向 COS 直链，避免代理流异常） */
+    private boolean publicRead = true;
+
     @Autowired
     private ScmConfigCryptoSupport configCryptoSupport;
 
@@ -104,6 +107,16 @@ public class CosProperties
     public void setDomain(String domain)
     {
         this.domain = domain;
+    }
+
+    public boolean isPublicRead()
+    {
+        return publicRead;
+    }
+
+    public void setPublicRead(boolean publicRead)
+    {
+        this.publicRead = publicRead;
     }
 
     public boolean isConfigured()

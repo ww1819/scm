@@ -20,20 +20,10 @@ import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.enums.BusinessType;
 import com.scm.common.utils.poi.ExcelUtil;
 import com.scm.system.domain.Delivery;
-import com.scm.system.domain.Hospital;
-import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.Order;
 import com.scm.system.domain.OrderDetail;
-import com.scm.system.domain.Supplier;
 import com.scm.system.service.IDeliveryService;
-import com.scm.system.service.IHospitalSupplierService;
-import com.scm.system.service.IHospitalService;
 import com.scm.system.service.IOrderService;
-import com.scm.system.service.IScmHospitalContextService;
-import com.scm.system.service.IScmSupplierContextService;
-import com.scm.system.service.ISupplierService;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.bind.annotation.RequestParam;
 
 /**
@@ -51,21 +41,9 @@ public class OrderController extends BaseController
 
     @Autowired
     private IOrderService orderService;
-    
-    @Autowired
-    private ISupplierService supplierService;
-    
-    @Autowired
-    private IHospitalService hospitalService;
 
     @Autowired
     private IDeliveryService deliveryService;
-    @Autowired
-    private IScmHospitalContextService scmHospitalContextService;
-    @Autowired
-    private IScmSupplierContextService scmSupplierContextService;
-    @Autowired
-    private IHospitalSupplierService hospitalSupplierService;
 
     @RequiresPermissions("order:order:view")
     @GetMapping()
@@ -174,71 +152,6 @@ public class OrderController extends BaseController
     public String edit(@PathVariable("orderId") Long orderId, ModelMap mmap)
     {
         throw new ServiceException(ORDER_MUTATION_DISABLED_MSG);
-    }
-
-    private void fillScopedHospitalSupplier(ModelMap mmap)
-    {
-        Long userId = getUserId();
-        Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(userId);
-        Long supplierCtx = scmSupplierContextService.resolveSupplierIdForUser(userId);
-
-        Hospital hospitalQ = new Hospital();
-        hospitalQ.setStatus("0");
-        Supplier supplierQ = new Supplier();
-        supplierQ.setStatus("0");
-
-        if (hospitalCtx != null)
-        {
-            hospitalQ.setHospitalId(hospitalCtx);
-            mmap.put("hospitalList", hospitalService.selectHospitalList(hospitalQ));
-
-            HospitalSupplier relQ = new HospitalSupplier();
-            relQ.setHospitalId(hospitalCtx);
-            List<HospitalSupplier> rels = hospitalSupplierService.selectHospitalSupplierList(relQ);
-            java.util.List<Supplier> suppliers = new java.util.ArrayList<>();
-            java.util.Set<Long> seen = new java.util.HashSet<>();
-            for (HospitalSupplier rel : rels)
-            {
-                if (rel.getSupplierId() != null && seen.add(rel.getSupplierId()))
-                {
-                    Supplier s = supplierService.selectSupplierById(rel.getSupplierId());
-                    if (s != null && "0".equals(s.getStatus()))
-                    {
-                        suppliers.add(s);
-                    }
-                }
-            }
-            mmap.put("supplierList", suppliers);
-            return;
-        }
-
-        if (supplierCtx != null)
-        {
-            supplierQ.setSupplierId(supplierCtx);
-            mmap.put("supplierList", supplierService.selectSupplierList(supplierQ));
-
-            HospitalSupplier relQ = new HospitalSupplier();
-            relQ.setSupplierId(supplierCtx);
-            List<HospitalSupplier> rels = hospitalSupplierService.selectHospitalSupplierList(relQ);
-            java.util.List<Hospital> hospitals = new java.util.ArrayList<>();
-            java.util.Set<Long> seen = new java.util.HashSet<>();
-            for (HospitalSupplier rel : rels)
-            {
-                if (rel.getHospitalId() != null && seen.add(rel.getHospitalId()))
-                {
-                    Hospital h = hospitalService.selectHospitalById(rel.getHospitalId());
-                    if (h != null && "0".equals(h.getStatus()))
-                    {
-                        hospitals.add(h);
-                    }
-                }
-            }
-            mmap.put("hospitalList", hospitals);
-            return;
-        }
-
-        mmap.put("supplierList", supplierService.selectSupplierList(supplierQ));
-        mmap.put("hospitalList", hospitalService.selectHospitalList(hospitalQ));
     }
 
     /**

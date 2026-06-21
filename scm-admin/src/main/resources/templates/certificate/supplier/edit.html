@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html lang="zh" xmlns:th="http://www.thymeleaf.org">
 <head>
-	<th:block th:include="include :: header('修改供应商证件')" />
+	<th:block th:include="include :: header('淇敼渚涘簲鍟嗚瘉浠?)" />
 	<th:block th:include="include :: bootstrap-fileinput-css" />
 </head>
 <body>
     <div class="main-content">
         <form id="form-supplier-certificate-edit" class="form-horizontal" enctype="multipart/form-data">
             <input name="certificateId" type="hidden" th:value="${supplierCertificate.certificateId}"/>
-            <h4 class="form-header h4">基本信息</h4>
+            <div id="cert-files-data" th:attr="data-file-ids=${supplierCertificate.certificateFileIds},data-file-urls=${supplierCertificate.certificateFile}" style="display:none"></div>
+            <h4 class="form-header h4">鍩烘湰淇℃伅</h4>
             <div class="row">
             	<div class="col-sm-6" th:if="${supplierSelfService}">
                     <div class="form-group">
-                        <label class="col-sm-4 control-label is-required">当前供应商：</label>
+                        <label class="col-sm-4 control-label is-required">褰撳墠渚涘簲鍟嗭細</label>
                         <div class="col-sm-8">
                             <input type="text" class="form-control" readonly th:value="${bindSupplierCompanyName}"/>
                             <input type="hidden" name="supplierId" th:value="${bindSupplierId}"/>
@@ -21,10 +22,10 @@
                 </div>
                 <div class="col-sm-6" th:unless="${supplierSelfService}">
                     <div class="form-group">
-                        <label class="col-sm-4 control-label is-required">供应商：</label>
+                        <label class="col-sm-4 control-label is-required">渚涘簲鍟嗭細</label>
                         <div class="col-sm-8">
                             <select name="supplierId" class="form-control" required>
-                                <option value="">请选择供应商</option>
+                                <option value="">璇烽€夋嫨渚涘簲鍟?/option>
                                 <option th:each="supplier : ${supplierList}"
                                         th:value="${supplier.supplierId}"
                                         th:selected="${supplier.supplierId == supplierCertificate.supplierId}"
@@ -36,10 +37,10 @@
                 </div>
                 <div class="col-sm-6">
                     <div class="form-group">
-                        <label class="col-sm-4 control-label is-required">证件类型：</label>
+                        <label class="col-sm-4 control-label is-required">璇佷欢绫诲瀷锛?/label>
                         <div class="col-sm-8">
                             <select name="certificateType" id="certificateType" class="form-control" required>
-                                <option value="">请选择证件类型</option>
+                                <option value="">璇烽€夋嫨璇佷欢绫诲瀷</option>
                                 <option th:each="certType : ${certificateTypeList}"
                                         th:value="${certType.typeName}"
                                         th:selected="${supplierCertificate.certificateType == certType.typeName}"
@@ -53,20 +54,20 @@
             <div class="row">
                 <div class="col-sm-6">
                     <div class="form-group">
-                        <label class="col-sm-4 control-label">是否长期：</label>
+                        <label class="col-sm-4 control-label">鏄惁闀挎湡锛?/label>
                         <div class="col-sm-8">
                             <select name="certificateName" id="certificateName" class="form-control">
-                                <option value="否" th:selected="${supplierCertificate.certificateName == null or supplierCertificate.certificateName == '' or supplierCertificate.certificateName == '否'}">否</option>
-                                <option value="是" th:selected="${supplierCertificate.certificateName == '是'}">是</option>
+                                <option value="鍚? th:selected="${supplierCertificate.certificateName == null or supplierCertificate.certificateName == '' or supplierCertificate.certificateName == '鍚?}">鍚?/option>
+                                <option value="鏄? th:selected="${supplierCertificate.certificateName == '鏄?}">鏄?/option>
                             </select>
                         </div>
                     </div>
                 </div>
                 <div class="col-sm-6">
                     <div class="form-group">
-                        <label class="col-sm-4 control-label">证件编号：</label>
+                        <label class="col-sm-4 control-label">璇佷欢缂栧彿锛?/label>
                         <div class="col-sm-8">
-                            <input name="certificateNo" placeholder="请输入证件编号" class="form-control" type="text" maxlength="100" th:value="${supplierCertificate.certificateNo}">
+                            <input name="certificateNo" placeholder="璇疯緭鍏ヨ瘉浠剁紪鍙? class="form-control" type="text" maxlength="100" th:value="${supplierCertificate.certificateNo}">
                         </div>
                     </div>
                 </div>
@@ -74,45 +75,46 @@
             <div class="row">
                 <div class="col-sm-6">
                     <div class="form-group">
-                        <label class="col-sm-4 control-label">发证日期：</label>
+                        <label class="col-sm-4 control-label">鍙戣瘉鏃ユ湡锛?/label>
                         <div class="col-sm-8">
-                            <input name="issueDate" placeholder="请输入发证日期" class="form-control" type="date" th:value="${#dates.format(supplierCertificate.issueDate, 'yyyy-MM-dd')}">
+                            <input name="issueDate" placeholder="璇疯緭鍏ュ彂璇佹棩鏈? class="form-control" type="date" th:value="${#dates.format(supplierCertificate.issueDate, 'yyyy-MM-dd')}">
                         </div>
                     </div>
                 </div>
                 <div class="col-sm-6">
                     <div class="form-group">
-                        <label class="col-sm-4 control-label">有效期至：</label>
+                        <label class="col-sm-4 control-label">鏈夋晥鏈熻嚦锛?/label>
                         <div class="col-sm-8">
-                            <input name="expireDate" placeholder="请输入有效期至" class="form-control" type="date" th:value="${#dates.format(supplierCertificate.expireDate, 'yyyy-MM-dd')}">
+                            <input name="expireDate" placeholder="璇疯緭鍏ユ湁鏁堟湡鑷? class="form-control" type="date" th:value="${#dates.format(supplierCertificate.expireDate, 'yyyy-MM-dd')}">
                         </div>
                     </div>
                 </div>
             </div>
-            <h4 class="form-header h4">证件图片</h4>
+            <h4 class="form-header h4">璇佷欢鍥剧墖</h4>
             <div class="row">
                 <div class="col-sm-12">
                     <div class="form-group">
-                        <label class="col-xs-2 control-label">证件图片：</label>
+                        <label class="col-xs-2 control-label">璇佷欢鍥剧墖锛?/label>
                         <div class="col-xs-10">
                             <div class="file-loading">
                                 <input id="certificateFile" name="certificateFile" type="file" accept="image/*">
                             </div>
+                            <input type="hidden" name="certificateFileIds" id="certificateFileIds" th:value="${supplierCertificate.certificateFileIds}">
                             <input type="hidden" name="certificateFile" id="certificateFileUrl" th:value="${supplierCertificate.certificateFile}">
                             <div th:if="${supplierCertificate.certificateFile != null and supplierCertificate.certificateFile != ''}" style="margin-top: 10px;">
-                                <a th:href="@{${supplierCertificate.certificateFile}}" target="_blank" class="btn btn-xs btn-info">
-                                    <i class="fa fa-image"></i> 查看当前图片
+                                <a th:href="${supplierCertificate.certificateFile}" target="_blank" class="btn btn-xs btn-info">
+                                    <i class="fa fa-image"></i> 鏌ョ湅褰撳墠鍥剧墖
                                 </a>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <h4 class="form-header h4">其他信息</h4>
+            <h4 class="form-header h4">鍏朵粬淇℃伅</h4>
             <div class="row">
                 <div class="col-sm-12">
                     <div class="form-group">
-                        <label class="col-xs-2 control-label">备注：</label>
+                        <label class="col-xs-2 control-label">澶囨敞锛?/label>
                         <div class="col-xs-10">
                             <textarea name="remark" maxlength="500" class="form-control" rows="3" th:text="${supplierCertificate.remark}"></textarea>
                         </div>
@@ -124,431 +126,85 @@
       
     <div class="row" style="position: fixed; bottom: 0; left: 0; right: 0; background-color: #fff; padding: 15px 20px; border-top: 1px solid #ddd; z-index: 1000; box-shadow: 0 -2px 8px rgba(0,0,0,0.1);">
         <div class="col-sm-offset-5 col-sm-10">
-            <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
-            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
+            <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>淇?瀛?/button>&nbsp;
+            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>鍏?闂?/button>
         </div>
     </div>
     <div style="height: 70px;"></div>
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: bootstrap-fileinput-js" />
+	<script th:src="@{/js/common/scmCosDownload.js}"></script>
+	<script th:src="@{/js/certificate/supplierCertCosUpload.js}"></script>
 	<script th:inline="javascript">
 	    var prefix = ctx + "certificate/supplier";
-	    var currentFile = /*[[${supplierCertificate.certificateFile}]]*/ '';
-	    
-	    console.log("从后端获取的currentFile:", currentFile);
-	    
-	    // 存储所有上传的文件URL
-	    var uploadedFileUrls = [];
-	    
-	    // 存储文件ID和URL的映射关系
-	    var fileIdToUrlMap = {};
-	    
-	    // 初始化文件上传
+	    var certFileHelper;
+
 	    $(function() {
-	        // 监听"是否长期"字段变化，自动处理"有效期至"字段
 	        $("#certificateName").on('change', function() {
 	            var isLongTerm = $(this).val();
 	            var $expireDateInput = $("input[name='expireDate']");
-	            
-	            if (isLongTerm === '是') {
-	                // 选择"是"时，清空有效期至并禁用
+	            if (isLongTerm === '鏄?) {
 	                $expireDateInput.val('').prop('disabled', true);
 	            } else {
-	                // 选择"否"时，启用有效期至
 	                $expireDateInput.prop('disabled', false);
 	            }
 	        });
-	        
-	        // 初始化时，根据当前值设置有效期至字段状态
 	        var currentIsLongTerm = $("#certificateName").val();
-	        if (currentIsLongTerm === '是') {
+	        if (currentIsLongTerm === '鏄?) {
 	            $("input[name='expireDate']").val('').prop('disabled', true);
 	        }
-	        
-	        var initialPreview = [];
-	        var initialPreviewConfig = [];
-	        
-	        // 支持多文件：如果currentFile包含逗号，说明有多个文件
-	        if (currentFile && currentFile != '') {
-	            var fileUrls = currentFile.split(',').filter(function(url) {
-	                return url && url.trim() !== '';
-	            });
-	            
-	            // 初始化文件URL数组
-	            uploadedFileUrls = fileUrls;
-	            
-	            // 为每个文件创建预览
-	            for (var i = 0; i < fileUrls.length; i++) {
-	                var fileUrl = fileUrls[i].trim();
-	                // 构建完整的图片URL
-	                var fullUrl = '';
-	                if (fileUrl.indexOf('http://') === 0 || fileUrl.indexOf('https://') === 0) {
-	                    // 已经是完整的URL（包含域名）
-	                    fullUrl = fileUrl;
-	                } else if (fileUrl.indexOf('/') === 0) {
-	                    // 以/开头，可能是 /profile/... 格式，需要添加上下文路径
-	                    // 如果ctx已经以/结尾，直接拼接；否则添加/
-	                    var ctxPath = ctx.endsWith('/') ? ctx.substring(0, ctx.length - 1) : ctx;
-	                    fullUrl = ctxPath + fileUrl;
-	                } else {
-	                    // 其他情况，添加上下文路径和/
-	                    var ctxPath = ctx.endsWith('/') ? ctx : (ctx + '/');
-	                    fullUrl = ctxPath + fileUrl;
-	                }
-	                
-	                console.log("构建图片预览URL - 原始URL:", fileUrl, "完整URL:", fullUrl, "ctx:", ctx);
-	                
-	                // 使用完整的URL作为预览（initialPreviewAsData: true时直接使用URL字符串）
-	                initialPreview.push(fullUrl);
-	                initialPreviewConfig.push({
-	                    caption: fileUrl.substring(fileUrl.lastIndexOf('/') + 1),
-	                    url: ctx + 'common/download/resource',
-	                    key: fileUrl,
-	                    extra: {
-	                        fileUrl: fileUrl
-	                    }
-	                });
-	            }
-	        }
-	        
-	        console.log("初始化fileinput，预览数据:", initialPreview);
-	        console.log("预览配置:", initialPreviewConfig);
-	        
-	        $("#certificateFile").fileinput({
-	            uploadUrl: ctx + 'common/upload',
-	            paramName: 'file', // 明确指定参数名为 'file'，与后端匹配
-	            maxFileCount: 2, // 最多上传2张图片
-	            autoReplace: false, // 不自动替换，保留已上传的图片
-	            allowedFileTypes: ['image'], // 只允许图片类型
-	            allowedFileExtensions: ['jpg', 'jpeg', 'png', 'gif', 'bmp'],
-	            maxFileSize: 5120, // 5MB
-	            showUpload: true,
-	            showRemove: true,
-	            showPreview: true,
-	            showCaption: true,
-	            browseClass: "btn btn-primary",
-	            uploadClass: "btn btn-success",
-	            removeClass: "btn btn-danger",
-	            previewFileIcon: '<i class="fa fa-image"></i>',
-	            initialPreview: initialPreview,
-	            initialPreviewConfig: initialPreviewConfig,
-	            initialPreviewAsData: true, // true表示initialPreview是数据（URL字符串）
-	            overwriteInitial: false,
-	            initialPreviewFileType: 'image', // 指定预览文件类型为图片
-	            initialPreviewShowDelete: true, // 显示删除按钮
-	            previewFileType: 'image',
-	            uploadAsync: true, // 异步上传
-	            autoUpload: true, // 自动上传
-	            // 预览加载完成后的回调
-	            onPreviewLoaded: function() {
-	                console.log("预览加载完成");
-	            },
-	            // 预览加载失败的回调
-	            onPreviewError: function(data) {
-	                console.error("预览加载失败:", data);
-	            },
-	            ajaxSettings: {
-	                xhrFields: {
-	                    withCredentials: true  // 确保携带 cookie
-	                },
-	                beforeSend: function(xhr) {
-	                    // 确保携带认证信息
-	                    var csrftoken = $('meta[name=csrf-token]').attr('content');
-	                    if (csrftoken) {
-	                        xhr.setRequestHeader("X-CSRF-Token", csrftoken);
-	                    }
-	                }
-	            }
-	        }).on('fileuploaded', function (event, data, previewId, index) {
-	            console.log("文件上传完成，完整data对象:", data);
-	            var rsp = data.response;
-	            console.log("文件上传响应:", rsp);
-	            
-	            // 处理响应，fileinput可能返回字符串或对象
-	            if (typeof rsp === 'string') {
-	                try {
-	                    rsp = JSON.parse(rsp);
-	                } catch(e) {
-	                    console.error("解析响应失败:", e);
-	                }
-	            }
-	            
-	            // 检查响应是否成功
-	            var isSuccess = false;
-	            if (rsp) {
-	                // 检查code字段（可能是数字或字符串）
-	                if (rsp.code == 0 || rsp.code === 0 || rsp.code === '0' || rsp.success === true) {
-	                    isSuccess = true;
-	                }
-	            }
-	            
-	            if (isSuccess) {
-	                // AjaxResult.put("url", url) 会将url放在响应的顶层
-	                // 尝试多种可能的URL字段名
-	                var uploadedUrl = rsp.url || rsp.fileName;
-	                
-	                // 如果顶层没有，检查data字段
-	                if (!uploadedUrl && rsp.data) {
-	                    if (typeof rsp.data === 'string') {
-	                        uploadedUrl = rsp.data;
-	                    } else if (rsp.data.url) {
-	                        uploadedUrl = rsp.data.url;
-	                    } else if (rsp.data.fileName) {
-	                        uploadedUrl = rsp.data.fileName;
-	                    }
-	                }
-	                
-	                // 如果还是没有，尝试从data对象的所有属性中查找
-	                if (!uploadedUrl && rsp.data && typeof rsp.data === 'object') {
-	                    for (var key in rsp.data) {
-	                        if (key === 'url' || key === 'fileName' || key === 'fileUrl') {
-	                            uploadedUrl = rsp.data[key];
-	                            break;
-	                        }
-	                    }
-	                }
-	                
-	                if (uploadedUrl) {
-	                    // 将新上传的URL添加到数组中（如果不存在）
-	                    if (uploadedFileUrls.indexOf(uploadedUrl) === -1) {
-	                        uploadedFileUrls.push(uploadedUrl);
-	                    }
-	                    // 更新隐藏字段，用逗号分隔多个URL
-	                    $("#certificateFileUrl").val(uploadedFileUrls.join(','));
-	                    console.log("文件URL已添加，当前所有URL:", uploadedFileUrls);
-	                    $.modal.msgSuccess("图片上传成功");
-	                } else {
-	                    console.error("上传响应中没有URL，完整响应:", JSON.stringify(rsp, null, 2));
-	                    console.error("响应所有键:", Object.keys(rsp || {}));
-	                    $.modal.alertError("图片上传成功，但未获取到文件URL。响应数据：" + JSON.stringify(rsp));
-	                }
-	            } else {
-	                var errorMsg = rsp && rsp.msg ? rsp.msg : "图片上传失败";
-	                if (errorMsg.indexOf("未登录") > -1 || errorMsg.indexOf("登录超时") > -1) {
-	                    $.modal.alertError("登录已过期，请刷新页面重新登录");
-	                } else {
-	                    $.modal.alertError(errorMsg);
-	                }
-	            }
-	        }).on('fileuploaderror', function (event, data, msg) {
-	            var errorMsg = msg || "图片上传失败";
-	            if (data && data.response) {
-	                try {
-	                    var rsp = typeof data.response === 'string' ? JSON.parse(data.response) : data.response;
-	                    if (rsp.msg) {
-	                        errorMsg = rsp.msg;
-	                    }
-	                } catch(e) {
-	                    // 忽略解析错误
-	                }
-	            }
-	            if (errorMsg.indexOf("未登录") > -1 || errorMsg.indexOf("登录超时") > -1) {
-	                $.modal.alertError("登录已过期，请刷新页面重新登录");
-	            } else {
-	                $.modal.alertError("图片上传失败：" + errorMsg);
-	            }
-	        }).on('fileremoved', function (event, id, index) {
-	            console.log("文件被删除，id:", id, "index:", index);
-	            // 如果知道被删除文件的ID，从映射中移除
-	            if (id && fileIdToUrlMap[id]) {
-	                var removedUrl = fileIdToUrlMap[id];
-	                var indexInArray = uploadedFileUrls.indexOf(removedUrl);
-	                if (indexInArray > -1) {
-	                    uploadedFileUrls.splice(indexInArray, 1);
-	                }
-	                delete fileIdToUrlMap[id];
-	                console.log("从数组中移除URL:", removedUrl);
-	            }
-	            
-	            // 延迟执行，确保fileinput已经更新了预览数据
-	            setTimeout(function() {
-	                updateFileUrlsArray();
-	            }, 200);
-	        }).on('filecleared', function (event) {
-	            // 清空所有文件时，清空数组和映射
-	            uploadedFileUrls = [];
-	            fileIdToUrlMap = {};
-	            $("#certificateFileUrl").val('');
-	            console.log("所有文件已清除");
-	        }).on('filesorted', function (event, params) {
-	            // 文件排序后，更新数组顺序
-	            updateFileUrlsArray();
+	        certFileHelper = initSupplierCertCosUpload({
+	            certEditable: true,
+	            initialFiles: readCertInitialFilesFromDom('cert-files-data'),
+	            legacyFileCsv: (document.getElementById('cert-files-data') || {}).getAttribute('data-file-urls') || ''
 	        });
-	        
-	        // 更新文件URL数组的函数
-	        function updateFileUrlsArray() {
-	            var fileUrls = [];
-	            var $fileInput = $("#certificateFile");
-	            
-	            // 方法1：从fileinput的预览配置中获取URL（最可靠的方法）
-	            try {
-	                var previewConfig = $fileInput.fileinput('getPreviewConfig');
-	                console.log("预览配置:", previewConfig);
-	                if (previewConfig && previewConfig.length > 0) {
-	                    for (var i = 0; i < previewConfig.length; i++) {
-	                        var config = previewConfig[i];
-	                        var fileUrl = null;
-	                        
-	                        // 优先从extra.fileUrl获取（初始预览的文件）
-	                        if (config && config.extra && config.extra.fileUrl) {
-	                            fileUrl = config.extra.fileUrl;
-	                        }
-	                        // 其次从key获取（已上传的文件）
-	                        else if (config && config.key) {
-	                            fileUrl = config.key;
-	                        }
-	                        
-	                        if (fileUrl && fileUrls.indexOf(fileUrl) === -1) {
-	                            fileUrls.push(fileUrl);
-	                            // 如果config有id，建立映射关系
-	                            if (config.id) {
-	                                fileIdToUrlMap[config.id] = fileUrl;
-	                            }
-	                        }
-	                    }
-	                }
-	            } catch(e) {
-	                console.log("从预览配置获取URL失败:", e);
-	            }
-	            
-	            // 方法2：如果预览配置中没有找到，尝试从新上传的文件中获取
-	            // 只保留那些仍然在预览配置中的URL
-	            var finalUrls = [];
-	            for (var k = 0; k < fileUrls.length; k++) {
-	                finalUrls.push(fileUrls[k]);
-	            }
-	            
-	            // 如果预览配置为空，但还有新上传的文件，保留新上传的URL
-	            if (fileUrls.length === 0) {
-	                // 检查是否有新上传但还未在预览配置中的文件
-	                for (var m = 0; m < uploadedFileUrls.length; m++) {
-	                    var url = uploadedFileUrls[m];
-	                    // 检查这个URL是否还在预览中（通过检查DOM）
-	                    var $preview = $fileInput.closest('.file-input').find('.file-preview-frame');
-	                    var found = false;
-	                    $preview.each(function() {
-	                        var $frame = $(this);
-	                        var frameId = $frame.attr('id');
-	                        if (frameId && fileIdToUrlMap[frameId] === url) {
-	                            found = true;
-	                            return false; // break
-	                        }
-	                    });
-	                    if (found && finalUrls.indexOf(url) === -1) {
-	                        finalUrls.push(url);
-	                    }
-	                }
-	            }
-	            
-	            uploadedFileUrls = finalUrls;
-	            $("#certificateFileUrl").val(uploadedFileUrls.join(','));
-	            console.log("文件URL数组已更新:", uploadedFileUrls);
-	            console.log("文件ID映射:", fileIdToUrlMap);
-	        }
-	        
-	        // 初始化时，如果有已存在的文件URL，加载到数组中
-	        if (currentFile && currentFile != '') {
-	            uploadedFileUrls = currentFile.split(',').filter(function(url) {
-	                return url && url.trim() !== '';
-	            });
-	            $("#certificateFileUrl").val(uploadedFileUrls.join(','));
-	        }
 	    });
-	
+
         $("#form-supplier-certificate-edit").validate({
         	onkeyup: false,
         	rules:{
-        		supplierId:{
-        			required: true
-        		},
-        		certificateType:{
-        			required: true,
-        			maxlength: 50
-        		}
+        		supplierId:{ required: true },
+        		certificateType:{ required: true, maxlength: 50 }
         	},
             focusCleanup: true
         });
-        
-        function submitHandler() {
-	        if ($.validate.form()) {
-	            // 处理"是否长期"和"有效期至"的联动
-	            var isLongTerm = $("#certificateName").val();
-	            var expireDate = $("input[name='expireDate']").val();
-	            
-	            // 如果选择"是"，清空有效期至
-	            if (isLongTerm === '是') {
-	                $("input[name='expireDate']").val('');
-	            }
-	            // 如果选择"否"，必须填写有效期至
-	            else if (isLongTerm === '否' && (!expireDate || expireDate.trim() === '')) {
-	                $.modal.alertWarning("选择"否"时，必须填写有效期至");
-	                return;
-	            }
-	            
-	            // 在提交前，重新更新一次文件URL数组，确保数据是最新的
-	            if (typeof updateFileUrlsArray === 'function') {
-	                updateFileUrlsArray();
-	            }
-	            
-	            // 检查是否有文件正在上传
-	            var $fileInput = $("#certificateFile");
-	            var filesCount = $fileInput.fileinput('getFilesCount') || 0;
-	            
-	            // 如果有文件但还未上传完成，等待上传完成
-	            if (filesCount > 0) {
-	                var fileUrl = $("#certificateFileUrl").val();
-	                if (!fileUrl || fileUrl.trim() === '') {
-	                    // 文件可能正在上传，等待一下
-	                    setTimeout(function() {
-	                        // 再次更新文件URL数组
-	                        if (typeof updateFileUrlsArray === 'function') {
-	                            updateFileUrlsArray();
-	                        }
-	                        fileUrl = $("#certificateFileUrl").val();
-	                        if (!fileUrl || fileUrl.trim() === '') {
-	                            $.modal.alertWarning("文件正在上传中，请稍候再试");
-	                            return;
-	                        }
-	                        doSubmit(fileUrl);
-	                    }, 500);
-	                    return;
-	                }
-	            }
-	            
-	            // 再次确保文件URL数组是最新的
-	            setTimeout(function() {
-	                if (typeof updateFileUrlsArray === 'function') {
-	                    updateFileUrlsArray();
-	                }
-	                var fileUrl = $("#certificateFileUrl").val();
-	                console.log("提交时的文件URL:", fileUrl);
-	                doSubmit(fileUrl);
-	            }, 100);
-	        }
-	    }
-	    
-	    function doSubmit(fileUrl) {
+
+        function doSubmit() {
+	        certFileHelper.updateFileState();
 	        var formData = $("#form-supplier-certificate-edit").serializeArray();
-	        
-	        // 移除原有的certificateFile字段（如果有）
 	        formData = formData.filter(function(item) {
 	            return item.name !== 'certificateFile';
 	        });
-	        
-	        // 获取文件URL：优先使用新上传的文件，否则使用原有的文件
-	        // 如果上传了新文件，使用新文件的URL
-	        if (fileUrl && fileUrl.trim() !== '') {
-	            formData.push({name: "certificateFile", value: fileUrl.trim()});
-	        } 
-	        // 如果没有上传新文件，但存在原有的文件URL（从后端加载的），保留原有URL
-	        else if (currentFile && currentFile != '' && currentFile != null) {
-	            formData.push({name: "certificateFile", value: currentFile});
-	        }
-	        // 如果既没有新文件也没有原有文件，certificateFile可以为空（不添加该字段，允许为空）
-	        
 	        $.operate.saveTab(prefix + "/edit", formData);
+	    }
+
+	    function submitHandler() {
+	        if ($.validate.form()) {
+	            var isLongTerm = $("#certificateName").val();
+	            var expireDate = $("input[name='expireDate']").val();
+	            if (isLongTerm === '鏄?) {
+	                $("input[name='expireDate']").val('');
+	            } else if (isLongTerm === '鍚? && (!expireDate || expireDate.trim() === '')) {
+	                $.modal.alertWarning("閫夋嫨銆屽惁銆嶆椂锛屽繀椤诲～鍐欐湁鏁堟湡鑷?);
+	                return;
+	            }
+	            certFileHelper.updateFileState();
+	            var $fileInput = $("#certificateFile");
+	            var filesCount = $fileInput.fileinput('getFilesCount') || 0;
+	            if (filesCount > 0 && !$("#certificateFileIds").val()) {
+	                setTimeout(function() {
+	                    certFileHelper.updateFileState();
+	                    if (!$("#certificateFileIds").val()) {
+	                        $.modal.alertWarning("璇风瓑寰呭浘鐗囦笂浼犲畬鎴愬悗鍐嶄繚瀛?);
+	                        return;
+	                    }
+	                    doSubmit();
+	                }, 500);
+	                return;
+	            }
+	            doSubmit();
+	        }
 	    }
     </script>
 </body>
 </html>
-
