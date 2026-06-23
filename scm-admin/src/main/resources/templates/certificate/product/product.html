@@ -3,7 +3,6 @@
 <head>
 	<th:block th:include="include :: header('产品证件登记')" />
 	<th:block th:include="include :: layout-latest-css" />
-	<th:block th:include="include :: bootstrap-table-fixed-columns-css" />
 	<style>
 		#bootstrap-table-hospital td,
 		#bootstrap-table-hospital th {
@@ -189,15 +188,16 @@
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table {
-			flex: 1 1 58%;
+			flex: 1 1 57%;
 			min-height: 160px;
 			padding-bottom: 4px;
 		}
 
 		.audit-right-area .audit-cert-detail-wrap {
-			flex: 0 0 36%;
+			flex: 1 1 43%;
 			min-height: 170px;
-			margin: 0 var(--audit-inner-padding) var(--audit-inner-padding);
+			margin: 0;
+			padding: 0 var(--audit-inner-padding) 0;
 			overflow: hidden;
 			display: flex;
 			flex-direction: column;
@@ -287,7 +287,7 @@
 			align-items: center;
 			justify-content: space-between;
 			gap: 8px;
-			padding: 4px 172px 4px 10px;
+			padding: 4px 10px;
 			border-top: 1px solid #eee;
 			background: #fff;
 			z-index: 3;
@@ -311,6 +311,17 @@
 			min-width: 0;
 			overflow: hidden;
 			text-overflow: ellipsis;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination .page-list select {
+			display: none !important;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination .page-list::after {
+			content: '10';
+			display: inline-block;
+			min-width: 18px;
+			text-align: center;
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-body .fixed-table-border {
@@ -356,6 +367,14 @@
 			text-overflow: ellipsis;
 			white-space: nowrap;
 			vertical-align: middle;
+		}
+
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-header {
+			position: relative !important;
+			top: auto !important;
+			z-index: 2;
+			background: #fff;
+			overflow: hidden;
 		}
 
 		.audit-page-wrap > .audit-search-area.search-collapse {
@@ -480,7 +499,6 @@
 
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
-	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
 	<script th:inline="javascript">
 		var prefix = ctx + "certificate/product";
 		var supplierSelfService = /*[[${supplierSelfService}]]*/ false;
@@ -525,12 +543,20 @@
 			return value;
 		}
 
+		function formatCertDetailImageIcon(row) {
+			var file = row && row.certificateFile ? String(row.certificateFile).trim() : '';
+			var hasFile = file !== '';
+			var color = hasFile ? '#3c8dbc' : '#bbb';
+			var title = hasFile ? '已上传图片' : '暂无图片';
+			return '<i class="fa fa-image" style="font-size:16px;color:' + color + ';" title="' + title + '"></i>';
+		}
+
 		function calculateCertDetailTableHeight() {
 			var $wrap = $('.audit-cert-detail-wrap');
 			if ($wrap.length === 0) {
 				return 180;
 			}
-			return Math.max($wrap.innerHeight() - 4, 120);
+			return Math.max($wrap.innerHeight() - 2, 120);
 		}
 
 		function adjustCertDetailTableHeight() {
@@ -585,6 +611,15 @@
 					width: 120,
 					formatter: function(value) {
 						return formatCertDate(value);
+					}
+				},
+				{
+					field: 'certificateFile',
+					title: '图片',
+					align: 'center',
+					width: 56,
+					formatter: function(value, row) {
+						return formatCertDetailImageIcon(row);
 					}
 				},
 				{
@@ -891,6 +926,8 @@
 				uniqueId: "certificateId",
 				rememberSelected: true,
 				maintainSelected: true,
+				pageSize: 10,
+				pageList: [10],
 				height: calculateProductTableHeight(),
 				mobileResponsive: false,
 				fixedColumns: false,
