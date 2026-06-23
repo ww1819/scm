@@ -515,9 +515,6 @@
 	<script th:inline="javascript">
 		var prefix = ctx + "certificate/supplier";
 		var supplierPrefix = ctx + "supplier/supplier";
-		var editFlag = [[${@permission.hasPermi('certificate:supplier:edit')}]];
-		var auditFlag = [[${@permission.hasPermi('certificate:supplier:audit')}]];
-		var uploadFlag = (editFlag !== 'hidden' || auditFlag !== 'hidden') ? '' : 'hidden';
 		var selectedSupplierId = null; // 当前选中的供应商ID
 		var allSuppliers = []; // 左侧供应商全量数据（用于搜索过滤）
 		var auditTableId = 'bootstrap-table';
@@ -778,21 +775,10 @@
 		    var hasFile = (row.certificateFile && row.certificateFile.trim() !== '')
 		        || (row.certificateFileIds && row.certificateFileIds.trim() !== '');
 		    if (hasFile) {
-		        actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="previewCertById(' + cid + ')" title="查看证件图片"><i class="fa fa-eye"></i> 查看</a>');
+		        actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="previewCertById(' + cid + ')" title="预览证件图片"><i class="fa fa-eye"></i> 预览</a>');
 		        actions.push(' <a class="btn btn-warning btn-xs" href="javascript:void(0)" onclick="downloadCertById(' + cid + ')" title="下载证件图片"><i class="fa fa-download"></i> 下载</a>');
 		    }
-		    if (uploadFlag !== 'hidden') {
-		        actions.push(' <a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="openUploadImagesTab(' + cid + ')" title="上传或删除证照图片"><i class="fa fa-cloud-upload"></i> 上传</a>');
-		    }
 		    return actions.join('');
-		}
-
-		function openUploadImagesTab(certificateId) {
-		    if (certificateId == null || certificateId === '') {
-		        $.modal.alertWarning('无法打开上传页：缺少证件ID');
-		        return;
-		    }
-		    $.modal.openTab('上传证照', prefix + '/upload/' + certificateId);
 		}
 
 		function querySupplierCertificateAuditList() {

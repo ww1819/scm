@@ -285,8 +285,6 @@
             <div th:replace="include/privacy-brief :: privacyScrollBox"></div>
         </div>
     </div>
-    <th:block th:replace="include :: icpFooterStyle" />
-    <th:block th:replace="include :: icpFooter('light')" />
 <script th:inline="javascript"> var ctx = [[@{/}]]; var captchaType = [[${captchaType}]]; var captchaEnabled = [[${captchaEnabled}]];</script>
 <script src="../static/js/jquery.min.js" th:src="@{/js/jquery.min.js}"></script>
 <script src="../static/ajax/libs/validate/jquery.validate.min.js" th:src="@{/ajax/libs/validate/jquery.validate.min.js}"></script>

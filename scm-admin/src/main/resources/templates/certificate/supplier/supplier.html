@@ -830,7 +830,6 @@
 				|| (row.certificateFileIds && row.certificateFileIds.trim() !== '');
 			if (hasFile) {
 				actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="previewCertById(' + cid + ')" title="预览证件图片"><i class="fa fa-eye"></i> 预览</a>');
-				actions.push(' <a class="btn btn-warning btn-xs" href="javascript:void(0)" onclick="downloadCertById(' + cid + ')" title="下载证件图片"><i class="fa fa-download"></i> 下载</a>');
 			}
 			if (editFlag !== 'hidden') {
 				actions.push(' <a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="openUploadImagesTab(' + cid + ')" title="上传或删除证照图片"><i class="fa fa-cloud-upload"></i> 上传</a>');
