@@ -4,18 +4,76 @@
 	<th:block th:include="include :: header('证件类型列表')" />
 	<th:block th:include="include :: layout-latest-css" />
 	<style>
+		body.gray-bg:has(.type-page-wrap) {
+			height: 100%;
+			overflow: hidden;
+		}
+
+		.type-page-wrap.container-div {
+			padding: 10px 28px;
+			box-sizing: border-box;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+		}
+
+		.type-page-wrap > .type-page-row {
+			flex: 1 1 auto;
+			min-height: 0;
+			margin: 0;
+			display: flex;
+			width: 100%;
+		}
+
+		.type-page-wrap .type-left-col {
+			padding-left: 0;
+			padding-right: 8px;
+			width: 20%;
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+		}
+
+		.type-page-wrap .type-right-col {
+			padding-left: 3px;
+			padding-right: 0;
+			width: 80%;
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+			flex: 1;
+		}
+
 		.type-nav-box {
 			border: 1px solid #e7eaec;
 			border-radius: 4px;
 			background: #fff;
 			padding: 15px;
+			margin-top: 0;
+			flex: 1 1 auto;
+			min-height: 0;
+			height: 100%;
+			box-sizing: border-box;
+		}
+
+		.type-page-wrap .search-collapse {
+			margin-top: 0;
+			flex-shrink: 0;
+		}
+
+		.type-page-wrap #toolbar {
+			flex-shrink: 0;
 			margin-top: 10px;
-			min-height: 800px !important;
 		}
+
 		.detail-box-height {
-			min-height: 730px;
+			flex: 1 1 auto;
+			min-height: 0;
 			position: relative;
+			margin-top: 10px;
+			margin-bottom: 10px;
 		}
+
 		.detail-box-height .bootstrap-table {
 			height: 100%;
 			padding-bottom: 46px;
@@ -74,10 +132,10 @@
 	</style>
 </head>
 <body class="gray-bg">
-	<div class="container-div">
-		<div class="row">
+	<div class="container-div type-page-wrap">
+		<div class="row type-page-row">
 			<!-- 左侧：类型框 -->
-			<div class="col-sm-3" style="padding-left: 0; padding-right: 8px; width: 20%;">
+			<div class="col-sm-3 type-left-col">
 				<div class="type-nav-box">
 					<div class="nav-title">
 						<i class="fa fa-list"></i> 证件类型
@@ -95,7 +153,7 @@
 			</div>
 			
 			<!-- 右侧：证件类型列表 -->
-			<div class="col-sm-9" style="padding-left: 3px; padding-right: 0; width: 80%;">
+			<div class="col-sm-9 type-right-col">
 				<div class="col-sm-12 search-collapse" style="padding-right: 5px;">
 					<form id="certificate-type-form">
 						<div class="select-list">
@@ -161,42 +219,26 @@
 
 		$(function() {
 		    queryCertificateTypeList();
-		    alignTypeNavHeight();
 		    $('#bootstrap-table').on('load-success.bs.table post-body.bs.table reset-view.bs.table', function() {
-		    	setTimeout(alignTypeNavHeight, 0);
+		    	var $table = $('#bootstrap-table');
+		    	if ($table.length > 0 && $table.data('bootstrap.table')) {
+		    		$table.bootstrapTable('resetView', {height: calculateDetailTableHeight()});
+		    	}
 		    });
 		    $(window).on('resize', function() {
 		    	var $table = $('#bootstrap-table');
 		    	if ($table.length > 0 && $table.data('bootstrap.table')) {
 		    		$table.bootstrapTable('resetView', {height: calculateDetailTableHeight()});
 		    	}
-		    	alignTypeNavHeight();
 		    });
 		});
-
-		function alignTypeNavHeight() {
-			var $detail = $('.detail-box-height');
-			var $left = $('.type-nav-box');
-			if ($detail.length > 0 && $left.length > 0 && $left.offset()) {
-				var leftTop = $left.offset().top;
-				var $pager = $detail.find('.fixed-table-pagination');
-				var bottom = 0;
-				if ($pager.length > 0 && $pager.offset()) {
-					bottom = $pager.offset().top + $pager.outerHeight();
-				} else {
-					bottom = $detail.offset().top + $detail.outerHeight();
-				}
-				var h = Math.max(Math.ceil(bottom - leftTop) + 24, 800);
-				$left.css('min-height', h + 'px');
-			}
-		}
 
 		function calculateDetailTableHeight() {
 			var $detail = $('.detail-box-height');
 			if ($detail.length === 0) {
-				return 730;
+				return 400;
 			}
-			return Math.max($detail.innerHeight() - 8, 650);
+			return Math.max($detail.innerHeight() - 8, 200);
 		}
 
 		function queryCertificateTypeList() {

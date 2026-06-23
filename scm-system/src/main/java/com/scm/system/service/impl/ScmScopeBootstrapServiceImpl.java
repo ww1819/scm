@@ -140,9 +140,9 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         List<SysMenu> all = sysMenuMapper.selectMenuAll();
         Map<Long, SysMenu> byId = indexMenusById(all);
         Set<Long> rawSeeds = collectRawSupplierDefaultGrantSeeds();
-        Set<Long> adminExpanded = expandSeedsWithAncestors(rawSeeds, byId);
+        Set<Long> adminExpanded = expandSupplierSeedsWithAncestors(rawSeeds, byId);
         Set<Long> nonAdminRaw = filterSupplierSeedsExcludeAdminOnly(rawSeeds, byId);
-        Set<Long> nonAdminExpanded = expandSeedsWithAncestors(nonAdminRaw, byId);
+        Set<Long> nonAdminExpanded = expandSupplierSeedsWithAncestors(nonAdminRaw, byId);
         supplierMenuAuthMapper.deleteBySupplierId(supplierId);
         batchInsertSupplierAuth(supplierId, adminExpanded, operBy);
         String sid = String.valueOf(supplierId);
@@ -407,13 +407,13 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
     {
         List<SysMenu> all = sysMenuMapper.selectMenuAll();
         Map<Long, SysMenu> byId = indexMenusById(all);
-        Set<Long> adminExpanded = expandSeedsWithAncestors(rawSeedMenuIds, byId);
+        Set<Long> adminExpanded = expandSupplierSeedsWithAncestors(rawSeedMenuIds, byId);
         String sid = String.valueOf(supplierId);
         supplierMenuAuthMapper.deleteBySupplierId(supplierId);
         sysRoleMenuMapper.deleteRoleMenuBySupplierScope(sid);
         batchInsertSupplierAuth(supplierId, adminExpanded, operBy);
         Set<Long> nonAdminRaw = filterSupplierSeedsExcludeAdminOnly(rawSeedMenuIds, byId);
-        Set<Long> nonAdminExpanded = expandSeedsWithAncestors(nonAdminRaw, byId);
+        Set<Long> nonAdminExpanded = expandSupplierSeedsWithAncestors(nonAdminRaw, byId);
         List<SysRole> roles = sysRoleMapper.selectRolesBySupplierId(supplierId);
         if (roles == null)
         {
@@ -441,7 +441,7 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         List<SysMenu> all = sysMenuMapper.selectMenuAll();
         Map<Long, SysMenu> byId = indexMenusById(all);
         Set<Long> nonAdminRaw = filterSupplierSeedsExcludeAdminOnly(rawSupplierSeeds, byId);
-        return expandSeedsWithAncestors(nonAdminRaw, byId);
+        return expandSupplierSeedsWithAncestors(nonAdminRaw, byId);
     }
 
     private static boolean isOrgAdminRole(SysRole r)
@@ -608,6 +608,62 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         return result;
     }
 
+    /**
+     * 供应商建档/刷新：扩祖先时跳过医院侧「供应商资质审核」页面，避免登记页按钮误挂审核页父节点时把审核菜单带入。
+     */
+    private Set<Long> expandSupplierSeedsWithAncestors(Set<Long> rawSeeds, Map<Long, SysMenu> byId)
+    {
+        Set<Long> result = new HashSet<>();
+        if (rawSeeds == null)
+        {
+            return result;
+        }
+        for (Long mid : rawSeeds)
+        {
+            if (mid != null)
+            {
+                addSupplierMenuChain(result, mid, byId);
+            }
+        }
+        return result;
+    }
+
+    private static boolean isHospitalSupplierAuditPageForSupplierBootstrap(SysMenu m)
+    {
+        if (m == null)
+        {
+            return false;
+        }
+        String menuType = StringUtils.trimToEmpty(m.getMenuType());
+        if (!"C".equalsIgnoreCase(menuType) && !"M".equalsIgnoreCase(menuType))
+        {
+            return false;
+        }
+        String perms = StringUtils.trimToEmpty(m.getPerms());
+        String url = StringUtils.trimToEmpty(m.getUrl());
+        return "certificate:supplier:audit".equals(perms) || url.contains("/certificate/supplier/audit");
+    }
+
+    private static void addSupplierMenuChain(Set<Long> acc, Long menuId, Map<Long, SysMenu> byId)
+    {
+        Long cur = menuId;
+        int guard = 0;
+        while (cur != null && cur > 0 && guard++ < 64)
+        {
+            SysMenu m = byId.get(cur);
+            if (m == null)
+            {
+                acc.add(cur);
+                break;
+            }
+            if (!isHospitalSupplierAuditPageForSupplierBootstrap(m))
+            {
+                acc.add(cur);
+            }
+            cur = m.getParentId();
+        }
+    }
+
     private Set<Long> collectScopeMenuIdsWithAncestors(String authType)
     {
         List<SysMenu> all = sysMenuMapper.selectMenuAll();
@@ -651,6 +707,10 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
                     seed.add(m.getMenuId());
                 }
             }
+        }
+        if (ScmAuthConstants.AUTH_SUPPLIER.equalsIgnoreCase(authType))
+        {
+            return expandSupplierSeedsWithAncestors(seed, byId);
         }
         return expandSeedsWithAncestors(seed, byId);
     }

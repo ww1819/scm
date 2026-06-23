@@ -55,12 +55,16 @@
 			width: 100%;
 		}
 
+		.audit-page-wrap > .audit-page-row {
+			margin-top: var(--audit-page-gap);
+		}
+
 		.audit-split-area {
 			flex: 1;
 			display: flex;
 			min-height: 0;
 			overflow: hidden;
-			margin-top: var(--audit-page-gap);
+			margin-top: 0;
 			padding: 0 0 var(--audit-page-gap);
 			width: 100%;
 			box-sizing: border-box;
@@ -144,6 +148,82 @@
 			flex-shrink: 0;
 			padding: 0 var(--audit-inner-padding) 5px;
 			margin-bottom: 0;
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.audit-right-area #toolbar .toolbar-filter-item {
+			display: inline-flex;
+			align-items: center;
+			margin: 0;
+			font-weight: normal;
+		}
+
+		.audit-right-area #toolbar .toolbar-filter-label {
+			margin-right: 6px;
+			white-space: nowrap;
+			font-size: 13px;
+		}
+
+		.audit-right-area #toolbar .toolbar-filter-input {
+			width: 140px;
+			height: 30px;
+		}
+
+		.audit-right-area #toolbar .toolbar-filter-select {
+			width: 120px;
+			height: 30px;
+			padding: 5px 10px;
+		}
+
+		.audit-right-area #toolbar .dropdown-menu > li > a {
+			padding: 6px 16px;
+		}
+
+		.audit-right-area #toolbar .dropdown-menu > li > a.disabled {
+			color: #bbb;
+			cursor: not-allowed;
+			pointer-events: none;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table {
+			flex: 1 1 58%;
+			min-height: 160px;
+			padding-bottom: 4px;
+		}
+
+		.audit-right-area .audit-cert-detail-wrap {
+			flex: 0 0 36%;
+			min-height: 170px;
+			margin: 0 var(--audit-inner-padding) var(--audit-inner-padding);
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+			box-sizing: border-box;
+		}
+
+		.audit-right-area .audit-cert-detail-wrap > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
+		}
+
+		.audit-right-area .audit-cert-detail-wrap .bootstrap-table {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+		}
+
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-container {
+			flex: 1 1 auto;
+			min-height: 0;
+			overflow: hidden !important;
+		}
+
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-body {
+			overflow-x: auto !important;
+			overflow-y: auto !important;
 		}
 
 		.audit-right-area .audit-table-wrap {
@@ -318,35 +398,6 @@
 </head>
 <body class="gray-bg">
 	<div class="container-div audit-page-wrap">
-		<div class="search-collapse audit-search-area">
-			<form id="product-certificate-form">
-				<input type="hidden" name="hospitalCode" id="productFilterHospitalCode" value=""/>
-				<input type="hidden" name="hospitalId" id="productFilterHospitalId" value=""/>
-				<div class="select-list">
-					<ul>
-						<li>
-							产品名称：<input type="text" name="materialName"/>
-						</li>
-						<li>
-							注册证号：<input type="text" name="registerNo"/>
-						</li>
-						<li>
-							状态：
-							<select name="status" style="width: 120px; display: inline-block; height: 30px; padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px;">
-								<option value="">所有</option>
-								<option value="0">正常</option>
-								<option value="1">过期</option>
-							</select>
-						</li>
-						<li>
-							<a class="btn btn-primary btn-rounded btn-sm" onclick="searchProductList()"><i class="fa fa-search"></i>&nbsp;搜索</a>
-							<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
-						</li>
-					</ul>
-				</div>
-			</form>
-		</div>
-
 		<div class="row audit-page-row">
 			<div class="audit-split-area">
 				<div class="audit-left-panel">
@@ -365,26 +416,62 @@
 				</div>
 
 				<div class="audit-right-area">
-					<div class="btn-group-sm" id="toolbar" role="group">
-						<a class="btn btn-success" onclick="openAddProductInfoTab()" shiro:hasPermission="certificate:product:add">
-							<i class="fa fa-plus"></i> 新增
-						</a>
-						<a class="btn btn-primary single disabled" onclick="$.operate.editTab()" shiro:hasPermission="certificate:product:edit">
-							<i class="fa fa-edit"></i> 修改
-						</a>
-						<a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="certificate:product:remove">
-							<i class="fa fa-remove"></i> 删除
-						</a>
-						<a class="btn btn-info" onclick="checkExpired()" shiro:hasPermission="certificate:product:edit">
-							<i class="fa fa-check"></i> 检查过期
-						</a>
-						<a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="certificate:product:export">
-							<i class="fa fa-download"></i> 导出
-						</a>
-					</div>
+					<form id="product-certificate-form">
+						<input type="hidden" name="hospitalCode" id="productFilterHospitalCode" value=""/>
+						<input type="hidden" name="hospitalId" id="productFilterHospitalId" value=""/>
+						<div class="btn-group-sm" id="toolbar" role="group">
+							<label class="toolbar-filter-item">
+								<span class="toolbar-filter-label">产品名称</span>
+								<input type="text" name="materialName" class="form-control input-sm toolbar-filter-input"/>
+							</label>
+							<label class="toolbar-filter-item">
+								<span class="toolbar-filter-label">状态</span>
+								<select name="status" class="form-control input-sm toolbar-filter-select">
+									<option value="">所有</option>
+									<option value="0">正常</option>
+									<option value="1">过期</option>
+								</select>
+							</label>
+							<a class="btn btn-primary btn-sm" onclick="searchProductList()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+							<a class="btn btn-success" onclick="openAddProductInfoTab()" shiro:hasPermission="certificate:product:add">
+								<i class="fa fa-plus"></i> 新增
+							</a>
+							<div class="btn-group">
+								<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+									<i class="fa fa-bars"></i> 更多操作 <span class="caret"></span>
+								</button>
+								<ul class="dropdown-menu" role="menu">
+									<li>
+										<a href="javascript:void(0)" class="single disabled" onclick="$.operate.editTab()" shiro:hasPermission="certificate:product:edit">
+											<i class="fa fa-edit"></i> 修改
+										</a>
+									</li>
+									<li>
+										<a href="javascript:void(0)" class="multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="certificate:product:remove">
+											<i class="fa fa-remove"></i> 删除
+										</a>
+									</li>
+									<li>
+										<a href="javascript:void(0)" onclick="checkExpired()" shiro:hasPermission="certificate:product:edit">
+											<i class="fa fa-check"></i> 检查过期
+										</a>
+									</li>
+									<li>
+										<a href="javascript:void(0)" onclick="$.table.exportExcel()" shiro:hasPermission="certificate:product:export">
+											<i class="fa fa-download"></i> 导出
+										</a>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</form>
 
 					<div class="select-table table-striped audit-table-wrap audit-list-table">
 						<table id="bootstrap-table"></table>
+					</div>
+
+					<div class="select-table table-striped audit-cert-detail-wrap">
+						<table id="bootstrap-table-cert-detail"></table>
 					</div>
 				</div>
 			</div>
@@ -401,13 +488,17 @@
 		var selectedHospitalId = null;
 		var allHospitals = [];
 		var productTableId = 'bootstrap-table';
+		var certDetailTableId = 'bootstrap-table-cert-detail';
+		var selectedCertificateId = null;
 
 		$(function() {
 			initLeftHospitalTable();
+			initCertDetailTable();
 			queryProductCertificateList();
 
 			$(window).resize(function() {
 				adjustProductTableHeight();
+				adjustCertDetailTableHeight();
 				setTimeout(refreshProductTableLayout, 100);
 				var $hospitalTable = $('#bootstrap-table-hospital');
 				if ($hospitalTable.length && $hospitalTable.bootstrapTable('getOptions')) {
@@ -417,18 +508,139 @@
 
 			setTimeout(function() {
 				adjustProductTableHeight();
+				adjustCertDetailTableHeight();
 			}, 300);
 		});
 
+		function formatCertDate(value) {
+			if (!value) {
+				return '-';
+			}
+			if (typeof value === 'string' && value.indexOf('-') > -1) {
+				return value.split(' ')[0];
+			}
+			if (value instanceof Date && typeof $.common !== 'undefined' && $.common.formatDate) {
+				return $.common.formatDate(value, 'yyyy-MM-dd');
+			}
+			return value;
+		}
+
+		function calculateCertDetailTableHeight() {
+			var $wrap = $('.audit-cert-detail-wrap');
+			if ($wrap.length === 0) {
+				return 180;
+			}
+			return Math.max($wrap.innerHeight() - 4, 120);
+		}
+
+		function adjustCertDetailTableHeight() {
+			var $table = $('#' + certDetailTableId);
+			if ($table.length === 0 || !$table.bootstrapTable('getOptions')) {
+				return;
+			}
+			$table.bootstrapTable('resetView', { height: calculateCertDetailTableHeight() });
+		}
+
+		function initCertDetailTable() {
+			$('#' + certDetailTableId).bootstrapTable({
+				locale: 'zh-CN',
+				striped: true,
+				cache: false,
+				pagination: false,
+				showRefresh: false,
+				showColumns: false,
+				showToggle: false,
+				search: false,
+				height: calculateCertDetailTableHeight(),
+				data: [],
+				columns: [{
+					field: 'serialNumber',
+					title: '序号',
+					align: 'center',
+					width: 60,
+					formatter: function(value, row, index) {
+						return index + 1;
+					}
+				},
+				{
+					field: 'licenseKindName',
+					title: '证件类型',
+					align: 'left',
+					formatter: function(value, row) {
+						return value || row.licenseKindCode || '-';
+					}
+				},
+				{
+					field: 'licenseNo',
+					title: '证件编码',
+					align: 'left',
+					formatter: function(value) {
+						return value || '-';
+					}
+				},
+				{
+					field: 'expireDate',
+					title: '证件有效期',
+					align: 'center',
+					width: 120,
+					formatter: function(value) {
+						return formatCertDate(value);
+					}
+				},
+				{
+					field: 'createBy',
+					title: '上传人',
+					align: 'center',
+					width: 100,
+					formatter: function(value) {
+						return value || '-';
+					}
+				},
+				{
+					field: 'createTime',
+					title: '上传日期',
+					align: 'center',
+					width: 120,
+					formatter: function(value) {
+						return formatCertDate(value);
+					}
+				}]
+			});
+		}
+
+		function loadCertDetailRows(certificateId) {
+			selectedCertificateId = certificateId || null;
+			var $detail = $('#' + certDetailTableId);
+			if (!$detail.bootstrapTable('getOptions')) {
+				return;
+			}
+			if (!certificateId) {
+				$detail.bootstrapTable('load', []);
+				return;
+			}
+			$.post(prefix + '/licenseSnap/mergedRows', { certificateId: certificateId }, function(res) {
+				if (res.code === 0) {
+					$detail.bootstrapTable('load', res.data || []);
+				} else {
+					$detail.bootstrapTable('load', []);
+					if (res.msg) {
+						$.modal.msgWarning(res.msg);
+					}
+				}
+				setTimeout(adjustCertDetailTableHeight, 0);
+			});
+		}
+
 		function calculateProductTableHeight() {
-			var $wrap = $('.audit-right-area .audit-table-wrap');
+			var $wrap = $('.audit-right-area .audit-list-table');
 			if ($wrap.length === 0) {
 				return 400;
 			}
 			var wrapH = $wrap[0].clientHeight;
 			if (!wrapH) {
 				var outerToolbarH = $('#toolbar').outerHeight(true) || 40;
-				wrapH = $('.audit-right-area').height() - outerToolbarH - 10;
+				var detailH = $('.audit-cert-detail-wrap').outerHeight(true) || 200;
+				wrapH = $('.audit-right-area').height() - outerToolbarH - detailH - 10;
 			}
 			var $bt = $wrap.find('.bootstrap-table');
 			if ($bt.length === 0) {
@@ -634,6 +846,7 @@
 				selectedHospitalId = null;
 				applyHospitalFilterToForm(null);
 				updateHospitalTable(allHospitals);
+				loadCertDetailRows(null);
 				$('#' + productTableId).bootstrapTable('refresh');
 				return;
 			}
@@ -643,6 +856,7 @@
 			selectedHospitalId = hospitalId;
 			applyHospitalFilterToForm(hospitalId);
 			updateHospitalTable(allHospitals);
+			loadCertDetailRows(null);
 			$('#' + productTableId).bootstrapTable('refresh');
 		}
 
@@ -698,12 +912,21 @@
 					$.modal.closeLoading();
 					setTimeout(function() {
 						adjustProductTableHeight();
+						adjustCertDetailTableHeight();
 						refreshProductTableLayout();
+						if (selectedCertificateId) {
+							loadCertDetailRows(selectedCertificateId);
+						}
 					}, 50);
 					setTimeout(refreshProductTableLayout, 200);
 				},
 				onPostBody: function() {
 					refreshProductTableLayout();
+				},
+				onClickRow: function(row) {
+					if (row && row.certificateId) {
+						loadCertDetailRows(row.certificateId);
+					}
 				},
 				columns: [{
 					checkbox: true
@@ -842,6 +1065,7 @@
 			$.table.init(options);
 			setTimeout(function() {
 				adjustProductTableHeight();
+				adjustCertDetailTableHeight();
 				refreshProductTableLayout();
 			}, 500);
 		}

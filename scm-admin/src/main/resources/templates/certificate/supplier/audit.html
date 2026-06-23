@@ -530,7 +530,7 @@
 			expireDate: 110,
 			contactPerson: 120,
 			address: 260,
-			auditOperate: 160
+			auditOperate: 150
 		};
 
 		$(function() {
@@ -603,8 +603,8 @@
 		    $mainBody.find('tbody tr').each(function (rowIdx) {
 		        var html = $(this).find('td[data-field="auditOperate"]').html();
 		        var $rightCell = $rightBody.find('tbody tr').eq(rowIdx).find('td[data-field="auditOperate"]');
-		        if (html && $rightCell.length) {
-		            $rightCell.html(html);
+		        if ($rightCell.length) {
+		            $rightCell.html(html || '');
 		        }
 		    });
 		}
@@ -772,13 +772,17 @@
 		    var actions = [];
 		    var cid = row.certificateId;
 		    cacheCertRowFiles(cid, row.certificateFile || '', row.certificateFileIds || '');
-		    var hasFile = (row.certificateFile && row.certificateFile.trim() !== '')
-		        || (row.certificateFileIds && row.certificateFileIds.trim() !== '');
-		    if (hasFile) {
-		        actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="previewCertById(' + cid + ')" title="预览证件图片"><i class="fa fa-eye"></i> 预览</a>');
-		        actions.push(' <a class="btn btn-warning btn-xs" href="javascript:void(0)" onclick="downloadCertById(' + cid + ')" title="下载证件图片"><i class="fa fa-download"></i> 下载</a>');
-		    }
+		    actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="previewCertById(' + cid + ')" title="预览证件图片"><i class="fa fa-eye"></i> 预览</a>');
+		    actions.push(' <a class="btn btn-primary btn-xs" href="javascript:void(0)" onclick="viewAuditDetail(' + cid + ')" title="查看证件详情"><i class="fa fa-search"></i> 查看</a>');
 		    return actions.join('');
+		}
+
+		function viewAuditDetail(certificateId) {
+		    if (certificateId == null || certificateId === '') {
+		        $.modal.alertWarning('无法查看：缺少证件ID');
+		        return;
+		    }
+		    $.modal.openTab('供应商证件审核', prefix + '/audit/' + certificateId);
 		}
 
 		function querySupplierCertificateAuditList() {
@@ -973,7 +977,7 @@
 		            field: 'auditOperate',
 		            title: '操作',
 		            align: 'center',
-		            width: 160,
+		            width: 150,
 		            formatter: function (value, row, index) {
 		                return buildAuditOperateHtml(row);
 		            }
