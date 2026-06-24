@@ -8,8 +8,10 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <id     property="certificateId"     column="certificate_id"     />
         <result property="materialId"         column="material_id"         />
         <result property="materialName"        column="material_name"       />
+        <result property="materialCode"        column="material_code"       />
         <result property="specification"      column="specification"       />
         <result property="model"              column="model"               />
+        <result property="unit"               column="unit"                />
         <result property="manufacturerName"   column="manufacturer_name"   />
         <result property="supplierId"        column="supplier_id"         />
         <result property="supplierName"      column="supplier_name"       />
@@ -93,7 +95,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 AND c.hospital_id = #{hospitalId}
             </if>
             <if test="materialName != null and materialName != ''">
-                AND m.material_name like concat('%', #{materialName}, '%')
+                AND (
+                    IFNULL(m.material_name, '') like concat('%', #{materialName}, '%')
+                    OR IFNULL(c.register_name, '') like concat('%', #{materialName}, '%')
+                    OR IFNULL(c.register_no, '') like concat('%', #{materialName}, '%')
+                    OR lower(IFNULL(c.pinyin_code, '')) like lower(concat('%', #{materialName}, '%'))
+                )
             </if>
         </where>
         order by c.expire_date asc
@@ -117,7 +124,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 AND c.hospital_id = #{hospitalId}
             </if>
             <if test="materialName != null and materialName != ''">
-                AND m.material_name like concat('%', #{materialName}, '%')
+                AND (
+                    IFNULL(m.material_name, '') like concat('%', #{materialName}, '%')
+                    OR IFNULL(c.register_name, '') like concat('%', #{materialName}, '%')
+                    OR IFNULL(c.register_no, '') like concat('%', #{materialName}, '%')
+                    OR lower(IFNULL(c.pinyin_code, '')) like lower(concat('%', #{materialName}, '%'))
+                )
             </if>
         </where>
         order by c.expire_date asc
@@ -140,6 +152,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectProductCertificateById" parameterType="Long" resultMap="ProductCertificateResult">
         <include refid="selectProductCertificateVo"/>
         where c.certificate_id = #{certificateId}
+    </select>
+
+    <select id="selectProductCertificateByMaterialCode" resultMap="ProductCertificateResult">
+        <include refid="selectProductCertificateVo"/>
+        where c.status != '1'
+          and c.hospital_id = #{hospitalId}
+          and m.material_code = #{materialCode}
+          and m.del_flag = '0'
+        <if test="supplierId != null">
+            and c.supplier_id = #{supplierId}
+        </if>
+        order by c.certificate_id desc
+        limit 1
     </select>
     
     <insert id="insertProductCertificate" parameterType="ProductCertificate" useGeneratedKeys="true" keyProperty="certificateId">

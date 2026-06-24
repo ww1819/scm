@@ -3,7 +3,9 @@ package com.scm.system.service.impl;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -13,10 +15,15 @@ import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.HospitalSupplier;
+import com.scm.system.domain.OrderDetail;
 import com.scm.system.domain.ProductCertificate;
 import com.scm.system.domain.ScmFile;
+import com.scm.system.domain.Supplier;
+import com.scm.system.domain.vo.ProductCertificateImportVo;
 import com.scm.system.domain.vo.ProductMaterialArchiveVo;
+import com.scm.system.mapper.OrderDetailMapper;
 import com.scm.system.mapper.ProductCertificateMapper;
+import com.scm.system.mapper.SupplierMapper;
 import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.IProductCertLicenseSnapService;
 import com.scm.system.service.IProductCertificateService;
@@ -49,6 +56,12 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
 
     @Autowired
     private IScmProductCertificateFileService scmProductCertificateFileService;
+
+    @Autowired
+    private OrderDetailMapper orderDetailMapper;
+
+    @Autowired
+    private SupplierMapper supplierMapper;
 
     private void enrichCertificateFiles(ProductCertificate certificate)
     {
@@ -101,6 +114,14 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
         if (sid != null && c != null && c.getSupplierId() != null && !sid.equals(c.getSupplierId()))
         {
             throw new ServiceException("无权操作其他供应商的产品证件");
+        }
+    }
+
+    private void assertProductCertificateEditable(ProductCertificate certificate)
+    {
+        if (certificate != null && "1".equals(certificate.getAuditStatus()))
+        {
+            throw new ServiceException("已审核的产品不允许修改");
         }
     }
 
@@ -405,6 +426,7 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
         if (before != null)
         {
             assertProductCertificateSupplierScope(before);
+            assertProductCertificateEditable(before);
         }
         preserveHospitalOnUpdate(productCertificate, before);
         Long sid = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
@@ -447,6 +469,7 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
         if (before != null)
         {
             assertProductCertificateSupplierScope(before);
+            assertProductCertificateEditable(before);
         }
         preserveHospitalOnUpdate(productCertificate, before);
         Long sid = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
@@ -574,6 +597,10 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
         if (before != null)
         {
             assertProductCertificateSupplierScope(before);
+            if ("1".equals(before.getAuditStatus()))
+            {
+                throw new ServiceException("该产品已审核，不能重复审核");
+            }
         }
         productCertificate.setAuditTime(DateUtils.getNowDate());
         productCertificate.setUpdateTime(DateUtils.getNowDate());
@@ -589,6 +616,7 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
             throw new ServiceException("产品证件不存在");
         }
         assertProductCertificateSupplierScope(before);
+        assertProductCertificateEditable(before);
         ProductCertificate bind = new ProductCertificate();
         bind.setCertificateId(certificateId);
         bind.setCertificateFileIds(certificateFileIds != null ? certificateFileIds : "");
@@ -719,6 +747,390 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
         // 获取最后插入的ID
         manufacturerId = productCertificateMapper.getLastInsertManufacturerId();
         return manufacturerId;
+    }
+
+    @Override
+    public List<OrderDetail> selectOrderCatalogList(String hospitalId, Long supplierId)
+    {
+        if (StringUtils.isEmpty(hospitalId))
+        {
+            throw new ServiceException("请选择医院");
+        }
+        Long hid;
+        try
+        {
+            hid = Long.valueOf(hospitalId.trim());
+        }
+        catch (NumberFormatException e)
+        {
+            throw new ServiceException("医院ID无效");
+        }
+        Long sid = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (sid != null)
+        {
+            supplierId = sid;
+        }
+        return orderDetailMapper.selectDistinctOrderCatalog(hid, supplierId);
+    }
+
+    @Override
+    public String syncOrderCatalogToProducts(String hospitalId, String hospitalCode, Long supplierId, String operName)
+    {
+        List<OrderDetail> rawList = selectOrderCatalogList(hospitalId, supplierId);
+        if (rawList == null || rawList.isEmpty())
+        {
+            throw new ServiceException("当前医院订单中暂无产品目录可同步");
+        }
+        String hid = hospitalId.trim();
+        String hcode = StringUtils.trimToEmpty(hospitalCode);
+        Long supplierUserSid = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (supplierUserSid != null)
+        {
+            supplierId = supplierUserSid;
+            if (StringUtils.isNotEmpty(hcode))
+            {
+                assertHospitalLinkedToSupplier(supplierUserSid, hcode);
+            }
+        }
+        Map<String, OrderDetail> catalogMap = dedupeOrderCatalogByMaterialCode(rawList, supplierId);
+        int insertNum = 0;
+        int updateNum = 0;
+        int skipNum = 0;
+        for (OrderDetail row : catalogMap.values())
+        {
+            if (row == null || StringUtils.isEmpty(StringUtils.trimToNull(row.getMaterialCode())))
+            {
+                skipNum++;
+                continue;
+            }
+            if (StringUtils.isEmpty(StringUtils.trimToNull(row.getMaterialName())))
+            {
+                skipNum++;
+                continue;
+            }
+            Long rowSupplierId = supplierId != null ? supplierId : row.getSupplierId();
+            if (rowSupplierId == null)
+            {
+                skipNum++;
+                continue;
+            }
+            String materialCode = row.getMaterialCode().trim();
+            ProductCertificate existing = productCertificateMapper.selectProductCertificateByMaterialCode(
+                hid, rowSupplierId, materialCode);
+            if (existing != null)
+            {
+                assertProductCertificateSupplierScope(existing);
+                if ("1".equals(existing.getAuditStatus()))
+                {
+                    skipNum++;
+                    continue;
+                }
+                applyOrderRowToCertificate(existing, row, operName, true);
+                updateProductCertificate(existing, row.getSpecification(), row.getModel(), row.getUnit(),
+                    row.getManufacturer(), row.getPurchasePrice());
+                updateNum++;
+            }
+            else
+            {
+                ProductCertificate cert = buildCertificateFromOrderRow(row, hid, hcode, rowSupplierId, operName);
+                Long materialId = resolveOrCreateMaterialDictFromOrder(row, operName);
+                cert.setMaterialId(materialId);
+                insertProductCertificate(cert, row.getSpecification(), row.getModel(), row.getUnit(),
+                    row.getManufacturer(), row.getPurchasePrice());
+                insertNum++;
+            }
+        }
+        return "同步完成：新增 " + insertNum + " 条，更新 " + updateNum + " 条"
+            + (skipNum > 0 ? "，跳过 " + skipNum + " 条" : "");
+    }
+
+    /** 按耗材编码+供应商去重，保留最新订单明细并合并非空字段 */
+    private Map<String, OrderDetail> dedupeOrderCatalogByMaterialCode(List<OrderDetail> rawList, Long defaultSupplierId)
+    {
+        Map<String, OrderDetail> map = new LinkedHashMap<>();
+        for (OrderDetail row : rawList)
+        {
+            if (row == null || StringUtils.isEmpty(StringUtils.trimToNull(row.getMaterialCode())))
+            {
+                continue;
+            }
+            Long sid = defaultSupplierId != null ? defaultSupplierId : row.getSupplierId();
+            String key = row.getMaterialCode().trim() + "@" + (sid != null ? sid : "");
+            OrderDetail acc = map.get(key);
+            if (acc == null)
+            {
+                map.put(key, row);
+            }
+            else
+            {
+                mergeOrderCatalogFields(acc, row);
+            }
+        }
+        return map;
+    }
+
+    private void mergeOrderCatalogFields(OrderDetail target, OrderDetail incoming)
+    {
+        if (StringUtils.isNotEmpty(StringUtils.trimToNull(incoming.getMaterialName())))
+        {
+            target.setMaterialName(incoming.getMaterialName().trim());
+        }
+        if (StringUtils.isNotEmpty(StringUtils.trimToNull(incoming.getRegisterNo())))
+        {
+            target.setRegisterNo(incoming.getRegisterNo().trim());
+        }
+        if (StringUtils.isNotEmpty(StringUtils.trimToNull(incoming.getSpecification())))
+        {
+            target.setSpecification(incoming.getSpecification().trim());
+        }
+        if (StringUtils.isNotEmpty(StringUtils.trimToNull(incoming.getModel())))
+        {
+            target.setModel(incoming.getModel().trim());
+        }
+        if (StringUtils.isNotEmpty(StringUtils.trimToNull(incoming.getUnit())))
+        {
+            target.setUnit(incoming.getUnit().trim());
+        }
+        if (incoming.getPurchasePrice() != null)
+        {
+            target.setPurchasePrice(incoming.getPurchasePrice());
+        }
+        if (StringUtils.isNotEmpty(StringUtils.trimToNull(incoming.getManufacturer())))
+        {
+            target.setManufacturer(incoming.getManufacturer().trim());
+        }
+    }
+
+    private ProductCertificate buildCertificateFromOrderRow(OrderDetail row, String hospitalId, String hospitalCode,
+        Long supplierId, String operName)
+    {
+        ProductCertificate cert = new ProductCertificate();
+        cert.setMaterialName(row.getMaterialName().trim());
+        cert.setRegisterNo(StringUtils.trimToNull(row.getRegisterNo()));
+        cert.setHospitalId(hospitalId);
+        cert.setHospitalCode(hospitalCode);
+        cert.setSupplierId(supplierId);
+        cert.setProductCategory("低值");
+        cert.setCreateBy(operName);
+        if (row.getPurchasePrice() != null)
+        {
+            cert.setBidPrice(row.getPurchasePrice());
+        }
+        return cert;
+    }
+
+    private void applyOrderRowToCertificate(ProductCertificate cert, OrderDetail row, String operName, boolean updating)
+    {
+        cert.setUpdateBy(operName);
+        if (StringUtils.isNotEmpty(StringUtils.trimToNull(row.getMaterialName())))
+        {
+            cert.setMaterialName(row.getMaterialName().trim());
+        }
+        if (StringUtils.isNotEmpty(StringUtils.trimToNull(row.getRegisterNo())))
+        {
+            cert.setRegisterNo(row.getRegisterNo().trim());
+        }
+        if (row.getPurchasePrice() != null)
+        {
+            cert.setBidPrice(row.getPurchasePrice());
+        }
+        if (updating && cert.getMaterialId() != null && cert.getMaterialId() > 0
+            && StringUtils.isNotEmpty(StringUtils.trimToNull(row.getMaterialName())))
+        {
+            com.scm.system.domain.MaterialDict materialDict = materialDictService.selectMaterialDictById(cert.getMaterialId());
+            if (materialDict != null && !row.getMaterialName().trim().equals(materialDict.getMaterialName()))
+            {
+                materialDict.setMaterialName(row.getMaterialName().trim());
+                materialDict.setUpdateBy(operName);
+                materialDict.setUpdateTime(DateUtils.getNowDate());
+                materialDictService.updateMaterialDict(materialDict);
+            }
+        }
+    }
+
+    private Long resolveOrCreateMaterialDictFromOrder(OrderDetail row, String operName)
+    {
+        String materialCode = row.getMaterialCode().trim();
+        com.scm.system.domain.MaterialDict dict = materialDictService.selectMaterialDictByCode(materialCode);
+        if (dict == null)
+        {
+            dict = new com.scm.system.domain.MaterialDict();
+            dict.setMaterialCode(materialCode);
+            dict.setMaterialName(row.getMaterialName().trim());
+            dict.setSpecification(row.getSpecification());
+            dict.setModel(row.getModel());
+            dict.setUnit(row.getUnit());
+            dict.setPurchasePrice(row.getPurchasePrice());
+            if (StringUtils.isNotEmpty(StringUtils.trimToNull(row.getManufacturer())))
+            {
+                Long manufacturerId = findOrCreateManufacturer(row.getManufacturer().trim(), operName);
+                dict.setManufacturerId(manufacturerId);
+            }
+            dict.setStatus("0");
+            dict.setDelFlag("0");
+            dict.setCreateBy(operName);
+            materialDictService.insertMaterialDict(dict);
+            return dict.getMaterialId();
+        }
+        boolean needUpdate = false;
+        if (StringUtils.isNotEmpty(StringUtils.trimToNull(row.getMaterialName()))
+            && !row.getMaterialName().trim().equals(dict.getMaterialName()))
+        {
+            dict.setMaterialName(row.getMaterialName().trim());
+            needUpdate = true;
+        }
+        if (StringUtils.isNotEmpty(StringUtils.trimToNull(row.getSpecification()))
+            && !row.getSpecification().equals(dict.getSpecification()))
+        {
+            dict.setSpecification(row.getSpecification());
+            needUpdate = true;
+        }
+        if (StringUtils.isNotEmpty(StringUtils.trimToNull(row.getModel()))
+            && !row.getModel().equals(dict.getModel()))
+        {
+            dict.setModel(row.getModel());
+            needUpdate = true;
+        }
+        if (StringUtils.isNotEmpty(StringUtils.trimToNull(row.getUnit()))
+            && !row.getUnit().equals(dict.getUnit()))
+        {
+            dict.setUnit(row.getUnit());
+            needUpdate = true;
+        }
+        if (row.getPurchasePrice() != null && !row.getPurchasePrice().equals(dict.getPurchasePrice()))
+        {
+            dict.setPurchasePrice(row.getPurchasePrice());
+            needUpdate = true;
+        }
+        if (StringUtils.isNotEmpty(StringUtils.trimToNull(row.getManufacturer())))
+        {
+            Long manufacturerId = findOrCreateManufacturer(row.getManufacturer().trim(), operName);
+            if (manufacturerId != null && !manufacturerId.equals(dict.getManufacturerId()))
+            {
+                dict.setManufacturerId(manufacturerId);
+                needUpdate = true;
+            }
+        }
+        if (needUpdate)
+        {
+            dict.setUpdateBy(operName);
+            dict.setUpdateTime(DateUtils.getNowDate());
+            materialDictService.updateMaterialDict(dict);
+        }
+        return dict.getMaterialId();
+    }
+
+    @Override
+    public String importProductCatalog(List<ProductCertificateImportVo> rows, String hospitalId,
+        String hospitalCode, boolean updateSupport, String operName)
+    {
+        if (rows == null || rows.isEmpty())
+        {
+            throw new ServiceException("导入数据不能为空");
+        }
+        if (StringUtils.isEmpty(hospitalId))
+        {
+            throw new ServiceException("请先在左侧选择医院");
+        }
+        String hid = hospitalId.trim();
+        String hcode = StringUtils.trimToEmpty(hospitalCode);
+        Long supplierUserSid = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (supplierUserSid != null && StringUtils.isNotEmpty(hcode))
+        {
+            assertHospitalLinkedToSupplier(supplierUserSid, hcode);
+        }
+        int successNum = 0;
+        int failureNum = 0;
+        StringBuilder successMsg = new StringBuilder();
+        StringBuilder failureMsg = new StringBuilder();
+        for (ProductCertificateImportVo row : rows)
+        {
+            try
+            {
+                if (row == null || StringUtils.isEmpty(StringUtils.trimToNull(row.getMaterialName())))
+                {
+                    failureNum++;
+                    failureMsg.append("<br/>").append(failureNum).append("、产品名称不能为空");
+                    continue;
+                }
+                if (StringUtils.isEmpty(StringUtils.trimToNull(row.getRegisterNo())))
+                {
+                    failureNum++;
+                    failureMsg.append("<br/>").append(failureNum).append("、").append(row.getMaterialName()).append("：注册证号不能为空");
+                    continue;
+                }
+                ProductCertificate cert = new ProductCertificate();
+                cert.setMaterialName(row.getMaterialName().trim());
+                cert.setRegisterNo(row.getRegisterNo().trim());
+                cert.setRegisterName(row.getRegisterName());
+                cert.setUdiCode(row.getUdiCode());
+                cert.setRegisterIssueDate(row.getRegisterIssueDate());
+                cert.setExpireDate(row.getExpireDate());
+                cert.setProductCategory(row.getProductCategory());
+                cert.setHospitalId(hid);
+                cert.setHospitalCode(hcode);
+                cert.setCreateBy(operName);
+                if (supplierUserSid != null)
+                {
+                    cert.setSupplierId(supplierUserSid);
+                }
+                else if (StringUtils.isNotEmpty(StringUtils.trimToNull(row.getSupplierName())))
+                {
+                    Supplier supplier = supplierMapper.selectSupplierByCompanyName(row.getSupplierName().trim());
+                    if (supplier != null)
+                    {
+                        cert.setSupplierId(supplier.getSupplierId());
+                    }
+                }
+                ProductCertificate query = new ProductCertificate();
+                query.setHospitalId(hid);
+                query.setHospitalCode(hcode);
+                query.setRegisterNo(cert.getRegisterNo());
+                if (cert.getSupplierId() != null)
+                {
+                    query.setSupplierId(cert.getSupplierId());
+                }
+                applySupplierListScope(query);
+                List<ProductCertificate> exists = productCertificateMapper.selectProductCertificateList(query);
+                if (exists != null && !exists.isEmpty())
+                {
+                    if (!updateSupport)
+                    {
+                        failureNum++;
+                        failureMsg.append("<br/>").append(failureNum).append("、").append(cert.getMaterialName())
+                            .append("（").append(cert.getRegisterNo()).append("）已存在");
+                        continue;
+                    }
+                    ProductCertificate before = exists.get(0);
+                    cert.setCertificateId(before.getCertificateId());
+                    cert.setMaterialId(before.getMaterialId());
+                    cert.setUpdateBy(operName);
+                    updateProductCertificate(cert, row.getSpecification(), row.getModel(), row.getUnit(),
+                        row.getManufacturerName(), row.getPurchasePrice());
+                }
+                else
+                {
+                    insertProductCertificate(cert, row.getSpecification(), row.getModel(), row.getUnit(),
+                        row.getManufacturerName(), row.getPurchasePrice());
+                }
+                successNum++;
+                successMsg.append("<br/>").append(successNum).append("、").append(cert.getMaterialName()).append(" 导入成功");
+            }
+            catch (Exception e)
+            {
+                failureNum++;
+                String name = row != null && row.getMaterialName() != null ? row.getMaterialName() : "未知产品";
+                failureMsg.append("<br/>").append(failureNum).append("、").append(name).append(" 导入失败：")
+                    .append(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
+            }
+        }
+        if (failureNum > 0)
+        {
+            failureMsg.insert(0, "导入完成，成功 " + successNum + " 条，失败 " + failureNum + " 条，错误如下：");
+            throw new ServiceException(failureMsg.toString());
+        }
+        successMsg.insert(0, "恭喜您，数据已全部导入成功！共 " + successNum + " 条，数据如下：");
+        return successMsg.toString();
     }
 }
 

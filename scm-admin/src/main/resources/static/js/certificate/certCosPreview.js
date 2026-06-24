@@ -36,6 +36,46 @@
         return out;
     }
 
+    window.formatCertSnapPreviewCell = function (row) {
+        var file = row && row.certificateFile ? String(row.certificateFile).trim() : '';
+        var hasFile = file !== '';
+        var color = hasFile ? '#3c8dbc' : '#bbb';
+        var cursor = hasFile ? 'pointer' : 'default';
+        var title = hasFile ? '点击预览' : '暂无图片';
+        return '<a href="javascript:void(0)" class="cert-snap-preview-btn" style="cursor:' + cursor + ';text-decoration:none;" title="' + title + '">'
+            + '<i class="fa fa-image" style="font-size:16px;color:' + color + ';"></i></a>';
+    };
+
+    window.openCertSnapPreview = function (row) {
+        var file = row && row.certificateFile ? String(row.certificateFile).trim() : '';
+        if (!file) {
+            if ($ && $.modal) {
+                $.modal.alertWarning('暂无图片');
+            }
+            return;
+        }
+        window.previewCertificateImage(file);
+    };
+
+    window.getCertSnapPreviewColumn = function () {
+        return {
+            field: 'certificateFile',
+            title: '预览',
+            align: 'center',
+            width: 56,
+            formatter: function (value, row) {
+                return window.formatCertSnapPreviewCell(row);
+            },
+            events: {
+                'click .cert-snap-preview-btn': function (e, value, row) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.openCertSnapPreview(row);
+                }
+            }
+        };
+    };
+
     window.previewCertificateImage = function (imageUrls) {
         var urlArray = parseUrlCsv(imageUrls);
         if (urlArray.length === 0) {

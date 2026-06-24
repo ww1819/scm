@@ -52,6 +52,14 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
         return c;
     }
 
+    private void assertCertificateEditable(ProductCertificate c)
+    {
+        if (c != null && "1".equals(c.getAuditStatus()))
+        {
+            throw new ServiceException("已审核的产品不允许修改");
+        }
+    }
+
     private String resolveKindNameFromTypeTable(String code)
     {
         if (StringUtils.isEmpty(code))
@@ -211,6 +219,7 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
         }
         Long certId = Long.valueOf(db.getCertificateId());
         ProductCertificate c = assertCertificateScope(certId);
+        assertCertificateEditable(c);
         db.setLicenseTitle(incoming.getLicenseTitle());
         db.setLicenseNo(incoming.getLicenseNo());
         db.setIssuingBodySnap(incoming.getIssuingBodySnap());
@@ -221,6 +230,77 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
         fillSnapshotFromCertificate(c, db);
         db.setLicenseKindCode(db.getLicenseKindCode());
         db.setLicenseKindName(resolveKindNameFromTypeTable(db.getLicenseKindCode()));
+        db.setUpdateBy(loginName);
+        return productCertLicenseSnapMapper.update(db);
+    }
+
+    @Override
+    public int appendSnapCertificateImage(String licenseId, String fileUrl, String loginName)
+    {
+        if (StringUtils.isEmpty(licenseId) || StringUtils.isEmpty(fileUrl))
+        {
+            throw new ServiceException("参数无效");
+        }
+        ProductCertLicenseSnap db = productCertLicenseSnapMapper.selectById(licenseId);
+        if (db == null)
+        {
+            throw new ServiceException("记录不存在或已删除");
+        }
+        ProductCertificate c = assertCertificateScope(Long.valueOf(db.getCertificateId()));
+        assertCertificateEditable(c);
+        String existing = StringUtils.trimToEmpty(db.getCertificateFile());
+        List<String> urls = new ArrayList<>();
+        if (StringUtils.isNotEmpty(existing))
+        {
+            for (String part : existing.split(","))
+            {
+                String t = part != null ? part.trim() : "";
+                if (!t.isEmpty() && !urls.contains(t))
+                {
+                    urls.add(t);
+                }
+            }
+        }
+        String trimmedUrl = fileUrl.trim();
+        if (!urls.contains(trimmedUrl))
+        {
+            urls.add(trimmedUrl);
+        }
+        db.setCertificateFile(String.join(",", urls));
+        db.setUpdateBy(loginName);
+        return productCertLicenseSnapMapper.update(db);
+    }
+
+    @Override
+    public int removeSnapCertificateImage(String licenseId, String fileUrl, String loginName)
+    {
+        if (StringUtils.isEmpty(licenseId) || StringUtils.isEmpty(fileUrl))
+        {
+            throw new ServiceException("参数无效");
+        }
+        ProductCertLicenseSnap db = productCertLicenseSnapMapper.selectById(licenseId);
+        if (db == null)
+        {
+            throw new ServiceException("记录不存在或已删除");
+        }
+        ProductCertificate c = assertCertificateScope(Long.valueOf(db.getCertificateId()));
+        assertCertificateEditable(c);
+        String existing = StringUtils.trimToEmpty(db.getCertificateFile());
+        if (StringUtils.isEmpty(existing))
+        {
+            return 0;
+        }
+        String target = fileUrl.trim();
+        List<String> urls = new ArrayList<>();
+        for (String part : existing.split(","))
+        {
+            String t = part != null ? part.trim() : "";
+            if (!t.isEmpty() && !t.equals(target))
+            {
+                urls.add(t);
+            }
+        }
+        db.setCertificateFile(urls.isEmpty() ? "" : String.join(",", urls));
         db.setUpdateBy(loginName);
         return productCertLicenseSnapMapper.update(db);
     }
@@ -258,6 +338,7 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
         }
         Long certId = Long.valueOf(row.getCertificateId().trim());
         ProductCertificate c = assertCertificateScope(certId);
+        assertCertificateEditable(c);
         if (StringUtils.isEmpty(StringUtils.trimToNull(row.getLicenseKindCode())))
         {
             throw new ServiceException("证照类型编码不能为空");
@@ -291,6 +372,7 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
         }
         Long certId = Long.valueOf(db.getCertificateId());
         ProductCertificate c = assertCertificateScope(certId);
+        assertCertificateEditable(c);
         fillSnapshotFromCertificate(c, row);
         row.setCertificateId(db.getCertificateId());
         if (StringUtils.isNotEmpty(StringUtils.trimToNull(row.getLicenseKindCode())))
@@ -321,7 +403,8 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
             {
                 continue;
             }
-            assertCertificateScope(Long.valueOf(db.getCertificateId()));
+            ProductCertificate c = assertCertificateScope(Long.valueOf(db.getCertificateId()));
+            assertCertificateEditable(c);
             ProductCertLicenseSnap u = new ProductCertLicenseSnap();
             u.setLicenseId(lid);
             u.setUpdateBy(loginName);

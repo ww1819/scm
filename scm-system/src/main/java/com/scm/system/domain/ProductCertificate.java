@@ -28,11 +28,17 @@ public class ProductCertificate extends BaseEntity
     /** 物资名称 */
     private String materialName;
 
+    /** 产品编码（关联物资字典） */
+    private String materialCode;
+
     /** 规格 */
     private String specification;
 
     /** 型号 */
     private String model;
+
+    /** 单位（关联物资字典） */
+    private String unit;
 
     /** 生产厂家 */
     private String manufacturerName;
@@ -163,6 +169,16 @@ public class ProductCertificate extends BaseEntity
         this.materialName = materialName;
     }
 
+    public String getMaterialCode()
+    {
+        return materialCode;
+    }
+
+    public void setMaterialCode(String materialCode)
+    {
+        this.materialCode = materialCode;
+    }
+
     public String getSpecification()
     {
         return specification;
@@ -181,6 +197,16 @@ public class ProductCertificate extends BaseEntity
     public void setModel(String model)
     {
         this.model = model;
+    }
+
+    public String getUnit()
+    {
+        return unit;
+    }
+
+    public void setUnit(String unit)
+    {
+        this.unit = unit;
     }
 
     public String getManufacturerName()

@@ -1,53 +1,234 @@
 <!DOCTYPE html>
-<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" class="cert-edit-root">
 <head>
 	<th:block th:include="include :: header('新增产品信息')" />
 	<link rel="stylesheet" href="../../../static/layui/css/layui.css">
+	<style>
+		html.cert-edit-root,
+		html.cert-edit-root body.cert-edit-body {
+			height: 100%;
+			margin: 0;
+			overflow: hidden;
+			box-sizing: border-box;
+		}
+
+		body.cert-edit-body {
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+		}
+
+		body.cert-edit-body .main-content {
+			flex: 1 1 0%;
+			min-height: 0;
+			overflow: hidden;
+			padding-bottom: 0 !important;
+			display: flex;
+			flex-direction: column;
+		}
+
+		#form-product-certificate-add {
+			flex: 1 1 0%;
+			min-height: 0;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+		}
+
+		.form-header-row {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			flex-shrink: 0;
+			margin: 8px 10px 12px 10px;
+			padding-bottom: 5px;
+			border-bottom: 1px solid #ddd;
+		}
+
+		.form-header-row .form-header {
+			margin: 0;
+			padding-bottom: 0;
+			border-bottom: none;
+		}
+
+		.form-header-actions {
+			flex-shrink: 0;
+		}
+
+		.cert-basic-grid {
+			flex-shrink: 0;
+			margin: 0 10px 8px;
+		}
+
+		.cert-basic-grid .cert-inline-field {
+			display: flex;
+			align-items: center;
+			margin-bottom: 8px;
+		}
+
+		.cert-basic-grid .cert-inline-field > label {
+			flex-shrink: 0;
+			width: 96px;
+			text-align: right;
+			margin: 0 8px 0 0;
+			font-size: 12px;
+			font-weight: normal;
+			color: #666;
+			white-space: nowrap;
+		}
+
+		.cert-basic-grid .cert-inline-field > .form-control,
+		.cert-basic-grid .cert-inline-field > select.form-control,
+		.cert-basic-grid .cert-inline-field > textarea.form-control {
+			flex: 1;
+			min-width: 0;
+			height: 30px;
+			padding: 4px 8px;
+			font-size: 12px;
+		}
+
+		.cert-basic-grid .cert-inline-field > textarea.form-control {
+			height: 30px;
+			min-height: 30px;
+			resize: none;
+			overflow: hidden;
+		}
+
+		.cert-basic-grid .cert-inline-field > .form-control[readonly] {
+			background-color: #fff;
+		}
+
+		.cert-qual-section {
+			flex: 1 1 0%;
+			min-height: 0;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+			margin: 0 10px 10px;
+		}
+
+		.cert-qual-section .form-header {
+			flex-shrink: 0;
+			margin: 0 0 8px;
+		}
+
+		.cert-qual-table-wrap {
+			flex: 1 1 0%;
+			min-height: 0;
+			overflow: hidden;
+		}
+
+		body.cert-edit-body #scroll-up {
+			display: none !important;
+		}
+	</style>
 </head>
-<body>
-    <div class="main-content" style="padding-bottom: 80px;">
+<body class="cert-edit-body">
+    <div class="main-content">
         <form id="form-product-certificate-add" class="form-horizontal">
-            <h4 class="form-header h4">基本信息</h4>
-            <!-- 隐藏的产品ID字段 -->
             <input type="hidden" name="materialId" id="materialId">
-            <!-- 隐藏的产品编码字段，自动生成 -->
             <input type="hidden" name="materialCode" id="materialCode">
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label is-required">产品名称：</label>
-                        <div class="col-sm-8">
+
+            <div class="form-header-row">
+                <h4 class="form-header h4">基本信息</h4>
+                <div class="form-header-actions">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
+                    <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
+                </div>
+            </div>
+
+            <div class="cert-basic-grid">
+                <div class="row">
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>产品编码</label>
+                            <input type="text" class="form-control" readonly placeholder="保存后自动生成" th:value="${preMaterialDict != null ? preMaterialDict.materialCode : ''}"/>
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label class="is-required">产品名称</label>
                             <input name="materialName" id="materialName" placeholder="请输入产品名称" class="form-control" type="text" maxlength="200" required>
                         </div>
                     </div>
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>单位</label>
+                            <input name="unit" id="unit" placeholder="请输入单位" class="form-control" type="text" maxlength="20" th:value="${preMaterialDict != null ? preMaterialDict.unit : ''}">
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>单价</label>
+                            <input name="bidPrice" placeholder="请输入单价" class="form-control" type="number" step="0.01" min="0">
+                        </div>
+                    </div>
                 </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label is-required">注册证号：</label>
-                        <div class="col-sm-8">
+                <div class="row">
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>规格</label>
+                            <input name="specification" id="specification" placeholder="请输入规格" class="form-control" type="text" maxlength="200" th:value="${preMaterialDict != null ? preMaterialDict.specification : ''}">
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>型号</label>
+                            <input name="model" id="model" placeholder="请输入型号" class="form-control" type="text" maxlength="200" th:value="${preMaterialDict != null ? preMaterialDict.model : ''}">
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>注册证名称</label>
+                            <input name="registerName" placeholder="请输入注册证名称" class="form-control" type="text" maxlength="200">
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label class="is-required">注册证号</label>
                             <input name="registerNo" placeholder="请输入注册证号" class="form-control" type="text" maxlength="100" required>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="row" th:if="${supplierSelfService}">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">供应商：</label>
-                        <div class="col-sm-8">
+                <div class="row">
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>注册有效期</label>
+                            <input name="registerValidDate" id="registerValidDate" placeholder="年/月/日" class="form-control" type="text">
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>有效期至</label>
+                            <input name="expireDate" id="expireDate" placeholder="年/月/日" class="form-control" type="text">
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>拼音简码</label>
+                            <input name="pinyinCode" placeholder="请输入拼音简码" class="form-control" type="text" maxlength="50">
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>发证日期</label>
+                            <input name="registerIssueDate" id="registerIssueDate" placeholder="年/月/日" class="form-control" type="text">
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-3" th:if="${supplierSelfService}">
+                        <div class="cert-inline-field">
+                            <label>供应商</label>
                             <input type="hidden" name="supplierId" id="supplierId" th:value="${bindSupplierId}"/>
                             <input type="text" class="form-control" readonly th:value="${bindSupplierCompanyName}"/>
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="row" th:unless="${supplierSelfService}">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">供应商：</label>
-                        <div class="col-sm-8">
+                    <div class="col-sm-3" th:unless="${supplierSelfService}">
+                        <div class="cert-inline-field">
+                            <label>供应商</label>
                             <select name="supplierId" id="supplierId" class="form-control">
-                                <option value="">请选择供应商（选填）</option>
+                                <option value="">请选择（选填）</option>
                                 <option th:each="supplier : ${supplierList}"
                                         th:value="${supplier.supplierId}"
                                         th:text="${supplier.companyName}">
@@ -55,137 +236,44 @@
                             </select>
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">注册证名称：</label>
-                        <div class="col-sm-8">
-                            <input name="registerName" placeholder="请输入注册证名称" class="form-control" type="text" maxlength="200">
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>条码号(UDI)</label>
+                            <input name="udiCode" placeholder="请输入条码号" class="form-control" type="text" maxlength="100">
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>生产厂家</label>
+                            <input name="manufacturerName" id="manufacturerName" placeholder="请输入生产厂家" class="form-control" type="text" maxlength="200" th:value="${preMaterialDict != null ? preMaterialDict.manufacturerName : ''}">
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>采购价格</label>
+                            <input name="purchasePrice" id="purchasePrice" placeholder="请输入采购价格" class="form-control" type="number" step="0.01" min="0" th:value="${preMaterialDict != null ? preMaterialDict.purchasePrice : ''}">
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">条码号(UDI)：</label>
-                        <div class="col-sm-8">
-                            <input name="udiCode" placeholder="请输入条码号(UDI)" class="form-control" type="text" maxlength="100">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">拼音简码：</label>
-                        <div class="col-sm-8">
-                            <input name="pinyinCode" placeholder="请输入拼音简码" class="form-control" type="text" maxlength="50">
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">注册证发证日期：</label>
-                        <div class="col-sm-8">
-                            <input name="registerIssueDate" id="registerIssueDate" placeholder="年/月/日" class="form-control" type="text">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">注册有效期：</label>
-                        <div class="col-sm-8">
-                            <input name="registerValidDate" id="registerValidDate" placeholder="年/月/日" class="form-control" type="text">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <h4 class="form-header h4">产品信息</h4>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">规格：</label>
-                        <div class="col-sm-8">
-                            <input name="specification" id="specification" placeholder="请输入规格" class="form-control" type="text" maxlength="200">
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">型号：</label>
-                        <div class="col-sm-8">
-                            <input name="model" id="model" placeholder="请输入型号" class="form-control" type="text" maxlength="200">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">单位：</label>
-                        <div class="col-sm-8">
-                            <input name="unit" id="unit" placeholder="请输入单位" class="form-control" type="text" maxlength="20">
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">生产厂家：</label>
-                        <div class="col-sm-8">
-                            <input name="manufacturerName" id="manufacturerName" placeholder="请输入生产厂家" class="form-control" type="text" maxlength="200">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <h4 class="form-header h4">价格信息</h4>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">采购价格：</label>
-                        <div class="col-sm-8">
-                            <input name="purchasePrice" id="purchasePrice" placeholder="请输入采购价格" class="form-control" type="number" step="0.01" min="0">
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">单价：</label>
-                        <div class="col-sm-8">
-                            <input name="bidPrice" placeholder="请输入单价" class="form-control" type="number" step="0.01" min="0">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">销售价格：</label>
-                        <div class="col-sm-8">
+                <div class="row" th:if="${supplierSelfService}">
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>销售价格</label>
                             <input name="salePrice" placeholder="请输入销售价格" class="form-control" type="number" step="0.01" min="0">
                         </div>
                     </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">状态：</label>
-                        <div class="col-sm-8">
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>状态</label>
                             <select name="status" class="form-control">
                                 <option value="0">启用</option>
                                 <option value="1">停用</option>
                             </select>
                         </div>
                     </div>
-                </div>
-            </div>
-            <h4 class="form-header h4">其他信息</h4>
-            <div class="row" th:if="${supplierSelfService}">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label is-required">医院：</label>
-                        <div class="col-sm-8">
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label class="is-required">医院名称</label>
                             <select id="linkedHospitalSelect" class="form-control" title="仅展示与当前供应商已关联的医院" required>
                                 <option value="">请选择医院</option>
                                 <option th:each="h : ${linkedHospitals}"
@@ -199,80 +287,100 @@
                             <input type="hidden" name="hospitalId" id="hospitalIdHidden" value=""/>
                         </div>
                     </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">销售客户：</label>
-                        <div class="col-sm-8">
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>销售客户</label>
                             <input name="saleCustomer" placeholder="请输入销售客户" class="form-control" type="text" maxlength="200">
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="row" th:unless="${supplierSelfService}">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label is-required">医院编码：</label>
-                        <div class="col-sm-8">
-                            <input name="hospitalCode" id="hospitalCodePlatform" placeholder="请输入医院编码" class="form-control" type="text" maxlength="50" required>
+                <div class="row" th:unless="${supplierSelfService}">
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>销售价格</label>
+                            <input name="salePrice" placeholder="请输入销售价格" class="form-control" type="number" step="0.01" min="0">
                         </div>
                     </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">医院ID：</label>
-                        <div class="col-sm-8">
-                            <input name="hospitalId" id="hospitalIdPlatform" placeholder="医院主数据ID（选填）" class="form-control" type="text" maxlength="64">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row" th:unless="${supplierSelfService}">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">销售客户：</label>
-                        <div class="col-sm-8">
-                            <input name="saleCustomer" placeholder="请输入销售客户" class="form-control" type="text" maxlength="200">
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-6">
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">产品类别：</label>
-                        <div class="col-sm-8">
-                            <select name="productCategory" class="form-control">
-                                <option value="">请选择</option>
-                                <option value="高值">高值</option>
-                                <option value="低值">低值</option>
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>状态</label>
+                            <select name="status" class="form-control">
+                                <option value="0">启用</option>
+                                <option value="1">停用</option>
                             </select>
                         </div>
                     </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">备注：</label>
-                        <div class="col-sm-8">
-                            <textarea name="remark" maxlength="500" class="form-control" rows="3"></textarea>
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label class="is-required">医院编码</label>
+                            <input name="hospitalCode" id="hospitalCodePlatform" placeholder="请输入医院编码" class="form-control" type="text" maxlength="50" required>
                         </div>
                     </div>
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>医院名称</label>
+                            <input type="text" class="form-control" readonly id="hospitalNamePlatform" th:value="${preHospitalName != null ? preHospitalName : '—'}"/>
+                            <input type="hidden" name="hospitalId" id="hospitalIdPlatform" value=""/>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" th:unless="${supplierSelfService}">
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>销售客户</label>
+                            <input name="saleCustomer" placeholder="请输入销售客户" class="form-control" type="text" maxlength="200">
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>产品类别</label>
+                            <select name="productCategory" class="form-control">
+                                <option value="高值">高值</option>
+                                <option value="低值" selected>低值</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>备注</label>
+                            <textarea name="remark" maxlength="500" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" th:if="${supplierSelfService}">
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>产品类别</label>
+                            <select name="productCategory" class="form-control">
+                                <option value="高值">高值</option>
+                                <option value="低值" selected>低值</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="cert-inline-field">
+                            <label>备注</label>
+                            <textarea name="remark" maxlength="500" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cert-qual-section">
+                <h4 class="form-header h4">资质证件信息</h4>
+                <div class="select-table table-striped cert-qual-table-wrap">
+                    <table id="bootstrap-table-cert-detail" class="cert-detail-table"></table>
                 </div>
             </div>
         </form>
     </div>
 
-    <div class="row" style="position: fixed; bottom: 0; left: 0; right: 0; background-color: #fff; padding: 15px 20px; border-top: 1px solid #ddd; z-index: 1000; box-shadow: 0 -2px 8px rgba(0,0,0,0.1);">
-        <div class="col-sm-offset-5 col-sm-10">
-            <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
-            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
-        </div>
-    </div>
-    <div style="height: 70px;"></div>
 	<th:block th:include="include :: footer" />
 	<script src="../../../static/layui/layui.js"></script>
+	<script th:src="@{/js/common/scmCosDownload.js}"></script>
+	<script th:src="@{/js/certificate/certCosPreview.js}"></script>
+	<script th:src="@{/js/certificate/certDetailSnapInlineEdit.js}"></script>
+	<script th:src="@{/js/certificate/certDetailSnapUpload.js}"></script>
 	<script th:inline="javascript">
 	    var preHospitalCode = /*[[${preHospitalCode}]]*/ '';
 	    var preHospitalId = /*[[${preHospitalId}]]*/ '';
@@ -281,22 +389,18 @@
 	</script>
 	<script>
 	    var prefix = ctx + "certificate/product";
+	    var certDetailTableId = 'bootstrap-table-cert-detail';
+	    var certificateId = null;
+	    var isEditMode = false;
+	    var certSnapUpload;
+	    var certSnapInlineEdit;
 	    var laydate;
 
 	    layui.use('laydate', function(){
 	        laydate = layui.laydate;
-
-	        // 注册证发证日期
-	        laydate.render({
-	            elem: '#registerIssueDate',
-	            type: 'date'
-	        });
-
-	        // 注册有效期
-	        laydate.render({
-	            elem: '#registerValidDate',
-	            type: 'date'
-	        });
+	        laydate.render({ elem: '#registerIssueDate', type: 'date' });
+	        laydate.render({ elem: '#registerValidDate', type: 'date' });
+	        laydate.render({ elem: '#expireDate', type: 'date' });
 	    });
 
 	    function syncLinkedHospitalFromSelect() {
@@ -311,7 +415,167 @@
 	        $('#hospitalIdHidden').val(hid);
 	    }
 
+        function formatCertDate(value) {
+            if (!value) {
+                return '-';
+            }
+            if (typeof value === 'string' && value.indexOf('-') > -1) {
+                return value.split(' ')[0];
+            }
+            if (value instanceof Date && typeof $.common !== 'undefined' && $.common.formatDate) {
+                return $.common.formatDate(value, 'yyyy-MM-dd');
+            }
+            return value;
+        }
+
+        function calculateCertDetailTableHeight() {
+            var $section = $('.cert-qual-section');
+            if ($section.length === 0) {
+                return 180;
+            }
+            var headerH = $section.find('.form-header').outerHeight(true) || 0;
+            return Math.max($section.innerHeight() - headerH - 4, 120);
+        }
+
+        function adjustCertDetailTableHeight() {
+            var $table = $('#' + certDetailTableId);
+            if ($table.length === 0 || !$table.bootstrapTable('getOptions')) {
+                return;
+            }
+            $table.bootstrapTable('resetView', { height: calculateCertDetailTableHeight() });
+        }
+
+        function initCertDetailTable() {
+            certSnapInlineEdit = initCertDetailSnapInlineEdit({
+                prefix: prefix,
+                tableId: certDetailTableId,
+                editable: true,
+                laydate: laydate,
+                getCertificateId: function() { return certificateId; }
+            });
+            certSnapUpload = initCertDetailSnapUpload({
+                prefix: prefix,
+                editable: true,
+                getCertificateId: function() { return certificateId; },
+                onUploaded: loadCertDetailRows
+            });
+            var columns = [{
+                    field: 'serialNumber',
+                    title: '序号',
+                    align: 'center',
+                    width: 60,
+                    formatter: function(value, row, index) {
+                        return index + 1;
+                    }
+                },
+                {
+                    field: 'licenseKindName',
+                    title: '证件类型',
+                    align: 'left',
+                    formatter: function(value, row) {
+                        return value || row.licenseKindCode || '-';
+                    }
+                },
+                certSnapInlineEdit.getLicenseNoColumn(),
+                certSnapInlineEdit.getExpireDateColumn(),
+                getCertSnapPreviewColumn()];
+            var uploadCol = certSnapUpload.getUploadColumn();
+            if (uploadCol) {
+                columns.push(uploadCol);
+            }
+            columns.push({
+                    field: 'createBy',
+                    title: '上传人',
+                    align: 'center',
+                    width: 100,
+                    formatter: function(value) {
+                        return value || '-';
+                    }
+                },
+                {
+                    field: 'createTime',
+                    title: '上传日期',
+                    align: 'center',
+                    width: 150,
+                    formatter: function(value) {
+                        return formatCertDate(value);
+                    }
+                });
+            $('#' + certDetailTableId).bootstrapTable({
+                locale: 'zh-CN',
+                striped: true,
+                cache: false,
+                pagination: false,
+                showRefresh: false,
+                showColumns: false,
+                showToggle: false,
+                search: false,
+                height: calculateCertDetailTableHeight(),
+                data: [],
+                columns: columns
+            });
+        }
+
+        function loadCertDetailRows() {
+            var $detail = $('#' + certDetailTableId);
+            if (!$detail.bootstrapTable('getOptions')) {
+                return;
+            }
+            if (!certificateId) {
+                $detail.bootstrapTable('load', []);
+                return;
+            }
+            $.post(prefix + '/licenseSnap/mergedRows', { certificateId: certificateId }, function(res) {
+                if (res.code === 0) {
+                    $detail.bootstrapTable('load', res.data || []);
+                } else {
+                    $detail.bootstrapTable('load', []);
+                }
+                if (certSnapInlineEdit) {
+                    certSnapInlineEdit.bindAfterLoad();
+                }
+                setTimeout(adjustCertDetailTableHeight, 0);
+            });
+        }
+
+        function ensureCertificateIdField(id) {
+            certificateId = id;
+            isEditMode = true;
+            var $hid = $('input[name="certificateId"]');
+            if (!$hid.length) {
+                $('#form-product-certificate-add').prepend('<input type="hidden" name="certificateId" id="certificateId"/>');
+                $hid = $('input[name="certificateId"]');
+            }
+            $hid.val(id);
+        }
+
+        function refreshProductListTab() {
+            try {
+                if (!window.parent || window.parent === window) {
+                    return;
+                }
+                var topDoc = window.parent.document;
+                $('.Scm_iframe', topDoc).each(function() {
+                    var win = this.contentWindow;
+                    if (!win || !win.$) {
+                        return;
+                    }
+                    var $table = win.$('#bootstrap-table');
+                    if ($table.length && $table.bootstrapTable('getOptions')) {
+                        $table.bootstrapTable('refresh');
+                    }
+                });
+            } catch (e) {}
+        }
+
 	    $(function () {
+	        initCertDetailTable();
+	        setTimeout(adjustCertDetailTableHeight, 50);
+	        setTimeout(adjustCertDetailTableHeight, 200);
+	        $(window).resize(function() {
+	            adjustCertDetailTableHeight();
+	        });
+
 	        if ($('#linkedHospitalSelect').length) {
 	            $('#linkedHospitalSelect').on('change', syncLinkedHospitalFromSelect);
 	            if (typeof preHospitalId === 'string' && preHospitalId) {
@@ -346,32 +610,20 @@
         $("#form-product-certificate-add").validate({
         	onkeyup: false,
         	rules:{
-        		materialName:{
-        			required: true
-        		},
-        		registerNo:{
-        			required: true,
-        			maxlength: 100
-        		}
+        		materialName:{ required: true },
+        		registerNo:{ required: true, maxlength: 100 }
         	},
             focusCleanup: true
         });
 
         function submitHandler() {
-	        console.log("submitHandler 被调用");
-	        console.log("prefix:", prefix);
-
-	        // 先检查表单验证
-	        var isValid = $.validate.form();
-	        console.log("表单验证结果:", isValid);
-
-	        if (!isValid) {
-	            console.log("表单验证失败");
+	        if (!$.validate.form()) {
 	            return false;
 	        }
 
-	        // 确保materialId字段为空，让后端自动生成
-	        $('#materialId').val('');
+	        if (!isEditMode) {
+	            $('#materialId').val('');
+	        }
 
 	        if (typeof syncLinkedHospitalFromSelect === 'function') {
 	            syncLinkedHospitalFromSelect();
@@ -390,42 +642,40 @@
 	            }
 	        }
 
-	        // 使用自定义的AJAX请求，添加错误处理和超时
+	        var saveUrl = isEditMode ? prefix + "/edit" : prefix + "/add";
 	        var formData = $("#form-product-certificate-add").serializeArray();
-	        console.log("提交表单数据:", formData);
-	        console.log("请求URL:", prefix + "/add");
-
-	        // 确保loading在请求开始前显示
 	        $.modal.loading("正在处理中，请稍候...");
 
 	        $.ajax({
-	            url: prefix + "/add",
+	            url: saveUrl,
 	            type: "post",
 	            dataType: "json",
-	            timeout: 30000, // 30秒超时
+	            timeout: 30000,
 	            data: formData,
-	            beforeSend: function (xhr, settings) {
-	                console.log("AJAX请求开始发送");
+	            beforeSend: function (xhr) {
 	                var csrftoken = $('meta[name=csrf-token]').attr('content');
 	                if (csrftoken) {
 	                    xhr.setRequestHeader("X-CSRF-Token", csrftoken);
 	                }
 	            },
 	            success: function(result) {
-	                console.log("保存成功:", result);
-	                // 使用标准的successTabCallback处理，它会显示消息并关闭标签页
-	                $.operate.successTabCallback(result);
+	                if (result.code == web_status.SUCCESS) {
+	                    $.modal.msgSuccess(result.msg);
+	                    if (!isEditMode && result.data) {
+	                        ensureCertificateIdField(result.data);
+	                    }
+	                    loadCertDetailRows();
+	                    refreshProductListTab();
+	                } else if (result.code == web_status.WARNING) {
+	                    $.modal.alertWarning(result.msg);
+	                } else {
+	                    $.modal.alertError(result.msg);
+	                }
 	            },
-	            error: function(xhr, status, error) {
-	                console.error("保存失败:", status, error, xhr);
-	                console.error("响应状态:", xhr.status);
-	                console.error("响应文本:", xhr.responseText);
-	                $.modal.closeLoading();
+	            error: function(xhr, status) {
 	                var errorMsg = "保存失败";
 	                if (status === "timeout") {
 	                    errorMsg = "请求超时，请检查网络连接或稍后重试";
-	                } else if (status === "error" && xhr.status === 0) {
-	                    errorMsg = "网络错误，请检查网络连接";
 	                } else if (xhr.responseJSON && xhr.responseJSON.msg) {
 	                    errorMsg = xhr.responseJSON.msg;
 	                } else if (xhr.responseText) {
@@ -434,64 +684,38 @@
 	                        if (json.msg) {
 	                            errorMsg = json.msg;
 	                        }
-	                    } catch(e) {
-	                        if (xhr.responseText.length > 0) {
-	                            errorMsg = xhr.responseText.substring(0, 200);
-	                        }
-	                    }
+	                    } catch(e) {}
 	                }
 	                $.modal.alertError(errorMsg);
 	            },
 	            complete: function() {
-	                console.log("AJAX请求完成");
-	                // 确保loading被关闭
-	                setTimeout(function() {
-	                    $.modal.closeLoading();
-	                }, 100);
+	                $.modal.closeLoading();
 	            }
 	        });
 
-	        return false; // 防止表单默认提交
+	        return false;
 	    }
 
 	    function closeItem() {
-	        console.log("closeItem 被调用");
-
-	        // 如果在iframe中，使用父窗口的closeItem函数（来自common.js）
 	        if (window.parent && window.parent !== window) {
 	            try {
-	                // 直接调用全局的closeItem函数
 	                if (typeof window.parent.closeItem === 'function') {
 	                    window.parent.closeItem();
 	                    return;
 	                }
-	            } catch(e) {
-	                console.log("调用父窗口closeItem失败:", e);
-	            }
+	            } catch(e) {}
 
 	            try {
-	                // 如果closeItem不可用，尝试直接使用common.js中的逻辑
 	                var topWindow = $(window.parent.document);
-	                var panelUrl = null;
-
-	                // 获取当前iframe的data-panel属性
-	                if (window.frameElement) {
-	                    panelUrl = window.frameElement.getAttribute('data-panel');
-	                }
-
-	                // 点击当前活动标签页的关闭按钮（X图标）
+	                var panelUrl = window.frameElement ? window.frameElement.getAttribute('data-panel') : null;
 	                var closeBtn = $('.page-tabs-content .active i', topWindow);
 	                if (closeBtn.length > 0) {
 	                    closeBtn.click();
 	                    return;
 	                }
-
-	                // 如果找不到关闭按钮，尝试直接移除标签页
 	                if (panelUrl) {
 	                    $('.menuTab[data-id="' + panelUrl + '"]', topWindow).remove();
 	                    $('.mainContent .Scm_iframe[data-id="' + panelUrl + '"]', topWindow).remove();
-
-	                    // 激活上一个标签页
 	                    var prevTab = $('.menuTab', topWindow).last();
 	                    if (prevTab.length > 0) {
 	                        var prevId = prevTab.data('id');
@@ -500,22 +724,13 @@
 	                    }
 	                    return;
 	                }
-	            } catch(e) {
-	                console.error("关闭标签页失败:", e);
-	            }
+	            } catch(e) {}
 	        }
-
-	        // 如果不在iframe中，尝试使用$.modal.closeTab()
 	        try {
 	            if (typeof $.modal !== 'undefined' && typeof $.modal.closeTab === 'function') {
 	                $.modal.closeTab();
-	                return;
 	            }
-	        } catch(e) {
-	            console.log("使用$.modal.closeTab失败:", e);
-	        }
-
-	        console.warn("无法关闭页面，请手动关闭标签页");
+	        } catch(e) {}
 	    }
     </script>
 </body>

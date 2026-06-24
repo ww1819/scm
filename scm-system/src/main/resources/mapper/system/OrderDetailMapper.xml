@@ -20,6 +20,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="packCoefficient" column="pack_coefficient"    />
         <result property="manufacturer"    column="manufacturer_name"  />
         <result property="registerNo"      column="register_no"        />
+        <result property="supplierId"      column="supplier_id"        />
         <result property="remark"          column="remark"             />
     </resultMap>
     
@@ -62,6 +63,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectOrderDetailById" parameterType="Long" resultMap="OrderDetailResult">
         <include refid="selectOrderDetailVo"/>
         where d.detail_id = #{detailId}
+    </select>
+
+    <select id="selectDistinctOrderCatalog" resultMap="OrderDetailResult">
+        select d.material_code, d.material_name, d.specification, d.model, d.unit,
+               d.purchase_price, d.manufacturer_name, d.register_no, o.supplier_id
+        from scm_order_detail d
+        inner join scm_order o on d.order_id = o.order_id
+        where o.hospital_id = #{hospitalId}
+          and d.material_code is not null and d.material_code != ''
+        <if test="supplierId != null">
+            and o.supplier_id = #{supplierId}
+        </if>
+        order by d.detail_id desc
     </select>
     
     <insert id="insertOrderDetail" parameterType="OrderDetail" useGeneratedKeys="true" keyProperty="detailId">

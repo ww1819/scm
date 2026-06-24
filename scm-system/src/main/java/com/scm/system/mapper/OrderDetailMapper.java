@@ -41,6 +41,12 @@ public interface OrderDetailMapper
     List<Long> selectDistinctOrderIdsByDetailIds(@Param("detailIds") List<Long> detailIds);
 
     /**
+     * 按医院（及可选供应商）查询订单中不重复的产品目录
+     */
+    List<OrderDetail> selectDistinctOrderCatalog(@Param("hospitalId") Long hospitalId,
+        @Param("supplierId") Long supplierId);
+
+    /**
      * 新增订单明细信息
      * 
      * @param orderDetail 明细信息

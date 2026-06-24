@@ -555,6 +555,7 @@ public class SupplierCertificateController extends BaseController
     {
         SupplierCertificate supplierCertificate = supplierCertificateService.selectSupplierCertificateById(certificateId);
         mmap.put("supplierCertificate", supplierCertificate);
+        mmap.put("auditEditable", supplierCertificate != null && !"1".equals(supplierCertificate.getAuditStatus()));
         return prefix + "/auditDetail";
     }
 

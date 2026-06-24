@@ -74,6 +74,9 @@ public class OrderDetail extends BaseEntity
     @Excel(name = "注册证号")
     private String registerNo;
 
+    /** 订单供应商ID（订单目录查询投影，非明细表字段） */
+    private Long supplierId;
+
     /** 已审核配送数量（关联配送单审核通过） */
     private BigDecimal deliveredAuditedQty;
 
@@ -224,6 +227,16 @@ public class OrderDetail extends BaseEntity
     public void setRegisterNo(String registerNo)
     {
         this.registerNo = registerNo;
+    }
+
+    public Long getSupplierId()
+    {
+        return supplierId;
+    }
+
+    public void setSupplierId(Long supplierId)
+    {
+        this.supplierId = supplierId;
     }
 
     public BigDecimal getDeliveredAuditedQty()

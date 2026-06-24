@@ -2,6 +2,8 @@ package com.scm.system.service;
 
 import java.util.List;
 import com.scm.system.domain.ProductCertificate;
+import com.scm.system.domain.OrderDetail;
+import com.scm.system.domain.vo.ProductCertificateImportVo;
 import com.scm.system.domain.vo.ProductMaterialArchiveVo;
 
 /**
@@ -124,5 +126,21 @@ public interface IProductCertificateService
      * 仅更新产品证照图片（certificateFileIds 逗号分隔 file_id）
      */
     public int updateProductCertificateFile(Long certificateId, String certificateFileIds, String updateBy);
+
+    /**
+     * 批量导入产品目录
+     */
+    public String importProductCatalog(List<ProductCertificateImportVo> rows, String hospitalId,
+        String hospitalCode, boolean updateSupport, String operName);
+
+    /**
+     * 查询指定医院（及当前供应商）的订单产品目录
+     */
+    public List<OrderDetail> selectOrderCatalogList(String hospitalId, Long supplierId);
+
+    /**
+     * 将订单目录同步到产品证件登记（按耗材编码 upsert，不重复新增）
+     */
+    public String syncOrderCatalogToProducts(String hospitalId, String hospitalCode, Long supplierId, String operName);
 }
 

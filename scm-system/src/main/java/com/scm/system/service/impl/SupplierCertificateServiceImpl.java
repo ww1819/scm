@@ -404,6 +404,10 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         if (before != null)
         {
             assertSupplierCertificateViewScope(before);
+            if ("1".equals(before.getAuditStatus()))
+            {
+                throw new ServiceException("该证件已审核，不能重复审核");
+            }
         }
         supplierCertificate.setAuditTime(DateUtils.getNowDate());
         supplierCertificate.setUpdateTime(DateUtils.getNowDate());

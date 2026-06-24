@@ -31,4 +31,10 @@ public interface IProductCertLicenseSnapService
 
     /** 登记页单行保存（更新证号、日期、附件等） */
     int saveSnapRow(ProductCertLicenseSnap row, String loginName);
+
+    /** 为扩展证照行追加影像 URL（逗号分隔存储） */
+    int appendSnapCertificateImage(String licenseId, String fileUrl, String loginName);
+
+    /** 从扩展证照行移除指定影像 URL */
+    int removeSnapCertificateImage(String licenseId, String fileUrl, String loginName);
 }

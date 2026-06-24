@@ -177,6 +177,32 @@
 			padding: 5px 10px;
 		}
 
+		.audit-right-area .audit-list-table .fixed-table-toolbar {
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 8px;
+			padding: 0 2px 5px;
+		}
+
+		.audit-right-area .audit-list-table .fixed-table-toolbar #toolbar {
+			order: 2;
+			flex: 0 0 100%;
+			width: 100%;
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 8px;
+			padding: 0;
+			margin: 0;
+		}
+
+		.audit-right-area .audit-list-table .fixed-table-toolbar .columns,
+		.audit-right-area .audit-list-table .fixed-table-toolbar .pull-right {
+			order: 1;
+			margin-left: auto;
+		}
+
 		.audit-right-area .audit-table-wrap.audit-list-table {
 			flex: 1 1 57%;
 			min-height: 160px;
@@ -426,10 +452,6 @@
 								<input type="text" name="materialName" class="form-control input-sm toolbar-filter-input"/>
 							</label>
 							<label class="toolbar-filter-item">
-								<span class="toolbar-filter-label">注册证号</span>
-								<input type="text" name="registerNo" class="form-control input-sm toolbar-filter-input"/>
-							</label>
-							<label class="toolbar-filter-item">
 								<span class="toolbar-filter-label">状态</span>
 								<select name="auditStatusFilter" id="auditStatusFilter" class="form-control input-sm toolbar-filter-select">
 									<option value="">全部</option>
@@ -438,7 +460,7 @@
 								</select>
 							</label>
 							<a class="btn btn-primary btn-sm" onclick="searchAudit()"><i class="fa fa-search"></i>&nbsp;搜索</a>
-							<a class="btn btn-info single disabled" onclick="auditCertificate()" shiro:hasPermission="certificate:product:audit">
+							<a class="btn btn-info single disabled btn-product-audit" onclick="auditCertificate()" shiro:hasPermission="certificate:product:audit">
 								<i class="fa fa-check"></i> 审核
 							</a>
 						</div>
@@ -458,6 +480,8 @@
 
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
+	<script th:src="@{/js/common/scmCosDownload.js}"></script>
+	<script th:src="@{/js/certificate/certCosPreview.js}"></script>
 	<script th:inline="javascript">
 		var prefix = ctx + "certificate/product";
 		var supplierPrefix = ctx + "supplier/supplier";
@@ -500,14 +524,6 @@
 				return $.common.formatDate(value, 'yyyy-MM-dd');
 			}
 			return value;
-		}
-
-		function formatCertDetailImageIcon(row) {
-			var file = row && row.certificateFile ? String(row.certificateFile).trim() : '';
-			var hasFile = file !== '';
-			var color = hasFile ? '#3c8dbc' : '#bbb';
-			var title = hasFile ? '已上传图片' : '暂无图片';
-			return '<i class="fa fa-image" style="font-size:16px;color:' + color + ';" title="' + title + '"></i>';
 		}
 
 		function calculateCertDetailTableHeight() {
@@ -572,15 +588,7 @@
 						return formatCertDate(value);
 					}
 				},
-				{
-					field: 'certificateFile',
-					title: '图片',
-					align: 'center',
-					width: 56,
-					formatter: function(value, row) {
-						return formatCertDetailImageIcon(row);
-					}
-				},
+				getCertSnapPreviewColumn(),
 				{
 					field: 'createBy',
 					title: '上传人',
@@ -680,6 +688,15 @@
 			bindAuditMainHorizontalScroll();
 		}
 
+		function viewProductDetail(certificateId) {
+			if (certificateId == null || certificateId === '') {
+				$.modal.alertWarning('无法查看：缺少证件ID');
+				return;
+			}
+			$.modal.openTab('查看产品信息', prefix + '/detail/' + certificateId);
+		}
+		window.viewProductDetail = viewProductDetail;
+
 		function calculateLeftSupplierTableHeight() {
 			var $leftPanel = $('.audit-left-panel');
 			if ($leftPanel.length === 0) {
@@ -719,6 +736,7 @@
 				height: calculateAuditTableHeight(),
 				mobileResponsive: false,
 				fixedColumns: false,
+				escape: false,
 				onLoadSuccess: function() {
 					setTimeout(function() {
 						adjustAuditTableHeight();
@@ -746,17 +764,22 @@
 						loadCertDetailRows(row.certificateId);
 					}
 				},
+				onDblClickCell: function(field, value, row) {
+					if (field === 'materialName' && row && row.certificateId) {
+						viewProductDetail(row.certificateId);
+					}
+				},
 				columns: [{
 					checkbox: true
 				},
 				{
 					field: 'auditStatus',
-					title: '审核',
+					title: '状态',
 					align: 'center',
 					width: 80,
 					formatter: function(value, row, index) {
 						if (row.auditStatus == '1') {
-							return '<span class="label label-success">是</span>';
+							return '<span class="label label-success">已审核</span>';
 						} else if (row.auditStatus == '2') {
 							return '<span class="label label-danger">否</span>';
 						}
@@ -782,11 +805,25 @@
 					title: '产品名称',
 					align: 'left',
 					width: 160,
+					cellStyle: function() {
+						return { css: { cursor: 'pointer' } };
+					},
 					formatter: function(value, row, index) {
 						if (!value) {
 							return '-';
 						}
-						return $.table.tooltip(value, 12);
+						var text = value.length > 12 ? value.substring(0, 12) + '...' : value;
+						var title = (value || '').replace(/"/g, '&quot;');
+						return '<span class="cert-product-name-dblview" style="color:#337ab7;" title="' + title + '（双击查看）">' + text + '</span>';
+					},
+					events: {
+						'dblclick .cert-product-name-dblview': function(e, value, row) {
+							e.preventDefault();
+							e.stopPropagation();
+							if (row && row.certificateId) {
+								viewProductDetail(row.certificateId);
+							}
+						}
 					}
 				},
 				{
@@ -814,6 +851,31 @@
 					align: 'left',
 					width: 100,
 					formatter: function(value) { return value || '-'; }
+				},
+				{
+					field: 'unit',
+					title: '单位',
+					align: 'center',
+					width: 70,
+					formatter: function(value) {
+						return value || '-';
+					}
+				},
+				{
+					field: 'bidPrice',
+					title: '单价',
+					align: 'right',
+					width: 90,
+					formatter: function(value) {
+						if (value === null || value === undefined || value === '') {
+							return '-';
+						}
+						var num = parseFloat(value);
+						if (isNaN(num)) {
+							return value;
+						}
+						return num.toFixed(2);
+					}
 				},
 				{
 					field: 'manufacturerName',
@@ -865,7 +927,7 @@
 				},
 				{
 					field: 'certStatus',
-					title: '状态',
+					title: '效期状态',
 					align: 'center',
 					width: 80,
 					formatter: function(value, row) {
@@ -1060,6 +1122,10 @@
 			$('#' + auditTableId).bootstrapTable('refresh');
 		}
 
+		function isProductAudited(row) {
+			return row && row.auditStatus == '1';
+		}
+
 		function auditCertificate() {
 			var $table = $('#' + auditTableId);
 			if ($table.length === 0) {
@@ -1096,6 +1162,10 @@
 			var row = selections[0];
 			if (!row.certificateId) {
 				$.modal.alertError("无法获取证件ID");
+				return;
+			}
+			if (isProductAudited(row)) {
+				$.modal.msgWarning('该产品已审核，不能重复审核');
 				return;
 			}
 			showAuditDialog(row.certificateId, row);
@@ -1181,9 +1251,13 @@
 					}
 				}
 			}
-			var $auditBtn = $('#toolbar .single');
+			var $auditBtn = $('#toolbar .btn-product-audit');
 			if (selections && selections.length === 1) {
-				$auditBtn.removeClass('disabled').prop('disabled', false);
+				if (isProductAudited(selections[0])) {
+					$auditBtn.addClass('disabled').prop('disabled', true);
+				} else {
+					$auditBtn.removeClass('disabled').prop('disabled', false);
+				}
 			} else {
 				$auditBtn.addClass('disabled').prop('disabled', true);
 			}
