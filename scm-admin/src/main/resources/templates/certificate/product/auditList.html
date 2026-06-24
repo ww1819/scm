@@ -3,7 +3,6 @@
 <head>
 	<th:block th:include="include :: header('产品证件审核')" />
 	<th:block th:include="include :: layout-latest-css" />
-	<th:block th:include="include :: bootstrap-table-fixed-columns-css" />
 	<style>
 		#bootstrap-table-supplier td,
 		#bootstrap-table-supplier th {
@@ -55,12 +54,16 @@
 			width: 100%;
 		}
 
+		.audit-page-wrap > .audit-page-row {
+			margin-top: var(--audit-page-gap);
+		}
+
 		.audit-split-area {
 			flex: 1;
 			display: flex;
 			min-height: 0;
 			overflow: hidden;
-			margin-top: var(--audit-page-gap);
+			margin-top: 0;
 			padding: 0 0 var(--audit-page-gap);
 			width: 100%;
 			box-sizing: border-box;
@@ -144,6 +147,73 @@
 			flex-shrink: 0;
 			padding: 0 var(--audit-inner-padding) 5px;
 			margin-bottom: 0;
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.audit-right-area #toolbar .toolbar-filter-item {
+			display: inline-flex;
+			align-items: center;
+			margin: 0;
+			font-weight: normal;
+		}
+
+		.audit-right-area #toolbar .toolbar-filter-label {
+			margin-right: 6px;
+			white-space: nowrap;
+			font-size: 13px;
+		}
+
+		.audit-right-area #toolbar .toolbar-filter-input {
+			width: 140px;
+			height: 30px;
+		}
+
+		.audit-right-area #toolbar .toolbar-filter-select {
+			width: 120px;
+			height: 30px;
+			padding: 5px 10px;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table {
+			flex: 1 1 57%;
+			min-height: 160px;
+			padding-bottom: 4px;
+		}
+
+		.audit-right-area .audit-cert-detail-wrap {
+			flex: 1 1 43%;
+			min-height: 170px;
+			margin: 0;
+			padding: 0 var(--audit-inner-padding) 0;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+			box-sizing: border-box;
+		}
+
+		.audit-right-area .audit-cert-detail-wrap > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
+		}
+
+		.audit-right-area .audit-cert-detail-wrap .bootstrap-table {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+		}
+
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-container {
+			flex: 1 1 auto;
+			min-height: 0;
+			overflow: hidden !important;
+		}
+
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-body {
+			overflow-x: auto !important;
+			overflow-y: auto !important;
 		}
 
 		.audit-right-area .audit-table-wrap {
@@ -207,7 +277,7 @@
 			align-items: center;
 			justify-content: space-between;
 			gap: 8px;
-			padding: 4px 172px 4px 10px;
+			padding: 4px 10px;
 			border-top: 1px solid #eee;
 			background: #fff;
 			z-index: 3;
@@ -233,6 +303,17 @@
 			text-overflow: ellipsis;
 		}
 
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination .page-list select {
+			display: none !important;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination .page-list::after {
+			content: '10';
+			display: inline-block;
+			min-width: 18px;
+			text-align: center;
+		}
+
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-body .fixed-table-border {
 			display: none !important;
 			height: 0 !important;
@@ -246,18 +327,6 @@
 			overflow: hidden;
 		}
 
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right {
-			z-index: 5;
-			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
-		}
-
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-header {
-			position: relative !important;
-			top: auto !important;
-			z-index: 6;
-			background: #fff;
-		}
-
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th .th-inner,
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th .sortable {
 			text-align: center !important;
@@ -267,76 +336,6 @@
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th,
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body tbody td {
 			box-sizing: border-box;
-		}
-
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="auditOperate"],
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="auditOperate"] {
-			padding: 0 !important;
-			border-left: 0 !important;
-			border-right: 0 !important;
-			font-size: 0;
-			line-height: 0;
-			color: transparent;
-			overflow: hidden;
-		}
-
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="auditOperate"] > *,
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="auditOperate"] > * {
-			display: none;
-		}
-
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-header th,
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-body td {
-			background-color: #fff;
-			vertical-align: middle;
-			white-space: nowrap;
-		}
-
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-header th[data-field="auditOperate"] {
-			background-color: #f5f5f5;
-			min-width: 160px;
-			width: 160px;
-			text-align: center;
-			font-size: 14px;
-			line-height: normal;
-			color: #333;
-		}
-
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-header th[data-field="auditOperate"] .th-inner {
-			text-align: center;
-			justify-content: center;
-		}
-
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-body td[data-field="auditOperate"] {
-			min-width: 160px;
-			width: 160px;
-			padding: 6px 8px;
-			text-align: center;
-			font-size: 12px;
-			line-height: 1.42857143;
-			color: inherit;
-		}
-
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-body td[data-field="auditOperate"] .btn {
-			display: inline-block !important;
-		}
-
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-body td[data-field="auditOperate"] > * {
-			display: inline-block !important;
-		}
-
-		.audit-right-area .audit-table-wrap.audit-list-table.table-striped .fixed-columns-right .fixed-table-body tbody tr:nth-of-type(odd) td {
-			background-color: #f9f9f9;
-		}
-
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-body {
-			overflow-x: hidden !important;
-			overflow-y: hidden !important;
-		}
-
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header table,
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body > table {
-			table-layout: fixed;
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-body tbody td {
@@ -363,17 +362,12 @@
 			vertical-align: middle;
 		}
 
-		.audit-page-wrap > .audit-search-area.search-collapse {
-			padding-top: 10px !important;
-			padding-bottom: 10px !important;
-		}
-
-		.container-div .audit-search-area .select-list ul {
-			margin-bottom: 0;
-		}
-
-		.container-div .audit-search-area .select-list li {
-			margin: 4px 15px 4px 0;
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-header {
+			position: relative !important;
+			top: auto !important;
+			z-index: 2;
+			background: #fff;
+			overflow: hidden;
 		}
 
 		#bootstrap-table-supplier {
@@ -403,36 +397,6 @@
 </head>
 <body class="gray-bg">
 	<div class="container-div audit-page-wrap">
-		<div class="search-collapse audit-search-area">
-			<form id="product-certificate-form">
-				<div class="select-list">
-					<ul>
-						<li>
-							供应商名称：<input type="text" name="supplierName"/>
-						</li>
-						<li>
-							产品名称：<input type="text" name="materialName"/>
-						</li>
-						<li>
-							注册证号：<input type="text" name="registerNo"/>
-						</li>
-						<li>
-							状态：
-							<select name="auditStatusFilter" id="auditStatusFilter" style="width: 120px; display: inline-block; height: 30px; padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px;">
-								<option value="">全部</option>
-								<option value="1">已审核</option>
-								<option value="0">待审核</option>
-							</select>
-						</li>
-						<li>
-							<a class="btn btn-primary btn-rounded btn-sm" onclick="searchAudit()"><i class="fa fa-search"></i>&nbsp;搜索</a>
-							<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
-						</li>
-					</ul>
-				</div>
-			</form>
-		</div>
-
 		<div class="row audit-page-row">
 			<div class="audit-split-area">
 				<div class="audit-left-panel">
@@ -451,14 +415,41 @@
 				</div>
 
 				<div class="audit-right-area">
-					<div class="btn-group-sm" id="toolbar" role="group">
-						<button type="button" class="btn btn-info single disabled" onclick="auditCertificate()" shiro:hasPermission="certificate:product:audit">
-							<i class="fa fa-check"></i> 审核
-						</button>
-					</div>
+					<form id="product-certificate-form">
+						<div class="btn-group-sm" id="toolbar" role="group">
+							<label class="toolbar-filter-item">
+								<span class="toolbar-filter-label">供应商名称</span>
+								<input type="text" name="supplierName" class="form-control input-sm toolbar-filter-input"/>
+							</label>
+							<label class="toolbar-filter-item">
+								<span class="toolbar-filter-label">产品名称</span>
+								<input type="text" name="materialName" class="form-control input-sm toolbar-filter-input"/>
+							</label>
+							<label class="toolbar-filter-item">
+								<span class="toolbar-filter-label">注册证号</span>
+								<input type="text" name="registerNo" class="form-control input-sm toolbar-filter-input"/>
+							</label>
+							<label class="toolbar-filter-item">
+								<span class="toolbar-filter-label">状态</span>
+								<select name="auditStatusFilter" id="auditStatusFilter" class="form-control input-sm toolbar-filter-select">
+									<option value="">全部</option>
+									<option value="1">已审核</option>
+									<option value="0">待审核</option>
+								</select>
+							</label>
+							<a class="btn btn-primary btn-sm" onclick="searchAudit()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+							<a class="btn btn-info single disabled" onclick="auditCertificate()" shiro:hasPermission="certificate:product:audit">
+								<i class="fa fa-check"></i> 审核
+							</a>
+						</div>
+					</form>
 
 					<div class="select-table table-striped audit-table-wrap audit-list-table">
 						<table id="bootstrap-table"></table>
+					</div>
+
+					<div class="select-table table-striped audit-cert-detail-wrap">
+						<table id="bootstrap-table-cert-detail"></table>
 					</div>
 				</div>
 			</div>
@@ -467,7 +458,6 @@
 
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
-	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
 	<script th:inline="javascript">
 		var prefix = ctx + "certificate/product";
 		var supplierPrefix = ctx + "supplier/supplier";
@@ -475,29 +465,17 @@
 		var selectedSupplierId = null;
 		var allSuppliers = [];
 		var auditTableId = 'bootstrap-table';
-
-		var auditColWidths = {
-			auditStatus: 80,
-			serialNumber: 60,
-			materialName: 160,
-			supplierName: 150,
-			specification: 100,
-			model: 100,
-			manufacturerName: 140,
-			registerNo: 140,
-			registerIssueDate: 110,
-			expireDate: 110,
-			certStatus: 80,
-			createTime: 150,
-			auditOperate: 160
-		};
+		var certDetailTableId = 'bootstrap-table-cert-detail';
+		var selectedCertificateId = null;
 
 		$(function() {
 			initLeftSupplierTable();
+			initCertDetailTable();
 			queryProductCertificateAuditList();
 
 			$(window).resize(function() {
 				adjustAuditTableHeight();
+				adjustCertDetailTableHeight();
 				setTimeout(refreshAuditTableLayout, 100);
 				var $supplierTable = $('#bootstrap-table-supplier');
 				if ($supplierTable.length && $supplierTable.bootstrapTable('getOptions')) {
@@ -507,18 +485,156 @@
 
 			setTimeout(function() {
 				adjustAuditTableHeight();
+				adjustCertDetailTableHeight();
 			}, 300);
 		});
 
+		function formatCertDate(value) {
+			if (!value) {
+				return '-';
+			}
+			if (typeof value === 'string' && value.indexOf('-') > -1) {
+				return value.split(' ')[0];
+			}
+			if (value instanceof Date && typeof $.common !== 'undefined' && $.common.formatDate) {
+				return $.common.formatDate(value, 'yyyy-MM-dd');
+			}
+			return value;
+		}
+
+		function formatCertDetailImageIcon(row) {
+			var file = row && row.certificateFile ? String(row.certificateFile).trim() : '';
+			var hasFile = file !== '';
+			var color = hasFile ? '#3c8dbc' : '#bbb';
+			var title = hasFile ? '已上传图片' : '暂无图片';
+			return '<i class="fa fa-image" style="font-size:16px;color:' + color + ';" title="' + title + '"></i>';
+		}
+
+		function calculateCertDetailTableHeight() {
+			var $wrap = $('.audit-cert-detail-wrap');
+			if ($wrap.length === 0) {
+				return 180;
+			}
+			return Math.max($wrap.innerHeight() - 2, 120);
+		}
+
+		function adjustCertDetailTableHeight() {
+			var $table = $('#' + certDetailTableId);
+			if ($table.length === 0 || !$table.bootstrapTable('getOptions')) {
+				return;
+			}
+			$table.bootstrapTable('resetView', { height: calculateCertDetailTableHeight() });
+		}
+
+		function initCertDetailTable() {
+			$('#' + certDetailTableId).bootstrapTable({
+				locale: 'zh-CN',
+				striped: true,
+				cache: false,
+				pagination: false,
+				showRefresh: false,
+				showColumns: false,
+				showToggle: false,
+				search: false,
+				height: calculateCertDetailTableHeight(),
+				data: [],
+				columns: [{
+					field: 'serialNumber',
+					title: '序号',
+					align: 'center',
+					width: 60,
+					formatter: function(value, row, index) {
+						return index + 1;
+					}
+				},
+				{
+					field: 'licenseKindName',
+					title: '证件类型',
+					align: 'left',
+					formatter: function(value, row) {
+						return value || row.licenseKindCode || '-';
+					}
+				},
+				{
+					field: 'licenseNo',
+					title: '证件编码',
+					align: 'left',
+					formatter: function(value) {
+						return value || '-';
+					}
+				},
+				{
+					field: 'expireDate',
+					title: '证件有效期',
+					align: 'center',
+					width: 120,
+					formatter: function(value) {
+						return formatCertDate(value);
+					}
+				},
+				{
+					field: 'certificateFile',
+					title: '图片',
+					align: 'center',
+					width: 56,
+					formatter: function(value, row) {
+						return formatCertDetailImageIcon(row);
+					}
+				},
+				{
+					field: 'createBy',
+					title: '上传人',
+					align: 'center',
+					width: 100,
+					formatter: function(value) {
+						return value || '-';
+					}
+				},
+				{
+					field: 'createTime',
+					title: '上传日期',
+					align: 'center',
+					width: 120,
+					formatter: function(value) {
+						return formatCertDate(value);
+					}
+				}]
+			});
+		}
+
+		function loadCertDetailRows(certificateId) {
+			selectedCertificateId = certificateId || null;
+			var $detail = $('#' + certDetailTableId);
+			if (!$detail.bootstrapTable('getOptions')) {
+				return;
+			}
+			if (!certificateId) {
+				$detail.bootstrapTable('load', []);
+				return;
+			}
+			$.post(prefix + '/licenseSnap/mergedRows', { certificateId: certificateId }, function(res) {
+				if (res.code === 0) {
+					$detail.bootstrapTable('load', res.data || []);
+				} else {
+					$detail.bootstrapTable('load', []);
+					if (res.msg) {
+						$.modal.msgWarning(res.msg);
+					}
+				}
+				setTimeout(adjustCertDetailTableHeight, 0);
+			});
+		}
+
 		function calculateAuditTableHeight() {
-			var $wrap = $('.audit-right-area .audit-table-wrap');
+			var $wrap = $('.audit-right-area .audit-list-table');
 			if ($wrap.length === 0) {
 				return 400;
 			}
 			var wrapH = $wrap[0].clientHeight;
 			if (!wrapH) {
 				var outerToolbarH = $('#toolbar').outerHeight(true) || 40;
-				wrapH = $('.audit-right-area').height() - outerToolbarH - 10;
+				var detailH = $('.audit-cert-detail-wrap').outerHeight(true) || 200;
+				wrapH = $('.audit-right-area').height() - outerToolbarH - detailH - 10;
 			}
 			var $bt = $wrap.find('.bootstrap-table');
 			if ($bt.length === 0) {
@@ -538,141 +654,9 @@
 			refreshAuditTableLayout();
 		}
 
-		function calculateLeftSupplierTableHeight() {
-			var $leftPanel = $('.audit-left-panel');
-			if ($leftPanel.length === 0) {
-				return 400;
-			}
-			var panelHeaderHeight = $leftPanel.find('.audit-left-panel-heading').outerHeight(true) || 35;
-			var bodyPadding = 10;
-			var height = $leftPanel.height() - panelHeaderHeight - bodyPadding - 20;
-			return height > 100 ? height : 100;
-		}
-
-		function syncAuditOperateColumnContent() {
-			var $bt = $('#' + auditTableId).closest('.bootstrap-table');
-			var $rightWrap = $bt.find('.fixed-columns-right');
-			if ($rightWrap.length === 0) {
-				return;
-			}
-			var $container = $bt.find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $rightBody = $rightWrap.find('.fixed-table-body');
-			$mainBody.find('tbody tr').each(function(rowIdx) {
-				var html = $(this).find('td[data-field="auditOperate"]').html();
-				var $rightCell = $rightBody.find('tbody tr').eq(rowIdx).find('td[data-field="auditOperate"]');
-				if (html && $rightCell.length) {
-					$rightCell.html(html);
-				}
-			});
-		}
-
-		function syncAuditOperateColumnScroll() {
-			var $bt = $('#' + auditTableId).closest('.bootstrap-table');
-			var $rightBody = $bt.find('.fixed-columns-right .fixed-table-body');
-			if ($rightBody.length === 0) {
-				return;
-			}
-			var $mainBody = $bt.find('.fixed-table-container').children('.fixed-table-body');
-			$mainBody.off('scroll.auditOperateSync').on('scroll.auditOperateSync', function() {
-				$rightBody.scrollTop($mainBody.scrollTop());
-			});
-		}
-
-		function getAuditTableTotalWidth() {
-			var sum = 0;
-			var opt = $('#' + auditTableId).bootstrapTable('getOptions');
-			if (opt && opt.columns && opt.columns[0]) {
-				$.each(opt.columns[0], function(_, col) {
-					if (!col || col.visible === false) {
-						return;
-					}
-					if (col.checkbox) {
-						sum += 42;
-					} else if (col.field && auditColWidths[col.field] != null) {
-						sum += auditColWidths[col.field];
-					} else if (col.width) {
-						sum += parseInt(col.width, 10) || 0;
-					} else {
-						sum += 100;
-					}
-				});
-			}
-			return Math.max(sum, 1200);
-		}
-
-		function applyAuditFieldColumnWidth(field, widthPx) {
-			var w = widthPx + 'px';
-			var $container = $('#' + auditTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainHeader = $container.children('.fixed-table-header');
-			var $mainBody = $container.children('.fixed-table-body');
-			var $th = $mainHeader.find('th[data-field="' + field + '"]');
-			if ($th.length === 0) {
-				return;
-			}
-			var colIdx = $th[0].cellIndex;
-			var setW = function(el) {
-				el.style.setProperty('width', w, 'important');
-				el.style.setProperty('min-width', w, 'important');
-				el.style.setProperty('max-width', w, 'important');
-			};
-			$th.each(function() { setW(this); });
-			$mainBody.find('table tbody tr').each(function() {
-				var cell = this.cells[colIdx];
-				if (cell) {
-					setW(cell);
-				}
-			});
-			$mainHeader.find('table colgroup col').eq(colIdx).each(function() { setW(this); });
-			$mainBody.find('table colgroup col').eq(colIdx).each(function() { setW(this); });
-		}
-
-		function syncAuditHeaderBodyColumnWidths() {
-			var $container = $('#' + auditTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainHeader = $container.children('.fixed-table-header');
-			var $mainBody = $container.children('.fixed-table-body');
-			var $headerThs = $mainHeader.find('thead tr').first().children('th');
-			var $firstRow = $mainBody.find('tbody tr').first();
-			if ($firstRow.length === 0) {
-				return;
-			}
-			var setW = function(el, widthVal) {
-				el.style.setProperty('width', widthVal, 'important');
-				el.style.setProperty('min-width', widthVal, 'important');
-				el.style.setProperty('max-width', widthVal, 'important');
-			};
-			$headerThs.each(function(i) {
-				var bodyCell = $firstRow[0].cells[i];
-				if (!bodyCell) {
-					return;
-				}
-				var w = bodyCell.style.width;
-				if (!w) {
-					w = window.getComputedStyle(bodyCell).width;
-				}
-				if (w) {
-					setW(this, w);
-					$mainHeader.find('colgroup col').eq(i).each(function() { setW(this, w); });
-					$mainBody.find('colgroup col').eq(i).each(function() { setW(this, w); });
-				}
-			});
-		}
-
-		function scheduleAuditColumnWidths() {
-			$.each(auditColWidths, function(field, width) {
-				applyAuditFieldColumnWidth(field, width);
-			});
-			syncAuditHeaderBodyColumnWidths();
-			requestAnimationFrame(function() {
-				$.each(auditColWidths, function(field, width) {
-					applyAuditFieldColumnWidth(field, width);
-				});
-				syncAuditHeaderBodyColumnWidths();
-			});
-		}
-
 		function fixAuditTableHeaderAlign() {
-			var $container = $('#' + auditTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $bt = $('#' + auditTableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
 			var $mainBody = $container.children('.fixed-table-body');
 			var $mainHeader = $container.children('.fixed-table-header');
 			if (!$mainBody.length || !$mainHeader.length) {
@@ -680,15 +664,6 @@
 			}
 			var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
 			$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
-		}
-
-		function syncAuditHeaderBodyScrollLeft() {
-			var $container = $('#' + auditTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			if ($mainBody.length && $mainHeader.length) {
-				$mainHeader.scrollLeft($mainBody[0].scrollLeft);
-			}
 		}
 
 		function bindAuditMainHorizontalScroll() {
@@ -700,43 +675,20 @@
 			});
 		}
 
-		function applyAuditMainTableMinWidth() {
-			var sum = getAuditTableTotalWidth();
-			var w = sum + 'px';
-			var $container = $('#' + auditTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $headerTable = $container.children('.fixed-table-header').find('table');
-			var $bodyTable = $container.children('.fixed-table-body').children('table');
-			$headerTable.css({ width: w, minWidth: w, maxWidth: w });
-			$bodyTable.css({ width: w, minWidth: w, maxWidth: w });
-		}
-
 		function refreshAuditTableLayout() {
 			fixAuditTableHeaderAlign();
-			scheduleAuditColumnWidths();
-			applyAuditMainTableMinWidth();
-			syncAuditHeaderBodyScrollLeft();
 			bindAuditMainHorizontalScroll();
-			syncAuditOperateColumnScroll();
-			syncAuditOperateColumnContent();
 		}
 
-		function buildAuditOperateHtml(row) {
-			var actions = [];
-			if (row.auditStatus == '0' && auditFlag !== 'hidden') {
-				var cid = row.certificateId;
-				actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="showAuditDialog(' + cid + ', getRowByCertificateId(' + cid + '))" title="审核产品证件"><i class="fa fa-check"></i> 审核</a>');
+		function calculateLeftSupplierTableHeight() {
+			var $leftPanel = $('.audit-left-panel');
+			if ($leftPanel.length === 0) {
+				return 400;
 			}
-			return actions.join('');
-		}
-
-		function getRowByCertificateId(certificateId) {
-			var allData = $('#' + auditTableId).bootstrapTable('getData') || [];
-			for (var i = 0; i < allData.length; i++) {
-				if (allData[i].certificateId == certificateId) {
-					return allData[i];
-				}
-			}
-			return { certificateId: certificateId, materialName: '' };
+			var panelHeaderHeight = $leftPanel.find('.audit-left-panel-heading').outerHeight(true) || 35;
+			var bodyPadding = 10;
+			var height = $leftPanel.height() - panelHeaderHeight - bodyPadding - 20;
+			return height > 100 ? height : 100;
 		}
 
 		function queryProductCertificateAuditList() {
@@ -746,6 +698,8 @@
 				uniqueId: "certificateId",
 				rememberSelected: true,
 				maintainSelected: true,
+				pageSize: 10,
+				pageList: [10],
 				queryParams: function(params) {
 					var curParams = $.table.queryParams(params);
 					var auditStatusFilter = $('#auditStatusFilter').val();
@@ -764,22 +718,22 @@
 				modalName: "产品证件",
 				height: calculateAuditTableHeight(),
 				mobileResponsive: false,
-				fixedColumns: true,
-				fixedNumber: 0,
-				fixedRightNumber: 1,
+				fixedColumns: false,
 				onLoadSuccess: function() {
 					setTimeout(function() {
 						adjustAuditTableHeight();
+						adjustCertDetailTableHeight();
 						refreshAuditTableLayout();
+						updateToolbarState();
+						if (selectedCertificateId) {
+							loadCertDetailRows(selectedCertificateId);
+						}
 					}, 50);
-					setTimeout(function() {
-						adjustAuditTableHeight();
-						refreshAuditTableLayout();
-					}, 200);
-					setTimeout(refreshAuditTableLayout, 450);
+					setTimeout(refreshAuditTableLayout, 200);
 				},
 				onPostBody: function() {
 					refreshAuditTableLayout();
+					updateToolbarState();
 				},
 				onCheck: function() { updateToolbarState(); },
 				onUncheck: function() { updateToolbarState(); },
@@ -788,6 +742,9 @@
 				onClickRow: function(row, $element) {
 					$('#' + auditTableId + ' tbody tr').removeClass('selected');
 					$element.addClass('selected');
+					if (row && row.certificateId) {
+						loadCertDetailRows(row.certificateId);
+					}
 				},
 				columns: [{
 					checkbox: true
@@ -924,34 +881,19 @@
 					align: 'center',
 					width: 150,
 					sortable: true
-				},
-				{
-					field: 'auditOperate',
-					title: '操作',
-					align: 'center',
-					width: 160,
-					formatter: function(value, row) {
-						return buildAuditOperateHtml(row);
-					}
 				}]
 			};
 			$.table.init(options);
 			setTimeout(function() {
 				adjustAuditTableHeight();
+				adjustCertDetailTableHeight();
 				refreshAuditTableLayout();
 			}, 500);
 		}
 
-		function resetPre() {
-			$("#product-certificate-form")[0].reset();
-			$("#auditStatusFilter").val('');
-			selectedSupplierId = null;
-			applyLeftSupplierFilter();
-			$.table.search('product-certificate-form', auditTableId);
-		}
-
 		function searchAudit() {
 			syncLeftSupplierOnSearch();
+			loadCertDetailRows(null);
 			$.table.search('product-certificate-form', auditTableId);
 		}
 
@@ -1108,11 +1050,13 @@
 			if (!supplierId) {
 				selectedSupplierId = null;
 				applyLeftSupplierFilter();
+				loadCertDetailRows(null);
 				$('#' + auditTableId).bootstrapTable('refresh');
 				return;
 			}
 			selectedSupplierId = supplierId;
 			applyLeftSupplierFilter();
+			loadCertDetailRows(null);
 			$('#' + auditTableId).bootstrapTable('refresh');
 		}
 
@@ -1237,7 +1181,7 @@
 					}
 				}
 			}
-			var $auditBtn = $('.single');
+			var $auditBtn = $('#toolbar .single');
 			if (selections && selections.length === 1) {
 				$auditBtn.removeClass('disabled').prop('disabled', false);
 			} else {
