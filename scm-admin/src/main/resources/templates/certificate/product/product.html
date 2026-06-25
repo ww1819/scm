@@ -525,6 +525,7 @@
 		var productTableId = 'bootstrap-table';
 		var certDetailTableId = 'bootstrap-table-cert-detail';
 		var selectedCertificateId = null;
+		var selectedProductRow = null;
 
 		$(function() {
 			initLeftHospitalTable();
@@ -634,6 +635,22 @@
 					return previewCol;
 				})(),
 				{
+					field: 'snapUploadAction',
+					title: '上传',
+					align: 'center',
+					width: 72,
+					formatter: function() {
+						return '<a class="btn btn-success btn-xs cert-detail-upload-btn" href="javascript:void(0)" title="上传证照"><i class="fa fa-upload"></i></a>';
+					},
+					events: {
+						'click .cert-detail-upload-btn': function(e, value, row) {
+							e.preventDefault();
+							e.stopPropagation();
+							openCertDetailUploadTab(row);
+						}
+					}
+				},
+				{
 					field: 'createBy',
 					title: '上传人',
 					align: 'center',
@@ -653,6 +670,37 @@
 				}]
 			});
 		}
+
+		function findProductRowByCertificateId(certificateId) {
+			if (!certificateId) {
+				return null;
+			}
+			var data = $('#' + productTableId).bootstrapTable('getData') || [];
+			for (var i = 0; i < data.length; i++) {
+				if (data[i] && data[i].certificateId == certificateId) {
+					return data[i];
+				}
+			}
+			return selectedProductRow;
+		}
+
+		function openCertDetailUploadTab(row) {
+			if (!selectedCertificateId) {
+				$.modal.alertWarning('请先选择一条产品记录');
+				return;
+			}
+			if (!row || !row.licenseId) {
+				$.modal.alertWarning('证照记录无效');
+				return;
+			}
+			var productRow = findProductRowByCertificateId(selectedCertificateId);
+			if (productRow && isProductAudited(productRow)) {
+				$.modal.msgWarning('已审核的产品不能修改');
+				return;
+			}
+			$.modal.openTab('修改产品信息', prefix + '/edit/' + selectedCertificateId);
+		}
+		window.openCertDetailUploadTab = openCertDetailUploadTab;
 
 		function loadCertDetailRows(certificateId) {
 			selectedCertificateId = certificateId || null;
@@ -1032,6 +1080,7 @@
 				},
 				onClickRow: function(row) {
 					if (row && row.certificateId) {
+						selectedProductRow = row;
 						loadCertDetailRows(row.certificateId);
 					}
 				},

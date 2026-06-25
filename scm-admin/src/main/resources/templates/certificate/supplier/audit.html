@@ -216,6 +216,7 @@
 			border-top: 1px solid #eee;
 			background: #fff;
 			z-index: 3;
+			overflow: visible;
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination::after {
@@ -232,10 +233,21 @@
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination > .pagination-detail {
-			flex: 1 1 auto;
+			flex: 0 0 auto;
 			min-width: 0;
-			overflow: hidden;
-			text-overflow: ellipsis;
+			overflow: visible;
+			white-space: nowrap;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination .page-list {
+			position: relative;
+			z-index: 12;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination .page-list select {
+			min-width: 62px;
+			cursor: pointer;
+			pointer-events: auto;
 		}
 
 		/* 右侧固定操作列（参考订单查询 / 医院关联审核） */
@@ -255,6 +267,8 @@
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right {
 			z-index: 5;
 			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
+			background-color: #fff !important;
+			overflow: hidden;
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-header {
@@ -321,6 +335,8 @@
 			font-size: 12px;
 			line-height: 1.42857143;
 			color: inherit;
+			overflow: hidden;
+			background-color: #fff !important;
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-body td[data-field="auditOperate"] .btn {
@@ -372,6 +388,16 @@
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="address"] {
 			overflow: hidden;
 			text-overflow: ellipsis;
+			max-width: 260px;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="address"] .tooltip-show {
+			display: inline-block;
+			max-width: 100%;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			vertical-align: middle;
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateType"] .tooltip-show,
@@ -530,7 +556,7 @@
 			expireDate: 110,
 			contactPerson: 120,
 			address: 260,
-			auditOperate: 150
+			auditOperate: 160
 		};
 
 		$(function() {
@@ -812,6 +838,8 @@
 		        },
 		        sortName: "createTime",
 		        sortOrder: "desc",
+		        pageSize: 10,
+		        pageList: [10, 25, 50, 100],
 		        modalName: "供应商证件",
 		        height: calculateTableHeight(),
 		        mobileResponsive: false,
@@ -968,6 +996,7 @@
 		            title: '公司联系人',
 		            align: 'left',
 		            width: 120,
+		            visible: false,
 		            formatter: function (value, row, index) {
 		                return value || '-';
 		            }
@@ -976,16 +1005,20 @@
 		            field: 'address',
 		            title: '公司地址',
 		            align: 'left',
-		            width: 300,
+		            width: 260,
+		            visible: false,
 		            formatter: function (value, row, index) {
-		                return value || '-';
+		                if (!value) {
+		                    return '-';
+		                }
+		                return $.table.tooltip(value, 12);
 		            }
 		        },
 		        {
 		            field: 'auditOperate',
 		            title: '操作',
 		            align: 'center',
-		            width: 150,
+		            width: 160,
 		            formatter: function (value, row, index) {
 		                return buildAuditOperateHtml(row);
 		            }
