@@ -586,6 +586,9 @@
 				showColumns: false,
 				showToggle: false,
 				search: false,
+				sortable: true,
+				sortName: 'licenseKindName',
+				sortOrder: 'asc',
 				height: calculateCertDetailTableHeight(),
 				data: [],
 				columns: [{
@@ -601,6 +604,7 @@
 					field: 'licenseKindName',
 					title: '证件类型',
 					align: 'left',
+					sortable: true,
 					formatter: function(value, row) {
 						return value || row.licenseKindCode || '-';
 					}
@@ -609,6 +613,7 @@
 					field: 'licenseNo',
 					title: '证件编码',
 					align: 'left',
+					sortable: true,
 					formatter: function(value) {
 						return value || '-';
 					}
@@ -618,11 +623,16 @@
 					title: '证件有效期',
 					align: 'center',
 					width: 120,
+					sortable: true,
 					formatter: function(value) {
 						return formatCertDate(value);
 					}
 				},
-				getCertSnapPreviewColumn(),
+				(function() {
+					var previewCol = getCertSnapPreviewColumn();
+					previewCol.sortable = true;
+					return previewCol;
+				})(),
 				{
 					field: 'createBy',
 					title: '上传人',
@@ -1047,6 +1057,7 @@
 					title: '状态',
 					align: 'center',
 					width: 80,
+					sortable: true,
 					formatter: function(value, row, index) {
 						if (row.auditStatus == '1') {
 							return '<span class="label label-success">已审核</span>';
@@ -1064,6 +1075,7 @@
 					title: '产品编码',
 					align: 'left',
 					width: 120,
+					sortable: true,
 					formatter: function(value, row, index) {
 						return value || '-';
 					}
@@ -1073,6 +1085,7 @@
 					title: '产品名称',
 					align: 'left',
 					width: 160,
+					sortable: true,
 					cellStyle: function() {
 						return { css: { cursor: 'pointer' } };
 					},
@@ -1099,6 +1112,7 @@
 					title: '规格',
 					align: 'left',
 					width: 100,
+					sortable: true,
 					formatter: function(value, row, index) {
 						return value || '-';
 					}
@@ -1108,6 +1122,7 @@
 					title: '型号',
 					align: 'left',
 					width: 100,
+					sortable: true,
 					formatter: function(value, row, index) {
 						return value || '-';
 					}
@@ -1117,6 +1132,7 @@
 					title: '单位',
 					align: 'center',
 					width: 70,
+					sortable: true,
 					formatter: function(value, row, index) {
 						return value || '-';
 					}
@@ -1126,6 +1142,7 @@
 					title: '单价',
 					align: 'right',
 					width: 90,
+					sortable: true,
 					formatter: function(value, row, index) {
 						if (value === null || value === undefined || value === '') {
 							return '-';
@@ -1142,6 +1159,7 @@
 					title: '生产厂家',
 					align: 'left',
 					width: 140,
+					sortable: true,
 					formatter: function(value, row, index) {
 						if (!value) {
 							return '-';
@@ -1154,6 +1172,7 @@
 					title: '供应商',
 					align: 'left',
 					width: 150,
+					sortable: true,
 					formatter: function(value, row, index) {
 						if (!value) {
 							return '-';
@@ -1166,6 +1185,7 @@
 					title: '注册证号',
 					align: 'left',
 					width: 140,
+					sortable: true,
 					formatter: function(value, row, index) {
 						return value || '-';
 					}

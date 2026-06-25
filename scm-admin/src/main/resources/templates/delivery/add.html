@@ -578,6 +578,19 @@
 			padding-left: 4px !important;
 			padding-right: 4px !important;
 		}
+		#detail-table thead th[data-field="index"],
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="index"] {
+			min-width: 64px !important;
+			overflow: visible !important;
+			text-overflow: clip !important;
+		}
+		#detail-table thead th[data-field="index"] .th-inner,
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="index"] .th-inner {
+			overflow: visible !important;
+			text-overflow: clip !important;
+			padding-left: 6px !important;
+			padding-right: 6px !important;
+		}
 		#detail-table tbody td[data-field="unit"] .detail-cell-text,
 		#detail-table tbody td[data-field="packCoefficient"] .detail-cell-text,
 		#detail-table tbody td[data-field="remainingQuantity"] .detail-cell-text {
@@ -1032,7 +1045,7 @@
 	    /** 默认列宽（保证表头完整显示；含排序图标预留） */
 	    var DETAIL_DEFAULT_COL_WIDTHS = {
 	        btSelectItem: 42,
-	        index: 56,
+	        index: 64,
 	        materialCode: 120,
 	        materialName: 156,
 	        specification: 120,
@@ -2109,7 +2122,7 @@
 	                field: 'index',
 	                title: '序号',
 	                align: 'center',
-	                width: 56,
+	                width: 64,
 	                formatter: function(value, row, index) {
 	                    return index + 1;
 	                }

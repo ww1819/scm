@@ -455,6 +455,17 @@
 			padding-left: 4px !important;
 			padding-right: 4px !important;
 		}
+		#delivery-detail-list-section .fixed-table-header th[data-field="index"] {
+			min-width: 64px !important;
+			overflow: visible !important;
+			text-overflow: clip !important;
+		}
+		#delivery-detail-list-section .fixed-table-header th[data-field="index"] .th-inner {
+			overflow: visible !important;
+			text-overflow: clip !important;
+			padding-left: 6px !important;
+			padding-right: 6px !important;
+		}
 		#delivery-detail-list-section .fixed-table-header th[data-field="materialName"],
 		#delivery-detail-list-section .fixed-table-body td[data-field="materialName"] {
 			width: 140px !important;
@@ -1908,7 +1919,7 @@
 	                field: 'index',
 	                title: '序号',
 	                align: 'center',
-	                width: 48,
+	                width: 64,
 	                formatter: function(value, row, index) {
 	                    return index + 1;
 	                }
