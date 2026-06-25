@@ -71,6 +71,9 @@
 			color: #666;
 			white-space: nowrap;
 		}
+		.cert-readonly-form .cert-inline-field.cert-term-field > label {
+			width: 108px;
+		}
 		.cert-readonly-form .cert-inline-field > .form-control {
 			flex: 0 0 auto;
 			width: 118px;
@@ -229,16 +232,18 @@
                     </div>
                     <div class="col-sm-3">
                         <div class="cert-inline-field">
-                            <label>发证日期</label>
+                            <label>成立日期</label>
                             <input type="text" class="form-control" readonly
                                    th:value="${supplierCertificate.issueDate != null ? #dates.format(supplierCertificate.issueDate, 'yyyy-MM-dd') : ''}">
                         </div>
                     </div>
-                    <div class="col-sm-3">
-                        <div class="cert-inline-field">
-                            <label>有效期至</label>
-                            <input type="text" class="form-control" readonly
-                                   th:value="${supplierCertificate.expireDate != null ? #dates.format(supplierCertificate.expireDate, 'yyyy-MM-dd') : ''}">
+                    <div class="col-sm-6">
+                        <div class="cert-inline-field cert-term-field">
+                            <label>营业期限起止日期</label>
+                            <input type="text" class="form-control input-wide" readonly
+                                   th:value="${supplierCertificate.registerDate != null && supplierCertificate.expireDate != null
+                                       ? (#dates.format(supplierCertificate.registerDate, 'yyyy-MM-dd') + ' 至 ' + #dates.format(supplierCertificate.expireDate, 'yyyy-MM-dd'))
+                                       : (supplierCertificate.expireDate != null ? #dates.format(supplierCertificate.expireDate, 'yyyy-MM-dd') : '')}">
                         </div>
                     </div>
                     <div class="col-sm-3">

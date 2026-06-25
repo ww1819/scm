@@ -399,6 +399,8 @@ CALL add_table_column('scm_supplier_certificate', 'tenant_id', 'varchar(64)', '�
 /
 CALL add_table_column('scm_supplier_certificate', 'hospital_id', 'bigint(20)', '医院ID（按医院维护资质）', NULL);
 /
+CALL add_table_column('scm_supplier_certificate', 'register_date', 'date', '营业期限起', NULL);
+/
 -- scm_supplier_code_mapping
 CALL add_table_column('scm_supplier_code_mapping', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
 /

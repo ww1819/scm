@@ -206,6 +206,7 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
             supplierCertificate.setStatus("0"); // 默认正常
         }
         supplierCertificate.setCreateTime(DateUtils.getNowDate());
+        normalizeBusinessTermDates(supplierCertificate);
         // 检查过期状态
         checkExpiredStatus(supplierCertificate);
         int rows = supplierCertificateMapper.insertSupplierCertificate(supplierCertificate);
@@ -299,24 +300,19 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         }
         row.setCertificateName(longTerm);
         row.setIssueDate(supplierCertificate.getIssueDate());
+        normalizeBusinessTermDates(supplierCertificate);
         if ("是".equals(longTerm) || "1".equals(longTerm))
         {
+            row.setRegisterDate(null);
             row.setExpireDate(null);
             row.setIsExpired("0");
             row.setIsWarning("0");
         }
         else
         {
+            row.setRegisterDate(supplierCertificate.getRegisterDate());
             row.setExpireDate(supplierCertificate.getExpireDate());
-            if (row.getExpireDate() != null)
-            {
-                checkExpiredStatus(row);
-            }
-            else
-            {
-                row.setIsExpired("0");
-                row.setIsWarning("0");
-            }
+            checkExpiredStatus(row);
         }
         row.setCertificateFile(supplierCertificate.getCertificateFile() != null ? supplierCertificate.getCertificateFile() : "");
         row.setRemark(supplierCertificate.getRemark() != null ? supplierCertificate.getRemark() : "");
@@ -484,6 +480,29 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
             {
                 supplierCertificateMapper.updateSupplierCertificate(certificate);
             }
+        }
+    }
+
+    /**
+     * 营业期限：长期清空起止日期；非长期必须填写起止日期。
+     */
+    private void normalizeBusinessTermDates(SupplierCertificate certificate)
+    {
+        String longTerm = certificate.getCertificateName();
+        if (StringUtils.isEmpty(longTerm))
+        {
+            longTerm = "否";
+            certificate.setCertificateName(longTerm);
+        }
+        if ("是".equals(longTerm) || "1".equals(longTerm))
+        {
+            certificate.setRegisterDate(null);
+            certificate.setExpireDate(null);
+            return;
+        }
+        if (certificate.getRegisterDate() == null || certificate.getExpireDate() == null)
+        {
+            throw new ServiceException("选择「否」时，必须填写营业期限起止日期");
         }
     }
 

@@ -18,6 +18,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="certificateName"   column="certificate_name"    />
         <result property="certificateNo"     column="certificate_no"      />
         <result property="issueDate"         column="issue_date"          />
+        <result property="registerDate"      column="register_date"       />
         <result property="expireDate"        column="expire_date"         />
         <result property="certificateFile"   column="certificate_file"    />
         <result property="auditStatus"      column="audit_status"        />
@@ -36,7 +37,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     
     <sql id="selectSupplierCertificateVo">
         select c.certificate_id, c.supplier_id, c.hospital_id, c.certificate_type, c.certificate_name, c.certificate_no,
-               c.issue_date, c.expire_date, c.certificate_file, c.audit_status, c.audit_by, c.audit_time,
+               c.issue_date, c.register_date, c.expire_date, c.certificate_file, c.audit_status, c.audit_by, c.audit_time,
                c.audit_remark, c.is_expired, c.is_warning, c.status, c.create_by, c.create_time,
                c.update_by, c.update_time, c.remark,
                s.company_name as supplier_name,
@@ -120,7 +121,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     
     <select id="selectSupplierCertificateListBySupplierIds" resultMap="SupplierCertificateResult">
         select c.certificate_id, c.supplier_id, c.hospital_id, c.certificate_type, c.certificate_name, c.certificate_no,
-               c.issue_date, c.expire_date, c.certificate_file, c.audit_status, c.audit_by, c.audit_time,
+               c.issue_date, c.register_date, c.expire_date, c.certificate_file, c.audit_status, c.audit_by, c.audit_time,
                c.audit_remark, c.is_expired, c.is_warning, c.status, c.create_by, c.create_time,
                c.update_by, c.update_time, c.remark,
                s.company_name as supplier_name,
@@ -228,6 +229,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="certificateName != null and certificateName != ''">certificate_name,</if>
             <if test="certificateNo != null and certificateNo != ''">certificate_no,</if>
             <if test="issueDate != null">issue_date,</if>
+            <if test="registerDate != null">register_date,</if>
             <if test="expireDate != null">expire_date,</if>
             <if test="certificateFile != null and certificateFile != ''">certificate_file,</if>
             <if test="auditStatus != null and auditStatus != ''">audit_status,</if>
@@ -247,6 +249,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="certificateName != null and certificateName != ''">#{certificateName},</if>
             <if test="certificateNo != null and certificateNo != ''">#{certificateNo},</if>
             <if test="issueDate != null">#{issueDate},</if>
+            <if test="registerDate != null">#{registerDate},</if>
             <if test="expireDate != null">#{expireDate},</if>
             <if test="certificateFile != null and certificateFile != ''">#{certificateFile},</if>
             <if test="auditStatus != null and auditStatus != ''">#{auditStatus},</if>
@@ -271,6 +274,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="certificateName != null and certificateName != ''">certificate_name = #{certificateName},</if>
             <if test="certificateNo != null and certificateNo != ''">certificate_no = #{certificateNo},</if>
             <if test="issueDate != null">issue_date = #{issueDate},</if>
+            <if test="registerDate != null">register_date = #{registerDate},</if>
             <if test="expireDate != null">expire_date = #{expireDate},</if>
             <if test="certificateFile != null and certificateFile != ''">certificate_file = #{certificateFile},</if>
             <if test="auditStatus != null">audit_status = #{auditStatus},</if>
@@ -300,6 +304,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         set certificate_no = #{certificateNo, jdbcType=VARCHAR},
             certificate_name = #{certificateName, jdbcType=VARCHAR},
             issue_date = #{issueDate, jdbcType=DATE},
+            register_date = #{registerDate, jdbcType=DATE},
             expire_date = #{expireDate, jdbcType=DATE},
             certificate_file = #{certificateFile, jdbcType=VARCHAR},
             remark = #{remark, jdbcType=VARCHAR},

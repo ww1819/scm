@@ -94,6 +94,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<if test="status != null and status != ''">
 			AND u.status = #{status}
 		</if>
+		<if test="roleId != null and roleId != 0">
+			AND EXISTS (
+				SELECT 1 FROM sys_user_role ur
+				WHERE ur.user_id = u.user_id AND ur.role_id = #{roleId}
+			)
+		</if>
 		<if test="phonenumber != null and phonenumber != ''">
 			AND u.phonenumber like concat('%', #{phonenumber}, '%')
 		</if>

@@ -71,6 +71,26 @@
 			color: #666;
 			white-space: nowrap;
 		}
+		.cert-readonly-form .cert-inline-field.cert-term-field > label {
+			width: 108px;
+		}
+		.cert-term-range {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			flex-wrap: nowrap;
+		}
+		.cert-term-range .form-control {
+			width: 108px;
+			height: 28px;
+			padding: 2px 6px;
+			font-size: 12px;
+		}
+		.cert-term-range .cert-term-sep {
+			flex-shrink: 0;
+			font-size: 12px;
+			color: #666;
+		}
 		.cert-readonly-form .cert-inline-field > .form-control {
 			flex: 0 0 auto;
 			width: 118px;
@@ -231,24 +251,28 @@
                     </div>
                     <div class="col-sm-3">
                         <div class="cert-inline-field">
-                            <label>发证日期</label>
+                            <label>成立日期</label>
                             <input name="issueDate" type="date" class="form-control">
                         </div>
                     </div>
-                    <div class="col-sm-3">
-                        <div class="cert-inline-field">
-                            <label>有效期至</label>
-                            <input name="expireDate" id="expireDate" type="date" class="form-control">
+                    <div class="col-sm-6">
+                        <div class="cert-inline-field cert-term-field">
+                            <label>营业期限起止日期</label>
+                            <div class="cert-term-range">
+                                <input name="registerDate" id="registerDate" type="date" class="form-control">
+                                <span class="cert-term-sep">至</span>
+                                <input name="expireDate" id="expireDate" type="date" class="form-control">
+                            </div>
                         </div>
                     </div>
+                </div>
+                <div class="row">
                     <div class="col-sm-3">
                         <div class="cert-inline-field">
                             <label>创建人</label>
                             <input type="text" class="form-control" readonly value="-">
                         </div>
                     </div>
-                </div>
-                <div class="row">
                     <div class="col-sm-3">
                         <div class="cert-inline-field">
                             <label>创建时间</label>
@@ -287,16 +311,20 @@
 	    var prefix = ctx + "certificate/supplier";
 	    var certFileHelper;
 
+	    function toggleBusinessTermInputs() {
+	        var isLongTerm = $("#certificateName").val();
+	        if (isLongTerm === '是') {
+	            $("#registerDate").val('').prop('readonly', true);
+	            $("#expireDate").val('').prop('readonly', true);
+	        } else {
+	            $("#registerDate").prop('readonly', false);
+	            $("#expireDate").prop('readonly', false);
+	        }
+	    }
+
 	    $(function() {
-	        $("#certificateName").on('change', function() {
-	            var isLongTerm = $(this).val();
-	            var $expireDateInput = $("#expireDate");
-	            if (isLongTerm === '是') {
-	                $expireDateInput.val('').prop('readonly', true);
-	            } else {
-	                $expireDateInput.prop('readonly', false);
-	            }
-	        });
+	        $("#certificateName").on('change', toggleBusinessTermInputs);
+	        toggleBusinessTermInputs();
 	        certFileHelper = initSupplierCertCosUpload({ certEditable: true });
 	    });
 
@@ -326,11 +354,13 @@
 	                return;
 	            }
 	            var isLongTerm = $("#certificateName").val();
+	            var registerDate = $("#registerDate").val();
 	            var expireDate = $("#expireDate").val();
 	            if (isLongTerm === '是') {
+	                $("#registerDate").val('');
 	                $("#expireDate").val('');
-	            } else if (isLongTerm === '否' && (!expireDate || expireDate.trim() === '')) {
-	                $.modal.alertWarning("选择「否」时，必须填写有效期至");
+	            } else if (isLongTerm === '否' && (!registerDate || !expireDate)) {
+	                $.modal.alertWarning("选择「否」时，必须填写营业期限起止日期");
 	                return;
 	            }
 	            certFileHelper.updateFileState();
