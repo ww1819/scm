@@ -133,6 +133,8 @@ INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, targ
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2601', '发票结算', '2600', '1', '/settlement/settlement', '', 'C', '0', '1', 'settlement:settlement:view', 'fa fa-file-text-o', 'admin', sysdate(), '', null, '发票结算菜单', '0');
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2602', '结算查询', '2600', '2', '/settlement/settlement/query', '', 'C', '0', '1', 'settlement:settlement:view', '', 'admin', sysdate(), '', null, '结算查询菜单', '0');
+
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2603', '对账表', '2600', '3', '/settlement/settlement/reconciliation', '', 'C', '0', '1', 'settlement:settlement:view', 'fa fa-table', 'admin', sysdate(), '', null, '供应商证件对账表（独立于资质审核）', '0');
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2700', '数据中心', '0', '12', '#', '', 'M', '0', '1', '', 'fa fa-bar-chart', 'admin', sysdate(), '', null, '数据中心目录', '0');
 /
@@ -686,6 +688,13 @@ SET url = '/settlement/settlement/query'
 WHERE del_flag = '0'
   AND menu_id = '2602'
   AND url <> '/settlement/settlement/query';
+/
+-- C) 对账表：独立路由，勿复用供应商资质审核页
+UPDATE sys_menu
+SET url = '/settlement/settlement/reconciliation', perms = 'settlement:settlement:view'
+WHERE del_flag = '0'
+  AND menu_name = '对账表'
+  AND (url LIKE '/certificate/supplier/audit%' OR url = '/certificate/supplier/audit' OR url <> '/settlement/settlement/reconciliation');
 /
 -- D) 2026-05-02 配送单据申请：页面级对院商可见；新增/修改/删除/审核按钮仅供应商
 UPDATE sys_menu SET auth_type = 'hospital_supplier', hospital_grant_supplier_flag = '1', default_open_scope = 'all_hospital',

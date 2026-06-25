@@ -216,22 +216,30 @@
 		var removeFlag = [[${@permission.hasPermi('certificate:type:remove')}]];
 		var prefix = ctx + "certificate/type";
 		var selectedCategory = null; // 当前选中的证件类型分类
+		var adjustingTableHeight = false;
 
 		$(function() {
 		    queryCertificateTypeList();
-		    $('#bootstrap-table').on('load-success.bs.table post-body.bs.table reset-view.bs.table', function() {
-		    	var $table = $('#bootstrap-table');
-		    	if ($table.length > 0 && $table.data('bootstrap.table')) {
-		    		$table.bootstrapTable('resetView', {height: calculateDetailTableHeight()});
-		    	}
-		    });
+		    setTimeout(applyDetailTableHeight, 300);
 		    $(window).on('resize', function() {
-		    	var $table = $('#bootstrap-table');
-		    	if ($table.length > 0 && $table.data('bootstrap.table')) {
-		    		$table.bootstrapTable('resetView', {height: calculateDetailTableHeight()});
-		    	}
+		    	applyDetailTableHeight();
 		    });
 		});
+
+		function applyDetailTableHeight() {
+			if (adjustingTableHeight) {
+				return;
+			}
+			var $table = $('#bootstrap-table');
+			if ($table.length === 0 || !$table.data('bootstrap.table')) {
+				return;
+			}
+			adjustingTableHeight = true;
+			$table.bootstrapTable('resetView', { height: calculateDetailTableHeight() });
+			setTimeout(function() {
+				adjustingTableHeight = false;
+			}, 100);
+		}
 
 		function calculateDetailTableHeight() {
 			var $detail = $('.detail-box-height');
@@ -257,9 +265,11 @@
 		        rememberSelected: true,
 		        maintainSelected: true,
 		        height: calculateDetailTableHeight(),
+		        onLoadSuccess: function() {
+		        	setTimeout(applyDetailTableHeight, 50);
+		        },
 		        columns: [{
-		            checkbox: true,
-		            field: 'state'
+		            checkbox: true
 		        },
 		        {
 		            field: 'typeId',

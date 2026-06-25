@@ -20,7 +20,10 @@ import com.scm.common.enums.BusinessType;
 import com.scm.common.utils.poi.ExcelUtil;
 import com.scm.system.domain.Settlement;
 import com.scm.system.domain.SettlementDetail;
+import com.scm.system.domain.SupplierCertificate;
 import com.scm.system.service.ISettlementService;
+import com.scm.system.service.IScmSupplierContextService;
+import com.scm.system.service.ISupplierCertificateService;
 
 /**
  * 结算单信息
@@ -35,6 +38,12 @@ public class SettlementController extends BaseController
 
     @Autowired
     private ISettlementService settlementService;
+
+    @Autowired
+    private ISupplierCertificateService supplierCertificateService;
+
+    @Autowired
+    private IScmSupplierContextService scmSupplierContextService;
 
     @RequiresPermissions("settlement:settlement:view")
     @GetMapping()
@@ -51,6 +60,33 @@ public class SettlementController extends BaseController
     public String query()
     {
         return prefix + "/query";
+    }
+
+    /**
+     * 对账表（供应商证件列表，独立于资质审核页）
+     */
+    @RequiresPermissions("settlement:settlement:view")
+    @GetMapping("/reconciliation")
+    public String reconciliation()
+    {
+        return prefix + "/reconciliation";
+    }
+
+    /**
+     * 对账表数据：按顶部筛选查询供应商证件，不依赖左侧供应商树
+     */
+    @RequiresPermissions("settlement:settlement:view")
+    @PostMapping("/reconciliation/list")
+    @ResponseBody
+    public TableDataInfo reconciliationList(SupplierCertificate supplierCertificate)
+    {
+        startPage();
+        Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
+        if (bindSid != null)
+        {
+            supplierCertificate.setSupplierId(bindSid);
+        }
+        return getDataTable(supplierCertificateService.selectSupplierCertificateList(supplierCertificate));
     }
 
     /**

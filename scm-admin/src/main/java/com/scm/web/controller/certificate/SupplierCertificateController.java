@@ -21,7 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.scm.common.annotation.Log;
 import com.scm.common.constant.ScmFileConstants;
 import com.scm.common.exception.ServiceException;
-import com.scm.common.utils.ServletUtils;
+import com.scm.common.utils.ShiroUtils;
 import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.page.TableDataInfo;
@@ -340,7 +340,8 @@ public class SupplierCertificateController extends BaseController
     /**
      * 列表页「上传证照」：仅维护证件图片（登记页 edit；审核页 audit 亦可上传）
      */
-    @RequiresPermissions(value = { "certificate:supplier:edit", "certificate:supplier:audit" }, logical = Logical.OR)
+    @RequiresPermissions(value = { "certificate:supplier:edit", "certificate:supplier:audit", "settlement:settlement:view" },
+        logical = Logical.OR)
     @GetMapping("/upload/{certificateId}")
     public String uploadImages(@PathVariable("certificateId") Long certificateId, ModelMap mmap)
     {
@@ -358,7 +359,13 @@ public class SupplierCertificateController extends BaseController
             mmap.put("uploadLoadError", "证件不存在。");
         }
         mmap.put("supplierCertificate", supplierCertificate);
-        mmap.put("certEditable", supplierCertificate != null && !"1".equals(supplierCertificate.getAuditStatus()));
+        boolean certEditable = supplierCertificate != null && !"1".equals(supplierCertificate.getAuditStatus());
+        if (!ShiroUtils.getSubject().isPermitted("certificate:supplier:edit")
+            && !ShiroUtils.getSubject().isPermitted("certificate:supplier:audit"))
+        {
+            certEditable = false;
+        }
+        mmap.put("certEditable", certEditable);
         return prefix + "/uploadImages";
     }
 
@@ -445,7 +452,7 @@ public class SupplierCertificateController extends BaseController
     /**
      * 下载证照关联文件（302 到 COS 预签名 URL）
      */
-    @RequiresPermissions(value = { "certificate:supplier:view", "certificate:supplier:list", "certificate:supplier:audit" },
+    @RequiresPermissions(value = { "certificate:supplier:view", "certificate:supplier:list", "certificate:supplier:audit", "settlement:settlement:view" },
         logical = Logical.OR)
     @GetMapping("/downloadFile/{fileId}")
     public void downloadFile(@PathVariable("fileId") String fileId, HttpServletResponse response)

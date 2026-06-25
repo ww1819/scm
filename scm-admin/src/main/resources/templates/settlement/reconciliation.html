@@ -1,0 +1,950 @@
+﻿<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('瀵硅处琛?)" />
+	<th:block th:include="include :: layout-latest-css" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-css" />
+	<style>
+		/* 宸︿晶渚涘簲鍟嗚〃鏍煎垪涓嶆崲琛岋紙鍙充晶涓昏〃鏍峰紡瑙?.audit-list-table锛?*/
+		#bootstrap-table-supplier td,
+		#bootstrap-table-supplier th {
+			white-space: nowrap !important;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		
+		/* 椤甸潰鏁翠綋甯冨眬锛氶《閮ㄦ悳绱?+ 涓嬫柟宸﹀彸鍒嗘爮 */
+		.audit-page-wrap.container-div {
+			--audit-page-gap: 10px;
+			height: 100%;
+			overflow: hidden;
+			padding: 0 var(--audit-page-gap);
+			display: flex;
+			flex-direction: column;
+			box-sizing: border-box;
+		}
+
+		body.gray-bg:has(.audit-page-wrap) {
+			height: 100%;
+			overflow: hidden;
+		}
+
+		/* 鏁翠釜鎼滅储鐧藉簳瀹瑰櫒锛氫笌涓嬫柟鍒嗘爮鍚屽 */
+		.audit-page-wrap > .audit-search-area.search-collapse {
+			flex: 0 0 auto;
+			width: 100%;
+			max-width: 100%;
+			margin: var(--audit-page-gap) 0 0;
+			padding: 10px 15px 13px;
+			box-sizing: border-box;
+			border-radius: 6px;
+			float: none;
+		}
+
+		.audit-page-row {
+			display: flex;
+			flex-direction: column;
+			flex: 1 1 auto;
+			min-height: 0;
+			height: auto;
+			margin: 0;
+			width: 100%;
+		}
+
+		.audit-page-row > .audit-split-area {
+			padding-left: 0;
+			padding-right: 0;
+			float: none;
+			width: 100%;
+		}
+
+		.audit-split-area {
+			flex: 1;
+			display: flex;
+			min-height: 0;
+			overflow: hidden;
+			margin-top: var(--audit-page-gap);
+			padding: 0 0 var(--audit-page-gap);
+			width: 100%;
+			box-sizing: border-box;
+		}
+
+		.audit-left-panel {
+			width: 25%;
+			flex-shrink: 0;
+			border-right: 1px solid #e7eaec;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+			background: #fff;
+			border-radius: 6px;
+			box-shadow: 1px 1px 3px rgba(0,0,0,.2);
+			margin-right: 10px;
+		}
+
+		.audit-left-panel .audit-left-panel-heading {
+			background-color: #3c8dbc;
+			border-color: #3c8dbc;
+			color: #fff;
+			padding: 6px 10px;
+			flex-shrink: 0;
+			border-radius: 6px 6px 0 0;
+		}
+
+		.audit-left-panel .audit-left-panel-heading .panel-title {
+			color: #fff;
+		}
+
+		.audit-left-panel .audit-left-panel-body {
+			padding: 0 5px 5px;
+			flex: 1;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+			min-height: 0;
+		}
+
+		.audit-left-panel .audit-left-table-wrap {
+			flex: 1;
+			overflow: hidden;
+			min-height: 0;
+			width: 100%;
+			margin-top: 0 !important;
+			box-shadow: none;
+			border-radius: 0;
+			padding-top: 0;
+		}
+
+		.audit-left-panel .fixed-table-header {
+			position: sticky !important;
+			top: 0 !important;
+			z-index: 2;
+			background: #fff;
+		}
+
+		.audit-left-panel .fixed-table-header thead th {
+			background-color: #f5f5f5 !important;
+			border-bottom: 1px solid #e7eaec !important;
+			padding-top: 6px !important;
+			padding-bottom: 6px !important;
+		}
+
+		.audit-left-panel .fixed-table-container {
+			padding-top: 0 !important;
+		}
+
+		/* 鍙充晶涓昏〃锛氬灞備笉婊氬姩锛屼粎琛ㄦ牸浣撳唴閮ㄦ粴鍔?*/
+		.reconciliation-full-width {
+			width: 100%;
+			background: #fff;
+			border-radius: 6px;
+			box-shadow: 1px 1px 3px rgba(0,0,0,.2);
+		}
+
+		.audit-right-area {
+			--audit-inner-padding: 10px;
+			flex: 1;
+			min-width: 0;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+			min-height: 0;
+		}
+
+		.audit-right-area #toolbar {
+			flex-shrink: 0;
+			padding: 0 var(--audit-inner-padding) 5px;
+			margin-bottom: 0;
+		}
+
+		.audit-right-area .audit-table-wrap {
+			position: relative;
+			flex: 1;
+			min-height: 200px;
+			overflow: hidden !important;
+			padding: 0 var(--audit-inner-padding) var(--audit-inner-padding);
+			margin-top: 0 !important;
+			margin-bottom: 0;
+			box-sizing: border-box;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.audit-right-area .audit-table-wrap > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
+		}
+
+		.audit-right-area .audit-table-wrap .bootstrap-table {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			padding-bottom: 0;
+		}
+
+		.audit-right-area .audit-table-wrap .fixed-table-toolbar {
+			padding-right: 2px;
+		}
+
+		.audit-right-area .audit-table-wrap .fixed-table-toolbar .columns,
+		.audit-right-area .audit-table-wrap .fixed-table-toolbar .pull-right {
+			margin-right: 0;
+		}
+
+		.audit-right-area .audit-table-wrap .fixed-table-container {
+			flex: 1 1 auto;
+			min-height: 0;
+			overflow: hidden !important;
+			padding-bottom: 0;
+		}
+
+		.audit-right-area .audit-table-wrap .fixed-table-body {
+			overflow-x: auto !important;
+			overflow-y: auto !important;
+		}
+
+		.audit-right-area .audit-table-wrap .fixed-table-pagination {
+			position: relative;
+			flex-shrink: 0;
+			left: auto;
+			right: auto;
+			bottom: auto;
+			margin: 0 !important;
+		}
+
+		/* 鍒嗛〉鏍忥細璁板綍淇℃伅涓庨〉鐮佸悓涓€琛岋紝閬垮厤 float 鎹㈣ */
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination {
+			display: flex;
+			flex-wrap: nowrap;
+			align-items: center;
+			justify-content: space-between;
+			gap: 8px;
+			padding: 4px 172px 4px 10px;
+			border-top: 1px solid #eee;
+			background: #fff;
+			z-index: 3;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination::after {
+			display: none;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination > .pagination-detail,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination > .pagination {
+			float: none !important;
+			margin-top: 0 !important;
+			margin-bottom: 0 !important;
+			flex: 0 0 auto;
+			white-space: nowrap;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination > .pagination-detail {
+			flex: 1 1 auto;
+			min-width: 0;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		/* 鍙充晶鍥哄畾鎿嶄綔鍒楋紙鍙傝€冭鍗曟煡璇?/ 鍖婚櫌鍏宠仈瀹℃牳锛?*/
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-body .fixed-table-border {
+			display: none !important;
+			height: 0 !important;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-header {
+			position: relative !important;
+			top: auto !important;
+			z-index: 2;
+			background: #fff;
+			overflow: hidden;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right {
+			z-index: 5;
+			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-header {
+			position: relative !important;
+			top: auto !important;
+			z-index: 6;
+			background: #fff;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th .th-inner,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th .sortable {
+			text-align: center !important;
+			justify-content: center;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body tbody td {
+			box-sizing: border-box;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="auditOperate"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="auditOperate"] {
+			padding: 0 !important;
+			border-left: 0 !important;
+			border-right: 0 !important;
+			font-size: 0;
+			line-height: 0;
+			color: transparent;
+			overflow: hidden;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="auditOperate"] > *,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="auditOperate"] > * {
+			display: none;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-header th,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-body td {
+			background-color: #fff;
+			vertical-align: middle;
+			white-space: nowrap;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-header th[data-field="auditOperate"] {
+			background-color: #f5f5f5;
+			min-width: 160px;
+			width: 160px;
+			text-align: center;
+			font-size: 14px;
+			line-height: normal;
+			color: #333;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-header th[data-field="auditOperate"] .th-inner {
+			text-align: center;
+			justify-content: center;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-body td[data-field="auditOperate"] {
+			min-width: 160px;
+			width: 160px;
+			padding: 6px 8px;
+			text-align: center;
+			font-size: 12px;
+			line-height: 1.42857143;
+			color: inherit;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-body td[data-field="auditOperate"] .btn {
+			display: inline-block !important;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-body td[data-field="auditOperate"] > * {
+			display: inline-block !important;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table.table-striped .fixed-columns-right .fixed-table-body tbody tr:nth-of-type(odd) td {
+			background-color: #f9f9f9;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-body {
+			overflow-x: hidden !important;
+			overflow-y: hidden !important;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header table,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body > table {
+			table-layout: fixed;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-body tbody td {
+			white-space: nowrap;
+			vertical-align: middle !important;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateType"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="certificateType"] {
+			padding-left: 8px !important;
+			padding-right: 10px !important;
+			max-width: 0;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateNo"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="certificateNo"] {
+			padding-left: 8px !important;
+			max-width: 0;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierCode"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateType"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateNo"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="expireDate"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="contactPerson"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="address"] {
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateType"] .tooltip-show,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateNo"] .tooltip-show {
+			display: inline-block;
+			max-width: 100%;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			vertical-align: middle;
+		}
+
+		/* 鍘?audit-right-panel / audit-content-area 鍙屽眰瀹瑰櫒宸茬Щ闄わ紝鏄庣粏鍖虹洿鎺ヤ娇鐢?select-table */
+
+		.audit-page-wrap > .audit-search-area.search-collapse {
+			padding-top: 10px !important;
+			padding-bottom: 10px !important;
+		}
+
+		.container-div .audit-search-area .select-list ul {
+			margin-bottom: 0;
+		}
+
+		.container-div .audit-search-area .select-list li {
+			margin: 4px 15px 4px 0;
+		}
+		
+		/* 宸︿晶渚涘簲鍟嗚〃鏍兼牱寮?*/
+		#bootstrap-table-supplier {
+			visibility: visible !important;
+		}
+
+		#bootstrap-table-supplier + .fixed-table-container {
+			visibility: visible !important;
+			display: block !important;
+		}
+		.audit-left-panel .select-table {
+			overflow: auto !important;
+			visibility: visible !important;
+		}
+
+		.audit-left-panel .fixed-table-container {
+			height: 100% !important;
+			overflow: visible !important;
+		}
+
+		.audit-left-panel .fixed-table-body {
+			overflow-y: auto !important;
+			overflow-x: hidden !important;
+		}
+	</style>
+</head>
+<body class="gray-bg">
+	<div class="container-div audit-page-wrap">
+		<!-- 椤堕儴鎼滅储锛氭暣涓櫧搴曞鍣ㄧ嫭绔嬪崰婊″搴?-->
+		<div class="search-collapse audit-search-area">
+			<form id="supplier-certificate-form">
+				<div class="select-list">
+					<ul>
+						<li>
+							渚涘簲鍟嗗悕绉帮細<input type="text" name="supplierName"/>
+						</li>
+						<li>
+							璇佷欢绫诲瀷锛?input type="text" name="certificateType"/>
+						</li>
+						<li>
+							鐘舵€侊細
+							<select name="auditStatusFilter" id="auditStatusFilter" style="width: 120px; display: inline-block; height: 30px; padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px;">
+								<option value="">鍏ㄩ儴</option>
+								<option value="1">宸插鏍?/option>
+								<option value="0">寰呭鏍?/option>
+							</select>
+						</li>
+						<li>
+							涓婁紶锛?							<select name="uploadedFlag" style="width: 120px; display: inline-block; height: 30px; padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px;">
+								<option value="">鍏ㄩ儴</option>
+								<option value="1">鏄?/option>
+								<option value="0">鍚?/option>
+							</select>
+						</li>
+						<li>
+							<a class="btn btn-primary btn-rounded btn-sm" onclick="searchReconciliation()"><i class="fa fa-search"></i>&nbsp;鎼滅储</a>
+							<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;閲嶇疆</a>
+						</li>
+					</ul>
+				</div>
+			</form>
+		</div>
+
+		<div class="row audit-page-row">
+			<div class="audit-split-area">
+				<div class="audit-right-area reconciliation-full-width">
+			        <div class="select-table table-striped audit-table-wrap audit-list-table">
+					    <table id="bootstrap-table"></table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
+	<script th:src="@{/js/common/scmCosDownload.js}"></script>
+	<script th:src="@{/js/certificate/certCosPreview.js}"></script>
+	<script th:inline="javascript">
+		var prefix = ctx + "settlement/settlement/reconciliation";
+		var certPrefix = ctx + "certificate/supplier";
+		var auditTableId = 'bootstrap-table';
+
+		var auditColWidths = {
+			auditStatus: 80,
+			uploadedFlag: 70,
+			serialNumber: 60,
+			supplierCode: 150,
+			supplierName: 200,
+			certificateType: 160,
+			certificateNo: 140,
+			expireDate: 110,
+			contactPerson: 120,
+			address: 260,
+			auditOperate: 150
+		};
+
+		$(function() {
+		    queryReconciliationList();
+		    
+		    $(window).resize(function() {
+		        adjustSupplierTableHeight();
+		        setTimeout(refreshAuditTableLayout, 100);
+		    });
+		    
+		    setTimeout(function() {
+		        adjustSupplierTableHeight();
+		    }, 300);
+		});
+		
+		// 璁＄畻鍙充晶涓昏〃楂樺害锛堜粎琛ㄦ牸浣撴粴鍔紝澶栧眰瀹瑰櫒涓嶆粴鍔級
+		function calculateAuditTableHeight() {
+		    var $wrap = $('.audit-right-area .audit-table-wrap');
+		    if ($wrap.length === 0) {
+		        return 400;
+		    }
+		    var wrapH = $wrap[0].clientHeight;
+		    if (!wrapH) {
+		        var $contentArea = $('.audit-right-area');
+		        wrapH = $contentArea.height() - 10;
+		    }
+		    var $bt = $wrap.find('.bootstrap-table');
+		    if ($bt.length === 0) {
+		        return Math.max(wrapH - 50, 200);
+		    }
+		    var btToolbarH = $bt.find('.fixed-table-toolbar').outerHeight(true) || 0;
+		    var pagH = $bt.find('.fixed-table-pagination').outerHeight(true) || 46;
+		    return Math.max(Math.floor(wrapH - btToolbarH - pagH - 2), 200);
+		}
+		
+		// 璋冩暣渚涘簲鍟嗚瘉浠惰〃鏍奸珮搴?		function adjustSupplierTableHeight() {
+		    var $table = $('#bootstrap-table');
+		    if ($table.length === 0 || !$table.bootstrapTable('getOptions')) {
+		        return;
+		    }
+		    $table.bootstrapTable('resetView', {
+		        height: calculateAuditTableHeight()
+		    });
+		    refreshAuditTableLayout();
+		}
+
+		function syncAuditOperateColumnContent() {
+		    var $bt = $('#' + auditTableId).closest('.bootstrap-table');
+		    var $rightWrap = $bt.find('.fixed-columns-right');
+		    if ($rightWrap.length === 0) {
+		        return;
+		    }
+		    var $container = $bt.find('.fixed-table-container').first();
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    var $mainBody = $container.children('.fixed-table-body');
+		    var $rightHeader = $rightWrap.find('.fixed-table-header');
+		    var $rightBody = $rightWrap.find('.fixed-table-body');
+		    var $mainHeadInner = $mainHeader.find('th[data-field="auditOperate"] .th-inner');
+		    var $rightHeadInner = $rightHeader.find('th[data-field="auditOperate"] .th-inner');
+		    if ($mainHeadInner.length && $rightHeadInner.length) {
+		        $rightHeadInner.html($mainHeadInner.html());
+		    }
+		    $mainBody.find('tbody tr').each(function (rowIdx) {
+		        var html = $(this).find('td[data-field="auditOperate"]').html();
+		        var $rightCell = $rightBody.find('tbody tr').eq(rowIdx).find('td[data-field="auditOperate"]');
+		        if ($rightCell.length) {
+		            $rightCell.html(html || '');
+		        }
+		    });
+		}
+
+		function syncAuditOperateColumnScroll() {
+		    var $bt = $('#' + auditTableId).closest('.bootstrap-table');
+		    var $rightBody = $bt.find('.fixed-columns-right .fixed-table-body');
+		    if ($rightBody.length === 0) {
+		        return;
+		    }
+		    var $mainBody = $bt.find('.fixed-table-container').children('.fixed-table-body');
+		    $mainBody.off('scroll.auditOperateSync').on('scroll.auditOperateSync', function () {
+		        $rightBody.scrollTop($mainBody.scrollTop());
+		    });
+		}
+
+		function getAuditTableTotalWidth() {
+		    var sum = 0;
+		    var opt = $('#' + auditTableId).bootstrapTable('getOptions');
+		    if (opt && opt.columns && opt.columns[0]) {
+		        $.each(opt.columns[0], function (_, col) {
+		            if (!col || col.visible === false) {
+		                return;
+		            }
+		            if (col.checkbox) {
+		                sum += 42;
+		            } else if (col.field && auditColWidths[col.field] != null) {
+		                sum += auditColWidths[col.field];
+		            } else if (col.width) {
+		                sum += parseInt(col.width, 10) || 0;
+		            } else {
+		                sum += 100;
+		            }
+		        });
+		    }
+		    return Math.max(sum, 1200);
+		}
+
+		function applyAuditFieldColumnWidth(field, widthPx) {
+		    var w = widthPx + 'px';
+		    var $container = $('#' + auditTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    var $mainBody = $container.children('.fixed-table-body');
+		    var $th = $mainHeader.find('th[data-field="' + field + '"]');
+		    if ($th.length === 0) {
+		        return;
+		    }
+		    var colIdx = $th[0].cellIndex;
+		    var setW = function (el) {
+		        el.style.setProperty('width', w, 'important');
+		        el.style.setProperty('min-width', w, 'important');
+		        el.style.setProperty('max-width', w, 'important');
+		    };
+		    $th.each(function () { setW(this); });
+		    $mainBody.find('table tbody tr').each(function () {
+		        var cell = this.cells[colIdx];
+		        if (cell) {
+		            setW(cell);
+		        }
+		    });
+		    $mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+		    $mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+		}
+
+		function syncAuditHeaderBodyColumnWidths() {
+		    var $container = $('#' + auditTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    var $mainBody = $container.children('.fixed-table-body');
+		    var $headerThs = $mainHeader.find('thead tr').first().children('th');
+		    var $firstRow = $mainBody.find('tbody tr').first();
+		    if ($firstRow.length === 0) {
+		        return;
+		    }
+		    var setW = function (el, widthVal) {
+		        el.style.setProperty('width', widthVal, 'important');
+		        el.style.setProperty('min-width', widthVal, 'important');
+		        el.style.setProperty('max-width', widthVal, 'important');
+		    };
+		    $headerThs.each(function (i) {
+		        var field = $(this).attr('data-field');
+		        if (field && auditColWidths[field] != null) {
+		            return;
+		        }
+		        var bodyCell = $firstRow[0].cells[i];
+		        if (!bodyCell) {
+		            return;
+		        }
+		        var w = bodyCell.style.width;
+		        if (!w) {
+		            w = window.getComputedStyle(bodyCell).width;
+		        }
+		        if (w) {
+		            setW(this, w);
+		            $mainHeader.find('colgroup col').eq(i).each(function () { setW(this, w); });
+		            $mainBody.find('colgroup col').eq(i).each(function () { setW(this, w); });
+		        }
+		    });
+		}
+
+		function scheduleAuditColumnWidths() {
+		    $.each(auditColWidths, function (field, width) {
+		        applyAuditFieldColumnWidth(field, width);
+		    });
+		    syncAuditHeaderBodyColumnWidths();
+		    requestAnimationFrame(function () {
+		        $.each(auditColWidths, function (field, width) {
+		            applyAuditFieldColumnWidth(field, width);
+		        });
+		        syncAuditHeaderBodyColumnWidths();
+		    });
+		}
+
+		function fixAuditTableHeaderAlign() {
+		    var $bt = $('#' + auditTableId).closest('.bootstrap-table');
+		    var $container = $bt.find('.fixed-table-container').first();
+		    var $mainBody = $container.children('.fixed-table-body');
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    if (!$mainBody.length || !$mainHeader.length) {
+		        return;
+		    }
+		    var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
+		    $mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+		}
+
+		function syncAuditHeaderBodyScrollLeft() {
+		    var $container = $('#' + auditTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+		    var $mainBody = $container.children('.fixed-table-body');
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    if ($mainBody.length && $mainHeader.length) {
+		        $mainHeader.scrollLeft($mainBody[0].scrollLeft);
+		    }
+		}
+
+		function bindAuditMainHorizontalScroll() {
+		    var $bt = $('#' + auditTableId).closest('.bootstrap-table');
+		    var $container = $bt.find('.fixed-table-container').first();
+		    var $mainBody = $container.children('.fixed-table-body');
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    $mainBody.off('scroll.auditMainH').on('scroll.auditMainH', function () {
+		        $mainHeader.scrollLeft($mainBody.scrollLeft());
+		    });
+		}
+
+		function applyAuditMainTableMinWidth() {
+		    var sum = getAuditTableTotalWidth();
+		    var w = sum + 'px';
+		    var $container = $('#' + auditTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+		    var $headerTable = $container.children('.fixed-table-header').find('table');
+		    var $bodyTable = $container.children('.fixed-table-body').children('table');
+		    $headerTable.css({ width: w, minWidth: w, maxWidth: w });
+		    $bodyTable.css({ width: w, minWidth: w, maxWidth: w });
+		}
+
+		function refreshAuditTableLayout() {
+		    fixAuditTableHeaderAlign();
+		    scheduleAuditColumnWidths();
+		    applyAuditMainTableMinWidth();
+		    syncAuditHeaderBodyScrollLeft();
+		    bindAuditMainHorizontalScroll();
+		    syncAuditOperateColumnScroll();
+		    syncAuditOperateColumnContent();
+		}
+
+		function buildAuditOperateHtml(row) {
+		    var actions = [];
+		    var cid = row.certificateId;
+		    cacheCertRowFiles(cid, row.certificateFile || '', row.certificateFileIds || '');
+		    actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="previewCertById(' + cid + ')" title="棰勮璇佷欢鍥剧墖"><i class="fa fa-eye"></i> 棰勮</a>');
+		    actions.push(' <a class="btn btn-primary btn-xs" href="javascript:void(0)" onclick="viewAuditDetail(' + cid + ')" title="鏌ョ湅璇佷欢璇︽儏"><i class="fa fa-search"></i> 鏌ョ湅</a>');
+		    return actions.join('');
+		}
+
+		function viewAuditDetail(certificateId) {
+		    if (certificateId == null || certificateId === '') {
+		        $.modal.alertWarning('鏃犳硶鏌ョ湅锛氱己灏戣瘉浠禝D');
+		        return;
+		    }
+		    $.modal.openTab('鏌ョ湅渚涘簲鍟嗚瘉浠?, certPrefix + '/upload/' + certificateId);
+		}
+
+		function queryReconciliationList() {
+		    var calculateTableHeight = function() {
+		        return calculateAuditTableHeight();
+		    };
+		    
+		    var options = {
+		        url: prefix + "/list",
+		        formId: "supplier-certificate-form",
+		        uniqueId: "certificateId",
+		        rememberSelected: false,
+		        maintainSelected: false,
+		        queryParams: function(params) {
+		            var curParams = $.table.queryParams(params);
+		            var auditStatusFilter = $('#auditStatusFilter').val();
+		            if (auditStatusFilter !== '') {
+		                curParams.auditStatus = auditStatusFilter;
+		            }
+		            delete curParams.auditStatusFilter;
+		            return curParams;
+		        },
+		        sortName: "createTime",
+		        sortOrder: "desc",
+		        modalName: "渚涘簲鍟嗚瘉浠?,
+		        height: calculateTableHeight(),
+		        mobileResponsive: false,
+		        fixedColumns: true,
+		        fixedNumber: 0,
+		        fixedRightNumber: 1,
+		        onLoadSuccess: function () {
+		            setTimeout(function () {
+		                adjustSupplierTableHeight();
+		                refreshAuditTableLayout();
+		            }, 50);
+		            setTimeout(function () {
+		                adjustSupplierTableHeight();
+		                refreshAuditTableLayout();
+		            }, 200);
+		            setTimeout(refreshAuditTableLayout, 450);
+		        },
+		        onPostBody: function () {
+		            refreshAuditTableLayout();
+		        },
+		        onClickRow: function(row, $element) {
+		            $('#bootstrap-table tbody tr').removeClass('selected');
+		            $element.addClass('selected');
+		        },
+		        columns: [
+		        {
+		            field: 'auditStatus',
+		            title: '瀹℃牳',
+		            align: 'center',
+		            width: 80,
+		            formatter: function (value, row, index) {
+		                if (row.auditStatus == '1') {
+		                    return '<span class="label label-success">鏄?/span>';
+		                } else if (row.auditStatus == '2') {
+		                    return '<span class="label label-danger">鍚?/span>';
+		                } else {
+		                    return '<span class="label label-warning">寰呭鏍?/span>';
+		                }
+		            }
+		        },
+		        {
+		            field: 'uploadedFlag',
+		            title: '涓婁紶',
+		            align: 'center',
+		            width: 70,
+		            formatter: function(value, row, index) {
+		                if (row.certificateFile && row.certificateFile.trim() !== '') {
+		                    return '<span class="label label-success">鏄?/span>';
+		                }
+		                return '<span class="label label-default">鍚?/span>';
+		            }
+		        },
+		        {
+		            field: 'serialNumber',
+		            title: '搴忓彿',
+		            align: 'center',
+		            width: 60,
+		            formatter: function (value, row, index) {
+		                return $.table.serialNumber(index);
+		            }
+		        },
+		        {
+		            field: 'certificateId',
+		            title: '璇佷欢ID',
+		            visible: false
+		        },
+		        {
+		            field: 'supplierId',
+		            title: '渚涘簲鍟咺D',
+		            visible: false
+		        },
+		        {
+		            field: 'supplierCode',
+		            title: '渚涘簲鍟嗙紪鐮?,
+		            align: 'left',
+		            width: 150,
+		            formatter: function (value, row, index) {
+		                return value || '-';
+		            }
+		        },
+		        {
+		            field: 'supplierName',
+		            title: '渚涘簲鍟嗗悕绉?,
+		            align: 'left',
+		            width: 200,
+		            formatter: function (value, row, index) {
+		                return value || '-';
+		            }
+		        },
+		        {
+		            field: 'certificateType',
+		            title: '璇佷欢绫诲瀷',
+		            align: 'left',
+		            width: 160,
+		            formatter: function (value, row, index) {
+		                if (!value) {
+		                    return '-';
+		                }
+		                return $.table.tooltip(value, 10);
+		            }
+		        },
+		        {
+		            field: 'certificateNo',
+		            title: '璇佷欢缂栧彿',
+		            align: 'left',
+		            width: 140,
+		            formatter: function (value, row, index) {
+		                if (!value) {
+		                    return '-';
+		                }
+		                return $.table.tooltip(value, 12);
+		            }
+		        },
+		        {
+		            field: 'expireDate',
+		            title: '鏈夋晥鏈熻嚦',
+		            align: 'center',
+		            width: 110,
+		            formatter: function (value, row, index) {
+		                if (!value) {
+		                    return '-';
+		                }
+		                if (typeof value === 'string' && value.indexOf('-') > -1) {
+		                    return value.split(' ')[0];
+		                }
+		                return $.common.dateFormat(value, 'yyyy-MM-dd');
+		            }
+		        },
+		        {
+		            field: 'contactPerson',
+		            title: '鍏徃鑱旂郴浜?,
+		            align: 'left',
+		            width: 120,
+		            formatter: function (value, row, index) {
+		                return value || '-';
+		            }
+		        },
+		        {
+		            field: 'address',
+		            title: '鍏徃鍦板潃',
+		            align: 'left',
+		            width: 300,
+		            formatter: function (value, row, index) {
+		                return value || '-';
+		            }
+		        },
+		        {
+		            field: 'auditOperate',
+		            title: '鎿嶄綔',
+		            align: 'center',
+		            width: 150,
+		            formatter: function (value, row, index) {
+		                return buildAuditOperateHtml(row);
+		            }
+		        }]
+		    };
+		    
+		    $.table.init(options);
+		    
+		    setTimeout(function() {
+		        adjustSupplierTableHeight();
+		        refreshAuditTableLayout();
+		    }, 500);
+		}
+		
+		function resetPre() {
+			$("#supplier-certificate-form")[0].reset();
+			$("#auditStatusFilter").val('');
+			$.table.search('supplier-certificate-form', auditTableId);
+		}
+
+		function searchReconciliation() {
+			$.table.search('supplier-certificate-form', auditTableId);
+		}
+
+	</script>
+</body>
+</html>
