@@ -21,9 +21,15 @@ scm:
       manual-cooldown-ms: 120000
   sql:
     init:
+      # 启动时自动执行 SQL 增量脚本（procedure.sql + column.sql）
       enabled: true
       location: classpath:sql/mysql/
       fail-on-error: false
+      # true：仅当 scm.version 相对库中记录变更时执行增量脚本（推荐）
+      upgrade-only: true
+      upgrade-scripts: procedure.sql,column.sql
+      # 首次安装空库时执行的全量脚本链
+      full-scripts: table.sql,procedure.sql,column.sql,view.sql,trigger.sql,function.sql,menu.sql,data_integrity.sql
   cos:
     enabled: true
     secret-id: ENC(fmNwNkER0gQ8miAjitef1T17AQdp0H99YYn0PpX6xq6Jm3uO9fI4a5o2PU4xcgQ33QqbWuxZHNPMSYICudT5Iw==)

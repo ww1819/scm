@@ -1,6 +1,7 @@
 package com.scm.web.controller.settlement;
 
 import java.util.List;
+import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.scm.common.annotation.Log;
 import com.scm.common.core.controller.BaseController;
@@ -18,12 +20,14 @@ import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.enums.BusinessType;
 import com.scm.common.utils.poi.ExcelUtil;
+import com.scm.system.domain.Hospital;
+import com.scm.system.domain.ReconciliationYearMonthRow;
 import com.scm.system.domain.Settlement;
 import com.scm.system.domain.SettlementDetail;
-import com.scm.system.domain.SupplierCertificate;
+import com.scm.system.service.IHospitalService;
 import com.scm.system.service.ISettlementService;
+import com.scm.system.service.IScmReconciliationService;
 import com.scm.system.service.IScmSupplierContextService;
-import com.scm.system.service.ISupplierCertificateService;
 
 /**
  * 结算单信息
@@ -40,7 +44,10 @@ public class SettlementController extends BaseController
     private ISettlementService settlementService;
 
     @Autowired
-    private ISupplierCertificateService supplierCertificateService;
+    private IHospitalService hospitalService;
+
+    @Autowired
+    private IScmReconciliationService scmReconciliationService;
 
     @Autowired
     private IScmSupplierContextService scmSupplierContextService;
@@ -63,30 +70,55 @@ public class SettlementController extends BaseController
     }
 
     /**
-     * 对账表（供应商证件列表，独立于资质审核页）
+     * 对账表（年度按月汇总）
      */
     @RequiresPermissions("settlement:settlement:view")
     @GetMapping("/reconciliation")
-    public String reconciliation()
+    public String reconciliation(ModelMap mmap)
     {
+        Hospital query = new Hospital();
+        query.setStatus("0");
+        mmap.put("hospitals", hospitalService.selectHospitalList(query));
+        mmap.put("bindSupplierId", scmSupplierContextService.resolveSupplierIdForUser(getUserId()));
         return prefix + "/reconciliation";
     }
 
     /**
-     * 对账表数据：按顶部筛选查询供应商证件，不依赖左侧供应商树
+     * 对账表：供应商下拉（可按医院过滤；供应商账号仅返回绑定供应商）
      */
     @RequiresPermissions("settlement:settlement:view")
-    @PostMapping("/reconciliation/list")
+    @RequestMapping(value = "/reconciliation/suppliers", method = { RequestMethod.GET, RequestMethod.POST })
     @ResponseBody
-    public TableDataInfo reconciliationList(SupplierCertificate supplierCertificate)
+    public AjaxResult reconciliationSuppliers(Long hospitalId)
     {
-        startPage();
-        Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
-        if (bindSid != null)
+        Long bindSupplierId = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
+        List<Map<String, Object>> list = scmReconciliationService.selectSupplierOptions(hospitalId, bindSupplierId);
+        return success(list);
+    }
+
+    /**
+     * 对账表数据：按医院、年份、可选供应商返回 12 个月配送/结算汇总
+     */
+    @RequiresPermissions("settlement:settlement:view")
+    @PostMapping("/reconciliation/yearSummary")
+    @ResponseBody
+    public AjaxResult reconciliationYearSummary(Long hospitalId, Integer year, Long supplierId)
+    {
+        if (hospitalId == null)
         {
-            supplierCertificate.setSupplierId(bindSid);
+            return error("请选择医院");
         }
-        return getDataTable(supplierCertificateService.selectSupplierCertificateList(supplierCertificate));
+        if (year == null || year < 2000 || year > 2100)
+        {
+            return error("请选择有效年份");
+        }
+        Long bindSupplierId = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
+        if (bindSupplierId != null)
+        {
+            supplierId = bindSupplierId;
+        }
+        List<ReconciliationYearMonthRow> list = scmReconciliationService.selectYearSummary(hospitalId, year, supplierId);
+        return success(list);
     }
 
     /**

@@ -1,5 +1,9 @@
 -- ========== SCM 模块 增量字段（仅 CALL；存储过程定义见 procedure.sql，须先执行） ==========
 -- 建议在 table.sql、procedure.sql 之后执行；按「/」分段执行。新环境若已执行 table.sql 完整建表，本脚本中与 table 中已存在字段的 CALL 会跳过。
+-- 应用启动时由 SqlInitRunner 自动执行（scm.sql.init.enabled=true，upgrade-only=true）：
+--   1) 首次空库：全量脚本链；2) 版本升级：procedure.sql + column.sql；3) 记录 scm.sql.init.applied_version=scm.version。
+-- 新增增量语句后请同步提升 application.yml 中 scm.version，以便下次部署自动执行。
+-- 手工执行：node scripts/run-scm-column-sql.js
 -- UUID 列宽升级见 procedure.sql 中 upgrade_uuid_column_if_varchar32。订单/条码四表建表定义在 scm/table.sql 末尾；scminterface 侧副本见 scminterface-admin/src/main/resources/sql/mysql/scm/table.sql。scm_hospital_menu_auth / scm_supplier_menu_auth / scm_hospital_supplier_permission 全量建表在 spd/spd-admin/src/main/resources/sql/mysql/material/table.sql。
 /
 -- ========== 供应商表新增字段 ==========
@@ -853,3 +857,27 @@ ALTER TABLE scm_supplier_certificate MODIFY COLUMN certificate_file varchar(2000
 /
 ALTER TABLE scm_product_certificate MODIFY COLUMN certificate_file varchar(2000) DEFAULT NULL COMMENT '证件文件URL(逗号分隔)';
 /
+-- ========== 对账表 scm_reconciliation ==========
+CREATE TABLE IF NOT EXISTS `scm_reconciliation` (
+  `reconciliation_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `hospital_id` bigint(20) NOT NULL COMMENT '医院ID',
+  `hospital_name` varchar(200) DEFAULT '' COMMENT '医院名称',
+  `reconcile_date` date NOT NULL COMMENT '对账日期',
+  `his_amount` decimal(18,2) DEFAULT 0 COMMENT 'HIS金额',
+  `spd_amount` decimal(18,2) DEFAULT 0 COMMENT 'SPD金额',
+  `item_count` int(11) DEFAULT 0 COMMENT '品规总数',
+  `abnormal_count` int(11) DEFAULT 0 COMMENT '异常记录数',
+  `status` char(1) DEFAULT '0' COMMENT '状态（0未生成 1已生成）',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`reconciliation_id`),
+  UNIQUE KEY `uk_hospital_reconcile_date` (`hospital_id`,`reconcile_date`),
+  KEY `idx_reconcile_date` (`reconcile_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='对账表';
+/
+
+-- ========== scm_hospital：社会统一信用代码 ==========
+CALL add_table_column('scm_hospital', 'unified_credit_code', 'varchar(18)', '社会统一信用代码', NULL);

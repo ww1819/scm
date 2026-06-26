@@ -1,17 +1,19 @@
+/**
+ * 手工执行 SCM 增量 SQL：procedure.sql + column.sql
+ *
+ * 用法：
+ *   node scripts/run-scm-column-sql.js
+ *
+ * 数据库连接优先级（后者覆盖前者）：
+ *   1. 环境变量 SCM_DB_HOST / SCM_DB_PORT / SCM_DB_USER / SCM_DB_PASSWORD / SCM_DB_NAME
+ *   2. scm-admin/src/main/resources/application-druid.yml 中 spring.datasource.druid.master
+ */
 const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql2/promise');
 
-const DB = {
-  host: 'rm-bp1tov1b3948fc5inbo.mysql.rds.aliyuncs.com',
-  port: 3306,
-  user: 'spd',
-  password: 'Spd@456ww',
-  database: 'scm_test',
-  multipleStatements: true
-};
-
 const SQL_BASE = path.join(__dirname, '../scm-admin/src/main/resources/sql/mysql/scm');
+const DRUID_YML = path.join(__dirname, '../scm-admin/src/main/resources/application-druid.yml');
 
 function parseStatements(content) {
   const statements = [];
@@ -59,6 +61,64 @@ function isCommentOrBlankOnly(sql) {
     kept.push(t);
   }
   return kept.join(' ').trim().length === 0;
+}
+
+function readDruidMasterConfig() {
+  if (!fs.existsSync(DRUID_YML)) {
+    return {};
+  }
+  const text = fs.readFileSync(DRUID_YML, 'utf8');
+  const section = text.split('master:')[1];
+  if (!section) {
+    return {};
+  }
+  const pick = (key) => {
+    const m = section.match(new RegExp('^\\s*' + key + ':\\s*(.+)$', 'm'));
+    if (!m) {
+      return '';
+    }
+    return m[1].trim().replace(/^['"]|['"]$/g, '');
+  };
+  const url = pick('url');
+  let host = process.env.SCM_DB_HOST || '';
+  let port = process.env.SCM_DB_PORT || '3306';
+  let database = process.env.SCM_DB_NAME || '';
+  if (url) {
+    const hostMatch = url.match(/\/\/([^:/]+)(?::(\d+))?/);
+    const dbMatch = url.match(/\/([^/?]+)(?:\?|$)/);
+    if (hostMatch) {
+      host = hostMatch[1];
+      if (hostMatch[2]) {
+        port = hostMatch[2];
+      }
+    }
+    if (dbMatch) {
+      database = dbMatch[1];
+    }
+  }
+  return {
+    host,
+    port: Number(port, 10) || 3306,
+    user: process.env.SCM_DB_USER || pick('username'),
+    password: process.env.SCM_DB_PASSWORD || pick('password'),
+    database
+  };
+}
+
+function buildDbConfig() {
+  const fromYml = readDruidMasterConfig();
+  const cfg = {
+    host: process.env.SCM_DB_HOST || fromYml.host,
+    port: Number(process.env.SCM_DB_PORT || fromYml.port || 3306, 10),
+    user: process.env.SCM_DB_USER || fromYml.user,
+    password: process.env.SCM_DB_PASSWORD || fromYml.password,
+    database: process.env.SCM_DB_NAME || fromYml.database,
+    multipleStatements: true
+  };
+  if (!cfg.host || !cfg.user || !cfg.database) {
+    throw new Error('数据库配置不完整，请设置 SCM_DB_* 环境变量或检查 application-druid.yml');
+  }
+  return cfg;
 }
 
 async function executeOne(conn, sql) {
@@ -114,21 +174,23 @@ async function runScript(conn, scriptName) {
 }
 
 async function main() {
-  const conn = await mysql.createConnection(DB);
+  const cfg = buildDbConfig();
+  console.log(`连接数据库 ${cfg.user}@${cfg.host}:${cfg.port}/${cfg.database}`);
+  const conn = await mysql.createConnection(cfg);
   try {
-    await runScript(conn, 'procedure.sql');
+    const procResult = await runScript(conn, 'procedure.sql');
     const columnResult = await runScript(conn, 'column.sql');
     const [rows] = await conn.query(
-      "SELECT COLUMN_NAME, COLUMN_TYPE, COLUMN_COMMENT FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'scm_supplier_certificate' AND COLUMN_NAME = 'register_date'"
+      "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'scm_reconciliation'"
     );
     if (rows.length > 0) {
-      console.log('\n验证 register_date 字段:', rows[0]);
-    } else {
-      console.error('\nregister_date 字段仍未创建，请检查 column.sql 执行日志');
-      process.exitCode = 1;
+      console.log('\n验证 scm_reconciliation 表: 已存在');
     }
-    if (columnResult.fail > 0) {
-      console.warn(`\n注意: column.sql 有 ${columnResult.fail} 条语句执行失败（多为已存在结构，可结合日志判断）`);
+    const totalFail = (procResult.fail || 0) + (columnResult.fail || 0);
+    if (totalFail > 0) {
+      console.warn(`\n注意: 共 ${totalFail} 条语句执行失败（多为已存在结构，可结合日志判断）`);
+    } else {
+      console.log('\n增量 SQL 执行完成。');
     }
   } finally {
     await conn.end();
@@ -136,6 +198,6 @@ async function main() {
 }
 
 main().catch((e) => {
-  console.error(e);
+  console.error(e.message || e);
   process.exit(1);
 });

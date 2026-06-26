@@ -1,6 +1,8 @@
 package com.scm.system.mapper;
 
 import java.util.List;
+import java.util.Map;
+import org.apache.ibatis.annotations.Param;
 import com.scm.system.domain.Settlement;
 
 /**
@@ -65,5 +67,12 @@ public interface SettlementMapper
      * @return 结果
      */
     public int deleteSettlementByIds(String[] settlementIds);
+
+    /**
+     * 按月份汇总结算金额（对账表年度视图）
+     */
+    List<Map<String, Object>> sumSettlementAmountGroupByMonth(@Param("hospitalId") Long hospitalId,
+            @Param("supplierId") Long supplierId, @Param("yearBegin") String yearBegin,
+            @Param("yearEnd") String yearEnd);
 }
 

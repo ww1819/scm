@@ -1,8 +1,10 @@
 package com.scm.system.mapper;
 
 import java.util.List;
+import java.util.Map;
 import org.apache.ibatis.annotations.Param;
 import com.scm.system.domain.Delivery;
+import com.scm.system.domain.ReconciliationSupplierOption;
 
 /**
  * 配送单 数据层
@@ -84,5 +86,22 @@ public interface DeliveryMapper
      * @return 结果
      */
     public int deleteDeliveryByIds(@Param("ids") String[] deliveryIds, @Param("delBy") String delBy);
+
+    /**
+     * 按月份汇总配送金额（对账表年度视图）
+     */
+    List<Map<String, Object>> sumDeliveryAmountGroupByMonth(@Param("hospitalId") Long hospitalId,
+            @Param("supplierId") Long supplierId, @Param("yearBegin") String yearBegin,
+            @Param("yearEnd") String yearEnd);
+
+    /**
+     * 对账表：某医院在配送/结算中出现的供应商ID（去重）
+     */
+    List<Long> selectReconciliationSupplierIdsByHospital(@Param("hospitalId") Long hospitalId);
+
+    /**
+     * 对账表：医院绑定及业务往来供应商（含名称、拼音）
+     */
+    List<ReconciliationSupplierOption> selectReconciliationSuppliersByHospital(@Param("hospitalId") Long hospitalId);
 }
 
