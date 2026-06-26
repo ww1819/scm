@@ -1,9 +1,12 @@
 package com.scm.system.service.impl;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -129,6 +132,61 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
             if (exist == null)
             {
                 insertStubRow(c, t, loginName);
+            }
+        }
+    }
+
+    @Override
+    public void ensureProductSnapStubsForCertificates(Collection<Long> certificateIds, String loginName)
+    {
+        if (certificateIds == null || certificateIds.isEmpty())
+        {
+            return;
+        }
+        Set<Long> unique = new LinkedHashSet<>();
+        for (Long certificateId : certificateIds)
+        {
+            if (certificateId != null)
+            {
+                unique.add(certificateId);
+            }
+        }
+        if (unique.isEmpty())
+        {
+            return;
+        }
+        List<CertificateType> types = certificateTypeService.selectProductExtensionTypesForSnap();
+        if (types == null || types.isEmpty())
+        {
+            return;
+        }
+        String oper = loginName != null ? loginName : "";
+        for (Long certificateId : unique)
+        {
+            try
+            {
+                ProductCertificate c = productCertificateMapper.selectProductCertificateById(certificateId);
+                if (c == null)
+                {
+                    continue;
+                }
+                String certKey = String.valueOf(certificateId);
+                for (CertificateType t : types)
+                {
+                    if (t == null || StringUtils.isEmpty(t.getTypeCode()))
+                    {
+                        continue;
+                    }
+                    String kindCode = t.getTypeCode().trim();
+                    ProductCertLicenseSnap exist = productCertLicenseSnapMapper.selectByCertIdAndKind(certKey, kindCode);
+                    if (exist == null)
+                    {
+                        insertStubRow(c, t, oper);
+                    }
+                }
+            }
+            catch (Exception ignored)
+            {
             }
         }
     }

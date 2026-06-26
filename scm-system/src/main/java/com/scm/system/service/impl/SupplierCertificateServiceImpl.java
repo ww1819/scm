@@ -97,6 +97,7 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         if (c != null)
         {
             assertSupplierCertificateViewScope(c);
+            enrichCertificateTypeDisplay(c);
             enrichCertificateFiles(c);
         }
         return c;
@@ -164,8 +165,82 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         }
         for (SupplierCertificate certificate : list)
         {
+            enrichCertificateTypeDisplay(certificate);
             enrichCertificateFiles(certificate);
         }
+    }
+
+    /**
+     * 将 certificate_type 中的类型 ID / 编码解析为类型名称（展示与编辑用）
+     */
+    private void enrichCertificateTypeDisplay(SupplierCertificate certificate)
+    {
+        if (certificate == null || StringUtils.isEmpty(certificate.getCertificateType()))
+        {
+            return;
+        }
+        certificate.setCertificateType(resolveCertificateTypeName(certificate.getCertificateType()));
+    }
+
+    private String resolveCertificateTypeName(String raw)
+    {
+        if (StringUtils.isEmpty(raw))
+        {
+            return raw;
+        }
+        String value = raw.trim();
+        if (value.matches("^\\d+$"))
+        {
+            try
+            {
+                CertificateType type = certificateTypeService.selectCertificateTypeById(Long.parseLong(value));
+                if (type != null && StringUtils.isNotEmpty(type.getTypeName()))
+                {
+                    return type.getTypeName().trim();
+                }
+            }
+            catch (NumberFormatException ignored)
+            {
+            }
+        }
+        if (value.matches("^[A-Za-z]+_\\d+$"))
+        {
+            CertificateType type = certificateTypeService.selectByTypeCode(value);
+            if (type != null && StringUtils.isNotEmpty(type.getTypeName()))
+            {
+                return type.getTypeName().trim();
+            }
+        }
+        return value;
+    }
+
+    private void normalizeCertificateTypeOnSave(SupplierCertificate certificate)
+    {
+        if (certificate == null || StringUtils.isEmpty(certificate.getCertificateType()))
+        {
+            return;
+        }
+        certificate.setCertificateType(resolveCertificateTypeName(certificate.getCertificateType()));
+    }
+
+    private Set<String> normalizeExistingCertificateTypeKeys(Set<String> existingTypes)
+    {
+        Set<String> normalized = new HashSet<>();
+        if (existingTypes == null)
+        {
+            return normalized;
+        }
+        for (String existing : existingTypes)
+        {
+            if (StringUtils.isEmpty(existing))
+            {
+                continue;
+            }
+            String trimmed = existing.trim();
+            normalized.add(trimmed);
+            normalized.add(resolveCertificateTypeName(trimmed));
+        }
+        return normalized;
     }
 
     /**
@@ -205,6 +280,7 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         {
             supplierCertificate.setStatus("0"); // 默认正常
         }
+        normalizeCertificateTypeOnSave(supplierCertificate);
         supplierCertificate.setCreateTime(DateUtils.getNowDate());
         normalizeBusinessTermDates(supplierCertificate);
         // 检查过期状态
@@ -240,6 +316,7 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         {
             supplierCertificate.setSupplierId(sid);
         }
+        normalizeCertificateTypeOnSave(supplierCertificate);
         supplierCertificate.setUpdateTime(DateUtils.getNowDate());
         // 检查过期状态
         checkExpiredStatus(supplierCertificate);
@@ -627,6 +704,13 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         {
             return;
         }
+        try
+        {
+            supplierCertificateMapper.repairStoredCertificateTypeValues();
+        }
+        catch (Exception ignored)
+        {
+        }
         int existingCount = supplierCertificateMapper.countBySupplierAndHospital(supplierId, hospitalId);
         if (existingCount >= expectedCount)
         {
@@ -646,8 +730,8 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         {
             return;
         }
-        Set<String> existingTypes = new HashSet<>(
-            supplierCertificateMapper.selectCertificateTypeNamesBySupplierAndHospital(supplierId, hospitalId));
+        Set<String> existingTypes = normalizeExistingCertificateTypeKeys(new HashSet<>(
+            supplierCertificateMapper.selectCertificateTypeNamesBySupplierAndHospital(supplierId, hospitalId)));
         String oper = StringUtils.isNotEmpty(createBy) ? createBy : "system";
         Set<String> seenTypeNames = new HashSet<>();
         for (CertificateType t : types)

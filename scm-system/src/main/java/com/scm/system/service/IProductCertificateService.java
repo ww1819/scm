@@ -3,6 +3,7 @@ package com.scm.system.service;
 import java.util.List;
 import com.scm.system.domain.ProductCertificate;
 import com.scm.system.domain.OrderDetail;
+import com.scm.system.domain.vo.ProductCatalogImportValidateResult;
 import com.scm.system.domain.vo.ProductCertificateImportVo;
 import com.scm.system.domain.vo.ProductMaterialArchiveVo;
 
@@ -132,6 +133,12 @@ public interface IProductCertificateService
      */
     public String importProductCatalog(List<ProductCertificateImportVo> rows, String hospitalId,
         String hospitalCode, boolean updateSupport, String operName);
+
+    /**
+     * 校验产品目录导入文件（解析后逐行检查，不写入数据库）
+     */
+    public ProductCatalogImportValidateResult validateProductCatalogImport(List<ProductCertificateImportVo> rows,
+        String hospitalId, String hospitalCode, boolean updateSupport);
 
     /**
      * 查询指定医院（及当前供应商）的订单产品目录

@@ -881,3 +881,11 @@ CREATE TABLE IF NOT EXISTS `scm_reconciliation` (
 
 -- ========== scm_hospital：社会统一信用代码 ==========
 CALL add_table_column('scm_hospital', 'unified_credit_code', 'varchar(18)', '社会统一信用代码', NULL);
+/
+
+-- ========== scm_supplier_certificate：certificate_type 误存 type_id 时还原为类型名称 ==========
+UPDATE scm_supplier_certificate c
+INNER JOIN scm_certificate_type t ON t.type_id = CAST(c.certificate_type AS UNSIGNED)
+SET c.certificate_type = t.type_name
+WHERE (c.status IS NULL OR c.status != '1')
+  AND c.certificate_type REGEXP '^[0-9]+$';

@@ -3,12 +3,17 @@ package com.scm.system.service.impl;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.scm.common.core.text.Convert;
 import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.DateUtils;
@@ -19,10 +24,13 @@ import com.scm.system.domain.OrderDetail;
 import com.scm.system.domain.ProductCertificate;
 import com.scm.system.domain.ScmFile;
 import com.scm.system.domain.Supplier;
+import com.scm.system.domain.vo.ProductCatalogImportValidateError;
+import com.scm.system.domain.vo.ProductCatalogImportValidateResult;
 import com.scm.system.domain.vo.ProductCertificateImportVo;
 import com.scm.system.domain.vo.ProductMaterialArchiveVo;
 import com.scm.system.mapper.OrderDetailMapper;
 import com.scm.system.mapper.ProductCertificateMapper;
+import com.scm.system.mapper.MaterialDictMapper;
 import com.scm.system.mapper.SupplierMapper;
 import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.IProductCertLicenseSnapService;
@@ -43,6 +51,9 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
     
     @Autowired
     private com.scm.system.service.IMaterialDictService materialDictService;
+
+    @Autowired
+    private MaterialDictMapper materialDictMapper;
 
     @Autowired
     private IScmSupplierContextService scmSupplierContextService;
@@ -1021,116 +1032,571 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
     }
 
     @Override
-    public String importProductCatalog(List<ProductCertificateImportVo> rows, String hospitalId,
-        String hospitalCode, boolean updateSupport, String operName)
+    public ProductCatalogImportValidateResult validateProductCatalogImport(List<ProductCertificateImportVo> rows,
+        String hospitalId, String hospitalCode, boolean updateSupport)
+    {
+        ProductCatalogImportValidateResult result = new ProductCatalogImportValidateResult();
+        ProductCatalogImportContext ctx = buildProductCatalogImportContext(rows, hospitalId, hospitalCode, result);
+        if (ctx == null)
+        {
+            return result;
+        }
+        scanProductCatalogImportRows(ctx, rows, updateSupport, result);
+        return result;
+    }
+    private static final class ProductCatalogImportContext
+    {
+        private final String hospitalId;
+        private final String hospitalCode;
+        private final Long supplierUserSid;
+        private final Map<String, ProductCertificate> existingByKey = new HashMap<>();
+        private final Map<String, Long> supplierIdByCompanyName = new HashMap<>();
+        private final Set<Long> deferredSnapCertificateIds = new LinkedHashSet<>();
+        private final Map<String, Long> manufacturerIdByName = new HashMap<>();
+        private final Map<Long, com.scm.system.domain.MaterialDict> materialDictCache = new HashMap<>();
+        private int materialCodeSeq;
+
+        private ProductCatalogImportContext(String hospitalId, String hospitalCode, Long supplierUserSid)
+        {
+            this.hospitalId = hospitalId;
+            this.hospitalCode = hospitalCode;
+            this.supplierUserSid = supplierUserSid;
+        }
+    }
+
+    private ProductCatalogImportContext buildProductCatalogImportContext(List<ProductCertificateImportVo> rows,
+        String hospitalId, String hospitalCode, ProductCatalogImportValidateResult result)
     {
         if (rows == null || rows.isEmpty())
         {
-            throw new ServiceException("导入数据不能为空");
+            result.addError(0, null, null, "导入文件无有效数据，请确认使用「产品目录」模板");
+            result.setPass(false);
+            return null;
         }
         if (StringUtils.isEmpty(hospitalId))
         {
-            throw new ServiceException("请先在左侧选择医院");
+            result.addError(0, null, null, "请先在左侧选择医院");
+            result.setPass(false);
+            return null;
         }
         String hid = hospitalId.trim();
         String hcode = StringUtils.trimToEmpty(hospitalCode);
         Long supplierUserSid = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
-        if (supplierUserSid != null && StringUtils.isNotEmpty(hcode))
+        try
         {
-            assertHospitalLinkedToSupplier(supplierUserSid, hcode);
+            if (supplierUserSid != null && StringUtils.isNotEmpty(hcode))
+            {
+                assertHospitalLinkedToSupplier(supplierUserSid, hcode);
+            }
         }
-        int successNum = 0;
-        int failureNum = 0;
-        StringBuilder successMsg = new StringBuilder();
-        StringBuilder failureMsg = new StringBuilder();
+        catch (ServiceException e)
+        {
+            result.addError(0, null, null, e.getMessage());
+            result.setPass(false);
+            return null;
+        }
+        ProductCatalogImportContext ctx = new ProductCatalogImportContext(hid, hcode, supplierUserSid);
+        preloadImportExistingCertificates(ctx);
+        preloadImportSupplierMap(ctx, rows);
+        return ctx;
+    }
+
+    private void preloadImportExistingCertificates(ProductCatalogImportContext ctx)
+    {
+        ProductCertificate query = new ProductCertificate();
+        query.setHospitalId(ctx.hospitalId);
+        query.setHospitalCode(ctx.hospitalCode);
+        if (ctx.supplierUserSid != null)
+        {
+            query.setSupplierId(ctx.supplierUserSid);
+        }
+        applySupplierListScope(query);
+        List<ProductCertificate> existingList = productCertificateMapper.selectProductCertificateList(query);
+        if (existingList == null)
+        {
+            return;
+        }
+        for (ProductCertificate cert : existingList)
+        {
+            if (cert == null)
+            {
+                continue;
+            }
+            String key = buildImportMatchKey(cert.getSupplierId(), cert.getMaterialName(),
+                cert.getSpecification(), cert.getModel());
+            ctx.existingByKey.putIfAbsent(key, cert);
+        }
+    }
+
+    private void preloadImportSupplierMap(ProductCatalogImportContext ctx, List<ProductCertificateImportVo> rows)
+    {
+        if (ctx.supplierUserSid != null)
+        {
+            return;
+        }
+        Set<String> names = new HashSet<>();
         for (ProductCertificateImportVo row : rows)
         {
-            try
+            if (row == null)
             {
-                if (row == null || StringUtils.isEmpty(StringUtils.trimToNull(row.getMaterialName())))
-                {
-                    failureNum++;
-                    failureMsg.append("<br/>").append(failureNum).append("、产品名称不能为空");
-                    continue;
-                }
-                if (StringUtils.isEmpty(StringUtils.trimToNull(row.getRegisterNo())))
-                {
-                    failureNum++;
-                    failureMsg.append("<br/>").append(failureNum).append("、").append(row.getMaterialName()).append("：注册证号不能为空");
-                    continue;
-                }
-                ProductCertificate cert = new ProductCertificate();
-                cert.setMaterialName(row.getMaterialName().trim());
-                cert.setRegisterNo(row.getRegisterNo().trim());
-                cert.setRegisterName(row.getRegisterName());
-                cert.setUdiCode(row.getUdiCode());
-                cert.setRegisterIssueDate(row.getRegisterIssueDate());
-                cert.setExpireDate(row.getExpireDate());
-                cert.setProductCategory(row.getProductCategory());
-                cert.setHospitalId(hid);
-                cert.setHospitalCode(hcode);
-                cert.setCreateBy(operName);
-                if (supplierUserSid != null)
-                {
-                    cert.setSupplierId(supplierUserSid);
-                }
-                else if (StringUtils.isNotEmpty(StringUtils.trimToNull(row.getSupplierName())))
-                {
-                    Supplier supplier = supplierMapper.selectSupplierByCompanyName(row.getSupplierName().trim());
-                    if (supplier != null)
-                    {
-                        cert.setSupplierId(supplier.getSupplierId());
-                    }
-                }
-                ProductCertificate query = new ProductCertificate();
-                query.setHospitalId(hid);
-                query.setHospitalCode(hcode);
-                query.setRegisterNo(cert.getRegisterNo());
-                if (cert.getSupplierId() != null)
-                {
-                    query.setSupplierId(cert.getSupplierId());
-                }
-                applySupplierListScope(query);
-                List<ProductCertificate> exists = productCertificateMapper.selectProductCertificateList(query);
-                if (exists != null && !exists.isEmpty())
-                {
-                    if (!updateSupport)
-                    {
-                        failureNum++;
-                        failureMsg.append("<br/>").append(failureNum).append("、").append(cert.getMaterialName())
-                            .append("（").append(cert.getRegisterNo()).append("）已存在");
-                        continue;
-                    }
-                    ProductCertificate before = exists.get(0);
-                    cert.setCertificateId(before.getCertificateId());
-                    cert.setMaterialId(before.getMaterialId());
-                    cert.setUpdateBy(operName);
-                    updateProductCertificate(cert, row.getSpecification(), row.getModel(), row.getUnit(),
-                        row.getManufacturerName(), row.getPurchasePrice());
-                }
-                else
-                {
-                    insertProductCertificate(cert, row.getSpecification(), row.getModel(), row.getUnit(),
-                        row.getManufacturerName(), row.getPurchasePrice());
-                }
-                successNum++;
-                successMsg.append("<br/>").append(successNum).append("、").append(cert.getMaterialName()).append(" 导入成功");
+                continue;
             }
-            catch (Exception e)
+            String name = StringUtils.trimToNull(row.getSupplierName());
+            if (name != null)
             {
-                failureNum++;
-                String name = row != null && row.getMaterialName() != null ? row.getMaterialName() : "未知产品";
-                failureMsg.append("<br/>").append(failureNum).append("、").append(name).append(" 导入失败：")
-                    .append(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
+                names.add(name);
             }
         }
-        if (failureNum > 0)
+        if (names.isEmpty())
         {
-            failureMsg.insert(0, "导入完成，成功 " + successNum + " 条，失败 " + failureNum + " 条，错误如下：");
-            throw new ServiceException(failureMsg.toString());
+            return;
         }
-        successMsg.insert(0, "恭喜您，数据已全部导入成功！共 " + successNum + " 条，数据如下：");
-        return successMsg.toString();
+        List<Supplier> suppliers = supplierMapper.selectSupplierList(new Supplier());
+        if (suppliers == null)
+        {
+            return;
+        }
+        for (Supplier supplier : suppliers)
+        {
+            if (supplier == null || StringUtils.isEmpty(supplier.getCompanyName()))
+            {
+                continue;
+            }
+            String companyName = supplier.getCompanyName().trim();
+            if (names.contains(companyName))
+            {
+                ctx.supplierIdByCompanyName.put(companyName, supplier.getSupplierId());
+            }
+        }
+    }
+
+    private void scanProductCatalogImportRows(ProductCatalogImportContext ctx, List<ProductCertificateImportVo> rows,
+        boolean updateSupport, ProductCatalogImportValidateResult result)
+    {
+        int excelRowNum = 2;
+        int totalCount = 0;
+        int validCount = 0;
+        int willInsert = 0;
+        int willUpdate = 0;
+        int willSkip = 0;
+
+        for (ProductCertificateImportVo row : rows)
+        {
+            if (isImportBlankRow(row))
+            {
+                excelRowNum++;
+                continue;
+            }
+            totalCount++;
+            String materialName = StringUtils.trimToNull(row.getMaterialName());
+            String registerNo = StringUtils.trimToNull(row.getRegisterNo());
+            if (StringUtils.isEmpty(materialName))
+            {
+                result.addError(excelRowNum, null, registerNo, "产品名称不能为空");
+                excelRowNum++;
+                continue;
+            }
+            Long rowSupplierId = resolveImportRowSupplierId(ctx, row);
+            if (ctx.supplierUserSid == null && StringUtils.isNotEmpty(StringUtils.trimToNull(row.getSupplierName()))
+                && rowSupplierId == null)
+            {
+                result.addError(excelRowNum, materialName, registerNo,
+                    "供应商名称「" + row.getSupplierName().trim() + "」不存在");
+                excelRowNum++;
+                continue;
+            }
+
+            ProductCertificate existing = findImportExistingCert(ctx, row, rowSupplierId);
+            if (existing != null)
+            {
+                if (!updateSupport)
+                {
+                    result.addError(excelRowNum, materialName, registerNo, buildImportExistErrorMessage(row));
+                    willSkip++;
+                    excelRowNum++;
+                    continue;
+                }
+                willUpdate++;
+            }
+            else
+            {
+                willInsert++;
+            }
+            validCount++;
+            excelRowNum++;
+        }
+
+        result.setTotalCount(totalCount);
+        result.setValidCount(validCount);
+        result.setWillInsertCount(willInsert);
+        result.setWillUpdateCount(willUpdate);
+        result.setWillSkipCount(willSkip);
+        result.setPass(result.getErrorCount() == 0 && validCount > 0);
+        if (totalCount == 0)
+        {
+            result.addError(0, null, null, "导入文件无有效数据行，请检查是否使用了正确模板");
+            result.setPass(false);
+        }
+        else if (validCount == 0 && result.getErrorCount() == 0)
+        {
+            result.addError(0, null, null, "没有可导入的数据行");
+            result.setPass(false);
+        }
+    }
+
+    private int executeProductCatalogImportRows(ProductCatalogImportContext ctx, List<ProductCertificateImportVo> rows,
+        boolean updateSupport, String operName)
+    {
+        int successNum = 0;
+        for (ProductCertificateImportVo row : rows)
+        {
+            if (isImportBlankRow(row) || StringUtils.isEmpty(StringUtils.trimToNull(row.getMaterialName())))
+            {
+                continue;
+            }
+            Long rowSupplierId = resolveImportRowSupplierId(ctx, row);
+            ProductCertificate existing = findImportExistingCert(ctx, row, rowSupplierId);
+            if (existing != null)
+            {
+                if (!updateSupport)
+                {
+                    continue;
+                }
+                applyImportRowUpdate(ctx, row, existing, rowSupplierId, operName);
+            }
+            else
+            {
+                applyImportRowInsert(ctx, row, rowSupplierId, operName);
+            }
+            successNum++;
+        }
+        return successNum;
+    }
+
+    private boolean isImportBlankRow(ProductCertificateImportVo row)
+    {
+        if (row == null)
+        {
+            return true;
+        }
+        return StringUtils.isEmpty(StringUtils.trimToNull(row.getMaterialName()))
+            && StringUtils.isEmpty(StringUtils.trimToNull(row.getRegisterNo()))
+            && StringUtils.isEmpty(StringUtils.trimToNull(row.getSpecification()))
+            && StringUtils.isEmpty(StringUtils.trimToNull(row.getModel()))
+            && StringUtils.isEmpty(StringUtils.trimToNull(row.getRegisterName()))
+            && StringUtils.isEmpty(StringUtils.trimToNull(row.getSupplierName()));
+    }
+
+    private String buildImportExistErrorMessage(ProductCertificateImportVo row)
+    {
+        StringBuilder sb = new StringBuilder("产品已存在（可勾选「更新已存在的数据」）");
+        String spec = StringUtils.trimToNull(row.getSpecification());
+        String model = StringUtils.trimToNull(row.getModel());
+        if (spec != null || model != null)
+        {
+            sb.append("：");
+            if (spec != null)
+            {
+                sb.append("规格 ").append(spec);
+            }
+            if (model != null)
+            {
+                if (spec != null)
+                {
+                    sb.append("，");
+                }
+                sb.append("型号 ").append(model);
+            }
+        }
+        return sb.toString();
+    }
+
+    private String buildImportMatchKey(Long supplierId, String materialName, String specification, String model)
+    {
+        return (supplierId != null ? supplierId : "") + "\u0001"
+            + StringUtils.trimToEmpty(materialName) + "\u0001"
+            + StringUtils.trimToEmpty(specification) + "\u0001"
+            + StringUtils.trimToEmpty(model);
+    }
+
+    private String buildImportMatchKey(Long supplierId, ProductCertificateImportVo row)
+    {
+        if (row == null)
+        {
+            return "";
+        }
+        return buildImportMatchKey(supplierId, row.getMaterialName(), row.getSpecification(), row.getModel());
+    }
+
+    private ProductCertificate findImportExistingCert(ProductCatalogImportContext ctx,
+        ProductCertificateImportVo row, Long supplierId)
+    {
+        if (row == null || StringUtils.isEmpty(StringUtils.trimToNull(row.getMaterialName())))
+        {
+            return null;
+        }
+        return ctx.existingByKey.get(buildImportMatchKey(supplierId, row));
+    }
+
+    private Long resolveImportRowSupplierId(ProductCatalogImportContext ctx, ProductCertificateImportVo row)
+    {
+        if (ctx.supplierUserSid != null)
+        {
+            return ctx.supplierUserSid;
+        }
+        String name = StringUtils.trimToNull(row != null ? row.getSupplierName() : null);
+        if (name == null)
+        {
+            return null;
+        }
+        return ctx.supplierIdByCompanyName.get(name);
+    }
+
+    private void applyImportRowInsert(ProductCatalogImportContext ctx, ProductCertificateImportVo row,
+        Long rowSupplierId, String operName)
+    {
+        String materialName = row.getMaterialName().trim();
+        String registerNo = StringUtils.trimToNull(row.getRegisterNo());
+        ProductCertificate cert = new ProductCertificate();
+        cert.setMaterialName(materialName);
+        if (StringUtils.isNotEmpty(registerNo))
+        {
+            cert.setRegisterNo(registerNo);
+        }
+        cert.setRegisterName(row.getRegisterName());
+        cert.setUdiCode(row.getUdiCode());
+        cert.setRegisterIssueDate(row.getRegisterIssueDate());
+        cert.setExpireDate(row.getExpireDate());
+        cert.setProductCategory(row.getProductCategory());
+        cert.setHospitalId(ctx.hospitalId);
+        cert.setHospitalCode(ctx.hospitalCode);
+        cert.setCreateBy(operName);
+        if (rowSupplierId != null)
+        {
+            cert.setSupplierId(rowSupplierId);
+        }
+        assertHospitalRequiredOnInsert(cert, ctx.supplierUserSid);
+        if (StringUtils.isEmpty(cert.getAuditStatus()))
+        {
+            cert.setAuditStatus("0");
+        }
+        if (StringUtils.isEmpty(cert.getStatus()))
+        {
+            cert.setStatus("0");
+        }
+        Long materialId = createMaterialDictForImport(ctx, cert, row.getSpecification(), row.getModel(),
+            row.getUnit(), row.getManufacturerName(), row.getPurchasePrice());
+        cert.setMaterialId(materialId);
+        cert.setCreateTime(DateUtils.getNowDate());
+        checkExpiredStatus(cert);
+        productCertificateMapper.insertProductCertificate(cert);
+        if (cert.getCertificateId() != null)
+        {
+            ctx.deferredSnapCertificateIds.add(cert.getCertificateId());
+            cert.setSpecification(row.getSpecification());
+            cert.setModel(row.getModel());
+            ctx.existingByKey.put(buildImportMatchKey(rowSupplierId, row), cert);
+        }
+    }
+
+    private void applyImportRowUpdate(ProductCatalogImportContext ctx, ProductCertificateImportVo row,
+        ProductCertificate before, Long rowSupplierId, String operName)
+    {
+        assertProductCertificateSupplierScope(before);
+        assertProductCertificateEditable(before);
+        ProductCertificate cert = new ProductCertificate();
+        cert.setCertificateId(before.getCertificateId());
+        cert.setMaterialId(before.getMaterialId());
+        cert.setMaterialName(row.getMaterialName().trim());
+        String registerNo = StringUtils.trimToNull(row.getRegisterNo());
+        if (StringUtils.isNotEmpty(registerNo))
+        {
+            cert.setRegisterNo(registerNo);
+        }
+        cert.setRegisterName(row.getRegisterName());
+        cert.setUdiCode(row.getUdiCode());
+        cert.setRegisterIssueDate(row.getRegisterIssueDate());
+        cert.setExpireDate(row.getExpireDate());
+        cert.setProductCategory(row.getProductCategory());
+        cert.setHospitalId(before.getHospitalId());
+        cert.setHospitalCode(before.getHospitalCode());
+        cert.setSupplierId(rowSupplierId != null ? rowSupplierId : before.getSupplierId());
+        cert.setUpdateBy(operName);
+        cert.setUpdateTime(DateUtils.getNowDate());
+        checkExpiredStatus(cert);
+        productCertificateMapper.updateProductCertificate(cert);
+        updateMaterialDictForImport(ctx, cert, row.getSpecification(), row.getModel(), row.getUnit(),
+            row.getManufacturerName(), row.getPurchasePrice());
+        ctx.deferredSnapCertificateIds.add(cert.getCertificateId());
+        cert.setSpecification(row.getSpecification());
+        cert.setModel(row.getModel());
+        ctx.existingByKey.put(buildImportMatchKey(rowSupplierId, row), cert);
+    }
+
+    private Long createMaterialDictForImport(ProductCatalogImportContext ctx, ProductCertificate productCertificate,
+        String specification, String model, String unit, String manufacturerName,
+        java.math.BigDecimal purchasePrice)
+    {
+        com.scm.system.domain.MaterialDict materialDict = new com.scm.system.domain.MaterialDict();
+        materialDict.setMaterialName(productCertificate.getMaterialName());
+        if (StringUtils.isNotEmpty(specification))
+        {
+            materialDict.setSpecification(specification);
+        }
+        if (StringUtils.isNotEmpty(model))
+        {
+            materialDict.setModel(model);
+        }
+        if (StringUtils.isNotEmpty(unit))
+        {
+            materialDict.setUnit(unit);
+        }
+        if (purchasePrice != null)
+        {
+            materialDict.setPurchasePrice(purchasePrice);
+        }
+        if (StringUtils.isNotEmpty(manufacturerName))
+        {
+            Long manufacturerId = resolveImportManufacturerId(ctx, manufacturerName, productCertificate.getCreateBy());
+            if (manufacturerId != null)
+            {
+                materialDict.setManufacturerId(manufacturerId);
+            }
+        }
+        materialDict.setStatus("0");
+        materialDict.setDelFlag("0");
+        materialDict.setCreateBy(productCertificate.getCreateBy());
+        materialDict.setCreateTime(DateUtils.getNowDate());
+        ctx.materialCodeSeq++;
+        materialDict.setMaterialCode("MAT" + System.currentTimeMillis() + ctx.materialCodeSeq);
+        int result = materialDictMapper.insertMaterialDict(materialDict);
+        if (result > 0 && materialDict.getMaterialId() != null)
+        {
+            return materialDict.getMaterialId();
+        }
+        throw new RuntimeException("自动创建物资字典记录失败");
+    }
+
+    private void updateMaterialDictForImport(ProductCatalogImportContext ctx, ProductCertificate productCertificate,
+        String specification, String model, String unit, String manufacturerName,
+        java.math.BigDecimal purchasePrice)
+    {
+        if (productCertificate.getMaterialId() == null || productCertificate.getMaterialId() <= 0)
+        {
+            return;
+        }
+        com.scm.system.domain.MaterialDict materialDict = ctx.materialDictCache.get(productCertificate.getMaterialId());
+        if (materialDict == null)
+        {
+            materialDict = materialDictService.selectMaterialDictById(productCertificate.getMaterialId());
+            if (materialDict != null)
+            {
+                ctx.materialDictCache.put(productCertificate.getMaterialId(), materialDict);
+            }
+        }
+        if (materialDict == null)
+        {
+            return;
+        }
+        boolean needUpdate = false;
+        if (StringUtils.isNotEmpty(specification) && !specification.equals(materialDict.getSpecification()))
+        {
+            materialDict.setSpecification(specification);
+            needUpdate = true;
+        }
+        if (StringUtils.isNotEmpty(model) && !model.equals(materialDict.getModel()))
+        {
+            materialDict.setModel(model);
+            needUpdate = true;
+        }
+        if (StringUtils.isNotEmpty(unit) && !unit.equals(materialDict.getUnit()))
+        {
+            materialDict.setUnit(unit);
+            needUpdate = true;
+        }
+        if (purchasePrice != null && !purchasePrice.equals(materialDict.getPurchasePrice()))
+        {
+            materialDict.setPurchasePrice(purchasePrice);
+            needUpdate = true;
+        }
+        if (StringUtils.isNotEmpty(manufacturerName))
+        {
+            Long manufacturerId = resolveImportManufacturerId(ctx, manufacturerName, productCertificate.getUpdateBy());
+            if (manufacturerId != null
+                && (materialDict.getManufacturerId() == null || !manufacturerId.equals(materialDict.getManufacturerId())))
+            {
+                materialDict.setManufacturerId(manufacturerId);
+                needUpdate = true;
+            }
+        }
+        if (needUpdate)
+        {
+            materialDict.setUpdateBy(productCertificate.getUpdateBy());
+            materialDict.setUpdateTime(DateUtils.getNowDate());
+            materialDictMapper.updateMaterialDict(materialDict);
+        }
+    }
+
+    private Long resolveImportManufacturerId(ProductCatalogImportContext ctx, String manufacturerName, String operBy)
+    {
+        String name = manufacturerName.trim();
+        Long cached = ctx.manufacturerIdByName.get(name);
+        if (cached != null)
+        {
+            return cached;
+        }
+        Long manufacturerId = findOrCreateManufacturer(name, operBy);
+        if (manufacturerId != null)
+        {
+            ctx.manufacturerIdByName.put(name, manufacturerId);
+        }
+        return manufacturerId;
+    }
+
+    private String buildImportValidateErrorMessage(ProductCatalogImportValidateResult validate)
+    {
+        StringBuilder sb = new StringBuilder("文件校验未通过，共 ").append(validate.getErrorCount()).append(" 处问题：");
+        for (int i = 0; i < validate.getErrors().size(); i++)
+        {
+            ProductCatalogImportValidateError err = validate.getErrors().get(i);
+            sb.append("<br/>").append(i + 1).append("、");
+            if (err.getRowNum() > 0)
+            {
+                sb.append("第").append(err.getRowNum()).append("行");
+            }
+            if (StringUtils.isNotEmpty(err.getMaterialName()))
+            {
+                sb.append("「").append(err.getMaterialName()).append("」");
+            }
+            sb.append(err.getMessage());
+        }
+        return sb.toString();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String importProductCatalog(List<ProductCertificateImportVo> rows, String hospitalId,
+        String hospitalCode, boolean updateSupport, String operName)
+    {
+        ProductCatalogImportValidateResult validate = new ProductCatalogImportValidateResult();
+        ProductCatalogImportContext ctx = buildProductCatalogImportContext(rows, hospitalId, hospitalCode, validate);
+        if (ctx == null)
+        {
+            throw new ServiceException(buildImportValidateErrorMessage(validate));
+        }
+        scanProductCatalogImportRows(ctx, rows, updateSupport, validate);
+        if (!validate.isPass())
+        {
+            throw new ServiceException(buildImportValidateErrorMessage(validate));
+        }
+        int successNum = executeProductCatalogImportRows(ctx, rows, updateSupport, operName);
+        if (!ctx.deferredSnapCertificateIds.isEmpty())
+        {
+            productCertLicenseSnapService.ensureProductSnapStubsForCertificates(
+                ctx.deferredSnapCertificateIds, operName);
+        }
+        return String.format("导入成功，共 %d 条（预计新增 %d 条，更新 %d 条）",
+            successNum, validate.getWillInsertCount(), validate.getWillUpdateCount());
     }
 }
 

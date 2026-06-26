@@ -28,6 +28,7 @@ import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.enums.BusinessType;
 import com.scm.common.exception.ServiceException;
+import com.scm.common.exception.UtilException;
 import com.scm.common.utils.ServletUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.poi.ExcelUtil;
@@ -40,6 +41,7 @@ import com.scm.system.domain.ProductCertLicenseSnap;
 import com.scm.system.domain.ScmFile;
 import com.scm.system.domain.Supplier;
 import com.scm.system.domain.SupplierUser;
+import com.scm.system.domain.vo.ProductCatalogImportValidateResult;
 import com.scm.system.domain.vo.ProductCertificateImportVo;
 import com.scm.system.domain.vo.ProductMaterialArchiveVo;
 import com.scm.system.service.IHospitalSupplierService;
@@ -334,6 +336,49 @@ public class ProductCertificateController extends BaseController
     }
 
     /**
+     * 校验产品目录导入文件（解析 Excel 并逐行检查，不写入数据库）
+     */
+    @RequiresPermissions("certificate:product:add")
+    @PostMapping("/validateImportCatalog")
+    @ResponseBody
+    public AjaxResult validateImportCatalog(MultipartFile file,
+        @RequestParam String hospitalId,
+        @RequestParam(required = false) String hospitalCode,
+        @RequestParam(defaultValue = "false") boolean updateSupport) throws Exception
+    {
+        if (file == null || file.isEmpty())
+        {
+            return error("请选择导入文件");
+        }
+        try
+        {
+            ExcelUtil<ProductCertificateImportVo> util = new ExcelUtil<ProductCertificateImportVo>(ProductCertificateImportVo.class);
+            List<ProductCertificateImportVo> rows = util.importExcel(file.getInputStream());
+            ProductCatalogImportValidateResult result = productCertificateService.validateProductCatalogImport(
+                rows, hospitalId, hospitalCode, updateSupport);
+            if (result.isPass())
+            {
+                String summary = String.format("校验通过：共 %d 条，预计新增 %d 条",
+                    result.getValidCount(), result.getWillInsertCount());
+                if (updateSupport && result.getWillUpdateCount() > 0)
+                {
+                    summary += String.format("，更新 %d 条", result.getWillUpdateCount());
+                }
+                return AjaxResult.success(summary, result);
+            }
+            return AjaxResult.warn("文件校验未通过，请修正后重试", result);
+        }
+        catch (UtilException e)
+        {
+            return error("文件解析失败：" + e.getMessage());
+        }
+        catch (ServiceException e)
+        {
+            return error(e.getMessage());
+        }
+    }
+
+    /**
      * 导入产品目录
      */
     @RequiresPermissions("certificate:product:add")
@@ -345,10 +390,21 @@ public class ProductCertificateController extends BaseController
         @RequestParam(required = false) String hospitalCode,
         @RequestParam(defaultValue = "false") boolean updateSupport) throws Exception
     {
-        ExcelUtil<ProductCertificateImportVo> util = new ExcelUtil<ProductCertificateImportVo>(ProductCertificateImportVo.class);
-        List<ProductCertificateImportVo> rows = util.importExcel(file.getInputStream());
-        String message = productCertificateService.importProductCatalog(rows, hospitalId, hospitalCode, updateSupport, getLoginName());
-        return AjaxResult.success(message);
+        try
+        {
+            ExcelUtil<ProductCertificateImportVo> util = new ExcelUtil<ProductCertificateImportVo>(ProductCertificateImportVo.class);
+            List<ProductCertificateImportVo> rows = util.importExcel(file.getInputStream());
+            String message = productCertificateService.importProductCatalog(rows, hospitalId, hospitalCode, updateSupport, getLoginName());
+            return AjaxResult.success(message);
+        }
+        catch (UtilException e)
+        {
+            return error("文件解析失败：" + e.getMessage());
+        }
+        catch (ServiceException e)
+        {
+            return error(e.getMessage());
+        }
     }
 
     /**

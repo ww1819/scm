@@ -1349,12 +1349,135 @@
 			return true;
 		}
 
+		function escapeImportHtml(text) {
+			if (!text) {
+				return '';
+			}
+			return $('<div/>').text(text).html();
+		}
+
+		function buildImportValidateFormData(layero) {
+			var formData = new FormData(layero.find('form')[0]);
+			formData.set('hospitalId', selectedHospitalId);
+			formData.set('hospitalCode', $('#productFilterHospitalCode').val() || '');
+			return formData;
+		}
+
+		function renderImportValidateResult(layero, result) {
+			var $box = layero.find('#importValidateResult');
+			if (!result) {
+				$box.html('<div class="text-danger">校验请求失败</div>');
+				return;
+			}
+			if (result.code == web_status.SUCCESS && result.data) {
+				var d = result.data;
+				var html = '<div class="text-success"><i class="fa fa-check-circle"></i> ' + (result.msg || '校验通过') + '</div>';
+				html += '<div class="text-muted" style="margin-top:4px;">有效 ' + (d.validCount || 0) + ' 条';
+				if (d.willInsertCount > 0) {
+					html += '，新增 ' + d.willInsertCount + ' 条';
+				}
+				if (d.willUpdateCount > 0) {
+					html += '，更新 ' + d.willUpdateCount + ' 条';
+				}
+				html += '</div>';
+				$box.html(html);
+				return;
+			}
+			var html = '<div class="text-danger"><i class="fa fa-exclamation-circle"></i> ' + (result.msg || '校验未通过') + '</div>';
+			if (result.data && result.data.errors && result.data.errors.length) {
+				html += '<ul class="list-unstyled" style="margin:8px 0 0;padding-left:0;max-height:160px;overflow:auto;">';
+				$.each(result.data.errors, function(i, err) {
+					html += '<li style="margin-bottom:4px;line-height:1.5;">';
+					if (err.rowNum > 0) {
+						html += '<strong>第' + err.rowNum + '行</strong> ';
+					}
+					if (err.materialName) {
+						html += '「' + escapeImportHtml(err.materialName) + '」';
+					}
+					html += escapeImportHtml(err.message || '');
+					html += '</li>';
+				});
+				html += '</ul>';
+			}
+			$box.html(html);
+		}
+
+		function requestImportCatalogValidate(layero, callback) {
+			var file = layero.find('#file').val();
+			if (file == '' || (!$.common.endWith(file, '.xls') && !$.common.endWith(file, '.xlsx'))) {
+				$.modal.msgWarning("请选择后缀为 “xls”或“xlsx”的文件。");
+				if (callback) {
+					callback(false, null);
+				}
+				return;
+			}
+			layero.find('#importValidateResult').html('<div class="text-muted"><i class="fa fa-spinner fa-spin"></i> 正在解析并校验文件...</div>');
+			$.ajax({
+				url: prefix + "/validateImportCatalog",
+				data: buildImportValidateFormData(layero),
+				cache: false,
+				contentType: false,
+				processData: false,
+				type: 'POST',
+				success: function(result) {
+					renderImportValidateResult(layero, result);
+					layero.data('importValidatePassed', result.code == web_status.SUCCESS);
+					if (callback) {
+						callback(result.code == web_status.SUCCESS, result);
+					}
+				},
+				error: function() {
+					layero.find('#importValidateResult').html('<div class="text-danger">文件校验失败，请稍后重试</div>');
+					if (callback) {
+						callback(false, null);
+					}
+				}
+			});
+		}
+
+		function doImportProductCatalog(layero, loadIdx) {
+			$.ajax({
+				url: prefix + "/importCatalog",
+				data: buildImportValidateFormData(layero),
+				cache: false,
+				contentType: false,
+				processData: false,
+				type: 'POST',
+				success: function(result) {
+					if (result.code == web_status.SUCCESS) {
+						$.modal.close(loadIdx);
+						$.modal.closeAll();
+						$.modal.alertSuccess(result.msg);
+						$('#' + productTableId).bootstrapTable('refresh');
+					} else if (result.code == web_status.WARNING) {
+						$.modal.close(loadIdx);
+						$.modal.enable();
+						$.modal.alertWarning(result.msg);
+					} else {
+						$.modal.close(loadIdx);
+						$.modal.enable();
+						renderImportValidateResult(layero, result);
+						$.modal.alertError(result.msg);
+					}
+				},
+				error: function() {
+					$.modal.close(loadIdx);
+					$.modal.enable();
+					$.modal.alertError('导入失败');
+				},
+				complete: function() {
+					layero.find('#file').val('');
+					layero.find('#importValidateResult').empty();
+				}
+			});
+		}
+
 		function importProductCatalog() {
 			if (!requireSelectedHospital()) {
 				return;
 			}
-			var _width = "420";
-			var _height = "260";
+			var _width = "520";
+			var _height = "380";
 			top.layer.open({
 				type: 1,
 				area: [_width + 'px', _height + 'px'],
@@ -1365,49 +1488,39 @@
 				content: $('#productCatalogImportTpl').html(),
 				btn: ['<i class="fa fa-check"></i> 导入', '<i class="fa fa-remove"></i> 取消'],
 				shadeClose: true,
-				btn1: function(index, layero) {
-					var file = layero.find('#file').val();
-					if (file == '' || (!$.common.endWith(file, '.xls') && !$.common.endWith(file, '.xlsx'))) {
-						$.modal.msgWarning("请选择后缀为 “xls”或“xlsx”的文件。");
-						return false;
-					}
-					var loadIdx = top.layer.load(2, { shade: false });
-					$.modal.disable();
-					var formData = new FormData(layero.find('form')[0]);
-					formData.set('hospitalId', selectedHospitalId);
-					formData.set('hospitalCode', $('#productFilterHospitalCode').val() || '');
-					$.ajax({
-						url: prefix + "/importCatalog",
-						data: formData,
-						cache: false,
-						contentType: false,
-						processData: false,
-						type: 'POST',
-						success: function(result) {
-							if (result.code == web_status.SUCCESS) {
-								$.modal.close(loadIdx);
-								$.modal.closeAll();
-								$.modal.alertSuccess(result.msg);
-								$('#' + productTableId).bootstrapTable('refresh');
-							} else if (result.code == web_status.WARNING) {
-								$.modal.close(loadIdx);
-								$.modal.enable();
-								$.modal.alertWarning(result.msg);
-							} else {
-								$.modal.close(loadIdx);
-								$.modal.enable();
-								$.modal.alertError(result.msg);
-							}
-						},
-						error: function() {
-							$.modal.close(loadIdx);
-							$.modal.enable();
-							$.modal.alertError('导入失败');
-						},
-						complete: function() {
-							layero.find('#file').val('');
+				success: function(layero) {
+					layero.find('#file').on('change', function() {
+						layero.data('importValidatePassed', false);
+						if (!$(this).val()) {
+							layero.find('#importValidateResult').empty();
+							return;
+						}
+						requestImportCatalogValidate(layero);
+					});
+					layero.find('#updateSupport').on('change', function() {
+						layero.data('importValidatePassed', false);
+						if (layero.find('#file').val()) {
+							requestImportCatalogValidate(layero);
 						}
 					});
+				},
+				btn1: function(index, layero) {
+					var loadIdx = top.layer.load(2, { shade: false });
+					$.modal.disable();
+					if (layero.data('importValidatePassed') && layero.find('#file').val()) {
+						doImportProductCatalog(layero, loadIdx);
+						return false;
+					}
+					requestImportCatalogValidate(layero, function(passed) {
+						if (!passed) {
+							$.modal.close(loadIdx);
+							$.modal.enable();
+							$.modal.msgWarning("文件校验未通过，请根据下方提示修正后重试");
+							return;
+						}
+						doImportProductCatalog(layero, loadIdx);
+					});
+					return false;
 				}
 			});
 		}
@@ -1534,11 +1647,12 @@
 	<div class="col-xs-offset-1">
 		<input type="file" id="file" name="file"/>
 		<div class="mt10 pt5">
-			<input type="checkbox" id="updateSupport" name="updateSupport" title="若注册证号已存在则更新"> 是否更新已存在的数据
+			<input type="checkbox" id="updateSupport" name="updateSupport" title="若数据已存在则更新"> 是否更新已存在的数据
 			 &nbsp;	<a onclick="$.table.importTemplate()" class="btn btn-default btn-xs"><i class="fa fa-file-excel-o"></i> 下载模板</a>
 		</div>
+		<div id="importValidateResult" class="pull-left mt10" style="width:100%;"></div>
 		<font color="red" class="pull-left mt10">
-			提示：仅允许导入“xls”或“xlsx”格式文件！导入前请先在左侧选择医院。
+			提示：选择文件后将自动解析校验；仅允许导入“xls”或“xlsx”格式，导入前请先在左侧选择医院。
 		</font>
 	</div>
 </form>

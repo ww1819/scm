@@ -387,4 +387,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
           and c.hospital_id = #{hospitalId}
           and (c.status is null or c.status != '1')
     </select>
+
+    <update id="repairStoredCertificateTypeValues">
+        update scm_supplier_certificate c
+        inner join scm_certificate_type t on t.type_id = cast(c.certificate_type as unsigned)
+        set c.certificate_type = t.type_name
+        where (c.status is null or c.status != '1')
+          and c.certificate_type regexp '^[0-9]+$'
+    </update>
 </mapper>
