@@ -1,7 +1,9 @@
 package com.scm.system.service.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -28,6 +30,43 @@ import com.scm.system.service.IProductCertLicenseSnapService;
 public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSnapService
 {
     private static final Logger log = LoggerFactory.getLogger(ProductCertLicenseSnapServiceImpl.class);
+
+    /** 同供应商、同医院、同证件编码可共享预览图片的证件类型名称 */
+    private static final Set<String> SHAREABLE_LICENSE_KIND_NAMES = Collections.unmodifiableSet(new LinkedHashSet<>(
+        Arrays.asList(
+            "医疗器械注册证",
+            "生产许可证",
+            "生产许可证说明书",
+            "注册证",
+            "生产企业营业执照",
+            "生产企业许可证",
+            "生产企业变更说明",
+            "二级授权公司营业执照",
+            "二级授权公司许可证",
+            "二级授权公司授权书",
+            "三级授权公司营业执照",
+            "三级授权公司许可证",
+            "三级授权公司授权书",
+            "四级授权公司营业执照",
+            "四级授权公司许可证",
+            "四级授权公司授权书",
+            "五级授权公司营业执照",
+            "五级授权公司许可证",
+            "五级授权公司授权书",
+            "六级授权公司营业执照",
+            "六级授权公司许可证",
+            "六级授权公司授权书",
+            "经营许可证",
+            "第二类医疗器械经营备案凭证",
+            "第一类医疗器械生产备案凭证和备案信息表",
+            "备案信息表",
+            "厂家授权书",
+            "合同复印件",
+            "检验报告结论",
+            "消毒产品安全评价报告",
+            "消毒产品安全评价报告备案表",
+            "业务员身份证",
+            "业务员身份证表")));
 
     @Autowired
     private ProductCertLicenseSnapMapper productCertLicenseSnapMapper;
@@ -98,6 +137,181 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
         row.setManufacturerNameSnap(c.getManufacturerName());
         row.setSupplierCompanyNameSnap(c.getSupplierName());
         row.setRegisterNoSnap(c.getRegisterNo());
+    }
+
+    private boolean isShareableLicenseKind(ProductCertLicenseSnap snap)
+    {
+        if (snap == null)
+        {
+            return false;
+        }
+        String kindName = StringUtils.trimToNull(snap.getLicenseKindName());
+        if (kindName == null && StringUtils.isNotEmpty(snap.getLicenseKindCode()))
+        {
+            kindName = StringUtils.trimToNull(resolveKindNameFromTypeTable(snap.getLicenseKindCode()));
+        }
+        return kindName != null && SHAREABLE_LICENSE_KIND_NAMES.contains(kindName);
+    }
+
+    private boolean hasHospitalScope(ProductCertificate c)
+    {
+        return c != null
+            && (StringUtils.isNotEmpty(StringUtils.trimToNull(c.getHospitalId()))
+                || StringUtils.isNotEmpty(StringUtils.trimToNull(c.getHospitalCode())));
+    }
+
+    private boolean canShareLicenseSnapFiles(ProductCertLicenseSnap snap, ProductCertificate c)
+    {
+        return isShareableLicenseKind(snap)
+            && c != null
+            && c.getSupplierId() != null
+            && hasHospitalScope(c)
+            && StringUtils.isNotEmpty(StringUtils.trimToNull(snap.getLicenseKindCode()))
+            && StringUtils.isNotEmpty(StringUtils.trimToNull(snap.getLicenseNo()));
+    }
+
+    private List<ProductCertLicenseSnap> findPeerSnaps(ProductCertificate c, String licenseNo, String licenseKindCode)
+    {
+        if (c == null || StringUtils.isEmpty(licenseNo) || c.getSupplierId() == null
+            || StringUtils.isEmpty(licenseKindCode) || !hasHospitalScope(c))
+        {
+            return new ArrayList<>();
+        }
+        List<ProductCertLicenseSnap> list = productCertLicenseSnapMapper.selectSnapsByLicenseNoSupplierHospitalAndKind(
+            licenseNo.trim(), c.getSupplierId(), c.getHospitalId(), c.getHospitalCode(), licenseKindCode.trim());
+        return list != null ? list : new ArrayList<>();
+    }
+
+    private String resolveSharedSnapFiles(ProductCertificate c, String licenseNo, String licenseKindCode)
+    {
+        List<ProductCertLicenseSnap> peers = findPeerSnaps(c, licenseNo, licenseKindCode);
+        List<String> parts = new ArrayList<>();
+        for (ProductCertLicenseSnap snap : peers)
+        {
+            if (snap != null && StringUtils.isNotEmpty(snap.getCertificateFile()))
+            {
+                parts.add(snap.getCertificateFile());
+            }
+        }
+        return mergeCertificateFileUrls(parts.toArray(new String[0]));
+    }
+
+    private void applySharedSnapFiles(List<ProductCertLicenseSnap> ordered, ProductCertificate c)
+    {
+        if (c == null || c.getSupplierId() == null || !hasHospitalScope(c) || ordered == null || ordered.isEmpty())
+        {
+            return;
+        }
+        for (ProductCertLicenseSnap s : ordered)
+        {
+            if (!canShareLicenseSnapFiles(s, c))
+            {
+                continue;
+            }
+            String shared = resolveSharedSnapFiles(c, s.getLicenseNo(), s.getLicenseKindCode());
+            if (StringUtils.isNotEmpty(shared))
+            {
+                s.setCertificateFile(shared);
+            }
+        }
+    }
+
+    private void syncSnapFilesToPeers(ProductCertificate c, String licenseKindCode, String licenseNo,
+        String certificateFile, String loginName)
+    {
+        if (c == null || StringUtils.isEmpty(licenseNo) || c.getSupplierId() == null
+            || StringUtils.isEmpty(licenseKindCode) || !hasHospitalScope(c))
+        {
+            return;
+        }
+        List<ProductCertLicenseSnap> peers = findPeerSnaps(c, licenseNo, licenseKindCode);
+        String normalized = certificateFile != null ? certificateFile : "";
+        for (ProductCertLicenseSnap peer : peers)
+        {
+            if (peer == null || StringUtils.isEmpty(peer.getLicenseId()))
+            {
+                continue;
+            }
+            ProductCertLicenseSnap u = new ProductCertLicenseSnap();
+            u.setLicenseId(peer.getLicenseId());
+            u.setCertificateFile(normalized);
+            u.setUpdateBy(loginName);
+            productCertLicenseSnapMapper.update(u);
+        }
+    }
+
+    private void syncSnapFilesIfShareable(ProductCertLicenseSnap snap, ProductCertificate c,
+        String certificateFile, String loginName)
+    {
+        if (!canShareLicenseSnapFiles(snap, c))
+        {
+            return;
+        }
+        syncSnapFilesToPeers(c, snap.getLicenseKindCode(), snap.getLicenseNo(), certificateFile, loginName);
+    }
+
+    private boolean removeSharedSnapImage(ProductCertLicenseSnap snap, ProductCertificate c,
+        String targetUrl, String loginName)
+    {
+        if (!canShareLicenseSnapFiles(snap, c))
+        {
+            return false;
+        }
+        String merged = resolveSharedSnapFiles(c, snap.getLicenseNo(), snap.getLicenseKindCode());
+        if (StringUtils.isEmpty(merged))
+        {
+            return false;
+        }
+        String updated = removeUrlFromCsv(merged, target);
+        syncSnapFilesToPeers(c, snap.getLicenseKindCode(), snap.getLicenseNo(), updated, loginName);
+        return true;
+    }
+
+    private String mergeCertificateFileUrls(String... csvValues)
+    {
+        List<String> urls = new ArrayList<>();
+        if (csvValues == null)
+        {
+            return "";
+        }
+        for (String csv : csvValues)
+        {
+            if (StringUtils.isEmpty(csv))
+            {
+                continue;
+            }
+            for (String part : csv.split(","))
+            {
+                String t = part != null ? part.trim() : "";
+                if (!t.isEmpty() && !urls.contains(t))
+                {
+                    urls.add(t);
+                }
+            }
+        }
+        return urls.isEmpty() ? "" : String.join(",", urls);
+    }
+
+    private String removeUrlFromCsv(String csv, String targetUrl)
+    {
+        if (StringUtils.isEmpty(targetUrl))
+        {
+            return StringUtils.trimToEmpty(csv);
+        }
+        String target = targetUrl.trim();
+        List<String> urls = new ArrayList<>();
+        if (StringUtils.isNotEmpty(csv))
+        {
+            for (String part : csv.split(","))
+            {
+                String t = part != null ? part.trim() : "";
+                if (!t.isEmpty() && !t.equals(target))
+                {
+                    urls.add(t);
+                }
+            }
+        }
+        return urls.isEmpty() ? "" : String.join(",", urls);
     }
 
     private void insertStubRow(ProductCertificate c, CertificateType type, String loginName)
@@ -258,6 +472,8 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
         {
             ordered.add(orphan);
         }
+        ProductCertificate c = assertCertificateScope(certificateId);
+        applySharedSnapFiles(ordered, c);
         perf.mark("mergeOrderInMemory");
         perf.finish(350);
         return ordered;
@@ -326,7 +542,9 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
         }
         db.setCertificateFile(String.join(",", urls));
         db.setUpdateBy(loginName);
-        return productCertLicenseSnapMapper.update(db);
+        productCertLicenseSnapMapper.update(db);
+        syncSnapFilesIfShareable(db, c, db.getCertificateFile(), loginName);
+        return 1;
     }
 
     @Override
@@ -343,12 +561,16 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
         }
         ProductCertificate c = assertCertificateScope(Long.valueOf(db.getCertificateId()));
         assertCertificateEditable(c);
+        String target = fileUrl.trim();
+        if (removeSharedSnapImage(db, c, target, loginName))
+        {
+            return 1;
+        }
         String existing = StringUtils.trimToEmpty(db.getCertificateFile());
         if (StringUtils.isEmpty(existing))
         {
             return 0;
         }
-        String target = fileUrl.trim();
         List<String> urls = new ArrayList<>();
         for (String part : existing.split(","))
         {

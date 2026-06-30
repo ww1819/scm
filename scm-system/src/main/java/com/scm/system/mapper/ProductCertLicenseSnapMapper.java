@@ -21,4 +21,14 @@ public interface ProductCertLicenseSnapMapper
     int update(ProductCertLicenseSnap row);
 
     int softDeleteById(ProductCertLicenseSnap row);
+
+    /**
+     * 同供应商、同医院、同证件类型、同证件编码可共享预览图片的证件类型名称
+     */
+    List<ProductCertLicenseSnap> selectSnapsByLicenseNoSupplierHospitalAndKind(
+        @Param("licenseNo") String licenseNo,
+        @Param("supplierId") Long supplierId,
+        @Param("hospitalId") String hospitalId,
+        @Param("hospitalCode") String hospitalCode,
+        @Param("licenseKindCode") String licenseKindCode);
 }
