@@ -553,7 +553,7 @@
 				showToggle: false,
 				search: false,
 				sortable: true,
-				sortName: 'licenseKindName',
+				sortName: 'licenseNo',
 				sortOrder: 'asc',
 				height: calculateCertDetailTableHeight(),
 				data: [],
@@ -564,6 +564,15 @@
 					width: 60,
 					formatter: function(value, row, index) {
 						return index + 1;
+					}
+				},
+				{
+					field: 'licenseKindCode',
+					title: '证件编号',
+					align: 'left',
+					sortable: true,
+					formatter: function(value, row) {
+						return value || row.licenseKindCode || '-';
 					}
 				},
 				{
@@ -633,6 +642,7 @@
 			$.post(prefix + '/licenseSnap/mergedRows', { certificateId: certificateId }, function(res) {
 				if (res.code === 0) {
 					$detail.bootstrapTable('load', res.data || []);
+					$detail.bootstrapTable('sort', 'licenseNo', 'asc');
 				} else {
 					$detail.bootstrapTable('load', []);
 					if (res.msg) {

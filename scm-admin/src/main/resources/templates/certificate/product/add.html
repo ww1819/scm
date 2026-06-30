@@ -153,14 +153,14 @@
                     </div>
                     <div class="col-sm-3">
                         <div class="cert-inline-field">
-                            <label>单位</label>
-                            <input name="unit" id="unit" placeholder="请输入单位" class="form-control" type="text" maxlength="20" th:value="${preMaterialDict != null ? preMaterialDict.unit : ''}">
+                            <label>简码</label>
+                            <input name="pinyinCode" id="pinyinCode" placeholder="根据产品名称自动生成" class="form-control" type="text" maxlength="50">
                         </div>
                     </div>
                     <div class="col-sm-3">
                         <div class="cert-inline-field">
-                            <label>单价</label>
-                            <input name="bidPrice" placeholder="请输入单价" class="form-control" type="number" step="0.01" min="0">
+                            <label>单位</label>
+                            <input name="unit" id="unit" placeholder="请输入单位" class="form-control" type="text" maxlength="20" th:value="${preMaterialDict != null ? preMaterialDict.unit : ''}">
                         </div>
                     </div>
                 </div>
@@ -205,14 +205,14 @@
                     </div>
                     <div class="col-sm-3">
                         <div class="cert-inline-field">
-                            <label>拼音简码</label>
-                            <input name="pinyinCode" placeholder="请输入拼音简码" class="form-control" type="text" maxlength="50">
+                            <label>发证日期</label>
+                            <input name="registerIssueDate" id="registerIssueDate" placeholder="年/月/日" class="form-control" type="text">
                         </div>
                     </div>
                     <div class="col-sm-3">
                         <div class="cert-inline-field">
-                            <label>发证日期</label>
-                            <input name="registerIssueDate" id="registerIssueDate" placeholder="年/月/日" class="form-control" type="text">
+                            <label>单价</label>
+                            <input name="bidPrice" placeholder="请输入单价" class="form-control" type="number" step="0.01" min="0">
                         </div>
                     </div>
                 </div>
@@ -380,6 +380,7 @@
 	<script th:src="@{/js/common/scmCosDownload.js}"></script>
 	<script th:src="@{/js/certificate/certCosPreview.js}"></script>
 	<script th:src="@{/js/certificate/certDetailSnapInlineEdit.js}"></script>
+	<script th:src="@{/js/certificate/productCertShortCode.js}"></script>
 	<script th:src="@{/js/certificate/certDetailSnapUpload.js}"></script>
 	<script th:inline="javascript">
 	    var preHospitalCode = /*[[${preHospitalCode}]]*/ '';
@@ -394,6 +395,7 @@
 	    var isEditMode = false;
 	    var certSnapUpload;
 	    var certSnapInlineEdit;
+	    var productShortCodeHelper;
 	    var laydate;
 
 	    layui.use('laydate', function(){
@@ -468,10 +470,12 @@
                         return index + 1;
                     }
                 },
+                certSnapInlineEdit.getLicenseKindCodeColumn(),
                 {
                     field: 'licenseKindName',
                     title: '证件类型',
                     align: 'left',
+                    sortable: true,
                     formatter: function(value, row) {
                         return value || row.licenseKindCode || '-';
                     }
@@ -510,6 +514,9 @@
                 showColumns: false,
                 showToggle: false,
                 search: false,
+                sortable: true,
+                sortName: 'licenseNo',
+                sortOrder: 'asc',
                 height: calculateCertDetailTableHeight(),
                 data: [],
                 columns: columns
@@ -528,6 +535,7 @@
             $.post(prefix + '/licenseSnap/mergedRows', { certificateId: certificateId }, function(res) {
                 if (res.code === 0) {
                     $detail.bootstrapTable('load', res.data || []);
+                    $detail.bootstrapTable('sort', 'licenseNo', 'asc');
                 } else {
                     $detail.bootstrapTable('load', []);
                 }
@@ -569,6 +577,11 @@
         }
 
 	    $(function () {
+	        productShortCodeHelper = bindProductMaterialShortCode({
+	            enabled: true,
+	            apiUrl: prefix + '/materialShortCode',
+	            usePost: true
+	        });
 	        initCertDetailTable();
 	        setTimeout(adjustCertDetailTableHeight, 50);
 	        setTimeout(adjustCertDetailTableHeight, 200);
@@ -643,15 +656,15 @@
 	        }
 
 	        var saveUrl = isEditMode ? prefix + "/edit" : prefix + "/add";
-	        var formData = $("#form-product-certificate-add").serializeArray();
 	        $.modal.loading("正在处理中，请稍候...");
 
-	        $.ajax({
+	        var doSave = function () {
+	            $.ajax({
 	            url: saveUrl,
 	            type: "post",
 	            dataType: "json",
 	            timeout: 30000,
-	            data: formData,
+	            data: $("#form-product-certificate-add").serializeArray(),
 	            beforeSend: function (xhr) {
 	                var csrftoken = $('meta[name=csrf-token]').attr('content');
 	                if (csrftoken) {
@@ -692,6 +705,12 @@
 	                $.modal.closeLoading();
 	            }
 	        });
+	        };
+	        if (productShortCodeHelper && productShortCodeHelper.refresh) {
+	            productShortCodeHelper.refresh().always(doSave);
+	        } else {
+	            doSave();
+	        }
 
 	        return false;
 	    }

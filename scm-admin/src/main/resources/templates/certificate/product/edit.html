@@ -154,14 +154,14 @@
                     </div>
                     <div class="col-sm-3">
                         <div class="cert-inline-field">
-                            <label>单位</label>
-                            <input name="unit" placeholder="请输入单位" class="form-control" type="text" maxlength="20" th:value="${materialDict != null ? materialDict.unit : ''}">
+                            <label>简码</label>
+                            <input name="pinyinCode" id="pinyinCode" placeholder="根据产品名称自动生成" class="form-control" type="text" maxlength="50" th:value="${productCertificate.pinyinCode}">
                         </div>
                     </div>
                     <div class="col-sm-3">
                         <div class="cert-inline-field">
-                            <label>单价</label>
-                            <input name="bidPrice" placeholder="请输入单价" class="form-control" type="number" step="0.01" th:value="${productCertificate.bidPrice}">
+                            <label>单位</label>
+                            <input name="unit" placeholder="请输入单位" class="form-control" type="text" maxlength="20" th:value="${materialDict != null ? materialDict.unit : ''}">
                         </div>
                     </div>
                 </div>
@@ -206,14 +206,14 @@
                     </div>
                     <div class="col-sm-3">
                         <div class="cert-inline-field">
-                            <label>拼音简码</label>
-                            <input name="pinyinCode" placeholder="请输入拼音简码" class="form-control" type="text" maxlength="50" th:value="${productCertificate.pinyinCode}">
+                            <label>发证日期</label>
+                            <input name="registerIssueDate" id="registerIssueDate" placeholder="年/月/日" class="form-control" type="text" th:value="${productCertificate.registerIssueDate != null ? #dates.format(productCertificate.registerIssueDate, 'yyyy-MM-dd') : ''}">
                         </div>
                     </div>
                     <div class="col-sm-3">
                         <div class="cert-inline-field">
-                            <label>发证日期</label>
-                            <input name="registerIssueDate" id="registerIssueDate" placeholder="年/月/日" class="form-control" type="text" th:value="${productCertificate.registerIssueDate != null ? #dates.format(productCertificate.registerIssueDate, 'yyyy-MM-dd') : ''}">
+                            <label>单价</label>
+                            <input name="bidPrice" placeholder="请输入单价" class="form-control" type="number" step="0.01" th:value="${productCertificate.bidPrice}">
                         </div>
                     </div>
                 </div>
@@ -374,6 +374,7 @@
 	<script th:src="@{/js/common/scmCosDownload.js}"></script>
 	<script th:src="@{/js/certificate/certCosPreview.js}"></script>
 	<script th:src="@{/js/certificate/certDetailSnapInlineEdit.js}"></script>
+	<script th:src="@{/js/certificate/productCertShortCode.js}"></script>
 	<script th:src="@{/js/certificate/certDetailSnapUpload.js}"></script>
 	<script th:inline="javascript">
 	    var prefix = ctx + "certificate/product";
@@ -382,6 +383,7 @@
 	    var viewMode = /*[[${viewMode != null && viewMode}]]*/ false;
 	    var certSnapUpload;
 	    var certSnapInlineEdit;
+	    var productShortCodeHelper;
 	    var laydate;
 
 	    layui.use('laydate', function(){
@@ -444,10 +446,12 @@
                         return index + 1;
                     }
                 },
+                certSnapInlineEdit.getLicenseKindCodeColumn(),
                 {
                     field: 'licenseKindName',
                     title: '证件类型',
                     align: 'left',
+                    sortable: true,
                     formatter: function(value, row) {
                         return value || row.licenseKindCode || '-';
                     }
@@ -486,6 +490,9 @@
                 showColumns: false,
                 showToggle: false,
                 search: false,
+                sortable: true,
+                sortName: 'licenseNo',
+                sortOrder: 'asc',
                 height: calculateCertDetailTableHeight(),
                 data: [],
                 columns: columns
@@ -504,6 +511,7 @@
             $.post(prefix + '/licenseSnap/mergedRows', { certificateId: certificateId }, function(res) {
                 if (res.code === 0) {
                     $detail.bootstrapTable('load', res.data || []);
+                    $detail.bootstrapTable('sort', 'licenseNo', 'asc');
                 } else {
                     $detail.bootstrapTable('load', []);
                 }
@@ -523,6 +531,12 @@
                     } else {
                         $el.prop('readonly', true);
                     }
+                });
+            } else {
+                productShortCodeHelper = bindProductMaterialShortCode({
+                    enabled: true,
+                    apiUrl: prefix + '/materialShortCode',
+                    usePost: true
                 });
             }
             initCertDetailTable();
@@ -548,6 +562,7 @@
 	        	return;
 	        }
 	        $.modal.loading("正在处理中，请稍候...");
+	        var doSave = function () {
 	        $.ajax({
 	        	url: prefix + "/edit",
 	        	type: "post",
@@ -574,6 +589,12 @@
 	        		$.modal.closeLoading();
 	        	}
 	        });
+	        };
+	        if (productShortCodeHelper && productShortCodeHelper.refresh) {
+	            productShortCodeHelper.refresh().always(doSave);
+	        } else {
+	            doSave();
+	        }
 	    }
 
 	    function refreshProductListTab() {

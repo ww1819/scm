@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.scm.common.core.text.Convert;
 import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.PinyinUtils;
 import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.HospitalSupplier;
@@ -347,6 +348,7 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
         }
         
         productCertificate.setCreateTime(DateUtils.getNowDate());
+        fillPinyinCodeFromMaterialName(productCertificate);
         // 检查过期状态
         checkExpiredStatus(productCertificate);
         int rows = productCertificateMapper.insertProductCertificate(productCertificate);
@@ -451,6 +453,7 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
             }
         }
         productCertificate.setUpdateTime(DateUtils.getNowDate());
+        fillPinyinCodeFromMaterialName(productCertificate);
         // 检查过期状态
         checkExpiredStatus(productCertificate);
         int rows = productCertificateMapper.updateProductCertificate(productCertificate);
@@ -494,6 +497,7 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
             }
         }
         productCertificate.setUpdateTime(DateUtils.getNowDate());
+        fillPinyinCodeFromMaterialName(productCertificate);
         // 检查过期状态
         checkExpiredStatus(productCertificate);
         
@@ -702,6 +706,19 @@ public class ProductCertificateServiceImpl implements IProductCertificateService
      * 
      * @param certificate 证件信息
      */
+    private void fillPinyinCodeFromMaterialName(ProductCertificate productCertificate)
+    {
+        if (productCertificate == null)
+        {
+            return;
+        }
+        String name = StringUtils.trimToNull(productCertificate.getMaterialName());
+        if (name != null)
+        {
+            productCertificate.setPinyinCode(PinyinUtils.getShortCode(name));
+        }
+    }
+
     private void checkExpiredStatus(ProductCertificate certificate)
     {
         if (certificate.getExpireDate() != null)

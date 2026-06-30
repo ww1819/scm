@@ -29,6 +29,7 @@ import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.enums.BusinessType;
 import com.scm.common.exception.ServiceException;
 import com.scm.common.exception.UtilException;
+import com.scm.common.utils.PinyinUtils;
 import com.scm.common.utils.ServletUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.poi.ExcelUtil;
@@ -554,6 +555,7 @@ public class ProductCertificateController extends BaseController
     private void populateProductCertificateFormModel(Long certificateId, ModelMap mmap)
     {
         ProductCertificate productCertificate = productCertificateService.selectProductCertificateById(certificateId);
+        applyMaterialShortCodeForDisplay(productCertificate);
         mmap.put("productCertificate", productCertificate);
         Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
         boolean supplierSelf = bindSid != null;
@@ -697,6 +699,50 @@ public class ProductCertificateController extends BaseController
     public AjaxResult updateCertificateFile(Long certificateId, String certificateFileIds)
     {
         return toAjax(productCertificateService.updateProductCertificateFile(certificateId, certificateFileIds, getLoginName()));
+    }
+
+    /**
+     * 根据产品名称生成简码（拼音首字母）
+     */
+    @RequiresPermissions(value = { "certificate:product:add", "certificate:product:edit", "certificate:product:view",
+        "certificate:product:list", "certificate:product:audit" }, logical = Logical.OR)
+    @GetMapping("/materialShortCode")
+    @ResponseBody
+    public AjaxResult materialShortCode(@RequestParam(value = "name", required = false) String name)
+    {
+        return AjaxResult.success("操作成功", buildMaterialShortCode(name));
+    }
+
+    @RequiresPermissions(value = { "certificate:product:add", "certificate:product:edit", "certificate:product:view",
+        "certificate:product:list", "certificate:product:audit" }, logical = Logical.OR)
+    @PostMapping("/materialShortCode")
+    @ResponseBody
+    public AjaxResult materialShortCodePost(@RequestParam(value = "name", required = false) String name)
+    {
+        return AjaxResult.success("操作成功", buildMaterialShortCode(name));
+    }
+
+    private void applyMaterialShortCodeForDisplay(ProductCertificate productCertificate)
+    {
+        if (productCertificate == null)
+        {
+            return;
+        }
+        String code = buildMaterialShortCode(productCertificate.getMaterialName());
+        if (code != null)
+        {
+            productCertificate.setPinyinCode(code);
+        }
+    }
+
+    private String buildMaterialShortCode(String materialName)
+    {
+        if (StringUtils.isEmpty(materialName))
+        {
+            return "";
+        }
+        String raw = PinyinUtils.getShortCode(materialName.trim());
+        return raw != null ? raw : "";
     }
 
     /**

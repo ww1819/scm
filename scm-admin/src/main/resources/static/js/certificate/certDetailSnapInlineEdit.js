@@ -263,11 +263,24 @@
         var tableId = optionsRef.tableId;
 
         return {
+            getLicenseKindCodeColumn: function () {
+                return {
+                    field: 'licenseKindCode',
+                    title: '证件编号',
+                    align: 'left',
+                    sortable: true,
+                    formatter: function (value, row) {
+                        var code = value || row.licenseKindCode;
+                        return code ? code : '-';
+                    }
+                };
+            },
             getLicenseNoColumn: function () {
                 return {
                     field: 'licenseNo',
                     title: '证件编码',
                     align: 'left',
+                    sortable: true,
                     formatter: function (value, row) {
                         return formatLicenseNoCell(row, tableId, editable);
                     }
