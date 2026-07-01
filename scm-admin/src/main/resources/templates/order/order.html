@@ -248,10 +248,23 @@
 			border-color: #ccc !important;
 			color: #999 !important;
 		}
+
+		/* 与新增医院关联页一致：表格区撑满视口剩余高度，缩放时不被 max-height 截断 */
+		.container-div.order-page > .row {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			min-height: 0;
+		}
+
+		.container-div.order-page .order-table-wrap {
+			flex: 1 1 auto;
+			min-height: 260px;
+		}
 	</style>
 </head>
 <body class="gray-bg">
-	<div class="container-div">
+	<div class="container-div order-page">
 		<div class="row">
 			<div class="col-sm-12 search-collapse">
 				<form id="order-form">
@@ -373,10 +386,12 @@
 				return;
 			}
 			var top = $wrap[0].getBoundingClientRect().top;
-			var h = Math.floor(window.innerHeight - top - 14);
-			h = Math.min(Math.max(h, 400), 580);
+			var bottomGap = 10;
+			var h = Math.floor(window.innerHeight - top - bottomGap);
+			h = Math.max(h, 260);
 			$wrap[0].style.height = h + 'px';
 			$wrap[0].style.minHeight = h + 'px';
+			$wrap[0].style.maxHeight = h + 'px';
 		}
 
 		function calculateTableHeight() {
