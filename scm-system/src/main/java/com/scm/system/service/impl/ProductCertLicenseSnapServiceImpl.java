@@ -262,7 +262,7 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
         {
             return false;
         }
-        String updated = removeUrlFromCsv(merged, target);
+        String updated = removeUrlFromCsv(merged, targetUrl);
         syncSnapFilesToPeers(c, snap.getLicenseKindCode(), snap.getLicenseNo(), updated, loginName);
         return true;
     }
