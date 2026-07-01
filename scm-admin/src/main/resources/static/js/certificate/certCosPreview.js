@@ -85,6 +85,102 @@
             return;
         }
         var currentIndex = 0;
+        var rotateDeg = 0;
+        var zoomScale = 1;
+        var ZOOM_MIN = 0.5;
+        var ZOOM_MAX = 4;
+        var ZOOM_STEP = 0.25;
+
+        function resetPreviewTransform() {
+            rotateDeg = 0;
+            zoomScale = 1;
+        }
+
+        function applyPreviewImageTransform() {
+            var $img = $('#preview-image');
+            if (!$img.length) {
+                return;
+            }
+            var deg = rotateDeg % 360;
+            $img.css({
+                transform: 'rotate(' + deg + 'deg) scale(' + zoomScale + ')',
+                '-webkit-transform': 'rotate(' + deg + 'deg) scale(' + zoomScale + ')',
+                transition: 'transform 0.2s ease'
+            });
+        }
+
+        function changePreviewZoom(delta) {
+            zoomScale = Math.round((zoomScale + delta) * 100) / 100;
+            if (zoomScale < ZOOM_MIN) {
+                zoomScale = ZOOM_MIN;
+            }
+            if (zoomScale > ZOOM_MAX) {
+                zoomScale = ZOOM_MAX;
+            }
+            applyPreviewImageTransform();
+        }
+
+        var titleToolbarBtnStyle = 'display:inline-block;background:#3c8dbc;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:13px;line-height:1.4;margin-left:6px;vertical-align:middle;';
+
+        function ensureTitleToolbarDom(layero) {
+            if (!layero || !layero.length || layero.find('#cert-preview-toolbar-title').length) {
+                return;
+            }
+            var $title = layero.find('.layui-layer-title');
+            if (!$title.length) {
+                return;
+            }
+            $title.css({ position: 'relative', paddingRight: '260px', overflow: 'visible' });
+            $title.append(
+                '<div id="cert-preview-toolbar-title" class="cert-preview-toolbar-title" style="position:absolute;right:36px;top:0;height:100%;display:flex;align-items:center;gap:4px;z-index:10;pointer-events:auto;">'
+                + '<button type="button" id="cert-preview-zoom-out-btn-title" title="缩小" style="' + titleToolbarBtnStyle + '"><i class="fa fa-search-minus"></i> 缩小</button>'
+                + '<button type="button" id="cert-preview-zoom-in-btn-title" title="放大" style="' + titleToolbarBtnStyle + '"><i class="fa fa-search-plus"></i> 放大</button>'
+                + '<button type="button" id="cert-preview-rotate-btn-title" title="顺时针旋转90°" style="' + titleToolbarBtnStyle + '"><i class="fa fa-rotate-right"></i> 旋转</button>'
+                + '</div>'
+            );
+        }
+
+        function bindTitleToolbarEvents(layero) {
+            if (!layero || !layero.length) {
+                return;
+            }
+            var $toolbar = layero.find('#cert-preview-toolbar-title');
+            if (!$toolbar.length) {
+                return;
+            }
+            $toolbar.off('.certPreviewTitle');
+            $toolbar.find('button').off('.certPreviewTitle');
+            $toolbar.on('mousedown.certPreviewTitle', function (e) {
+                e.stopPropagation();
+            });
+            $toolbar.find('#cert-preview-zoom-out-btn-title').on('mousedown.certPreviewTitle', function (e) {
+                e.stopPropagation();
+            }).on('click.certPreviewTitle', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                changePreviewZoom(-ZOOM_STEP);
+            });
+            $toolbar.find('#cert-preview-zoom-in-btn-title').on('mousedown.certPreviewTitle', function (e) {
+                e.stopPropagation();
+            }).on('click.certPreviewTitle', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                changePreviewZoom(ZOOM_STEP);
+            });
+            $toolbar.find('#cert-preview-rotate-btn-title').on('mousedown.certPreviewTitle', function (e) {
+                e.stopPropagation();
+            }).on('click.certPreviewTitle', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                rotateDeg = (rotateDeg + 90) % 360;
+                applyPreviewImageTransform();
+            });
+        }
+
+        function injectTitleToolbar(layero) {
+            ensureTitleToolbarDom(layero);
+            bindTitleToolbarEvents(layero);
+        }
 
         function bindNav() {
             $('#prev-image-btn').off('click').on('click', function () {
@@ -103,7 +199,7 @@
 
         function buildContent() {
             var currentUrl = escapeHtml(urlArray[currentIndex]);
-            var html = '<div style="text-align:center;padding:20px;overflow:auto;height:100%;position:relative;">';
+            var html = '<div class="cert-preview-body" style="text-align:center;padding:20px;overflow:auto;height:100%;position:relative;">';
             if (urlArray.length > 1) {
                 html += '<div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#fff;padding:5px 15px;border-radius:15px;z-index:1000;font-size:14px;">';
                 html += '第 ' + (currentIndex + 1) + ' 张 / 共 ' + urlArray.length + ' 张';
@@ -115,7 +211,7 @@
                     html += '<button id="next-image-btn" type="button" style="position:absolute;right:20px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.7);color:#fff;border:none;padding:15px 20px;border-radius:5px;cursor:pointer;font-size:18px;z-index:1000;">›</button>';
                 }
             }
-            html += '<img id="preview-image" src="' + currentUrl + '" style="max-width:100%;max-height:calc(100% - 40px);margin-top:30px;" onerror="this.onerror=null;this.src=\'' + ctx + 'img/error.png\';" />';
+            html += '<img id="preview-image" src="' + currentUrl + '" style="max-width:100%;max-height:calc(100% - 40px);margin-top:30px;transform-origin:center center;" onerror="this.onerror=null;this.src=\'' + ctx + 'img/error.png\';" />';
             html += '</div>';
             return html;
         }
@@ -125,8 +221,12 @@
             if (layerIdx == null) {
                 return;
             }
-            $('#layui-layer' + layerIdx + ' .layui-layer-content').html(buildContent());
+            resetPreviewTransform();
+            var $layer = $('#layui-layer' + layerIdx);
+            $layer.find('.layui-layer-content').html(buildContent());
             bindNav();
+            bindTitleToolbarEvents($layer);
+            applyPreviewImageTransform();
         }
 
         if (!$ || !window.layer) {
@@ -138,7 +238,12 @@
             title: '证件图片预览',
             area: ['90%', '90%'],
             content: buildContent(),
-            success: bindNav
+            success: function (layero, index) {
+                window.__certPreviewLayerIndex = index;
+                var $layer = $('#layui-layer' + index);
+                injectTitleToolbar($layer);
+                bindNav();
+            }
         });
     };
 
