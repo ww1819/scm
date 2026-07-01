@@ -85,18 +85,54 @@
 		.delivery-detail-table-wrap .fixed-table-header table.table,
 		.delivery-detail-table-wrap .fixed-table-body table.table {
 			border-collapse: collapse;
+			table-layout: fixed;
 		}
 		#bootstrap-table.delivery-detail-fixed-table {
 			table-layout: fixed !important;
 		}
+		.delivery-detail-table-wrap .fixed-table-header th .th-inner,
+		.delivery-detail-table-wrap .fixed-table-header th .sortable,
+		#bootstrap-table thead th .th-inner,
+		#bootstrap-table thead th .sortable {
+			padding: 8px 10px !important;
+			font-size: 14px !important;
+			line-height: 1.42857143;
+			font-weight: normal;
+			text-align: center !important;
+			overflow: hidden !important;
+			text-overflow: ellipsis !important;
+			white-space: nowrap !important;
+		}
 		.delivery-detail-table-wrap .fixed-table-header th,
-		.delivery-detail-table-wrap .fixed-table-body td {
+		.delivery-detail-table-wrap .fixed-table-body td,
+		#bootstrap-table thead th,
+		#bootstrap-table tbody td {
 			box-sizing: border-box !important;
-			padding: 8px 14px !important;
+			border: 1px solid #e7eaec !important;
+			padding: 8px 10px !important;
 			white-space: nowrap !important;
 			word-break: keep-all !important;
 			overflow: hidden;
 			text-overflow: ellipsis;
+			vertical-align: middle !important;
+			text-align: center !important;
+		}
+		.delivery-detail-table-wrap .fixed-table-header th,
+		#bootstrap-table thead th {
+			background-color: #f5f5f5 !important;
+			font-size: 14px !important;
+			font-weight: normal;
+			color: #333;
+			border-bottom: 2px solid #ddd !important;
+		}
+		.delivery-detail-table-wrap .fixed-table-body td,
+		#bootstrap-table tbody td {
+			background-color: #fff;
+			font-size: 13px !important;
+			color: #333;
+		}
+		.delivery-detail-table-wrap .fixed-table-body .fixed-table-border {
+			display: none !important;
 		}
 	</style>
 </head>
@@ -202,6 +238,163 @@
 		var refOrderId = /*[[${delivery.orderId}]]*/ null;
 		var refZsOrderIdStr = /*[[${delivery.zsOrderId}]]*/ '';
 
+		var detailColumnWidths = {};
+		var DETAIL_DEFAULT_COL_WIDTHS = {
+		    serialNumber: 64,
+		    materialCode: 130,
+		    materialName: 200,
+		    specification: 120,
+		    model: 100,
+		    remainingQuantity: 110,
+		    deliveryQuantity: 96,
+		    price: 96,
+		    amount: 108,
+		    productionDate: 118,
+		    expireDate: 118,
+		    batchNo: 130,
+		    registerNo: 150,
+		    deliveryAuditStatus: 100,
+		    refOrderNo: 150,
+		    refOrderLineQty: 120,
+		    refOrderMaterialCode: 130,
+		    refZsOrderId: 150,
+		    refZsLineQty: 120,
+		    refZsMaterialCode: 130
+		};
+
+		function seedDetailDefaultColumnWidths() {
+		    $.extend(detailColumnWidths, DETAIL_DEFAULT_COL_WIDTHS);
+		    var opt = $('#bootstrap-table').bootstrapTable('getOptions');
+		    if (opt && opt.columns && opt.columns[0]) {
+		        $.each(opt.columns[0], function (_, col) {
+		            if (!col || !col.field || !col.width) {
+		                return;
+		            }
+		            var w = parseInt(col.width, 10);
+		            if (w > 0) {
+		                detailColumnWidths[col.field] = Math.max(detailColumnWidths[col.field] || 0, w);
+		            }
+		        });
+		    }
+		}
+
+		function ensureDetailTableColgroup($table, colCount) {
+		    if (!$table || !$table.length) {
+		        return $();
+		    }
+		    var $colgroup = $table.children('colgroup');
+		    if (!$colgroup.length) {
+		        $colgroup = $('<colgroup></colgroup>');
+		        $table.prepend($colgroup);
+		    }
+		    while ($colgroup.children('col').length < colCount) {
+		        $colgroup.append('<col />');
+		    }
+		    while ($colgroup.children('col').length > colCount) {
+		        $colgroup.children('col:last').remove();
+		    }
+		    return $colgroup;
+		}
+
+		/** 表头列宽 → 表体所有行 + colgroup（固定表头双表必须按列索引同步） */
+		function applyDetailColumnWidthFromHeader() {
+		    var $container = $('#bootstrap-table').closest('.bootstrap-table').find('.fixed-table-container').first();
+		    var $headTable = $container.children('.fixed-table-header').find('table').first();
+		    var $bodyTable = $container.children('.fixed-table-body').find('#bootstrap-table');
+		    if (!$bodyTable.length) {
+		        $bodyTable = $container.children('.fixed-table-body').find('table').not('.fixed-table-border').first();
+		    }
+		    if (!$headTable.length || !$bodyTable.length) {
+		        return;
+		    }
+		    var $ths = $headTable.find('thead tr:first th');
+		    var colCount = $ths.length;
+		    if (colCount < 1) {
+		        return;
+		    }
+		    ensureDetailTableColgroup($headTable, colCount);
+		    ensureDetailTableColgroup($bodyTable, colCount);
+		    var totalW = 0;
+		    var setW = function (el, w) {
+		        if (!el) {
+		            return;
+		        }
+		        var ws = w + 'px';
+		        el.style.setProperty('width', ws, 'important');
+		        el.style.setProperty('min-width', ws, 'important');
+		        el.style.setProperty('max-width', 'none', 'important');
+		    };
+		    $ths.each(function () {
+		        var colIdx = this.cellIndex;
+		        if (colIdx < 0) {
+		            return;
+		        }
+		        var field = $(this).attr('data-field');
+		        var w;
+		        if (field && detailColumnWidths[field]) {
+		            w = detailColumnWidths[field];
+		        } else {
+		            w = Math.ceil(this.getBoundingClientRect().width);
+		            if (!w || w < 40) {
+		                w = 40;
+		            }
+		            if (field) {
+		                detailColumnWidths[field] = w;
+		            }
+		        }
+		        setW(this, w);
+		        $headTable.find('colgroup col').eq(colIdx).each(function () {
+		            setW(this, w);
+		        });
+		        $bodyTable.find('colgroup col').eq(colIdx).each(function () {
+		            setW(this, w);
+		        });
+		        $bodyTable.find('tbody tr').each(function () {
+		            var cell = this.cells[colIdx];
+		            if (cell) {
+		                setW(cell, w);
+		            }
+		        });
+		        totalW += w;
+		    });
+		    if (totalW > 0) {
+		        var tw = totalW + 'px';
+		        $headTable[0].style.setProperty('width', tw, 'important');
+		        $bodyTable[0].style.setProperty('width', tw, 'important');
+		    }
+		}
+
+		function fixDetailTableHeaderAlign() {
+		    var $container = $('#bootstrap-table').closest('.bootstrap-table').find('.fixed-table-container').first();
+		    var $mainBody = $container.children('.fixed-table-body');
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    if (!$mainBody.length || !$mainHeader.length) {
+		        return;
+		    }
+		    var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
+		    $mainHeader.css('margin-right', scrollW + 'px');
+		    applyDetailColumnWidthFromHeader();
+		    var sl = $mainBody.scrollLeft();
+		    $mainHeader.scrollLeft(sl);
+		}
+
+		function scheduleDetailHeaderAlign() {
+		    fixDetailTableHeaderAlign();
+		    requestAnimationFrame(fixDetailTableHeaderAlign);
+		}
+
+		var detailTableLayoutRefreshTimer = null;
+		function refreshDetailTableLayoutDebounced() {
+		    if (detailTableLayoutRefreshTimer) {
+		        clearTimeout(detailTableLayoutRefreshTimer);
+		    }
+		    detailTableLayoutRefreshTimer = setTimeout(function () {
+		        detailTableLayoutRefreshTimer = null;
+		        seedDetailDefaultColumnWidths();
+		        scheduleDetailHeaderAlign();
+		    }, 60);
+		}
+
 		function calculateDetailTableHeight() {
 		    var $wrap = $('.delivery-detail-table-wrap');
 		    if ($wrap.length === 0) {
@@ -246,6 +439,16 @@
 		function relayoutDetailTable() {
 		    layoutDetailTableWrap();
 		    resetDetailTableHeight();
+		    refreshDetailTableLayoutDebounced();
+		}
+
+		function bindDetailTableScrollSync() {
+		    var $container = $('#bootstrap-table').closest('.bootstrap-table').find('.fixed-table-container').first();
+		    var $mainBody = $container.children('.fixed-table-body');
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    $mainBody.off('scroll.detailTableSync').on('scroll.detailTableSync', function () {
+		        $mainHeader.scrollLeft($mainBody.scrollLeft());
+		    });
 		}
 
 		$(function() {
@@ -271,8 +474,16 @@
 		        sidePagination: 'client',
 		        height: calculateDetailTableHeight(),
 		        responseHandler: ruoyiTableData,
+		        onSort: function () {
+		            refreshDetailTableLayoutDebounced();
+		        },
 		        onPostBody: function() {
-		            setTimeout(relayoutDetailTable, 0);
+		            bindDetailTableScrollSync();
+		            refreshDetailTableLayoutDebounced();
+		        },
+		        onLoadSuccess: function() {
+		            bindDetailTableScrollSync();
+		            refreshDetailTableLayoutDebounced();
 		        },
 		        columns: [
 		            {
@@ -284,26 +495,30 @@
 		                    return index + 1;
 		                }
 		            },
-		            { field: 'materialCode', title: '产品编码', width: 130, sortable: true },
-		            { field: 'materialName', title: '产品名称', width: 200, sortable: true },
-		            { field: 'specification', title: '规格', width: 120, sortable: true },
-		            { field: 'model', title: '型号', width: 100, sortable: true },
-		            { field: 'remainingQuantity', title: '可配送数量', align: 'right', width: 110, sortable: true, formatter: fmtDec },
-		            { field: 'deliveryQuantity', title: '数量', align: 'right', width: 96, sortable: true, formatter: fmtDec },
-		            { field: 'price', title: '单价', align: 'right', width: 96, sortable: true, formatter: fmtDec },
-		            { field: 'amount', title: '金额', align: 'right', width: 108, sortable: true, formatter: fmtDec },
-		            { field: 'productionDate', title: '生产日期', width: 118, sortable: true, formatter: fmtDate },
-		            { field: 'expireDate', title: '有效期', width: 118, sortable: true, formatter: fmtDate },
-		            { field: 'batchNo', title: '批号', width: 130, sortable: true },
-		            { field: 'registerNo', title: '注册证号', width: 150, sortable: true },
-		            { field: 'deliveryAuditStatus', title: '配送单审核', width: 100, sortable: true, formatter: fmtAudit },
-		            { field: 'refOrderNo', title: '本系统订单号', width: 150, sortable: true, formatter: function(v, row) { return v || (row.refOrderId ? '#' + row.refOrderId : '-'); } },
-		            { field: 'refOrderLineQty', title: '订单行订货数', width: 120, formatter: fmtDec },
-		            { field: 'refOrderMaterialCode', title: '订单行编码', width: 130 },
-		            { field: 'refZsOrderId', title: '第三方订单ID', width: 150, formatter: function(v) { return v || '-'; } },
-		            { field: 'refZsLineQty', title: '第三方行数量', width: 120, formatter: fmtDec },
-		            { field: 'refZsMaterialCode', title: '第三方编码', width: 130 }
+		            { field: 'materialCode', title: '产品编码', align: 'center', width: 130, sortable: true },
+		            { field: 'materialName', title: '产品名称', align: 'center', width: 200, sortable: true },
+		            { field: 'specification', title: '规格', align: 'center', width: 120, sortable: true },
+		            { field: 'model', title: '型号', align: 'center', width: 100, sortable: true },
+		            { field: 'remainingQuantity', title: '可配送数量', align: 'center', width: 110, sortable: true, formatter: fmtDec },
+		            { field: 'deliveryQuantity', title: '数量', align: 'center', width: 96, sortable: true, formatter: fmtDec },
+		            { field: 'price', title: '单价', align: 'center', width: 96, sortable: true, formatter: fmtDec },
+		            { field: 'amount', title: '金额', align: 'center', width: 108, sortable: true, formatter: fmtDec },
+		            { field: 'productionDate', title: '生产日期', align: 'center', width: 118, sortable: true, formatter: fmtDate },
+		            { field: 'expireDate', title: '有效期', align: 'center', width: 118, sortable: true, formatter: fmtDate },
+		            { field: 'batchNo', title: '批号', align: 'center', width: 130, sortable: true },
+		            { field: 'registerNo', title: '注册证号', align: 'center', width: 150, sortable: true },
+		            { field: 'deliveryAuditStatus', title: '配送单审核', align: 'center', width: 100, sortable: true, formatter: fmtAudit },
+		            { field: 'refOrderNo', title: '本系统订单号', align: 'center', width: 150, sortable: true, formatter: function(v, row) { return v || (row.refOrderId ? '#' + row.refOrderId : '-'); } },
+		            { field: 'refOrderLineQty', title: '订单行订货数', align: 'center', width: 120, formatter: fmtDec },
+		            { field: 'refOrderMaterialCode', title: '订单行编码', align: 'center', width: 130 },
+		            { field: 'refZsOrderId', title: '第三方订单ID', align: 'center', width: 150, formatter: function(v) { return v || '-'; } },
+		            { field: 'refZsLineQty', title: '第三方行数量', align: 'center', width: 120, formatter: fmtDec },
+		            { field: 'refZsMaterialCode', title: '第三方编码', align: 'center', width: 130 }
 		        ]
+		    });
+		    bindDetailTableScrollSync();
+		    $('#bootstrap-table').on('refresh.bs.table post-header.bs.table reset-view.bs.table', function () {
+		        refreshDetailTableLayoutDebounced();
 		    });
 		    $(window).on('resize', function() {
 		        relayoutDetailTable();

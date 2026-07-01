@@ -2110,6 +2110,7 @@
 	            mobileResponsive: false,
 	            sidePagination: 'client',
 	            sortReset: false,
+	            sortable: true,
 	            rowStyle: function () {
 	                return { css: { height: DETAIL_ROW_HEIGHT + 'px', maxHeight: DETAIL_ROW_HEIGHT + 'px' } };
 	            },
@@ -2163,6 +2164,8 @@
 	                title: '可配数量',
 	                align: 'center',
 	                width: 108,
+	                sortable: true,
+	                sorter: detailSortNumber,
 	                formatter: function (value) {
 	                    return detailCellTextHtml(formatDetailInteger(value));
 	                }
@@ -2763,6 +2766,11 @@
 	            // 获取表格中的所有明细数据（含未失焦的批号/日期输入）
 	            var detailData = syncDetailEditableFieldsFromDom();
 	            normalizeDetailDateFieldsForSave(detailData);
+
+	            if (!detailData || detailData.length === 0) {
+	                $.modal.alertWarning('无法保存，配送信息为空');
+	                return;
+	            }
 
 	            // 校验：配送数量为0（或未填写）的明细行，提示具体行号，要求完善或删除后再保存
 	            var zeroQtyRows = [];
