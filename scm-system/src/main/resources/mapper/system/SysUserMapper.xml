@@ -111,6 +111,17 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				AND s.company_name like concat('%', #{params.supplierName}, '%')
 			)
 		</if>
+		<if test="params.hospitalName != null and params.hospitalName != ''">
+			AND EXISTS (
+				SELECT 1 FROM scm_hospital_user hu
+				INNER JOIN scm_hospital h ON hu.hospital_id = h.hospital_id AND h.del_flag = '0' AND h.status = '0'
+				WHERE hu.user_id = u.user_id AND hu.status = '0' AND (hu.del_flag = '0' OR hu.del_flag IS NULL)
+				AND (
+					h.hospital_name like concat('%', #{params.hospitalName}, '%')
+					OR IFNULL(h.pinyin_code, '') like concat('%', #{params.hospitalName}, '%')
+				)
+			)
+		</if>
 		<if test="params.beginTime != null and params.beginTime != ''"><!-- 开始时间检索 -->
 			AND date_format(u.create_time,'%Y%m%d') &gt;= date_format(#{params.beginTime},'%Y%m%d')
 		</if>
