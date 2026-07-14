@@ -54,8 +54,10 @@ public class SysUserServiceImpl implements ISysUserService
     private static final Logger log = LoggerFactory.getLogger(SysUserServiceImpl.class);
     private static final String ROLE_KEY_HOSPITAL_ADMIN = "hospital_admin";
     private static final String ROLE_KEY_HOSPITAL_STAFF = "hospital_staff";
-    private static final String ROLE_KEY_SUPPLIER_ADMIN = "supplier_admin";
-    private static final String ROLE_KEY_SUPPLIER_SALES = "supplier_sales";
+    private static final String ROLE_KEY_SUPPLIER_ADMIN = ScmAuthConstants.ROLE_KEY_SUPPLIER_ADMIN;
+    private static final String ROLE_KEY_SUPPLIER_SALES = ScmAuthConstants.ROLE_KEY_SUPPLIER_SALES;
+    private static final String ROLE_KEY_TP_SUPPLIER_ADMIN = ScmAuthConstants.ROLE_KEY_TP_SUPPLIER_ADMIN;
+    private static final String ROLE_KEY_TP_SUPPLIER_SALES = ScmAuthConstants.ROLE_KEY_TP_SUPPLIER_SALES;
     private static final String ROLE_KEY_SUPPLIER_LEGACY = "supplier";
 
     @Autowired
@@ -460,6 +462,7 @@ public class SysUserServiceImpl implements ISysUserService
                 requireHospital = true;
             }
             if (ROLE_KEY_SUPPLIER_ADMIN.equals(roleKey) || ROLE_KEY_SUPPLIER_SALES.equals(roleKey)
+                || ROLE_KEY_TP_SUPPLIER_ADMIN.equals(roleKey) || ROLE_KEY_TP_SUPPLIER_SALES.equals(roleKey)
                 || ROLE_KEY_SUPPLIER_LEGACY.equals(roleKey))
             {
                 requireSupplier = true;
@@ -500,6 +503,7 @@ public class SysUserServiceImpl implements ISysUserService
                 requireHospital = true;
             }
             if (ROLE_KEY_SUPPLIER_ADMIN.equals(roleKey) || ROLE_KEY_SUPPLIER_SALES.equals(roleKey)
+                || ROLE_KEY_TP_SUPPLIER_ADMIN.equals(roleKey) || ROLE_KEY_TP_SUPPLIER_SALES.equals(roleKey)
                 || ROLE_KEY_SUPPLIER_LEGACY.equals(roleKey))
             {
                 requireSupplier = true;

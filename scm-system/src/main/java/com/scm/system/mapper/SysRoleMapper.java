@@ -101,6 +101,11 @@ public interface SysRoleMapper
     public SysRole selectByRoleKeyAndHospitalId(@Param("roleKey") String roleKey, @Param("hospitalId") Long hospitalId);
 
     /**
+     * 按权限字符查询 SCM 全局模板角色（hospital_id/supplier_id 均为空，含 hospital/supplier 类型）
+     */
+    public SysRole selectGlobalScmRoleByKey(@Param("roleKey") String roleKey);
+
+    /**
      * 按权限字符查询全局角色（tenant_id/supplier_id 为空）
      */
     public SysRole selectGlobalRoleByKey(@Param("roleKey") String roleKey);

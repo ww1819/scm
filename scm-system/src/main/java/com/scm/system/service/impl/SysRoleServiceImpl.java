@@ -187,6 +187,7 @@ public class SysRoleServiceImpl implements ISysRoleService
     public int insertRole(SysRole role)
     {
         fillRolePinyin(role);
+        blockScopedBuiltinTemplateRoleCreation(role);
         normalizeRoleTenantForSave(role);
         validateRoleTenantConsistency(role);
         validateOrgAdminUniqueness(role, null);
@@ -423,6 +424,7 @@ public class SysRoleServiceImpl implements ISysRoleService
         }
         if (ScmAuthConstants.ROLE_TYPE_HOSPITAL.equalsIgnoreCase(rt))
         {
+            role.setHospitalId(null);
             role.setSupplierId(null);
             if (StringUtils.isEmpty(StringUtils.trimToEmpty(role.getOrgAdmin())))
             {
@@ -433,6 +435,7 @@ public class SysRoleServiceImpl implements ISysRoleService
         if (ScmAuthConstants.ROLE_TYPE_SUPPLIER.equalsIgnoreCase(rt))
         {
             role.setHospitalId(null);
+            role.setSupplierId(null);
             if (StringUtils.isEmpty(StringUtils.trimToEmpty(role.getOrgAdmin())))
             {
                 role.setOrgAdmin("0");
@@ -465,10 +468,6 @@ public class SysRoleServiceImpl implements ISysRoleService
         }
         if (ScmAuthConstants.ROLE_TYPE_HOSPITAL.equalsIgnoreCase(rt))
         {
-            if (role.getHospitalId() == null)
-            {
-                throw new ServiceException("医院角色必须选择绑定医院");
-            }
             if (role.getSupplierId() != null)
             {
                 throw new ServiceException("医院角色不能绑定供应商");
@@ -477,10 +476,6 @@ public class SysRoleServiceImpl implements ISysRoleService
         }
         if (ScmAuthConstants.ROLE_TYPE_SUPPLIER.equalsIgnoreCase(rt))
         {
-            if (role.getSupplierId() == null)
-            {
-                throw new ServiceException("供应商角色必须选择绑定供应商");
-            }
             if (role.getHospitalId() != null)
             {
                 throw new ServiceException("供应商角色不能绑定医院");
@@ -562,5 +557,24 @@ public class SysRoleServiceImpl implements ISysRoleService
             list.add(ur);
         }
         return userRoleMapper.batchUserRole(list);
+    }
+
+    private void blockScopedBuiltinTemplateRoleCreation(SysRole role)
+    {
+        if (role == null)
+        {
+            return;
+        }
+        String key = StringUtils.trimToEmpty(role.getRoleKey());
+        if (!ScmAuthConstants.isBuiltinTemplateRoleKey(key))
+        {
+            return;
+        }
+        Long sid = role.getSupplierId();
+        Long hid = role.getHospitalId();
+        if ((sid != null && sid > 0) || (hid != null && hid > 0))
+        {
+            throw new ServiceException("内置角色「" + key + "」已改为全局模板，禁止按机构创建");
+        }
     }
 }

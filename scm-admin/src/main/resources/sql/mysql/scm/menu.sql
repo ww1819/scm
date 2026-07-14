@@ -518,7 +518,10 @@ WHERE del_flag = '0' AND menu_id = '2300';
 /
 UPDATE sys_menu SET auth_type = 'supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all_supplier',
   default_open_hospital = '0', hospital_admin_only = '0', default_open_supplier = '1', supplier_admin_only = '0', menu_biz_category = 'certificate'
-WHERE del_flag = '0' AND menu_id IN ('2301','2302','2307','23001','23002','23003','23004','23005','23006','23011','23012','23013','23014','23015','23016','23071','23072','23073','23074');
+WHERE del_flag = '0' AND menu_id IN ('2301','2302','2307','23001','23002','23003','23004','23006','23011','23012','23013','23014','23016','23071','23072','23073','23074');
+/
+UPDATE sys_menu SET default_open_supplier = '0', update_by = 'migration', update_time = NOW()
+WHERE del_flag = '0' AND menu_id IN ('23005','23015','2001605');
 /
 UPDATE sys_menu SET auth_type = 'hospital', hospital_grant_supplier_flag = '0', default_open_scope = 'all_hospital',
   default_open_hospital = '1', hospital_admin_only = '0', default_open_supplier = '0', supplier_admin_only = '0', menu_biz_category = 'certificate'
@@ -633,7 +636,10 @@ UPDATE sys_menu
 SET auth_type = 'supplier', hospital_grant_supplier_flag = '0', default_open_scope = 'all_supplier',
   default_open_hospital = '0', hospital_admin_only = '0', default_open_supplier = '1', supplier_admin_only = '0', menu_biz_category = 'certificate'
 WHERE del_flag = '0'
-  AND menu_id IN (@supplier_cert_parent_id, 2001601, 2001602, 2001603, 2001604, 2001605, 2001606);
+  AND menu_id IN (@supplier_cert_parent_id, 2001601, 2001602, 2001603, 2001604, 2001606);
+/
+UPDATE sys_menu SET default_open_supplier = '0', update_by = 'migration', update_time = NOW()
+WHERE del_flag = '0' AND menu_id = 2001605;
 /
 -- ========== 巡检：菜单 URL / 权限串 一致性检查（只读） ==========
 -- 1) 证件审核类菜单：URL 与 perms 关键字应一致（supplier/product + audit）

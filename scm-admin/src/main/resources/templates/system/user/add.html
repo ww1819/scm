@@ -408,7 +408,8 @@
             var k = roleKeyFromSelect();
             var n = roleNameFromSelect();
             if (!k && !n) return false;
-            if (k === 'supplier' || k === 'supplier_admin' || k === 'supplier_sales') return true;
+            if (k === 'supplier' || k === 'supplier_admin' || k === 'supplier_sales'
+                || k === 'tp_supplier_admin' || k === 'tp_supplier_sales') return true;
             if (n === '供应商') return true;
             return n.indexOf('供应商') >= 0;
         }

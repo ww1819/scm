@@ -378,6 +378,7 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
             }
         }
 
+        scmScopeBootstrapService.rebindSupplierBuiltinUserRoles(supplierId, createBy);
         return 1;
     }
 
@@ -584,6 +585,7 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
         hospitalSupplierMapper.insertHospitalSupplier(relation);
         insertChangeLog(relation, "CREATE_FROM_APPLY", operBy, null, relation);
         scmScopeBootstrapService.applyDefaultHospitalGrantedSupplierMenus(hospitalId, supplierId, operBy);
+        scmScopeBootstrapService.rebindSupplierBuiltinUserRoles(supplierId, operBy);
     }
 
     private void validateSupplyDateRange(Date supplyStartDate, Date supplyEndDate)

@@ -33,9 +33,42 @@
 	</resultMap>
 
 	<!--
-	  用户侧栏与 Shiro 权限串：仅按 sys_user_role + sys_role_menu + sys_menu 聚合，不再叠加
-	  scm_hospital_menu_auth / scm_supplier_menu_auth 或 sys_menu.auth_type 白名单遮罩。
+	  用户侧栏与 Shiro 权限：全局 SCM 模板角色（supplier_id/hospital_id 为空）使用默认 role_menu；
+	  医院授予供应商等增量菜单通过 role_menu 上的 supplier_id/hospital_id 与当前用户机构匹配。
 	-->
+
+	<sql id="roleMenuScopeMatch">
+		  and (
+		        coalesce(nullif(trim(rm.hospital_id), ''), '') = ''
+		        or (
+		             ro.hospital_id is not null and ro.hospital_id &gt; 0
+		             and trim(rm.hospital_id) = cast(ro.hospital_id as char)
+		        )
+		        or (
+		             (ro.hospital_id is null or ro.hospital_id = 0)
+		             and exists (
+		                 select 1 from scm_hospital_user hu
+		                 where hu.user_id = ur.user_id and hu.del_flag = '0'
+		                   and trim(rm.hospital_id) = cast(hu.hospital_id as char)
+		             )
+		        )
+		      )
+		  and (
+		        coalesce(nullif(trim(rm.supplier_id), ''), '') = ''
+		        or (
+		             ro.supplier_id is not null and ro.supplier_id &gt; 0
+		             and trim(rm.supplier_id) = cast(ro.supplier_id as char)
+		        )
+		        or (
+		             (ro.supplier_id is null or ro.supplier_id = 0)
+		             and exists (
+		                 select 1 from scm_supplier_user su
+		                 where su.user_id = ur.user_id and su.del_flag = '0'
+		                   and trim(rm.supplier_id) = cast(su.supplier_id as char)
+		             )
+		        )
+		      )
+	</sql>
 
     <sql id="selectMenuVo">
         select menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, ifnull(perms,'') as perms, icon, create_by, create_time,
@@ -57,10 +90,7 @@
 			 left join sys_user_role ur on rm.role_id = ur.role_id
 			 LEFT JOIN sys_role ro on ur.role_id = ro.role_id
 		where ur.user_id = #{userId} and m.menu_type in ('M', 'C') and m.visible = 0 and m.del_flag = '0' AND ro.status = '0'
-		  and (coalesce(nullif(trim(rm.hospital_id), ''), '') = ''
-		       or (ro.hospital_id is not null and trim(rm.hospital_id) = cast(ro.hospital_id as char)))
-		  and (coalesce(nullif(trim(rm.supplier_id), ''), '') = ''
-		       or (ro.supplier_id is not null and trim(rm.supplier_id) = cast(ro.supplier_id as char)))
+		<include refid="roleMenuScopeMatch"/>
 		order by m.parent_id, m.order_num
 	</select>
 
@@ -88,10 +118,7 @@
 			 left join sys_user_role ur on rm.role_id = ur.role_id
 			 LEFT JOIN sys_role ro on ur.role_id = ro.role_id
 		where ur.user_id = #{userId} and m.del_flag = '0' AND ro.status = '0'
-		  and (coalesce(nullif(trim(rm.hospital_id), ''), '') = ''
-		       or (ro.hospital_id is not null and trim(rm.hospital_id) = cast(ro.hospital_id as char)))
-		  and (coalesce(nullif(trim(rm.supplier_id), ''), '') = ''
-		       or (ro.supplier_id is not null and trim(rm.supplier_id) = cast(ro.supplier_id as char)))
+		<include refid="roleMenuScopeMatch"/>
 		order by m.parent_id, m.order_num
 	</select>
 
@@ -100,12 +127,9 @@
 		from sys_menu m
 			 left join sys_role_menu rm on m.menu_id = rm.menu_id
 			 left join sys_user_role ur on rm.role_id = ur.role_id
-			 left join sys_role r on r.role_id = ur.role_id
-		where m.visible = '0' and m.del_flag = '0' and r.status = '0' and ur.user_id = #{userId}
-		  and (coalesce(nullif(trim(rm.hospital_id), ''), '') = ''
-		       or (r.hospital_id is not null and trim(rm.hospital_id) = cast(r.hospital_id as char)))
-		  and (coalesce(nullif(trim(rm.supplier_id), ''), '') = ''
-		       or (r.supplier_id is not null and trim(rm.supplier_id) = cast(r.supplier_id as char)))
+			 left join sys_role ro on ro.role_id = ur.role_id
+		where m.visible = '0' and m.del_flag = '0' and ro.status = '0' and ur.user_id = #{userId}
+		<include refid="roleMenuScopeMatch"/>
 	</select>
 
 	<select id="selectPermsByRoleId" parameterType="Long" resultType="String">

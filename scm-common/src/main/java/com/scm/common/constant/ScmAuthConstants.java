@@ -26,4 +26,25 @@ public final class ScmAuthConstants
     /** 每供应商唯一的管理员角色 */
     public static final String ROLE_KEY_SUPPLIER_ADMIN = "supplier_admin";
     public static final String ROLE_KEY_SUPPLIER_SALES = "supplier_sales";
+    /** 第三方订单供应商管理员（仅新华医院供货） */
+    public static final String ROLE_KEY_TP_SUPPLIER_ADMIN = "tp_supplier_admin";
+    /** 第三方订单供应商业务员 */
+    public static final String ROLE_KEY_TP_SUPPLIER_SALES = "tp_supplier_sales";
+
+    /** 当前使用第三方订单推送的医院（伊犁哈萨克自治州新华医院） */
+    public static final Long HOSPITAL_ID_XINHUA_THIRD_PARTY = 46L;
+
+    public static boolean isBuiltinTemplateRoleKey(String roleKey)
+    {
+        if (roleKey == null || roleKey.isEmpty())
+        {
+            return false;
+        }
+        return ROLE_KEY_HOSPITAL_ADMIN.equals(roleKey)
+            || ROLE_KEY_HOSPITAL_STAFF.equals(roleKey)
+            || ROLE_KEY_SUPPLIER_ADMIN.equals(roleKey)
+            || ROLE_KEY_SUPPLIER_SALES.equals(roleKey)
+            || ROLE_KEY_TP_SUPPLIER_ADMIN.equals(roleKey)
+            || ROLE_KEY_TP_SUPPLIER_SALES.equals(roleKey);
+    }
 }

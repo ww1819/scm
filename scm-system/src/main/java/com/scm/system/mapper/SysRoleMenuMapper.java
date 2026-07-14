@@ -19,6 +19,9 @@ public interface SysRoleMenuMapper
      * @return 结果
      */
     public int deleteRoleMenuByRoleId(Long roleId);
+
+    /** 删除角色下默认维度菜单（hospital_id、supplier_id 均为空） */
+    int deleteDefaultRoleMenuByRoleId(Long roleId);
     
     /**
      * 批量删除角色菜单关联信息

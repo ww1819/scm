@@ -15,6 +15,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 	<delete id="deleteRoleMenuByRoleId" parameterType="Long">
 		delete from sys_role_menu where role_id=#{roleId}
 	</delete>
+
+	<delete id="deleteDefaultRoleMenuByRoleId" parameterType="Long">
+		delete from sys_role_menu
+		where role_id = #{roleId}
+		  and coalesce(nullif(trim(hospital_id), ''), '') = ''
+		  and coalesce(nullif(trim(supplier_id), ''), '') = ''
+	</delete>
 	
 	<select id="selectCountRoleMenuByMenuId" resultType="Integer">
 	    select count(1) from sys_role_menu where menu_id=#{menuId}  

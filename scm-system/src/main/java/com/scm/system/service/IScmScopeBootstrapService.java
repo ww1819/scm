@@ -13,12 +13,12 @@ public interface IScmScopeBootstrapService
     Set<Long> listAllScopeMenuIds(String authType);
 
     /**
-     * 新供应商注册后：创建供应商管理员+供应商业务员角色、写入菜单白名单、角色菜单；返回供应商管理员角色ID
+     * 新供应商注册后：确保全局模板角色与菜单、写入供应商菜单白名单；返回全局供应商管理员角色ID
      */
     Long bootstrapAfterSupplierRegister(Long supplierId, String operBy);
 
     /**
-     * 新医院创建后：创建医院管理员+医院职工角色、白名单与角色菜单
+     * 新医院创建后：确保全局模板角色与菜单、写入医院菜单白名单
      */
     void bootstrapAfterHospitalCreated(Long hospitalId, String operBy);
 
@@ -43,6 +43,11 @@ public interface IScmScopeBootstrapService
 
     /** 覆盖供应商白名单，并同步供应商管理员角色菜单为传入集合 */
     void replaceSupplierMenuAuth(Long supplierId, List<Long> menuIds, String operBy);
+
+    /**
+     * 医院-供应商关联变化后：按当前绑定医院重绑该供应商下用户的全局内置角色（普通 vs 第三方）。
+     */
+    void rebindSupplierBuiltinUserRoles(Long supplierId, String operBy);
 
     /**
      * 医院-供应商关联生效且关联已审核通过时：将本院菜单白名单内、且标记为「需医院授予供应商」的医院-供应商类菜单

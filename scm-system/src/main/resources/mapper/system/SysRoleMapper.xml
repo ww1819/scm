@@ -135,6 +135,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		limit 1
 	</select>
 
+	<select id="selectGlobalScmRoleByKey" resultMap="SysRoleResult">
+		<include refid="selectRoleVo"/>
+		where r.del_flag = '0'
+		  and r.role_key = #{roleKey}
+		  and (r.hospital_id is null or r.hospital_id = 0)
+		  and (r.supplier_id is null or r.supplier_id = 0)
+		order by r.role_id
+		limit 1
+	</select>
+
 	<select id="selectGlobalRoleByKey" resultMap="SysRoleResult">
 		<include refid="selectRoleVo"/>
 		where r.del_flag = '0'

@@ -540,13 +540,55 @@
 			syncRoleHeaderBodyScrollLeft();
 			bindRoleMainHorizontalScroll();
 			syncRoleOperateColumnScroll();
+			syncRoleOperateColumnContent();
+		}
+
+		function syncRoleOperateColumnContent() {
+			var $bt = $('#' + roleTableId).closest('.bootstrap-table');
+			var $right = $bt.find('.fixed-columns-right');
+			if ($right.length === 0) {
+				initRoleTablePopovers();
+				return;
+			}
+			var colIdx = -1;
+			$bt.find('.fixed-table-container > .fixed-table-header th').each(function (i) {
+				if ($(this).attr('data-field') === 'roleOperate') {
+					colIdx = i;
+				}
+			});
+			if (colIdx < 0) {
+				initRoleTablePopovers();
+				return;
+			}
+			var $mainRows = $bt.find('.fixed-table-container > .fixed-table-body tbody tr');
+			var $rightRows = $right.find('.fixed-table-body tbody tr');
+			var len = Math.min($mainRows.length, $rightRows.length);
+			for (var i = 0; i < len; i++) {
+				var mainCell = $mainRows[i].cells[colIdx];
+				var rightCell = $rightRows[i].cells[colIdx];
+				if (!mainCell || !rightCell) {
+					continue;
+				}
+				rightCell.innerHTML = mainCell.innerHTML;
+				$(rightCell).find('.btn, a').css({ display: 'inline-block', visibility: 'visible', opacity: 1 });
+			}
 			initRoleTablePopovers();
 		}
 
 		function initRoleTablePopovers() {
-			var $bt = $('#' + roleTableId).closest('.bootstrap-table');
-			$bt.find('[data-toggle="popover"]').popover('destroy');
-			$bt.find('[data-toggle="popover"]').popover({ html: true, trigger: 'hover', container: 'body' });
+			var $scope = $('#' + roleTableId).closest('.bootstrap-table').find('.fixed-columns-right');
+			if ($scope.length === 0) {
+				$scope = $('#' + roleTableId).closest('.bootstrap-table');
+			}
+			$scope.find('[data-toggle="popover"]').each(function () {
+				var $el = $(this);
+				if ($el.data('bs.popover')) {
+					try {
+						$el.popover('destroy');
+					} catch (e) { /* 表格重绘后旧实例可能已失效 */ }
+				}
+			});
+			$scope.find('[data-toggle="popover"]').popover({ html: true, trigger: 'hover', container: 'body' });
 		}
 
 		function buildRoleOperateHtml(row) {

@@ -80,7 +80,7 @@
 				<div class="col-sm-8">
 					<select name="orgAdmin" id="orgAdmin" class="form-control">
 						<option value="0" selected>否</option>
-						<option value="1">是（同一医院/供应商仅允许一个）</option>
+						<option value="1">是（同类型全局模板角色仅建议保留一个）</option>
 					</select>
 				</div>
 			</div>
@@ -124,15 +124,11 @@
 
 		function syncRoleTenantUi() {
 			var t = $("#roleType").val() || "platform";
-			if (t === "hospital") {
-				$("#grpBindHospital").show();
-				$("#grpBindSupplier").hide();
-				$("#supplierId").val("");
-				$("#grpOrgAdmin").show();
-			} else if (t === "supplier") {
+			if (t === "hospital" || t === "supplier") {
 				$("#grpBindHospital").hide();
+				$("#grpBindSupplier").hide();
 				$("#hospitalId").val("");
-				$("#grpBindSupplier").show();
+				$("#supplierId").val("");
 				$("#grpOrgAdmin").show();
 			} else {
 				$("#grpBindHospital").hide();

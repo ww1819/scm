@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.scm.common.constant.ScmAuthConstants;
 import com.scm.common.constant.UserConstants;
 import com.scm.common.core.domain.entity.SysRole;
 import com.scm.common.core.domain.entity.SysUser;
@@ -17,6 +18,7 @@ import com.scm.system.domain.Supplier;
 import com.scm.system.domain.SupplierUser;
 import com.scm.system.domain.SupplierUserApply;
 import com.scm.system.domain.SysUserRole;
+import com.scm.system.mapper.HospitalSupplierMapper;
 import com.scm.system.mapper.SupplierMapper;
 import com.scm.system.mapper.SupplierUserApplyMapper;
 import com.scm.system.mapper.SupplierUserMapper;
@@ -34,10 +36,13 @@ import com.scm.system.service.ISupplierRegisterService;
 @Service
 public class SupplierRegisterServiceImpl implements ISupplierRegisterService {
 
-    private static final String ROLE_KEY_SUPPLIER_SALES = "supplier_sales";
+    private static final String ROLE_KEY_SUPPLIER_SALES = ScmAuthConstants.ROLE_KEY_SUPPLIER_SALES;
+    private static final String ROLE_KEY_TP_SUPPLIER_SALES = ScmAuthConstants.ROLE_KEY_TP_SUPPLIER_SALES;
 
     @Autowired
     private SupplierMapper supplierMapper;
+    @Autowired
+    private HospitalSupplierMapper hospitalSupplierMapper;
     @Autowired
     private IScmScopeBootstrapService scmScopeBootstrapService;
     @Autowired
@@ -227,23 +232,20 @@ public class SupplierRegisterServiceImpl implements ISupplierRegisterService {
         }
         if ("1".equals(approved)) {
             applyMapper.updateStatus(applyId, SupplierUserApply.STATUS_APPROVED, operBy, auditRemark);
-            SysRole salesRole = roleMapper.selectByRoleKeyAndSupplierId(ROLE_KEY_SUPPLIER_SALES, supplierId);
-            if (salesRole == null) {
-                // 兼容全局「供应商业务员」角色场景
-                salesRole = roleMapper.selectGlobalRoleByKey(ROLE_KEY_SUPPLIER_SALES);
+            String salesRoleKey = hospitalSupplierMapper.isThirdPartyOrderSupplier(supplierId,
+                ScmAuthConstants.HOSPITAL_ID_XINHUA_THIRD_PARTY)
+                ? ROLE_KEY_TP_SUPPLIER_SALES : ROLE_KEY_SUPPLIER_SALES;
+            SysRole salesRole = roleMapper.selectGlobalScmRoleByKey(salesRoleKey);
+            if (salesRole == null)
+            {
+                throw new IllegalArgumentException("全局供应商业务员角色未初始化，请先执行 migrate_global_template_roles_v2.sql");
             }
-            if (salesRole == null) {
-                // 再按名称兜底
-                salesRole = roleMapper.selectGlobalRoleByName("供应商业务员");
-            }
-            if (salesRole != null) {
-                List<SysUserRole> urList = new ArrayList<>();
-                SysUserRole ur = new SysUserRole();
-                ur.setUserId(apply.getUserId());
-                ur.setRoleId(salesRole.getRoleId());
-                urList.add(ur);
-                userRoleMapper.batchUserRole(urList);
-            }
+            List<SysUserRole> urList = new ArrayList<>();
+            SysUserRole ur = new SysUserRole();
+            ur.setUserId(apply.getUserId());
+            ur.setRoleId(salesRole.getRoleId());
+            urList.add(ur);
+            userRoleMapper.batchUserRole(urList);
             SupplierUser su = new SupplierUser();
             su.setSupplierId(supplierId);
             su.setUserId(apply.getUserId());

@@ -81,7 +81,7 @@
 				<div class="col-sm-8">
 					<select name="orgAdmin" id="orgAdmin" class="form-control" th:field="*{orgAdmin}">
 						<option value="0">否</option>
-						<option value="1">是（同一医院/供应商仅允许一个）</option>
+						<option value="1">是（同类型全局模板角色仅建议保留一个）</option>
 					</select>
 					<span class="help-block m-b-none text-muted">为「是」时，新建/刷新机构仅向该角色自动下发「仅管理员开放」的菜单。</span>
 				</div>
@@ -134,19 +134,13 @@
 			if (!t) {
 				t = "platform";
 			}
-			if (t === "hospital") {
-				$("#grpBindHospital").show();
+			if (t === "hospital" || t === "supplier") {
+				$("#grpBindHospital").hide();
 				$("#grpBindSupplier").hide();
 				if (!restoreBound) {
+					$("#hospitalId").val("");
 					$("#supplierId").val("");
 				}
-				$("#grpOrgAdmin").show();
-			} else if (t === "supplier") {
-				$("#grpBindHospital").hide();
-				if (!restoreBound) {
-					$("#hospitalId").val("");
-				}
-				$("#grpBindSupplier").show();
 				$("#grpOrgAdmin").show();
 			} else {
 				$("#grpBindHospital").hide();
@@ -164,12 +158,6 @@
 		}
 
 		function restoreRoleBindFields(roleType) {
-			if (roleType === "hospital" && roleBoundHospitalId != null && roleBoundHospitalId !== '') {
-				$("#hospitalId").val(String(roleBoundHospitalId));
-			}
-			if (roleType === "supplier" && roleBoundSupplierId != null && roleBoundSupplierId !== '') {
-				$("#supplierId").val(String(roleBoundSupplierId));
-			}
 			if ((roleType === "hospital" || roleType === "supplier") && roleBoundOrgAdmin != null && roleBoundOrgAdmin !== '') {
 				$("#orgAdmin").val(String(roleBoundOrgAdmin));
 			}

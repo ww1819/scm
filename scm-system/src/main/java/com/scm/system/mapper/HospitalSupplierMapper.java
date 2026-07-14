@@ -1,6 +1,7 @@
 package com.scm.system.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.scm.system.domain.HospitalSupplier;
 
 /**
@@ -93,5 +94,11 @@ public interface HospitalSupplierMapper
      * 与供应商已绑定且当前处于供货期内的医院（用于资质变更抄送）
      */
     public List<Long> selectHospitalIdsInActiveSupplyForSupplier(Long supplierId);
+
+    /**
+     * 是否为第三方订单供应商：已绑定医院且仅绑定新华医院（第三方订单推送）
+     */
+    public boolean isThirdPartyOrderSupplier(@Param("supplierId") Long supplierId,
+        @Param("xinhuaHospitalId") Long xinhuaHospitalId);
 }
 
