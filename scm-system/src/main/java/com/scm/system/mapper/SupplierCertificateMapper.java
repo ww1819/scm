@@ -98,5 +98,10 @@ public interface SupplierCertificateMapper
 
     List<String> selectCertificateTypeNamesBySupplierAndHospital(@Param("supplierId") Long supplierId,
         @Param("hospitalId") Long hospitalId);
+
+    /**
+     * 将误存为 type_id 或 type_code 的 certificate_type 修正为类型名称
+     */
+    int repairStoredCertificateTypeValues();
 }
 

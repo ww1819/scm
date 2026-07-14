@@ -107,5 +107,11 @@ public interface ProductCertificateMapper
      * 某物资下未删除的产品证件主键（用于同步扩展证照占位）
      */
     public List<Long> selectCertificateIdsByMaterialId(@Param("materialId") Long materialId);
+
+    /**
+     * 按医院、供应商、耗材编码查询产品证件（用于订单目录同步 upsert）
+     */
+    public ProductCertificate selectProductCertificateByMaterialCode(@Param("hospitalId") String hospitalId,
+        @Param("supplierId") Long supplierId, @Param("materialCode") String materialCode);
 }
 

@@ -216,6 +216,7 @@
 			border-top: 1px solid #eee;
 			background: #fff;
 			z-index: 3;
+			overflow: visible;
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination::after {
@@ -232,10 +233,21 @@
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination > .pagination-detail {
-			flex: 1 1 auto;
+			flex: 0 0 auto;
 			min-width: 0;
-			overflow: hidden;
-			text-overflow: ellipsis;
+			overflow: visible;
+			white-space: nowrap;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination .page-list {
+			position: relative;
+			z-index: 12;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination .page-list select {
+			min-width: 62px;
+			cursor: pointer;
+			pointer-events: auto;
 		}
 
 		/* 右侧固定操作列（参考订单查询 / 医院关联审核） */
@@ -255,6 +267,8 @@
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right {
 			z-index: 5;
 			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
+			background-color: #fff !important;
+			overflow: hidden;
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-header {
@@ -321,6 +335,8 @@
 			font-size: 12px;
 			line-height: 1.42857143;
 			color: inherit;
+			overflow: hidden;
+			background-color: #fff !important;
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right .fixed-table-body td[data-field="auditOperate"] .btn {
@@ -372,6 +388,16 @@
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="address"] {
 			overflow: hidden;
 			text-overflow: ellipsis;
+			max-width: 260px;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="address"] .tooltip-show {
+			display: inline-block;
+			max-width: 100%;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			vertical-align: middle;
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateType"] .tooltip-show,
@@ -515,9 +541,6 @@
 	<script th:inline="javascript">
 		var prefix = ctx + "certificate/supplier";
 		var supplierPrefix = ctx + "supplier/supplier";
-		var editFlag = [[${@permission.hasPermi('certificate:supplier:edit')}]];
-		var auditFlag = [[${@permission.hasPermi('certificate:supplier:audit')}]];
-		var uploadFlag = (editFlag !== 'hidden' || auditFlag !== 'hidden') ? '' : 'hidden';
 		var selectedSupplierId = null; // 当前选中的供应商ID
 		var allSuppliers = []; // 左侧供应商全量数据（用于搜索过滤）
 		var auditTableId = 'bootstrap-table';
@@ -606,8 +629,8 @@
 		    $mainBody.find('tbody tr').each(function (rowIdx) {
 		        var html = $(this).find('td[data-field="auditOperate"]').html();
 		        var $rightCell = $rightBody.find('tbody tr').eq(rowIdx).find('td[data-field="auditOperate"]');
-		        if (html && $rightCell.length) {
-		            $rightCell.html(html);
+		        if ($rightCell.length) {
+		            $rightCell.html(html || '');
 		        }
 		    });
 		}
@@ -775,24 +798,17 @@
 		    var actions = [];
 		    var cid = row.certificateId;
 		    cacheCertRowFiles(cid, row.certificateFile || '', row.certificateFileIds || '');
-		    var hasFile = (row.certificateFile && row.certificateFile.trim() !== '')
-		        || (row.certificateFileIds && row.certificateFileIds.trim() !== '');
-		    if (hasFile) {
-		        actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="previewCertById(' + cid + ')" title="查看证件图片"><i class="fa fa-eye"></i> 查看</a>');
-		        actions.push(' <a class="btn btn-warning btn-xs" href="javascript:void(0)" onclick="downloadCertById(' + cid + ')" title="下载证件图片"><i class="fa fa-download"></i> 下载</a>');
-		    }
-		    if (uploadFlag !== 'hidden') {
-		        actions.push(' <a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="openUploadImagesTab(' + cid + ')" title="上传或删除证照图片"><i class="fa fa-cloud-upload"></i> 上传</a>');
-		    }
+		    actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="previewCertById(' + cid + ')" title="预览证件图片"><i class="fa fa-eye"></i> 预览</a>');
+		    actions.push(' <a class="btn btn-primary btn-xs" href="javascript:void(0)" onclick="viewAuditDetail(' + cid + ')" title="查看证件详情"><i class="fa fa-search"></i> 查看</a>');
 		    return actions.join('');
 		}
 
-		function openUploadImagesTab(certificateId) {
+		function viewAuditDetail(certificateId) {
 		    if (certificateId == null || certificateId === '') {
-		        $.modal.alertWarning('无法打开上传页：缺少证件ID');
+		        $.modal.alertWarning('无法查看：缺少证件ID');
 		        return;
 		    }
-		    $.modal.openTab('上传证照', prefix + '/upload/' + certificateId);
+		    $.modal.openTab('供应商证件审核', prefix + '/audit/' + certificateId);
 		}
 
 		function querySupplierCertificateAuditList() {
@@ -822,6 +838,8 @@
 		        },
 		        sortName: "createTime",
 		        sortOrder: "desc",
+		        pageSize: 10,
+		        pageList: [10, 25, 50, 100],
 		        modalName: "供应商证件",
 		        height: calculateTableHeight(),
 		        mobileResponsive: false,
@@ -867,6 +885,7 @@
 		            title: '审核',
 		            align: 'center',
 		            width: 80,
+		            sortable: true,
 		            formatter: function (value, row, index) {
 		                if (row.auditStatus == '1') {
 		                    return '<span class="label label-success">是</span>';
@@ -882,6 +901,8 @@
 		            title: '上传',
 		            align: 'center',
 		            width: 70,
+		            sortable: true,
+		            sortName: 'certificateFile',
 		            formatter: function(value, row, index) {
 		                if (row.certificateFile && row.certificateFile.trim() !== '') {
 		                    return '<span class="label label-success">是</span>';
@@ -913,6 +934,7 @@
 		            title: '供应商编码',
 		            align: 'left',
 		            width: 150,
+		            sortable: true,
 		            formatter: function (value, row, index) {
 		                return value || '-';
 		            }
@@ -922,6 +944,7 @@
 		            title: '供应商名称',
 		            align: 'left',
 		            width: 200,
+		            sortable: true,
 		            formatter: function (value, row, index) {
 		                return value || '-';
 		            }
@@ -931,6 +954,7 @@
 		            title: '证件类型',
 		            align: 'left',
 		            width: 160,
+		            sortable: true,
 		            formatter: function (value, row, index) {
 		                if (!value) {
 		                    return '-';
@@ -943,6 +967,7 @@
 		            title: '证件编号',
 		            align: 'left',
 		            width: 140,
+		            sortable: true,
 		            formatter: function (value, row, index) {
 		                if (!value) {
 		                    return '-';
@@ -955,6 +980,7 @@
 		            title: '有效期至',
 		            align: 'center',
 		            width: 110,
+		            sortable: true,
 		            formatter: function (value, row, index) {
 		                if (!value) {
 		                    return '-';
@@ -970,6 +996,7 @@
 		            title: '公司联系人',
 		            align: 'left',
 		            width: 120,
+		            visible: false,
 		            formatter: function (value, row, index) {
 		                return value || '-';
 		            }
@@ -978,9 +1005,13 @@
 		            field: 'address',
 		            title: '公司地址',
 		            align: 'left',
-		            width: 300,
+		            width: 260,
+		            visible: false,
 		            formatter: function (value, row, index) {
-		                return value || '-';
+		                if (!value) {
+		                    return '-';
+		                }
+		                return $.table.tooltip(value, 12);
 		            }
 		        },
 		        {

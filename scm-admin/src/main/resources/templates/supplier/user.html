@@ -30,6 +30,7 @@
 			flex: 1 1 auto;
 			min-height: 0;
 			padding-bottom: 0;
+			position: relative !important;
 		}
 
 		.supplier-user-table-wrap .fixed-table-body {
@@ -38,6 +39,10 @@
 		}
 
 		.supplier-user-table-wrap.supplier-user-list-table .fixed-columns-right {
+			position: absolute !important;
+			right: 0 !important;
+			top: 0 !important;
+			height: 100% !important;
 			z-index: 5;
 			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
 		}
@@ -187,10 +192,23 @@
 		.container-div .search-collapse .select-list li {
 			margin: 4px 15px 4px 0;
 		}
+
+		/* 与新增医院关联页一致：表格区撑满视口剩余高度，缩放时不被 max-height 截断 */
+		.container-div.supplier-user-page > .row {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			min-height: 0;
+		}
+
+		.container-div.supplier-user-page .supplier-user-table-wrap {
+			flex: 1 1 auto;
+			min-height: 260px;
+		}
 	</style>
 </head>
 <body class="gray-bg">
-	<div class="container-div">
+	<div class="container-div supplier-user-page">
 		<div class="row">
 			<div class="col-sm-12 search-collapse">
 				<form id="supplier-user-form">
@@ -275,14 +293,30 @@
 			supplierUserOperate: 160
 		};
 
+		var supplierUserLayoutTimer = null;
+
+		function scheduleSupplierUserViewportRelayout() {
+			if (supplierUserLayoutTimer) {
+				clearTimeout(supplierUserLayoutTimer);
+			}
+			supplierUserLayoutTimer = setTimeout(function () {
+				supplierUserLayoutTimer = null;
+				layoutSupplierUserTableWrapHeight();
+				adjustTableHeight();
+				refreshSupplierUserTableLayout();
+			}, 80);
+		}
+
 		$(function() {
 		    layoutSupplierUserTableWrapHeight();
 		    querySupplierUserList();
-		    $(window).resize(function() {
-		    	layoutSupplierUserTableWrapHeight();
-		    	adjustTableHeight();
-		    	setTimeout(refreshSupplierUserTableLayout, 100);
-		    });
+		    $(window).off('resize.supplierUserLayout').on('resize.supplierUserLayout', scheduleSupplierUserViewportRelayout);
+		    if (window.visualViewport) {
+		        window.visualViewport.removeEventListener('resize', scheduleSupplierUserViewportRelayout);
+		        window.visualViewport.removeEventListener('scroll', scheduleSupplierUserViewportRelayout);
+		        window.visualViewport.addEventListener('resize', scheduleSupplierUserViewportRelayout);
+		        window.visualViewport.addEventListener('scroll', scheduleSupplierUserViewportRelayout);
+		    }
 		});
 
 		function layoutSupplierUserTableWrapHeight() {
@@ -291,10 +325,12 @@
 				return;
 			}
 			var top = $wrap[0].getBoundingClientRect().top;
-			var h = Math.floor(window.innerHeight - top - 14);
-			h = Math.min(Math.max(h, 400), 580);
+			var bottomGap = 10;
+			var h = Math.floor(window.innerHeight - top - bottomGap);
+			h = Math.max(h, 260);
 			$wrap[0].style.height = h + 'px';
 			$wrap[0].style.minHeight = h + 'px';
+			$wrap[0].style.maxHeight = h + 'px';
 		}
 
 		function calculateTableHeight() {
@@ -456,6 +492,42 @@
 			});
 		}
 
+		function fixSupplierUserFixedColumnsRight() {
+			var $bt = $('#' + supplierUserTableId).closest('.bootstrap-table');
+			var $container = $bt.find('.fixed-table-container').first();
+			var $fixedRight = $bt.find('.fixed-columns-right');
+			if (!$container.length || !$fixedRight.length) {
+				return;
+			}
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $mainBody = $container.children('.fixed-table-body');
+			var containerH = Math.ceil($container.outerHeight() || 0);
+			var headerH = Math.ceil($mainHeader.outerHeight() || 0);
+			var opW = supplierUserColWidths.supplierUserOperate || 160;
+			$fixedRight.css({
+				position: 'absolute',
+				right: 0,
+				top: 0,
+				width: opW + 'px',
+				height: containerH > 0 ? (containerH + 'px') : '100%',
+				zIndex: 5
+			});
+			var $fixedHeader = $fixedRight.find('.fixed-table-header');
+			var $fixedBody = $fixedRight.find('.fixed-table-body');
+			if ($fixedHeader.length && headerH > 0) {
+				$fixedHeader.css({ height: headerH + 'px' });
+			}
+			if ($fixedBody.length && $mainBody.length) {
+				var bodyH = Math.ceil($mainBody.outerHeight() || 0);
+				var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
+				$fixedBody.css({
+					height: Math.max(bodyH - (scrollW > 0 ? 1 : 0), 0) + 'px',
+					overflowY: 'hidden'
+				});
+				$fixedBody.scrollTop($mainBody.scrollTop());
+			}
+		}
+
 		function fixSupplierUserTableHeaderAlign() {
 			var $bt = $('#' + supplierUserTableId).closest('.bootstrap-table');
 			var $container = $bt.find('.fixed-table-container').first();
@@ -516,6 +588,7 @@
 			syncSupplierUserHeaderBodyScrollLeft();
 			bindSupplierUserMainHorizontalScroll();
 			syncSupplierUserOperateColumnScroll();
+			fixSupplierUserFixedColumnsRight();
 		}
 
 		function querySupplierUserList() {
@@ -554,6 +627,9 @@
 		        },
 		        onPostBody: function () {
 		            refreshSupplierUserTableLayout();
+		        },
+		        onResetView: function () {
+		            setTimeout(refreshSupplierUserTableLayout, 0);
 		        },
 		        columns: [{
 		            checkbox: true

@@ -311,7 +311,7 @@ public class SysDeptServiceImpl implements ISysDeptService
         List<SysDept> children = deptMapper.selectChildrenDeptById(deptId);
         for (SysDept child : children)
         {
-            child.setAncestors(child.getAncestors().replaceFirst(oldAncestors, newAncestors));
+            child.setAncestors(StringUtils.replace(child.getAncestors(), oldAncestors, newAncestors));
         }
         if (children.size() > 0)
         {

@@ -58,12 +58,16 @@ public class SupplierCertificate extends BaseEntity
     @Excel(name = "证件编号")
     private String certificateNo;
 
-    /** 发证日期 */
-    @Excel(name = "发证日期", width = 30, dateFormat = "yyyy-MM-dd")
+    /** 成立日期 */
+    @Excel(name = "成立日期", width = 30, dateFormat = "yyyy-MM-dd")
     private Date issueDate;
 
-    /** 有效期至 */
-    @Excel(name = "有效期至", width = 30, dateFormat = "yyyy-MM-dd")
+    /** 营业期限起 */
+    @Excel(name = "营业期限起", width = 30, dateFormat = "yyyy-MM-dd")
+    private Date registerDate;
+
+    /** 营业期限止 */
+    @Excel(name = "营业期限止", width = 30, dateFormat = "yyyy-MM-dd")
     private Date expireDate;
 
     /** 证件文件路径 */
@@ -229,6 +233,16 @@ public class SupplierCertificate extends BaseEntity
         this.issueDate = issueDate;
     }
 
+    public Date getRegisterDate()
+    {
+        return registerDate;
+    }
+
+    public void setRegisterDate(Date registerDate)
+    {
+        this.registerDate = registerDate;
+    }
+
     public Date getExpireDate()
     {
         return expireDate;
@@ -371,6 +385,7 @@ public class SupplierCertificate extends BaseEntity
             .append("certificateName", getCertificateName())
             .append("certificateNo", getCertificateNo())
             .append("issueDate", getIssueDate())
+            .append("registerDate", getRegisterDate())
             .append("expireDate", getExpireDate())
             .append("certificateFile", getCertificateFile())
             .append("auditStatus", getAuditStatus())

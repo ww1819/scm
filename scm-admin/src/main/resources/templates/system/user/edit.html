@@ -256,6 +256,7 @@
         var maintainSupplierLabel = /*[[${maintainSupplierLabel}]]*/ '';
 
         var rolePickerTableInited = false;
+        var rolePickerRowCache = {};
 
         function roleKeyFromSelect() {
             return $.common.trim($('#pickedRoleKey').val() || '');
@@ -326,6 +327,12 @@
                 },
                 responseHandler: function (res) {
                     if (res.code === web_status.SUCCESS) {
+                        rolePickerRowCache = {};
+                        $.each(res.rows || [], function (i, r) {
+                            if (r && r.roleId != null) {
+                                rolePickerRowCache[r.roleId] = r;
+                            }
+                        });
                         return { rows: res.rows, total: res.total };
                     }
                     $.modal.alertWarning(res.msg || '加载失败');
@@ -333,6 +340,8 @@
                 },
                 columns: [
                     { field: 'roleId', title: '编号', width: 70 },
+                    { field: 'hospitalId', visible: false },
+                    { field: 'supplierId', visible: false },
                     { field: 'roleName', title: '角色名称', sortable: true },
                     { field: 'roleKey', title: '权限字符' },
                     { field: 'pinyinCode', title: '首拼简码', formatter: function (v) { return v || '—'; } },
@@ -364,41 +373,90 @@
                         title: '操作',
                         align: 'center',
                         formatter: function (value, row, index) {
-                            return '<a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="applyPickedRoleAt(' + index + ')"><i class="fa fa-check"></i> 选择</a>';
+                            return '<a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="applyPickedRoleById(' + row.roleId + ')"><i class="fa fa-check"></i> 选择</a>';
                         }
                     }
                 ]
             });
         }
 
-        function applyPickedRoleAt(index) {
-            var rows = $('#rolePickerTable').bootstrapTable('getData');
-            var row = rows[index];
+        function applyPickedRoleById(roleId) {
+            var row = rolePickerRowCache[roleId];
+            if (!row) {
+                var rows = $('#rolePickerTable').bootstrapTable('getData') || [];
+                for (var i = 0; i < rows.length; i++) {
+                    if (rows[i] && String(rows[i].roleId) === String(roleId)) {
+                        row = rows[i];
+                        break;
+                    }
+                }
+            }
             if (!row) {
                 return;
             }
+            var category = resolveRoleCategory(row);
             $('#pickedRoleId').val(row.roleId);
             $('#pickedRoleKey').val(row.roleKey || '');
             $('#pickedRoleName').val(row.roleName || '');
-            $('#pickedRoleType').val(row.roleType || '');
+            $('#pickedRoleType').val(category || row.roleType || '');
             var hn = row.hospitalName || '—';
             var sn = row.supplierCompanyName || '—';
-            var rt = pickerRoleTypeText(row.roleType);
+            var rt = pickerRoleTypeText(category || row.roleType);
             var oa = (row.orgAdmin === '1' || row.orgAdmin === 1) ? '是' : '否';
             $('#pickedRoleDisplay').val((row.roleName || '') + '（类型：' + rt + '，医院：' + hn + '，供应商：' + sn + '，机构管理员：' + oa + '）');
+            applyFieldsFromPickedRole(row, category);
             $('#rolePickerModal').modal('hide');
-            applyMaintainFieldsByRole();
+        }
+        function resolveRoleCategory(row) {
+            var rt = $.common.trim((row && row.roleType) || roleTypeFromSelect() || '');
+            if (rt === 'hospital' || rt === 'supplier' || rt === 'platform') {
+                return rt;
+            }
+            var k = $.common.trim((row && row.roleKey) || roleKeyFromSelect() || '');
+            var n = $.common.trim((row && row.roleName) || roleNameFromSelect() || '');
+            if (k === 'hospital_admin' || n === '医院' || n.indexOf('医院') >= 0) {
+                return 'hospital';
+            }
+            if (k === 'supplier' || k === 'supplier_admin' || k === 'supplier_sales' || n === '供应商' || n.indexOf('供应商') >= 0) {
+                return 'supplier';
+            }
+            return '';
+        }
+        function findHospitalOptionValue(hospitalId, hospitalName) {
+            var $h = $('#maintainHospitalId');
+            if (hospitalId != null && hospitalId !== '') {
+                var idStr = String(hospitalId);
+                if ($h.find('option[value="' + idStr.replace(/"/g, '\\"') + '"]').length) {
+                    return idStr;
+                }
+            }
+            if (hospitalName) {
+                var matched = '';
+                $h.find('option').each(function () {
+                    if ($.common.trim($(this).text()) === $.common.trim(hospitalName)) {
+                        matched = $(this).val();
+                        return false;
+                    }
+                });
+                return matched;
+            }
+            return '';
+        }
+        function applyUserTypeByRoleType(roleType) {
+            if (roleType === 'hospital' || roleType === 'supplier' || roleType === 'platform') {
+                $('#userType').val(roleType).trigger('change');
+            }
+        }
+        function applyFieldsFromPickedRole(row, category) {
+            if (!row) {
+                return;
+            }
+            category = category || resolveRoleCategory(row);
+            applyUserTypeByRoleType(category);
+            applyMaintainFieldsByRole(row, category);
         }
         function isHospitalPrincipalRole() {
-            var rt = roleTypeFromSelect();
-            if (rt === 'hospital') return true;
-            if (rt === 'supplier' || rt === 'platform') return false;
-            var k = roleKeyFromSelect();
-            var n = roleNameFromSelect();
-            if (!k && !n) return false;
-            if (k === 'hospital_admin') return true;
-            if (n === '医院') return true;
-            return n.indexOf('医院') >= 0;
+            return resolveRoleCategory({}) === 'hospital';
         }
         function isSupplierPrincipalRole() {
             var rt = roleTypeFromSelect();
@@ -412,24 +470,38 @@
             if (n === '供应商') return true;
             return n.indexOf('供应商') >= 0;
         }
-        function applyMaintainFieldsByRole() {
-            var h = isHospitalPrincipalRole();
-            var s = isSupplierPrincipalRole();
+        function applyMaintainFieldsByRole(roleRow, category) {
+            category = category || resolveRoleCategory(roleRow || {});
             var $h = $('#maintainHospitalId');
             var $sid = $('#maintainSupplierId');
             var $st = $('#maintainSupplierSearch');
             var $wrap = $('.maintain-supplier-wrap');
-            if (h && !s) {
+            if (category === 'hospital') {
                 $h.prop('disabled', false).removeClass('field-muted');
                 $sid.val('').prop('disabled', true);
                 $st.val('').prop('disabled', true).addClass('field-muted');
                 $wrap.addClass('field-muted');
                 $('#maintainSupplierSuggestPanel').hide().empty();
-            } else if (s && !h) {
+                if (roleRow) {
+                    var hospitalVal = findHospitalOptionValue(roleRow.hospitalId, roleRow.hospitalName);
+                    if (hospitalVal) {
+                        $h.val(hospitalVal).trigger('change');
+                    }
+                }
+            } else if (category === 'supplier') {
                 $h.val('').prop('disabled', true).addClass('field-muted');
                 $sid.prop('disabled', false);
                 $st.prop('disabled', false).removeClass('field-muted');
                 $wrap.removeClass('field-muted');
+                if (roleRow) {
+                    if (roleRow.supplierId) {
+                        $sid.val(String(roleRow.supplierId));
+                        $st.val(roleRow.supplierCompanyName || '');
+                    } else {
+                        $sid.val('');
+                        $st.val('');
+                    }
+                }
             } else {
                 $h.val('').prop('disabled', true).addClass('field-muted');
                 $sid.val('').prop('disabled', true);

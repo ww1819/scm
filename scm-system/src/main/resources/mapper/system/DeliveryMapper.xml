@@ -408,5 +408,68 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </foreach>
           and (del_flag is null or del_flag = '' or del_flag = '0')
     </update>
+
+    <select id="sumDeliveryAmountGroupByMonth" resultType="java.util.HashMap">
+        select MONTH(d.create_time) as monthNum,
+               IFNULL(SUM(d.delivery_amount), 0) as totalAmount,
+               IFNULL(SUM(dd.delivery_quantity), 0) as totalQuantity
+        from scm_delivery d
+        left join scm_delivery_detail dd on dd.delivery_id = d.delivery_id
+          and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
+        where d.hospital_id = #{hospitalId}
+          and (d.del_flag is null or d.del_flag = '' or d.del_flag = '0')
+          <if test="supplierId != null">
+              AND d.supplier_id = #{supplierId}
+          </if>
+          and d.create_time &gt;= #{yearBegin}
+          and d.create_time &lt; DATE_ADD(#{yearEnd}, INTERVAL 1 DAY)
+        group by MONTH(d.create_time)
+    </select>
+
+    <select id="selectReconciliationSupplierIdsByHospital" resultType="java.lang.Long">
+        select distinct supplier_id from (
+            select d.supplier_id
+            from scm_delivery d
+            where d.hospital_id = #{hospitalId}
+              and d.supplier_id is not null
+              and (d.del_flag is null or d.del_flag = '' or d.del_flag = '0')
+            union
+            select s.supplier_id
+            from scm_settlement s
+            where s.customer_id = #{hospitalId}
+              and s.supplier_id is not null
+              and (s.status is null or s.status = '' or s.status = '0')
+        ) t
+        order by supplier_id
+    </select>
+
+    <select id="selectReconciliationSuppliersByHospital" resultType="com.scm.system.domain.ReconciliationSupplierOption">
+        select distinct s.supplier_id as supplierId,
+               s.company_name as supplierName,
+               s.supplier_code as supplierCode,
+               s.pinyin_code as pinyinCode
+        from (
+            select hs.supplier_id
+            from scm_hospital_supplier hs
+            where hs.hospital_id = #{hospitalId}
+              and hs.supplier_id is not null
+              and (hs.status is null or hs.status = '' or hs.status = '0')
+            union
+            select d.supplier_id
+            from scm_delivery d
+            where d.hospital_id = #{hospitalId}
+              and d.supplier_id is not null
+              and (d.del_flag is null or d.del_flag = '' or d.del_flag = '0')
+            union
+            select st.supplier_id
+            from scm_settlement st
+            where st.customer_id = #{hospitalId}
+              and st.supplier_id is not null
+              and (st.status is null or st.status = '' or st.status = '0')
+        ) x
+        inner join scm_supplier s on s.supplier_id = x.supplier_id
+        where (s.del_flag is null or s.del_flag = '' or s.del_flag = '0')
+        order by s.company_name
+    </select>
 </mapper>
 

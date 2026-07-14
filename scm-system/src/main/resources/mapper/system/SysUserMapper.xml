@@ -94,6 +94,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		<if test="status != null and status != ''">
 			AND u.status = #{status}
 		</if>
+		<if test="roleId != null and roleId != 0">
+			AND EXISTS (
+				SELECT 1 FROM sys_user_role ur
+				WHERE ur.user_id = u.user_id AND ur.role_id = #{roleId}
+			)
+		</if>
 		<if test="phonenumber != null and phonenumber != ''">
 			AND u.phonenumber like concat('%', #{phonenumber}, '%')
 		</if>
@@ -103,6 +109,17 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				INNER JOIN scm_supplier s ON su.supplier_id = s.supplier_id AND s.del_flag = '0'
 				WHERE su.user_id = u.user_id AND su.status = '0' AND (su.del_flag = '0' OR su.del_flag IS NULL)
 				AND s.company_name like concat('%', #{params.supplierName}, '%')
+			)
+		</if>
+		<if test="params.hospitalName != null and params.hospitalName != ''">
+			AND EXISTS (
+				SELECT 1 FROM scm_hospital_user hu
+				INNER JOIN scm_hospital h ON hu.hospital_id = h.hospital_id AND h.del_flag = '0' AND h.status = '0'
+				WHERE hu.user_id = u.user_id AND hu.status = '0' AND (hu.del_flag = '0' OR hu.del_flag IS NULL)
+				AND (
+					h.hospital_name like concat('%', #{params.hospitalName}, '%')
+					OR IFNULL(h.pinyin_code, '') like concat('%', #{params.hospitalName}, '%')
+				)
 			)
 		</if>
 		<if test="params.beginTime != null and params.beginTime != ''"><!-- 开始时间检索 -->

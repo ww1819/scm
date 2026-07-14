@@ -1,5 +1,6 @@
 package com.scm.system.service;
 
+import java.util.Collection;
 import java.util.List;
 import com.scm.system.domain.ProductCertLicenseSnap;
 
@@ -24,6 +25,9 @@ public interface IProductCertLicenseSnapService
     /** 某物资下所有产品证件补齐扩展证照占位 */
     void ensureProductSnapStubsForMaterial(Long materialId, String loginName);
 
+    /** 批量补齐扩展证照占位（类型配置只加载一次） */
+    void ensureProductSnapStubsForCertificates(Collection<Long> certificateIds, String loginName);
+
     /**
      * 合并展示：先补齐占位，再按证件类型配置顺序返回行（含历史多余类型排在末尾）
      */
@@ -31,4 +35,10 @@ public interface IProductCertLicenseSnapService
 
     /** 登记页单行保存（更新证号、日期、附件等） */
     int saveSnapRow(ProductCertLicenseSnap row, String loginName);
+
+    /** 为扩展证照行追加影像 URL（逗号分隔存储） */
+    int appendSnapCertificateImage(String licenseId, String fileUrl, String loginName);
+
+    /** 从扩展证照行移除指定影像 URL */
+    int removeSnapCertificateImage(String licenseId, String fileUrl, String loginName);
 }

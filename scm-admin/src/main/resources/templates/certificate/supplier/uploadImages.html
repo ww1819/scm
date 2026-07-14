@@ -71,6 +71,26 @@
 			color: #666;
 			white-space: nowrap;
 		}
+		.cert-readonly-form .cert-inline-field.cert-term-field > label {
+			width: 108px;
+		}
+		.cert-term-range {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			flex-wrap: nowrap;
+		}
+		.cert-term-range .form-control {
+			width: 108px;
+			height: 28px;
+			padding: 2px 6px;
+			font-size: 12px;
+		}
+		.cert-term-range .cert-term-sep {
+			flex-shrink: 0;
+			font-size: 12px;
+			color: #666;
+		}
 		.cert-readonly-form .cert-inline-field > .form-control {
 			flex: 0 0 auto;
 			width: 118px;
@@ -235,28 +255,34 @@
                 </div>
                 <div class="col-sm-3">
                     <div class="cert-inline-field">
-                        <label>发证日期</label>
+                        <label>成立日期</label>
                         <input name="issueDate" type="date" class="form-control"
                                th:readonly="${!certEditable}"
                                th:value="${supplierCertificate.issueDate != null ? #dates.format(supplierCertificate.issueDate, 'yyyy-MM-dd') : ''}">
                     </div>
                 </div>
-                <div class="col-sm-3">
-                    <div class="cert-inline-field">
-                        <label>有效期至</label>
-                        <input name="expireDate" id="expireDate" type="date" class="form-control"
-                               th:readonly="${!certEditable}"
-                               th:value="${supplierCertificate.expireDate != null ? #dates.format(supplierCertificate.expireDate, 'yyyy-MM-dd') : ''}">
+                <div class="col-sm-6">
+                    <div class="cert-inline-field cert-term-field">
+                        <label>营业期限起止日期</label>
+                        <div class="cert-term-range">
+                            <input name="registerDate" id="registerDate" type="date" class="form-control"
+                                   th:readonly="${!certEditable}"
+                                   th:value="${supplierCertificate.registerDate != null ? #dates.format(supplierCertificate.registerDate, 'yyyy-MM-dd') : ''}">
+                            <span class="cert-term-sep">至</span>
+                            <input name="expireDate" id="expireDate" type="date" class="form-control"
+                                   th:readonly="${!certEditable}"
+                                   th:value="${supplierCertificate.expireDate != null ? #dates.format(supplierCertificate.expireDate, 'yyyy-MM-dd') : ''}">
+                        </div>
                     </div>
                 </div>
+            </div>
+            <div class="row">
                 <div class="col-sm-3">
                     <div class="cert-inline-field">
                         <label>创建人</label>
                         <input type="text" class="form-control" readonly th:value="${supplierCertificate.createBy != null ? supplierCertificate.createBy : '-'}">
                     </div>
                 </div>
-            </div>
-            <div class="row">
                 <div class="col-sm-3">
                     <div class="cert-inline-field">
                         <label>创建时间</label>
@@ -300,6 +326,44 @@
 	    var certFileHelper;
 	    var autoSaveInFlight = false;
 
+	    function toggleBusinessTermInputs() {
+	        var isLongTerm = $("#certificateName").val();
+	        var readonly = !certEditable || isLongTerm === '是';
+	        if (isLongTerm === '是') {
+	            $("#registerDate").val('');
+	            $("#expireDate").val('');
+	        }
+	        $("#registerDate").prop('readonly', readonly);
+	        $("#expireDate").prop('readonly', readonly);
+	    }
+
+	    function validateBusinessTerm() {
+	        if ($("#certificateName").val() === '是') {
+	            return true;
+	        }
+	        var startDate = $("#registerDate").val();
+	        var endDate = $("#expireDate").val();
+	        if (!startDate || !endDate) {
+	            $.modal.alertWarning("选择「否」时，必须填写营业期限起止日期");
+	            return false;
+	        }
+	        return true;
+	    }
+
+	    function collectCertFormData() {
+	        return {
+	            certificateId: $("#certificateId").val(),
+	            certificateFileIds: $("#certificateFileIds").val() || '',
+	            certificateFile: $("#certificateFileUrl").val() || '',
+	            certificateNo: $("#certificateNo").val() || '',
+	            certificateName: $("#certificateName").val() || '否',
+	            issueDate: $("input[name='issueDate']").val() || '',
+	            registerDate: $("#registerDate").val() || '',
+	            expireDate: $("#expireDate").val() || '',
+	            remark: $("#remark").val() || ''
+	        };
+	    }
+
 	    function refreshSiblingListTables() {
 	        try {
 	            $(window.parent.document).find('iframe.Scm_iframe').each(function () {
@@ -318,16 +382,7 @@
 	        }
 	        certFileHelper.updateFileState();
 	        autoSaveInFlight = true;
-	        var data = {
-	            certificateId: $("#certificateId").val(),
-	            certificateFileIds: $("#certificateFileIds").val() || '',
-	            certificateFile: $("#certificateFileUrl").val() || '',
-	            certificateNo: $("#certificateNo").val() || '',
-	            certificateName: $("#certificateName").val() || '否',
-	            issueDate: $("input[name='issueDate']").val() || '',
-	            expireDate: $("#expireDate").val() || '',
-	            remark: $("#remark").val() || ''
-	        };
+	        var data = collectCertFormData();
 	        $.ajax({
 	            url: prefix + "/updateUpload",
 	            type: "post",
@@ -356,18 +411,8 @@
 
 	    $(function() {
 	        if (certEditable) {
-	            $("#certificateName").on('change', function() {
-	                var isLongTerm = $(this).val();
-	                var $expireDateInput = $("#expireDate");
-	                if (isLongTerm === '是') {
-	                    $expireDateInput.val('').prop('readonly', true);
-	                } else {
-	                    $expireDateInput.prop('readonly', false);
-	                }
-	            });
-	            if ($("#certificateName").val() === '是') {
-	                $("#expireDate").val('').prop('readonly', true);
-	            }
+	            $("#certificateName").on('change', toggleBusinessTermInputs);
+	            toggleBusinessTermInputs();
 	        }
 	        certFileHelper = initSupplierCertCosUpload({
 	            certEditable: certEditable,
@@ -380,6 +425,9 @@
 	    function submitUpload() {
 	        if (!certEditable) {
 	            $.modal.alertWarning("该证件已审核，不可修改");
+	            return;
+	        }
+	        if (!validateBusinessTerm()) {
 	            return;
 	        }
 	        certFileHelper.updateFileState();
@@ -401,17 +449,7 @@
 
 	    function doPost() {
 	        certFileHelper.updateFileState();
-	        var data = {
-	            certificateId: $("#certificateId").val(),
-	            certificateFileIds: $("#certificateFileIds").val() || '',
-	            certificateFile: $("#certificateFileUrl").val() || '',
-	            certificateNo: $("#certificateNo").val() || '',
-	            certificateName: $("#certificateName").val() || '否',
-	            issueDate: $("input[name='issueDate']").val() || '',
-	            expireDate: $("#expireDate").val() || '',
-	            remark: $("#remark").val() || ''
-	        };
-	        $.operate.saveTab(prefix + "/updateUpload", data);
+	        $.operate.saveTab(prefix + "/updateUpload", collectCertFormData());
 	    }
 	</script>
 </body>

@@ -2,158 +2,216 @@
 <html lang="zh" xmlns:th="http://www.thymeleaf.org">
 <head>
 	<th:block th:include="include :: header('修改医院')" />
+	<style>
+		.form-header-row {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin: 8px 10px 12px;
+			padding-bottom: 5px;
+			border-bottom: 1px solid #ddd;
+		}
+
+		.form-header-row .form-header {
+			margin: 0;
+			padding-bottom: 0;
+			border-bottom: none;
+		}
+
+		.form-header-actions {
+			flex-shrink: 0;
+		}
+
+		.hospital-form-grid {
+			margin: 0 10px 8px;
+		}
+
+		.hospital-form-grid .hospital-inline-field {
+			display: flex;
+			align-items: center;
+			margin-bottom: 10px;
+		}
+
+        .hospital-form-grid .hospital-inline-field > label {
+			flex-shrink: 0;
+			width: 88px;
+			text-align: right;
+			margin: 0 8px 0 0;
+			font-size: 12px;
+			font-weight: normal;
+			color: #666;
+			white-space: nowrap;
+		}
+
+		.hospital-form-grid .hospital-inline-field > label.label-wide {
+			width: 112px;
+		}
+
+		.hospital-form-grid .hospital-inline-field > .form-control,
+		.hospital-form-grid .hospital-inline-field > select.form-control,
+		.hospital-form-grid .hospital-inline-field > textarea.form-control {
+			flex: 1;
+			min-width: 0;
+			height: 32px;
+			padding: 4px 8px;
+			font-size: 12px;
+		}
+
+		.hospital-form-grid .hospital-inline-field > textarea.form-control {
+			height: 32px;
+			min-height: 32px;
+			resize: vertical;
+		}
+
+		.hospital-form-grid .hospital-inline-field > .form-control[readonly] {
+			background-color: #fff;
+		}
+
+		.hospital-form-grid .form-header.h4 {
+			margin: 4px 0 10px;
+			padding-bottom: 5px;
+		}
+	</style>
 </head>
 <body>
     <div class="main-content">
         <form id="form-hospital-edit" class="form-horizontal">
             <input name="hospitalId" type="hidden" th:value="${hospital.hospitalId}"/>
-            <h4 class="form-header h4">基本信息</h4>
-            <div class="row">
-            	<div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label is-required">医院名称：</label>
-                        <div class="col-sm-8">
+
+            <div class="form-header-row">
+                <h4 class="form-header h4">基本信息</h4>
+                <div class="form-header-actions">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
+                    <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
+                </div>
+            </div>
+
+            <div class="hospital-form-grid">
+                <input type="hidden" name="hospitalShortName" th:value="${hospital.hospitalShortName}"/>
+                <div class="row">
+                    <div class="col-sm-3">
+                        <div class="hospital-inline-field">
+                            <label>医院编码</label>
+                            <input name="hospitalCode" placeholder="请输入医院编码" class="form-control" type="text" maxlength="50" th:value="${hospital.hospitalCode}">
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="hospital-inline-field">
+                            <label class="is-required">医院名称</label>
                             <input name="hospitalName" placeholder="请输入医院名称" class="form-control" type="text" maxlength="200" th:value="${hospital.hospitalName}" required>
                         </div>
                     </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">医院简称：</label>
-                        <div class="col-sm-8">
-                            <input name="hospitalShortName" placeholder="请输入医院简称" class="form-control" type="text" maxlength="100" th:value="${hospital.hospitalShortName}">
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">首拼简码：</label>
-                        <div class="col-sm-8">
+                    <div class="col-sm-3">
+                        <div class="hospital-inline-field">
+                            <label>首拼简码</label>
                             <input type="text" class="form-control" th:value="${hospital.pinyinCode}" readonly placeholder="保存时按医院名称自动生成">
                         </div>
                     </div>
+                    <div class="col-sm-3">
+                        <div class="hospital-inline-field">
+                            <label class="label-wide">社会统一信用代码</label>
+                            <input name="unifiedCreditCode" placeholder="请输入社会统一信用代码" class="form-control" type="text" maxlength="18" th:value="${hospital.unifiedCreditCode}">
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">医院等级：</label>
-                        <div class="col-sm-8">
+                <div class="row">
+                    <div class="col-sm-3">
+                        <div class="hospital-inline-field">
+                            <label>医院等级</label>
                             <select name="hospitalLevel" class="form-control">
                                 <option value="">请选择医院等级</option>
                                 <option value="一级" th:selected="${hospital.hospitalLevel == '一级'}">一级</option>
                                 <option value="二级" th:selected="${hospital.hospitalLevel == '二级'}">二级</option>
                                 <option value="三级" th:selected="${hospital.hospitalLevel == '三级'}">三级</option>
+                                <option value="社区卫生中心" th:selected="${hospital.hospitalLevel == '社区卫生中心'}">社区卫生中心</option>
+                                <option value="分子公司" th:selected="${hospital.hospitalLevel == '分子公司'}">分子公司</option>
+                                <option value="小型厂矿医院" th:selected="${hospital.hospitalLevel == '小型厂矿医院'}">小型厂矿医院</option>
+                                <option value="门诊" th:selected="${hospital.hospitalLevel == '门诊'}">门诊</option>
+                                <option value="医药零售连锁" th:selected="${hospital.hospitalLevel == '医药零售连锁'}">医药零售连锁</option>
+                                <option value="单体零售药店" th:selected="${hospital.hospitalLevel == '单体零售药店'}">单体零售药店</option>
+                                <option value="乡镇卫生院" th:selected="${hospital.hospitalLevel == '乡镇卫生院'}">乡镇卫生院</option>
                             </select>
                         </div>
                     </div>
                 </div>
             </div>
-            <h4 class="form-header h4">联系信息</h4>
-            <div class="row" id="address-select">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">省份/直辖市：</label>
-                        <div class="col-sm-8">
+
+            <div class="hospital-form-grid">
+                <h4 class="form-header h4">联系信息</h4>
+                <div class="row" id="address-select">
+                    <div class="col-sm-3">
+                        <div class="hospital-inline-field">
+                            <label>省份/直辖市</label>
                             <select name="province" class="province form-control" data-first-title="请选择省份">
                                 <option value="">请选择省份</option>
-                                <option th:if="${hospital.province != null and hospital.province != ''}" 
-                                        th:value="${hospital.province}" 
-                                        th:text="${hospital.province}" 
+                                <option th:if="${hospital.province != null and hospital.province != ''}"
+                                        th:value="${hospital.province}"
+                                        th:text="${hospital.province}"
                                         selected></option>
                             </select>
                         </div>
                     </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">城市：</label>
-                        <div class="col-sm-8">
+                    <div class="col-sm-3">
+                        <div class="hospital-inline-field">
+                            <label>城市</label>
                             <select name="city" class="city form-control" data-first-title="请选择城市">
                                 <option value="">请选择城市</option>
-                                <option th:if="${hospital.city != null and hospital.city != ''}" 
-                                        th:value="${hospital.city}" 
-                                        th:text="${hospital.city}" 
+                                <option th:if="${hospital.city != null and hospital.city != ''}"
+                                        th:value="${hospital.city}"
+                                        th:text="${hospital.city}"
                                         selected></option>
                             </select>
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">区县：</label>
-                        <div class="col-sm-8">
+                    <div class="col-sm-3">
+                        <div class="hospital-inline-field">
+                            <label>区县</label>
                             <select name="district" class="area form-control" data-first-title="请选择区县">
                                 <option value="">请选择区县</option>
-                                <option th:if="${hospital.district != null and hospital.district != ''}" 
-                                        th:value="${hospital.district}" 
-                                        th:text="${hospital.district}" 
+                                <option th:if="${hospital.district != null and hospital.district != ''}"
+                                        th:value="${hospital.district}"
+                                        th:text="${hospital.district}"
                                         selected></option>
                             </select>
                         </div>
                     </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">详细地址：</label>
-                        <div class="col-sm-8">
+                    <div class="col-sm-3">
+                        <div class="hospital-inline-field">
+                            <label>详细地址</label>
                             <input name="address" placeholder="请输入详细地址" class="form-control" type="text" maxlength="500" th:value="${hospital.address}">
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">联系人：</label>
-                        <div class="col-sm-8">
+                <div class="row">
+                    <div class="col-sm-3">
+                        <div class="hospital-inline-field">
+                            <label>联系人</label>
                             <input name="contactPerson" placeholder="请输入联系人" class="form-control" type="text" maxlength="50" th:value="${hospital.contactPerson}">
                         </div>
                     </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">联系电话：</label>
-                        <div class="col-sm-8">
+                    <div class="col-sm-3">
+                        <div class="hospital-inline-field">
+                            <label>联系电话</label>
                             <input name="contactPhone" placeholder="请输入联系电话" class="form-control" type="text" maxlength="20" th:value="${hospital.contactPhone}">
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">邮箱：</label>
-                        <div class="col-sm-8">
+                    <div class="col-sm-3">
+                        <div class="hospital-inline-field">
+                            <label>邮箱</label>
                             <input name="email" placeholder="请输入邮箱" class="form-control" type="text" maxlength="100" th:value="${hospital.email}">
                         </div>
                     </div>
-                </div>
-            </div>
-            <h4 class="form-header h4">其他信息</h4>
-            <div class="row">
-                <div class="col-sm-12">
-                    <div class="form-group">
-                        <label class="col-xs-2 control-label">备注：</label>
-                        <div class="col-xs-10">
-                            <textarea name="remark" maxlength="500" class="form-control" rows="3" th:text="${hospital.remark}"></textarea>
+                    <div class="col-sm-3">
+                        <div class="hospital-inline-field">
+                            <label>备注</label>
+                            <textarea name="remark" maxlength="500" class="form-control" rows="2" placeholder="请输入备注" th:text="${hospital.remark}"></textarea>
                         </div>
                     </div>
                 </div>
             </div>
         </form>
     </div>
-      
-    <div class="row">
-        <div class="col-sm-offset-5 col-sm-10">
-            <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
-            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
-        </div>
-    </div>
+
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: jquery-cxselect-js" />
 	<script th:inline="javascript">
@@ -161,8 +219,7 @@
 	    var currentProvince = /*[[${hospital.province}]]*/ '';
 	    var currentCity = /*[[${hospital.city}]]*/ '';
 	    var currentDistrict = /*[[${hospital.district}]]*/ '';
-	    
-	    // 初始化省市区联动
+
 	    $(function() {
 	        var urlChina = ctx + 'demo/form/cityData';
 	        $.cxSelect.defaults.url = urlChina;
@@ -170,15 +227,12 @@
 	            selects: ['province', 'city', 'area'],
 	            nodata: 'none'
 	        });
-	        
-	        // 设置默认值
+
 	        if (currentProvince) {
 	            $('select.province').val(currentProvince).trigger('change');
-	            // 等待城市数据加载后设置城市值
 	            setTimeout(function() {
 	                if (currentCity) {
 	                    $('select.city').val(currentCity).trigger('change');
-	                    // 等待区县数据加载后设置区县值
 	                    setTimeout(function() {
 	                        if (currentDistrict) {
 	                            $('select.area').val(currentDistrict);
@@ -188,7 +242,7 @@
 	            }, 300);
 	        }
 	    });
-	
+
         $("#form-hospital-edit").validate({
         	onkeyup: false,
         	rules:{
@@ -199,7 +253,7 @@
         	},
             focusCleanup: true
         });
-        
+
         function submitHandler() {
 	        if ($.validate.form()) {
 	        	$.operate.saveTab(prefix + "/edit", $("#form-hospital-edit").serializeArray());
@@ -208,4 +262,3 @@
     </script>
 </body>
 </html>
-

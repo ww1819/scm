@@ -151,5 +151,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             #{settlementId}
         </foreach>
     </delete>
+
+    <select id="sumSettlementAmountGroupByMonth" resultType="java.util.HashMap">
+        select MONTH(s.invoice_date) as monthNum,
+               IFNULL(SUM(s.total_amount), 0) as totalAmount,
+               IFNULL(SUM(sd.quantity), 0) as totalQuantity
+        from scm_settlement s
+        left join scm_settlement_detail sd on sd.settlement_id = s.settlement_id
+        where s.customer_id = #{hospitalId}
+          and s.invoice_date is not null
+          <if test="supplierId != null">
+              AND s.supplier_id = #{supplierId}
+          </if>
+          and s.invoice_date &gt;= #{yearBegin}
+          and s.invoice_date &lt;= #{yearEnd}
+          and (s.status is null or s.status = '' or s.status = '0')
+        group by MONTH(s.invoice_date)
+    </select>
 </mapper>
 

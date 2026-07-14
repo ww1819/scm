@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS `scm_hospital` (
   `hospital_name` varchar(200) NOT NULL COMMENT '医院名称',
   `hospital_short_name` varchar(100) DEFAULT '' COMMENT '医院简称',
   `pinyin_code` varchar(64) DEFAULT '' COMMENT '首拼简码（医院名称拼音首字母，小写）',
+  `unified_credit_code` varchar(18) DEFAULT '' COMMENT '社会统一信用代码',
   `hospital_level` varchar(50) DEFAULT '' COMMENT '医院等级',
   `province` varchar(50) DEFAULT '' COMMENT '省份/直辖市',
   `city` varchar(50) DEFAULT '' COMMENT '城市',
@@ -697,6 +698,26 @@ CREATE TABLE IF NOT EXISTS `scm_settlement_detail` (
   KEY `idx_settlement_id` (`settlement_id`),
   KEY `idx_delivery_id` (`delivery_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='结算明细表';
+/
+CREATE TABLE IF NOT EXISTS `scm_reconciliation` (
+  `reconciliation_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `hospital_id` bigint(20) NOT NULL COMMENT '医院ID',
+  `hospital_name` varchar(200) DEFAULT '' COMMENT '医院名称',
+  `reconcile_date` date NOT NULL COMMENT '对账日期',
+  `his_amount` decimal(18,2) DEFAULT 0 COMMENT 'HIS金额',
+  `spd_amount` decimal(18,2) DEFAULT 0 COMMENT 'SPD金额',
+  `item_count` int(11) DEFAULT 0 COMMENT '品规总数',
+  `abnormal_count` int(11) DEFAULT 0 COMMENT '异常记录数',
+  `status` char(1) DEFAULT '0' COMMENT '状态（0未生成 1已生成）',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`reconciliation_id`),
+  UNIQUE KEY `uk_hospital_reconcile_date` (`hospital_id`,`reconcile_date`),
+  KEY `idx_reconcile_date` (`reconcile_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='对账表';
 /
 CREATE TABLE IF NOT EXISTS `scm_purchase_statistics` (
   `statistics_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '统计ID',

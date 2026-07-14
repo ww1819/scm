@@ -233,9 +233,18 @@
 									供应商：<input type="text" name="params[supplierName]"/>
 								</li>
 								<li>
+									医院：<input type="text" name="params[hospitalName]"/>
+								</li>
+								<li>
 									用户状态：<select name="status" th:with="type=${@dict.getType('sys_normal_disable')}">
 										<option value="">所有</option>
 										<option th:each="dict : ${type}" th:text="${dict.dictLabel}" th:value="${dict.dictValue}"></option>
+									</select>
+								</li>
+								<li>
+									角色：<select name="roleId">
+										<option value="">所有</option>
+										<option th:each="role : ${roles}" th:value="${role.roleId}" th:text="${role.roleName}"></option>
 									</select>
 								</li>
 								<li class="select-time">

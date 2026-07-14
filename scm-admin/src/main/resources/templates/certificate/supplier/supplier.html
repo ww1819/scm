@@ -499,7 +499,7 @@
 
 				<div class="audit-right-area">
 					<div class="btn-group-sm" id="toolbar" role="group">
-						<a class="btn btn-success" onclick="handleAdd()" shiro:hasPermission="certificate:supplier:add">
+						<a class="btn btn-success disabled" id="btn-cert-add" href="javascript:void(0)" onclick="handleAdd()" shiro:hasPermission="certificate:supplier:add">
 							<i class="fa fa-plus"></i> 新增
 						</a>
 						<a class="btn btn-primary single disabled" onclick="handleEditCertificate()" shiro:hasPermission="certificate:supplier:edit">
@@ -556,6 +556,7 @@
 		$(function() {
 			initLeftHospitalTable();
 			querySupplierCertificateList();
+			updateAddButtonState();
 
 			$(window).resize(function() {
 				adjustCertTableHeight();
@@ -830,7 +831,6 @@
 				|| (row.certificateFileIds && row.certificateFileIds.trim() !== '');
 			if (hasFile) {
 				actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="previewCertById(' + cid + ')" title="预览证件图片"><i class="fa fa-eye"></i> 预览</a>');
-				actions.push(' <a class="btn btn-warning btn-xs" href="javascript:void(0)" onclick="downloadCertById(' + cid + ')" title="下载证件图片"><i class="fa fa-download"></i> 下载</a>');
 			}
 			if (editFlag !== 'hidden') {
 				actions.push(' <a class="btn btn-success btn-xs" href="javascript:void(0)" onclick="openUploadImagesTab(' + cid + ')" title="上传或删除证照图片"><i class="fa fa-cloud-upload"></i> 上传</a>');
@@ -933,11 +933,17 @@
 					title: '供应商',
 					align: 'left',
 					width: 190,
+					sortable: true,
 					formatter: function(value, row, index) {
 						if (!value) {
 							return '-';
 						}
-						return $.table.tooltip(value, 12);
+						var cid = row.certificateId;
+						var text = value.length > 12 ? value.substring(0, 12) + '...' : value;
+						var title = (value || '').replace(/"/g, '&quot;');
+						return '<span class="cert-supplier-dblview" style="cursor:pointer;color:#337ab7;" '
+							+ 'ondblclick="viewCertDetail(' + cid + ');return false;" '
+							+ 'title="' + title + '（双击查看明细）">' + text + '</span>';
 					}
 				},
 				{
@@ -945,6 +951,7 @@
 					title: '证件类型',
 					align: 'left',
 					width: 160,
+					sortable: true,
 					formatter: function(value, row, index) {
 						if (!value) {
 							return '-';
@@ -957,6 +964,7 @@
 					title: '证件编码',
 					align: 'left',
 					width: 140,
+					sortable: true,
 					formatter: function(value, row, index) {
 						if (!value) {
 							return '-';
@@ -1024,16 +1032,43 @@
 			}, 500);
 		}
 
+		function updateAddButtonState() {
+			var $btn = $('#btn-cert-add');
+			if ($btn.length === 0) {
+				return;
+			}
+			if (selectedHospitalId && allHospitals.length > 0) {
+				$btn.removeClass('disabled');
+			} else {
+				$btn.addClass('disabled');
+			}
+		}
+
 		function resetPre() {
 			$("#supplier-certificate-form")[0].reset();
 			selectedHospitalId = null;
 			ensuredHospitalMap = {};
 			updateHospitalTable(allHospitals);
 			$('#' + certTableId).bootstrapTable('removeAll');
+			updateAddButtonState();
 		}
 
 		function searchCertList() {
 			$.table.search('supplier-certificate-form', certTableId);
+		}
+
+		/** 表格初始化完成后触发首次加载（供应商自助且无关联医院时需主动查一次） */
+		function triggerInitialCertLoad() {
+			var $t = $('#' + certTableId);
+			if ($t.length === 0 || !$t.bootstrapTable('getOptions')) {
+				setTimeout(triggerInitialCertLoad, 100);
+				return;
+			}
+			if (selectedHospitalId) {
+				$t.bootstrapTable('refresh');
+			} else if (supplierSelfService && bindSupplierId != null) {
+				searchCertList();
+			}
 		}
 
 		function initLeftHospitalTable() {
@@ -1118,15 +1153,22 @@
 						updateHospitalTable(allHospitals);
 						if (allHospitals.length > 0 && !selectedHospitalId) {
 							selectHospital(allHospitals[0].hospitalId);
+						} else {
+							updateAddButtonState();
+							triggerInitialCertLoad();
 						}
 					} else {
 						allHospitals = [];
 						updateHospitalTable([]);
+						updateAddButtonState();
+						triggerInitialCertLoad();
 					}
 				},
 				error: function() {
 					allHospitals = [];
 					updateHospitalTable([]);
+					updateAddButtonState();
+					triggerInitialCertLoad();
 				}
 			});
 		}
@@ -1170,6 +1212,7 @@
 				selectedHospitalId = null;
 				updateHospitalTable(allHospitals);
 				$('#' + certTableId).bootstrapTable('removeAll');
+				updateAddButtonState();
 				return;
 			}
 			if (selectedHospitalId == hospitalId) {
@@ -1177,6 +1220,7 @@
 			}
 			selectedHospitalId = hospitalId;
 			updateHospitalTable(allHospitals);
+			updateAddButtonState();
 			$('#' + certTableId).bootstrapTable('refresh');
 		}
 
@@ -1187,6 +1231,10 @@
 		}
 
 		function handleAdd() {
+			if (!selectedHospitalId || allHospitals.length === 0) {
+				$.modal.alertWarning('请先在左侧选择一家关联医院后再新增证件');
+				return;
+			}
 			var addUrl = prefix + "/add";
 			$.modal.openTab("新增供应商证件", addUrl);
 		}
@@ -1207,6 +1255,14 @@
 				return;
 			}
 			$.modal.openTab("上传证照", prefix + "/upload/" + certificateId);
+		}
+
+		function viewCertDetail(certificateId) {
+			if (certificateId == null || certificateId === '') {
+				$.modal.alertWarning('无法查看：缺少证件ID');
+				return;
+			}
+			$.modal.openTab('查看供应商证件', prefix + '/upload/' + certificateId);
 		}
 	</script>
 </body>

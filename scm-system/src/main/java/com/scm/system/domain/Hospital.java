@@ -36,6 +36,10 @@ public class Hospital extends BaseEntity
     @Excel(name = "首拼简码")
     private String pinyinCode;
 
+    /** 社会统一信用代码 */
+    @Excel(name = "社会统一信用代码")
+    private String unifiedCreditCode;
+
     /** 医院等级 */
     @Excel(name = "医院等级")
     private String hospitalLevel;
@@ -124,6 +128,17 @@ public class Hospital extends BaseEntity
     public void setPinyinCode(String pinyinCode)
     {
         this.pinyinCode = pinyinCode;
+    }
+
+    @Size(min = 0, max = 18, message = "社会统一信用代码不能超过18个字符")
+    public String getUnifiedCreditCode()
+    {
+        return unifiedCreditCode;
+    }
+
+    public void setUnifiedCreditCode(String unifiedCreditCode)
+    {
+        this.unifiedCreditCode = unifiedCreditCode;
     }
 
     @Size(min = 0, max = 50, message = "医院等级不能超过50个字符")
@@ -233,6 +248,7 @@ public class Hospital extends BaseEntity
             .append("hospitalName", getHospitalName())
             .append("hospitalShortName", getHospitalShortName())
             .append("pinyinCode", getPinyinCode())
+            .append("unifiedCreditCode", getUnifiedCreditCode())
             .append("hospitalLevel", getHospitalLevel())
             .append("province", getProvince())
             .append("city", getCity())

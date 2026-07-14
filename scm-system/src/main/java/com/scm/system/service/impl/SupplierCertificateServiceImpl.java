@@ -97,6 +97,7 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         if (c != null)
         {
             assertSupplierCertificateViewScope(c);
+            enrichCertificateTypeDisplay(c);
             enrichCertificateFiles(c);
         }
         return c;
@@ -164,8 +165,82 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         }
         for (SupplierCertificate certificate : list)
         {
+            enrichCertificateTypeDisplay(certificate);
             enrichCertificateFiles(certificate);
         }
+    }
+
+    /**
+     * 将 certificate_type 中的类型 ID / 编码解析为类型名称（展示与编辑用）
+     */
+    private void enrichCertificateTypeDisplay(SupplierCertificate certificate)
+    {
+        if (certificate == null || StringUtils.isEmpty(certificate.getCertificateType()))
+        {
+            return;
+        }
+        certificate.setCertificateType(resolveCertificateTypeName(certificate.getCertificateType()));
+    }
+
+    private String resolveCertificateTypeName(String raw)
+    {
+        if (StringUtils.isEmpty(raw))
+        {
+            return raw;
+        }
+        String value = raw.trim();
+        if (value.matches("^\\d+$"))
+        {
+            try
+            {
+                CertificateType type = certificateTypeService.selectCertificateTypeById(Long.parseLong(value));
+                if (type != null && StringUtils.isNotEmpty(type.getTypeName()))
+                {
+                    return type.getTypeName().trim();
+                }
+            }
+            catch (NumberFormatException ignored)
+            {
+            }
+        }
+        if (value.matches("^[A-Za-z]+_\\d+$"))
+        {
+            CertificateType type = certificateTypeService.selectByTypeCode(value);
+            if (type != null && StringUtils.isNotEmpty(type.getTypeName()))
+            {
+                return type.getTypeName().trim();
+            }
+        }
+        return value;
+    }
+
+    private void normalizeCertificateTypeOnSave(SupplierCertificate certificate)
+    {
+        if (certificate == null || StringUtils.isEmpty(certificate.getCertificateType()))
+        {
+            return;
+        }
+        certificate.setCertificateType(resolveCertificateTypeName(certificate.getCertificateType()));
+    }
+
+    private Set<String> normalizeExistingCertificateTypeKeys(Set<String> existingTypes)
+    {
+        Set<String> normalized = new HashSet<>();
+        if (existingTypes == null)
+        {
+            return normalized;
+        }
+        for (String existing : existingTypes)
+        {
+            if (StringUtils.isEmpty(existing))
+            {
+                continue;
+            }
+            String trimmed = existing.trim();
+            normalized.add(trimmed);
+            normalized.add(resolveCertificateTypeName(trimmed));
+        }
+        return normalized;
     }
 
     /**
@@ -205,7 +280,9 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         {
             supplierCertificate.setStatus("0"); // 默认正常
         }
+        normalizeCertificateTypeOnSave(supplierCertificate);
         supplierCertificate.setCreateTime(DateUtils.getNowDate());
+        normalizeBusinessTermDates(supplierCertificate);
         // 检查过期状态
         checkExpiredStatus(supplierCertificate);
         int rows = supplierCertificateMapper.insertSupplierCertificate(supplierCertificate);
@@ -239,6 +316,7 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         {
             supplierCertificate.setSupplierId(sid);
         }
+        normalizeCertificateTypeOnSave(supplierCertificate);
         supplierCertificate.setUpdateTime(DateUtils.getNowDate());
         // 检查过期状态
         checkExpiredStatus(supplierCertificate);
@@ -299,24 +377,19 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         }
         row.setCertificateName(longTerm);
         row.setIssueDate(supplierCertificate.getIssueDate());
+        normalizeBusinessTermDates(supplierCertificate);
         if ("是".equals(longTerm) || "1".equals(longTerm))
         {
+            row.setRegisterDate(null);
             row.setExpireDate(null);
             row.setIsExpired("0");
             row.setIsWarning("0");
         }
         else
         {
+            row.setRegisterDate(supplierCertificate.getRegisterDate());
             row.setExpireDate(supplierCertificate.getExpireDate());
-            if (row.getExpireDate() != null)
-            {
-                checkExpiredStatus(row);
-            }
-            else
-            {
-                row.setIsExpired("0");
-                row.setIsWarning("0");
-            }
+            checkExpiredStatus(row);
         }
         row.setCertificateFile(supplierCertificate.getCertificateFile() != null ? supplierCertificate.getCertificateFile() : "");
         row.setRemark(supplierCertificate.getRemark() != null ? supplierCertificate.getRemark() : "");
@@ -404,6 +477,10 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         if (before != null)
         {
             assertSupplierCertificateViewScope(before);
+            if ("1".equals(before.getAuditStatus()))
+            {
+                throw new ServiceException("该证件已审核，不能重复审核");
+            }
         }
         supplierCertificate.setAuditTime(DateUtils.getNowDate());
         supplierCertificate.setUpdateTime(DateUtils.getNowDate());
@@ -480,6 +557,29 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
             {
                 supplierCertificateMapper.updateSupplierCertificate(certificate);
             }
+        }
+    }
+
+    /**
+     * 营业期限：长期清空起止日期；非长期必须填写起止日期。
+     */
+    private void normalizeBusinessTermDates(SupplierCertificate certificate)
+    {
+        String longTerm = certificate.getCertificateName();
+        if (StringUtils.isEmpty(longTerm))
+        {
+            longTerm = "否";
+            certificate.setCertificateName(longTerm);
+        }
+        if ("是".equals(longTerm) || "1".equals(longTerm))
+        {
+            certificate.setRegisterDate(null);
+            certificate.setExpireDate(null);
+            return;
+        }
+        if (certificate.getRegisterDate() == null || certificate.getExpireDate() == null)
+        {
+            throw new ServiceException("选择「否」时，必须填写营业期限起止日期");
         }
     }
 
@@ -604,6 +704,13 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         {
             return;
         }
+        try
+        {
+            supplierCertificateMapper.repairStoredCertificateTypeValues();
+        }
+        catch (Exception ignored)
+        {
+        }
         int existingCount = supplierCertificateMapper.countBySupplierAndHospital(supplierId, hospitalId);
         if (existingCount >= expectedCount)
         {
@@ -623,8 +730,8 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         {
             return;
         }
-        Set<String> existingTypes = new HashSet<>(
-            supplierCertificateMapper.selectCertificateTypeNamesBySupplierAndHospital(supplierId, hospitalId));
+        Set<String> existingTypes = normalizeExistingCertificateTypeKeys(new HashSet<>(
+            supplierCertificateMapper.selectCertificateTypeNamesBySupplierAndHospital(supplierId, hospitalId)));
         String oper = StringUtils.isNotEmpty(createBy) ? createBy : "system";
         Set<String> seenTypeNames = new HashSet<>();
         for (CertificateType t : types)

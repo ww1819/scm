@@ -10,6 +10,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="hospitalName"      column="hospital_name"      />
         <result property="hospitalShortName" column="hospital_short_name" />
         <result property="pinyinCode"        column="pinyin_code"        />
+        <result property="unifiedCreditCode" column="unified_credit_code" />
         <result property="hospitalLevel"     column="hospital_level"     />
         <result property="province"          column="province"           />
         <result property="city"              column="city"               />
@@ -28,7 +29,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
     
     <sql id="selectHospitalVo">
-        select hospital_id, hospital_code, hospital_name, hospital_short_name, pinyin_code, hospital_level,
+        select hospital_id, hospital_code, hospital_name, hospital_short_name, pinyin_code, unified_credit_code, hospital_level,
                province, city, district, address, contact_person, contact_phone, email,
                status, del_flag, create_by, create_time, update_by, update_time, remark
         from scm_hospital
@@ -76,6 +77,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="hospitalCode != null and hospitalCode != ''">hospital_code,</if>
             <if test="hospitalName != null and hospitalName != ''">hospital_name,</if>
             <if test="pinyinCode != null">pinyin_code,</if>
+            <if test="unifiedCreditCode != null and unifiedCreditCode != ''">unified_credit_code,</if>
             <if test="hospitalShortName != null and hospitalShortName != ''">hospital_short_name,</if>
             <if test="hospitalLevel != null and hospitalLevel != ''">hospital_level,</if>
             <if test="province != null and province != ''">province,</if>
@@ -93,6 +95,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="hospitalCode != null and hospitalCode != ''">#{hospitalCode},</if>
             <if test="hospitalName != null and hospitalName != ''">#{hospitalName},</if>
             <if test="pinyinCode != null">#{pinyinCode},</if>
+            <if test="unifiedCreditCode != null and unifiedCreditCode != ''">#{unifiedCreditCode},</if>
             <if test="hospitalShortName != null and hospitalShortName != ''">#{hospitalShortName},</if>
             <if test="hospitalLevel != null and hospitalLevel != ''">#{hospitalLevel},</if>
             <if test="province != null and province != ''">#{province},</if>
@@ -115,6 +118,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="hospitalCode != null and hospitalCode != ''">hospital_code = #{hospitalCode},</if>
             <if test="hospitalName != null and hospitalName != ''">hospital_name = #{hospitalName},</if>
             <if test="pinyinCode != null">pinyin_code = #{pinyinCode},</if>
+            <if test="unifiedCreditCode != null">unified_credit_code = #{unifiedCreditCode},</if>
             <if test="hospitalShortName != null and hospitalShortName != ''">hospital_short_name = #{hospitalShortName},</if>
             <if test="hospitalLevel != null and hospitalLevel != ''">hospital_level = #{hospitalLevel},</if>
             <if test="province != null and province != ''">province = #{province},</if>

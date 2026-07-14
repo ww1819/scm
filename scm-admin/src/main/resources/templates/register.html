@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <title>注册</title>
-    <meta name="description" content="医疗物资供应链">
+    <meta name="description" content="医承云配供应链云平台">
     <link href="../static/css/bootstrap.min.css" th:href="@{/css/bootstrap.min.css}" rel="stylesheet"/>
     <link href="../static/css/font-awesome.min.css" th:href="@{/css/font-awesome.min.css}" rel="stylesheet"/>
     <link href="../static/css/style.min.css" th:href="@{/css/style.min.css}" rel="stylesheet"/>
@@ -285,8 +285,6 @@
             <div th:replace="include/privacy-brief :: privacyScrollBox"></div>
         </div>
     </div>
-    <th:block th:replace="include :: icpFooterStyle" />
-    <th:block th:replace="include :: icpFooter('light')" />
 <script th:inline="javascript"> var ctx = [[@{/}]]; var captchaType = [[${captchaType}]]; var captchaEnabled = [[${captchaEnabled}]];</script>
 <script src="../static/js/jquery.min.js" th:src="@{/js/jquery.min.js}"></script>
 <script src="../static/ajax/libs/validate/jquery.validate.min.js" th:src="@{/ajax/libs/validate/jquery.validate.min.js}"></script>

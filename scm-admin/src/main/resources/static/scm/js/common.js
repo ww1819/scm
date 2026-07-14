@@ -47,12 +47,12 @@ $(function() {
             var laydate = layui.laydate;
             startLayDate = laydate.render({
                 elem: '#startTime',
-                max: $('#endTime').val(),
+                max: $('#endTime').val() || '2099-12-31',
                 theme: 'molv',
                 type: $('#startTime').attr("data-type") || 'date',
                 trigger: 'click',
                 done: function(value, date) {
-                    // 结束时间大于开始时间
+                    // 结束时间大于开始时间（仅当起止均有值时约束）
                     if (value !== '') {
                         endLayDate.config.min.year = date.year;
                         endLayDate.config.min.month = date.month - 1;
@@ -62,17 +62,16 @@ $(function() {
                         endLayDate.config.min.month = '';
                         endLayDate.config.min.date = '';
                     }
-                    $('#endTime').trigger('click');
                 }
             });
             endLayDate = laydate.render({
                 elem: '#endTime',
-                min: $('#startTime').val(),
+                min: $('#startTime').val() || '1900-1-1',
                 theme: 'molv',
                 type: $('#endTime').attr("data-type") || 'date',
                 trigger: 'click',
                 done: function(value, date) {
-                    // 开始时间小于结束时间
+                    // 开始时间小于结束时间（仅当起止均有值时约束）
                     if (value !== '') {
                         startLayDate.config.max.year = date.year;
                         startLayDate.config.max.month = date.month - 1;
@@ -93,6 +92,11 @@ $(function() {
             var com = layui.laydate;
             $(".time-input").each(function (index, item) {
                 var time = $(item);
+                // 起止日期成对控件已在上方 select-time 中绑定，避免重复初始化
+                if (time.closest('.select-time').length > 0
+                    && (time.attr('id') === 'startTime' || time.attr('id') === 'endTime')) {
+                    return;
+                }
                 // 控制控件外观
                 var type = time.attr("data-type") || 'date';
                 // 控制回显格式

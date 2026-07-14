@@ -3,7 +3,6 @@
 <head>
 	<th:block th:include="include :: header('产品证件登记')" />
 	<th:block th:include="include :: layout-latest-css" />
-	<th:block th:include="include :: bootstrap-table-fixed-columns-css" />
 	<style>
 		#bootstrap-table-hospital td,
 		#bootstrap-table-hospital th {
@@ -55,12 +54,16 @@
 			width: 100%;
 		}
 
+		.audit-page-wrap > .audit-page-row {
+			margin-top: var(--audit-page-gap);
+		}
+
 		.audit-split-area {
 			flex: 1;
 			display: flex;
 			min-height: 0;
 			overflow: hidden;
-			margin-top: var(--audit-page-gap);
+			margin-top: 0;
 			padding: 0 0 var(--audit-page-gap);
 			width: 100%;
 			box-sizing: border-box;
@@ -144,6 +147,83 @@
 			flex-shrink: 0;
 			padding: 0 var(--audit-inner-padding) 5px;
 			margin-bottom: 0;
+			display: flex;
+			flex-wrap: wrap;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.audit-right-area #toolbar .toolbar-filter-item {
+			display: inline-flex;
+			align-items: center;
+			margin: 0;
+			font-weight: normal;
+		}
+
+		.audit-right-area #toolbar .toolbar-filter-label {
+			margin-right: 6px;
+			white-space: nowrap;
+			font-size: 13px;
+		}
+
+		.audit-right-area #toolbar .toolbar-filter-input {
+			width: 140px;
+			height: 30px;
+		}
+
+		.audit-right-area #toolbar .toolbar-filter-select {
+			width: 120px;
+			height: 30px;
+			padding: 5px 10px;
+		}
+
+		.audit-right-area #toolbar .dropdown-menu > li > a {
+			padding: 6px 16px;
+		}
+
+		.audit-right-area #toolbar .dropdown-menu > li > a.disabled {
+			color: #bbb;
+			cursor: not-allowed;
+			pointer-events: none;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table {
+			flex: 1 1 57%;
+			min-height: 160px;
+			padding-bottom: 4px;
+		}
+
+		.audit-right-area .audit-cert-detail-wrap {
+			flex: 1 1 43%;
+			min-height: 170px;
+			margin: 0;
+			padding: 0 var(--audit-inner-padding) 0;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+			box-sizing: border-box;
+		}
+
+		.audit-right-area .audit-cert-detail-wrap > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
+		}
+
+		.audit-right-area .audit-cert-detail-wrap .bootstrap-table {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+		}
+
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-container {
+			flex: 1 1 auto;
+			min-height: 0;
+			overflow: hidden !important;
+		}
+
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-body {
+			overflow-x: auto !important;
+			overflow-y: auto !important;
 		}
 
 		.audit-right-area .audit-table-wrap {
@@ -207,7 +287,7 @@
 			align-items: center;
 			justify-content: space-between;
 			gap: 8px;
-			padding: 4px 172px 4px 10px;
+			padding: 4px 10px;
 			border-top: 1px solid #eee;
 			background: #fff;
 			z-index: 3;
@@ -231,6 +311,17 @@
 			min-width: 0;
 			overflow: hidden;
 			text-overflow: ellipsis;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination .page-list select {
+			display: none !important;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-pagination .page-list::after {
+			content: '10';
+			display: inline-block;
+			min-width: 18px;
+			text-align: center;
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-body .fixed-table-border {
@@ -278,6 +369,14 @@
 			vertical-align: middle;
 		}
 
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-header {
+			position: relative !important;
+			top: auto !important;
+			z-index: 2;
+			background: #fff;
+			overflow: hidden;
+		}
+
 		.audit-page-wrap > .audit-search-area.search-collapse {
 			padding-top: 10px !important;
 			padding-bottom: 10px !important;
@@ -318,35 +417,6 @@
 </head>
 <body class="gray-bg">
 	<div class="container-div audit-page-wrap">
-		<div class="search-collapse audit-search-area">
-			<form id="product-certificate-form">
-				<input type="hidden" name="hospitalCode" id="productFilterHospitalCode" value=""/>
-				<input type="hidden" name="hospitalId" id="productFilterHospitalId" value=""/>
-				<div class="select-list">
-					<ul>
-						<li>
-							产品名称：<input type="text" name="materialName"/>
-						</li>
-						<li>
-							注册证号：<input type="text" name="registerNo"/>
-						</li>
-						<li>
-							状态：
-							<select name="status" style="width: 120px; display: inline-block; height: 30px; padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px;">
-								<option value="">所有</option>
-								<option value="0">正常</option>
-								<option value="1">过期</option>
-							</select>
-						</li>
-						<li>
-							<a class="btn btn-primary btn-rounded btn-sm" onclick="searchProductList()"><i class="fa fa-search"></i>&nbsp;搜索</a>
-							<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
-						</li>
-					</ul>
-				</div>
-			</form>
-		</div>
-
 		<div class="row audit-page-row">
 			<div class="audit-split-area">
 				<div class="audit-left-panel">
@@ -365,26 +435,77 @@
 				</div>
 
 				<div class="audit-right-area">
-					<div class="btn-group-sm" id="toolbar" role="group">
-						<a class="btn btn-success" onclick="openAddProductInfoTab()" shiro:hasPermission="certificate:product:add">
-							<i class="fa fa-plus"></i> 新增
-						</a>
-						<a class="btn btn-primary single disabled" onclick="$.operate.editTab()" shiro:hasPermission="certificate:product:edit">
-							<i class="fa fa-edit"></i> 修改
-						</a>
-						<a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="certificate:product:remove">
-							<i class="fa fa-remove"></i> 删除
-						</a>
-						<a class="btn btn-info" onclick="checkExpired()" shiro:hasPermission="certificate:product:edit">
-							<i class="fa fa-check"></i> 检查过期
-						</a>
-						<a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="certificate:product:export">
-							<i class="fa fa-download"></i> 导出
-						</a>
-					</div>
+					<form id="product-certificate-form">
+						<input type="hidden" name="hospitalCode" id="productFilterHospitalCode" value=""/>
+						<input type="hidden" name="hospitalId" id="productFilterHospitalId" value=""/>
+						<div class="btn-group-sm" id="toolbar" role="group">
+							<label class="toolbar-filter-item">
+								<span class="toolbar-filter-label">产品名称</span>
+								<input type="text" name="materialName" class="form-control input-sm toolbar-filter-input"/>
+							</label>
+							<label class="toolbar-filter-item">
+								<span class="toolbar-filter-label">状态</span>
+								<select name="status" class="form-control input-sm toolbar-filter-select">
+									<option value="">所有</option>
+									<option value="0">正常</option>
+									<option value="1">过期</option>
+								</select>
+							</label>
+							<a class="btn btn-primary btn-sm" onclick="searchProductList()"><i class="fa fa-search"></i>&nbsp;搜索</a>
+							<a class="btn btn-success" onclick="openAddProductInfoTab()" shiro:hasPermission="certificate:product:add">
+								<i class="fa fa-plus"></i> 新增
+							</a>
+							<div class="btn-group">
+								<button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+									<i class="fa fa-bars"></i> 更多操作 <span class="caret"></span>
+								</button>
+								<ul class="dropdown-menu" role="menu">
+									<li>
+										<a href="javascript:void(0)" class="single disabled btn-product-edit" onclick="editProductTabGuard()" shiro:hasPermission="certificate:product:edit">
+											<i class="fa fa-edit"></i> 修改
+										</a>
+									</li>
+									<li>
+										<a href="javascript:void(0)" class="multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="certificate:product:remove">
+											<i class="fa fa-remove"></i> 删除
+										</a>
+									</li>
+									<li>
+										<a href="javascript:void(0)" onclick="checkExpired()" shiro:hasPermission="certificate:product:edit">
+											<i class="fa fa-check"></i> 检查过期
+										</a>
+									</li>
+									<li>
+										<a href="javascript:void(0)" onclick="$.table.exportExcel()" shiro:hasPermission="certificate:product:export">
+											<i class="fa fa-download"></i> 导出
+										</a>
+									</li>
+									<li>
+										<a href="javascript:void(0)" onclick="$.table.importTemplate()" shiro:hasPermission="certificate:product:add">
+											<i class="fa fa-file-excel-o"></i> 下载模板
+										</a>
+									</li>
+									<li>
+										<a href="javascript:void(0)" onclick="importProductCatalog()" shiro:hasPermission="certificate:product:add">
+											<i class="fa fa-upload"></i> 导入目录
+										</a>
+									</li>
+									<li>
+										<a href="javascript:void(0)" onclick="syncOrderCatalog()" shiro:hasPermission="certificate:product:add">
+											<i class="fa fa-file-text-o"></i> 下载订单目录
+										</a>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</form>
 
 					<div class="select-table table-striped audit-table-wrap audit-list-table">
 						<table id="bootstrap-table"></table>
+					</div>
+
+					<div class="select-table table-striped audit-cert-detail-wrap">
+						<table id="bootstrap-table-cert-detail"></table>
 					</div>
 				</div>
 			</div>
@@ -393,7 +514,8 @@
 
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
-	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
+	<script th:src="@{/js/common/scmCosDownload.js}"></script>
+	<script th:src="@{/js/certificate/certCosPreview.js}"></script>
 	<script th:inline="javascript">
 		var prefix = ctx + "certificate/product";
 		var supplierSelfService = /*[[${supplierSelfService}]]*/ false;
@@ -401,13 +523,18 @@
 		var selectedHospitalId = null;
 		var allHospitals = [];
 		var productTableId = 'bootstrap-table';
+		var certDetailTableId = 'bootstrap-table-cert-detail';
+		var selectedCertificateId = null;
+		var selectedProductRow = null;
 
 		$(function() {
 			initLeftHospitalTable();
+			initCertDetailTable();
 			queryProductCertificateList();
 
 			$(window).resize(function() {
 				adjustProductTableHeight();
+				adjustCertDetailTableHeight();
 				setTimeout(refreshProductTableLayout, 100);
 				var $hospitalTable = $('#bootstrap-table-hospital');
 				if ($hospitalTable.length && $hospitalTable.bootstrapTable('getOptions')) {
@@ -417,18 +544,207 @@
 
 			setTimeout(function() {
 				adjustProductTableHeight();
+				adjustCertDetailTableHeight();
 			}, 300);
 		});
 
+		function formatCertDate(value) {
+			if (!value) {
+				return '-';
+			}
+			if (typeof value === 'string' && value.indexOf('-') > -1) {
+				return value.split(' ')[0];
+			}
+			if (value instanceof Date && typeof $.common !== 'undefined' && $.common.formatDate) {
+				return $.common.formatDate(value, 'yyyy-MM-dd');
+			}
+			return value;
+		}
+
+		function calculateCertDetailTableHeight() {
+			var $wrap = $('.audit-cert-detail-wrap');
+			if ($wrap.length === 0) {
+				return 180;
+			}
+			return Math.max($wrap.innerHeight() - 2, 120);
+		}
+
+		function adjustCertDetailTableHeight() {
+			var $table = $('#' + certDetailTableId);
+			if ($table.length === 0 || !$table.bootstrapTable('getOptions')) {
+				return;
+			}
+			$table.bootstrapTable('resetView', { height: calculateCertDetailTableHeight() });
+		}
+
+		function initCertDetailTable() {
+			$('#' + certDetailTableId).bootstrapTable({
+				locale: 'zh-CN',
+				striped: true,
+				cache: false,
+				pagination: false,
+				showRefresh: false,
+				showColumns: false,
+				showToggle: false,
+				search: false,
+				sortable: true,
+				sortName: 'licenseNo',
+				sortOrder: 'asc',
+				height: calculateCertDetailTableHeight(),
+				data: [],
+				columns: [{
+					field: 'serialNumber',
+					title: '序号',
+					align: 'center',
+					width: 60,
+					formatter: function(value, row, index) {
+						return index + 1;
+					}
+				},
+				{
+					field: 'licenseKindCode',
+					title: '证件编号',
+					align: 'left',
+					sortable: true,
+					formatter: function(value, row) {
+						return value || row.licenseKindCode || '-';
+					}
+				},
+				{
+					field: 'licenseKindName',
+					title: '证件类型',
+					align: 'left',
+					sortable: true,
+					formatter: function(value, row) {
+						return value || row.licenseKindCode || '-';
+					}
+				},
+				{
+					field: 'licenseNo',
+					title: '证件编码',
+					align: 'left',
+					sortable: true,
+					formatter: function(value) {
+						return value || '-';
+					}
+				},
+				{
+					field: 'expireDate',
+					title: '证件有效期',
+					align: 'center',
+					width: 120,
+					sortable: true,
+					formatter: function(value) {
+						return formatCertDate(value);
+					}
+				},
+				(function() {
+					var previewCol = getCertSnapPreviewColumn();
+					previewCol.sortable = true;
+					return previewCol;
+				})(),
+				{
+					field: 'snapUploadAction',
+					title: '上传',
+					align: 'center',
+					width: 72,
+					formatter: function() {
+						return '<a class="btn btn-success btn-xs cert-detail-upload-btn" href="javascript:void(0)" title="上传证照"><i class="fa fa-upload"></i></a>';
+					},
+					events: {
+						'click .cert-detail-upload-btn': function(e, value, row) {
+							e.preventDefault();
+							e.stopPropagation();
+							openCertDetailUploadTab(row);
+						}
+					}
+				},
+				{
+					field: 'createBy',
+					title: '上传人',
+					align: 'center',
+					width: 100,
+					formatter: function(value) {
+						return value || '-';
+					}
+				},
+				{
+					field: 'createTime',
+					title: '上传日期',
+					align: 'center',
+					width: 120,
+					formatter: function(value) {
+						return formatCertDate(value);
+					}
+				}]
+			});
+		}
+
+		function findProductRowByCertificateId(certificateId) {
+			if (!certificateId) {
+				return null;
+			}
+			var data = $('#' + productTableId).bootstrapTable('getData') || [];
+			for (var i = 0; i < data.length; i++) {
+				if (data[i] && data[i].certificateId == certificateId) {
+					return data[i];
+				}
+			}
+			return selectedProductRow;
+		}
+
+		function openCertDetailUploadTab(row) {
+			if (!selectedCertificateId) {
+				$.modal.alertWarning('请先选择一条产品记录');
+				return;
+			}
+			if (!row || !row.licenseId) {
+				$.modal.alertWarning('证照记录无效');
+				return;
+			}
+			var productRow = findProductRowByCertificateId(selectedCertificateId);
+			if (productRow && isProductAudited(productRow)) {
+				$.modal.msgWarning('已审核的产品不能修改');
+				return;
+			}
+			$.modal.openTab('修改产品信息', prefix + '/edit/' + selectedCertificateId);
+		}
+		window.openCertDetailUploadTab = openCertDetailUploadTab;
+
+		function loadCertDetailRows(certificateId) {
+			selectedCertificateId = certificateId || null;
+			var $detail = $('#' + certDetailTableId);
+			if (!$detail.bootstrapTable('getOptions')) {
+				return;
+			}
+			if (!certificateId) {
+				$detail.bootstrapTable('load', []);
+				return;
+			}
+			$.post(prefix + '/licenseSnap/mergedRows', { certificateId: certificateId }, function(res) {
+				if (res.code === 0) {
+					$detail.bootstrapTable('load', res.data || []);
+					$detail.bootstrapTable('sort', 'licenseNo', 'asc');
+				} else {
+					$detail.bootstrapTable('load', []);
+					if (res.msg) {
+						$.modal.msgWarning(res.msg);
+					}
+				}
+				setTimeout(adjustCertDetailTableHeight, 0);
+			});
+		}
+
 		function calculateProductTableHeight() {
-			var $wrap = $('.audit-right-area .audit-table-wrap');
+			var $wrap = $('.audit-right-area .audit-list-table');
 			if ($wrap.length === 0) {
 				return 400;
 			}
 			var wrapH = $wrap[0].clientHeight;
 			if (!wrapH) {
 				var outerToolbarH = $('#toolbar').outerHeight(true) || 40;
-				wrapH = $('.audit-right-area').height() - outerToolbarH - 10;
+				var detailH = $('.audit-cert-detail-wrap').outerHeight(true) || 200;
+				wrapH = $('.audit-right-area').height() - outerToolbarH - detailH - 10;
 			}
 			var $bt = $wrap.find('.bootstrap-table');
 			if ($bt.length === 0) {
@@ -634,6 +950,7 @@
 				selectedHospitalId = null;
 				applyHospitalFilterToForm(null);
 				updateHospitalTable(allHospitals);
+				loadCertDetailRows(null);
 				$('#' + productTableId).bootstrapTable('refresh');
 				return;
 			}
@@ -643,7 +960,48 @@
 			selectedHospitalId = hospitalId;
 			applyHospitalFilterToForm(hospitalId);
 			updateHospitalTable(allHospitals);
+			loadCertDetailRows(null);
 			$('#' + productTableId).bootstrapTable('refresh');
+		}
+
+		function viewProductDetail(certificateId) {
+			if (certificateId == null || certificateId === '') {
+				$.modal.alertWarning('无法查看：缺少证件ID');
+				return;
+			}
+			$.modal.openTab('查看产品信息', prefix + '/detail/' + certificateId);
+		}
+		window.viewProductDetail = viewProductDetail;
+
+		function isProductAudited(row) {
+			return row && row.auditStatus == '1';
+		}
+
+		function getProductTableSelections() {
+			return $('#' + productTableId).bootstrapTable('getSelections') || [];
+		}
+
+		function updateProductEditButtonState() {
+			var rows = getProductTableSelections();
+			var $edit = $('#toolbar .btn-product-edit');
+			if (rows.length === 1 && isProductAudited(rows[0])) {
+				$edit.addClass('disabled');
+			} else if (rows.length === 1) {
+				$edit.removeClass('disabled');
+			}
+		}
+
+		function editProductTabGuard() {
+			var rows = getProductTableSelections();
+			if (rows.length !== 1) {
+				$.modal.alertWarning('请选择一条记录');
+				return;
+			}
+			if (isProductAudited(rows[0])) {
+				$.modal.msgWarning('已审核的产品不能修改');
+				return;
+			}
+			$.operate.editTab();
 		}
 
 		function openAddProductInfoTab() {
@@ -671,17 +1029,25 @@
 				updateUrl: prefix + "/edit/{id}",
 				removeUrl: prefix + "/remove",
 				exportUrl: prefix + "/export",
+				importUrl: prefix + "/importCatalog",
+				importTemplateUrl: prefix + "/importTemplate",
+				orderCatalogExportUrl: prefix + "/exportOrderCatalog",
+				syncOrderCatalogUrl: prefix + "/syncOrderCatalog",
 				sortName: "expireDate",
 				sortOrder: "asc",
 				modalName: "产品信息",
 				uniqueId: "certificateId",
 				rememberSelected: true,
 				maintainSelected: true,
+				pageSize: 10,
+				pageList: [10],
 				height: calculateProductTableHeight(),
 				mobileResponsive: false,
 				fixedColumns: false,
+				escape: false,
 				queryParams: function(params) {
 					var curParams = $.table.queryParams(params);
+					applyProductToolbarFilters(curParams);
 					if (selectedHospitalId) {
 						curParams.hospitalId = selectedHospitalId;
 						var row = findHospitalRow(selectedHospitalId);
@@ -698,12 +1064,40 @@
 					$.modal.closeLoading();
 					setTimeout(function() {
 						adjustProductTableHeight();
+						adjustCertDetailTableHeight();
 						refreshProductTableLayout();
+						if (selectedCertificateId) {
+							loadCertDetailRows(selectedCertificateId);
+						}
+						updateProductEditButtonState();
 					}, 50);
 					setTimeout(refreshProductTableLayout, 200);
 				},
+				onCheck: function() {
+					updateProductEditButtonState();
+				},
+				onUncheck: function() {
+					updateProductEditButtonState();
+				},
+				onCheckAll: function() {
+					updateProductEditButtonState();
+				},
+				onUncheckAll: function() {
+					updateProductEditButtonState();
+				},
 				onPostBody: function() {
 					refreshProductTableLayout();
+				},
+				onClickRow: function(row) {
+					if (row && row.certificateId) {
+						selectedProductRow = row;
+						loadCertDetailRows(row.certificateId);
+					}
+				},
+				onDblClickCell: function(field, value, row) {
+					if (field === 'materialName' && row && row.certificateId) {
+						viewProductDetail(row.certificateId);
+					}
 				},
 				columns: [{
 					checkbox: true
@@ -718,32 +1112,58 @@
 					}
 				},
 				{
+					field: 'auditStatus',
+					title: '状态',
+					align: 'center',
+					width: 80,
+					sortable: true,
+					formatter: function(value, row, index) {
+						if (row.auditStatus == '1') {
+							return '<span class="label label-success">已审核</span>';
+						}
+						return '<span class="label label-warning">待审核</span>';
+					}
+				},
+				{
 					field: 'certificateId',
 					title: '证件ID',
 					visible: false
+				},
+				{
+					field: 'materialCode',
+					title: '产品编码',
+					align: 'left',
+					width: 120,
+					sortable: true,
+					formatter: function(value, row, index) {
+						return value || '-';
+					}
 				},
 				{
 					field: 'materialName',
 					title: '产品名称',
 					align: 'left',
 					width: 160,
+					sortable: true,
+					cellStyle: function() {
+						return { css: { cursor: 'pointer' } };
+					},
 					formatter: function(value, row, index) {
 						if (!value) {
 							return '-';
 						}
-						return $.table.tooltip(value, 12);
-					}
-				},
-				{
-					field: 'supplierName',
-					title: '供应商',
-					align: 'left',
-					width: 150,
-					formatter: function(value, row, index) {
-						if (!value) {
-							return '-';
+						var text = value.length > 12 ? value.substring(0, 12) + '...' : value;
+						var title = (value || '').replace(/"/g, '&quot;');
+						return '<span class="cert-product-name-dblview" style="color:#337ab7;" title="' + title + '（双击查看）">' + text + '</span>';
+					},
+					events: {
+						'dblclick .cert-product-name-dblview': function(e, value, row) {
+							e.preventDefault();
+							e.stopPropagation();
+							if (row && row.certificateId) {
+								viewProductDetail(row.certificateId);
+							}
 						}
-						return $.table.tooltip(value, 10);
 					}
 				},
 				{
@@ -751,6 +1171,7 @@
 					title: '规格',
 					align: 'left',
 					width: 100,
+					sortable: true,
 					formatter: function(value, row, index) {
 						return value || '-';
 					}
@@ -760,8 +1181,36 @@
 					title: '型号',
 					align: 'left',
 					width: 100,
+					sortable: true,
 					formatter: function(value, row, index) {
 						return value || '-';
+					}
+				},
+				{
+					field: 'unit',
+					title: '单位',
+					align: 'center',
+					width: 70,
+					sortable: true,
+					formatter: function(value, row, index) {
+						return value || '-';
+					}
+				},
+				{
+					field: 'bidPrice',
+					title: '单价',
+					align: 'right',
+					width: 90,
+					sortable: true,
+					formatter: function(value, row, index) {
+						if (value === null || value === undefined || value === '') {
+							return '-';
+						}
+						var num = parseFloat(value);
+						if (isNaN(num)) {
+							return value;
+						}
+						return num.toFixed(2);
 					}
 				},
 				{
@@ -769,6 +1218,20 @@
 					title: '生产厂家',
 					align: 'left',
 					width: 140,
+					sortable: true,
+					formatter: function(value, row, index) {
+						if (!value) {
+							return '-';
+						}
+						return $.table.tooltip(value, 10);
+					}
+				},
+				{
+					field: 'supplierName',
+					title: '供应商',
+					align: 'left',
+					width: 150,
+					sortable: true,
 					formatter: function(value, row, index) {
 						if (!value) {
 							return '-';
@@ -781,6 +1244,7 @@
 					title: '注册证号',
 					align: 'left',
 					width: 140,
+					sortable: true,
 					formatter: function(value, row, index) {
 						return value || '-';
 					}
@@ -821,14 +1285,14 @@
 				},
 				{
 					field: 'status',
-					title: '状态',
+					title: '效期状态',
 					align: 'center',
 					width: 80,
 					formatter: function(value, row, index) {
-						if (row.status == '0') {
-							return '<span class="label label-success">正常</span>';
+						if (row.isExpired == '1') {
+							return '<span class="label label-danger">过期</span>';
 						}
-						return '<span class="label label-danger">过期</span>';
+						return '<span class="label label-success">正常</span>';
 					}
 				},
 				{
@@ -842,6 +1306,7 @@
 			$.table.init(options);
 			setTimeout(function() {
 				adjustProductTableHeight();
+				adjustCertDetailTableHeight();
 				refreshProductTableLayout();
 			}, 500);
 		}
@@ -862,11 +1327,344 @@
 			$.table.search('product-certificate-form', productTableId);
 		}
 
+		function applyProductToolbarFilters(curParams) {
+			var materialName = ($('#toolbar input[name="materialName"]').val() || '').trim();
+			if (materialName) {
+				curParams.materialName = materialName;
+			} else {
+				delete curParams.materialName;
+			}
+			var statusFilter = ($('#toolbar select[name="status"]').val() || '').trim();
+			delete curParams.status;
+			if (statusFilter === '0') {
+				curParams.isExpired = '0';
+			} else if (statusFilter === '1') {
+				curParams.isExpired = '1';
+			} else {
+				delete curParams.isExpired;
+			}
+		}
+
 		function checkExpired() {
 			$.modal.confirm("确认要检查证件过期状态吗？", function() {
 				$.operate.post(prefix + "/checkExpired", {});
 			});
 		}
+
+		function requireSelectedHospital() {
+			if (!selectedHospitalId) {
+				$.modal.msgWarning("请先在左侧选择医院");
+				return false;
+			}
+			return true;
+		}
+
+		function escapeImportHtml(text) {
+			if (!text) {
+				return '';
+			}
+			return $('<div/>').text(text).html();
+		}
+
+		function buildImportValidateFormData(layero) {
+			var formData = new FormData(layero.find('form')[0]);
+			formData.set('hospitalId', selectedHospitalId);
+			formData.set('hospitalCode', $('#productFilterHospitalCode').val() || '');
+			return formData;
+		}
+
+		function renderImportValidateResult(layero, result) {
+			var $box = layero.find('#importValidateResult');
+			if (!result) {
+				$box.html('<div class="text-danger">校验请求失败</div>');
+				return;
+			}
+			if (result.code == web_status.SUCCESS && result.data) {
+				var d = result.data;
+				var html = '<div class="text-success"><i class="fa fa-check-circle"></i> ' + (result.msg || '校验通过') + '</div>';
+				html += '<div class="text-muted" style="margin-top:4px;">有效 ' + (d.validCount || 0) + ' 条';
+				if (d.willInsertCount > 0) {
+					html += '，新增 ' + d.willInsertCount + ' 条';
+				}
+				if (d.willUpdateCount > 0) {
+					html += '，更新 ' + d.willUpdateCount + ' 条';
+				}
+				html += '</div>';
+				$box.html(html);
+				return;
+			}
+			var html = '<div class="text-danger"><i class="fa fa-exclamation-circle"></i> ' + (result.msg || '校验未通过') + '</div>';
+			if (result.data && result.data.errors && result.data.errors.length) {
+				html += '<ul class="list-unstyled" style="margin:8px 0 0;padding-left:0;max-height:160px;overflow:auto;">';
+				$.each(result.data.errors, function(i, err) {
+					html += '<li style="margin-bottom:4px;line-height:1.5;">';
+					if (err.rowNum > 0) {
+						html += '<strong>第' + err.rowNum + '行</strong> ';
+					}
+					if (err.materialName) {
+						html += '「' + escapeImportHtml(err.materialName) + '」';
+					}
+					html += escapeImportHtml(err.message || '');
+					html += '</li>';
+				});
+				html += '</ul>';
+			}
+			$box.html(html);
+		}
+
+		function requestImportCatalogValidate(layero, callback) {
+			var file = layero.find('#file').val();
+			if (file == '' || (!$.common.endWith(file, '.xls') && !$.common.endWith(file, '.xlsx'))) {
+				$.modal.msgWarning("请选择后缀为 “xls”或“xlsx”的文件。");
+				if (callback) {
+					callback(false, null);
+				}
+				return;
+			}
+			layero.find('#importValidateResult').html('<div class="text-muted"><i class="fa fa-spinner fa-spin"></i> 正在解析并校验文件...</div>');
+			$.ajax({
+				url: prefix + "/validateImportCatalog",
+				data: buildImportValidateFormData(layero),
+				cache: false,
+				contentType: false,
+				processData: false,
+				type: 'POST',
+				success: function(result) {
+					renderImportValidateResult(layero, result);
+					layero.data('importValidatePassed', result.code == web_status.SUCCESS);
+					if (callback) {
+						callback(result.code == web_status.SUCCESS, result);
+					}
+				},
+				error: function() {
+					layero.find('#importValidateResult').html('<div class="text-danger">文件校验失败，请稍后重试</div>');
+					if (callback) {
+						callback(false, null);
+					}
+				}
+			});
+		}
+
+		function doImportProductCatalog(layero, loadIdx) {
+			$.ajax({
+				url: prefix + "/importCatalog",
+				data: buildImportValidateFormData(layero),
+				cache: false,
+				contentType: false,
+				processData: false,
+				type: 'POST',
+				success: function(result) {
+					if (result.code == web_status.SUCCESS) {
+						$.modal.close(loadIdx);
+						$.modal.closeAll();
+						$.modal.alertSuccess(result.msg);
+						$('#' + productTableId).bootstrapTable('refresh');
+					} else if (result.code == web_status.WARNING) {
+						$.modal.close(loadIdx);
+						$.modal.enable();
+						$.modal.alertWarning(result.msg);
+					} else {
+						$.modal.close(loadIdx);
+						$.modal.enable();
+						renderImportValidateResult(layero, result);
+						$.modal.alertError(result.msg);
+					}
+				},
+				error: function() {
+					$.modal.close(loadIdx);
+					$.modal.enable();
+					$.modal.alertError('导入失败');
+				},
+				complete: function() {
+					layero.find('#file').val('');
+					layero.find('#importValidateResult').empty();
+				}
+			});
+		}
+
+		function importProductCatalog() {
+			if (!requireSelectedHospital()) {
+				return;
+			}
+			var _width = "520";
+			var _height = "380";
+			top.layer.open({
+				type: 1,
+				area: [_width + 'px', _height + 'px'],
+				fix: false,
+				maxmin: true,
+				shade: 0.3,
+				title: '导入产品目录',
+				content: $('#productCatalogImportTpl').html(),
+				btn: ['<i class="fa fa-check"></i> 导入', '<i class="fa fa-remove"></i> 取消'],
+				shadeClose: true,
+				success: function(layero) {
+					layero.find('#file').on('change', function() {
+						layero.data('importValidatePassed', false);
+						if (!$(this).val()) {
+							layero.find('#importValidateResult').empty();
+							return;
+						}
+						requestImportCatalogValidate(layero);
+					});
+					layero.find('#updateSupport').on('change', function() {
+						layero.data('importValidatePassed', false);
+						if (layero.find('#file').val()) {
+							requestImportCatalogValidate(layero);
+						}
+					});
+				},
+				btn1: function(index, layero) {
+					var loadIdx = top.layer.load(2, { shade: false });
+					$.modal.disable();
+					if (layero.data('importValidatePassed') && layero.find('#file').val()) {
+						doImportProductCatalog(layero, loadIdx);
+						return false;
+					}
+					requestImportCatalogValidate(layero, function(passed) {
+						if (!passed) {
+							$.modal.close(loadIdx);
+							$.modal.enable();
+							$.modal.msgWarning("文件校验未通过，请根据下方提示修正后重试");
+							return;
+						}
+						doImportProductCatalog(layero, loadIdx);
+					});
+					return false;
+				}
+			});
+		}
+
+		function syncOrderCatalog() {
+			if (!requireSelectedHospital()) {
+				return;
+			}
+			$.modal.confirm("确认从订单同步产品目录到当前医院吗？<br/>以<strong>耗材编码</strong>为唯一标识：已存在的将更新信息（如注册证号），不存在的将新增。", function() {
+				var postData = {
+					hospitalId: selectedHospitalId,
+					hospitalCode: ($('#productFilterHospitalCode').val() || '').trim()
+				};
+				if (supplierSelfService && bindSupplierId != null) {
+					postData.supplierId = bindSupplierId;
+				}
+				$.modal.loading("正在同步订单目录，请稍候...");
+				$.ajax({
+					url: prefix + "/syncOrderCatalog",
+					type: "post",
+					dataType: "json",
+					data: postData,
+					beforeSend: function(xhr) {
+						var csrftoken = $('meta[name=csrf-token]').attr('content');
+						if ($.common.isNotEmpty(csrftoken)) {
+							xhr.setRequestHeader("X-CSRF-Token", csrftoken);
+						}
+					},
+					success: function(result) {
+						if (result.code == web_status.SUCCESS) {
+							$.modal.msgSuccess(result.msg);
+							$('#' + productTableId).bootstrapTable('refresh');
+							loadCertDetailRows(null);
+						} else if (result.code == web_status.WARNING) {
+							$.modal.alertWarning(result.msg);
+						} else {
+							$.modal.alertError(result.msg || '同步失败');
+						}
+					},
+					error: function() {
+						$.modal.alertError('同步失败，请稍后重试');
+					},
+					complete: function() {
+						$.modal.closeLoading();
+					}
+				});
+			});
+		}
+
+		function downloadOrderCatalog() {
+			if (!requireSelectedHospital()) {
+				return;
+			}
+			$.modal.confirm("确定导出当前医院的订单目录 Excel 吗？", function() {
+				var dataParam = $("#product-certificate-form").serializeArray();
+				dataParam.push({ name: "hospitalId", value: selectedHospitalId });
+				if (supplierSelfService && bindSupplierId != null) {
+					dataParam.push({ name: "supplierId", value: bindSupplierId });
+				}
+				$.modal.loading("正在导出数据，请稍候...");
+				var body = new URLSearchParams();
+				$.each(dataParam, function(i, item) {
+					body.append(item.name, item.value == null ? '' : item.value);
+				});
+				var headers = {};
+				var csrftoken = $('meta[name=csrf-token]').attr('content');
+				if ($.common.isNotEmpty(csrftoken)) {
+					headers['X-CSRF-Token'] = csrftoken;
+				}
+				fetch(prefix + "/exportOrderCatalog", {
+					method: 'POST',
+					headers: headers,
+					body: body,
+					credentials: 'same-origin'
+				}).then(function(response) {
+					var ctype = (response.headers.get('Content-Type') || '').toLowerCase();
+					if (ctype.indexOf('application/json') !== -1) {
+						return response.json().then(function(result) {
+							$.modal.closeLoading();
+							if (result.code == web_status.SUCCESS && result.msg) {
+								window.location.href = ctx + "common/download?fileName=" + encodeURIComponent(result.msg) + "&delete=" + true;
+							} else if (result.code == web_status.WARNING) {
+								$.modal.alertWarning(result.msg);
+							} else {
+								$.modal.alertError(result.msg || '导出失败');
+							}
+						});
+					}
+					if (!response.ok) {
+						$.modal.closeLoading();
+						$.modal.alertError('导出失败（HTTP ' + response.status + '）');
+						return;
+					}
+					return response.blob().then(function(blob) {
+						$.modal.closeLoading();
+						var fileName = '订单目录.xlsx';
+						var cd = response.headers.get('Content-Disposition');
+						if ($.common.isNotEmpty(cd)) {
+							var m = cd.match(/filename\*=utf-8''([^;]+)/i);
+							if (m && m[1]) {
+								try { fileName = decodeURIComponent(m[1].trim()); } catch (e3) {}
+							}
+						}
+						var url = window.URL.createObjectURL(blob);
+						var a = document.createElement('a');
+						a.href = url;
+						a.download = fileName;
+						a.style.display = 'none';
+						document.body.appendChild(a);
+						a.click();
+						document.body.removeChild(a);
+						window.URL.revokeObjectURL(url);
+					});
+				}).catch(function() {
+					$.modal.closeLoading();
+					$.modal.alertError('导出失败');
+				});
+			});
+		}
 	</script>
 </body>
+<script id="productCatalogImportTpl" type="text/template">
+<form enctype="multipart/form-data" class="mt20 mb10">
+	<div class="col-xs-offset-1">
+		<input type="file" id="file" name="file"/>
+		<div class="mt10 pt5">
+			<input type="checkbox" id="updateSupport" name="updateSupport" title="若数据已存在则更新"> 是否更新已存在的数据
+			 &nbsp;	<a onclick="$.table.importTemplate()" class="btn btn-default btn-xs"><i class="fa fa-file-excel-o"></i> 下载模板</a>
+		</div>
+		<div id="importValidateResult" class="pull-left mt10" style="width:100%;"></div>
+		<font color="red" class="pull-left mt10">
+			提示：选择文件后将自动解析校验；仅允许导入“xls”或“xlsx”格式，导入前请先在左侧选择医院。
+		</font>
+	</div>
+</form>
+</script>
 </html>

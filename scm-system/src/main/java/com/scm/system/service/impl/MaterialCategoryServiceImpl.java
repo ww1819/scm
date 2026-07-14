@@ -144,7 +144,7 @@ public class MaterialCategoryServiceImpl implements IMaterialCategoryService
         List<MaterialCategory> children = materialCategoryMapper.selectMaterialCategoryByParentId(categoryId);
         for (MaterialCategory child : children)
         {
-            child.setAncestors(child.getAncestors().replaceFirst(oldAncestors, newAncestors));
+            child.setAncestors(StringUtils.replace(child.getAncestors(), oldAncestors, newAncestors));
         }
         if (children.size() > 0)
         {

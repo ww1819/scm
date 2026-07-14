@@ -28,17 +28,22 @@ import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.enums.BusinessType;
 import com.scm.common.exception.ServiceException;
+import com.scm.common.exception.UtilException;
+import com.scm.common.utils.PinyinUtils;
 import com.scm.common.utils.ServletUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.poi.ExcelUtil;
 import com.scm.system.domain.Hospital;
 import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.MaterialDict;
+import com.scm.system.domain.OrderDetail;
 import com.scm.system.domain.ProductCertificate;
 import com.scm.system.domain.ProductCertLicenseSnap;
 import com.scm.system.domain.ScmFile;
 import com.scm.system.domain.Supplier;
 import com.scm.system.domain.SupplierUser;
+import com.scm.system.domain.vo.ProductCatalogImportValidateResult;
+import com.scm.system.domain.vo.ProductCertificateImportVo;
 import com.scm.system.domain.vo.ProductMaterialArchiveVo;
 import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.IHospitalService;
@@ -320,6 +325,133 @@ public class ProductCertificateController extends BaseController
     }
 
     /**
+     * 下载产品目录导入模板
+     */
+    @RequiresPermissions("certificate:product:add")
+    @GetMapping("/importTemplate")
+    @ResponseBody
+    public AjaxResult importTemplate()
+    {
+        ExcelUtil<ProductCertificateImportVo> util = new ExcelUtil<ProductCertificateImportVo>(ProductCertificateImportVo.class);
+        return util.importTemplateExcel("产品目录");
+    }
+
+    /**
+     * 校验产品目录导入文件（解析 Excel 并逐行检查，不写入数据库）
+     */
+    @RequiresPermissions("certificate:product:add")
+    @PostMapping("/validateImportCatalog")
+    @ResponseBody
+    public AjaxResult validateImportCatalog(MultipartFile file,
+        @RequestParam String hospitalId,
+        @RequestParam(required = false) String hospitalCode,
+        @RequestParam(defaultValue = "false") boolean updateSupport) throws Exception
+    {
+        if (file == null || file.isEmpty())
+        {
+            return error("请选择导入文件");
+        }
+        try
+        {
+            ExcelUtil<ProductCertificateImportVo> util = new ExcelUtil<ProductCertificateImportVo>(ProductCertificateImportVo.class);
+            List<ProductCertificateImportVo> rows = util.importExcel(file.getInputStream());
+            ProductCatalogImportValidateResult result = productCertificateService.validateProductCatalogImport(
+                rows, hospitalId, hospitalCode, updateSupport);
+            if (result.isPass())
+            {
+                String summary = String.format("校验通过：共 %d 条，预计新增 %d 条",
+                    result.getValidCount(), result.getWillInsertCount());
+                if (updateSupport && result.getWillUpdateCount() > 0)
+                {
+                    summary += String.format("，更新 %d 条", result.getWillUpdateCount());
+                }
+                return AjaxResult.success(summary, result);
+            }
+            return AjaxResult.warn("文件校验未通过，请修正后重试", result);
+        }
+        catch (UtilException e)
+        {
+            return error("文件解析失败：" + e.getMessage());
+        }
+        catch (ServiceException e)
+        {
+            return error(e.getMessage());
+        }
+    }
+
+    /**
+     * 导入产品目录
+     */
+    @RequiresPermissions("certificate:product:add")
+    @Log(title = "产品证件管理", businessType = BusinessType.IMPORT)
+    @PostMapping("/importCatalog")
+    @ResponseBody
+    public AjaxResult importCatalog(MultipartFile file,
+        @RequestParam String hospitalId,
+        @RequestParam(required = false) String hospitalCode,
+        @RequestParam(defaultValue = "false") boolean updateSupport) throws Exception
+    {
+        try
+        {
+            ExcelUtil<ProductCertificateImportVo> util = new ExcelUtil<ProductCertificateImportVo>(ProductCertificateImportVo.class);
+            List<ProductCertificateImportVo> rows = util.importExcel(file.getInputStream());
+            String message = productCertificateService.importProductCatalog(rows, hospitalId, hospitalCode, updateSupport, getLoginName());
+            return AjaxResult.success(message);
+        }
+        catch (UtilException e)
+        {
+            return error("文件解析失败：" + e.getMessage());
+        }
+        catch (ServiceException e)
+        {
+            return error(e.getMessage());
+        }
+    }
+
+    /**
+     * 下载订单目录（当前医院订单中的不重复产品列表，Excel 导出）
+     */
+    @RequiresPermissions("certificate:product:export")
+    @Log(title = "产品证件管理", businessType = BusinessType.EXPORT)
+    @PostMapping("/exportOrderCatalog")
+    public void exportOrderCatalog(@RequestParam String hospitalId,
+        @RequestParam(required = false) Long supplierId,
+        HttpServletResponse response)
+    {
+        List<OrderDetail> list = productCertificateService.selectOrderCatalogList(hospitalId, supplierId);
+        ExcelUtil<OrderDetail> util = new ExcelUtil<OrderDetail>(OrderDetail.class);
+        util.exportExcel(response, list, "订单目录");
+    }
+
+    /**
+     * 同步订单目录到产品证件登记（按耗材编码 upsert）
+     */
+    @RequiresPermissions("certificate:product:add")
+    @Log(title = "产品证件管理", businessType = BusinessType.IMPORT)
+    @PostMapping("/syncOrderCatalog")
+    @ResponseBody
+    public AjaxResult syncOrderCatalog(@RequestParam String hospitalId,
+        @RequestParam(required = false) String hospitalCode,
+        @RequestParam(required = false) Long supplierId)
+    {
+        try
+        {
+            String msg = productCertificateService.syncOrderCatalogToProducts(
+                hospitalId, hospitalCode, supplierId, getLoginName());
+            return AjaxResult.success(msg);
+        }
+        catch (ServiceException e)
+        {
+            return error(e.getMessage());
+        }
+        catch (Exception e)
+        {
+            logger.error("同步订单目录失败", e);
+            return error("同步失败：" + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
+        }
+    }
+
+    /**
      * 新增产品证件
      */
     @RequiresPermissions("certificate:product:add")
@@ -353,6 +485,7 @@ public class ProductCertificateController extends BaseController
             supplier.setStatus("0");
             mmap.put("supplierList", supplierService.selectSupplierList(supplier));
         }
+        mmap.put("preHospitalName", resolveHospitalDisplayName(hospitalId, hospitalCode));
         return prefix + "/add";
     }
 
@@ -376,7 +509,11 @@ public class ProductCertificateController extends BaseController
             // 将额外的产品信息传递给Service
             int result = productCertificateService.insertProductCertificate(productCertificate, 
                 specification, model, unit, manufacturerName, purchasePrice);
-            return toAjax(result);
+            if (result > 0)
+            {
+                return AjaxResult.success("新增成功", productCertificate.getCertificateId());
+            }
+            return error("新增失败");
         }
         catch (Exception e)
         {
@@ -393,6 +530,32 @@ public class ProductCertificateController extends BaseController
     public String edit(@PathVariable("certificateId") Long certificateId, ModelMap mmap)
     {
         ProductCertificate productCertificate = productCertificateService.selectProductCertificateById(certificateId);
+        if (productCertificate != null && "1".equals(productCertificate.getAuditStatus()))
+        {
+            return detail(certificateId, mmap);
+        }
+        populateProductCertificateFormModel(certificateId, mmap);
+        mmap.put("viewMode", false);
+        return prefix + "/edit";
+    }
+
+    /**
+     * 查看产品证件（只读）
+     */
+    @RequiresPermissions(value = { "certificate:product:view", "certificate:product:list", "certificate:product:edit", "certificate:product:audit" },
+        logical = Logical.OR)
+    @GetMapping("/detail/{certificateId}")
+    public String detail(@PathVariable("certificateId") Long certificateId, ModelMap mmap)
+    {
+        populateProductCertificateFormModel(certificateId, mmap);
+        mmap.put("viewMode", true);
+        return prefix + "/edit";
+    }
+
+    private void populateProductCertificateFormModel(Long certificateId, ModelMap mmap)
+    {
+        ProductCertificate productCertificate = productCertificateService.selectProductCertificateById(certificateId);
+        applyMaterialShortCodeForDisplay(productCertificate);
         mmap.put("productCertificate", productCertificate);
         Long bindSid = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
         boolean supplierSelf = bindSid != null;
@@ -411,8 +574,9 @@ public class ProductCertificateController extends BaseController
             Supplier supplier = new Supplier();
             supplier.setStatus("0");
             mmap.put("supplierList", supplierService.selectSupplierList(supplier));
+            mmap.put("hospitalReadonlyLabel", resolveHospitalDisplayName(
+                productCertificate.getHospitalId(), productCertificate.getHospitalCode()));
         }
-        // 如果materialId不为空，查询MaterialDict信息用于显示规格、型号、单位、生产厂家、采购价格
         if (productCertificate.getMaterialId() != null && productCertificate.getMaterialId() > 0)
         {
             com.scm.system.domain.MaterialDict materialDict = materialDictService.selectMaterialDictById(productCertificate.getMaterialId());
@@ -421,7 +585,6 @@ public class ProductCertificateController extends BaseController
                 mmap.put("materialDict", materialDict);
             }
         }
-        return prefix + "/edit";
     }
 
     /**
@@ -536,6 +699,50 @@ public class ProductCertificateController extends BaseController
     public AjaxResult updateCertificateFile(Long certificateId, String certificateFileIds)
     {
         return toAjax(productCertificateService.updateProductCertificateFile(certificateId, certificateFileIds, getLoginName()));
+    }
+
+    /**
+     * 根据产品名称生成简码（拼音首字母）
+     */
+    @RequiresPermissions(value = { "certificate:product:add", "certificate:product:edit", "certificate:product:view",
+        "certificate:product:list", "certificate:product:audit" }, logical = Logical.OR)
+    @GetMapping("/materialShortCode")
+    @ResponseBody
+    public AjaxResult materialShortCode(@RequestParam(value = "name", required = false) String name)
+    {
+        return AjaxResult.success("操作成功", buildMaterialShortCode(name));
+    }
+
+    @RequiresPermissions(value = { "certificate:product:add", "certificate:product:edit", "certificate:product:view",
+        "certificate:product:list", "certificate:product:audit" }, logical = Logical.OR)
+    @PostMapping("/materialShortCode")
+    @ResponseBody
+    public AjaxResult materialShortCodePost(@RequestParam(value = "name", required = false) String name)
+    {
+        return AjaxResult.success("操作成功", buildMaterialShortCode(name));
+    }
+
+    private void applyMaterialShortCodeForDisplay(ProductCertificate productCertificate)
+    {
+        if (productCertificate == null)
+        {
+            return;
+        }
+        String code = buildMaterialShortCode(productCertificate.getMaterialName());
+        if (code != null)
+        {
+            productCertificate.setPinyinCode(code);
+        }
+    }
+
+    private String buildMaterialShortCode(String materialName)
+    {
+        if (StringUtils.isEmpty(materialName))
+        {
+            return "";
+        }
+        String raw = PinyinUtils.getShortCode(materialName.trim());
+        return raw != null ? raw : "";
     }
 
     /**
@@ -698,7 +905,7 @@ public class ProductCertificateController extends BaseController
         }
     }
 
-    @RequiresPermissions("certificate:product:edit")
+    @RequiresPermissions(value = { "certificate:product:add", "certificate:product:edit" }, logical = Logical.OR)
     @Log(title = "产品证件扩展证照", businessType = BusinessType.UPDATE)
     @PostMapping("/licenseSnap/saveRow")
     @ResponseBody
@@ -711,6 +918,75 @@ public class ProductCertificateController extends BaseController
         catch (ServiceException e)
         {
             return error(e.getMessage());
+        }
+    }
+
+    @RequiresPermissions(value = { "certificate:product:add", "certificate:product:edit" }, logical = Logical.OR)
+    @Log(title = "产品证件扩展证照", businessType = BusinessType.UPDATE)
+    @PostMapping("/licenseSnap/uploadImage")
+    @ResponseBody
+    public AjaxResult licenseSnapUploadImage(@RequestParam String licenseId,
+            @RequestParam(value = "file", required = false) MultipartFile file)
+    {
+        if (StringUtils.isEmpty(licenseId))
+        {
+            return error("证照记录无效");
+        }
+        if (file == null || file.isEmpty())
+        {
+            return error("请选择要上传的图片");
+        }
+        if (file.getSize() > ScmFileConstants.MAX_CERTIFICATE_IMAGE_BYTES)
+        {
+            return error("图片大小不能超过500KB");
+        }
+        String contentType = file.getContentType();
+        if (contentType != null && !contentType.startsWith("image/"))
+        {
+            return error("仅支持上传图片文件");
+        }
+        try
+        {
+            ScmFile scmFile = scmFileService.uploadToCos(file, ScmFileConstants.MODULE_PRODUCT_CERTIFICATE, getLoginName());
+            productCertLicenseSnapService.appendSnapCertificateImage(licenseId, scmFile.getFileUrl(), getLoginName());
+            AjaxResult ajax = AjaxResult.success("上传成功");
+            ajax.put("fileUrl", scmFile.getFileUrl());
+            return ajax;
+        }
+        catch (ServiceException e)
+        {
+            return error(e.getMessage());
+        }
+        catch (Exception e)
+        {
+            logger.error("扩展证照图片上传失败, licenseId={}", licenseId, e);
+            return error("上传失败：" + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
+        }
+    }
+
+    @RequiresPermissions(value = { "certificate:product:add", "certificate:product:edit" }, logical = Logical.OR)
+    @Log(title = "产品证件扩展证照", businessType = BusinessType.UPDATE)
+    @PostMapping("/licenseSnap/removeImage")
+    @ResponseBody
+    public AjaxResult licenseSnapRemoveImage(@RequestParam String licenseId, @RequestParam String fileUrl)
+    {
+        if (StringUtils.isEmpty(licenseId) || StringUtils.isEmpty(fileUrl))
+        {
+            return error("参数无效");
+        }
+        try
+        {
+            int rows = productCertLicenseSnapService.removeSnapCertificateImage(licenseId, fileUrl, getLoginName());
+            return rows > 0 ? success("删除成功") : success("图片已删除");
+        }
+        catch (ServiceException e)
+        {
+            return error(e.getMessage());
+        }
+        catch (Exception e)
+        {
+            logger.error("扩展证照图片删除失败, licenseId={}", licenseId, e);
+            return error("删除失败：" + (e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName()));
         }
     }
 
@@ -828,6 +1104,42 @@ public class ProductCertificateController extends BaseController
             sb.append("医院ID：").append(c.getHospitalId());
         }
         return sb.length() > 0 ? sb.toString() : "—";
+    }
+
+    /** 平台侧展示用：按医院ID或编码解析医院名称。 */
+    private String resolveHospitalDisplayName(String hospitalId, String hospitalCode)
+    {
+        if (StringUtils.isNotEmpty(hospitalId))
+        {
+            try
+            {
+                Hospital hospital = hospitalService.selectHospitalById(Long.valueOf(hospitalId.trim()));
+                if (hospital != null && StringUtils.isNotEmpty(hospital.getHospitalName()))
+                {
+                    return hospital.getHospitalName();
+                }
+            }
+            catch (NumberFormatException ignored)
+            {
+            }
+        }
+        if (StringUtils.isNotEmpty(hospitalCode))
+        {
+            Hospital query = new Hospital();
+            query.setHospitalCode(hospitalCode.trim());
+            List<Hospital> hospitals = hospitalService.selectHospitalList(query);
+            if (hospitals != null)
+            {
+                for (Hospital hospital : hospitals)
+                {
+                    if (hospital != null && StringUtils.isNotEmpty(hospital.getHospitalName()))
+                    {
+                        return hospital.getHospitalName();
+                    }
+                }
+            }
+        }
+        return "—";
     }
 }
 

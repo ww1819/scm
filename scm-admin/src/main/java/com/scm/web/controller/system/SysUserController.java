@@ -89,8 +89,16 @@ public class SysUserController extends BaseController
 
     @RequiresPermissions("system:user:view")
     @GetMapping()
-    public String user()
+    public String user(ModelMap mmap)
     {
+        SysRole roleQuery = new SysRole();
+        roleQuery.setStatus("0");
+        List<SysRole> roles = roleService.selectRoleList(roleQuery);
+        if (!SysUser.isAdmin(getUserId()))
+        {
+            roles = roles.stream().filter(r -> !r.isAdmin()).collect(Collectors.toList());
+        }
+        mmap.put("roles", roles);
         return prefix + "/user";
     }
 

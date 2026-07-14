@@ -578,6 +578,19 @@
 			padding-left: 4px !important;
 			padding-right: 4px !important;
 		}
+		#detail-table thead th[data-field="index"],
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="index"] {
+			min-width: 64px !important;
+			overflow: visible !important;
+			text-overflow: clip !important;
+		}
+		#detail-table thead th[data-field="index"] .th-inner,
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="index"] .th-inner {
+			overflow: visible !important;
+			text-overflow: clip !important;
+			padding-left: 6px !important;
+			padding-right: 6px !important;
+		}
 		#detail-table tbody td[data-field="unit"] .detail-cell-text,
 		#detail-table tbody td[data-field="packCoefficient"] .detail-cell-text,
 		#detail-table tbody td[data-field="remainingQuantity"] .detail-cell-text {
@@ -1032,7 +1045,7 @@
 	    /** 默认列宽（保证表头完整显示；含排序图标预留） */
 	    var DETAIL_DEFAULT_COL_WIDTHS = {
 	        btSelectItem: 42,
-	        index: 56,
+	        index: 64,
 	        materialCode: 120,
 	        materialName: 156,
 	        specification: 120,
@@ -2097,6 +2110,7 @@
 	            mobileResponsive: false,
 	            sidePagination: 'client',
 	            sortReset: false,
+	            sortable: true,
 	            rowStyle: function () {
 	                return { css: { height: DETAIL_ROW_HEIGHT + 'px', maxHeight: DETAIL_ROW_HEIGHT + 'px' } };
 	            },
@@ -2109,7 +2123,7 @@
 	                field: 'index',
 	                title: '序号',
 	                align: 'center',
-	                width: 56,
+	                width: 64,
 	                formatter: function(value, row, index) {
 	                    return index + 1;
 	                }
@@ -2150,6 +2164,8 @@
 	                title: '可配数量',
 	                align: 'center',
 	                width: 108,
+	                sortable: true,
+	                sorter: detailSortNumber,
 	                formatter: function (value) {
 	                    return detailCellTextHtml(formatDetailInteger(value));
 	                }
@@ -2750,6 +2766,11 @@
 	            // 获取表格中的所有明细数据（含未失焦的批号/日期输入）
 	            var detailData = syncDetailEditableFieldsFromDom();
 	            normalizeDetailDateFieldsForSave(detailData);
+
+	            if (!detailData || detailData.length === 0) {
+	                $.modal.alertWarning('无法保存，配送信息为空');
+	                return;
+	            }
 
 	            // 校验：配送数量为0（或未填写）的明细行，提示具体行号，要求完善或删除后再保存
 	            var zeroQtyRows = [];

@@ -1,7 +1,9 @@
 package com.scm.web.controller.supplier;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,16 +14,19 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.scm.common.annotation.Log;
 import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
+import com.scm.common.core.domain.entity.SysDept;
 import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.enums.BusinessType;
 import com.scm.common.utils.poi.ExcelUtil;
 import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.Hospital;
 import com.scm.system.domain.HospitalSupplier;
+import com.scm.system.domain.ScmHospitalSupplierApply;
 import com.scm.system.domain.Supplier;
 import com.scm.system.domain.SupplierCertificate;
 import com.scm.system.domain.SupplierUser;
@@ -30,6 +35,7 @@ import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.ISupplierService;
 import com.scm.system.service.ISupplierCertificateService;
 import com.scm.system.service.ISupplierUserService;
+import com.scm.system.service.ISysDeptService;
 
 /**
  * 供应商信息
@@ -56,6 +62,29 @@ public class SupplierController extends BaseController
 
     @Autowired
     private ISupplierUserService supplierUserService;
+
+    @Autowired
+    private ISysDeptService deptService;
+
+    /**
+     * 省/市/区县级联：数据与部门管理一致（医承云配 → 省 → 市 → 区县）
+     */
+    @RequiresPermissions("supplier:supplier:view")
+    @GetMapping("/deptRegionOptions")
+    @ResponseBody
+    public AjaxResult deptRegionOptions(@RequestParam(value = "parentId", required = false) Long parentId)
+    {
+        List<SysDept> list = deptService.listDeptChildrenForSupplierRegister(parentId);
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (SysDept d : list)
+        {
+            Map<String, Object> m = new HashMap<>();
+            m.put("deptId", d.getDeptId());
+            m.put("deptName", d.getDeptName());
+            rows.add(m);
+        }
+        return success(rows);
+    }
 
     @RequiresPermissions("supplier:supplier:view")
     @GetMapping()
@@ -199,6 +228,24 @@ public class SupplierController extends BaseController
     }
 
     /**
+     * 供应商关联申请列表（与「新增医院关联」明细一致，只读展示）
+     */
+    @RequiresPermissions("supplier:supplier:view")
+    @GetMapping("/associationApplies/{supplierId}")
+    @ResponseBody
+    public AjaxResult associationApplies(@PathVariable("supplierId") Long supplierId)
+    {
+        SupplierUser supplierUser = supplierUserService.selectSupplierUserByUserId(getUserId());
+        if (supplierUser != null && supplierUser.getSupplierId() != null
+            && !supplierUser.getSupplierId().equals(supplierId))
+        {
+            return success(new ArrayList<>());
+        }
+        List<ScmHospitalSupplierApply> list = hospitalSupplierService.selectSupplierApplyList(supplierId, null, null, null);
+        return success(list);
+    }
+
+    /**
      * 获取供应商关联的医院列表
      */
     @RequiresPermissions("supplier:supplier:view")
@@ -226,28 +273,14 @@ public class SupplierController extends BaseController
     @Log(title = "供应商管理", businessType = BusinessType.UPDATE)
     @PostMapping("/edit")
     @ResponseBody
-    public AjaxResult editSave(@Validated Supplier supplier, String hospitalIds)
+    public AjaxResult editSave(@Validated Supplier supplier)
     {
         if (!supplierService.checkSupplierCodeUnique(supplier))
         {
             return error("修改供应商'" + supplier.getCompanyName() + "'失败，供应商编码已存在");
         }
         supplier.setUpdateBy(getLoginName());
-        int result = supplierService.updateSupplier(supplier);
-        
-        // 保存配送公司关联关系
-        if (result > 0 && StringUtils.isNotEmpty(hospitalIds))
-        {
-            String[] hospitalIdArray = hospitalIds.split(",");
-            hospitalSupplierService.saveSupplierHospitals(supplier.getSupplierId(), hospitalIdArray, getLoginName());
-        }
-        else if (result > 0 && StringUtils.isEmpty(hospitalIds))
-        {
-            // 如果hospitalIds为空，删除所有关联
-            hospitalSupplierService.deleteHospitalSupplierBySupplierId(supplier.getSupplierId());
-        }
-        
-        return toAjax(result);
+        return toAjax(supplierService.updateSupplier(supplier));
     }
 
     /**
