@@ -1,7 +1,6 @@
 package com.scm.system.service.impl;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
@@ -19,6 +18,7 @@ import com.scm.common.exception.ServiceException;
 import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.PageUtils;
 import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.MoneyPrecisionUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.uuid.IdUtils;
 import com.scm.system.domain.Delivery;
@@ -375,13 +375,14 @@ public class DeliveryServiceImpl implements IDeliveryService
             {
                 if (detail.getPrice() != null && detail.getDeliveryQuantity() != null)
                 {
-                    BigDecimal amount = detail.getPrice().multiply(detail.getDeliveryQuantity());
+                    detail.setPrice(MoneyPrecisionUtils.preserve(detail.getPrice()));
+                    BigDecimal amount = MoneyPrecisionUtils.multiplyPreserve(detail.getPrice(), detail.getDeliveryQuantity());
                     detail.setAmount(amount);
                     totalAmount = totalAmount.add(amount);
                 }
             }
         }
-        delivery.setDeliveryAmount(totalAmount);
+        delivery.setDeliveryAmount(MoneyPrecisionUtils.preserve(totalAmount));
 
         if (StringUtils.isNotEmpty(delivery.getCreateBy()))
         {
@@ -528,12 +529,13 @@ public class DeliveryServiceImpl implements IDeliveryService
             {
                 if (detail.getPrice() != null && detail.getDeliveryQuantity() != null)
                 {
-                    BigDecimal amount = detail.getPrice().multiply(detail.getDeliveryQuantity());
+                    detail.setPrice(MoneyPrecisionUtils.preserve(detail.getPrice()));
+                    BigDecimal amount = MoneyPrecisionUtils.multiplyPreserve(detail.getPrice(), detail.getDeliveryQuantity());
                     detail.setAmount(amount);
                     totalAmount = totalAmount.add(amount);
                 }
             }
-            delivery.setDeliveryAmount(totalAmount);
+            delivery.setDeliveryAmount(MoneyPrecisionUtils.preserve(totalAmount));
         }
 
         int r = deliveryMapper.updateDelivery(delivery);
@@ -1337,7 +1339,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         vo.setOrderNo(StringUtils.trimToEmpty(head.getDh()));
         vo.setWarehouse(StringUtils.trimToEmpty(head.getCk()));
         vo.setOrderAmount(head.getSheetJe() != null
-            ? head.getSheetJe().setScale(2, RoundingMode.HALF_UP)
+            ? MoneyPrecisionUtils.preserve(head.getSheetJe())
             : BigDecimal.ZERO);
         vo.setOrderDate(head.getCreateTime());
         StringBuilder remark = new StringBuilder();
@@ -1433,15 +1435,15 @@ public class DeliveryServiceImpl implements IDeliveryService
         BigDecimal je;
         if (available.compareTo(sl) == 0 && line.getJe() != null)
         {
-            je = line.getJe().setScale(2, RoundingMode.HALF_UP);
+            je = MoneyPrecisionUtils.preserve(line.getJe());
         }
         else
         {
-            je = available.multiply(dj).setScale(2, RoundingMode.HALF_UP);
+            je = MoneyPrecisionUtils.multiplyPreserve(dj, available);
         }
         d.setDeliveryQuantity(available);
         d.setRemainingQuantity(available);
-        d.setPrice(dj.setScale(4, RoundingMode.HALF_UP));
+        d.setPrice(MoneyPrecisionUtils.preserve(dj));
         d.setAmount(je);
         d.setManufacturer(StringUtils.trimToEmpty(line.getSccj()));
         d.setRegisterNo(StringUtils.trimToEmpty(line.getZcz()));

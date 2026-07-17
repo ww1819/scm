@@ -889,3 +889,19 @@ INNER JOIN scm_certificate_type t ON t.type_id = CAST(c.certificate_type AS UNSI
 SET c.certificate_type = t.type_name
 WHERE (c.status IS NULL OR c.status != '1')
   AND c.certificate_type REGEXP '^[0-9]+$';
+
+-- ========== SCM-X-001 / SCM-B-001：订单/配送单价与金额扩至 6 位小数（默认业务至少保留 3 位） ==========
+ALTER TABLE scm_order
+  MODIFY COLUMN order_amount decimal(18,6) DEFAULT 0 COMMENT '订单金额';
+/
+ALTER TABLE scm_order_detail
+  MODIFY COLUMN purchase_price decimal(18,6) DEFAULT 0 COMMENT '采购价格',
+  MODIFY COLUMN amount decimal(18,6) DEFAULT 0 COMMENT '金额';
+/
+ALTER TABLE scm_delivery
+  MODIFY COLUMN delivery_amount decimal(18,6) DEFAULT 0.000000 COMMENT '配送金额';
+/
+ALTER TABLE scm_delivery_detail
+  MODIFY COLUMN price decimal(18,6) DEFAULT 0.000000 COMMENT '单价',
+  MODIFY COLUMN amount decimal(18,6) DEFAULT 0.000000 COMMENT '金额';
+/
