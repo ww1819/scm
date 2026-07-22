@@ -84,9 +84,23 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 				OR IFNULL(sh.pinyin_code, '') like concat('%', #{params.hospitalName}, '%'))
 		</if>
 		<if test="params != null and params.supplierCompanyName != null and params.supplierCompanyName != ''">
-			AND (sup.company_name like concat('%', #{params.supplierCompanyName}, '%')
+			AND (
+				sup.company_name like concat('%', #{params.supplierCompanyName}, '%')
 				OR IFNULL(sup.supplier_code, '') like concat('%', #{params.supplierCompanyName}, '%')
-				OR IFNULL(sup.pinyin_code, '') like concat('%', #{params.supplierCompanyName}, '%'))
+				OR IFNULL(sup.pinyin_code, '') like concat('%', #{params.supplierCompanyName}, '%')
+				/* 全局模板角色 supplier_id 为空，按角色.供应商名筛不到；同时命中「该公司用户已绑定的角色」 */
+				OR EXISTS (
+					SELECT 1
+					FROM scm_supplier_user su
+					INNER JOIN scm_supplier s2 ON s2.supplier_id = su.supplier_id
+						AND (s2.del_flag IS NULL OR s2.del_flag = '0')
+					INNER JOIN sys_user_role ur2 ON ur2.user_id = su.user_id AND ur2.role_id = r.role_id
+					WHERE (su.del_flag IS NULL OR su.del_flag = '0')
+					  AND (s2.company_name like concat('%', #{params.supplierCompanyName}, '%')
+						OR IFNULL(s2.supplier_code, '') like concat('%', #{params.supplierCompanyName}, '%')
+						OR IFNULL(s2.pinyin_code, '') like concat('%', #{params.supplierCompanyName}, '%'))
+				)
+			)
 		</if>
 		<if test="params != null and params.excludeAdminRole != null and params.excludeAdminRole != ''">
 			AND r.role_id &lt;&gt; 1
@@ -105,14 +119,27 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		where r.del_flag = '0' and r.role_id = #{roleId}
 	</select>
 	
-	<select id="checkRoleNameUnique" parameterType="String" resultMap="SysRoleResult">
+	<!-- 同名校验限定在同一医院/供应商作用域；排除自身，避免历史大量「供应商管理员」导致改菜单无法保存 -->
+	<select id="checkRoleNameUnique" parameterType="SysRole" resultMap="SysRoleResult">
 		<include refid="selectRoleVo"/>
-		 where r.role_name=#{roleName} and r.del_flag = '0' limit 1
+		where r.role_name = #{roleName} and r.del_flag = '0'
+		  and ifnull(r.hospital_id, 0) = ifnull(#{hospitalId}, 0)
+		  and ifnull(r.supplier_id, 0) = ifnull(#{supplierId}, 0)
+		<if test="roleId != null and roleId != 0">
+		  and r.role_id &lt;&gt; #{roleId}
+		</if>
+		limit 1
 	</select>
 	
-	<select id="checkRoleKeyUnique" parameterType="String" resultMap="SysRoleResult">
+	<select id="checkRoleKeyUnique" parameterType="SysRole" resultMap="SysRoleResult">
 		<include refid="selectRoleVo"/>
-		 where r.role_key=#{roleKey} and r.del_flag = '0' limit 1
+		where r.role_key = #{roleKey} and r.del_flag = '0'
+		  and ifnull(r.hospital_id, 0) = ifnull(#{hospitalId}, 0)
+		  and ifnull(r.supplier_id, 0) = ifnull(#{supplierId}, 0)
+		<if test="roleId != null and roleId != 0">
+		  and r.role_id &lt;&gt; #{roleId}
+		</if>
+		limit 1
 	</select>
 	
 	<select id="selectByRoleKeyAndTenantId" resultMap="SysRoleResult">

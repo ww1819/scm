@@ -301,8 +301,30 @@ public class SysRoleServiceImpl implements ISysRoleService
     @Override
     public boolean checkRoleNameUnique(SysRole role)
     {
+        if (role == null || StringUtils.isEmpty(role.getRoleName()))
+        {
+            return UserConstants.UNIQUE;
+        }
         Long roleId = StringUtils.isNull(role.getRoleId()) ? -1L : role.getRoleId();
-        SysRole info = roleMapper.checkRoleNameUnique(role.getRoleName());
+        // 修改且名称未变（如仅保存菜单授权）：直接放行，避免历史同名角色误拦
+        if (roleId != null && roleId > 0)
+        {
+            SysRole db = roleMapper.selectRoleById(roleId);
+            if (db != null && StringUtils.equals(StringUtils.trim(db.getRoleName()), StringUtils.trim(role.getRoleName())))
+            {
+                return UserConstants.UNIQUE;
+            }
+            // 表单未带院商时用库中作用域，保证与同作用域内其他角色比较
+            if (role.getHospitalId() == null)
+            {
+                role.setHospitalId(db != null ? db.getHospitalId() : null);
+            }
+            if (role.getSupplierId() == null)
+            {
+                role.setSupplierId(db != null ? db.getSupplierId() : null);
+            }
+        }
+        SysRole info = roleMapper.checkRoleNameUnique(role);
         if (StringUtils.isNotNull(info) && info.getRoleId().longValue() != roleId.longValue())
         {
             return UserConstants.NOT_UNIQUE;
@@ -319,8 +341,28 @@ public class SysRoleServiceImpl implements ISysRoleService
     @Override
     public boolean checkRoleKeyUnique(SysRole role)
     {
+        if (role == null || StringUtils.isEmpty(role.getRoleKey()))
+        {
+            return UserConstants.UNIQUE;
+        }
         Long roleId = StringUtils.isNull(role.getRoleId()) ? -1L : role.getRoleId();
-        SysRole info = roleMapper.checkRoleKeyUnique(role.getRoleKey());
+        if (roleId != null && roleId > 0)
+        {
+            SysRole db = roleMapper.selectRoleById(roleId);
+            if (db != null && StringUtils.equals(StringUtils.trim(db.getRoleKey()), StringUtils.trim(role.getRoleKey())))
+            {
+                return UserConstants.UNIQUE;
+            }
+            if (role.getHospitalId() == null)
+            {
+                role.setHospitalId(db != null ? db.getHospitalId() : null);
+            }
+            if (role.getSupplierId() == null)
+            {
+                role.setSupplierId(db != null ? db.getSupplierId() : null);
+            }
+        }
+        SysRole info = roleMapper.checkRoleKeyUnique(role);
         if (StringUtils.isNotNull(info) && info.getRoleId().longValue() != roleId.longValue())
         {
             return UserConstants.NOT_UNIQUE;

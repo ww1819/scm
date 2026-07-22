@@ -253,7 +253,7 @@
 	             <a class="btn btn-primary single disabled" onclick="$.operate.editTab()" shiro:hasPermission="supplier:supplier:edit">
 		            <i class="fa fa-edit"></i> 修改
 		        </a>
-	            <a class="btn btn-info single disabled" onclick="ensureBuiltinRoles()" shiro:hasPermission="supplier:supplier:edit" title="确保全局供应商管理员/业务员角色存在，增量补本供应商菜单白名单并重绑用户">
+	            <a class="btn btn-info single disabled" onclick="ensureBuiltinRoles()" shiro:hasPermission="supplier:supplier:edit" title="确保全局供应商管理员/业务员角色存在并重绑用户；不会按供应商新建 sys_role。补齐后请到用户授权查看，勿仅在角色管理按公司名找「本供应商角色行」">
 	                <i class="fa fa-wrench"></i> 补齐内置角色/权限
 	            </a>
 	            <a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="supplier:supplier:remove">

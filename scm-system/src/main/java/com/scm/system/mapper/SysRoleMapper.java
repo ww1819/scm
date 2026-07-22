@@ -70,20 +70,20 @@ public interface SysRoleMapper
     public int insertRole(SysRole role);
 
     /**
-     * 校验角色名称是否唯一
-     * 
-     * @param roleName 角色名称
-     * @return 角色信息
+     * 校验角色名称是否唯一（同医院/供应商作用域内；排除自身 roleId）
+     *
+     * @param role 含 roleName、roleId、hospitalId、supplierId
+     * @return 冲突的角色信息（无则 null）
      */
-    public SysRole checkRoleNameUnique(String roleName);
+    public SysRole checkRoleNameUnique(SysRole role);
     
     /**
-     * 校验角色权限是否唯一
-     * 
-     * @param roleKey 角色权限
-     * @return 角色信息
+     * 校验角色权限字符是否唯一（同医院/供应商作用域内；排除自身 roleId）
+     *
+     * @param role 含 roleKey、roleId、hospitalId、supplierId
+     * @return 冲突的角色信息（无则 null）
      */
-    public SysRole checkRoleKeyUnique(String roleKey);
+    public SysRole checkRoleKeyUnique(SysRole role);
 
     /**
      * 按租户与权限字符查询角色（用于医院管理员等）

@@ -364,7 +364,10 @@ public class SupplierController extends BaseController
         Map<String, Integer> stat = scmScopeBootstrapService.ensureSupplierBuiltinScope(supplierId, getLoginName());
         return success("补齐完成：新建全局角色 " + stat.get("createdSupplierRoles")
             + " 个，补菜单白名单 " + stat.get("addedSupplierMenuAuth")
-            + " 项，重绑用户 " + stat.get("reboundUsers") + " 人").put("stat", stat);
+            + " 项，重绑用户 " + stat.get("reboundUsers") + " 人。"
+            + "说明：现行为全局模板角色（supplier_admin/sales），不会按供应商再生成 sys_role；"
+            + "请到「用户管理→授权」查看该供应商用户是否已绑定全局管理员，"
+            + "角色管理按供应商公司名检索时也会显示其用户已绑定的全局角色。").put("stat", stat);
     }
 
     /**
