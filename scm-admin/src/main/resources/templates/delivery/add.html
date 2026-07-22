@@ -221,7 +221,12 @@
 			flex: 1 1 0%;
 			min-height: 0;
 			position: relative;
-			padding-bottom: 0;
+			padding: 0 !important;
+			margin-left: 0 !important;
+			margin-right: 0 !important;
+			width: 100% !important;
+			max-width: 100% !important;
+			float: none !important;
 			overflow: hidden;
 			display: flex;
 			flex-direction: column;
@@ -330,7 +335,7 @@
 		}
 		#delivery-detail-list-section .detail-op-fixed-panel {
 			position: absolute;
-			right: 10px;
+			right: 0;
 			width: 175px;
 			z-index: 6;
 			background: #fff;
@@ -402,10 +407,24 @@
 			overflow-y: hidden !important;
 		}
 		#delivery-detail-list-section .fixed-table-header .rc-handle-container {
-			z-index: 12;
+			position: relative;
+			z-index: 20;
+			pointer-events: none;
+			height: 0;
 		}
 		#delivery-detail-list-section .fixed-table-header .rc-handle {
+			position: absolute;
+			top: 0;
+			width: 10px;
+			margin-left: -5px;
 			cursor: col-resize;
+			pointer-events: auto;
+			z-index: 21;
+			background: transparent;
+		}
+		#delivery-detail-list-section .fixed-table-header .rc-handle:hover,
+		#delivery-detail-list-section .fixed-table-header .rc-handle.rc-handle-active {
+			background: rgba(60, 141, 188, 0.35);
 		}
 		#delivery-detail-list-section .fixed-table-container {
 			display: flex;
@@ -447,11 +466,9 @@
 			border: 1px solid #e7eaec;
 			background: #fff;
 		}
-		/* 表头/表体单元格：主表固定表头 + 表体，与冻结操作列对齐 */
+		/* 表头/表体单元格：主表固定表头 + 表体，与冻结操作列对齐（表头行高对齐详情页） */
 		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th .th-inner,
-		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th .sortable,
-		#detail-table thead th .th-inner,
-		#detail-table thead th .sortable {
+		#detail-table thead th .th-inner {
 			padding: 8px 10px !important;
 			font-size: 14px !important;
 			line-height: 1.42857143;
@@ -460,6 +477,17 @@
 			overflow: hidden !important;
 			text-overflow: ellipsis !important;
 			white-space: nowrap !important;
+		}
+		/* 排序列：必须保留右侧空白给升/降序图标，勿被上面的 padding 简写覆盖 */
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th .th-inner.sortable,
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th .sortable,
+		#detail-table thead th .th-inner.sortable,
+		#detail-table thead th .sortable {
+			padding: 8px 28px 8px 8px !important;
+			background-position: right 6px center !important;
+			background-repeat: no-repeat !important;
+			background-size: 12px 14px !important;
+			cursor: pointer;
 		}
 		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th {
 			overflow: hidden !important;
@@ -473,8 +501,23 @@
 			display: none !important;
 		}
 		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th,
+		#detail-table thead th {
+			box-sizing: border-box !important;
+			border: 1px solid #e7eaec !important;
+			padding: 0 !important;
+			white-space: nowrap !important;
+			word-break: keep-all !important;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			vertical-align: middle !important;
+			background-color: #f5f5f5 !important;
+			text-align: center !important;
+			font-size: 14px !important;
+			font-weight: normal;
+			color: #333;
+			border-bottom: 2px solid #ddd !important;
+		}
 		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td,
-		#detail-table thead th,
 		#detail-table tbody td {
 			box-sizing: border-box !important;
 			border: 1px solid #e7eaec !important;
@@ -484,15 +527,10 @@
 			overflow: hidden;
 			text-overflow: ellipsis;
 			vertical-align: middle !important;
-		}
-		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th,
-		#detail-table thead th {
-			background-color: #f5f5f5 !important;
-			text-align: center !important;
-			font-size: 14px !important;
-			font-weight: normal;
+			background-color: #fff;
+			font-size: 13px !important;
 			color: #333;
-			border-bottom: 2px solid #ddd !important;
+			text-align: center !important;
 		}
 		#detail-table thead th[data-field="deliveryQuantity"] .th-inner,
 		#detail-table thead th[data-field="batchNo"] .th-inner,
@@ -580,7 +618,7 @@
 		}
 		#detail-table thead th[data-field="index"],
 		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="index"] {
-			min-width: 64px !important;
+			min-width: 58px !important;
 			overflow: visible !important;
 			text-overflow: clip !important;
 		}
@@ -588,17 +626,13 @@
 		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="index"] .th-inner {
 			overflow: visible !important;
 			text-overflow: clip !important;
-			padding-left: 6px !important;
-			padding-right: 6px !important;
+			padding-left: 4px !important;
+			padding-right: 4px !important;
 		}
 		#detail-table tbody td[data-field="unit"] .detail-cell-text,
 		#detail-table tbody td[data-field="packCoefficient"] .detail-cell-text,
 		#detail-table tbody td[data-field="remainingQuantity"] .detail-cell-text {
 			text-align: center !important;
-		}
-		/* 列宽拖动：若依 bootstrap-table-resizable，手柄在一体表上 */
-		#delivery-detail-list-section .rc-handle-container {
-			z-index: 20;
 		}
 		#delivery-detail-list-section .detail-cell-text,
 		#delivery-detail-list-section .barcode-cell-wrap {
@@ -961,22 +995,21 @@
                     <button type="button" class="btn btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i> 关 闭</button>
                 </div>
             </div>
-            <div id="delivery-detail-list-section" class="col-sm-12 select-table table-striped table-bordered query-table-wrap">
+            <div id="delivery-detail-list-section" class="select-table table-striped table-bordered query-table-wrap">
                 <table id="detail-table" class="delivery-detail-fixed-table" data-resizable="true"></table>
             </div>
         </div>
     </div>
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
-	<th:block th:include="include :: bootstrap-table-resizable-js" />
 	<script>
 	    var prefix = ctx + "delivery/delivery";
 	    var DETAIL_OPERATION_COL_WIDTH = 175;
-	    var DETAIL_OP_PANEL_RIGHT = 10;
+	    var DETAIL_OP_PANEL_RIGHT = 0;
 	    var DETAIL_ROW_HEIGHT = 44;
 	    var DETAIL_HSCROLL_GUTTER = 14;
 	    var detailColumnWidths = {};
-	    var DETAIL_COL_RESIZE_SKIP = { btSelectItem: 1, index: 1, operation: 1 };
+	    var DETAIL_COL_RESIZE_SKIP = { btSelectItem: 1, operation: 1 };
 
 	    /** 明细行金额：始终按 数量×单价（复制拆行后避免沿用旧 amount） */
 	    function detailRowAmountValue(row) {
@@ -1042,33 +1075,37 @@
 	        $("input[name='deliveryAmount']").val(totalAmount.toFixed(2));
 	    }
 
-	    /** 默认列宽（保证表头完整显示；含排序图标预留） */
+	    /** 默认列宽（序号刚好两字；可排序列略留排序图标空间） */
 	    var DETAIL_DEFAULT_COL_WIDTHS = {
 	        btSelectItem: 42,
-	        index: 64,
-	        materialCode: 120,
-	        materialName: 156,
-	        specification: 120,
-	        unit: 60,
-	        remainingQuantity: 108,
-	        deliveryQuantity: 80,
-	        price: 92,
-	        amount: 100,
-	        packCoefficient: 100,
+	        index: 58,
+	        materialCode: 128,
+	        materialName: 162,
+	        specification: 96,
+	        unit: 80,
+	        remainingQuantity: 122,
+	        deliveryQuantity: 96,
+	        price: 104,
+	        amount: 112,
+	        packCoefficient: 108,
 	        batchNo: 160,
 	        expireDate: 118,
 	        productionDate: 118,
 	        mainBarcode: 150,
 	        auxBarcode: 150,
 	        manufacturer: 160,
-	        model: 80,
+	        model: 88,
 	        registerNo: 200,
 	        nationalInsuranceCode: 160,
 	        remark: 140
 	    };
 
 	    function seedDetailDefaultColumnWidths() {
-	        $.extend(detailColumnWidths, DETAIL_DEFAULT_COL_WIDTHS);
+	        $.each(DETAIL_DEFAULT_COL_WIDTHS, function (field, w) {
+	            if (!detailColumnWidths[field]) {
+	                detailColumnWidths[field] = w;
+	            }
+	        });
 	        var opt = $('#detail-table').bootstrapTable('getOptions');
 	        if (opt && opt.columns && opt.columns[0]) {
 	            $.each(opt.columns[0], function (_, col) {
@@ -1076,16 +1113,15 @@
 	                    return;
 	                }
 	                if (col.checkbox) {
-	                    detailColumnWidths.btSelectItem = parseInt(col.width, 10) || 42;
+	                    if (!detailColumnWidths.btSelectItem) {
+	                        detailColumnWidths.btSelectItem = parseInt(col.width, 10) || 42;
+	                    }
 	                    return;
 	                }
-	                if (col.field && col.width) {
+	                if (col.field && col.width && !detailColumnWidths[col.field]) {
 	                    var w = parseInt(col.width, 10);
 	                    if (w > 0) {
-	                        detailColumnWidths[col.field] = Math.max(
-	                            detailColumnWidths[col.field] || 0,
-	                            w
-	                        );
+	                        detailColumnWidths[col.field] = w;
 	                    }
 	                }
 	            });
@@ -1385,40 +1421,90 @@
 	        updateDetailHscrollRailSize();
 	    }
 
+	    /** 像素级列宽拖动（与详情页一致；勾选列/操作列不参与拖动，操作列仍右侧固定） */
 	    function initDetailHeaderColumnResize() {
-	        if (typeof $.fn.resizableColumns !== 'function') {
-	            return;
-	        }
-	        var $headTable = $('#detail-table').closest('.bootstrap-table').find('.fixed-table-header table').first();
-	        if (!$headTable.length) {
+	        var $container = $('#detail-table').closest('.bootstrap-table').find('.fixed-table-container').first();
+	        var $mainHeader = $container.children('.fixed-table-header');
+	        var $headTable = $mainHeader.find('table').first();
+	        if (!$mainHeader.length || !$headTable.length) {
 	            return;
 	        }
 	        if ($headTable.data('resizableColumns')) {
-	            $headTable.data('resizableColumns').destroy();
+	            try {
+	                $headTable.data('resizableColumns').destroy();
+	            } catch (e) { /* ignore */ }
 	        }
-	        $headTable.find('thead th').each(function () {
-	            var field = $(this).data('field');
-	            if ($(this).hasClass('bs-checkbox') || (field && DETAIL_COL_RESIZE_SKIP[field])) {
-	                $(this).attr('data-noresize', 'true');
-	            } else {
-	                $(this).removeAttr('data-noresize');
+	        $mainHeader.find('.rc-handle-container').remove();
+	        var $handleContainer = $('<div class="rc-handle-container"></div>');
+	        $headTable.before($handleContainer);
+
+	        function syncDetailResizeHandles() {
+	            var $ths = $headTable.find('thead tr:first th');
+	            if (!$ths.length) {
+	                return;
 	            }
-	        });
-	        $headTable.resizableColumns({
-	            store: false,
-	            resizeFromBody: false,
-	            selector: 'thead tr:first > th[data-field]:not([data-noresize])',
-	            resize: function () {
-	                applyDetailColumnWidthFromHeader();
-	            },
-	            stop: function () {
-	                applyDetailColumnWidthFromHeader();
-	                requestAnimationFrame(function () {
-	                    applyDetailColumnWidthFromHeader();
-	                    scheduleDetailHeaderAlign();
-	                });
+	            var tableW = $headTable.outerWidth() || 0;
+	            var headerH = $headTable.find('thead').outerHeight() || 40;
+	            $handleContainer.css({ width: tableW + 'px' });
+	            $handleContainer.empty();
+	            var containerLeft = $handleContainer.offset().left;
+	            $ths.each(function () {
+	                var $th = $(this);
+	                var field = $th.attr('data-field');
+	                if (!field || DETAIL_COL_RESIZE_SKIP[field] || $th.hasClass('bs-checkbox')) {
+	                    return;
+	                }
+	                var left = $th.offset().left - containerLeft + $th.outerWidth();
+	                $('<div class="rc-handle" title="拖动调整列宽"></div>')
+	                    .css({ left: left + 'px', height: headerH + 'px' })
+	                    .attr('data-field', field)
+	                    .appendTo($handleContainer);
+	            });
+	        }
+
+	        $handleContainer.off('.detailColResize').on('mousedown.detailColResize', '.rc-handle', function (e) {
+	            e.preventDefault();
+	            e.stopPropagation();
+	            var field = $(this).attr('data-field');
+	            if (!field || DETAIL_COL_RESIZE_SKIP[field]) {
+	                return;
 	            }
+	            var startX = e.clientX;
+	            var startW = detailColumnWidths[field] || 80;
+	            var $th = $headTable.find('thead tr:first th[data-field="' + field + '"]');
+	            if ($th.length) {
+	                startW = Math.ceil($th.outerWidth()) || startW;
+	            }
+	            var $active = $(this).addClass('rc-handle-active');
+	            $(document.body).css('cursor', 'col-resize');
+
+	            function onMove(ev) {
+	                var delta = ev.clientX - startX;
+	                var nextW = Math.max(48, startW + delta);
+	                detailColumnWidths[field] = nextW;
+	                applyDetailColumnWidthFromHeader();
+	                updateDetailHscrollRailSize();
+	                syncDetailResizeHandles();
+	                $handleContainer.find('.rc-handle[data-field="' + field + '"]').addClass('rc-handle-active');
+	            }
+
+	            function onUp() {
+	                $(document).off('mousemove.detailColResize mouseup.detailColResize');
+	                $(document.body).css('cursor', '');
+	                $active.removeClass('rc-handle-active');
+	                applyDetailColumnWidthFromHeader();
+	                updateDetailHscrollRailSize();
+	                syncDetailResizeHandles();
+	                scheduleDetailHeaderAlign();
+	                scheduleDetailOperationPanelSync();
+	            }
+
+	            $(document).on('mousemove.detailColResize', onMove);
+	            $(document).on('mouseup.detailColResize', onUp);
 	        });
+
+	        syncDetailResizeHandles();
+	        window.__syncAddDetailResizeHandles = syncDetailResizeHandles;
 	    }
 
 	    function applyDeliveryDetailTableMinWidth() {
@@ -1541,6 +1627,9 @@
 	        }
 	        if (source !== 'rail' && $rail.length && $rail.scrollLeft() !== sl) {
 	            $rail.scrollLeft(sl);
+	        }
+	        if (typeof window.__syncAddDetailResizeHandles === 'function') {
+	            window.__syncAddDetailResizeHandles();
 	        }
 	    }
 
@@ -1714,7 +1803,12 @@
 
 	    function scheduleDetailHeaderAlign() {
 	        fixDetailTableHeaderAlign();
-	        requestAnimationFrame(fixDetailTableHeaderAlign);
+	        requestAnimationFrame(function () {
+	            fixDetailTableHeaderAlign();
+	            if (typeof window.__syncAddDetailResizeHandles === 'function') {
+	                window.__syncAddDetailResizeHandles();
+	            }
+	        });
 	    }
 
 	    function refreshDetailTableLayout() {
@@ -2123,7 +2217,7 @@
 	                field: 'index',
 	                title: '序号',
 	                align: 'center',
-	                width: 64,
+	                width: 58,
 	                formatter: function(value, row, index) {
 	                    return index + 1;
 	                }
@@ -2131,7 +2225,7 @@
                 field: 'materialCode',
                 title: '产品编码',
                 align: 'center',
-                width: 120,
+                width: 128,
                 sortable: true,
                 sorter: detailSortText,
                 formatter: function (value) { return detailCellTextHtml(value); }
@@ -2139,7 +2233,7 @@
                 field: 'materialName',
                 title: '产品名称',
                 align: 'center',
-                width: 156,
+                width: 162,
                 sortable: true,
                 sorter: detailSortText,
                 formatter: function (value) { return detailCellTextHtml(value); }
@@ -2147,7 +2241,7 @@
                 field: 'specification',
                 title: '规格',
                 align: 'center',
-                width: 120,
+                width: 96,
                 sortable: true,
                 sorter: detailSortText,
                 formatter: function (value) { return detailCellTextHtml(value); }
@@ -2155,7 +2249,7 @@
 	                field: 'unit',
 	                title: '单位',
 	                align: 'center',
-	                width: 60,
+	                width: 80,
 	                sortable: true,
 	                sorter: detailSortText,
 	                formatter: function (value) { return detailCellTextHtml(value); }
@@ -2163,7 +2257,7 @@
 	                field: 'remainingQuantity',
 	                title: '可配数量',
 	                align: 'center',
-	                width: 108,
+	                width: 122,
 	                sortable: true,
 	                sorter: detailSortNumber,
 	                formatter: function (value) {
@@ -2173,7 +2267,7 @@
 	                field: 'deliveryQuantity',
 	                title: '数量',
 	                align: 'center',
-	                width: 80,
+	                width: 96,
 	                sortable: true,
 	                sorter: detailSortNumber,
 	                formatter: function(value, row, index) {
@@ -2190,7 +2284,7 @@
 	                field: 'price',
 	                title: '单价',
 	                align: 'center',
-	                width: 92,
+	                width: 104,
 	                sortable: true,
 	                sorter: detailSortNumber,
 	                formatter: function (value) {
@@ -2201,7 +2295,7 @@
 	                field: 'amount',
 	                title: '金额',
 	                align: 'center',
-	                width: 100,
+	                width: 112,
 	                sortable: true,
 	                sorter: detailSortAmount,
 	                formatter: function (value, row) {
@@ -2258,7 +2352,7 @@
 	                field: 'model',
 	                title: '型号',
 	                align: 'center',
-	                width: 80,
+	                width: 88,
 	                formatter: function (value) { return detailCellTextHtml(value); }
 	            }, 	            {
 	                field: 'registerNo',
@@ -2282,7 +2376,7 @@
 	                field: 'packCoefficient',
 	                title: '打包系数',
 	                align: 'center',
-	                width: 100,
+	                width: 108,
 	                formatter: function (value) {
 	                    if (value != null && value !== '' && !isNaN(parseFloat(value))) {
 	                        return detailCellTextHtml(String(parseFloat(value)));

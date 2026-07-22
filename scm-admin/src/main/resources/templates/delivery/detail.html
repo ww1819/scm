@@ -80,7 +80,28 @@
 			overflow-y: auto !important;
 		}
 		.delivery-detail-table-wrap .fixed-table-header {
+			position: relative;
 			background: #fff;
+		}
+		.delivery-detail-table-wrap .fixed-table-header .rc-handle-container {
+			position: relative;
+			z-index: 20;
+			pointer-events: none;
+			height: 0;
+		}
+		.delivery-detail-table-wrap .fixed-table-header .rc-handle {
+			position: absolute;
+			top: 0;
+			width: 10px;
+			margin-left: -5px;
+			cursor: col-resize;
+			pointer-events: auto;
+			z-index: 21;
+			background: transparent;
+		}
+		.delivery-detail-table-wrap .fixed-table-header .rc-handle:hover,
+		.delivery-detail-table-wrap .fixed-table-header .rc-handle.rc-handle-active {
+			background: rgba(60, 141, 188, 0.35);
 		}
 		.delivery-detail-table-wrap .fixed-table-header table.table,
 		.delivery-detail-table-wrap .fixed-table-body table.table {
@@ -94,9 +115,9 @@
 		.delivery-detail-table-wrap .fixed-table-header th .sortable,
 		#bootstrap-table thead th .th-inner,
 		#bootstrap-table thead th .sortable {
-			padding: 8px 10px !important;
+			padding: 4px 10px !important;
 			font-size: 14px !important;
-			line-height: 1.42857143;
+			line-height: 1.3;
 			font-weight: normal;
 			text-align: center !important;
 			overflow: hidden !important;
@@ -104,8 +125,23 @@
 			white-space: nowrap !important;
 		}
 		.delivery-detail-table-wrap .fixed-table-header th,
+		#bootstrap-table thead th {
+			box-sizing: border-box !important;
+			border: 1px solid #e7eaec !important;
+			padding: 4px 10px !important;
+			white-space: nowrap !important;
+			word-break: keep-all !important;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			vertical-align: middle !important;
+			text-align: center !important;
+			background-color: #f5f5f5 !important;
+			font-size: 14px !important;
+			font-weight: normal;
+			color: #333;
+			border-bottom: 2px solid #ddd !important;
+		}
 		.delivery-detail-table-wrap .fixed-table-body td,
-		#bootstrap-table thead th,
 		#bootstrap-table tbody td {
 			box-sizing: border-box !important;
 			border: 1px solid #e7eaec !important;
@@ -116,17 +152,6 @@
 			text-overflow: ellipsis;
 			vertical-align: middle !important;
 			text-align: center !important;
-		}
-		.delivery-detail-table-wrap .fixed-table-header th,
-		#bootstrap-table thead th {
-			background-color: #f5f5f5 !important;
-			font-size: 14px !important;
-			font-weight: normal;
-			color: #333;
-			border-bottom: 2px solid #ddd !important;
-		}
-		.delivery-detail-table-wrap .fixed-table-body td,
-		#bootstrap-table tbody td {
 			background-color: #fff;
 			font-size: 13px !important;
 			color: #333;
@@ -240,7 +265,7 @@
 
 		var detailColumnWidths = {};
 		var DETAIL_DEFAULT_COL_WIDTHS = {
-		    serialNumber: 64,
+		    serialNumber: 76,
 		    materialCode: 130,
 		    materialName: 200,
 		    specification: 120,
@@ -263,16 +288,23 @@
 		};
 
 		function seedDetailDefaultColumnWidths() {
-		    $.extend(detailColumnWidths, DETAIL_DEFAULT_COL_WIDTHS);
+		    $.each(DETAIL_DEFAULT_COL_WIDTHS, function (field, w) {
+		        if (!detailColumnWidths[field]) {
+		            detailColumnWidths[field] = w;
+		        }
+		    });
 		    var opt = $('#bootstrap-table').bootstrapTable('getOptions');
 		    if (opt && opt.columns && opt.columns[0]) {
 		        $.each(opt.columns[0], function (_, col) {
 		            if (!col || !col.field || !col.width) {
 		                return;
 		            }
+		            if (detailColumnWidths[col.field]) {
+		                return;
+		            }
 		            var w = parseInt(col.width, 10);
 		            if (w > 0) {
-		                detailColumnWidths[col.field] = Math.max(detailColumnWidths[col.field] || 0, w);
+		                detailColumnWidths[col.field] = w;
 		            }
 		        });
 		    }
@@ -378,9 +410,95 @@
 		    $mainHeader.scrollLeft(sl);
 		}
 
+		/** 像素级列宽拖动（避免 resizableColumns 百分比与 !important 像素宽冲突） */
+		function initDetailHeaderColumnResize() {
+		    var $container = $('#bootstrap-table').closest('.bootstrap-table').find('.fixed-table-container').first();
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    var $headTable = $mainHeader.find('table').first();
+		    if (!$mainHeader.length || !$headTable.length) {
+		        return;
+		    }
+		    $mainHeader.find('.rc-handle-container').remove();
+		    var $handleContainer = $('<div class="rc-handle-container"></div>');
+		    $headTable.before($handleContainer);
+
+		    function syncDetailResizeHandles() {
+		        var $ths = $headTable.find('thead tr:first th[data-field]');
+		        if (!$ths.length) {
+		            return;
+		        }
+		        var tableW = $headTable.outerWidth() || 0;
+		        var headerH = $headTable.find('thead').outerHeight() || 40;
+		        $handleContainer.css({ width: tableW + 'px' });
+		        $handleContainer.empty();
+		        var containerLeft = $handleContainer.offset().left;
+		        $ths.each(function (idx) {
+		            if (idx >= $ths.length - 1) {
+		                return;
+		            }
+		            var $th = $(this);
+		            var field = $th.attr('data-field');
+		            if (!field) {
+		                return;
+		            }
+		            var left = $th.offset().left - containerLeft + $th.outerWidth();
+		            $('<div class="rc-handle" title="拖动调整列宽"></div>')
+		                .css({ left: left + 'px', height: headerH + 'px' })
+		                .attr('data-field', field)
+		                .appendTo($handleContainer);
+		        });
+		    }
+
+		    $handleContainer.off('.detailColResize').on('mousedown.detailColResize', '.rc-handle', function (e) {
+		        e.preventDefault();
+		        e.stopPropagation();
+		        var field = $(this).attr('data-field');
+		        if (!field) {
+		            return;
+		        }
+		        var startX = e.clientX;
+		        var startW = detailColumnWidths[field] || Math.ceil($(this).data('thWidth')) || 80;
+		        var $th = $headTable.find('thead tr:first th[data-field="' + field + '"]');
+		        if ($th.length) {
+		            startW = Math.ceil($th.outerWidth()) || startW;
+		        }
+		        var $active = $(this).addClass('rc-handle-active');
+		        $(document.body).css('cursor', 'col-resize');
+
+		        function onMove(ev) {
+		            var delta = ev.clientX - startX;
+		            var nextW = Math.max(48, startW + delta);
+		            detailColumnWidths[field] = nextW;
+		            applyDetailColumnWidthFromHeader();
+		            syncDetailResizeHandles();
+		            $handleContainer.find('.rc-handle[data-field="' + field + '"]').addClass('rc-handle-active');
+		        }
+
+		        function onUp() {
+		            $(document).off('mousemove.detailColResize mouseup.detailColResize');
+		            $(document.body).css('cursor', '');
+		            $active.removeClass('rc-handle-active');
+		            applyDetailColumnWidthFromHeader();
+		            syncDetailResizeHandles();
+		            scheduleDetailHeaderAlign();
+		        }
+
+		        $(document).on('mousemove.detailColResize', onMove);
+		        $(document).on('mouseup.detailColResize', onUp);
+		    });
+
+		    syncDetailResizeHandles();
+		    window.__syncDetailResizeHandles = syncDetailResizeHandles;
+		}
+
 		function scheduleDetailHeaderAlign() {
 		    fixDetailTableHeaderAlign();
-		    requestAnimationFrame(fixDetailTableHeaderAlign);
+		    requestAnimationFrame(function () {
+		        fixDetailTableHeaderAlign();
+		        if (typeof window.__syncDetailResizeHandles === 'function') {
+		            window.__syncDetailResizeHandles();
+		        }
+		    });
 		}
 
 		var detailTableLayoutRefreshTimer = null;
@@ -392,6 +510,13 @@
 		        detailTableLayoutRefreshTimer = null;
 		        seedDetailDefaultColumnWidths();
 		        scheduleDetailHeaderAlign();
+		        setTimeout(function () {
+		            initDetailHeaderColumnResize();
+		            fixDetailTableHeaderAlign();
+		            if (typeof window.__syncDetailResizeHandles === 'function') {
+		                window.__syncDetailResizeHandles();
+		            }
+		        }, 0);
 		    }, 60);
 		}
 
@@ -448,6 +573,9 @@
 		    var $mainHeader = $container.children('.fixed-table-header');
 		    $mainBody.off('scroll.detailTableSync').on('scroll.detailTableSync', function () {
 		        $mainHeader.scrollLeft($mainBody.scrollLeft());
+		        if (typeof window.__syncDetailResizeHandles === 'function') {
+		            window.__syncDetailResizeHandles();
+		        }
 		    });
 		}
 
@@ -490,7 +618,7 @@
 		                field: 'serialNumber',
 		                title: '序号',
 		                align: 'center',
-		                width: 64,
+		                width: 76,
 		                formatter: function(value, row, index) {
 		                    return index + 1;
 		                }

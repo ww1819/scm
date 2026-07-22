@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh" xmlns:th="http://www.thymeleaf.org">
 <head>
-	<th:block th:include="include :: header('订单明细')" />
+	<th:block th:include="include :: header('订单详情')" />
 	<th:block th:include="include :: layout-latest-css" />
 	<style>
 		body.order-detail-page {
@@ -15,42 +15,53 @@
 			min-height: 480px;
 			overflow: hidden;
 			box-sizing: border-box;
-			padding: 4px 10px 8px 10px !important;
 		}
 		.order-detail-basic {
 			flex-shrink: 0;
 		}
+		#form-order-detail.order-basic-fields .form-group {
+			margin-bottom: 10px;
+		}
+		#form-order-detail.order-basic-fields .control-label {
+			padding-right: 4px;
+			padding-left: 0;
+			white-space: nowrap;
+		}
+		#form-order-detail .col-order-5 {
+			position: relative;
+			min-height: 1px;
+			padding-left: 6px;
+			padding-right: 6px;
+			float: left;
+			width: 20%;
+			box-sizing: border-box;
+		}
 		.order-info-box.search-collapse {
-			margin: 0 0 0 0 !important;
-			padding: 6px 8px 0 !important;
+			margin: 0 10px 10px 10px;
+			padding: 10px 8px 6px;
+			background: #fff !important;
 			box-shadow: none !important;
-			border-radius: 0 !important;
+		}
+		.order-info-box .form-control[readonly] {
+			background-color: #fff;
+			border-color: #e5e6e7;
 		}
 		.order-basic-header-row {
-			margin: 2px 0 6px 0 !important;
-			padding-bottom: 4px !important;
+			margin-bottom: 8px !important;
 		}
 		.order-detail-table-section {
 			flex: 1;
 			min-height: 0;
 			display: flex;
 			flex-direction: column;
-			margin-top: 0 !important;
-			padding: 0 !important;
+			margin-top: 4px;
+			padding: 0 10px 10px;
 			overflow: hidden;
 		}
-		.order-detail-table-section > .form-header.h4 {
+		.order-detail-table-section .form-header {
 			flex-shrink: 0;
-			margin: 2px 0 4px 0 !important;
-			padding: 0 0 4px 0 !important;
-			border-bottom: 1px solid #ddd;
-		}
-		.order-detail-table-wrap.select-table {
-			margin-top: 0 !important;
-			padding-top: 0 !important;
-			padding-bottom: 0 !important;
-			box-shadow: none !important;
-			border-radius: 0 !important;
+			margin: 4px 0 8px 0 !important;
+			padding-bottom: 5px !important;
 		}
 		.order-detail-table-wrap {
 			flex: 1;
@@ -60,12 +71,29 @@
 			display: flex;
 			flex-direction: column;
 		}
+		.order-detail-table-wrap.select-table {
+			margin: 0 !important;
+			padding: 0 !important;
+			box-shadow: none !important;
+			border-radius: 0 !important;
+			background: transparent !important;
+		}
+		.order-detail-table-wrap .fixed-table-toolbar {
+			display: none !important;
+			height: 0 !important;
+			min-height: 0 !important;
+			margin: 0 !important;
+			padding: 0 !important;
+			border: 0 !important;
+		}
 		.order-detail-table-wrap > .bootstrap-table {
 			flex: 1 1 auto;
 			min-height: 0;
 			height: 100%;
 			display: flex;
 			flex-direction: column;
+			margin: 0 !important;
+			padding: 0 !important;
 		}
 		.order-detail-table-wrap .fixed-table-container {
 			flex: 1;
@@ -73,94 +101,134 @@
 			display: flex;
 			flex-direction: column;
 			overflow: hidden;
+			margin: 0 !important;
+			padding: 0 !important;
 		}
 		.order-detail-table-wrap .fixed-table-body {
 			flex: 1;
 			min-height: 0;
-			overflow-x: auto !important;
+			overflow-x: scroll !important;
 			overflow-y: auto !important;
 		}
 		.order-detail-table-wrap .fixed-table-header {
+			position: relative;
 			background: #fff;
 		}
-		.order-detail-table-wrap .fixed-table-header th {
-			font-size: 15px !important;
-			font-weight: 600;
+		.order-detail-table-wrap .fixed-table-header .rc-handle-container {
+			position: relative;
+			z-index: 20;
+			pointer-events: none;
+			height: 0;
 		}
-		/* 明细行固定行高，避免仅一条数据时被撑满整块区域 */
-		.order-detail-table-wrap .fixed-table-container > .fixed-table-header thead tr {
-			height: 42px !important;
+		.order-detail-table-wrap .fixed-table-header .rc-handle {
+			position: absolute;
+			top: 0;
+			width: 10px;
+			margin-left: -5px;
+			cursor: col-resize;
+			pointer-events: auto;
+			z-index: 21;
+			background: transparent;
 		}
-		.order-detail-table-wrap .fixed-table-container > .fixed-table-header thead th {
-			height: 42px !important;
-			padding: 6px 10px !important;
-			line-height: 1.35;
-			vertical-align: middle !important;
+		.order-detail-table-wrap .fixed-table-header .rc-handle:hover,
+		.order-detail-table-wrap .fixed-table-header .rc-handle.rc-handle-active {
+			background: rgba(60, 141, 188, 0.35);
 		}
-		.order-detail-table-wrap .fixed-table-container > .fixed-table-body tbody tr {
-			height: 42px !important;
-			min-height: 42px !important;
-			max-height: 42px !important;
-		}
-		.order-detail-table-wrap .fixed-table-container > .fixed-table-body tbody td {
-			height: 42px !important;
-			max-height: 42px !important;
-			padding: 6px 10px !important;
-			line-height: 1.35;
-			vertical-align: middle !important;
-		}
-		.order-detail-table-wrap .fixed-table-body table,
-		.order-detail-table-wrap .fixed-table-body tbody {
-			height: auto !important;
+		.order-detail-table-wrap .fixed-table-header table.table,
+		.order-detail-table-wrap .fixed-table-body table.table {
+			border-collapse: collapse;
+			table-layout: fixed;
 		}
 		#bootstrap-table.order-detail-fixed-table {
 			table-layout: fixed !important;
 		}
+		.order-detail-table-wrap .fixed-table-header th .th-inner,
+		.order-detail-table-wrap .fixed-table-header th .sortable,
+		#bootstrap-table thead th .th-inner,
+		#bootstrap-table thead th .sortable {
+			padding: 4px 10px !important;
+			font-size: 14px !important;
+			line-height: 1.3;
+			font-weight: normal;
+			text-align: center !important;
+			overflow: hidden !important;
+			text-overflow: ellipsis !important;
+			white-space: nowrap !important;
+		}
+		.order-detail-table-wrap .fixed-table-header th .th-inner.sortable,
+		.order-detail-table-wrap .fixed-table-header th .sortable,
+		#bootstrap-table thead th .th-inner.sortable,
+		#bootstrap-table thead th .sortable {
+			padding: 4px 28px 4px 8px !important;
+			background-position: right 6px center !important;
+			background-repeat: no-repeat !important;
+			background-size: 12px 14px !important;
+			cursor: pointer;
+		}
 		.order-detail-table-wrap .fixed-table-header th,
-		.order-detail-table-wrap .fixed-table-body td {
+		#bootstrap-table thead th {
 			box-sizing: border-box !important;
+			border: 1px solid #e7eaec !important;
+			padding: 4px 10px !important;
 			white-space: nowrap !important;
 			word-break: keep-all !important;
 			overflow: hidden;
 			text-overflow: ellipsis;
-		}
-		/* 订单信息：每行五列 */
-		.order-info-box .row {
-			margin-left: -8px;
-			margin-right: -8px;
-		}
-		.order-info-box .row::after {
-			content: "";
-			display: table;
-			clear: both;
-		}
-		.order-info-box .col-order-5 {
-			position: relative;
-			min-height: 1px;
-			padding-left: 8px;
-			padding-right: 8px;
-		}
-		@media (min-width: 992px) {
-			.order-info-box .col-order-5 { width: 20%; float: left; }
-		}
-		@media (max-width: 991px) {
-			.order-info-box .col-order-5 { width: 50%; float: left; }
-		}
-		.order-info-box .form-group {
-			margin-bottom: 8px;
-		}
-		.order-info-box .form-control[readonly] {
-			background-color: #fff !important;
-			background-image: none !important;
-			border-color: #e5e6e7;
+			vertical-align: middle !important;
+			text-align: center !important;
+			background-color: #f5f5f5 !important;
+			font-size: 14px !important;
+			font-weight: normal;
 			color: #333;
-			cursor: default;
+			border-bottom: 2px solid #ddd !important;
+		}
+		.order-detail-table-wrap .fixed-table-header th[data-field="index"],
+		.order-detail-table-wrap .fixed-table-body td[data-field="index"] {
+			width: 76px !important;
+			min-width: 76px !important;
+			max-width: 76px !important;
+		}
+		.order-detail-table-wrap .fixed-table-body > table,
+		.order-detail-table-wrap .fixed-table-body > table > tbody {
+			height: auto !important;
+			min-height: 0 !important;
+		}
+		.order-detail-table-wrap .fixed-table-body > table > tbody > tr,
+		#bootstrap-table tbody tr {
+			height: 36px !important;
+			max-height: 36px !important;
+			min-height: 36px !important;
+		}
+		.order-detail-table-wrap .fixed-table-body td,
+		#bootstrap-table tbody td {
+			box-sizing: border-box !important;
+			border: 1px solid #e7eaec !important;
+			padding: 4px 8px !important;
+			white-space: nowrap !important;
+			word-break: keep-all !important;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			vertical-align: middle !important;
+			text-align: center !important;
+			background-color: #fff;
+			font-size: 13px !important;
+			color: #333;
+			height: 36px !important;
+			line-height: 1.42857143 !important;
+		}
+		.order-detail-table-wrap .fixed-table-body .fixed-table-border {
+			display: none !important;
+			height: 0 !important;
+			min-height: 0 !important;
+			max-height: 0 !important;
+			border: 0 !important;
 		}
 		.order-detail-table-wrap .order-detail-cell-text {
 			display: block;
 			overflow: hidden;
 			text-overflow: ellipsis;
 			white-space: nowrap;
+			line-height: 1.42857143;
 		}
 		.order-detail-table-wrap .fixed-table-body td[title],
 		.order-detail-table-wrap .order-detail-cell-text[title] {
@@ -171,17 +239,19 @@
 <body class="gray-bg order-detail-page">
     <div class="main-content">
         <div class="order-detail-basic">
-        <form class="form-horizontal">
-            <div class="order-basic-header-row" style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #ddd;">
+        <form id="form-order-detail" class="form-horizontal order-basic-fields">
+            <div class="order-basic-header-row" style="display:flex;align-items:center;justify-content:space-between;margin:6px 10px 8px 10px;padding-bottom:5px;border-bottom:1px solid #ddd;">
                 <h4 class="form-header h4" style="margin:0;border:0;padding:0;">订单信息</h4>
                 <div style="display:flex;align-items:center;gap:8px;">
-                    <a class="btn btn-info btn-sm" href="javascript:void(0)" onclick="openOrderDeliveries()"><i class="fa fa-truck"></i> 关联配送单</a>
+                    <a class="btn btn-sm btn-default" href="javascript:void(0)" onclick="openOrderDeliveries()">
+                        <i class="fa fa-truck"></i> 关联配送单
+                    </a>
                     <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i> 关 闭</button>
                 </div>
             </div>
             <div class="search-collapse order-info-box">
             <div class="row">
-            	<div class="col-order-5">
+                <div class="col-order-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">订单编号：</label>
                         <div class="col-sm-7">
@@ -235,7 +305,7 @@
                     <div class="form-group">
                         <label class="col-sm-5 control-label">订单状态：</label>
                         <div class="col-sm-7">
-                            <input class="form-control" type="text" th:value="${order.orderStatus == '0' ? '待接收' : (order.orderStatus == '1' ? '已接收' : (order.orderStatus == '2' ? '配送中' : (order.orderStatus == '3' ? '已完成' : (order.orderStatus == '4' ? '已取消' : ''))))}" readonly>
+                            <input class="form-control" type="text" th:value="${order.orderStatus == '0' ? '待接收' : (order.orderStatus == '1' ? '已接收' : (order.orderStatus == '2' ? '配送中' : (order.orderStatus == '3' ? '已完成' : (order.orderStatus == '4' ? '已取消' : '-'))))}" readonly>
                         </div>
                     </div>
                 </div>
@@ -259,6 +329,7 @@
             </div>
         </form>
         </div>
+
         <div class="order-detail-table-section">
             <h4 class="form-header h4">订单明细</h4>
             <div class="order-detail-table-wrap select-table table-striped">
@@ -272,6 +343,261 @@
 	<script th:inline="javascript">
 		var orderId = [[${order.orderId}]];
 		var prefix = ctx + "order/order";
+		var detailColumnWidths = {};
+		var DETAIL_DEFAULT_COL_WIDTHS = {
+		    index: 76,
+		    materialCode: 136,
+		    materialName: 200,
+		    specification: 120,
+		    model: 100,
+		    unit: 80,
+		    orderQuantity: 110,
+		    purchasePrice: 110,
+		    amount: 120,
+		    remainingQuantity: 130,
+		    deliveredAuditedQty: 130,
+		    deliveredPendingAuditQty: 110,
+		    undeliveredQty: 96
+		};
+
+		function seedDetailDefaultColumnWidths() {
+		    $.each(DETAIL_DEFAULT_COL_WIDTHS, function (field, w) {
+		        if (!detailColumnWidths[field]) {
+		            detailColumnWidths[field] = w;
+		        }
+		    });
+		    var opt = $('#bootstrap-table').bootstrapTable('getOptions');
+		    if (opt && opt.columns && opt.columns[0]) {
+		        $.each(opt.columns[0], function (_, col) {
+		            if (!col || !col.field || !col.width || detailColumnWidths[col.field]) {
+		                return;
+		            }
+		            var w = parseInt(col.width, 10);
+		            if (w > 0) {
+		                detailColumnWidths[col.field] = w;
+		            }
+		        });
+		    }
+		}
+
+		function ensureDetailTableColgroup($table, colCount) {
+		    if (!$table || !$table.length) {
+		        return $();
+		    }
+		    var $colgroup = $table.children('colgroup');
+		    if (!$colgroup.length) {
+		        $colgroup = $('<colgroup></colgroup>');
+		        $table.prepend($colgroup);
+		    }
+		    while ($colgroup.children('col').length < colCount) {
+		        $colgroup.append('<col />');
+		    }
+		    while ($colgroup.children('col').length > colCount) {
+		        $colgroup.children('col:last').remove();
+		    }
+		    return $colgroup;
+		}
+
+		function applyDetailColumnWidthFromHeader() {
+		    var $container = $('#bootstrap-table').closest('.bootstrap-table').find('.fixed-table-container').first();
+		    var $headTable = $container.children('.fixed-table-header').find('table').first();
+		    var $bodyTable = $container.children('.fixed-table-body').find('#bootstrap-table');
+		    if (!$bodyTable.length) {
+		        $bodyTable = $container.children('.fixed-table-body').find('table').not('.fixed-table-border').first();
+		    }
+		    if (!$headTable.length || !$bodyTable.length) {
+		        return;
+		    }
+		    var $ths = $headTable.find('thead tr:first th');
+		    var colCount = $ths.length;
+		    if (colCount < 1) {
+		        return;
+		    }
+		    ensureDetailTableColgroup($headTable, colCount);
+		    ensureDetailTableColgroup($bodyTable, colCount);
+		    var totalW = 0;
+		    var setW = function (el, w) {
+		        if (!el) {
+		            return;
+		        }
+		        var ws = w + 'px';
+		        el.style.setProperty('width', ws, 'important');
+		        el.style.setProperty('min-width', ws, 'important');
+		        el.style.setProperty('max-width', 'none', 'important');
+		    };
+		    $ths.each(function () {
+		        var colIdx = this.cellIndex;
+		        if (colIdx < 0) {
+		            return;
+		        }
+		        var field = $(this).attr('data-field');
+		        var w;
+		        if (field && detailColumnWidths[field]) {
+		            w = detailColumnWidths[field];
+		        } else {
+		            w = Math.ceil(this.getBoundingClientRect().width);
+		            if (!w || w < 40) {
+		                w = 40;
+		            }
+		            if (field) {
+		                detailColumnWidths[field] = w;
+		            }
+		        }
+		        setW(this, w);
+		        $headTable.find('colgroup col').eq(colIdx).each(function () {
+		            setW(this, w);
+		        });
+		        $bodyTable.find('colgroup col').eq(colIdx).each(function () {
+		            setW(this, w);
+		        });
+		        $bodyTable.find('tbody tr').each(function () {
+		            var cell = this.cells[colIdx];
+		            if (cell) {
+		                setW(cell, w);
+		            }
+		        });
+		        totalW += w;
+		    });
+		    if (totalW > 0) {
+		        var tw = totalW + 'px';
+		        $headTable[0].style.setProperty('width', tw, 'important');
+		        $bodyTable[0].style.setProperty('width', tw, 'important');
+		    }
+		}
+
+		function fixDetailTableHeaderAlign() {
+		    var $container = $('#bootstrap-table').closest('.bootstrap-table').find('.fixed-table-container').first();
+		    var $mainBody = $container.children('.fixed-table-body');
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    if (!$mainBody.length || !$mainHeader.length) {
+		        return;
+		    }
+		    var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
+		    $mainHeader.css('margin-right', scrollW + 'px');
+		    applyDetailColumnWidthFromHeader();
+		    $mainHeader.scrollLeft($mainBody.scrollLeft());
+		}
+
+		function initDetailHeaderColumnResize() {
+		    var $container = $('#bootstrap-table').closest('.bootstrap-table').find('.fixed-table-container').first();
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    var $headTable = $mainHeader.find('table').first();
+		    if (!$mainHeader.length || !$headTable.length) {
+		        return;
+		    }
+		    $mainHeader.find('.rc-handle-container').remove();
+		    var $handleContainer = $('<div class="rc-handle-container"></div>');
+		    $headTable.before($handleContainer);
+
+		    function syncDetailResizeHandles() {
+		        var $ths = $headTable.find('thead tr:first th[data-field]');
+		        if (!$ths.length) {
+		            return;
+		        }
+		        var tableW = $headTable.outerWidth() || 0;
+		        var headerH = $headTable.find('thead').outerHeight() || 40;
+		        $handleContainer.css({ width: tableW + 'px' });
+		        $handleContainer.empty();
+		        var containerLeft = $handleContainer.offset().left;
+		        $ths.each(function (idx) {
+		            if (idx >= $ths.length - 1) {
+		                return;
+		            }
+		            var $th = $(this);
+		            var field = $th.attr('data-field');
+		            if (!field) {
+		                return;
+		            }
+		            var left = $th.offset().left - containerLeft + $th.outerWidth();
+		            $('<div class="rc-handle" title="拖动调整列宽"></div>')
+		                .css({ left: left + 'px', height: headerH + 'px' })
+		                .attr('data-field', field)
+		                .appendTo($handleContainer);
+		        });
+		    }
+
+		    $handleContainer.off('.detailColResize').on('mousedown.detailColResize', '.rc-handle', function (e) {
+		        e.preventDefault();
+		        e.stopPropagation();
+		        var field = $(this).attr('data-field');
+		        if (!field) {
+		            return;
+		        }
+		        var startX = e.clientX;
+		        var startW = detailColumnWidths[field] || 80;
+		        var $th = $headTable.find('thead tr:first th[data-field="' + field + '"]');
+		        if ($th.length) {
+		            startW = Math.ceil($th.outerWidth()) || startW;
+		        }
+		        var $active = $(this).addClass('rc-handle-active');
+		        $(document.body).css('cursor', 'col-resize');
+
+		        function onMove(ev) {
+		            var nextW = Math.max(48, startW + (ev.clientX - startX));
+		            detailColumnWidths[field] = nextW;
+		            applyDetailColumnWidthFromHeader();
+		            syncDetailResizeHandles();
+		            $handleContainer.find('.rc-handle[data-field="' + field + '"]').addClass('rc-handle-active');
+		        }
+
+		        function onUp() {
+		            $(document).off('mousemove.detailColResize mouseup.detailColResize');
+		            $(document.body).css('cursor', '');
+		            $active.removeClass('rc-handle-active');
+		            applyDetailColumnWidthFromHeader();
+		            syncDetailResizeHandles();
+		            scheduleDetailHeaderAlign();
+		        }
+
+		        $(document).on('mousemove.detailColResize', onMove);
+		        $(document).on('mouseup.detailColResize', onUp);
+		    });
+
+		    syncDetailResizeHandles();
+		    window.__syncOrderDetailResizeHandles = syncDetailResizeHandles;
+		}
+
+		function scheduleDetailHeaderAlign() {
+		    fixDetailTableHeaderAlign();
+		    requestAnimationFrame(function () {
+		        fixDetailTableHeaderAlign();
+		        if (typeof window.__syncOrderDetailResizeHandles === 'function') {
+		            window.__syncOrderDetailResizeHandles();
+		        }
+		    });
+		}
+
+		var detailTableLayoutRefreshTimer = null;
+		function refreshDetailTableLayoutDebounced() {
+		    if (detailTableLayoutRefreshTimer) {
+		        clearTimeout(detailTableLayoutRefreshTimer);
+		    }
+		    detailTableLayoutRefreshTimer = setTimeout(function () {
+		        detailTableLayoutRefreshTimer = null;
+		        seedDetailDefaultColumnWidths();
+		        scheduleDetailHeaderAlign();
+		        setTimeout(function () {
+		            initDetailHeaderColumnResize();
+		            fixDetailTableHeaderAlign();
+		            if (typeof window.__syncOrderDetailResizeHandles === 'function') {
+		                window.__syncOrderDetailResizeHandles();
+		            }
+		            bindOrderDetailCellTitles();
+		        }, 0);
+		    }, 60);
+		}
+
+		function bindOrderDetailTableScrollSync() {
+		    var $container = $('#bootstrap-table').closest('.bootstrap-table').find('.fixed-table-container').first();
+		    var $mainBody = $container.children('.fixed-table-body');
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    $mainBody.off('scroll.orderDetailSync').on('scroll.orderDetailSync', function () {
+		        $mainHeader.scrollLeft($mainBody.scrollLeft());
+		        if (typeof window.__syncOrderDetailResizeHandles === 'function') {
+		            window.__syncOrderDetailResizeHandles();
+		        }
+		    });
+		}
 
 		function calculateOrderDetailTableHeight() {
 		    var $wrap = $('.order-detail-table-wrap');
@@ -298,9 +624,13 @@
 		    if ($pane.length && $pane.is(':visible')) {
 		        bottom = Math.min(bottom, $pane[0].getBoundingClientRect().bottom - 4);
 		    }
-		    var top = $section[0].getBoundingClientRect().top;
 		    var $wrap = $section.find('.order-detail-table-wrap');
-		    var h = Math.floor(bottom - top - 28);
+		    if ($wrap.length === 0) {
+		        return;
+		    }
+		    // 从明细表格顶部起算，预留底部空间给横向滚动条，避免被裁切
+		    var top = $wrap[0].getBoundingClientRect().top;
+		    var h = Math.floor(bottom - top - 14);
 		    if (h < 200) {
 		        h = 200;
 		    }
@@ -317,6 +647,7 @@
 		function relayoutOrderDetailTable() {
 		    layoutOrderDetailTableWrap();
 		    resetOrderDetailTableHeight();
+		    refreshDetailTableLayoutDebounced();
 		}
 
 		/** 单元格文字被截断时，悬停显示完整内容 */
@@ -346,7 +677,6 @@
 		    queryOrderDetailList();
 		    $(window).on('resize', function() {
 		        relayoutOrderDetailTable();
-		        bindOrderDetailCellTitles();
 		    });
 		    setTimeout(relayoutOrderDetailTable, 0);
 		    setTimeout(relayoutOrderDetailTable, 200);
@@ -368,17 +698,22 @@
 		        striped: true,
 		        mobileResponsive: false,
 		        height: calculateOrderDetailTableHeight(),
+		        onSort: function () {
+		            refreshDetailTableLayoutDebounced();
+		        },
 		        onPostBody: function() {
-		            setTimeout(function() {
-		                relayoutOrderDetailTable();
-		                bindOrderDetailCellTitles();
-		            }, 0);
+		            bindOrderDetailTableScrollSync();
+		            refreshDetailTableLayoutDebounced();
+		        },
+		        onLoadSuccess: function () {
+		            bindOrderDetailTableScrollSync();
+		            refreshDetailTableLayoutDebounced();
 		        },
 		        columns: [{
 		            field: 'index',
 		            title: '序号',
 		            align: 'center',
-		            width: 60,
+		            width: 76,
 		            formatter: function(value, row, index) {
 		                return index + 1;
 		            }
@@ -387,14 +722,14 @@
 		            field: 'materialCode',
 		            title: '产品编码',
 		            align: 'center',
-		            width: 130,
+		            width: 136,
 		            sortable: true,
 		            formatter: fmtOrderDetailText
 		        },
 		        {
 		            field: 'materialName',
 		            title: '产品名称',
-		            align: 'left',
+		            align: 'center',
 		            width: 200,
 		            sortable: true,
 		            formatter: fmtOrderDetailText
@@ -425,8 +760,8 @@
 		        {
 		            field: 'orderQuantity',
 		            title: '订货数量',
-		            align: 'right',
-		            width: 100,
+		            align: 'center',
+		            width: 110,
 		            sortable: true,
 		            formatter: function(value, row, index) {
 		                if (value) {
@@ -438,8 +773,8 @@
 		        {
 		            field: 'purchasePrice',
 		            title: '单价',
-		            align: 'right',
-		            width: 100,
+		            align: 'center',
+		            width: 110,
 		            sortable: true,
 		            formatter: function(value, row, index) {
 		                if (value) {
@@ -451,7 +786,7 @@
 		        {
 		            field: 'amount',
 		            title: '金额',
-		            align: 'right',
+		            align: 'center',
 		            width: 120,
 		            sortable: true,
 		            formatter: function(value, row, index) {
@@ -464,8 +799,8 @@
 		        {
 		            field: 'remainingQuantity',
 		            title: '剩余待配送数',
-		            align: 'right',
-		            width: 120,
+		            align: 'center',
+		            width: 130,
 		            formatter: function(value, row, index) {
 		                if (value) {
 		                    return parseFloat(value).toFixed(2);
@@ -476,31 +811,23 @@
 		        {
 		            field: 'deliveredAuditedQty',
 		            title: '已配送(已审核)',
-		            align: 'right',
-		            width: 110,
+		            align: 'center',
+		            width: 130,
 		            formatter: fmtQty2
 		        },
 		        {
 		            field: 'deliveredPendingAuditQty',
 		            title: '待审核配送',
-		            align: 'right',
-		            width: 100,
+		            align: 'center',
+		            width: 110,
 		            formatter: fmtQty2
 		        },
 		        {
 		            field: 'undeliveredQty',
 		            title: '未配送',
-		            align: 'right',
-		            width: 90,
-		            formatter: fmtQty2
-		        },
-		        {
-		            title: '配送明细',
 		            align: 'center',
-		            width: 100,
-		            formatter: function(value, row) {
-		                return '<a class="btn btn-primary btn-xs" href="javascript:void(0)" onclick="openLineTraces(' + row.detailId + ')"><i class="fa fa-link"></i> 查看</a>';
-		            }
+		            width: 96,
+		            formatter: fmtQty2
 		        }]
 		    };
 		    $.table.init(options);
@@ -565,41 +892,6 @@
 		    });
 		}
 
-		function openLineTraces(detailId) {
-		    var tid = 'bootstrap-table-line-tr';
-		    layer.open({
-		        type: 1,
-		        area: ['920px', '420px'],
-		        title: '本行关联的配送明细',
-		        content: '<table id="' + tid + '"></table>',
-		        success: function() {
-		            $('#' + tid).bootstrapTable({
-		                url: prefix + '/detailDeliveryTraces',
-		                method: 'post',
-		                contentType: "application/x-www-form-urlencoded",
-		                queryParams: { orderDetailId: detailId },
-		                pagination: false,
-		                sidePagination: 'server',
-		                responseHandler: ruoyiTableData,
-		                columns: [
-		                    { field: 'deliveryNo', title: '配送单号' },
-		                    { field: 'deliveryQuantity', title: '本行配送数量', formatter: fmtQty2 },
-		                    { field: 'auditStatus', title: '审核状态', formatter: function(v) {
-		                        var m = { '0': '待审核', '1': '已审核', '2': '已拒绝' };
-		                        return m[v] || (v == null ? '' : v);
-		                    }},
-		                    { field: 'deliveryStatus', title: '单据状态', formatter: function(v) {
-		                        var m = { '0': '未审核', '1': '已审核', '2': '已配送', '3': '已入库' };
-		                        return m[v] || (v == null ? '' : v);
-		                    }},
-		                    { title: '操作', formatter: function(v, row) {
-		                        return '<a href="javascript:void(0)" onclick="$.modal.openTab(\'配送单详情\',\'' + ctx + 'delivery/delivery/detail/' + row.deliveryId + '\')">配送单</a>';
-		                    }}
-		                ]
-		            });
-		        }
-		    });
-		}
 	</script>
 </body>
 </html>

@@ -319,6 +319,57 @@
 			flex: 1;
 			min-height: 0;
 		}
+		/* 汇总表：禁止换行，列宽固定，超出横向滚动 */
+		#summary-tab .query-table-wrap .fixed-table-header {
+			overflow: hidden !important;
+			background: #fff;
+		}
+		#summary-tab .query-table-wrap .fixed-table-header table,
+		#summary-tab .query-table-wrap .fixed-table-body > table {
+			table-layout: fixed !important;
+			min-width: 1980px !important;
+			width: 1980px !important;
+			border-collapse: collapse;
+		}
+		#summary-tab .query-table-wrap .fixed-table-header th,
+		#summary-tab .query-table-wrap .fixed-table-body td {
+			box-sizing: border-box !important;
+			white-space: nowrap !important;
+			word-break: keep-all !important;
+			overflow: hidden !important;
+			text-overflow: ellipsis !important;
+			vertical-align: middle !important;
+			padding: 8px 10px !important;
+			border: 1px solid #e7eaec !important;
+		}
+		#summary-tab .query-table-wrap .fixed-table-header th {
+			background-color: #f5f5f5 !important;
+			font-weight: normal;
+			border-bottom: 2px solid #ddd !important;
+		}
+		#summary-tab .query-table-wrap .fixed-table-header th .th-inner {
+			padding: 0 !important;
+			overflow: hidden !important;
+			text-overflow: ellipsis !important;
+			white-space: nowrap !important;
+			line-height: 1.42857143;
+		}
+		#summary-tab .query-table-wrap .fixed-table-header th .th-inner.sortable,
+		#summary-tab .query-table-wrap .fixed-table-header th .sortable {
+			padding-right: 26px !important;
+			background-position: right 4px center !important;
+			background-repeat: no-repeat !important;
+			background-size: 12px 14px !important;
+		}
+		#summary-tab .query-table-wrap .fixed-table-header th[data-field="serialNumber"],
+		#summary-tab .query-table-wrap .fixed-table-body td[data-field="serialNumber"] {
+			width: 52px !important;
+			min-width: 52px !important;
+			max-width: 52px !important;
+			padding-left: 4px !important;
+			padding-right: 4px !important;
+			text-align: center !important;
+		}
 		.query-table-wrap .fixed-table-pagination {
 			position: relative;
 			bottom: auto;
@@ -1272,6 +1323,18 @@
 		}
 
 		// 初始化汇总表
+		function bindSummaryTableScrollSync() {
+		    var $container = $('#bootstrap-table-summary').closest('.bootstrap-table').find('.fixed-table-container').first();
+		    var $mainBody = $container.children('.fixed-table-body');
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    if (!$mainBody.length || !$mainHeader.length) {
+		        return;
+		    }
+		    $mainBody.off('scroll.summaryHSync').on('scroll.summaryHSync', function () {
+		        $mainHeader.scrollLeft($mainBody.scrollLeft());
+		    });
+		}
+
 		function initSummaryTable() {
 		    if (summaryTableInitialized) {
 		        return;
@@ -1309,7 +1372,7 @@
 		            field: 'serialNumber',
 		            title: '序号',
 		            align: 'center',
-		            width: 60,
+		            width: 52,
 		            formatter: function(value, row, index) {
 		                var $table = $('#bootstrap-table-summary');
 		                var options = $table.bootstrapTable('getOptions');
@@ -1322,11 +1385,13 @@
 		        {
 		            field: 'deliveryNo',
 		            title: '配送单号',
+		            width: 170,
 		            sortable: true
 		        },
 		        {
 		            field: 'hospitalName',
 		            title: '医院名称',
+		            width: 180,
 		            formatter: function(value, row, index) {
 		                return value || '-';
 		            }
@@ -1334,6 +1399,7 @@
 		        {
 		            field: 'supplierName',
 		            title: '供应商名称',
+		            width: 180,
 		            formatter: function(value, row, index) {
 		                return value || '-';
 		            }
@@ -1341,6 +1407,7 @@
 		        {
 		            field: 'srcOrderSupplierName',
 		            title: '订单供应商',
+		            width: 160,
 		            formatter: function(value, row, index) {
 		                return value || '-';
 		            }
@@ -1348,6 +1415,7 @@
 		        {
 		            field: 'srcOrderWarehouseName',
 		            title: '订单仓库',
+		            width: 120,
 		            formatter: function(value, row, index) {
 		                return value || '-';
 		            }
@@ -1355,6 +1423,7 @@
 		        {
 		            field: 'srcOrderDeptName',
 		            title: '订单申请科室',
+		            width: 120,
 		            formatter: function(value, row, index) {
 		                return value || '-';
 		            }
@@ -1362,6 +1431,8 @@
 		        {
 		            field: 'deliveryAmount',
 		            title: '配送金额',
+		            width: 110,
+		            align: 'center',
 		            sortable: true,
 		            formatter: function(value, row, index) {
 		                if (value != null) {
@@ -1373,6 +1444,8 @@
 		        {
 		            field: 'deliveryStatus',
 		            title: '单据状态',
+		            width: 96,
+		            align: 'center',
 		            formatter: function(value, row, index) {
 		            	var statusMap = {'0': '待配送', '1': '配送中', '2': '已完成', '3': '已取消'};
 		            	return statusMap[value] || '';
@@ -1381,6 +1454,7 @@
 		        {
 		            field: 'createTime',
 		            title: '制单日期',
+		            width: 168,
 		            sortable: true,
 		            formatter: function(value, row, index) {
 		                return formatDate(value, "yyyy-MM-dd HH:mm:ss");
@@ -1388,11 +1462,15 @@
 		        },
 		        {
 		            field: 'createByDisplay',
-		            title: '制单人'
+		            title: '制单人',
+		            width: 96,
+		            align: 'center'
 		        },
 		        {
 		            field: 'expectedDeliveryDate',
 		            title: '预计配送日期',
+		            width: 130,
+		            align: 'center',
 		            sortable: true,
 		            formatter: function(value, row, index) {
 		                return formatDate(value, "yyyy-MM-dd");
@@ -1400,11 +1478,13 @@
 		        },
 		        {
 		            field: 'deliveryAddress',
-		            title: '配送地址'
+		            title: '配送地址',
+		            width: 200
 		        },
 		        {
 		            field: 'remark',
-		            title: '备注'
+		            title: '备注',
+		            width: 180
 		        }]
 		    };
 		    
@@ -1427,6 +1507,7 @@
 		                    $table.data('currentPage', options.pageNumber || 1);
 		                }
 		            }
+		            bindSummaryTableScrollSync();
 		            setTimeout(relayoutDeliveryQueryTables, 0);
 		            setTimeout(relayoutDeliveryQueryTables, 150);
 		        };
