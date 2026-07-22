@@ -34,8 +34,12 @@ public class Order extends BaseEntity
     @Excel(name = "医院名称")
     private String hospitalName;
 
-    /** 供应商ID */
+    /** 供应商ID（平台 scm_supplier.supplier_id） */
     private Long supplierId;
+
+    /** 平台供应商编码（scm_supplier.supplier_code） */
+    @Excel(name = "供应商编码")
+    private String supplierCode;
 
     /** SPD 采购订单供应商主键 purchase_order.supplier_id（字符串；与平台 scm_supplier.supplier_id 区分） */
     private String spdSupplierId;
@@ -120,6 +124,16 @@ public class Order extends BaseEntity
     public void setSupplierId(Long supplierId)
     {
         this.supplierId = supplierId;
+    }
+
+    public String getSupplierCode()
+    {
+        return supplierCode;
+    }
+
+    public void setSupplierCode(String supplierCode)
+    {
+        this.supplierCode = supplierCode;
     }
 
     public String getSpdSupplierId()
@@ -262,6 +276,7 @@ public class Order extends BaseEntity
             .append("hospitalId", getHospitalId())
             .append("hospitalName", getHospitalName())
             .append("supplierId", getSupplierId())
+            .append("supplierCode", getSupplierCode())
             .append("spdSupplierId", getSpdSupplierId())
             .append("supplierName", getSupplierName())
             .append("orderSupplierName", getOrderSupplierName())

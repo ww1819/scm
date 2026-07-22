@@ -24,6 +24,26 @@ public class OrderDetail extends BaseEntity
     /** 订单ID */
     private Long orderId;
 
+    /** 订单编号（冗余自 scm_order） */
+    @Excel(name = "订单编号")
+    private String orderNo;
+
+    /** 医院ID（冗余自 scm_order） */
+    private Long hospitalId;
+
+    /** 平台医院编码（冗余） */
+    private String hospitalCode;
+
+    /** 平台供应商ID（冗余自 scm_order.supplier_id） */
+    private Long supplierId;
+
+    /** 平台供应商编码（冗余） */
+    @Excel(name = "供应商编码")
+    private String supplierCode;
+
+    /** SPD 明细主键 purchase_order_entry.id */
+    private Long spdEntryId;
+
     /** 物资ID */
     private Long materialId;
 
@@ -74,9 +94,6 @@ public class OrderDetail extends BaseEntity
     @Excel(name = "注册证号")
     private String registerNo;
 
-    /** 订单供应商ID（订单目录查询投影，非明细表字段） */
-    private Long supplierId;
-
     /** 已审核配送数量（关联配送单审核通过） */
     private BigDecimal deliveredAuditedQty;
 
@@ -95,6 +112,66 @@ public class OrderDetail extends BaseEntity
     public void setOrderId(Long orderId)
     {
         this.orderId = orderId;
+    }
+
+    public String getOrderNo()
+    {
+        return orderNo;
+    }
+
+    public void setOrderNo(String orderNo)
+    {
+        this.orderNo = orderNo;
+    }
+
+    public Long getHospitalId()
+    {
+        return hospitalId;
+    }
+
+    public void setHospitalId(Long hospitalId)
+    {
+        this.hospitalId = hospitalId;
+    }
+
+    public String getHospitalCode()
+    {
+        return hospitalCode;
+    }
+
+    public void setHospitalCode(String hospitalCode)
+    {
+        this.hospitalCode = hospitalCode;
+    }
+
+    public Long getSupplierId()
+    {
+        return supplierId;
+    }
+
+    public void setSupplierId(Long supplierId)
+    {
+        this.supplierId = supplierId;
+    }
+
+    public String getSupplierCode()
+    {
+        return supplierCode;
+    }
+
+    public void setSupplierCode(String supplierCode)
+    {
+        this.supplierCode = supplierCode;
+    }
+
+    public Long getSpdEntryId()
+    {
+        return spdEntryId;
+    }
+
+    public void setSpdEntryId(Long spdEntryId)
+    {
+        this.spdEntryId = spdEntryId;
     }
 
     @NotNull(message = "物资ID不能为空")
@@ -229,16 +306,6 @@ public class OrderDetail extends BaseEntity
         this.registerNo = registerNo;
     }
 
-    public Long getSupplierId()
-    {
-        return supplierId;
-    }
-
-    public void setSupplierId(Long supplierId)
-    {
-        this.supplierId = supplierId;
-    }
-
     public BigDecimal getDeliveredAuditedQty()
     {
         return deliveredAuditedQty;
@@ -284,6 +351,12 @@ public class OrderDetail extends BaseEntity
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
             .append("detailId", getDetailId())
             .append("orderId", getOrderId())
+            .append("orderNo", getOrderNo())
+            .append("hospitalId", getHospitalId())
+            .append("hospitalCode", getHospitalCode())
+            .append("supplierId", getSupplierId())
+            .append("supplierCode", getSupplierCode())
+            .append("spdEntryId", getSpdEntryId())
             .append("materialId", getMaterialId())
             .append("materialCode", getMaterialCode())
             .append("materialName", getMaterialName())

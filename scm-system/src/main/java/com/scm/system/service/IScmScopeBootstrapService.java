@@ -70,4 +70,10 @@ public interface IScmScopeBootstrapService
      * @return 统计信息（createdHospitalAdminRole/createdHospitalStaffRole/createdSupplierAdminRole/createdSupplierSalesRole/addedHospitalMenuAuth/addedSupplierMenuAuth/addedHospitalRoleMenu/addedSupplierRoleMenu）
      */
     Map<String, Integer> repairLegacyAdminScopes(String operBy);
+
+    /**
+     * 单供应商补齐内置角色/权限：确保全局供应商模板角色存在（缺哪个补哪个）、增量补菜单白名单、重绑用户内置角色。
+     * @return 统计（createdSupplierRoles / addedSupplierMenuAuth / reboundUsers）
+     */
+    Map<String, Integer> ensureSupplierBuiltinScope(Long supplierId, String operBy);
 }

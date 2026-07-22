@@ -32,6 +32,7 @@ import com.scm.system.domain.SupplierCertificate;
 import com.scm.system.domain.SupplierUser;
 import com.scm.system.service.IHospitalService;
 import com.scm.system.service.IHospitalSupplierService;
+import com.scm.system.service.IScmScopeBootstrapService;
 import com.scm.system.service.ISupplierService;
 import com.scm.system.service.ISupplierCertificateService;
 import com.scm.system.service.ISupplierUserService;
@@ -65,6 +66,9 @@ public class SupplierController extends BaseController
 
     @Autowired
     private ISysDeptService deptService;
+
+    @Autowired
+    private IScmScopeBootstrapService scmScopeBootstrapService;
 
     /**
      * 省/市/区县级联：数据与部门管理一致（医承云配 → 省 → 市 → 区县）
@@ -331,6 +335,36 @@ public class SupplierController extends BaseController
     {
         supplier.setUpdateBy(getLoginName());
         return toAjax(supplierService.updateSupplier(supplier));
+    }
+
+    /**
+     * 补齐内置角色/权限：确保全局供应商模板角色存在，增量补本供应商菜单白名单，并重绑用户内置角色。
+     */
+    @RequiresPermissions("supplier:supplier:edit")
+    @Log(title = "供应商补齐内置角色权限", businessType = BusinessType.UPDATE)
+    @PostMapping("/ensureBuiltinRoles")
+    @ResponseBody
+    public AjaxResult ensureBuiltinRoles(Long supplierId)
+    {
+        if (supplierId == null)
+        {
+            return error("请选择供应商");
+        }
+        Supplier supplier = supplierService.selectSupplierById(supplierId);
+        if (supplier == null)
+        {
+            return error("供应商不存在");
+        }
+        SupplierUser supplierUser = supplierUserService.selectSupplierUserByUserId(getUserId());
+        if (supplierUser != null && supplierUser.getSupplierId() != null
+            && !supplierUser.getSupplierId().equals(supplierId))
+        {
+            return error("无权操作其他供应商");
+        }
+        Map<String, Integer> stat = scmScopeBootstrapService.ensureSupplierBuiltinScope(supplierId, getLoginName());
+        return success("补齐完成：新建全局角色 " + stat.get("createdSupplierRoles")
+            + " 个，补菜单白名单 " + stat.get("addedSupplierMenuAuth")
+            + " 项，重绑用户 " + stat.get("reboundUsers") + " 人").put("stat", stat);
     }
 
     /**

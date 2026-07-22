@@ -253,6 +253,9 @@
 	             <a class="btn btn-primary single disabled" onclick="$.operate.editTab()" shiro:hasPermission="supplier:supplier:edit">
 		            <i class="fa fa-edit"></i> 修改
 		        </a>
+	            <a class="btn btn-info single disabled" onclick="ensureBuiltinRoles()" shiro:hasPermission="supplier:supplier:edit" title="确保全局供应商管理员/业务员角色存在，增量补本供应商菜单白名单并重绑用户">
+	                <i class="fa fa-wrench"></i> 补齐内置角色/权限
+	            </a>
 	            <a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="supplier:supplier:remove">
 	                <i class="fa fa-remove"></i> 删除
 	            </a>
@@ -703,6 +706,24 @@
 			$.modal.confirm("确认要启用供应商吗？", function() {
 				$.operate.post(prefix + "/changeStatus", { "supplierId": supplierId, "status": "1" });
 		    });
+		}
+
+		function ensureBuiltinRoles() {
+			var rows = $.table.selectColumns("supplierId");
+			if (rows.length == 0) {
+				$.modal.alertWarning("请选择一条供应商记录");
+				return;
+			}
+			if (rows.length > 1) {
+				$.modal.alertWarning("请仅选择一条供应商记录");
+				return;
+			}
+			var supplierId = rows[0];
+			$.modal.confirm("将为该供应商补齐全局内置角色（缺则创建）、增量补菜单白名单，并重绑已有用户角色。是否继续？", function() {
+				$.post(prefix + "/ensureBuiltinRoles", { supplierId: supplierId }, function(data) {
+					$.operate.successCallback(data);
+				});
+			});
 		}
 	</script>
 </body>

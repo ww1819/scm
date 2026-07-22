@@ -123,7 +123,11 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         {
             return;
         }
-        List<Long> builtinRoleIds = collectBuiltinSupplierGlobalRoleIds();
+        Set<String> builtinKeys = new HashSet<>(Arrays.asList(
+            ScmAuthConstants.ROLE_KEY_SUPPLIER_ADMIN,
+            ScmAuthConstants.ROLE_KEY_SUPPLIER_SALES,
+            ScmAuthConstants.ROLE_KEY_TP_SUPPLIER_ADMIN,
+            ScmAuthConstants.ROLE_KEY_TP_SUPPLIER_SALES));
         List<SupplierUser> users = supplierUserMapper.selectSupplierUserListBySupplierId(supplierId);
         if (users == null || users.isEmpty())
         {
@@ -136,16 +140,21 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
                 continue;
             }
             Long userId = su.getUserId();
-            for (Long rid : builtinRoleIds)
+            // 清掉该用户上所有内置 key 的角色绑定（含历史 per-supplier 角色，避免误绑残留）
+            List<SysRole> currentRoles = sysRoleMapper.selectRolesByUserId(userId);
+            if (currentRoles != null)
             {
-                if (rid == null)
+                for (SysRole r : currentRoles)
                 {
-                    continue;
+                    if (r == null || r.getRoleId() == null || !builtinKeys.contains(r.getRoleKey()))
+                    {
+                        continue;
+                    }
+                    SysUserRole del = new SysUserRole();
+                    del.setUserId(userId);
+                    del.setRoleId(r.getRoleId());
+                    userRoleMapper.deleteUserRoleInfo(del);
                 }
-                SysUserRole del = new SysUserRole();
-                del.setUserId(userId);
-                del.setRoleId(rid);
-                userRoleMapper.deleteUserRoleInfo(del);
             }
             Long targetRoleId = "1".equals(StringUtils.trimToEmpty(su.getIsMain()))
                 ? adminRole.getRoleId() : salesRole.getRoleId();
@@ -268,6 +277,69 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         {
             batchInsertSupplierHospitalMenuAuth(hospitalId, supplierId, needAuth, oper);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Map<String, Integer> ensureSupplierBuiltinScope(Long supplierId, String operBy)
+    {
+        if (supplierId == null)
+        {
+            throw new ServiceException("供应商ID不能为空");
+        }
+        String realOper = StringUtils.isNotEmpty(operBy) ? operBy : "system";
+        Map<String, Integer> stat = new HashMap<>();
+        int createdRoles = 0;
+        if (sysRoleMapper.selectGlobalScmRoleByKey(ScmAuthConstants.ROLE_KEY_SUPPLIER_ADMIN) == null)
+        {
+            createdRoles++;
+        }
+        if (sysRoleMapper.selectGlobalScmRoleByKey(ScmAuthConstants.ROLE_KEY_SUPPLIER_SALES) == null)
+        {
+            createdRoles++;
+        }
+        if (sysRoleMapper.selectGlobalScmRoleByKey(ScmAuthConstants.ROLE_KEY_TP_SUPPLIER_ADMIN) == null)
+        {
+            createdRoles++;
+        }
+        if (sysRoleMapper.selectGlobalScmRoleByKey(ScmAuthConstants.ROLE_KEY_TP_SUPPLIER_SALES) == null)
+        {
+            createdRoles++;
+        }
+        // 新建角色时同步模板角色菜单；已有角色时 sync 会按默认规则重建全局模板菜单（与 reset/repair 一致）
+        if (createdRoles > 0)
+        {
+            syncGlobalSupplierTemplateRoles(realOper);
+        }
+        else
+        {
+            ensureGlobalSupplierRolesExist(realOper);
+        }
+        Set<Long> supplierSeedExpanded = collectScopeMenuIdsWithAncestors(ScmAuthConstants.AUTH_SUPPLIER);
+        Set<Long> existingAuth = new HashSet<>(supplierMenuAuthMapper.selectMenuIdsBySupplierId(supplierId));
+        Set<Long> needAuth = new HashSet<>(supplierSeedExpanded);
+        needAuth.removeAll(existingAuth);
+        if (!needAuth.isEmpty())
+        {
+            batchInsertSupplierAuth(supplierId, needAuth, realOper);
+        }
+        List<SupplierUser> users = supplierUserMapper.selectSupplierUserListBySupplierId(supplierId);
+        int reboundUsers = 0;
+        if (users != null)
+        {
+            for (SupplierUser su : users)
+            {
+                if (su != null && su.getUserId() != null)
+                {
+                    reboundUsers++;
+                }
+            }
+        }
+        rebindSupplierBuiltinUserRoles(supplierId, realOper);
+        stat.put("createdSupplierRoles", createdRoles);
+        stat.put("addedSupplierMenuAuth", needAuth.size());
+        stat.put("reboundUsers", reboundUsers);
+        return stat;
     }
 
     @Override
@@ -759,25 +831,6 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
         ensureGlobalSupplierSalesRole(operBy);
         ensureGlobalTpSupplierAdminRole(operBy);
         ensureGlobalTpSupplierSalesRole(operBy);
-    }
-
-    private List<Long> collectBuiltinSupplierGlobalRoleIds()
-    {
-        List<Long> ids = new ArrayList<>();
-        appendGlobalRoleId(ids, ScmAuthConstants.ROLE_KEY_SUPPLIER_ADMIN);
-        appendGlobalRoleId(ids, ScmAuthConstants.ROLE_KEY_SUPPLIER_SALES);
-        appendGlobalRoleId(ids, ScmAuthConstants.ROLE_KEY_TP_SUPPLIER_ADMIN);
-        appendGlobalRoleId(ids, ScmAuthConstants.ROLE_KEY_TP_SUPPLIER_SALES);
-        return ids;
-    }
-
-    private void appendGlobalRoleId(List<Long> ids, String roleKey)
-    {
-        SysRole role = sysRoleMapper.selectGlobalScmRoleByKey(roleKey);
-        if (role != null && role.getRoleId() != null)
-        {
-            ids.add(role.getRoleId());
-        }
     }
 
     private void insertGlobalScmTemplateRole(SysRole role)

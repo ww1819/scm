@@ -10,6 +10,7 @@ import com.scm.common.utils.PinyinUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.Supplier;
 import com.scm.system.mapper.SupplierMapper;
+import com.scm.system.service.IScmScopeBootstrapService;
 import com.scm.system.service.ISupplierCertificateService;
 import com.scm.system.service.ISupplierService;
 
@@ -27,6 +28,10 @@ public class SupplierServiceImpl implements ISupplierService
     @Autowired
     @Lazy
     private ISupplierCertificateService supplierCertificateService;
+
+    @Autowired
+    @Lazy
+    private IScmScopeBootstrapService scmScopeBootstrapService;
 
     /**
      * 查询供应商信息
@@ -79,10 +84,18 @@ public class SupplierServiceImpl implements ISupplierService
         int rows = supplierMapper.insertSupplier(supplier);
         if (rows > 0 && supplier.getSupplierId() != null)
         {
+            String oper = supplier.getCreateBy() != null ? supplier.getCreateBy() : "";
             try
             {
-                supplierCertificateService.ensureMissingCertificatesForSupplier(supplier.getSupplierId(),
-                    supplier.getCreateBy() != null ? supplier.getCreateBy() : "");
+                supplierCertificateService.ensureMissingCertificatesForSupplier(supplier.getSupplierId(), oper);
+            }
+            catch (Exception ignored)
+            {
+            }
+            try
+            {
+                // 与医院创建对称：后台新增也补齐全局模板角色与菜单白名单（无用户时 rebind 为空操作）
+                scmScopeBootstrapService.ensureSupplierBuiltinScope(supplier.getSupplierId(), oper);
             }
             catch (Exception ignored)
             {

@@ -7,6 +7,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <resultMap type="OrderDetail" id="OrderDetailResult">
         <id     property="detailId"          column="detail_id"          />
         <result property="orderId"          column="order_id"            />
+        <result property="orderNo"          column="order_no"            />
+        <result property="hospitalId"       column="hospital_id"         />
+        <result property="hospitalCode"     column="hospital_code"       />
+        <result property="supplierId"       column="supplier_id"         />
+        <result property="supplierCode"     column="supplier_code"       />
+        <result property="spdEntryId"       column="spd_entry_id"        />
         <result property="materialId"        column="material_id"        />
         <result property="materialCode"     column="material_code"      />
         <result property="materialName"     column="material_name"      />
@@ -20,12 +26,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="packCoefficient" column="pack_coefficient"    />
         <result property="manufacturer"    column="manufacturer_name"  />
         <result property="registerNo"      column="register_no"        />
-        <result property="supplierId"      column="supplier_id"        />
         <result property="remark"          column="remark"             />
     </resultMap>
     
     <sql id="selectOrderDetailVo">
-        select d.detail_id, d.order_id, d.material_id, d.material_code, d.material_name,
+        select d.detail_id, d.order_id, d.order_no, d.hospital_id, d.hospital_code,
+               d.supplier_id, d.supplier_code, d.spd_entry_id,
+               d.material_id, d.material_code, d.material_name,
                d.specification, d.model, d.unit, d.purchase_price, d.order_quantity,
                d.remaining_quantity, d.amount, d.pack_coefficient, d.manufacturer_name, d.register_no, d.remark
         from scm_order_detail d
@@ -81,6 +88,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <insert id="insertOrderDetail" parameterType="OrderDetail" useGeneratedKeys="true" keyProperty="detailId">
         insert into scm_order_detail(
             <if test="orderId != null">order_id,</if>
+            <if test="orderNo != null and orderNo != ''">order_no,</if>
+            <if test="hospitalId != null">hospital_id,</if>
+            <if test="hospitalCode != null and hospitalCode != ''">hospital_code,</if>
+            <if test="supplierId != null">supplier_id,</if>
+            <if test="supplierCode != null and supplierCode != ''">supplier_code,</if>
+            <if test="spdEntryId != null">spd_entry_id,</if>
             <if test="materialId != null">material_id,</if>
             <if test="materialCode != null and materialCode != ''">material_code,</if>
             <if test="materialName != null and materialName != ''">material_name,</if>
@@ -97,6 +110,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             create_time
         )values(
             <if test="orderId != null">#{orderId},</if>
+            <if test="orderNo != null and orderNo != ''">#{orderNo},</if>
+            <if test="hospitalId != null">#{hospitalId},</if>
+            <if test="hospitalCode != null and hospitalCode != ''">#{hospitalCode},</if>
+            <if test="supplierId != null">#{supplierId},</if>
+            <if test="supplierCode != null and supplierCode != ''">#{supplierCode},</if>
+            <if test="spdEntryId != null">#{spdEntryId},</if>
             <if test="materialId != null">#{materialId},</if>
             <if test="materialCode != null and materialCode != ''">#{materialCode},</if>
             <if test="materialName != null and materialName != ''">#{materialName},</if>
@@ -115,12 +134,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </insert>
     
     <insert id="batchInsertOrderDetail" parameterType="java.util.List">
-        insert into scm_order_detail(order_id, material_id, material_code, material_name,
+        insert into scm_order_detail(order_id, order_no, hospital_id, hospital_code, supplier_id, supplier_code,
+               spd_entry_id, material_id, material_code, material_name,
                specification, model, unit, purchase_price, order_quantity, remaining_quantity,
                amount, pack_coefficient, manufacturer_name, register_no, create_time)
         values
         <foreach collection="list" item="item" separator=",">
-            (#{item.orderId}, #{item.materialId}, #{item.materialCode}, #{item.materialName},
+            (#{item.orderId}, #{item.orderNo}, #{item.hospitalId}, #{item.hospitalCode},
+             #{item.supplierId}, #{item.supplierCode}, #{item.spdEntryId},
+             #{item.materialId}, #{item.materialCode}, #{item.materialName},
              #{item.specification}, #{item.model}, #{item.unit}, #{item.purchasePrice},
              #{item.orderQuantity}, #{item.remainingQuantity}, #{item.amount},
              #{item.packCoefficient}, #{item.manufacturer}, #{item.registerNo}, sysdate())
@@ -131,6 +153,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         update scm_order_detail
         <set>
             <if test="orderId != null">order_id = #{orderId},</if>
+            <if test="orderNo != null and orderNo != ''">order_no = #{orderNo},</if>
+            <if test="hospitalId != null">hospital_id = #{hospitalId},</if>
+            <if test="hospitalCode != null and hospitalCode != ''">hospital_code = #{hospitalCode},</if>
+            <if test="supplierId != null">supplier_id = #{supplierId},</if>
+            <if test="supplierCode != null and supplierCode != ''">supplier_code = #{supplierCode},</if>
+            <if test="spdEntryId != null">spd_entry_id = #{spdEntryId},</if>
             <if test="materialId != null">material_id = #{materialId},</if>
             <if test="materialCode != null and materialCode != ''">material_code = #{materialCode},</if>
             <if test="materialName != null and materialName != ''">material_name = #{materialName},</if>

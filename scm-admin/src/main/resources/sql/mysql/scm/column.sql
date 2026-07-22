@@ -345,6 +345,50 @@ CALL add_table_column('scm_order_detail', 'tenant_id', 'varchar(64)', '租户ID'
 /
 CALL add_table_column('scm_order_detail', 'pack_coefficient', 'decimal(18,6)', '打包系数', NULL);
 /
+CALL add_table_column('scm_order_detail', 'order_no', 'varchar(50)', '订单编号（冗余自 scm_order，便于按单号查明细）', '');
+/
+CALL add_table_index('scm_order_detail', 'idx_order_no', 'order_no');
+/
+-- 历史明细回填 order_no（仅空值）
+UPDATE scm_order_detail d
+INNER JOIN scm_order o ON o.order_id = d.order_id
+SET d.order_no = IFNULL(o.order_no, '')
+WHERE TRIM(IFNULL(d.order_no, '')) = '' AND IFNULL(o.order_no, '') <> '';
+/
+-- ========== 第一方订单：平台供应商/医院冗余（主表 supplier_id 已有；补 supplier_code；明细补供应商+医院）==========
+CALL add_table_column('scm_order', 'supplier_code', 'varchar(64)', '平台供应商编码（scm_supplier.supplier_code，与 spd_snapshot_supplier_code 同源）', '');
+/
+CALL add_table_index('scm_order', 'idx_supplier_code', 'supplier_code');
+/
+UPDATE scm_order
+SET supplier_code = IFNULL(spd_snapshot_supplier_code, '')
+WHERE TRIM(IFNULL(supplier_code, '')) = '' AND IFNULL(spd_snapshot_supplier_code, '') <> '';
+/
+CALL add_table_column('scm_order_detail', 'hospital_id', 'bigint(20)', '医院ID（冗余自 scm_order，便于行级筛选）', NULL);
+/
+CALL add_table_column('scm_order_detail', 'hospital_code', 'varchar(64)', '平台医院编码（冗余自 scm_order.spd_snapshot_hospital_code）', '');
+/
+CALL add_table_column('scm_order_detail', 'supplier_id', 'bigint(20)', '平台供应商ID（冗余自 scm_order.supplier_id）', NULL);
+/
+CALL add_table_column('scm_order_detail', 'supplier_code', 'varchar(64)', '平台供应商编码（冗余自 scm_order）', '');
+/
+CALL add_table_index('scm_order_detail', 'idx_od_hospital_id', 'hospital_id');
+/
+CALL add_table_index('scm_order_detail', 'idx_od_supplier_id', 'supplier_id');
+/
+CALL add_table_index('scm_order_detail', 'idx_od_supplier_code', 'supplier_code');
+/
+UPDATE scm_order_detail d
+INNER JOIN scm_order o ON o.order_id = d.order_id
+SET d.hospital_id = o.hospital_id,
+    d.hospital_code = IFNULL(NULLIF(TRIM(d.hospital_code), ''), IFNULL(o.spd_snapshot_hospital_code, '')),
+    d.supplier_id = COALESCE(d.supplier_id, o.supplier_id),
+    d.supplier_code = IFNULL(NULLIF(TRIM(d.supplier_code), ''), IFNULL(NULLIF(TRIM(o.supplier_code), ''), IFNULL(o.spd_snapshot_supplier_code, '')))
+WHERE d.hospital_id IS NULL
+   OR TRIM(IFNULL(d.hospital_code, '')) = ''
+   OR d.supplier_id IS NULL
+   OR TRIM(IFNULL(d.supplier_code, '')) = '';
+/
 -- scm_product_certificate
 CALL add_table_column('scm_product_certificate', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');
 /
