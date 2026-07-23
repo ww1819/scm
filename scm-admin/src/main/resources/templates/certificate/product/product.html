@@ -365,7 +365,14 @@
 			background: rgba(60, 141, 188, 0.35);
 		}
 
-		/* 表头与明细统一左对齐；th-inner 不拉满，排序图标紧跟文字 */
+		/* 表头与明细统一左对齐；固定表布局保证列宽同步 */
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header table,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body > table,
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-container > .fixed-table-header table,
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-container > .fixed-table-body > table {
+			table-layout: fixed !important;
+		}
+
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th,
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body thead th,
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body tbody td,
@@ -373,9 +380,11 @@
 		.audit-right-area .audit-cert-detail-wrap .fixed-table-container > .fixed-table-body thead th,
 		.audit-right-area .audit-cert-detail-wrap .fixed-table-container > .fixed-table-body tbody td {
 			text-align: left !important;
-			box-sizing: border-box;
+			box-sizing: border-box !important;
+			vertical-align: middle !important;
 		}
 
+		/* 表头行高与供应商资质登记明细表一致（沿用 bootstrap-table 默认 th-inner） */
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th .th-inner,
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th .sortable,
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body thead th .th-inner,
@@ -389,14 +398,16 @@
 			max-width: 100%;
 			box-sizing: border-box;
 			vertical-align: middle;
+			overflow: visible !important;
+			text-overflow: clip !important;
+			white-space: nowrap !important;
 			padding-right: 18px !important;
 			background-position: right center !important;
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th.bs-checkbox,
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td.bs-checkbox,
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th.bs-checkbox .th-inner,
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td.bs-checkbox {
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th.bs-checkbox .th-inner {
 			text-align: center !important;
 			justify-content: center !important;
 		}
@@ -406,7 +417,6 @@
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
-			vertical-align: middle !important;
 		}
 
 		.audit-page-wrap > .audit-search-area.search-collapse {
@@ -637,7 +647,7 @@
 					title: '序号',
 					align: 'left',
 					halign: 'left',
-					width: 60,
+					width: 70,
 					formatter: function(value, row, index) {
 						return index + 1;
 					}
@@ -647,6 +657,7 @@
 					title: '证件编号',
 					align: 'left',
 					halign: 'left',
+					width: 110,
 					sortable: true,
 					formatter: function(value, row) {
 						return ellipsisText(value || row.licenseKindCode || '-');
@@ -657,6 +668,7 @@
 					title: '证件类型',
 					align: 'left',
 					halign: 'left',
+					width: 200,
 					sortable: true,
 					formatter: function(value, row) {
 						return ellipsisText(value || row.licenseKindCode || '-');
@@ -667,6 +679,7 @@
 					title: '证件编码',
 					align: 'left',
 					halign: 'left',
+					width: 140,
 					sortable: true,
 					formatter: function(value) {
 						return ellipsisText(value || '-');
@@ -688,6 +701,7 @@
 					previewCol.sortable = true;
 					previewCol.align = 'left';
 					previewCol.halign = 'left';
+					previewCol.width = 64;
 					return previewCol;
 				})(),
 				{
@@ -695,7 +709,7 @@
 					title: '上传',
 					align: 'left',
 					halign: 'left',
-					width: 72,
+					width: 64,
 					formatter: function() {
 						return '<a class="btn btn-success btn-xs cert-detail-upload-btn" href="javascript:void(0)" title="上传证照"><i class="fa fa-upload"></i></a>';
 					},
@@ -712,7 +726,7 @@
 					title: '上传人',
 					align: 'left',
 					halign: 'left',
-					width: 100,
+					width: 90,
 					formatter: function(value) {
 						return value || '-';
 					}
@@ -722,7 +736,7 @@
 					title: '上传日期',
 					align: 'left',
 					halign: 'left',
-					width: 120,
+					width: 110,
 					formatter: function(value) {
 						return formatCertDate(value);
 					}
@@ -866,18 +880,23 @@
 				var $headTable = tables.$headTable;
 				var $bodyTable = tables.$bodyTable;
 				var $mainBody = tables.$mainBody;
+				var $mainHeader = tables.$mainHeader;
 				if (!$headTable.length || !$bodyTable.length) {
 					return;
 				}
-				var $ths = $headTable.find('thead tr:first th');
+				$headTable[0].style.setProperty('table-layout', 'fixed', 'important');
+				$bodyTable[0].style.setProperty('table-layout', 'fixed', 'important');
+
+				var $ths = $headTable.find('thead tr:first > th');
 				var headColCount = $ths.length;
 				if (headColCount < 1) {
 					return;
 				}
-				var $bodyThs = $bodyTable.find('thead tr:first th');
+				var $bodyThs = $bodyTable.find('thead tr:first > th');
 				var bodyColCount = Math.max(headColCount, $bodyThs.length);
 				ensureColgroup($headTable, headColCount);
 				ensureColgroup($bodyTable, bodyColCount);
+
 				var totalW = 0;
 				var setW = function(el, w) {
 					if (!el) {
@@ -886,81 +905,89 @@
 					var ws = w + 'px';
 					el.style.setProperty('width', ws, 'important');
 					el.style.setProperty('min-width', ws, 'important');
-					el.style.setProperty('max-width', 'none', 'important');
+					el.style.setProperty('max-width', ws, 'important');
 				};
-				var setAlignLeft = function(el) {
-					if (!el || (el.classList && el.classList.contains('bs-checkbox'))) {
-						return;
-					}
-					el.style.setProperty('text-align', 'left', 'important');
-				};
-				$ths.each(function() {
-					var headIdx = this.cellIndex;
-					if (headIdx < 0) {
-						return;
-					}
+
+				$ths.each(function(idx) {
 					var $th = $(this);
 					var field = $th.attr('data-field');
+					var headIdx = this.cellIndex >= 0 ? this.cellIndex : idx;
 					var w;
 					if ($th.hasClass('bs-checkbox') || field === '0' || field === 'state') {
 						w = checkboxColWidth;
 					} else if (field && colWidths[field] != null) {
 						w = colWidths[field];
 					} else {
-						w = Math.ceil(this.getBoundingClientRect().width);
-						if (!w || w < 40) {
-							w = 40;
-						}
+						w = Math.max(48, Math.ceil($th.outerWidth()) || 80);
 						if (field) {
 							colWidths[field] = w;
 						}
 					}
+
+					/* 优先按同序索引对齐，避免 field 映射错位 */
 					var bodyIdx = headIdx;
-					if (field) {
-						var $bodyTh = $bodyTable.find('thead tr:first th[data-field="' + field + '"]');
-						if ($bodyTh.length) {
-							bodyIdx = $bodyTh[0].cellIndex;
+					if (field && $bodyThs.length) {
+						var matched = -1;
+						$bodyThs.each(function(i) {
+							if ($(this).attr('data-field') === field) {
+								matched = this.cellIndex >= 0 ? this.cellIndex : i;
+								return false;
+							}
+						});
+						if (matched >= 0) {
+							bodyIdx = matched;
 						}
 					}
+
 					setW(this, w);
-					setAlignLeft(this);
 					$th.find('.fht-cell').each(function() { setW(this, w); });
-					$th.find('.th-inner, .sortable').each(function() {
-						this.style.setProperty('text-align', 'left', 'important');
-						this.style.setProperty('justify-content', 'flex-start', 'important');
-						this.style.setProperty('display', 'inline-block', 'important');
-						this.style.setProperty('width', 'auto', 'important');
-					});
 					$headTable.children('colgroup').children('col').eq(headIdx).each(function() { setW(this, w); });
 					$bodyTable.children('colgroup').children('col').eq(bodyIdx).each(function() { setW(this, w); });
-					$bodyTable.find('thead tr:first th').eq(bodyIdx).each(function() {
-						setW(this, w);
-						setAlignLeft(this);
-						$(this).find('.fht-cell').each(function() { setW(this, w); });
-					});
+
+					var $bodyTh = $bodyThs.eq(bodyIdx);
+					if (!$bodyTh.length && field) {
+						$bodyTh = $bodyTable.find('thead tr:first > th[data-field="' + field + '"]');
+					}
+					if ($bodyTh.length) {
+						setW($bodyTh[0], w);
+						$bodyTh.find('.fht-cell').each(function() { setW(this, w); });
+					}
+
 					$bodyTable.find('tbody tr').each(function() {
+						if (!this.cells || !this.cells.length) {
+							return;
+						}
+						if (this.cells.length === 1 && this.cells[0].colSpan > 1) {
+							return;
+						}
 						var cell = this.cells[bodyIdx];
 						if (cell) {
 							setW(cell, w);
-							setAlignLeft(cell);
 						}
 					});
 					if (field) {
-						$mainBody.find('td[data-field="' + field + '"]').each(function() {
+						$mainBody.children('table').find('td[data-field="' + field + '"]').each(function() {
 							setW(this, w);
-							setAlignLeft(this);
 						});
 					}
 					totalW += w;
 				});
+
 				if (totalW > 0) {
 					var tw = totalW + 'px';
 					$headTable[0].style.setProperty('width', tw, 'important');
 					$headTable[0].style.setProperty('min-width', tw, 'important');
-					$headTable[0].style.setProperty('max-width', 'none', 'important');
+					$headTable[0].style.setProperty('max-width', tw, 'important');
 					$bodyTable[0].style.setProperty('width', tw, 'important');
 					$bodyTable[0].style.setProperty('min-width', tw, 'important');
-					$bodyTable[0].style.setProperty('max-width', 'none', 'important');
+					$bodyTable[0].style.setProperty('max-width', tw, 'important');
+				}
+
+				/* 滚动条占位：保证表头可视宽度与表体内容区一致 */
+				if ($mainBody.length && $mainHeader.length) {
+					var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
+					$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+					$mainHeader.scrollLeft($mainBody.scrollLeft());
 				}
 			}
 
@@ -1081,24 +1108,24 @@
 		var productColResize = createColResizeController({
 			tableId: productTableId,
 			ns: 'prodCol',
-			checkboxWidth: 36,
+			checkboxWidth: 40,
 			skipFields: { '0': true, state: true },
 			colWidths: {
-				serialNumber: 60,
-				auditStatus: 80,
-				materialCode: 120,
-				materialName: 160,
-				specification: 100,
-				model: 100,
-				unit: 70,
-				bidPrice: 90,
-				manufacturerName: 140,
-				supplierName: 150,
-				registerNo: 140,
-				registerIssueDate: 110,
-				expireDate: 110,
-				status: 80,
-				createTime: 150
+				serialNumber: 70,
+				auditStatus: 78,
+				materialCode: 140,
+				materialName: 170,
+				specification: 90,
+				model: 90,
+				unit: 56,
+				bidPrice: 72,
+				manufacturerName: 150,
+				supplierName: 160,
+				registerNo: 130,
+				registerIssueDate: 100,
+				expireDate: 100,
+				status: 78,
+				createTime: 140
 			}
 		});
 
@@ -1107,15 +1134,15 @@
 			ns: 'certDetailCol',
 			skipFields: {},
 			colWidths: {
-				serialNumber: 60,
+				serialNumber: 70,
 				licenseKindCode: 110,
-				licenseKindName: 180,
+				licenseKindName: 200,
 				licenseNo: 140,
 				expireDate: 120,
-				certificateFile: 70,
-				snapUploadAction: 72,
-				createBy: 100,
-				createTime: 120
+				certificateFile: 64,
+				snapUploadAction: 64,
+				createBy: 90,
+				createTime: 110
 			}
 		});
 
@@ -1457,7 +1484,7 @@
 					title: '序号',
 					align: 'left',
 					halign: 'left',
-					width: 60,
+					width: 70,
 					formatter: function(value, row, index) {
 						return $.table.serialNumber(index);
 					}
@@ -1467,7 +1494,7 @@
 					title: '状态',
 					align: 'left',
 					halign: 'left',
-					width: 80,
+					width: 72,
 					sortable: true,
 					formatter: function(value, row, index) {
 						if (row.auditStatus == '1') {
@@ -1486,7 +1513,7 @@
 					title: '产品编码',
 					align: 'left',
 					halign: 'left',
-					width: 120,
+					width: 140,
 					sortable: true,
 					formatter: function(value, row, index) {
 						return ellipsisText(value);
@@ -1497,7 +1524,7 @@
 					title: '产品名称',
 					align: 'left',
 					halign: 'left',
-					width: 160,
+					width: 170,
 					sortable: true,
 					cellStyle: function() {
 						return { css: { cursor: 'pointer' } };
@@ -1525,7 +1552,7 @@
 					title: '规格',
 					align: 'left',
 					halign: 'left',
-					width: 100,
+					width: 88,
 					sortable: true,
 					formatter: function(value, row, index) {
 						return ellipsisText(value);
@@ -1536,7 +1563,7 @@
 					title: '型号',
 					align: 'left',
 					halign: 'left',
-					width: 100,
+					width: 88,
 					sortable: true,
 					formatter: function(value, row, index) {
 						return ellipsisText(value);
@@ -1547,7 +1574,7 @@
 					title: '单位',
 					align: 'left',
 					halign: 'left',
-					width: 70,
+					width: 56,
 					sortable: true,
 					formatter: function(value, row, index) {
 						return value || '-';
@@ -1558,7 +1585,7 @@
 					title: '单价',
 					align: 'left',
 					halign: 'left',
-					width: 90,
+					width: 72,
 					sortable: true,
 					formatter: function(value, row, index) {
 						if (value === null || value === undefined || value === '') {
@@ -1576,7 +1603,7 @@
 					title: '生产厂家',
 					align: 'left',
 					halign: 'left',
-					width: 140,
+					width: 150,
 					sortable: true,
 					formatter: function(value, row, index) {
 						return ellipsisText(value);
@@ -1587,7 +1614,7 @@
 					title: '供应商',
 					align: 'left',
 					halign: 'left',
-					width: 150,
+					width: 160,
 					sortable: true,
 					formatter: function(value, row, index) {
 						return ellipsisText(value);
@@ -1598,7 +1625,7 @@
 					title: '注册证号',
 					align: 'left',
 					halign: 'left',
-					width: 140,
+					width: 130,
 					sortable: true,
 					formatter: function(value, row, index) {
 						return ellipsisText(value);
@@ -1609,7 +1636,7 @@
 					title: '发证日期',
 					align: 'left',
 					halign: 'left',
-					width: 110,
+					width: 100,
 					sortable: true,
 					formatter: function(value, row, index) {
 						if (value) {
@@ -1628,7 +1655,7 @@
 					title: '有效期至',
 					align: 'left',
 					halign: 'left',
-					width: 110,
+					width: 100,
 					sortable: true,
 					formatter: function(value, row, index) {
 						if (!value) {
@@ -1645,7 +1672,7 @@
 					title: '效期状态',
 					align: 'left',
 					halign: 'left',
-					width: 80,
+					width: 72,
 					formatter: function(value, row, index) {
 						if (row.isExpired == '1') {
 							return '<span class="label label-danger">过期</span>';
@@ -1658,7 +1685,7 @@
 					title: '创建时间',
 					align: 'left',
 					halign: 'left',
-					width: 150,
+					width: 140,
 					sortable: true
 				}]
 			};

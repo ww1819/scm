@@ -69,12 +69,24 @@
 			margin-right: 172px;
 		}
 
+		/* 文本列表头左对齐，排序图标紧跟文字 */
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th {
+			text-align: left !important;
+		}
 		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th .th-inner,
 		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th .sortable {
-			text-align: center !important;
-			justify-content: center;
+			text-align: left !important;
+			justify-content: flex-start !important;
+			display: inline-block !important;
+			width: auto !important;
+			max-width: 100%;
+			box-sizing: border-box;
+			vertical-align: middle;
+			padding-right: 18px !important;
+			background-position: right center !important;
 		}
 
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th.bs-checkbox,
 		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th[data-field="rowIndex"],
 		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-body td[data-field="rowIndex"],
 		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th[data-field="isMain"],
@@ -84,6 +96,14 @@
 		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th[data-field="phonenumber"],
 		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-body td[data-field="phonenumber"] {
 			text-align: center !important;
+		}
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th.bs-checkbox .th-inner,
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th[data-field="rowIndex"] .th-inner,
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th[data-field="isMain"] .th-inner,
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th[data-field="status"] .th-inner,
+		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-container > .fixed-table-header th[data-field="phonenumber"] .th-inner {
+			text-align: center !important;
+			justify-content: center !important;
 		}
 
 		.supplier-user-table-wrap.supplier-user-list-table .fixed-table-header {
@@ -273,6 +293,7 @@
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
 	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
+	<script th:src="@{/js/common/tableColResize.js}"></script>
 	<script th:inline="javascript">
 		var editFlag = [[${@permission.hasPermi('supplier:user:edit')}]];
 		var removeFlag = [[${@permission.hasPermi('supplier:user:remove')}]];
@@ -292,6 +313,20 @@
 			createTime: 160,
 			supplierUserOperate: 160
 		};
+
+		var supplierUserColResize = createTableColResizeController({
+			tableId: supplierUserTableId,
+			ns: 'supplierUser',
+			checkboxWidth: 42,
+			skipFields: { '0': true, state: true, supplierUserOperate: true },
+			colWidths: supplierUserColWidths,
+			onAfterRefresh: function () {
+				syncSupplierUserOperateColumnScroll();
+				if (typeof fixSupplierUserFixedColumnsRight === 'function') {
+					fixSupplierUserFixedColumnsRight();
+				}
+			}
+		});
 
 		var supplierUserLayoutTimer = null;
 
@@ -372,126 +407,6 @@
 			return '<span class="supplier-user-cell-ellipsis" title="' + escSupplierUserCellAttr(s) + '">' + escSupplierUserCellAttr(s) + '</span>';
 		}
 
-		function getSupplierUserTableTotalWidth() {
-			var sum = 0;
-			var opt = $('#' + supplierUserTableId).bootstrapTable('getOptions');
-			if (opt && opt.columns && opt.columns[0]) {
-				$.each(opt.columns[0], function (_, col) {
-					if (!col || col.visible === false) {
-						return;
-					}
-					if (col.checkbox) {
-						sum += 42;
-					} else if (col.field && supplierUserColWidths[col.field] != null) {
-						sum += supplierUserColWidths[col.field];
-					} else if (col.width) {
-						sum += parseInt(col.width, 10) || 0;
-					} else {
-						sum += 100;
-					}
-				});
-			}
-			return Math.max(sum, 1200);
-		}
-
-		function applySupplierUserFieldColumnWidth(field, widthPx) {
-			var w = widthPx + 'px';
-			var $container = $('#' + supplierUserTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainHeader = $container.children('.fixed-table-header');
-			var $mainBody = $container.children('.fixed-table-body');
-			var $th = $mainHeader.find('th[data-field="' + field + '"]');
-			if ($th.length === 0) {
-				return;
-			}
-			var colIdx = $th[0].cellIndex;
-			var setW = function (el) {
-				el.style.setProperty('width', w, 'important');
-				el.style.setProperty('min-width', w, 'important');
-				el.style.setProperty('max-width', w, 'important');
-			};
-			$th.each(function () { setW(this); });
-			$mainBody.find('table tbody tr').each(function () {
-				var cell = this.cells[colIdx];
-				if (cell) {
-					setW(cell);
-				}
-			});
-			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
-			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
-		}
-
-		function applySupplierUserCheckboxColumnWidth() {
-			var w = '42px';
-			var $container = $('#' + supplierUserTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainHeader = $container.children('.fixed-table-header');
-			var $mainBody = $container.children('.fixed-table-body');
-			var $th = $mainHeader.find('th.bs-checkbox');
-			if ($th.length === 0) {
-				return;
-			}
-			var colIdx = $th[0].cellIndex;
-			var setW = function (el) {
-				el.style.setProperty('width', w, 'important');
-				el.style.setProperty('min-width', w, 'important');
-				el.style.setProperty('max-width', w, 'important');
-			};
-			$th.each(function () { setW(this); });
-			$mainBody.find('table tbody tr').each(function () {
-				var cell = this.cells[colIdx];
-				if (cell) {
-					setW(cell);
-				}
-			});
-			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
-			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
-		}
-
-		function syncSupplierUserHeaderBodyColumnWidths() {
-			var $container = $('#' + supplierUserTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainHeader = $container.children('.fixed-table-header');
-			var $mainBody = $container.children('.fixed-table-body');
-			var $headerThs = $mainHeader.find('thead tr').first().children('th');
-			var $firstRow = $mainBody.find('tbody tr').first();
-			if ($firstRow.length === 0) {
-				return;
-			}
-			var setW = function (el, widthVal) {
-				el.style.setProperty('width', widthVal, 'important');
-				el.style.setProperty('min-width', widthVal, 'important');
-				el.style.setProperty('max-width', widthVal, 'important');
-			};
-			$headerThs.each(function (i) {
-				var bodyCell = $firstRow[0].cells[i];
-				if (!bodyCell) {
-					return;
-				}
-				var w = bodyCell.style.width;
-				if (!w) {
-					w = window.getComputedStyle(bodyCell).width;
-				}
-				if (w) {
-					setW(this, w);
-					$mainHeader.find('colgroup col').eq(i).each(function () { setW(this, w); });
-					$mainBody.find('colgroup col').eq(i).each(function () { setW(this, w); });
-				}
-			});
-		}
-
-		function scheduleSupplierUserColumnWidths() {
-			applySupplierUserCheckboxColumnWidth();
-			$.each(supplierUserColWidths, function (field, width) {
-				applySupplierUserFieldColumnWidth(field, width);
-			});
-			syncSupplierUserHeaderBodyColumnWidths();
-			requestAnimationFrame(function () {
-				applySupplierUserCheckboxColumnWidth();
-				$.each(supplierUserColWidths, function (field, width) {
-					applySupplierUserFieldColumnWidth(field, width);
-				});
-				syncSupplierUserHeaderBodyColumnWidths();
-			});
-		}
-
 		function fixSupplierUserFixedColumnsRight() {
 			var $bt = $('#' + supplierUserTableId).closest('.bootstrap-table');
 			var $container = $bt.find('.fixed-table-container').first();
@@ -528,47 +443,6 @@
 			}
 		}
 
-		function fixSupplierUserTableHeaderAlign() {
-			var $bt = $('#' + supplierUserTableId).closest('.bootstrap-table');
-			var $container = $bt.find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			if (!$mainBody.length || !$mainHeader.length) {
-				return;
-			}
-			var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
-			$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
-		}
-
-		function syncSupplierUserHeaderBodyScrollLeft() {
-			var $container = $('#' + supplierUserTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			if ($mainBody.length && $mainHeader.length) {
-				$mainHeader.scrollLeft($mainBody[0].scrollLeft);
-			}
-		}
-
-		function bindSupplierUserMainHorizontalScroll() {
-			var $bt = $('#' + supplierUserTableId).closest('.bootstrap-table');
-			var $container = $bt.find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			$mainBody.off('scroll.supplierUserMainH').on('scroll.supplierUserMainH', function () {
-				$mainHeader.scrollLeft($mainBody.scrollLeft());
-			});
-		}
-
-		function applySupplierUserMainTableMinWidth() {
-			var sum = getSupplierUserTableTotalWidth();
-			var w = sum + 'px';
-			var $container = $('#' + supplierUserTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $headerTable = $container.children('.fixed-table-header').find('table');
-			var $bodyTable = $container.children('.fixed-table-body').children('table');
-			$headerTable.css({ width: w, minWidth: w, maxWidth: w });
-			$bodyTable.css({ width: w, minWidth: w, maxWidth: w });
-		}
-
 		function syncSupplierUserOperateColumnScroll() {
 			var $bt = $('#' + supplierUserTableId).closest('.bootstrap-table');
 			var $rightBody = $bt.find('.fixed-columns-right .fixed-table-body');
@@ -582,13 +456,10 @@
 		}
 
 		function refreshSupplierUserTableLayout() {
-			fixSupplierUserTableHeaderAlign();
-			scheduleSupplierUserColumnWidths();
-			applySupplierUserMainTableMinWidth();
-			syncSupplierUserHeaderBodyScrollLeft();
-			bindSupplierUserMainHorizontalScroll();
-			syncSupplierUserOperateColumnScroll();
-			fixSupplierUserFixedColumnsRight();
+			if (supplierUserColResize.isResizing()) {
+				return;
+			}
+			supplierUserColResize.refresh();
 		}
 
 		function querySupplierUserList() {

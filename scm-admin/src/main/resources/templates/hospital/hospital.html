@@ -64,12 +64,24 @@
 			margin-right: 172px;
 		}
 
+		/* 文本列表头左对齐，排序图标紧跟文字 */
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header th {
+			text-align: left !important;
+		}
 		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header th .th-inner,
 		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header th .sortable {
-			text-align: center !important;
-			justify-content: center;
+			text-align: left !important;
+			justify-content: flex-start !important;
+			display: inline-block !important;
+			width: auto !important;
+			max-width: 100%;
+			box-sizing: border-box;
+			vertical-align: middle;
+			padding-right: 18px !important;
+			background-position: right center !important;
 		}
 
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header th.bs-checkbox,
 		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header th[data-field="rowIndex"],
 		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="rowIndex"],
 		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header th[data-field="status"],
@@ -77,6 +89,13 @@
 		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header th[data-field="contactPhone"],
 		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="contactPhone"] {
 			text-align: center !important;
+		}
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header th.bs-checkbox .th-inner,
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header th[data-field="rowIndex"] .th-inner,
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header th[data-field="status"] .th-inner,
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-header th[data-field="contactPhone"] .th-inner {
+			text-align: center !important;
+			justify-content: center !important;
 		}
 
 		.hospital-table-wrap.hospital-list-table .fixed-table-header {
@@ -247,6 +266,7 @@
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
 	<th:block th:include="include :: bootstrap-table-fixed-columns-js" />
+	<script th:src="@{/js/common/tableColResize.js}"></script>
 	<script th:inline="javascript">
 		var editFlag = [[${@permission.hasPermi('hospital:hospital:edit')}]];
 		var removeFlag = [[${@permission.hasPermi('hospital:hospital:remove')}]];
@@ -268,6 +288,17 @@
 			createTime: 160,
 			hospitalOperate: 160
 		};
+
+		var hospitalColResize = createTableColResizeController({
+			tableId: hospitalTableId,
+			ns: 'hospitalMaint',
+			checkboxWidth: 42,
+			skipFields: { '0': true, state: true, hospitalOperate: true },
+			colWidths: hospitalColWidths,
+			onAfterRefresh: function () {
+				syncHospitalOperateColumnScroll();
+			}
+		});
 
 		$(function() {
 		    layoutHospitalTableWrapHeight();
@@ -329,167 +360,6 @@
 			return '<span class="hospital-cell-ellipsis" title="' + escHospitalCellAttr(s) + '">' + escHospitalCellAttr(s) + '</span>';
 		}
 
-		function getHospitalTableTotalWidth() {
-			var sum = 0;
-			var opt = $('#' + hospitalTableId).bootstrapTable('getOptions');
-			if (opt && opt.columns && opt.columns[0]) {
-				$.each(opt.columns[0], function (_, col) {
-					if (!col || col.visible === false) {
-						return;
-					}
-					if (col.checkbox) {
-						sum += 42;
-					} else if (col.field && hospitalColWidths[col.field] != null) {
-						sum += hospitalColWidths[col.field];
-					} else if (col.width) {
-						sum += parseInt(col.width, 10) || 0;
-					} else {
-						sum += 100;
-					}
-				});
-			}
-			return Math.max(sum, 1200);
-		}
-
-		function applyHospitalFieldColumnWidth(field, widthPx) {
-			var w = widthPx + 'px';
-			var $container = $('#' + hospitalTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainHeader = $container.children('.fixed-table-header');
-			var $mainBody = $container.children('.fixed-table-body');
-			var $th = $mainHeader.find('th[data-field="' + field + '"]');
-			if ($th.length === 0) {
-				return;
-			}
-			var colIdx = $th[0].cellIndex;
-			var setW = function (el) {
-				el.style.setProperty('width', w, 'important');
-				el.style.setProperty('min-width', w, 'important');
-				el.style.setProperty('max-width', w, 'important');
-			};
-			$th.each(function () { setW(this); });
-			$mainBody.find('table tbody tr').each(function () {
-				var cell = this.cells[colIdx];
-				if (cell) {
-					setW(cell);
-				}
-			});
-			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
-			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
-		}
-
-		function applyHospitalCheckboxColumnWidth() {
-			var w = '42px';
-			var $container = $('#' + hospitalTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainHeader = $container.children('.fixed-table-header');
-			var $mainBody = $container.children('.fixed-table-body');
-			var $th = $mainHeader.find('th.bs-checkbox');
-			if ($th.length === 0) {
-				return;
-			}
-			var colIdx = $th[0].cellIndex;
-			var setW = function (el) {
-				el.style.setProperty('width', w, 'important');
-				el.style.setProperty('min-width', w, 'important');
-				el.style.setProperty('max-width', w, 'important');
-			};
-			$th.each(function () { setW(this); });
-			$mainBody.find('table tbody tr').each(function () {
-				var cell = this.cells[colIdx];
-				if (cell) {
-					setW(cell);
-				}
-			});
-			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
-			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
-		}
-
-		function syncHospitalHeaderBodyColumnWidths() {
-			var $container = $('#' + hospitalTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainHeader = $container.children('.fixed-table-header');
-			var $mainBody = $container.children('.fixed-table-body');
-			var $headerThs = $mainHeader.find('thead tr').first().children('th');
-			var $firstRow = $mainBody.find('tbody tr').first();
-			if ($firstRow.length === 0) {
-				return;
-			}
-			var setW = function (el, widthVal) {
-				el.style.setProperty('width', widthVal, 'important');
-				el.style.setProperty('min-width', widthVal, 'important');
-				el.style.setProperty('max-width', widthVal, 'important');
-			};
-			$headerThs.each(function (i) {
-				var bodyCell = $firstRow[0].cells[i];
-				if (!bodyCell) {
-					return;
-				}
-				var w = bodyCell.style.width;
-				if (!w) {
-					w = window.getComputedStyle(bodyCell).width;
-				}
-				if (w) {
-					setW(this, w);
-					$mainHeader.find('colgroup col').eq(i).each(function () { setW(this, w); });
-					$mainBody.find('colgroup col').eq(i).each(function () { setW(this, w); });
-				}
-			});
-		}
-
-		function scheduleHospitalColumnWidths() {
-			applyHospitalCheckboxColumnWidth();
-			$.each(hospitalColWidths, function (field, width) {
-				applyHospitalFieldColumnWidth(field, width);
-			});
-			syncHospitalHeaderBodyColumnWidths();
-			requestAnimationFrame(function () {
-				applyHospitalCheckboxColumnWidth();
-				$.each(hospitalColWidths, function (field, width) {
-					applyHospitalFieldColumnWidth(field, width);
-				});
-				syncHospitalHeaderBodyColumnWidths();
-			});
-		}
-
-		function fixHospitalTableHeaderAlign() {
-			var $bt = $('#' + hospitalTableId).closest('.bootstrap-table');
-			var $container = $bt.find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			if (!$mainBody.length || !$mainHeader.length) {
-				return;
-			}
-			var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
-			$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
-		}
-
-		function syncHospitalHeaderBodyScrollLeft() {
-			var $container = $('#' + hospitalTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			if ($mainBody.length && $mainHeader.length) {
-				$mainHeader.scrollLeft($mainBody[0].scrollLeft);
-			}
-		}
-
-		function bindHospitalMainHorizontalScroll() {
-			var $bt = $('#' + hospitalTableId).closest('.bootstrap-table');
-			var $container = $bt.find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			$mainBody.off('scroll.hospitalMainH').on('scroll.hospitalMainH', function () {
-				$mainHeader.scrollLeft($mainBody.scrollLeft());
-			});
-		}
-
-		function applyHospitalMainTableMinWidth() {
-			var sum = getHospitalTableTotalWidth();
-			var w = sum + 'px';
-			var $container = $('#' + hospitalTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $headerTable = $container.children('.fixed-table-header').find('table');
-			var $bodyTable = $container.children('.fixed-table-body').children('table');
-			$headerTable.css({ width: w, minWidth: w, maxWidth: w });
-			$bodyTable.css({ width: w, minWidth: w, maxWidth: w });
-		}
-
 		function syncHospitalOperateColumnScroll() {
 			var $bt = $('#' + hospitalTableId).closest('.bootstrap-table');
 			var $rightBody = $bt.find('.fixed-columns-right .fixed-table-body');
@@ -503,12 +373,10 @@
 		}
 
 		function refreshHospitalTableLayout() {
-			fixHospitalTableHeaderAlign();
-			scheduleHospitalColumnWidths();
-			applyHospitalMainTableMinWidth();
-			syncHospitalHeaderBodyScrollLeft();
-			bindHospitalMainHorizontalScroll();
-			syncHospitalOperateColumnScroll();
+			if (hospitalColResize.isResizing()) {
+				return;
+			}
+			hospitalColResize.refresh();
 		}
 
 		function queryHospitalList() {

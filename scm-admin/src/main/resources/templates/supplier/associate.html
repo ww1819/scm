@@ -295,10 +295,39 @@
 	</div>
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
+	<script th:src="@{/js/common/tableColResize.js}"></script>
 	<script th:inline="javascript">
 		var prefix = ctx + "supplier/associate";
 		var withdrawFlag = [[${@permission.hasPermi('supplier:associate:withdraw')}]];
 		var associateApplyTableId = "apply-table";
+
+		var associateColWidths = {
+			rowIndex: 60,
+			hospitalCode: 110,
+			hospitalName: 160,
+			supplierCode: 120,
+			supplierName: 160,
+			supplyStartDate: 110,
+			supplyEndDate: 110,
+			auditStatus: 90,
+			auditRemark: 140,
+			associateOperate: 90
+		};
+
+		var associateColResize = createTableColResizeController({
+			tableId: associateApplyTableId,
+			ns: 'associateApply',
+			checkboxWidth: 42,
+			skipFields: { '0': true, state: true, associateOperate: true },
+			colWidths: associateColWidths
+		});
+
+		function refreshAssociateTableLayout() {
+			if (associateColResize.isResizing()) {
+				return;
+			}
+			associateColResize.refresh();
+		}
 
 		function layoutAssociateTableWrapHeight() {
 			var $wrap = $('.apply-list-panel .apply-table-wrap');
@@ -332,6 +361,7 @@
 			if ($table.length && $table.bootstrapTable('getOptions')) {
 				$table.bootstrapTable('resetView', { height: calculateAssociateTableHeight() });
 			}
+			refreshAssociateTableLayout();
 		}
 
 		$(function() {
@@ -341,6 +371,7 @@
 			$(window).resize(function() {
 				layoutAssociateTableWrapHeight();
 				adjustAssociateTableHeight();
+				setTimeout(refreshAssociateTableLayout, 100);
 			});
 			$("#associate-form").on("submit", function(e) {
 				e.preventDefault();
@@ -421,10 +452,15 @@
 				uniqueId: "applyId",
 				onLoadSuccess: function() {
 					layoutAssociateTableWrapHeight();
-					setTimeout(adjustAssociateTableHeight, 50);
+					setTimeout(function() {
+						adjustAssociateTableHeight();
+						refreshAssociateTableLayout();
+					}, 50);
+					setTimeout(refreshAssociateTableLayout, 200);
 				},
 				onPostBody: function() {
 					adjustAssociateTableHeight();
+					refreshAssociateTableLayout();
 				},
 				queryParams: function(params) {
 					var curParams = {
@@ -443,30 +479,39 @@
 					title: '申请ID',
 					visible: false
 				}, {
+					field: 'rowIndex',
 					title: '序号',
 					align: 'center',
+					width: 60,
 					formatter: function (value, row, index) { return $.table.serialNumber(index); }
 				}, {
 					field: 'hospitalCode',
-					title: '医院编码'
+					title: '医院编码',
+					width: 110
 				}, {
 					field: 'hospitalName',
-					title: '医院名称'
+					title: '医院名称',
+					width: 160
 				}, {
 					field: 'supplierCode',
-					title: '供应商编码'
+					title: '供应商编码',
+					width: 120
 				}, {
 					field: 'supplierName',
-					title: '供应商名称'
+					title: '供应商名称',
+					width: 160
 				}, {
 					field: 'supplyStartDate',
-					title: '供货开始'
+					title: '供货开始',
+					width: 110
 				}, {
 					field: 'supplyEndDate',
-					title: '供货结束'
+					title: '供货结束',
+					width: 110
 				}, {
 					field: 'auditStatus',
 					title: '状态',
+					width: 90,
 					formatter: function(v) {
 						if (v == '0') return '<span class="label label-warning">待审核</span>';
 						if (v == '1') return '<span class="label label-success">已通过</span>';
@@ -475,10 +520,13 @@
 					}
 				}, {
 					field: 'auditRemark',
-					title: '审核备注'
+					title: '审核备注',
+					width: 140
 				}, {
+					field: 'associateOperate',
 					title: '操作',
 					align: 'center',
+					width: 90,
 					formatter: function(value, row) {
 						if (row.auditStatus != '0') return '-';
 						return '<a class="btn btn-danger btn-xs ' + withdrawFlag + '" href="javascript:void(0)" onclick="withdrawApply(\'' + row.applyId + '\')"><i class="fa fa-undo"></i>撤回</a>';
@@ -489,6 +537,7 @@
 			setTimeout(function() {
 				layoutAssociateTableWrapHeight();
 				adjustAssociateTableHeight();
+				refreshAssociateTableLayout();
 			}, 0);
 		}
 

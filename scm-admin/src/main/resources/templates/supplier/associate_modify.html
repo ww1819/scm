@@ -297,10 +297,42 @@
 	</div>
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
+	<script th:src="@{/js/common/tableColResize.js}"></script>
 	<script th:inline="javascript">
 		var prefix = ctx + "supplier/associate";
 		var withdrawModifyFlag = [[${@permission.hasPermi('supplier:associateModify:withdraw')}]];
 		var modifyApplyTableId = "modify-apply-table";
+
+		var modifyColWidths = {
+			rowIndex: 60,
+			relationId: 90,
+			hospitalCode: 110,
+			hospitalName: 140,
+			supplierCode: 110,
+			supplierName: 140,
+			prevSupplyStartDate: 120,
+			prevSupplyEndDate: 120,
+			supplyStartDate: 120,
+			supplyEndDate: 120,
+			auditStatus: 90,
+			auditRemark: 120,
+			modifyOperate: 90
+		};
+
+		var modifyColResize = createTableColResizeController({
+			tableId: modifyApplyTableId,
+			ns: 'associateModify',
+			checkboxWidth: 42,
+			skipFields: { '0': true, state: true, modifyOperate: true },
+			colWidths: modifyColWidths
+		});
+
+		function refreshModifyTableLayout() {
+			if (modifyColResize.isResizing()) {
+				return;
+			}
+			modifyColResize.refresh();
+		}
 
 		function layoutAssociateTableWrapHeight() {
 			var $wrap = $('.apply-list-panel .apply-table-wrap');
@@ -334,6 +366,7 @@
 			if ($table.length && $table.bootstrapTable('getOptions')) {
 				$table.bootstrapTable('resetView', { height: calculateAssociateTableHeight() });
 			}
+			refreshModifyTableLayout();
 		}
 
 		$(function() {
@@ -343,6 +376,7 @@
 			$(window).resize(function() {
 				layoutAssociateTableWrapHeight();
 				adjustAssociateTableHeight();
+				setTimeout(refreshModifyTableLayout, 100);
 			});
 			$("#relationId").on("change", function() {
 				var rid = $(this).val();
@@ -439,10 +473,15 @@
 				uniqueId: "modifyApplyId",
 				onLoadSuccess: function() {
 					layoutAssociateTableWrapHeight();
-					setTimeout(adjustAssociateTableHeight, 50);
+					setTimeout(function() {
+						adjustAssociateTableHeight();
+						refreshModifyTableLayout();
+					}, 50);
+					setTimeout(refreshModifyTableLayout, 200);
 				},
 				onPostBody: function() {
 					adjustAssociateTableHeight();
+					refreshModifyTableLayout();
 				},
 				queryParams: function(params) {
 					var curParams = {
@@ -465,40 +504,51 @@
 					title: '关联ID',
 					width: 90
 				}, {
+					field: 'rowIndex',
 					title: '序号',
 					align: 'center',
+					width: 60,
 					formatter: function (value, row, index) { return $.table.serialNumber(index); }
 				}, {
 					field: 'hospitalCode',
-					title: '医院编码'
+					title: '医院编码',
+					width: 110
 				}, {
 					field: 'hospitalName',
-					title: '医院名称'
+					title: '医院名称',
+					width: 140
 				}, {
 					field: 'supplierCode',
-					title: '供应商编码'
+					title: '供应商编码',
+					width: 110
 				}, {
 					field: 'supplierName',
-					title: '供应商名称'
+					title: '供应商名称',
+					width: 140
 				}, {
 					field: 'prevSupplyStartDate',
 					title: '变更前供货开始',
+					width: 120,
 					formatter: function(v) { return v ? (typeof v === 'string' && v.length >= 10 ? v.substring(0, 10) : v) : '-'; }
 				}, {
 					field: 'prevSupplyEndDate',
 					title: '变更前供货结束',
+					width: 120,
 					formatter: function(v) { return v ? (typeof v === 'string' && v.length >= 10 ? v.substring(0, 10) : v) : '-'; }
 				}, {
 					field: 'supplyStartDate',
 					title: '申请供货开始',
+					width: 120,
 					formatter: function(v) { return v ? (typeof v === 'string' && v.length >= 10 ? v.substring(0, 10) : v) : '-'; }
 				}, {
 					field: 'supplyEndDate',
 					title: '申请供货结束',
+					width: 120,
 					formatter: function(v) { return v ? (typeof v === 'string' && v.length >= 10 ? v.substring(0, 10) : v) : '-'; }
 				}, {
 					field: 'auditStatus',
 					title: '状态',
+					width: 90,
 					formatter: function(v) {
 						if (v == '0') return '<span class="label label-warning">待审核</span>';
 						if (v == '1') return '<span class="label label-success">已通过</span>';
@@ -507,10 +557,13 @@
 					}
 				}, {
 					field: 'auditRemark',
-					title: '审核备注'
+					title: '审核备注',
+					width: 120
 				}, {
+					field: 'modifyOperate',
 					title: '操作',
 					align: 'center',
+					width: 90,
 					formatter: function(value, row) {
 						if (row.auditStatus != '0') return '-';
 						return '<a class="btn btn-danger btn-xs ' + withdrawModifyFlag + '" href="javascript:void(0)" onclick="withdrawModifyApply(\'' + row.modifyApplyId + '\')"><i class="fa fa-undo"></i>撤回</a>';
@@ -521,6 +574,7 @@
 			setTimeout(function() {
 				layoutAssociateTableWrapHeight();
 				adjustAssociateTableHeight();
+				refreshModifyTableLayout();
 			}, 0);
 		}
 		function withdrawModifyApply(modifyApplyId) {
