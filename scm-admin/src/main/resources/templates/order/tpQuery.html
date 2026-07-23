@@ -64,17 +64,46 @@
 			margin-right: 172px;
 		}
 
-		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-header th .th-inner,
-		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-header th .sortable {
-			text-align: center !important;
-			justify-content: center;
+		/* 文本列表头与明细统一左对齐；th-inner 不拉满整列，排序图标紧跟标题文字 */
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-header th {
+			text-align: left !important;
 		}
 
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-header th .th-inner,
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-header th .sortable {
+			text-align: left !important;
+			justify-content: flex-start !important;
+			display: inline-block !important;
+			width: auto !important;
+			max-width: 100%;
+			box-sizing: border-box;
+			vertical-align: middle;
+			padding-right: 18px !important;
+			background-position: right center !important;
+		}
+
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-header th.bs-checkbox,
 		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-header th[data-field="rowIndex"],
 		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-body td[data-field="rowIndex"],
 		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-header th[data-field="sheetJe"],
-		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-body td[data-field="sheetJe"] {
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-body td[data-field="sheetJe"],
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-header th[data-field="confirmStatus"],
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-body td[data-field="confirmStatus"],
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-header th[data-field="voidStatus"],
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-body td[data-field="voidStatus"],
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-header th[data-field="deliveryProgress"],
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-body td[data-field="deliveryProgress"] {
 			text-align: center !important;
+		}
+
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-header th.bs-checkbox .th-inner,
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-header th[data-field="rowIndex"] .th-inner,
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-header th[data-field="sheetJe"] .th-inner,
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-header th[data-field="confirmStatus"] .th-inner,
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-header th[data-field="voidStatus"] .th-inner,
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-header th[data-field="deliveryProgress"] .th-inner {
+			text-align: center !important;
+			justify-content: center !important;
 		}
 
 		.tp-query-table-wrap.tp-query-list-table .fixed-table-header {
@@ -83,6 +112,29 @@
 			z-index: 2;
 			background: #fff;
 			overflow: hidden;
+		}
+
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-header .rc-handle-container {
+			position: relative;
+			z-index: 20;
+			pointer-events: none;
+			height: 0;
+		}
+
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-header .rc-handle {
+			position: absolute;
+			top: 0;
+			width: 10px;
+			margin-left: -5px;
+			cursor: col-resize;
+			pointer-events: auto;
+			z-index: 21;
+			background: transparent;
+		}
+
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-header .rc-handle:hover,
+		.tp-query-table-wrap.tp-query-list-table .fixed-table-header .rc-handle.rc-handle-active {
+			background: rgba(60, 141, 188, 0.35);
 		}
 
 		.tp-query-table-wrap.tp-query-list-table .fixed-table-container > .fixed-table-header table,
@@ -319,6 +371,10 @@
 			deliveryProgress: 100,
 			tpOperate: 160
 		};
+		var TP_COL_RESIZE_SKIP = {
+			tpOperate: true
+		};
+		var tpCheckboxColWidth = 42;
 
 		$(function() {
 		    initDefaultTpPushDateRange();
@@ -461,16 +517,14 @@
 		}
 
 		function getTpTableTotalWidth() {
-			var sum = 0;
+			var sum = tpCheckboxColWidth;
 			var opt = $('#' + tpQueryTableId).bootstrapTable('getOptions');
 			if (opt && opt.columns && opt.columns[0]) {
 				$.each(opt.columns[0], function (_, col) {
-					if (!col || col.visible === false) {
+					if (!col || col.visible === false || col.checkbox) {
 						return;
 					}
-					if (col.checkbox) {
-						sum += 42;
-					} else if (col.field && tpColWidths[col.field] != null) {
+					if (col.field && tpColWidths[col.field] != null) {
 						sum += tpColWidths[col.field];
 					} else if (col.width) {
 						sum += parseInt(col.width, 10) || 0;
@@ -482,143 +536,179 @@
 			return Math.max(sum, 2400);
 		}
 
-		function applyTpFieldColumnWidth(field, widthPx) {
-			var w = widthPx + 'px';
+		function getTpFixedTables() {
+			/* 与订单查询同一套取表逻辑 */
 			var $container = $('#' + tpQueryTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
 			var $mainHeader = $container.children('.fixed-table-header');
 			var $mainBody = $container.children('.fixed-table-body');
-			var $th = $mainHeader.find('th[data-field="' + field + '"]');
-			if ($th.length === 0) {
+			var $headTable = $mainHeader.find('table').not('.fixed-table-border').first();
+			var $bodyTable = $mainBody.find('#' + tpQueryTableId);
+			if (!$bodyTable.length) {
+				$bodyTable = $mainBody.find('table').not('.fixed-table-border').first();
+			}
+			return {
+				$container: $container,
+				$mainHeader: $mainHeader,
+				$mainBody: $mainBody,
+				$headTable: $headTable,
+				$bodyTable: $bodyTable
+			};
+		}
+
+		function ensureTpTableColgroup($table, colCount) {
+			if (!$table || !$table.length) {
+				return $();
+			}
+			var $colgroup = $table.children('colgroup');
+			if (!$colgroup.length) {
+				$colgroup = $('<colgroup></colgroup>');
+				$table.prepend($colgroup);
+			}
+			while ($colgroup.children('col').length < colCount) {
+				$colgroup.append('<col />');
+			}
+			while ($colgroup.children('col').length > colCount) {
+				$colgroup.children('col:last').remove();
+			}
+			return $colgroup;
+		}
+
+		/** 表头列宽 → 表体（按 data-field 对齐列索引，与订单查询一致并更稳） */
+		function applyTpColumnWidthFromHeader() {
+			var tables = getTpFixedTables();
+			var $headTable = tables.$headTable;
+			var $bodyTable = tables.$bodyTable;
+			var $mainBody = tables.$mainBody;
+			if (!$headTable.length || !$bodyTable.length) {
 				return;
 			}
-			var colIdx = $th[0].cellIndex;
-			var setW = function (el) {
-				el.style.setProperty('width', w, 'important');
-				el.style.setProperty('min-width', w, 'important');
-				el.style.setProperty('max-width', w, 'important');
-			};
-			$th.each(function () { setW(this); });
-			$mainBody.find('table tbody tr').each(function () {
-				var cell = this.cells[colIdx];
-				if (cell) {
-					setW(cell);
+			var $ths = $headTable.find('thead tr:first th');
+			var headColCount = $ths.length;
+			if (headColCount < 1) {
+				return;
+			}
+			var $bodyThs = $bodyTable.find('thead tr:first th');
+			var bodyColCount = Math.max(headColCount, $bodyThs.length);
+			ensureTpTableColgroup($headTable, headColCount);
+			ensureTpTableColgroup($bodyTable, bodyColCount);
+			var totalW = 0;
+			var setW = function (el, w) {
+				if (!el) {
+					return;
 				}
+				var ws = w + 'px';
+				el.style.setProperty('width', ws, 'important');
+				el.style.setProperty('min-width', ws, 'important');
+				el.style.setProperty('max-width', 'none', 'important');
+			};
+			$ths.each(function () {
+				var headIdx = this.cellIndex;
+				if (headIdx < 0) {
+					return;
+				}
+				var $th = $(this);
+				var field = $th.attr('data-field');
+				var w;
+				if ($th.hasClass('bs-checkbox') || field === '0' || field === 'state') {
+					w = tpCheckboxColWidth;
+				} else if (field && tpColWidths[field] != null) {
+					w = tpColWidths[field];
+				} else {
+					w = Math.ceil(this.getBoundingClientRect().width);
+					if (!w || w < 40) {
+						w = 40;
+					}
+					if (field) {
+						tpColWidths[field] = w;
+					}
+				}
+				/* 表体列索引：优先按 data-field 对齐，避免表头/表体列数不一致时错位 */
+				var bodyIdx = headIdx;
+				if (field) {
+					var $bodyTh = $bodyTable.find('thead tr:first th[data-field="' + field + '"]');
+					if ($bodyTh.length) {
+						bodyIdx = $bodyTh[0].cellIndex;
+					}
+				}
+				setW(this, w);
+				$th.find('.fht-cell').each(function () { setW(this, w); });
+				$headTable.children('colgroup').children('col').eq(headIdx).each(function () { setW(this, w); });
+				$bodyTable.children('colgroup').children('col').eq(bodyIdx).each(function () { setW(this, w); });
+				$bodyTable.find('thead tr:first th').eq(bodyIdx).each(function () {
+					setW(this, w);
+					$(this).find('.fht-cell').each(function () { setW(this, w); });
+				});
+				$bodyTable.find('tbody tr').each(function () {
+					var cell = this.cells[bodyIdx];
+					if (cell) {
+						setW(cell, w);
+					}
+				});
+				if (field) {
+					$mainBody.find('td[data-field="' + field + '"]').each(function () { setW(this, w); });
+				}
+				totalW += w;
 			});
-			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
-			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			if (totalW > 0) {
+				var tw = totalW + 'px';
+				$headTable[0].style.setProperty('width', tw, 'important');
+				$headTable[0].style.setProperty('min-width', tw, 'important');
+				$headTable[0].style.setProperty('max-width', 'none', 'important');
+				$bodyTable[0].style.setProperty('width', tw, 'important');
+				$bodyTable[0].style.setProperty('min-width', tw, 'important');
+				$bodyTable[0].style.setProperty('max-width', 'none', 'important');
+			}
+		}
+
+		function applyTpFieldColumnWidth(field, widthPx) {
+			tpColWidths[field] = widthPx;
+			applyTpColumnWidthFromHeader();
 		}
 
 		function applyTpCheckboxColumnWidth() {
-			var w = '42px';
-			var $container = $('#' + tpQueryTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainHeader = $container.children('.fixed-table-header');
-			var $mainBody = $container.children('.fixed-table-body');
-			var $th = $mainHeader.find('th.bs-checkbox');
-			if ($th.length === 0) {
-				return;
-			}
-			var colIdx = $th[0].cellIndex;
-			var setW = function (el) {
-				el.style.setProperty('width', w, 'important');
-				el.style.setProperty('min-width', w, 'important');
-				el.style.setProperty('max-width', w, 'important');
-			};
-			$th.each(function () { setW(this); });
-			$mainBody.find('table tbody tr').each(function () {
-				var cell = this.cells[colIdx];
-				if (cell) {
-					setW(cell);
-				}
-			});
-			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
-			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			applyTpColumnWidthFromHeader();
 		}
 
 		function syncTpHeaderBodyColumnWidths() {
-			var $container = $('#' + tpQueryTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainHeader = $container.children('.fixed-table-header');
-			var $mainBody = $container.children('.fixed-table-body');
-			var $headerThs = $mainHeader.find('thead tr').first().children('th');
-			var $firstRow = $mainBody.find('tbody tr').first();
-			if ($firstRow.length === 0) {
-				return;
-			}
-			var setW = function (el, widthVal) {
-				el.style.setProperty('width', widthVal, 'important');
-				el.style.setProperty('min-width', widthVal, 'important');
-				el.style.setProperty('max-width', widthVal, 'important');
-			};
-			$headerThs.each(function (i) {
-				var bodyCell = $firstRow[0].cells[i];
-				if (!bodyCell) {
-					return;
-				}
-				var w = bodyCell.style.width;
-				if (!w) {
-					w = window.getComputedStyle(bodyCell).width;
-				}
-				if (w) {
-					setW(this, w);
-					$mainHeader.find('colgroup col').eq(i).each(function () { setW(this, w); });
-					$mainBody.find('colgroup col').eq(i).each(function () { setW(this, w); });
-				}
-			});
+			applyTpColumnWidthFromHeader();
 		}
 
 		function scheduleTpColumnWidths() {
-			applyTpCheckboxColumnWidth();
-			$.each(tpColWidths, function (field, width) {
-				applyTpFieldColumnWidth(field, width);
-			});
-			syncTpHeaderBodyColumnWidths();
+			applyTpColumnWidthFromHeader();
 			requestAnimationFrame(function () {
-				applyTpCheckboxColumnWidth();
-				$.each(tpColWidths, function (field, width) {
-					applyTpFieldColumnWidth(field, width);
-				});
-				syncTpHeaderBodyColumnWidths();
+				applyTpColumnWidthFromHeader();
 			});
 		}
 
 		function fixTpTableHeaderAlign() {
-			var $bt = $('#' + tpQueryTableId).closest('.bootstrap-table');
-			var $container = $bt.find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			if (!$mainBody.length || !$mainHeader.length) {
+			var tables = getTpFixedTables();
+			if (!tables.$mainBody.length || !tables.$mainHeader.length) {
 				return;
 			}
-			var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
-			$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+			var scrollW = tables.$mainBody[0].offsetWidth - tables.$mainBody[0].clientWidth;
+			tables.$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+			applyTpColumnWidthFromHeader();
 		}
 
 		function syncTpHeaderBodyScrollLeft() {
-			var $container = $('#' + tpQueryTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			if ($mainBody.length && $mainHeader.length) {
-				$mainHeader.scrollLeft($mainBody[0].scrollLeft);
+			var tables = getTpFixedTables();
+			if (tables.$mainBody.length && tables.$mainHeader.length) {
+				tables.$mainHeader.scrollLeft(tables.$mainBody[0].scrollLeft);
 			}
 		}
 
 		function bindTpMainHorizontalScroll() {
-			var $bt = $('#' + tpQueryTableId).closest('.bootstrap-table');
-			var $container = $bt.find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			$mainBody.off('scroll.tpMainH').on('scroll.tpMainH', function () {
-				$mainHeader.scrollLeft($mainBody.scrollLeft());
+			var tables = getTpFixedTables();
+			tables.$mainBody.off('scroll.tpMainH').on('scroll.tpMainH', function () {
+				tables.$mainHeader.scrollLeft(tables.$mainBody.scrollLeft());
+				if (typeof window.__syncTpResizeHandles === 'function') {
+					window.__syncTpResizeHandles();
+				}
 			});
 		}
 
 		function applyTpMainTableMinWidth() {
-			var sum = getTpTableTotalWidth();
-			var w = sum + 'px';
-			var $container = $('#' + tpQueryTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $headerTable = $container.children('.fixed-table-header').find('table');
-			var $bodyTable = $container.children('.fixed-table-body').children('table');
-			$headerTable.css({ width: w, minWidth: w, maxWidth: w });
-			$bodyTable.css({ width: w, minWidth: w, maxWidth: w });
+			applyTpColumnWidthFromHeader();
 		}
 
 		function syncTpOperateColumnScroll() {
@@ -633,13 +723,97 @@
 			});
 		}
 
+		var tpColResizing = false;
+
+		/** 像素级列宽拖动：与订单查询同一交互，拖拽中禁止布局刷新打断同步 */
+		function initTpHeaderColumnResize() {
+			var tables = getTpFixedTables();
+			var $mainHeader = tables.$mainHeader;
+			var $headTable = tables.$headTable;
+			if (!$mainHeader.length || !$headTable.length) {
+				return;
+			}
+			$mainHeader.find('.rc-handle-container').remove();
+			var $handleContainer = $('<div class="rc-handle-container"></div>');
+			$headTable.before($handleContainer);
+
+			function syncTpResizeHandles() {
+				var $ths = $headTable.find('thead tr:first th');
+				if (!$ths.length) {
+					return;
+				}
+				var tableW = $headTable.outerWidth() || 0;
+				var headerH = $headTable.find('thead').outerHeight() || 40;
+				$handleContainer.css({ width: tableW + 'px' });
+				$handleContainer.empty();
+				var containerLeft = $handleContainer.offset().left;
+				$ths.each(function () {
+					var $th = $(this);
+					var field = $th.attr('data-field');
+					if (!field || TP_COL_RESIZE_SKIP[field] || $th.hasClass('bs-checkbox')) {
+						return;
+					}
+					var left = $th.offset().left - containerLeft + $th.outerWidth();
+					$('<div class="rc-handle" title="拖动调整列宽"></div>')
+						.css({ left: left + 'px', height: headerH + 'px' })
+						.attr('data-field', field)
+						.appendTo($handleContainer);
+				});
+			}
+
+			$handleContainer.off('.tpColResize').on('mousedown.tpColResize', '.rc-handle', function (e) {
+				e.preventDefault();
+				e.stopPropagation();
+				var field = $(this).attr('data-field');
+				if (!field || TP_COL_RESIZE_SKIP[field]) {
+					return;
+				}
+				var startX = e.clientX;
+				var startW = tpColWidths[field] || 80;
+				var $th = $headTable.find('thead tr:first th[data-field="' + field + '"]');
+				if ($th.length) {
+					startW = Math.ceil($th.outerWidth()) || startW;
+				}
+				var $active = $(this).addClass('rc-handle-active');
+				tpColResizing = true;
+				$(document.body).css('cursor', 'col-resize');
+
+				function onMove(ev) {
+					var nextW = Math.max(48, startW + (ev.clientX - startX));
+					tpColWidths[field] = nextW;
+					applyTpColumnWidthFromHeader();
+					syncTpResizeHandles();
+					$handleContainer.find('.rc-handle[data-field="' + field + '"]').addClass('rc-handle-active');
+				}
+
+				function onUp() {
+					$(document).off('mousemove.tpColResize mouseup.tpColResize');
+					$(document.body).css('cursor', '');
+					$active.removeClass('rc-handle-active');
+					applyTpColumnWidthFromHeader();
+					syncTpResizeHandles();
+					fixTpTableHeaderAlign();
+					tpColResizing = false;
+				}
+
+				$(document).on('mousemove.tpColResize', onMove);
+				$(document).on('mouseup.tpColResize', onUp);
+			});
+
+			syncTpResizeHandles();
+			window.__syncTpResizeHandles = syncTpResizeHandles;
+		}
+
 		function refreshTpTableLayout() {
+			if (tpColResizing) {
+				return;
+			}
 			fixTpTableHeaderAlign();
 			scheduleTpColumnWidths();
-			applyTpMainTableMinWidth();
 			syncTpHeaderBodyScrollLeft();
 			bindTpMainHorizontalScroll();
 			syncTpOperateColumnScroll();
+			initTpHeaderColumnResize();
 		}
 
 		function tpQueryParams(params) {

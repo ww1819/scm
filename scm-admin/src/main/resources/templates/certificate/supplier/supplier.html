@@ -257,6 +257,29 @@
 			overflow: hidden;
 		}
 
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-header .rc-handle-container {
+			position: relative;
+			z-index: 20;
+			pointer-events: none;
+			height: 0;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-header .rc-handle {
+			position: absolute;
+			top: 0;
+			width: 10px;
+			margin-left: -5px;
+			cursor: col-resize;
+			pointer-events: auto;
+			z-index: 21;
+			background: transparent;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-header .rc-handle:hover,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-header .rc-handle.rc-handle-active {
+			background: rgba(60, 141, 188, 0.35);
+		}
+
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-columns-right {
 			z-index: 5;
 			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
@@ -269,10 +292,49 @@
 			background: #fff;
 		}
 
+		/* 文本列表头左对齐，th-inner 不拉满，排序图标紧跟文字 */
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th {
+			text-align: left !important;
+		}
+
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th .th-inner,
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th .sortable {
+			text-align: left !important;
+			justify-content: flex-start !important;
+			display: inline-block !important;
+			width: auto !important;
+			max-width: 100%;
+			box-sizing: border-box;
+			vertical-align: middle;
+			padding-right: 18px !important;
+			background-position: right center !important;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th.bs-checkbox,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="uploadedFlag"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="uploadedFlag"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="serialNumber"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="serialNumber"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="expireDate"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="expireDate"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="certificateName"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateName"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="auditStatus"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="auditStatus"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="createBy"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="createBy"] {
 			text-align: center !important;
-			justify-content: center;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th.bs-checkbox .th-inner,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="uploadedFlag"] .th-inner,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="serialNumber"] .th-inner,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="expireDate"] .th-inner,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="certificateName"] .th-inner,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="auditStatus"] .th-inner,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="createBy"] .th-inner {
+			text-align: center !important;
+			justify-content: center !important;
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th,
@@ -369,13 +431,11 @@
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="certificateType"] {
 			padding-left: 16px !important;
 			padding-right: 10px !important;
-			max-width: 0;
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateNo"],
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="certificateNo"] {
 			padding-left: 8px !important;
-			max-width: 0;
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateType"],
@@ -552,6 +612,11 @@
 			uploadedFlag: 70,
 			certOperate: 160
 		};
+		var CERT_COL_RESIZE_SKIP = {
+			certOperate: true
+		};
+		var certCheckboxColWidth = 42;
+		var certColResizing = false;
 
 		$(function() {
 			initLeftHospitalTable();
@@ -681,16 +746,14 @@
 		}
 
 		function getCertTableTotalWidth() {
-			var sum = 0;
+			var sum = certCheckboxColWidth;
 			var opt = $('#' + certTableId).bootstrapTable('getOptions');
 			if (opt && opt.columns && opt.columns[0]) {
 				$.each(opt.columns[0], function(_, col) {
-					if (!col || col.visible === false) {
+					if (!col || col.visible === false || col.checkbox) {
 						return;
 					}
-					if (col.checkbox) {
-						sum += 42;
-					} else if (col.field && regColWidths[col.field] != null) {
+					if (col.field && regColWidths[col.field] != null) {
 						sum += regColWidths[col.field];
 					} else if (col.width) {
 						sum += parseInt(col.width, 10) || 0;
@@ -702,125 +765,265 @@
 			return Math.max(sum, 1000);
 		}
 
-		function applyCertFieldColumnWidth(field, widthPx) {
-			var w = widthPx + 'px';
+		function getCertFixedTables() {
 			var $container = $('#' + certTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
 			var $mainHeader = $container.children('.fixed-table-header');
 			var $mainBody = $container.children('.fixed-table-body');
-			var $th = $mainHeader.find('th[data-field="' + field + '"]');
-			if ($th.length === 0) {
+			var $headTable = $mainHeader.find('table').not('.fixed-table-border').first();
+			var $bodyTable = $mainBody.find('#' + certTableId);
+			if (!$bodyTable.length) {
+				$bodyTable = $mainBody.find('table').not('.fixed-table-border').first();
+			}
+			return {
+				$container: $container,
+				$mainHeader: $mainHeader,
+				$mainBody: $mainBody,
+				$headTable: $headTable,
+				$bodyTable: $bodyTable
+			};
+		}
+
+		function ensureCertTableColgroup($table, colCount) {
+			if (!$table || !$table.length) {
+				return $();
+			}
+			var $colgroup = $table.children('colgroup');
+			if (!$colgroup.length) {
+				$colgroup = $('<colgroup></colgroup>');
+				$table.prepend($colgroup);
+			}
+			while ($colgroup.children('col').length < colCount) {
+				$colgroup.append('<col />');
+			}
+			while ($colgroup.children('col').length > colCount) {
+				$colgroup.children('col:last').remove();
+			}
+			return $colgroup;
+		}
+
+		/** 表头列宽 → 表体同步（按 data-field 对齐） */
+		function applyCertColumnWidthFromHeader() {
+			var tables = getCertFixedTables();
+			var $headTable = tables.$headTable;
+			var $bodyTable = tables.$bodyTable;
+			var $mainBody = tables.$mainBody;
+			if (!$headTable.length || !$bodyTable.length) {
 				return;
 			}
-			var colIdx = $th[0].cellIndex;
-			var setW = function(el) {
-				el.style.setProperty('width', w, 'important');
-				el.style.setProperty('min-width', w, 'important');
-				el.style.setProperty('max-width', w, 'important');
-			};
-			$th.each(function() { setW(this); });
-			$mainBody.find('table tbody tr').each(function() {
-				var cell = this.cells[colIdx];
-				if (cell) {
-					setW(cell);
+			var $ths = $headTable.find('thead tr:first th');
+			var headColCount = $ths.length;
+			if (headColCount < 1) {
+				return;
+			}
+			var $bodyThs = $bodyTable.find('thead tr:first th');
+			var bodyColCount = Math.max(headColCount, $bodyThs.length);
+			ensureCertTableColgroup($headTable, headColCount);
+			ensureCertTableColgroup($bodyTable, bodyColCount);
+			var totalW = 0;
+			var setW = function(el, w) {
+				if (!el) {
+					return;
 				}
+				var ws = w + 'px';
+				el.style.setProperty('width', ws, 'important');
+				el.style.setProperty('min-width', ws, 'important');
+				el.style.setProperty('max-width', 'none', 'important');
+			};
+			$ths.each(function() {
+				var headIdx = this.cellIndex;
+				if (headIdx < 0) {
+					return;
+				}
+				var $th = $(this);
+				var field = $th.attr('data-field');
+				var w;
+				if ($th.hasClass('bs-checkbox') || field === '0' || field === 'state') {
+					w = certCheckboxColWidth;
+				} else if (field && regColWidths[field] != null) {
+					w = regColWidths[field];
+				} else {
+					w = Math.ceil(this.getBoundingClientRect().width);
+					if (!w || w < 40) {
+						w = 40;
+					}
+					if (field) {
+						regColWidths[field] = w;
+					}
+				}
+				var bodyIdx = headIdx;
+				if (field) {
+					var $bodyTh = $bodyTable.find('thead tr:first th[data-field="' + field + '"]');
+					if ($bodyTh.length) {
+						bodyIdx = $bodyTh[0].cellIndex;
+					}
+				}
+				setW(this, w);
+				$th.find('.fht-cell').each(function() { setW(this, w); });
+				$headTable.children('colgroup').children('col').eq(headIdx).each(function() { setW(this, w); });
+				$bodyTable.children('colgroup').children('col').eq(bodyIdx).each(function() { setW(this, w); });
+				$bodyTable.find('thead tr:first th').eq(bodyIdx).each(function() {
+					setW(this, w);
+					$(this).find('.fht-cell').each(function() { setW(this, w); });
+				});
+				$bodyTable.find('tbody tr').each(function() {
+					var cell = this.cells[bodyIdx];
+					if (cell) {
+						setW(cell, w);
+					}
+				});
+				if (field) {
+					$mainBody.find('td[data-field="' + field + '"]').each(function() { setW(this, w); });
+				}
+				totalW += w;
 			});
-			$mainHeader.find('table colgroup col').eq(colIdx).each(function() { setW(this); });
-			$mainBody.find('table colgroup col').eq(colIdx).each(function() { setW(this); });
+			if (totalW > 0) {
+				var tw = totalW + 'px';
+				$headTable[0].style.setProperty('width', tw, 'important');
+				$headTable[0].style.setProperty('min-width', tw, 'important');
+				$headTable[0].style.setProperty('max-width', 'none', 'important');
+				$bodyTable[0].style.setProperty('width', tw, 'important');
+				$bodyTable[0].style.setProperty('min-width', tw, 'important');
+				$bodyTable[0].style.setProperty('max-width', 'none', 'important');
+			}
+		}
+
+		function applyCertFieldColumnWidth(field, widthPx) {
+			regColWidths[field] = widthPx;
+			applyCertColumnWidthFromHeader();
 		}
 
 		function syncCertHeaderBodyColumnWidths() {
-			var $container = $('#' + certTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainHeader = $container.children('.fixed-table-header');
-			var $mainBody = $container.children('.fixed-table-body');
-			var $headerThs = $mainHeader.find('thead tr').first().children('th');
-			var $firstRow = $mainBody.find('tbody tr').first();
-			if ($firstRow.length === 0) {
-				return;
-			}
-			var setW = function(el, widthVal) {
-				el.style.setProperty('width', widthVal, 'important');
-				el.style.setProperty('min-width', widthVal, 'important');
-				el.style.setProperty('max-width', widthVal, 'important');
-			};
-			$headerThs.each(function(i) {
-				var bodyCell = $firstRow[0].cells[i];
-				if (!bodyCell) {
-					return;
-				}
-				var w = bodyCell.style.width;
-				if (!w) {
-					w = window.getComputedStyle(bodyCell).width;
-				}
-				if (w) {
-					setW(this, w);
-					$mainHeader.find('colgroup col').eq(i).each(function() { setW(this, w); });
-					$mainBody.find('colgroup col').eq(i).each(function() { setW(this, w); });
-				}
-			});
+			applyCertColumnWidthFromHeader();
 		}
 
 		function scheduleCertColumnWidths() {
-			$.each(regColWidths, function(field, width) {
-				applyCertFieldColumnWidth(field, width);
-			});
-			syncCertHeaderBodyColumnWidths();
+			applyCertColumnWidthFromHeader();
 			requestAnimationFrame(function() {
-				$.each(regColWidths, function(field, width) {
-					applyCertFieldColumnWidth(field, width);
-				});
-				syncCertHeaderBodyColumnWidths();
+				applyCertColumnWidthFromHeader();
 			});
 		}
 
 		function fixCertTableHeaderAlign() {
-			var $bt = $('#' + certTableId).closest('.bootstrap-table');
-			var $container = $bt.find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			if (!$mainBody.length || !$mainHeader.length) {
+			var tables = getCertFixedTables();
+			if (!tables.$mainBody.length || !tables.$mainHeader.length) {
 				return;
 			}
-			var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
-			$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+			var scrollW = tables.$mainBody[0].offsetWidth - tables.$mainBody[0].clientWidth;
+			tables.$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+			applyCertColumnWidthFromHeader();
 		}
 
 		function syncCertHeaderBodyScrollLeft() {
-			var $container = $('#' + certTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			if ($mainBody.length && $mainHeader.length) {
-				$mainHeader.scrollLeft($mainBody[0].scrollLeft);
+			var tables = getCertFixedTables();
+			if (tables.$mainBody.length && tables.$mainHeader.length) {
+				tables.$mainHeader.scrollLeft(tables.$mainBody[0].scrollLeft);
 			}
 		}
 
 		function bindCertMainHorizontalScroll() {
-			var $bt = $('#' + certTableId).closest('.bootstrap-table');
-			var $container = $bt.find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			$mainBody.off('scroll.certMainH').on('scroll.certMainH', function() {
-				$mainHeader.scrollLeft($mainBody.scrollLeft());
+			var tables = getCertFixedTables();
+			tables.$mainBody.off('scroll.certMainH').on('scroll.certMainH', function() {
+				tables.$mainHeader.scrollLeft(tables.$mainBody.scrollLeft());
+				if (typeof window.__syncCertResizeHandles === 'function') {
+					window.__syncCertResizeHandles();
+				}
 			});
 		}
 
 		function applyCertMainTableMinWidth() {
-			var sum = getCertTableTotalWidth();
-			var w = sum + 'px';
-			var $container = $('#' + certTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $headerTable = $container.children('.fixed-table-header').find('table');
-			var $bodyTable = $container.children('.fixed-table-body').children('table');
-			$headerTable.css({ width: w, minWidth: w, maxWidth: w });
-			$bodyTable.css({ width: w, minWidth: w, maxWidth: w });
+			applyCertColumnWidthFromHeader();
+		}
+
+		/** 像素级列宽拖动：表头交界处拖动手柄，表头表体同步 */
+		function initCertHeaderColumnResize() {
+			var tables = getCertFixedTables();
+			var $mainHeader = tables.$mainHeader;
+			var $headTable = tables.$headTable;
+			if (!$mainHeader.length || !$headTable.length) {
+				return;
+			}
+			$mainHeader.find('.rc-handle-container').remove();
+			var $handleContainer = $('<div class="rc-handle-container"></div>');
+			$headTable.before($handleContainer);
+
+			function syncCertResizeHandles() {
+				var $ths = $headTable.find('thead tr:first th');
+				if (!$ths.length) {
+					return;
+				}
+				var tableW = $headTable.outerWidth() || 0;
+				var headerH = $headTable.find('thead').outerHeight() || 40;
+				$handleContainer.css({ width: tableW + 'px' });
+				$handleContainer.empty();
+				var containerLeft = $handleContainer.offset().left;
+				$ths.each(function() {
+					var $th = $(this);
+					var field = $th.attr('data-field');
+					if (!field || CERT_COL_RESIZE_SKIP[field] || $th.hasClass('bs-checkbox')) {
+						return;
+					}
+					var left = $th.offset().left - containerLeft + $th.outerWidth();
+					$('<div class="rc-handle" title="拖动调整列宽"></div>')
+						.css({ left: left + 'px', height: headerH + 'px' })
+						.attr('data-field', field)
+						.appendTo($handleContainer);
+				});
+			}
+
+			$handleContainer.off('.certColResize').on('mousedown.certColResize', '.rc-handle', function(e) {
+				e.preventDefault();
+				e.stopPropagation();
+				var field = $(this).attr('data-field');
+				if (!field || CERT_COL_RESIZE_SKIP[field]) {
+					return;
+				}
+				var startX = e.clientX;
+				var startW = regColWidths[field] || 80;
+				var $th = $headTable.find('thead tr:first th[data-field="' + field + '"]');
+				if ($th.length) {
+					startW = Math.ceil($th.outerWidth()) || startW;
+				}
+				var $active = $(this).addClass('rc-handle-active');
+				certColResizing = true;
+				$(document.body).css('cursor', 'col-resize');
+
+				function onMove(ev) {
+					var nextW = Math.max(48, startW + (ev.clientX - startX));
+					regColWidths[field] = nextW;
+					applyCertColumnWidthFromHeader();
+					syncCertResizeHandles();
+					$handleContainer.find('.rc-handle[data-field="' + field + '"]').addClass('rc-handle-active');
+				}
+
+				function onUp() {
+					$(document).off('mousemove.certColResize mouseup.certColResize');
+					$(document.body).css('cursor', '');
+					$active.removeClass('rc-handle-active');
+					applyCertColumnWidthFromHeader();
+					syncCertResizeHandles();
+					fixCertTableHeaderAlign();
+					certColResizing = false;
+				}
+
+				$(document).on('mousemove.certColResize', onMove);
+				$(document).on('mouseup.certColResize', onUp);
+			});
+
+			syncCertResizeHandles();
+			window.__syncCertResizeHandles = syncCertResizeHandles;
 		}
 
 		function refreshCertTableLayout() {
+			if (certColResizing) {
+				return;
+			}
 			fixCertTableHeaderAlign();
 			scheduleCertColumnWidths();
-			applyCertMainTableMinWidth();
 			syncCertHeaderBodyScrollLeft();
 			bindCertMainHorizontalScroll();
 			syncCertOperateColumnScroll();
 			syncCertOperateColumnContent();
+			initCertHeaderColumnResize();
 		}
 
 		function buildCertOperateHtml(row) {
@@ -939,9 +1142,9 @@
 							return '-';
 						}
 						var cid = row.certificateId;
-						var text = value.length > 12 ? value.substring(0, 12) + '...' : value;
+						var text = String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 						var title = (value || '').replace(/"/g, '&quot;');
-						return '<span class="cert-supplier-dblview" style="cursor:pointer;color:#337ab7;" '
+						return '<span class="cert-supplier-dblview" style="cursor:pointer;color:#337ab7;display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;" '
 							+ 'ondblclick="viewCertDetail(' + cid + ');return false;" '
 							+ 'title="' + title + '（双击查看明细）">' + text + '</span>';
 					}
@@ -956,7 +1159,9 @@
 						if (!value) {
 							return '-';
 						}
-						return $.table.tooltip(value, 10);
+						var text = String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+						var title = String(value).replace(/"/g, '&quot;');
+						return '<span title="' + title + '" style="display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;">' + text + '</span>';
 					}
 				},
 				{
@@ -969,7 +1174,9 @@
 						if (!value) {
 							return '-';
 						}
-						return $.table.tooltip(value, 12);
+						var text = String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+						var title = String(value).replace(/"/g, '&quot;');
+						return '<span title="' + title + '" style="display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;">' + text + '</span>';
 					}
 				},
 				{

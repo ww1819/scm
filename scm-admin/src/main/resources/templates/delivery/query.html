@@ -234,6 +234,26 @@
 			background: #fff;
 			overflow: hidden;
 		}
+		#detail-tab .delivery-table-wrap.delivery-list-table .fixed-table-header .rc-handle-container {
+			position: relative;
+			z-index: 20;
+			pointer-events: none;
+			height: 0;
+		}
+		#detail-tab .delivery-table-wrap.delivery-list-table .fixed-table-header .rc-handle {
+			position: absolute;
+			top: 0;
+			width: 10px;
+			margin-left: -5px;
+			cursor: col-resize;
+			pointer-events: auto;
+			z-index: 21;
+			background: transparent;
+		}
+		#detail-tab .delivery-table-wrap.delivery-list-table .fixed-table-header .rc-handle:hover,
+		#detail-tab .delivery-table-wrap.delivery-list-table .fixed-table-header .rc-handle.rc-handle-active {
+			background: rgba(60, 141, 188, 0.35);
+		}
 		#detail-tab .delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header table,
 		#detail-tab .delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body > table {
 			table-layout: fixed;
@@ -287,14 +307,13 @@
 			line-height: 1.35;
 			max-width: 100%;
 		}
-		/* 汇总表 */
+		/* 汇总表：布局与配送明细表一致 */
 		.query-table-wrap {
 			flex: 1;
 			min-height: 0;
 			position: relative;
 			padding-bottom: 0;
-			overflow-x: hidden;
-			overflow-y: visible;
+			overflow: hidden;
 			display: flex;
 			flex-direction: column;
 		}
@@ -305,19 +324,25 @@
 			display: flex;
 			flex-direction: column;
 			height: 100%;
+			padding-bottom: 0;
 		}
 		.query-table-wrap .fixed-table-container {
 			display: flex;
 			flex-direction: column;
-			flex: 1;
+			flex: 1 1 auto;
 			min-height: 0;
 			padding-bottom: 0;
+			overflow: hidden;
+		}
+		.query-table-wrap .fixed-table-header {
+			flex-shrink: 0;
 		}
 		.query-table-wrap .fixed-table-body {
 			overflow-x: auto !important;
 			overflow-y: auto !important;
-			flex: 1;
+			flex: 1 1 auto;
 			min-height: 0;
+			box-sizing: border-box;
 		}
 		/* 汇总表：禁止换行，列宽固定，超出横向滚动 */
 		#summary-tab .query-table-wrap .fixed-table-header {
@@ -327,9 +352,28 @@
 		#summary-tab .query-table-wrap .fixed-table-header table,
 		#summary-tab .query-table-wrap .fixed-table-body > table {
 			table-layout: fixed !important;
-			min-width: 1980px !important;
-			width: 1980px !important;
+			min-width: 1980px;
 			border-collapse: collapse;
+		}
+		#summary-tab .query-table-wrap .fixed-table-header .rc-handle-container {
+			position: relative;
+			z-index: 20;
+			pointer-events: none;
+			height: 0;
+		}
+		#summary-tab .query-table-wrap .fixed-table-header .rc-handle {
+			position: absolute;
+			top: 0;
+			width: 10px;
+			margin-left: -5px;
+			cursor: col-resize;
+			pointer-events: auto;
+			z-index: 21;
+			background: transparent;
+		}
+		#summary-tab .query-table-wrap .fixed-table-header .rc-handle:hover,
+		#summary-tab .query-table-wrap .fixed-table-header .rc-handle.rc-handle-active {
+			background: rgba(60, 141, 188, 0.35);
 		}
 		#summary-tab .query-table-wrap .fixed-table-header th,
 		#summary-tab .query-table-wrap .fixed-table-body td {
@@ -363,9 +407,6 @@
 		}
 		#summary-tab .query-table-wrap .fixed-table-header th[data-field="serialNumber"],
 		#summary-tab .query-table-wrap .fixed-table-body td[data-field="serialNumber"] {
-			width: 52px !important;
-			min-width: 52px !important;
-			max-width: 52px !important;
 			padding-left: 4px !important;
 			padding-right: 4px !important;
 			text-align: center !important;
@@ -377,7 +418,7 @@
 			background: #fff;
 			z-index: 6;
 			border-top: 1px solid #eee;
-			margin: 0 !important;
+			margin: 6px 0 0 !important;
 			padding: 4px 10px 2px;
 			flex-shrink: 0;
 		}
@@ -419,6 +460,26 @@
 		}
 		.delivery-query-page .search-collapse .select-list li.select-time label {
 			margin-bottom: 0;
+		}
+		/* 汇总表搜索：一行展示，缩短过宽输入框 */
+		#summary-tab .search-collapse .select-list ul {
+			display: flex;
+			flex-wrap: nowrap;
+			align-items: center;
+			white-space: nowrap;
+		}
+		#summary-tab .search-collapse .select-list li {
+			float: none;
+			flex-shrink: 0;
+			margin: 4px 10px 4px 0;
+		}
+		#summary-tab .search-collapse .select-list li input[name="deliveryNo"],
+		#summary-tab .search-collapse .select-list li input[name="hospitalName"],
+		#summary-tab .search-collapse .select-list li input[name="supplierName"] {
+			width: 120px;
+		}
+		#summary-tab .search-collapse .select-list li select[name="deliveryStatus"] {
+			width: 100px;
 		}
 	</style>
 </head>
@@ -672,6 +733,8 @@
 			deliveryAuditByDisplay: 90,
 			deliveryAuditTime: 110
 		};
+		/** 用户手动拖过的列，不再被自动列宽覆盖 */
+		var detailColWidthsManual = {};
 
 		function escDeliveryCellAttr(s) {
 			return String(s == null ? '' : s)
@@ -716,6 +779,9 @@
 		/** 配送单号列宽随当前页最长单号自适应，完整显示且不过宽 */
 		function fitDetailDeliveryNoColumnWidth() {
 			var field = 'deliveryNo';
+			if (detailColWidthsManual[field]) {
+				return;
+			}
 			var minPx = 132;
 			var maxPx = 204;
 			var padPx = 26;
@@ -852,142 +918,290 @@
 			return Math.max(sum, 1200);
 		}
 
-		function applyDetailFieldColumnWidth(field, widthPx) {
-			var w = widthPx + 'px';
+		function getDetailFixedTables() {
 			var $container = $('#' + detailTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
 			var $mainHeader = $container.children('.fixed-table-header');
 			var $mainBody = $container.children('.fixed-table-body');
-			var $th = $mainHeader.find('th[data-field="' + field + '"]');
-			if ($th.length === 0) {
+			var $headTable = $mainHeader.find('table').not('.fixed-table-border').first();
+			var $bodyTable = $mainBody.find('#' + detailTableId);
+			if (!$bodyTable.length) {
+				$bodyTable = $mainBody.find('table').not('.fixed-table-border').first();
+			}
+			return {
+				$container: $container,
+				$mainHeader: $mainHeader,
+				$mainBody: $mainBody,
+				$headTable: $headTable,
+				$bodyTable: $bodyTable
+			};
+		}
+
+		function ensureDetailQueryTableColgroup($table, colCount) {
+			if (!$table || !$table.length) {
+				return $();
+			}
+			var $colgroup = $table.children('colgroup');
+			if (!$colgroup.length) {
+				$colgroup = $('<colgroup></colgroup>');
+				$table.prepend($colgroup);
+			}
+			while ($colgroup.children('col').length < colCount) {
+				$colgroup.append('<col />');
+			}
+			while ($colgroup.children('col').length > colCount) {
+				$colgroup.children('col:last').remove();
+			}
+			return $colgroup;
+		}
+
+		/** 表头列宽 → 表体所有行 + colgroup（固定表头双表必须按列索引同步） */
+		function applyDetailColumnWidthFromHeader() {
+			var tables = getDetailFixedTables();
+			var $headTable = tables.$headTable;
+			var $bodyTable = tables.$bodyTable;
+			if (!$headTable.length || !$bodyTable.length) {
 				return;
 			}
-			var setW = function (el) {
-				el.style.setProperty('width', w, 'important');
-				el.style.setProperty('min-width', w, 'important');
-				el.style.setProperty('max-width', w, 'important');
+			var $ths = $headTable.find('thead tr:first th');
+			var colCount = $ths.length;
+			if (colCount < 1) {
+				return;
+			}
+			ensureDetailQueryTableColgroup($headTable, colCount);
+			ensureDetailQueryTableColgroup($bodyTable, colCount);
+			var totalW = 0;
+			var setW = function (el, w) {
+				if (!el) {
+					return;
+				}
+				var ws = w + 'px';
+				el.style.setProperty('width', ws, 'important');
+				el.style.setProperty('min-width', ws, 'important');
+				el.style.setProperty('max-width', 'none', 'important');
 			};
-			$th.each(function () { setW(this); });
-			$mainBody.find('td[data-field="' + field + '"]').each(function () { setW(this); });
-			var colIdx = $th[0].cellIndex;
-			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
-			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			$ths.each(function () {
+				var colIdx = this.cellIndex;
+				if (colIdx < 0) {
+					return;
+				}
+				var field = $(this).attr('data-field');
+				var w;
+				if (field && detailColWidths[field] != null) {
+					w = detailColWidths[field];
+				} else {
+					w = Math.ceil(this.getBoundingClientRect().width);
+					if (!w || w < 40) {
+						w = 40;
+					}
+					if (field) {
+						detailColWidths[field] = w;
+					}
+				}
+				setW(this, w);
+				$headTable.children('colgroup').children('col').eq(colIdx).each(function () { setW(this, w); });
+				$bodyTable.children('colgroup').children('col').eq(colIdx).each(function () { setW(this, w); });
+				$bodyTable.find('tbody tr').each(function () {
+					var cell = this.cells[colIdx];
+					if (cell) {
+						setW(cell, w);
+					}
+				});
+				totalW += w;
+			});
+			if (totalW > 0) {
+				var tw = totalW + 'px';
+				$headTable[0].style.setProperty('width', tw, 'important');
+				$headTable[0].style.setProperty('min-width', tw, 'important');
+				$headTable[0].style.setProperty('max-width', 'none', 'important');
+				$bodyTable[0].style.setProperty('width', tw, 'important');
+				$bodyTable[0].style.setProperty('min-width', tw, 'important');
+				$bodyTable[0].style.setProperty('max-width', 'none', 'important');
+			}
+		}
+
+		function applyDetailFieldColumnWidth(field, widthPx) {
+			detailColWidths[field] = widthPx;
+			applyDetailColumnWidthFromHeader();
 		}
 
 		function syncDetailHeaderBodyColumnWidths() {
-			var $container = $('#' + detailTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainHeader = $container.children('.fixed-table-header');
-			var $mainBody = $container.children('.fixed-table-body');
-			var setW = function (el, widthVal) {
-				el.style.setProperty('width', widthVal, 'important');
-				el.style.setProperty('min-width', widthVal, 'important');
-				el.style.setProperty('max-width', widthVal, 'important');
-			};
-			$.each(detailColWidths, function (field, widthPx) {
-				var w = widthPx + 'px';
-				var $th = $mainHeader.find('th[data-field="' + field + '"]');
-				if ($th.length === 0) {
-					return;
-				}
-				$th.each(function () { setW(this, w); });
-				$mainBody.find('td[data-field="' + field + '"]').each(function () { setW(this, w); });
-				var colIdx = $th[0].cellIndex;
-				$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this, w); });
-				$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this, w); });
-			});
+			applyDetailColumnWidthFromHeader();
 		}
 
 		function fixDetailTableHeaderAlign() {
-			var $bt = $('#' + detailTableId).closest('.bootstrap-table');
-			var $container = $bt.find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			if (!$mainBody.length || !$mainHeader.length) {
+			var tables = getDetailFixedTables();
+			if (!tables.$mainBody.length || !tables.$mainHeader.length) {
 				return;
 			}
-			var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
-			$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+			var scrollW = tables.$mainBody[0].offsetWidth - tables.$mainBody[0].clientWidth;
+			tables.$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+			applyDetailColumnWidthFromHeader();
 		}
 
 		function syncDetailHeaderBodyScrollLeft() {
-			var $container = $('#' + detailTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			if ($mainBody.length && $mainHeader.length) {
-				$mainHeader.scrollLeft($mainBody[0].scrollLeft);
+			var tables = getDetailFixedTables();
+			if (tables.$mainBody.length && tables.$mainHeader.length) {
+				tables.$mainHeader.scrollLeft(tables.$mainBody[0].scrollLeft);
 			}
 		}
 
 		function bindDetailMainHorizontalScroll() {
-			var $bt = $('#' + detailTableId).closest('.bootstrap-table');
-			var $container = $bt.find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			$mainBody.off('scroll.detailMainH').on('scroll.detailMainH', function () {
-				$mainHeader.scrollLeft($mainBody.scrollLeft());
+			var tables = getDetailFixedTables();
+			tables.$mainBody.off('scroll.detailMainH').on('scroll.detailMainH', function () {
+				tables.$mainHeader.scrollLeft(tables.$mainBody.scrollLeft());
+				if (typeof window.__syncDetailQueryResizeHandles === 'function') {
+					window.__syncDetailQueryResizeHandles();
+				}
 			});
 		}
 
 		function applyDetailMainTableMinWidth() {
-			var sum = getDetailTableTotalWidth();
-			var w = sum + 'px';
-			var $container = $('#' + detailTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $headerTable = $container.children('.fixed-table-header').find('table');
-			var $bodyTable = $container.children('.fixed-table-body').children('table');
-			$headerTable.css({ width: w, minWidth: w, maxWidth: w });
-			$bodyTable.css({ width: w, minWidth: w, maxWidth: w });
+			applyDetailColumnWidthFromHeader();
+		}
+
+		/** 像素级列宽拖动：表头交界处拖动手柄 */
+		function initDetailQueryHeaderColumnResize() {
+			var tables = getDetailFixedTables();
+			var $mainHeader = tables.$mainHeader;
+			var $headTable = tables.$headTable;
+			if (!$mainHeader.length || !$headTable.length) {
+				return;
+			}
+			$mainHeader.find('.rc-handle-container').remove();
+			var $handleContainer = $('<div class="rc-handle-container"></div>');
+			$headTable.before($handleContainer);
+
+			function syncDetailQueryResizeHandles() {
+				var $ths = $headTable.find('thead tr:first th[data-field]');
+				if (!$ths.length) {
+					return;
+				}
+				var tableW = $headTable.outerWidth() || 0;
+				var headerH = $headTable.find('thead').outerHeight() || 40;
+				$handleContainer.css({ width: tableW + 'px' });
+				$handleContainer.empty();
+				var containerLeft = $handleContainer.offset().left;
+				$ths.each(function (idx) {
+					if (idx >= $ths.length - 1) {
+						return;
+					}
+					var $th = $(this);
+					var field = $th.attr('data-field');
+					if (!field) {
+						return;
+					}
+					var left = $th.offset().left - containerLeft + $th.outerWidth();
+					$('<div class="rc-handle" title="拖动调整列宽"></div>')
+						.css({ left: left + 'px', height: headerH + 'px' })
+						.attr('data-field', field)
+						.appendTo($handleContainer);
+				});
+			}
+
+			$handleContainer.off('.detailQueryColResize').on('mousedown.detailQueryColResize', '.rc-handle', function (e) {
+				e.preventDefault();
+				e.stopPropagation();
+				var field = $(this).attr('data-field');
+				if (!field) {
+					return;
+				}
+				var startX = e.clientX;
+				var startW = detailColWidths[field] || 80;
+				var $th = $headTable.find('thead tr:first th[data-field="' + field + '"]');
+				if ($th.length) {
+					startW = Math.ceil($th.outerWidth()) || startW;
+				}
+				var $active = $(this).addClass('rc-handle-active');
+				$(document.body).css('cursor', 'col-resize');
+
+				function onMove(ev) {
+					var nextW = Math.max(48, startW + (ev.clientX - startX));
+					detailColWidths[field] = nextW;
+					detailColWidthsManual[field] = true;
+					applyDetailColumnWidthFromHeader();
+					syncDetailQueryResizeHandles();
+					$handleContainer.find('.rc-handle[data-field="' + field + '"]').addClass('rc-handle-active');
+				}
+
+				function onUp() {
+					$(document).off('mousemove.detailQueryColResize mouseup.detailQueryColResize');
+					$(document.body).css('cursor', '');
+					$active.removeClass('rc-handle-active');
+					applyDetailColumnWidthFromHeader();
+					syncDetailQueryResizeHandles();
+					fixDetailTableHeaderAlign();
+				}
+
+				$(document).on('mousemove.detailQueryColResize', onMove);
+				$(document).on('mouseup.detailQueryColResize', onUp);
+			});
+
+			syncDetailQueryResizeHandles();
+			window.__syncDetailQueryResizeHandles = syncDetailQueryResizeHandles;
 		}
 
 		function refreshDetailTableLayout() {
 			stretchDetailTableBodyHeight();
 			fitDetailDeliveryNoColumnWidth();
 			fixDetailTableHeaderAlign();
-			syncDetailHeaderBodyColumnWidths();
-			applyDetailMainTableMinWidth();
+			applyDetailColumnWidthFromHeader();
 			syncDetailHeaderBodyScrollLeft();
 			bindDetailMainHorizontalScroll();
+			initDetailQueryHeaderColumnResize();
 		}
 
 		/**
-		 * 汇总表：表格外包层高度
+		 * 汇总表：外包层高度与配送明细表同一套算法（视口剩余高度，400~580）
 		 */
 		function layoutDeliveryQueryWrapHeights() {
-			var $page = $('.delivery-query-page.container-div');
-			if (!$page.length) {
+			var $wrap = $('#summary-tab .query-table-wrap');
+			if (!$wrap.length) {
 				return;
 			}
-			var pageEl = $page[0];
-			var pageBottom = pageEl.getBoundingClientRect().bottom;
-			function applyWrap(selector) {
-				var $w = $(selector);
-				if (!$w.length) {
-					return;
-				}
-				if (!$w.closest('.tab-pane').is(':visible')) {
-					return;
-				}
-				var el = $w[0];
-				var top = el.getBoundingClientRect().top;
-				var bottom = pageBottom;
-				var $tc = $w.closest('.tab-content');
-				if ($tc.length) {
-					bottom = Math.min(bottom, $tc[0].getBoundingClientRect().bottom - 4);
-				}
-				var $pane = $w.closest('.tab-pane');
-				if ($pane.length) {
-					bottom = Math.min(bottom, $pane[0].getBoundingClientRect().bottom - 4);
-				}
-				var base = Math.floor(bottom - top - 6);
-				var h = base;
-				if (h < 260) {
-					h = 260;
-				}
-				el.style.setProperty('flex', '0 0 auto', 'important');
-				el.style.setProperty('height', h + 'px', 'important');
-				el.style.setProperty('min-height', h + 'px', 'important');
-				el.style.removeProperty('max-height');
-				el.style.setProperty('box-sizing', 'border-box', 'important');
+			if (!$wrap.closest('.tab-pane').is(':visible')) {
+				return;
 			}
-			applyWrap('#summary-tab .query-table-wrap');
+			var top = $wrap[0].getBoundingClientRect().top;
+			var h = Math.floor(window.innerHeight - top - 14);
+			h = Math.min(Math.max(h, 400), 580);
+			$wrap[0].style.removeProperty('flex');
+			$wrap[0].style.height = h + 'px';
+			$wrap[0].style.minHeight = h + 'px';
+			$wrap[0].style.removeProperty('max-height');
+			$wrap[0].style.boxSizing = 'border-box';
+		}
+
+		/** 汇总表体撑满容器剩余高度，横向滚动条贴近底部分页栏（与明细表一致） */
+		function stretchSummaryTableBodyHeight() {
+			var $wrap = $('#summary-tab .query-table-wrap');
+			if (!$wrap.length) {
+				return;
+			}
+			var $bt = $wrap.children('.bootstrap-table');
+			if (!$bt.length) {
+				$bt = $wrap.find('.bootstrap-table').first();
+			}
+			var $container = $bt.find('.fixed-table-container').first();
+			var $header = $container.children('.fixed-table-header');
+			var $body = $container.children('.fixed-table-body');
+			if (!$container.length || !$body.length) {
+				return;
+			}
+			var wrapH = $wrap[0].clientHeight || 0;
+			if (wrapH < 1) {
+				return;
+			}
+			var toolbarH = $bt.find('.fixed-table-toolbar').outerHeight(true) || 0;
+			var pagH = $bt.find('.fixed-table-pagination').outerHeight(true) || 46;
+			var containerH = Math.max(Math.floor(wrapH - toolbarH - pagH), 240);
+			$container[0].style.setProperty('height', containerH + 'px', 'important');
+			$container[0].style.setProperty('min-height', containerH + 'px', 'important');
+			$container[0].style.setProperty('max-height', containerH + 'px', 'important');
+			var headerH = $header.outerHeight(true) || 0;
+			var bodyH = Math.max(Math.floor(containerH - headerH), 180);
+			$body[0].style.setProperty('height', bodyH + 'px', 'important');
+			$body[0].style.setProperty('min-height', bodyH + 'px', 'important');
+			$body[0].style.setProperty('max-height', bodyH + 'px', 'important');
 		}
 
 		function relayoutDeliveryQueryTables() {
@@ -999,35 +1213,37 @@
 			if ($('#summary-tab').hasClass('active')) {
 				layoutDeliveryQueryWrapHeights();
 				resetQueryTableHeights();
+				refreshSummaryTableLayout();
 			}
 		}
 
 		function calculateQueryTableHeight(tableSelector) {
+			layoutDeliveryQueryWrapHeights();
 			var $table = $(tableSelector);
 			var $wrap = $table.closest('.query-table-wrap');
 			if ($wrap.length === 0) {
-				return 600;
+				return 440;
 			}
-			var el = $wrap[0];
-			/* 略小于外包层，给工具栏/表头/分页和边框留余量，避免被外包层 overflow 裁掉 */
-			var h = el ? el.clientHeight : Math.floor($wrap.innerHeight());
-			if (!h || h < 1) {
-				h = Math.floor($wrap.innerHeight());
-			}
-			h = Math.floor(h - 12);
-			return Math.max(h, 280);
+			var $bt = $wrap.find('.bootstrap-table');
+			var wrapH = $wrap[0].clientHeight || $wrap.innerHeight() || 0;
+			var toolbarH = $bt.find('.fixed-table-toolbar').outerHeight(true) || 0;
+			var pagH = $bt.find('.fixed-table-pagination').outerHeight(true) || 46;
+			var containerH = Math.floor(wrapH - toolbarH - pagH - 2);
+			return Math.max(containerH, 240);
 		}
 
 		function resetQueryTableHeights() {
 			var $summary = $('#bootstrap-table-summary');
 			if ($summary.length > 0 && $summary.bootstrapTable('getOptions')) {
 				$summary.bootstrapTable('resetView', { height: calculateQueryTableHeight('#bootstrap-table-summary') });
+				stretchSummaryTableBodyHeight();
 				$summary.closest('.bootstrap-table').find('.fixed-table-body').scrollLeft(0);
 			}
 			setTimeout(function() {
 				var $s = $('#bootstrap-table-summary');
 				if ($s.length > 0 && $s.bootstrapTable('getOptions')) {
 					$s.bootstrapTable('resetView', { height: calculateQueryTableHeight('#bootstrap-table-summary') });
+					stretchSummaryTableBodyHeight();
 				}
 			}, 80);
 		}
@@ -1323,6 +1539,237 @@
 		}
 
 		// 初始化汇总表
+		var summaryColumnWidths = {};
+		var SUMMARY_DEFAULT_COL_WIDTHS = {
+			serialNumber: 52,
+			deliveryNo: 170,
+			hospitalName: 180,
+			supplierName: 180,
+			srcOrderSupplierName: 160,
+			srcOrderWarehouseName: 120,
+			srcOrderDeptName: 120,
+			deliveryAmount: 110,
+			deliveryStatus: 96,
+			createTime: 168,
+			createByDisplay: 96,
+			expectedDeliveryDate: 130,
+			deliveryAddress: 200,
+			remark: 180
+		};
+
+		function seedSummaryDefaultColumnWidths() {
+			$.each(SUMMARY_DEFAULT_COL_WIDTHS, function (field, w) {
+				if (!summaryColumnWidths[field]) {
+					summaryColumnWidths[field] = w;
+				}
+			});
+			var opt = $('#bootstrap-table-summary').bootstrapTable('getOptions');
+			if (opt && opt.columns && opt.columns[0]) {
+				$.each(opt.columns[0], function (_, col) {
+					if (!col || !col.field || !col.width || summaryColumnWidths[col.field]) {
+						return;
+					}
+					var w = parseInt(col.width, 10);
+					if (w > 0) {
+						summaryColumnWidths[col.field] = w;
+					}
+				});
+			}
+		}
+
+		function ensureSummaryTableColgroup($table, colCount) {
+			if (!$table || !$table.length) {
+				return $();
+			}
+			var $colgroup = $table.children('colgroup');
+			if (!$colgroup.length) {
+				$colgroup = $('<colgroup></colgroup>');
+				$table.prepend($colgroup);
+			}
+			while ($colgroup.children('col').length < colCount) {
+				$colgroup.append('<col />');
+			}
+			while ($colgroup.children('col').length > colCount) {
+				$colgroup.children('col:last').remove();
+			}
+			return $colgroup;
+		}
+
+		/** 表头列宽同步到表体（固定表头双表按列索引） */
+		function applySummaryColumnWidthFromHeader() {
+			var $container = $('#bootstrap-table-summary').closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $headTable = $container.children('.fixed-table-header').find('table').first();
+			var $bodyTable = $container.children('.fixed-table-body').find('#bootstrap-table-summary');
+			if (!$bodyTable.length) {
+				$bodyTable = $container.children('.fixed-table-body').find('table').not('.fixed-table-border').first();
+			}
+			if (!$headTable.length || !$bodyTable.length) {
+				return;
+			}
+			var $ths = $headTable.find('thead tr:first th');
+			var colCount = $ths.length;
+			if (colCount < 1) {
+				return;
+			}
+			ensureSummaryTableColgroup($headTable, colCount);
+			ensureSummaryTableColgroup($bodyTable, colCount);
+			var totalW = 0;
+			var setW = function (el, w) {
+				if (!el) {
+					return;
+				}
+				var ws = w + 'px';
+				el.style.setProperty('width', ws, 'important');
+				el.style.setProperty('min-width', ws, 'important');
+				el.style.setProperty('max-width', 'none', 'important');
+			};
+			$ths.each(function () {
+				var colIdx = this.cellIndex;
+				if (colIdx < 0) {
+					return;
+				}
+				var field = $(this).attr('data-field');
+				var w;
+				if (field && summaryColumnWidths[field]) {
+					w = summaryColumnWidths[field];
+				} else {
+					w = Math.ceil(this.getBoundingClientRect().width);
+					if (!w || w < 40) {
+						w = 40;
+					}
+					if (field) {
+						summaryColumnWidths[field] = w;
+					}
+				}
+				setW(this, w);
+				$headTable.find('colgroup col').eq(colIdx).each(function () { setW(this, w); });
+				$bodyTable.find('colgroup col').eq(colIdx).each(function () { setW(this, w); });
+				$bodyTable.find('tbody tr').each(function () {
+					var cell = this.cells[colIdx];
+					if (cell) {
+						setW(cell, w);
+					}
+				});
+				totalW += w;
+			});
+			if (totalW > 0) {
+				var tw = totalW + 'px';
+				$headTable[0].style.setProperty('width', tw, 'important');
+				$headTable[0].style.setProperty('min-width', tw, 'important');
+				$bodyTable[0].style.setProperty('width', tw, 'important');
+				$bodyTable[0].style.setProperty('min-width', tw, 'important');
+			}
+		}
+
+		function fixSummaryTableHeaderAlign() {
+			var $container = $('#bootstrap-table-summary').closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainBody = $container.children('.fixed-table-body');
+			var $mainHeader = $container.children('.fixed-table-header');
+			if (!$mainBody.length || !$mainHeader.length) {
+				return;
+			}
+			var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
+			$mainHeader.css('margin-right', scrollW + 'px');
+			applySummaryColumnWidthFromHeader();
+			$mainHeader.scrollLeft($mainBody.scrollLeft());
+		}
+
+		/** 像素级列宽拖动（避免固定 !important 列宽导致无法拉开） */
+		function initSummaryHeaderColumnResize() {
+			var $container = $('#bootstrap-table-summary').closest('.bootstrap-table').find('.fixed-table-container').first();
+			var $mainHeader = $container.children('.fixed-table-header');
+			var $headTable = $mainHeader.find('table').first();
+			if (!$mainHeader.length || !$headTable.length) {
+				return;
+			}
+			$mainHeader.find('.rc-handle-container').remove();
+			var $handleContainer = $('<div class="rc-handle-container"></div>');
+			$headTable.before($handleContainer);
+
+			function syncSummaryResizeHandles() {
+				var $ths = $headTable.find('thead tr:first th[data-field]');
+				if (!$ths.length) {
+					return;
+				}
+				var tableW = $headTable.outerWidth() || 0;
+				var headerH = $headTable.find('thead').outerHeight() || 40;
+				$handleContainer.css({ width: tableW + 'px' });
+				$handleContainer.empty();
+				var containerLeft = $handleContainer.offset().left;
+				$ths.each(function (idx) {
+					if (idx >= $ths.length - 1) {
+						return;
+					}
+					var $th = $(this);
+					var field = $th.attr('data-field');
+					if (!field) {
+						return;
+					}
+					var left = $th.offset().left - containerLeft + $th.outerWidth();
+					$('<div class="rc-handle" title="拖动调整列宽"></div>')
+						.css({ left: left + 'px', height: headerH + 'px' })
+						.attr('data-field', field)
+						.appendTo($handleContainer);
+				});
+			}
+
+			$handleContainer.off('.summaryColResize').on('mousedown.summaryColResize', '.rc-handle', function (e) {
+				e.preventDefault();
+				e.stopPropagation();
+				var field = $(this).attr('data-field');
+				if (!field) {
+					return;
+				}
+				var startX = e.clientX;
+				var startW = summaryColumnWidths[field] || 80;
+				var $th = $headTable.find('thead tr:first th[data-field="' + field + '"]');
+				if ($th.length) {
+					startW = Math.ceil($th.outerWidth()) || startW;
+				}
+				var $active = $(this).addClass('rc-handle-active');
+				$(document.body).css('cursor', 'col-resize');
+
+				function onMove(ev) {
+					var nextW = Math.max(48, startW + (ev.clientX - startX));
+					summaryColumnWidths[field] = nextW;
+					applySummaryColumnWidthFromHeader();
+					syncSummaryResizeHandles();
+					$handleContainer.find('.rc-handle[data-field="' + field + '"]').addClass('rc-handle-active');
+				}
+
+				function onUp() {
+					$(document).off('mousemove.summaryColResize mouseup.summaryColResize');
+					$(document.body).css('cursor', '');
+					$active.removeClass('rc-handle-active');
+					applySummaryColumnWidthFromHeader();
+					syncSummaryResizeHandles();
+					fixSummaryTableHeaderAlign();
+				}
+
+				$(document).on('mousemove.summaryColResize', onMove);
+				$(document).on('mouseup.summaryColResize', onUp);
+			});
+
+			syncSummaryResizeHandles();
+			window.__syncSummaryResizeHandles = syncSummaryResizeHandles;
+		}
+
+		var summaryTableLayoutRefreshTimer = null;
+		function refreshSummaryTableLayout() {
+			if (summaryTableLayoutRefreshTimer) {
+				clearTimeout(summaryTableLayoutRefreshTimer);
+			}
+			summaryTableLayoutRefreshTimer = setTimeout(function () {
+				summaryTableLayoutRefreshTimer = null;
+				seedSummaryDefaultColumnWidths();
+				fixSummaryTableHeaderAlign();
+				initSummaryHeaderColumnResize();
+				if (typeof window.__syncSummaryResizeHandles === 'function') {
+					window.__syncSummaryResizeHandles();
+				}
+			}, 60);
+		}
+
 		function bindSummaryTableScrollSync() {
 		    var $container = $('#bootstrap-table-summary').closest('.bootstrap-table').find('.fixed-table-container').first();
 		    var $mainBody = $container.children('.fixed-table-body');
@@ -1332,6 +1779,9 @@
 		    }
 		    $mainBody.off('scroll.summaryHSync').on('scroll.summaryHSync', function () {
 		        $mainHeader.scrollLeft($mainBody.scrollLeft());
+		        if (typeof window.__syncSummaryResizeHandles === 'function') {
+		            window.__syncSummaryResizeHandles();
+		        }
 		    });
 		}
 
@@ -1510,6 +1960,7 @@
 		            bindSummaryTableScrollSync();
 		            setTimeout(relayoutDeliveryQueryTables, 0);
 		            setTimeout(relayoutDeliveryQueryTables, 150);
+		            setTimeout(refreshSummaryTableLayout, 200);
 		        };
 		        // 添加加载错误回调
 		        options.onLoadError = function(status, res) {
@@ -1530,6 +1981,7 @@
 		        setTimeout(mountSummaryToolbar, 0);
 		        setTimeout(relayoutDeliveryQueryTables, 0);
 		        setTimeout(relayoutDeliveryQueryTables, 120);
+		        setTimeout(refreshSummaryTableLayout, 180);
 		        
 		        // 延迟刷新一次，确保数据正确加载
 		        setTimeout(function() {

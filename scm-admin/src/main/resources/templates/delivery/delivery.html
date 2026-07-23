@@ -63,11 +63,25 @@
 		.delivery-table-wrap.delivery-list-table .fixed-table-pagination .pagination {
 			margin-right: 172px;
 		}
+		/* 文本列表头与明细统一左对齐；th-inner 不拉满整列，排序图标紧跟标题文字 */
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th {
+			text-align: left !important;
+		}
 		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th .th-inner,
 		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th .sortable {
-			text-align: center !important;
-			justify-content: center;
+			text-align: left !important;
+			justify-content: flex-start !important;
+			display: inline-block !important;
+			width: auto !important;
+			max-width: 100%;
+			box-sizing: border-box;
+			vertical-align: middle;
+			padding-right: 18px !important;
+			background-position: right center !important;
 		}
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th.bs-checkbox,
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="index"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="index"],
 		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="srcOrderWarehouseName"],
 		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="srcOrderWarehouseName"],
 		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="deliveryAmount"],
@@ -79,8 +93,25 @@
 		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="auditByDisplay"],
 		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="auditByDisplay"],
 		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="expectedDeliveryDate"],
-		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="expectedDeliveryDate"] {
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="expectedDeliveryDate"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="createTime"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="createTime"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="auditTime"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="auditTime"] {
 			text-align: center !important;
+		}
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th.bs-checkbox .th-inner,
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="index"] .th-inner,
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="srcOrderWarehouseName"] .th-inner,
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="deliveryAmount"] .th-inner,
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="auditStatus"] .th-inner,
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="createByDisplay"] .th-inner,
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="auditByDisplay"] .th-inner,
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="expectedDeliveryDate"] .th-inner,
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="createTime"] .th-inner,
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header th[data-field="auditTime"] .th-inner {
+			text-align: center !important;
+			justify-content: center !important;
 		}
 		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="expectedDeliveryDate"] .delivery-cell-ellipsis {
 			text-align: center;
@@ -92,6 +123,26 @@
 			z-index: 2;
 			background: #fff;
 			overflow: hidden;
+		}
+		.delivery-table-wrap.delivery-list-table .fixed-table-header .rc-handle-container {
+			position: relative;
+			z-index: 20;
+			pointer-events: none;
+			height: 0;
+		}
+		.delivery-table-wrap.delivery-list-table .fixed-table-header .rc-handle {
+			position: absolute;
+			top: 0;
+			width: 10px;
+			margin-left: -5px;
+			cursor: col-resize;
+			pointer-events: auto;
+			z-index: 21;
+			background: transparent;
+		}
+		.delivery-table-wrap.delivery-list-table .fixed-table-header .rc-handle:hover,
+		.delivery-table-wrap.delivery-list-table .fixed-table-header .rc-handle.rc-handle-active {
+			background: rgba(60, 141, 188, 0.35);
 		}
 		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-header table,
 		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body > table {
@@ -502,18 +553,21 @@
 			relatedOrder: 180,
 			deliveryOperate: 160
 		};
+		var DELIVERY_COL_RESIZE_SKIP = {
+			deliveryOperate: true
+		};
+		var deliveryCheckboxColWidth = 42;
+		var deliveryColResizing = false;
 
 		function getDeliveryTableTotalWidth() {
-			var sum = 0;
+			var sum = deliveryCheckboxColWidth;
 			var opt = $('#' + deliveryTableId).bootstrapTable('getOptions');
 			if (opt && opt.columns && opt.columns[0]) {
 				$.each(opt.columns[0], function (_, col) {
-					if (!col || col.visible === false) {
+					if (!col || col.visible === false || col.checkbox) {
 						return;
 					}
-					if (col.checkbox) {
-						sum += 42;
-					} else if (col.field && deliveryColWidths[col.field] != null) {
+					if (col.field && deliveryColWidths[col.field] != null) {
 						sum += deliveryColWidths[col.field];
 					} else if (col.width) {
 						sum += parseInt(col.width, 10) || 0;
@@ -525,149 +579,177 @@
 			return Math.max(sum, 1200);
 		}
 
-		function applyDeliveryFieldColumnWidth(field, widthPx) {
-			var w = widthPx + 'px';
+		function getDeliveryFixedTables() {
 			var $container = $('#' + deliveryTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
 			var $mainHeader = $container.children('.fixed-table-header');
 			var $mainBody = $container.children('.fixed-table-body');
-			var $th = $mainHeader.find('th[data-field="' + field + '"]');
-			if ($th.length === 0) {
+			var $headTable = $mainHeader.find('table').not('.fixed-table-border').first();
+			var $bodyTable = $mainBody.find('#' + deliveryTableId);
+			if (!$bodyTable.length) {
+				$bodyTable = $mainBody.find('table').not('.fixed-table-border').first();
+			}
+			return {
+				$container: $container,
+				$mainHeader: $mainHeader,
+				$mainBody: $mainBody,
+				$headTable: $headTable,
+				$bodyTable: $bodyTable
+			};
+		}
+
+		function ensureDeliveryTableColgroup($table, colCount) {
+			if (!$table || !$table.length) {
+				return $();
+			}
+			var $colgroup = $table.children('colgroup');
+			if (!$colgroup.length) {
+				$colgroup = $('<colgroup></colgroup>');
+				$table.prepend($colgroup);
+			}
+			while ($colgroup.children('col').length < colCount) {
+				$colgroup.append('<col />');
+			}
+			while ($colgroup.children('col').length > colCount) {
+				$colgroup.children('col:last').remove();
+			}
+			return $colgroup;
+		}
+
+		/** 表头列宽 → 表体（按 data-field 对齐，与订单查询一致） */
+		function applyDeliveryColumnWidthFromHeader() {
+			var tables = getDeliveryFixedTables();
+			var $headTable = tables.$headTable;
+			var $bodyTable = tables.$bodyTable;
+			var $mainBody = tables.$mainBody;
+			if (!$headTable.length || !$bodyTable.length) {
 				return;
 			}
-			var colIdx = $th[0].cellIndex;
-			var clipOverflow = (field === 'createByDisplay' || field === 'auditByDisplay'
-				|| field === 'supplierName' || field === 'srcOrderSupplierName');
-			var setW = function (el) {
-				el.style.setProperty('width', w, 'important');
-				el.style.setProperty('min-width', w, 'important');
-				el.style.setProperty('max-width', w, 'important');
-				if (clipOverflow) {
-					el.style.setProperty('overflow', 'hidden', 'important');
+			var $ths = $headTable.find('thead tr:first th');
+			var headColCount = $ths.length;
+			if (headColCount < 1) {
+				return;
+			}
+			var $bodyThs = $bodyTable.find('thead tr:first th');
+			var bodyColCount = Math.max(headColCount, $bodyThs.length);
+			ensureDeliveryTableColgroup($headTable, headColCount);
+			ensureDeliveryTableColgroup($bodyTable, bodyColCount);
+			var totalW = 0;
+			var setW = function (el, w) {
+				if (!el) {
+					return;
 				}
+				var ws = w + 'px';
+				el.style.setProperty('width', ws, 'important');
+				el.style.setProperty('min-width', ws, 'important');
+				el.style.setProperty('max-width', 'none', 'important');
 			};
-			$th.each(function () { setW(this); });
-			$mainBody.find('table tbody tr').each(function () {
-				var cell = this.cells[colIdx];
-				if (cell) {
-					setW(cell);
+			$ths.each(function () {
+				var headIdx = this.cellIndex;
+				if (headIdx < 0) {
+					return;
 				}
+				var $th = $(this);
+				var field = $th.attr('data-field');
+				var w;
+				if ($th.hasClass('bs-checkbox') || field === '0' || field === 'state') {
+					w = deliveryCheckboxColWidth;
+				} else if (field && deliveryColWidths[field] != null) {
+					w = deliveryColWidths[field];
+				} else {
+					w = Math.ceil(this.getBoundingClientRect().width);
+					if (!w || w < 40) {
+						w = 40;
+					}
+					if (field) {
+						deliveryColWidths[field] = w;
+					}
+				}
+				var bodyIdx = headIdx;
+				if (field) {
+					var $bodyTh = $bodyTable.find('thead tr:first th[data-field="' + field + '"]');
+					if ($bodyTh.length) {
+						bodyIdx = $bodyTh[0].cellIndex;
+					}
+				}
+				setW(this, w);
+				$th.find('.fht-cell').each(function () { setW(this, w); });
+				$headTable.children('colgroup').children('col').eq(headIdx).each(function () { setW(this, w); });
+				$bodyTable.children('colgroup').children('col').eq(bodyIdx).each(function () { setW(this, w); });
+				$bodyTable.find('thead tr:first th').eq(bodyIdx).each(function () {
+					setW(this, w);
+					$(this).find('.fht-cell').each(function () { setW(this, w); });
+				});
+				$bodyTable.find('tbody tr').each(function () {
+					var cell = this.cells[bodyIdx];
+					if (cell) {
+						setW(cell, w);
+					}
+				});
+				if (field) {
+					$mainBody.find('td[data-field="' + field + '"]').each(function () { setW(this, w); });
+				}
+				totalW += w;
 			});
-			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
-			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			if (totalW > 0) {
+				var tw = totalW + 'px';
+				$headTable[0].style.setProperty('width', tw, 'important');
+				$headTable[0].style.setProperty('min-width', tw, 'important');
+				$headTable[0].style.setProperty('max-width', 'none', 'important');
+				$bodyTable[0].style.setProperty('width', tw, 'important');
+				$bodyTable[0].style.setProperty('min-width', tw, 'important');
+				$bodyTable[0].style.setProperty('max-width', 'none', 'important');
+			}
+		}
+
+		function applyDeliveryFieldColumnWidth(field, widthPx) {
+			deliveryColWidths[field] = widthPx;
+			applyDeliveryColumnWidthFromHeader();
 		}
 
 		function applyDeliveryCheckboxColumnWidth() {
-			var w = '42px';
-			var $container = $('#' + deliveryTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainHeader = $container.children('.fixed-table-header');
-			var $mainBody = $container.children('.fixed-table-body');
-			var $th = $mainHeader.find('th.bs-checkbox');
-			if ($th.length === 0) {
-				return;
-			}
-			var colIdx = $th[0].cellIndex;
-			var setW = function (el) {
-				el.style.setProperty('width', w, 'important');
-				el.style.setProperty('min-width', w, 'important');
-				el.style.setProperty('max-width', w, 'important');
-			};
-			$th.each(function () { setW(this); });
-			$mainBody.find('table tbody tr').each(function () {
-				var cell = this.cells[colIdx];
-				if (cell) {
-					setW(cell);
-				}
-			});
-			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
-			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
+			applyDeliveryColumnWidthFromHeader();
 		}
 
 		function syncDeliveryHeaderBodyColumnWidths() {
-			var $container = $('#' + deliveryTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainHeader = $container.children('.fixed-table-header');
-			var $mainBody = $container.children('.fixed-table-body');
-			var $headerThs = $mainHeader.find('thead tr').first().children('th');
-			var $firstRow = $mainBody.find('tbody tr').first();
-			if ($firstRow.length === 0) {
-				return;
-			}
-			var setW = function (el, w) {
-				el.style.setProperty('width', w, 'important');
-				el.style.setProperty('min-width', w, 'important');
-				el.style.setProperty('max-width', w, 'important');
-			};
-			$headerThs.each(function (i) {
-				var bodyCell = $firstRow[0].cells[i];
-				if (!bodyCell) {
-					return;
-				}
-				var w = bodyCell.style.width;
-				if (!w) {
-					w = window.getComputedStyle(bodyCell).width;
-				}
-				if (w) {
-					setW(this, w);
-					$mainHeader.find('colgroup col').eq(i).each(function () { setW(this, w); });
-					$mainBody.find('colgroup col').eq(i).each(function () { setW(this, w); });
-				}
-			});
+			applyDeliveryColumnWidthFromHeader();
 		}
 
 		function scheduleDeliveryColumnWidths() {
-			applyDeliveryCheckboxColumnWidth();
-			$.each(deliveryColWidths, function (field, width) {
-				applyDeliveryFieldColumnWidth(field, width);
-			});
-			syncDeliveryHeaderBodyColumnWidths();
+			applyDeliveryColumnWidthFromHeader();
 			requestAnimationFrame(function () {
-				applyDeliveryCheckboxColumnWidth();
-				$.each(deliveryColWidths, function (field, width) {
-					applyDeliveryFieldColumnWidth(field, width);
-				});
-				syncDeliveryHeaderBodyColumnWidths();
+				applyDeliveryColumnWidthFromHeader();
 			});
 		}
 
 		function fixDeliveryTableHeaderAlign() {
-			var $bt = $('#' + deliveryTableId).closest('.bootstrap-table');
-			var $container = $bt.find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			if (!$mainBody.length || !$mainHeader.length) {
+			var tables = getDeliveryFixedTables();
+			if (!tables.$mainBody.length || !tables.$mainHeader.length) {
 				return;
 			}
-			var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
-			$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+			var scrollW = tables.$mainBody[0].offsetWidth - tables.$mainBody[0].clientWidth;
+			tables.$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+			applyDeliveryColumnWidthFromHeader();
 		}
 
 		function syncDeliveryHeaderBodyScrollLeft() {
-			var $container = $('#' + deliveryTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			if ($mainBody.length && $mainHeader.length) {
-				$mainHeader.scrollLeft($mainBody[0].scrollLeft);
+			var tables = getDeliveryFixedTables();
+			if (tables.$mainBody.length && tables.$mainHeader.length) {
+				tables.$mainHeader.scrollLeft(tables.$mainBody[0].scrollLeft);
 			}
 		}
 
 		function bindDeliveryMainHorizontalScroll() {
-			var $bt = $('#' + deliveryTableId).closest('.bootstrap-table');
-			var $container = $bt.find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			$mainBody.off('scroll.deliveryMainH').on('scroll.deliveryMainH', function () {
-				var sl = $mainBody.scrollLeft();
-				$mainHeader.scrollLeft(sl);
+			var tables = getDeliveryFixedTables();
+			tables.$mainBody.off('scroll.deliveryMainH').on('scroll.deliveryMainH', function () {
+				tables.$mainHeader.scrollLeft(tables.$mainBody.scrollLeft());
+				if (typeof window.__syncDeliveryResizeHandles === 'function') {
+					window.__syncDeliveryResizeHandles();
+				}
 			});
 		}
 
 		function applyDeliveryMainTableMinWidth() {
-			var sum = getDeliveryTableTotalWidth();
-			var w = sum + 'px';
-			var $container = $('#' + deliveryTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $headerTable = $container.children('.fixed-table-header').find('table');
-			var $bodyTable = $container.children('.fixed-table-body').children('table');
-			$headerTable.css({ width: w, minWidth: w, maxWidth: w });
-			$bodyTable.css({ width: w, minWidth: w, maxWidth: w });
+			applyDeliveryColumnWidthFromHeader();
 		}
 
 		function syncDeliveryOperateColumnScroll() {
@@ -708,7 +790,7 @@
 			return '<span class="delivery-cell-ellipsis" title="' + esc + '">' + esc + '</span>';
 		}
 
-		/** 制单人/审核人：固定宽度截断，避免长文本盖住相邻列 */
+		/** 制单人/审核人：随列宽变化，悬停看全名 */
 		function deliveryPersonCellEllipsis(value) {
 			var s = (value == null || value === '') ? '-' : String(value).trim();
 			if (!s) {
@@ -717,16 +799,13 @@
 			var fullEsc = escDeliveryCellAttr(s);
 			var maxLen = 6;
 			var shown = (s !== '-' && s.length > maxLen) ? (s.substring(0, maxLen) + '…') : s;
-			return '<div class="delivery-person-ellipsis" style="display:block;box-sizing:border-box;width:78px;max-width:78px;margin:0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'
+			return '<div class="delivery-person-ellipsis" style="display:block;box-sizing:border-box;width:100%;max-width:100%;margin:0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'
 				+ fullEsc + '">' + escDeliveryCellAttr(shown) + '</div>';
 		}
 
 		function deliveryPersonCellStyle() {
 			return {
 				css: {
-					'max-width': '90px',
-					'width': '90px',
-					'min-width': '90px',
 					'overflow': 'hidden',
 					'text-overflow': 'ellipsis',
 					'white-space': 'nowrap'
@@ -754,13 +833,95 @@
 			return '<span class="delivery-cell-ellipsis" title="' + title + '">' + parts.join('<br/>') + '</span>';
 		}
 
+		/** 像素级列宽拖动：表头交界处拖动手柄，表头表体同步 */
+		function initDeliveryHeaderColumnResize() {
+			var tables = getDeliveryFixedTables();
+			var $mainHeader = tables.$mainHeader;
+			var $headTable = tables.$headTable;
+			if (!$mainHeader.length || !$headTable.length) {
+				return;
+			}
+			$mainHeader.find('.rc-handle-container').remove();
+			var $handleContainer = $('<div class="rc-handle-container"></div>');
+			$headTable.before($handleContainer);
+
+			function syncDeliveryResizeHandles() {
+				var $ths = $headTable.find('thead tr:first th');
+				if (!$ths.length) {
+					return;
+				}
+				var tableW = $headTable.outerWidth() || 0;
+				var headerH = $headTable.find('thead').outerHeight() || 40;
+				$handleContainer.css({ width: tableW + 'px' });
+				$handleContainer.empty();
+				var containerLeft = $handleContainer.offset().left;
+				$ths.each(function () {
+					var $th = $(this);
+					var field = $th.attr('data-field');
+					if (!field || DELIVERY_COL_RESIZE_SKIP[field] || $th.hasClass('bs-checkbox')) {
+						return;
+					}
+					var left = $th.offset().left - containerLeft + $th.outerWidth();
+					$('<div class="rc-handle" title="拖动调整列宽"></div>')
+						.css({ left: left + 'px', height: headerH + 'px' })
+						.attr('data-field', field)
+						.appendTo($handleContainer);
+				});
+			}
+
+			$handleContainer.off('.deliveryColResize').on('mousedown.deliveryColResize', '.rc-handle', function (e) {
+				e.preventDefault();
+				e.stopPropagation();
+				var field = $(this).attr('data-field');
+				if (!field || DELIVERY_COL_RESIZE_SKIP[field]) {
+					return;
+				}
+				var startX = e.clientX;
+				var startW = deliveryColWidths[field] || 80;
+				var $th = $headTable.find('thead tr:first th[data-field="' + field + '"]');
+				if ($th.length) {
+					startW = Math.ceil($th.outerWidth()) || startW;
+				}
+				var $active = $(this).addClass('rc-handle-active');
+				deliveryColResizing = true;
+				$(document.body).css('cursor', 'col-resize');
+
+				function onMove(ev) {
+					var nextW = Math.max(48, startW + (ev.clientX - startX));
+					deliveryColWidths[field] = nextW;
+					applyDeliveryColumnWidthFromHeader();
+					syncDeliveryResizeHandles();
+					$handleContainer.find('.rc-handle[data-field="' + field + '"]').addClass('rc-handle-active');
+				}
+
+				function onUp() {
+					$(document).off('mousemove.deliveryColResize mouseup.deliveryColResize');
+					$(document.body).css('cursor', '');
+					$active.removeClass('rc-handle-active');
+					applyDeliveryColumnWidthFromHeader();
+					syncDeliveryResizeHandles();
+					fixDeliveryTableHeaderAlign();
+					deliveryColResizing = false;
+				}
+
+				$(document).on('mousemove.deliveryColResize', onMove);
+				$(document).on('mouseup.deliveryColResize', onUp);
+			});
+
+			syncDeliveryResizeHandles();
+			window.__syncDeliveryResizeHandles = syncDeliveryResizeHandles;
+		}
+
 		function refreshDeliveryTableLayout() {
+			if (deliveryColResizing) {
+				return;
+			}
 			fixDeliveryTableHeaderAlign();
 			scheduleDeliveryColumnWidths();
-			applyDeliveryMainTableMinWidth();
 			syncDeliveryHeaderBodyScrollLeft();
 			bindDeliveryMainHorizontalScroll();
 			syncDeliveryOperateColumnScroll();
+			initDeliveryHeaderColumnResize();
 		}
 
 		function isDeliveryAudited(row) {

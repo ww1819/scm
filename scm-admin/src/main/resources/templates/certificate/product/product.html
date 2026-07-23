@@ -329,52 +329,69 @@
 			height: 0 !important;
 		}
 
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-header {
-			position: relative !important;
-			top: auto !important;
-			z-index: 2;
-			background: #fff;
-			overflow: hidden;
-		}
-
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th .th-inner,
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th .sortable {
-			text-align: center !important;
-			justify-content: center;
-		}
-
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th,
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body tbody td {
-			box-sizing: border-box;
-		}
-
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-body tbody td {
-			white-space: nowrap;
-			vertical-align: middle !important;
-		}
-
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="materialName"],
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"],
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="manufacturerName"] {
-			overflow: hidden;
-			text-overflow: ellipsis;
-		}
-
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="materialName"] .tooltip-show {
-			display: inline-block;
-			max-width: 100%;
-			overflow: hidden;
-			text-overflow: ellipsis;
-			white-space: nowrap;
-			vertical-align: middle;
-		}
-
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-header,
 		.audit-right-area .audit-cert-detail-wrap .fixed-table-header {
 			position: relative !important;
 			top: auto !important;
 			z-index: 2;
 			background: #fff;
 			overflow: hidden;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-header .rc-handle-container,
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-header .rc-handle-container {
+			position: relative;
+			z-index: 20;
+			pointer-events: none;
+			height: 0;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-header .rc-handle,
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-header .rc-handle {
+			position: absolute;
+			top: 0;
+			width: 10px;
+			margin-left: -5px;
+			cursor: col-resize;
+			pointer-events: auto;
+			z-index: 21;
+			background: transparent;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-header .rc-handle:hover,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-header .rc-handle.rc-handle-active,
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-header .rc-handle:hover,
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-header .rc-handle.rc-handle-active {
+			background: rgba(60, 141, 188, 0.35);
+		}
+
+		/* 文本列表头左对齐，th-inner 不拉满，排序图标紧跟文字 */
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th,
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-container > .fixed-table-header th {
+			text-align: left !important;
+			box-sizing: border-box;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th .th-inner,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th .sortable,
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-container > .fixed-table-header th .th-inner,
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-container > .fixed-table-header th .sortable {
+			display: inline-block;
+			width: auto !important;
+			max-width: 100%;
+			padding-right: 18px;
+			background-position: right center;
+			text-align: left !important;
+			justify-content: flex-start;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body tbody td,
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-container > .fixed-table-body tbody td {
+			box-sizing: border-box;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			vertical-align: middle !important;
 		}
 
 		.audit-page-wrap > .audit-search-area.search-collapse {
@@ -535,7 +552,10 @@
 			$(window).resize(function() {
 				adjustProductTableHeight();
 				adjustCertDetailTableHeight();
-				setTimeout(refreshProductTableLayout, 100);
+				setTimeout(function() {
+					refreshProductTableLayout();
+					refreshCertDetailTableLayout();
+				}, 100);
 				var $hospitalTable = $('#bootstrap-table-hospital');
 				if ($hospitalTable.length && $hospitalTable.bootstrapTable('getOptions')) {
 					$hospitalTable.bootstrapTable('resetView', { height: calculateLeftHospitalTableHeight() });
@@ -545,6 +565,7 @@
 			setTimeout(function() {
 				adjustProductTableHeight();
 				adjustCertDetailTableHeight();
+				refreshCertDetailTableLayout();
 			}, 300);
 		});
 
@@ -575,6 +596,7 @@
 				return;
 			}
 			$table.bootstrapTable('resetView', { height: calculateCertDetailTableHeight() });
+			refreshCertDetailTableLayout();
 		}
 
 		function initCertDetailTable() {
@@ -592,6 +614,9 @@
 				sortOrder: 'asc',
 				height: calculateCertDetailTableHeight(),
 				data: [],
+				onPostBody: function() {
+					refreshCertDetailTableLayout();
+				},
 				columns: [{
 					field: 'serialNumber',
 					title: '序号',
@@ -607,7 +632,7 @@
 					align: 'left',
 					sortable: true,
 					formatter: function(value, row) {
-						return value || row.licenseKindCode || '-';
+						return ellipsisText(value || row.licenseKindCode || '-');
 					}
 				},
 				{
@@ -616,7 +641,7 @@
 					align: 'left',
 					sortable: true,
 					formatter: function(value, row) {
-						return value || row.licenseKindCode || '-';
+						return ellipsisText(value || row.licenseKindCode || '-');
 					}
 				},
 				{
@@ -625,7 +650,7 @@
 					align: 'left',
 					sortable: true,
 					formatter: function(value) {
-						return value || '-';
+						return ellipsisText(value || '-');
 					}
 				},
 				{
@@ -755,6 +780,301 @@
 			return Math.max(Math.floor(wrapH - btToolbarH - pagH - 2), 200);
 		}
 
+		function ellipsisText(value) {
+			if (value === null || value === undefined || value === '') {
+				return '-';
+			}
+			var text = String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+			var title = String(value).replace(/"/g, '&quot;');
+			return '<span title="' + title + '" style="display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;">' + text + '</span>';
+		}
+
+		/** 通用：表头交界拖拽调列宽，表头/表体同步 */
+		function createColResizeController(options) {
+			var tableId = options.tableId;
+			var ns = options.ns;
+			var skipFields = options.skipFields || {};
+			var checkboxColWidth = options.checkboxWidth || 36;
+			var colWidths = options.colWidths || {};
+			var resizing = false;
+			var syncHandlesKey = '__syncResizeHandles_' + ns;
+
+			function getFixedTables() {
+				var $container = $('#' + tableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+				var $mainHeader = $container.children('.fixed-table-header');
+				var $mainBody = $container.children('.fixed-table-body');
+				var $headTable = $mainHeader.find('table').not('.fixed-table-border').first();
+				var $bodyTable = $mainBody.find('#' + tableId);
+				if (!$bodyTable.length) {
+					$bodyTable = $mainBody.find('table').not('.fixed-table-border').first();
+				}
+				return {
+					$container: $container,
+					$mainHeader: $mainHeader,
+					$mainBody: $mainBody,
+					$headTable: $headTable,
+					$bodyTable: $bodyTable
+				};
+			}
+
+			function ensureColgroup($table, colCount) {
+				if (!$table || !$table.length) {
+					return $();
+				}
+				var $colgroup = $table.children('colgroup');
+				if (!$colgroup.length) {
+					$colgroup = $('<colgroup></colgroup>');
+					$table.prepend($colgroup);
+				}
+				while ($colgroup.children('col').length < colCount) {
+					$colgroup.append('<col />');
+				}
+				while ($colgroup.children('col').length > colCount) {
+					$colgroup.children('col:last').remove();
+				}
+				return $colgroup;
+			}
+
+			function applyFromHeader() {
+				var tables = getFixedTables();
+				var $headTable = tables.$headTable;
+				var $bodyTable = tables.$bodyTable;
+				var $mainBody = tables.$mainBody;
+				if (!$headTable.length || !$bodyTable.length) {
+					return;
+				}
+				var $ths = $headTable.find('thead tr:first th');
+				var headColCount = $ths.length;
+				if (headColCount < 1) {
+					return;
+				}
+				var $bodyThs = $bodyTable.find('thead tr:first th');
+				var bodyColCount = Math.max(headColCount, $bodyThs.length);
+				ensureColgroup($headTable, headColCount);
+				ensureColgroup($bodyTable, bodyColCount);
+				var totalW = 0;
+				var setW = function(el, w) {
+					if (!el) {
+						return;
+					}
+					var ws = w + 'px';
+					el.style.setProperty('width', ws, 'important');
+					el.style.setProperty('min-width', ws, 'important');
+					el.style.setProperty('max-width', 'none', 'important');
+				};
+				$ths.each(function() {
+					var headIdx = this.cellIndex;
+					if (headIdx < 0) {
+						return;
+					}
+					var $th = $(this);
+					var field = $th.attr('data-field');
+					var w;
+					if ($th.hasClass('bs-checkbox') || field === '0' || field === 'state') {
+						w = checkboxColWidth;
+					} else if (field && colWidths[field] != null) {
+						w = colWidths[field];
+					} else {
+						w = Math.ceil(this.getBoundingClientRect().width);
+						if (!w || w < 40) {
+							w = 40;
+						}
+						if (field) {
+							colWidths[field] = w;
+						}
+					}
+					var bodyIdx = headIdx;
+					if (field) {
+						var $bodyTh = $bodyTable.find('thead tr:first th[data-field="' + field + '"]');
+						if ($bodyTh.length) {
+							bodyIdx = $bodyTh[0].cellIndex;
+						}
+					}
+					setW(this, w);
+					$th.find('.fht-cell').each(function() { setW(this, w); });
+					$headTable.children('colgroup').children('col').eq(headIdx).each(function() { setW(this, w); });
+					$bodyTable.children('colgroup').children('col').eq(bodyIdx).each(function() { setW(this, w); });
+					$bodyTable.find('thead tr:first th').eq(bodyIdx).each(function() {
+						setW(this, w);
+						$(this).find('.fht-cell').each(function() { setW(this, w); });
+					});
+					$bodyTable.find('tbody tr').each(function() {
+						var cell = this.cells[bodyIdx];
+						if (cell) {
+							setW(cell, w);
+						}
+					});
+					if (field) {
+						$mainBody.find('td[data-field="' + field + '"]').each(function() { setW(this, w); });
+					}
+					totalW += w;
+				});
+				if (totalW > 0) {
+					var tw = totalW + 'px';
+					$headTable[0].style.setProperty('width', tw, 'important');
+					$headTable[0].style.setProperty('min-width', tw, 'important');
+					$headTable[0].style.setProperty('max-width', 'none', 'important');
+					$bodyTable[0].style.setProperty('width', tw, 'important');
+					$bodyTable[0].style.setProperty('min-width', tw, 'important');
+					$bodyTable[0].style.setProperty('max-width', 'none', 'important');
+				}
+			}
+
+			function fixHeaderAlign() {
+				var tables = getFixedTables();
+				if (!tables.$mainBody.length || !tables.$mainHeader.length) {
+					return;
+				}
+				var scrollW = tables.$mainBody[0].offsetWidth - tables.$mainBody[0].clientWidth;
+				tables.$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+				applyFromHeader();
+			}
+
+			function bindHScroll() {
+				var tables = getFixedTables();
+				tables.$mainBody.off('scroll.' + ns + 'H').on('scroll.' + ns + 'H', function() {
+					tables.$mainHeader.scrollLeft(tables.$mainBody.scrollLeft());
+					if (typeof window[syncHandlesKey] === 'function') {
+						window[syncHandlesKey]();
+					}
+				});
+			}
+
+			function initHeaderResize() {
+				var tables = getFixedTables();
+				var $mainHeader = tables.$mainHeader;
+				var $headTable = tables.$headTable;
+				if (!$mainHeader.length || !$headTable.length) {
+					return;
+				}
+				$mainHeader.find('.rc-handle-container').remove();
+				var $handleContainer = $('<div class="rc-handle-container"></div>');
+				$headTable.before($handleContainer);
+
+				function syncResizeHandles() {
+					var $ths = $headTable.find('thead tr:first th');
+					if (!$ths.length) {
+						return;
+					}
+					var tableW = $headTable.outerWidth() || 0;
+					var headerH = $headTable.find('thead').outerHeight() || 40;
+					$handleContainer.css({ width: tableW + 'px' });
+					$handleContainer.empty();
+					var containerLeft = $handleContainer.offset().left;
+					$ths.each(function() {
+						var $th = $(this);
+						var field = $th.attr('data-field');
+						if (!field || skipFields[field] || $th.hasClass('bs-checkbox')) {
+							return;
+						}
+						var left = $th.offset().left - containerLeft + $th.outerWidth();
+						$('<div class="rc-handle" title="拖动调整列宽"></div>')
+							.css({ left: left + 'px', height: headerH + 'px' })
+							.attr('data-field', field)
+							.appendTo($handleContainer);
+					});
+				}
+
+				$handleContainer.off('.' + ns + 'Resize').on('mousedown.' + ns + 'Resize', '.rc-handle', function(e) {
+					e.preventDefault();
+					e.stopPropagation();
+					var field = $(this).attr('data-field');
+					if (!field || skipFields[field]) {
+						return;
+					}
+					var startX = e.clientX;
+					var startW = colWidths[field] || 80;
+					var $th = $headTable.find('thead tr:first th[data-field="' + field + '"]');
+					if ($th.length) {
+						startW = Math.ceil($th.outerWidth()) || startW;
+					}
+					var $active = $(this).addClass('rc-handle-active');
+					resizing = true;
+					$(document.body).css('cursor', 'col-resize');
+
+					function onMove(ev) {
+						var nextW = Math.max(48, startW + (ev.clientX - startX));
+						colWidths[field] = nextW;
+						applyFromHeader();
+						syncResizeHandles();
+						$handleContainer.find('.rc-handle[data-field="' + field + '"]').addClass('rc-handle-active');
+					}
+
+					function onUp() {
+						$(document).off('mousemove.' + ns + 'Resize mouseup.' + ns + 'Resize');
+						$(document.body).css('cursor', '');
+						$active.removeClass('rc-handle-active');
+						applyFromHeader();
+						syncResizeHandles();
+						fixHeaderAlign();
+						resizing = false;
+					}
+
+					$(document).on('mousemove.' + ns + 'Resize', onMove);
+					$(document).on('mouseup.' + ns + 'Resize', onUp);
+				});
+
+				syncResizeHandles();
+				window[syncHandlesKey] = syncResizeHandles;
+			}
+
+			function refresh() {
+				if (resizing) {
+					return;
+				}
+				fixHeaderAlign();
+				applyFromHeader();
+				requestAnimationFrame(function() {
+					applyFromHeader();
+				});
+				bindHScroll();
+				initHeaderResize();
+			}
+
+			return { refresh: refresh };
+		}
+
+		var productColResize = createColResizeController({
+			tableId: productTableId,
+			ns: 'prodCol',
+			checkboxWidth: 36,
+			skipFields: { '0': true, state: true },
+			colWidths: {
+				serialNumber: 60,
+				auditStatus: 80,
+				materialCode: 120,
+				materialName: 160,
+				specification: 100,
+				model: 100,
+				unit: 70,
+				bidPrice: 90,
+				manufacturerName: 140,
+				supplierName: 150,
+				registerNo: 140,
+				registerIssueDate: 110,
+				expireDate: 110,
+				status: 80,
+				createTime: 150
+			}
+		});
+
+		var certDetailColResize = createColResizeController({
+			tableId: certDetailTableId,
+			ns: 'certDetailCol',
+			skipFields: {},
+			colWidths: {
+				serialNumber: 60,
+				licenseKindCode: 110,
+				licenseKindName: 180,
+				licenseNo: 140,
+				expireDate: 120,
+				preview: 70,
+				snapUploadAction: 72,
+				createBy: 100,
+				createTime: 120
+			}
+		});
+
 		function adjustProductTableHeight() {
 			var $table = $('#' + productTableId);
 			if ($table.length === 0 || !$table.bootstrapTable('getOptions')) {
@@ -764,30 +1084,12 @@
 			refreshProductTableLayout();
 		}
 
-		function fixProductTableHeaderAlign() {
-			var $bt = $('#' + productTableId).closest('.bootstrap-table');
-			var $container = $bt.find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			if (!$mainBody.length || !$mainHeader.length) {
-				return;
-			}
-			var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
-			$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
-		}
-
-		function bindProductMainHorizontalScroll() {
-			var $container = $('#' + productTableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			$mainBody.off('scroll.productMainH').on('scroll.productMainH', function() {
-				$mainHeader.scrollLeft($mainBody.scrollLeft());
-			});
-		}
-
 		function refreshProductTableLayout() {
-			fixProductTableHeaderAlign();
-			bindProductMainHorizontalScroll();
+			productColResize.refresh();
+		}
+
+		function refreshCertDetailTableLayout() {
+			certDetailColResize.refresh();
 		}
 
 		function calculateLeftHospitalTableHeight() {
@@ -1152,9 +1454,9 @@
 						if (!value) {
 							return '-';
 						}
-						var text = value.length > 12 ? value.substring(0, 12) + '...' : value;
+						var text = String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 						var title = (value || '').replace(/"/g, '&quot;');
-						return '<span class="cert-product-name-dblview" style="color:#337ab7;" title="' + title + '（双击查看）">' + text + '</span>';
+						return '<span class="cert-product-name-dblview" style="color:#337ab7;display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle;" title="' + title + '（双击查看）">' + text + '</span>';
 					},
 					events: {
 						'dblclick .cert-product-name-dblview': function(e, value, row) {
@@ -1220,10 +1522,7 @@
 					width: 140,
 					sortable: true,
 					formatter: function(value, row, index) {
-						if (!value) {
-							return '-';
-						}
-						return $.table.tooltip(value, 10);
+						return ellipsisText(value);
 					}
 				},
 				{
@@ -1233,10 +1532,7 @@
 					width: 150,
 					sortable: true,
 					formatter: function(value, row, index) {
-						if (!value) {
-							return '-';
-						}
-						return $.table.tooltip(value, 10);
+						return ellipsisText(value);
 					}
 				},
 				{
@@ -1246,7 +1542,7 @@
 					width: 140,
 					sortable: true,
 					formatter: function(value, row, index) {
-						return value || '-';
+						return ellipsisText(value);
 					}
 				},
 				{
