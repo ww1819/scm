@@ -365,29 +365,44 @@
 			background: rgba(60, 141, 188, 0.35);
 		}
 
-		/* 文本列表头左对齐，th-inner 不拉满，排序图标紧跟文字 */
+		/* 表头与明细统一左对齐；th-inner 不拉满，排序图标紧跟文字 */
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th,
-		.audit-right-area .audit-cert-detail-wrap .fixed-table-container > .fixed-table-header th {
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body thead th,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body tbody td,
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-container > .fixed-table-header th,
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-container > .fixed-table-body thead th,
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-container > .fixed-table-body tbody td {
 			text-align: left !important;
 			box-sizing: border-box;
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th .th-inner,
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th .sortable,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body thead th .th-inner,
 		.audit-right-area .audit-cert-detail-wrap .fixed-table-container > .fixed-table-header th .th-inner,
-		.audit-right-area .audit-cert-detail-wrap .fixed-table-container > .fixed-table-header th .sortable {
-			display: inline-block;
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-container > .fixed-table-header th .sortable,
+		.audit-right-area .audit-cert-detail-wrap .fixed-table-container > .fixed-table-body thead th .th-inner {
+			text-align: left !important;
+			justify-content: flex-start !important;
+			display: inline-block !important;
 			width: auto !important;
 			max-width: 100%;
-			padding-right: 18px;
-			background-position: right center;
-			text-align: left !important;
-			justify-content: flex-start;
+			box-sizing: border-box;
+			vertical-align: middle;
+			padding-right: 18px !important;
+			background-position: right center !important;
+		}
+
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th.bs-checkbox,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td.bs-checkbox,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th.bs-checkbox .th-inner,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td.bs-checkbox {
+			text-align: center !important;
+			justify-content: center !important;
 		}
 
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body tbody td,
 		.audit-right-area .audit-cert-detail-wrap .fixed-table-container > .fixed-table-body tbody td {
-			box-sizing: border-box;
 			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
@@ -620,7 +635,8 @@
 				columns: [{
 					field: 'serialNumber',
 					title: '序号',
-					align: 'center',
+					align: 'left',
+					halign: 'left',
 					width: 60,
 					formatter: function(value, row, index) {
 						return index + 1;
@@ -630,6 +646,7 @@
 					field: 'licenseKindCode',
 					title: '证件编号',
 					align: 'left',
+					halign: 'left',
 					sortable: true,
 					formatter: function(value, row) {
 						return ellipsisText(value || row.licenseKindCode || '-');
@@ -639,6 +656,7 @@
 					field: 'licenseKindName',
 					title: '证件类型',
 					align: 'left',
+					halign: 'left',
 					sortable: true,
 					formatter: function(value, row) {
 						return ellipsisText(value || row.licenseKindCode || '-');
@@ -648,6 +666,7 @@
 					field: 'licenseNo',
 					title: '证件编码',
 					align: 'left',
+					halign: 'left',
 					sortable: true,
 					formatter: function(value) {
 						return ellipsisText(value || '-');
@@ -656,7 +675,8 @@
 				{
 					field: 'expireDate',
 					title: '证件有效期',
-					align: 'center',
+					align: 'left',
+					halign: 'left',
 					width: 120,
 					sortable: true,
 					formatter: function(value) {
@@ -666,12 +686,15 @@
 				(function() {
 					var previewCol = getCertSnapPreviewColumn();
 					previewCol.sortable = true;
+					previewCol.align = 'left';
+					previewCol.halign = 'left';
 					return previewCol;
 				})(),
 				{
 					field: 'snapUploadAction',
 					title: '上传',
-					align: 'center',
+					align: 'left',
+					halign: 'left',
 					width: 72,
 					formatter: function() {
 						return '<a class="btn btn-success btn-xs cert-detail-upload-btn" href="javascript:void(0)" title="上传证照"><i class="fa fa-upload"></i></a>';
@@ -687,7 +710,8 @@
 				{
 					field: 'createBy',
 					title: '上传人',
-					align: 'center',
+					align: 'left',
+					halign: 'left',
 					width: 100,
 					formatter: function(value) {
 						return value || '-';
@@ -696,7 +720,8 @@
 				{
 					field: 'createTime',
 					title: '上传日期',
-					align: 'center',
+					align: 'left',
+					halign: 'left',
 					width: 120,
 					formatter: function(value) {
 						return formatCertDate(value);
@@ -863,6 +888,12 @@
 					el.style.setProperty('min-width', ws, 'important');
 					el.style.setProperty('max-width', 'none', 'important');
 				};
+				var setAlignLeft = function(el) {
+					if (!el || (el.classList && el.classList.contains('bs-checkbox'))) {
+						return;
+					}
+					el.style.setProperty('text-align', 'left', 'important');
+				};
 				$ths.each(function() {
 					var headIdx = this.cellIndex;
 					if (headIdx < 0) {
@@ -892,21 +923,33 @@
 						}
 					}
 					setW(this, w);
+					setAlignLeft(this);
 					$th.find('.fht-cell').each(function() { setW(this, w); });
+					$th.find('.th-inner, .sortable').each(function() {
+						this.style.setProperty('text-align', 'left', 'important');
+						this.style.setProperty('justify-content', 'flex-start', 'important');
+						this.style.setProperty('display', 'inline-block', 'important');
+						this.style.setProperty('width', 'auto', 'important');
+					});
 					$headTable.children('colgroup').children('col').eq(headIdx).each(function() { setW(this, w); });
 					$bodyTable.children('colgroup').children('col').eq(bodyIdx).each(function() { setW(this, w); });
 					$bodyTable.find('thead tr:first th').eq(bodyIdx).each(function() {
 						setW(this, w);
+						setAlignLeft(this);
 						$(this).find('.fht-cell').each(function() { setW(this, w); });
 					});
 					$bodyTable.find('tbody tr').each(function() {
 						var cell = this.cells[bodyIdx];
 						if (cell) {
 							setW(cell, w);
+							setAlignLeft(cell);
 						}
 					});
 					if (field) {
-						$mainBody.find('td[data-field="' + field + '"]').each(function() { setW(this, w); });
+						$mainBody.find('td[data-field="' + field + '"]').each(function() {
+							setW(this, w);
+							setAlignLeft(this);
+						});
 					}
 					totalW += w;
 				});
@@ -1069,7 +1112,7 @@
 				licenseKindName: 180,
 				licenseNo: 140,
 				expireDate: 120,
-				preview: 70,
+				certificateFile: 70,
 				snapUploadAction: 72,
 				createBy: 100,
 				createTime: 120
@@ -1369,12 +1412,16 @@
 						adjustProductTableHeight();
 						adjustCertDetailTableHeight();
 						refreshProductTableLayout();
+						refreshCertDetailTableLayout();
 						if (selectedCertificateId) {
 							loadCertDetailRows(selectedCertificateId);
 						}
 						updateProductEditButtonState();
 					}, 50);
-					setTimeout(refreshProductTableLayout, 200);
+					setTimeout(function() {
+						refreshProductTableLayout();
+						refreshCertDetailTableLayout();
+					}, 200);
 				},
 				onCheck: function() {
 					updateProductEditButtonState();
@@ -1408,7 +1455,8 @@
 				{
 					field: 'serialNumber',
 					title: '序号',
-					align: 'center',
+					align: 'left',
+					halign: 'left',
 					width: 60,
 					formatter: function(value, row, index) {
 						return $.table.serialNumber(index);
@@ -1417,7 +1465,8 @@
 				{
 					field: 'auditStatus',
 					title: '状态',
-					align: 'center',
+					align: 'left',
+					halign: 'left',
 					width: 80,
 					sortable: true,
 					formatter: function(value, row, index) {
@@ -1436,16 +1485,18 @@
 					field: 'materialCode',
 					title: '产品编码',
 					align: 'left',
+					halign: 'left',
 					width: 120,
 					sortable: true,
 					formatter: function(value, row, index) {
-						return value || '-';
+						return ellipsisText(value);
 					}
 				},
 				{
 					field: 'materialName',
 					title: '产品名称',
 					align: 'left',
+					halign: 'left',
 					width: 160,
 					sortable: true,
 					cellStyle: function() {
@@ -1473,26 +1524,29 @@
 					field: 'specification',
 					title: '规格',
 					align: 'left',
+					halign: 'left',
 					width: 100,
 					sortable: true,
 					formatter: function(value, row, index) {
-						return value || '-';
+						return ellipsisText(value);
 					}
 				},
 				{
 					field: 'model',
 					title: '型号',
 					align: 'left',
+					halign: 'left',
 					width: 100,
 					sortable: true,
 					formatter: function(value, row, index) {
-						return value || '-';
+						return ellipsisText(value);
 					}
 				},
 				{
 					field: 'unit',
 					title: '单位',
-					align: 'center',
+					align: 'left',
+					halign: 'left',
 					width: 70,
 					sortable: true,
 					formatter: function(value, row, index) {
@@ -1502,7 +1556,8 @@
 				{
 					field: 'bidPrice',
 					title: '单价',
-					align: 'right',
+					align: 'left',
+					halign: 'left',
 					width: 90,
 					sortable: true,
 					formatter: function(value, row, index) {
@@ -1520,6 +1575,7 @@
 					field: 'manufacturerName',
 					title: '生产厂家',
 					align: 'left',
+					halign: 'left',
 					width: 140,
 					sortable: true,
 					formatter: function(value, row, index) {
@@ -1530,6 +1586,7 @@
 					field: 'supplierName',
 					title: '供应商',
 					align: 'left',
+					halign: 'left',
 					width: 150,
 					sortable: true,
 					formatter: function(value, row, index) {
@@ -1540,6 +1597,7 @@
 					field: 'registerNo',
 					title: '注册证号',
 					align: 'left',
+					halign: 'left',
 					width: 140,
 					sortable: true,
 					formatter: function(value, row, index) {
@@ -1549,7 +1607,8 @@
 				{
 					field: 'registerIssueDate',
 					title: '发证日期',
-					align: 'center',
+					align: 'left',
+					halign: 'left',
 					width: 110,
 					sortable: true,
 					formatter: function(value, row, index) {
@@ -1567,7 +1626,8 @@
 				{
 					field: 'expireDate',
 					title: '有效期至',
-					align: 'center',
+					align: 'left',
+					halign: 'left',
 					width: 110,
 					sortable: true,
 					formatter: function(value, row, index) {
@@ -1583,7 +1643,8 @@
 				{
 					field: 'status',
 					title: '效期状态',
-					align: 'center',
+					align: 'left',
+					halign: 'left',
 					width: 80,
 					formatter: function(value, row, index) {
 						if (row.isExpired == '1') {
@@ -1595,7 +1656,8 @@
 				{
 					field: 'createTime',
 					title: '创建时间',
-					align: 'center',
+					align: 'left',
+					halign: 'left',
 					width: 150,
 					sortable: true
 				}]
