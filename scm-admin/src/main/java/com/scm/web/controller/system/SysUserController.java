@@ -292,6 +292,7 @@ public class SysUserController extends BaseController
         }
         mmap.put("boundHospitalNames", resolveBoundHospitalNames(user.getMaintainSupplierId(), user.getMaintainHospitalId()));
         putRegionNamesFromDeptId(user.getDeptId(), mmap);
+        mmap.put("accountLocked", passwordService.isAccountLocked(user.getLoginName()));
         return prefix + "/edit";
     }
 
@@ -392,7 +393,8 @@ public class SysUserController extends BaseController
     @Log(title = "用户管理", businessType = BusinessType.UPDATE)
     @PostMapping("/edit")
     @ResponseBody
-    public AjaxResult editSave(@Validated SysUser user)
+    public AjaxResult editSave(@Validated SysUser user,
+        @RequestParam(value = "accountLock", required = false) String accountLock)
     {
         userService.checkUserAllowed(user);
         userService.checkUserDataScope(user.getUserId());
@@ -412,7 +414,29 @@ public class SysUserController extends BaseController
         }
         user.setUpdateBy(getLoginName());
         AuthorizationUtils.clearAllCachedAuthorizationInfo();
-        return toAjax(userService.updateUser(user));
+        int rows = userService.updateUser(user);
+        // 账号锁定仅存 EhCache，与库表无关；无论 update 影响行数是否 >0 都要同步
+        if (StringUtils.isNotEmpty(accountLock))
+        {
+            String loginName = user.getLoginName();
+            if (StringUtils.isEmpty(loginName) && user.getUserId() != null)
+            {
+                SysUser dbUser = userService.selectUserById(user.getUserId());
+                loginName = dbUser != null ? dbUser.getLoginName() : null;
+            }
+            if (StringUtils.isNotEmpty(loginName))
+            {
+                if ("0".equals(accountLock))
+                {
+                    passwordService.clearLoginRecordCache(loginName);
+                }
+                else if ("1".equals(accountLock))
+                {
+                    passwordService.lockAccount(loginName);
+                }
+            }
+        }
+        return toAjax(rows);
     }
 
     @RequiresPermissions("system:user:resetPwd")

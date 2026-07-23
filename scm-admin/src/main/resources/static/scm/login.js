@@ -20,6 +20,8 @@ function login() {
     $.ajax({
         type: "post",
         url: ctx + "login",
+        dataType: "json",
+        timeout: 60000,
         data: {
             "username": username,
             "password": password,
@@ -35,8 +37,21 @@ function login() {
             } else {
                 $('.imgcode').click();
                 $(".code").val("");
-                $.modal.msg(r.msg);
+                $.modal.msg(r.msg || "登录失败");
             }
+        },
+        error: function(xhr, textStatus) {
+            $('.imgcode').click();
+            $(".code").val("");
+            var msg = "登录请求失败，请稍后重试";
+            if (textStatus === "timeout") {
+                msg = "登录超时，请检查网络或稍后重试";
+            } else if (xhr && xhr.responseJSON && xhr.responseJSON.msg) {
+                msg = xhr.responseJSON.msg;
+            }
+            $.modal.msg(msg);
+        },
+        complete: function() {
             $.modal.closeLoading();
         }
     });

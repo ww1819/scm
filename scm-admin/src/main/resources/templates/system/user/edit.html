@@ -314,6 +314,15 @@
 	                        </label>
                         </div>
                     </div>
+                    <div class="col-sm-3">
+                        <div class="user-inline-field">
+                            <label>账号锁定</label>
+                            <select name="accountLock" id="accountLock" class="form-control" title="密码连续错误达到上限后锁定，约10分钟自动解锁，也可手工改为未锁定">
+                                <option value="0" th:selected="${accountLocked == null or !accountLocked}">未锁定</option>
+                                <option value="1" th:selected="${accountLocked != null and accountLocked}">已锁定</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
 

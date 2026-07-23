@@ -78,6 +78,36 @@ public class SysPasswordService
         loginRecordCache.remove(loginName);
     }
 
+    /**
+     * 是否因密码重试超限而锁定
+     */
+    public boolean isAccountLocked(String loginName)
+    {
+        if (loginName == null || loginName.isEmpty())
+        {
+            return false;
+        }
+        AtomicInteger retryCount = loginRecordCache.get(loginName);
+        if (retryCount == null)
+        {
+            return false;
+        }
+        return retryCount.get() > Integer.valueOf(maxRetryCount).intValue();
+    }
+
+    /**
+     * 手工锁定（写入超过上限的重试次数）
+     */
+    public void lockAccount(String loginName)
+    {
+        if (loginName == null || loginName.isEmpty())
+        {
+            return;
+        }
+        int limit = Integer.valueOf(maxRetryCount).intValue();
+        loginRecordCache.put(loginName, new AtomicInteger(limit + 1));
+    }
+
     public String encryptPassword(String loginName, String password, String salt)
     {
         return new Md5Hash(loginName + password + salt).toHex();
