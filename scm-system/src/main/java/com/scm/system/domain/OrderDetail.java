@@ -1,9 +1,11 @@
 package com.scm.system.domain;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import javax.validation.constraints.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.scm.common.annotation.Excel;
 import com.scm.common.annotation.Excel.ColumnType;
 import com.scm.common.core.domain.BaseEntity;
@@ -93,6 +95,19 @@ public class OrderDetail extends BaseEntity
     /** 注册证号 */
     @Excel(name = "注册证号")
     private String registerNo;
+
+    /** 注册证有效期（关联产品证件） */
+    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    @Excel(name = "注册证有效期", width = 30, dateFormat = "yyyy-MM-dd")
+    private Date registerExpireDate;
+
+    /** 国家医保编码 */
+    @Excel(name = "国家医保编码")
+    private String nationalInsuranceCode;
+
+    /** 阳光采购平台编码 */
+    @Excel(name = "阳光采购平台编码")
+    private String sunshineProcurementCode;
 
     /** 已审核配送数量（关联配送单审核通过） */
     private BigDecimal deliveredAuditedQty;
@@ -306,6 +321,36 @@ public class OrderDetail extends BaseEntity
         this.registerNo = registerNo;
     }
 
+    public Date getRegisterExpireDate()
+    {
+        return registerExpireDate;
+    }
+
+    public void setRegisterExpireDate(Date registerExpireDate)
+    {
+        this.registerExpireDate = registerExpireDate;
+    }
+
+    public String getNationalInsuranceCode()
+    {
+        return nationalInsuranceCode;
+    }
+
+    public void setNationalInsuranceCode(String nationalInsuranceCode)
+    {
+        this.nationalInsuranceCode = nationalInsuranceCode;
+    }
+
+    public String getSunshineProcurementCode()
+    {
+        return sunshineProcurementCode;
+    }
+
+    public void setSunshineProcurementCode(String sunshineProcurementCode)
+    {
+        this.sunshineProcurementCode = sunshineProcurementCode;
+    }
+
     public BigDecimal getDeliveredAuditedQty()
     {
         return deliveredAuditedQty;
@@ -370,6 +415,9 @@ public class OrderDetail extends BaseEntity
             .append("packCoefficient", getPackCoefficient())
             .append("manufacturer", getManufacturer())
             .append("registerNo", getRegisterNo())
+            .append("registerExpireDate", getRegisterExpireDate())
+            .append("nationalInsuranceCode", getNationalInsuranceCode())
+            .append("sunshineProcurementCode", getSunshineProcurementCode())
             .toString();
     }
 }

@@ -1,212 +1,223 @@
 <!DOCTYPE html>
-<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro" class="tp-detail-root">
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
 <head>
 	<th:block th:include="include :: header('第三方订单详情')" />
 	<th:block th:include="include :: layout-latest-css" />
 	<th:block th:include="include :: bootstrap-table-fixed-columns-css" />
 	<style>
-		html.tp-detail-root,
-		html.tp-detail-root body.tp-detail-body {
+		body.order-detail-page {
 			height: 100%;
-			margin: 0;
+			overflow: hidden;
+		}
+		.order-detail-page .main-content {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			min-height: 480px;
 			overflow: hidden;
 			box-sizing: border-box;
 		}
-		body.tp-detail-body {
-			display: flex;
-			flex-direction: column;
-			min-height: 0;
-		}
-		.tp-detail-page.main-content {
-			flex: 1 1 0%;
-			min-height: 0;
-			height: auto !important;
-			display: flex;
-			flex-direction: column;
-			overflow: hidden;
-			box-sizing: border-box;
-			padding: 0 10px 10px;
-		}
-		.tp-detail-page > form {
+		.order-detail-basic {
 			flex-shrink: 0;
 		}
-		.tp-order-info-box.search-collapse {
-			margin: 0 10px 15px 10px;
-			padding: 12px 10px 5px;
-			background: #fff !important;
+		#form-order-detail.order-basic-fields .form-group {
+			margin-bottom: 10px;
 		}
-		.tp-order-info-box .form-control[readonly] {
+		#form-order-detail.order-basic-fields .control-label {
+			padding-right: 4px;
+			padding-left: 0;
+			white-space: nowrap;
+		}
+		#form-order-detail .col-order-5 {
+			position: relative;
+			min-height: 1px;
+			padding-left: 6px;
+			padding-right: 6px;
+			float: left;
+			width: 20%;
+			box-sizing: border-box;
+		}
+		.order-info-box.search-collapse {
+			margin: 0 10px 10px 10px;
+			padding: 10px 8px 6px;
+			background: #fff !important;
+			box-shadow: none !important;
+		}
+		.order-info-box .form-control[readonly] {
 			background-color: #fff;
 			border-color: #e5e6e7;
 		}
-		.tp-detail-table-section {
+		.order-basic-header-row {
+			margin-bottom: 8px !important;
+		}
+		.order-detail-table-section {
 			flex: 1;
 			min-height: 0;
 			display: flex;
 			flex-direction: column;
-			margin: 0;
-			padding: 0 10px;
+			margin-top: 4px;
+			padding: 0 10px 10px;
+			overflow: hidden;
 		}
-		.tp-detail-table-section > .form-header {
+		.order-detail-table-section .form-header {
 			flex-shrink: 0;
-			margin-top: 8px;
+			margin: 4px 0 8px 0 !important;
+			padding-bottom: 5px !important;
 		}
-		/* 明细表：与第三方订单查询页 query-table-wrap.tp-query-table 一致 */
-		.query-table-wrap.tp-query-table {
+		.order-detail-table-wrap {
 			flex: 1;
 			min-height: 0;
 			position: relative;
-			padding-bottom: 0;
-			overflow-x: hidden;
-			overflow-y: visible;
+			overflow: hidden;
 			display: flex;
 			flex-direction: column;
 		}
-		.query-table-wrap.tp-query-table > .bootstrap-table {
+		.order-detail-table-wrap.select-table {
+			margin: 0 !important;
+			padding: 0 !important;
+			box-shadow: none !important;
+			border-radius: 0 !important;
+			background: transparent !important;
+		}
+		.order-detail-table-wrap .fixed-table-toolbar {
+			display: none !important;
+			height: 0 !important;
+			min-height: 0 !important;
+			margin: 0 !important;
+			padding: 0 !important;
+			border: 0 !important;
+		}
+		.order-detail-table-wrap > .bootstrap-table {
 			flex: 1 1 auto;
 			min-height: 0;
-			width: 100%;
-			display: flex;
-			flex-direction: column;
 			height: 100%;
-		}
-		.query-table-wrap.tp-query-table .fixed-table-container {
 			display: flex;
 			flex-direction: column;
-			flex: 1;
-			min-height: 0;
-			padding-bottom: 0;
-		}
-		.query-table-wrap.tp-query-table .fixed-table-body {
-			overflow-x: hidden !important;
-			overflow-y: auto !important;
-			flex: 1;
-			min-height: 0;
-		}
-		.query-table-wrap.tp-query-table .tp-detail-hscroll {
-			flex-shrink: 0;
-			overflow-x: auto;
-			overflow-y: hidden;
-			height: 14px;
-			min-height: 14px;
-			background: #f5f5f5;
-			border-top: 1px solid #e5e5e5;
-			box-sizing: border-box;
-			-webkit-overflow-scrolling: touch;
-			scrollbar-width: thin;
-		}
-		.query-table-wrap.tp-query-table .tp-detail-hscroll::-webkit-scrollbar {
-			height: 10px;
-		}
-		.query-table-wrap.tp-query-table .tp-detail-hscroll::-webkit-scrollbar-thumb {
-			background: rgba(0, 0, 0, 0.28);
-			border-radius: 5px;
-		}
-		.query-table-wrap.tp-query-table .tp-detail-hscroll::-webkit-scrollbar-track {
-			background: #eee;
-		}
-		.query-table-wrap.tp-query-table .tp-detail-hscroll-inner {
-			height: 1px;
-			pointer-events: none;
-		}
-		.query-table-wrap.tp-query-table .fixed-table-pagination {
-			position: relative;
-			bottom: auto;
-			display: block !important;
-			background: #fff;
-			z-index: 6;
-			border-top: 1px solid #eee;
 			margin: 0 !important;
-			margin-top: 12px !important;
-			padding: 10px 10px 14px !important;
-			flex-shrink: 0;
+			padding: 0 !important;
 		}
-		.query-table-wrap.tp-query-table .fixed-table-pagination .pagination {
-			margin-right: 28px;
+		.order-detail-table-wrap .fixed-table-container {
+			flex: 1;
+			min-height: 0;
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+			margin: 0 !important;
+			padding: 0 !important;
 		}
-		.query-table-wrap.tp-query-table .fixed-table-header {
+		.order-detail-table-wrap .fixed-table-body {
+			flex: 1;
+			min-height: 0;
+			overflow-x: scroll !important;
+			overflow-y: auto !important;
+		}
+		.order-detail-table-wrap .fixed-table-header {
 			position: relative;
-			top: auto;
-			z-index: 2;
-			background: #fff !important;
+			background: #fff;
 		}
-		.query-table-wrap.tp-query-table .fixed-table-header th {
-			background-color: #f5f5f5 !important;
-			border-bottom: 2px solid #ddd !important;
+		.order-detail-table-wrap .fixed-table-header table.table,
+		.order-detail-table-wrap .fixed-table-body table.table {
+			border-collapse: collapse;
+			table-layout: fixed;
 		}
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th,
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body tbody td,
-		.query-table-wrap.tp-query-table .fixed-columns-right .fixed-table-header th,
-		.query-table-wrap.tp-query-table .fixed-columns-right .fixed-table-body td {
+		#bootstrap-table.order-detail-fixed-table {
+			table-layout: fixed !important;
+		}
+		.order-detail-table-wrap .fixed-table-header th .th-inner,
+		.order-detail-table-wrap .fixed-table-header th .sortable,
+		#bootstrap-table thead th .th-inner,
+		#bootstrap-table thead th .sortable {
+			padding: 4px 10px !important;
+			font-size: 14px !important;
+			line-height: 1.3;
+			font-weight: normal;
+			text-align: center !important;
+			overflow: hidden !important;
+			text-overflow: ellipsis !important;
+			white-space: nowrap !important;
+		}
+		.order-detail-table-wrap .fixed-table-header th .th-inner.sortable,
+		.order-detail-table-wrap .fixed-table-header th .sortable,
+		#bootstrap-table thead th .th-inner.sortable,
+		#bootstrap-table thead th .sortable {
+			padding: 4px 28px 4px 8px !important;
+			background-position: right 6px center !important;
+			background-repeat: no-repeat !important;
+			background-size: 12px 14px !important;
+			cursor: pointer;
+		}
+		.order-detail-table-wrap .fixed-table-header th,
+		#bootstrap-table thead th {
 			box-sizing: border-box !important;
-			padding: 8px 14px !important;
+			border: 1px solid #e7eaec !important;
+			padding: 4px 10px !important;
 			white-space: nowrap !important;
 			word-break: keep-all !important;
 			overflow: hidden;
 			text-overflow: ellipsis;
-			vertical-align: middle;
-		}
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header table,
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body > table {
-			table-layout: fixed;
-		}
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="index"],
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="index"] {
-			min-width: 72px !important;
-			width: 72px !important;
-			max-width: 72px !important;
-			overflow: visible;
-			text-overflow: clip;
-		}
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="gg"],
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="gg"] {
-			min-width: 150px !important;
-			width: 150px !important;
-			max-width: 150px !important;
-		}
-		/* 明细行固定行高，避免仅一条数据时被撑满整块区域 */
-		.query-table-wrap.tp-query-table.tp-detail-lines-table .fixed-table-container > .fixed-table-body tbody tr,
-		.query-table-wrap.tp-query-table.tp-detail-lines-table .fixed-columns-right .fixed-table-body tbody tr {
-			height: 42px !important;
-			min-height: 42px !important;
-			max-height: 42px !important;
-		}
-		.query-table-wrap.tp-query-table.tp-detail-lines-table .fixed-table-container > .fixed-table-body tbody td,
-		.query-table-wrap.tp-query-table.tp-detail-lines-table .fixed-columns-right .fixed-table-body td {
-			padding: 6px 10px !important;
-			line-height: 1.35;
 			vertical-align: middle !important;
+			text-align: center !important;
+			background-color: #f5f5f5 !important;
+			font-size: 14px !important;
+			font-weight: normal;
+			color: #333;
+			border-bottom: 2px solid #ddd !important;
 		}
-		.query-table-wrap.tp-query-table .tp-gg-tip {
-			display: inline-block;
-			max-width: 100%;
+		.order-detail-table-wrap .fixed-table-header th[data-field="index"],
+		.order-detail-table-wrap .fixed-table-body td[data-field="index"] {
+			width: 76px !important;
+			min-width: 76px !important;
+			max-width: 76px !important;
+		}
+		.order-detail-table-wrap .fixed-table-body > table,
+		.order-detail-table-wrap .fixed-table-body > table > tbody {
+			height: auto !important;
+			min-height: 0 !important;
+		}
+		.order-detail-table-wrap .fixed-table-body > table > tbody > tr,
+		#bootstrap-table tbody tr,
+		.order-detail-table-wrap .fixed-columns-right .fixed-table-body tbody tr {
+			height: 36px !important;
+			max-height: 36px !important;
+			min-height: 36px !important;
+		}
+		.order-detail-table-wrap .fixed-table-body td,
+		#bootstrap-table tbody td,
+		.order-detail-table-wrap .fixed-columns-right .fixed-table-body td {
+			box-sizing: border-box !important;
+			border: 1px solid #e7eaec !important;
+			padding: 4px 8px !important;
+			white-space: nowrap !important;
+			word-break: keep-all !important;
 			overflow: hidden;
 			text-overflow: ellipsis;
-			vertical-align: middle;
-			cursor: default;
+			vertical-align: middle !important;
+			text-align: center !important;
+			background-color: #fff;
+			font-size: 13px !important;
+			color: #333;
+			height: 36px !important;
+			line-height: 1.42857143 !important;
 		}
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="code"],
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="code"] {
-			min-width: 120px !important;
-			width: 120px !important;
-			max-width: 120px !important;
+		.order-detail-table-wrap .fixed-table-body .fixed-table-border {
+			display: none !important;
+			height: 0 !important;
+			min-height: 0 !important;
+			max-height: 0 !important;
+			border: 0 !important;
 		}
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="name"],
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="name"] {
-			min-width: 180px !important;
-			width: 180px !important;
-			max-width: 180px !important;
+		.order-detail-table-wrap .fixed-table-pagination {
+			display: none !important;
 		}
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="zcz"],
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="zcz"],
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="sccj"],
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="sccj"] {
-			min-width: 160px !important;
-			width: 160px !important;
-			max-width: 160px !important;
+		.order-detail-table-wrap .fixed-columns-right {
+			z-index: 5;
+			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
 		}
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="tpOperate"],
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="tpOperate"] {
+		.order-detail-table-wrap .fixed-columns-right .fixed-table-header th {
+			background-color: #f5f5f5 !important;
+		}
+		.order-detail-table-wrap .fixed-table-container > .fixed-table-header th[data-field="tpOperate"],
+		.order-detail-table-wrap .fixed-table-container > .fixed-table-body td[data-field="tpOperate"] {
 			padding: 0 !important;
 			border-left: 0 !important;
 			border-right: 0 !important;
@@ -215,109 +226,102 @@
 			color: transparent;
 			overflow: hidden;
 		}
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-header th[data-field="tpOperate"] > *,
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body td[data-field="tpOperate"] > * {
+		.order-detail-table-wrap .fixed-table-container > .fixed-table-header th[data-field="tpOperate"] > *,
+		.order-detail-table-wrap .fixed-table-container > .fixed-table-body td[data-field="tpOperate"] > * {
 			display: none;
 		}
-		.query-table-wrap.tp-query-table .fixed-columns-right {
-			z-index: 5;
-			box-shadow: -4px 0 8px rgba(0, 0, 0, 0.08);
+		.order-detail-table-wrap .fixed-columns-right .fixed-table-header th[data-field="tpOperate"],
+		.order-detail-table-wrap .fixed-columns-right .fixed-table-body td[data-field="tpOperate"] {
+			min-width: 110px !important;
+			width: 110px !important;
+			max-width: 110px !important;
+			font-size: 13px !important;
+			line-height: 1.42857143 !important;
+			color: #333 !important;
+			padding: 4px 8px !important;
 		}
-		.query-table-wrap.tp-query-table .fixed-columns-right .fixed-table-header th,
-		.query-table-wrap.tp-query-table .fixed-columns-right .fixed-table-body td {
-			background-color: #fff;
-			vertical-align: middle;
-			white-space: nowrap;
-			box-sizing: border-box;
-		}
-		.query-table-wrap.tp-query-table .fixed-columns-right .fixed-table-header th[data-field="tpOperate"] {
-			background-color: #f5f5f5;
-			min-width: 120px;
-			width: 120px;
-		}
-		.query-table-wrap.tp-query-table .fixed-columns-right .fixed-table-body td[data-field="tpOperate"] {
-			min-width: 120px;
-			width: 120px;
-			padding: 8px 14px;
-		}
-		.query-table-wrap.tp-query-table.table-striped .fixed-columns-right .fixed-table-body tbody tr:nth-of-type(odd) td {
+		.order-detail-table-wrap.table-striped .fixed-columns-right .fixed-table-body tbody tr:nth-of-type(odd) td {
 			background-color: #f9f9f9;
 		}
-		.query-table-wrap.tp-query-table .fixed-columns-right .fixed-table-body {
-			overflow-x: hidden !important;
-			overflow-y: hidden !important;
-		}
-		.query-table-wrap.tp-query-table .fixed-table-container > .fixed-table-body tbody td {
-			white-space: nowrap !important;
+		.order-detail-table-wrap .order-detail-cell-text {
+			display: block;
 			overflow: hidden;
 			text-overflow: ellipsis;
-			vertical-align: middle;
+			white-space: nowrap;
+			line-height: 1.42857143;
+		}
+		.order-detail-table-wrap .fixed-table-body td[title],
+		.order-detail-table-wrap .order-detail-cell-text[title] {
+			cursor: help;
 		}
 	</style>
 </head>
-<body class="gray-bg tp-detail-body">
-    <div class="main-content tp-detail-page">
-        <form class="form-horizontal">
-            <div class="tp-order-basic-header-row" style="display:flex;align-items:center;justify-content:space-between;margin:8px 10px 12px 10px;padding-bottom:5px;border-bottom:1px solid #ddd;">
+<body class="gray-bg order-detail-page">
+    <div class="main-content">
+        <div class="order-detail-basic">
+        <form id="form-order-detail" class="form-horizontal order-basic-fields">
+            <div class="order-basic-header-row" style="display:flex;align-items:center;justify-content:space-between;margin:6px 10px 8px 10px;padding-bottom:5px;border-bottom:1px solid #ddd;">
                 <h4 class="form-header h4" style="margin:0;border:0;padding:0;">订单信息</h4>
                 <div style="display:flex;align-items:center;gap:8px;">
-                    <a class="btn btn-info btn-sm" href="javascript:void(0)" onclick="openDeliveries()"><i class="fa fa-truck"></i> 查看关联配送单</a>
+                    <a class="btn btn-sm btn-default" href="javascript:void(0)" onclick="openDeliveries()">
+                        <i class="fa fa-truck"></i> 关联配送单
+                    </a>
                     <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i> 关 闭</button>
                 </div>
             </div>
-            <div class="search-collapse tp-order-info-box">
+            <div class="search-collapse order-info-box">
             <div class="row">
-            	<div class="col-sm-3">
+                <div class="col-order-5">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">单号(DH)：</label>
+                        <label class="col-sm-5 control-label">单号：</label>
                         <div class="col-sm-7">
                             <input class="form-control" type="text" th:value="${head != null ? head.dh : ''}" readonly>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-order-5">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">平台医院名称：</label>
+                        <label class="col-sm-5 control-label">医院：</label>
                         <div class="col-sm-7">
                             <input class="form-control" type="text" th:value="${head != null ? head.hospitalName : ''}" readonly>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-order-5">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">平台供应商名称：</label>
+                        <label class="col-sm-5 control-label">供应商：</label>
                         <div class="col-sm-7">
                             <input class="form-control" type="text" th:value="${head != null ? head.supplierName : ''}" readonly>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-order-5">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">金额：</label>
+                        <label class="col-sm-5 control-label">订单金额：</label>
                         <div class="col-sm-7">
                             <input class="form-control" type="text" th:value="${head != null && head.sheetJe != null ? #numbers.formatDecimal(head.sheetJe, 1, 2) : ''}" readonly>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-3">
+                <div class="col-order-5">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">订单仓库名称：</label>
+                        <label class="col-sm-5 control-label">要货仓库：</label>
                         <div class="col-sm-7">
                             <input class="form-control" type="text" th:value="${head != null ? head.ck : ''}" readonly>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+            </div>
+            <div class="row">
+                <div class="col-order-5">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">订单科室名称：</label>
+                        <label class="col-sm-5 control-label">申请科室：</label>
                         <div class="col-sm-7">
                             <input class="form-control" type="text" th:value="${head != null ? head.ksmc : ''}" readonly>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-order-5">
                     <div class="form-group">
                         <label class="col-sm-5 control-label">服务标识：</label>
                         <div class="col-sm-7">
@@ -325,24 +329,23 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-3">
+                <div class="col-order-5">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">推送时间：</label>
+                        <label class="col-sm-5 control-label">推送日期：</label>
                         <div class="col-sm-7">
-                            <input class="form-control" type="text" th:value="${head != null && head.createTime != null ? #dates.format(head.createTime, 'yyyy-MM-dd HH:mm:ss') : ''}" readonly>
+                            <input class="form-control" type="text" th:value="${head != null && head.createTime != null ? #dates.format(head.createTime, 'yyyy-MM-dd') : ''}" readonly>
                         </div>
                     </div>
                 </div>
             </div>
             </div>
         </form>
+        </div>
 
-        <div class="row tp-detail-table-section">
-            <div class="col-sm-12">
-                <h4 class="form-header h4">订单明细</h4>
-                <div class="col-sm-12 select-table table-striped query-table-wrap tp-query-table tp-detail-lines-table">
-                    <table id="bootstrap-table"></table>
-                </div>
+        <div class="order-detail-table-section">
+            <h4 class="form-header h4">订单明细</h4>
+            <div class="order-detail-table-wrap select-table table-striped">
+                <table id="bootstrap-table" class="order-detail-fixed-table"></table>
             </div>
         </div>
     </div>
@@ -355,348 +358,155 @@
 		var prefix = ctx + "order/zstp";
 		var tableId = "bootstrap-table";
 
-		function layoutTpDetailWrapHeight() {
-			var $page = $('.tp-detail-page.main-content');
-			if (!$page.length) {
-				return;
-			}
-			var $wrap = $page.find('.query-table-wrap');
-			if (!$wrap.length) {
-				return;
-			}
-			var el = $wrap[0];
-			var pageBottom = $page[0].getBoundingClientRect().bottom;
-			var top = el.getBoundingClientRect().top;
-			var base = Math.floor(pageBottom - top - 6);
-			var docEl = document.documentElement;
-			var viewH = (docEl && docEl.clientHeight) ? docEl.clientHeight : (window.innerHeight || 0);
-			var maxByViewport = Math.floor(viewH - top - 10);
-			var boosted = Math.min(base + 56, maxByViewport);
-			var h = Math.max(base, boosted);
-			if (h < 260) {
-				h = 260;
-			}
-			el.style.setProperty('flex', '0 0 auto', 'important');
-			el.style.setProperty('height', h + 'px', 'important');
-			el.style.setProperty('min-height', h + 'px', 'important');
-			el.style.removeProperty('max-height');
-			el.style.setProperty('box-sizing', 'border-box', 'important');
+		function calculateOrderDetailTableHeight() {
+		    var $wrap = $('.order-detail-table-wrap');
+		    if ($wrap.length === 0) {
+		        return 400;
+		    }
+		    var h = $wrap[0].clientHeight || $wrap.innerHeight();
+		    h = Math.floor(h - 8);
+		    return Math.max(h, 200);
 		}
 
-		function calculateTableHeight() {
-			var $table = $('#' + tableId);
-			var $wrap = $table.closest('.query-table-wrap');
-			if ($wrap.length === 0) {
-				return 600;
-			}
-			var el = $wrap[0];
-			var h = el ? el.clientHeight : Math.floor($wrap.innerHeight());
-			if (!h || h < 1) {
-				h = Math.floor($wrap.innerHeight());
-			}
-			h = Math.floor(h - 12);
-			return Math.max(h, 280);
+		function layoutOrderDetailTableWrap() {
+		    var $section = $('.order-detail-table-section');
+		    var $page = $('.order-detail-page .main-content');
+		    if ($section.length === 0 || $page.length === 0) {
+		        return;
+		    }
+		    var bottom = $page[0].getBoundingClientRect().bottom;
+		    var $tc = $section.closest('.tab-content');
+		    if ($tc.length) {
+		        bottom = Math.min(bottom, $tc[0].getBoundingClientRect().bottom - 4);
+		    }
+		    var $pane = $section.closest('.tab-pane');
+		    if ($pane.length && $pane.is(':visible')) {
+		        bottom = Math.min(bottom, $pane[0].getBoundingClientRect().bottom - 4);
+		    }
+		    var $wrap = $section.find('.order-detail-table-wrap');
+		    if ($wrap.length === 0) {
+		        return;
+		    }
+		    var top = $wrap[0].getBoundingClientRect().top;
+		    var h = Math.floor(bottom - top - 14);
+		    if (h < 200) {
+		        h = 200;
+		    }
+		    $wrap.css({ height: h + 'px', minHeight: h + 'px', flex: '0 0 auto' });
 		}
 
-		function adjustTableHeight() {
-			var $table = $('#' + tableId);
-			if ($table.length > 0 && $table.bootstrapTable('getOptions')) {
-				$table.bootstrapTable('resetView', { height: calculateTableHeight() });
-			}
+		function resetOrderDetailTableHeight() {
+		    var $table = $('#' + tableId);
+		    if ($table.length > 0 && $table.bootstrapTable('getOptions')) {
+		        $table.bootstrapTable('resetView', { height: calculateOrderDetailTableHeight() });
+		    }
 		}
 
-		function relayoutTpDetailTable() {
-			layoutTpDetailWrapHeight();
-			adjustTableHeight();
-			setTimeout(function () {
-				adjustTableHeight();
-				refreshTpTableLayout();
-			}, 80);
+		function fixDetailTableHeaderAlign() {
+		    var $container = $('#' + tableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+		    var $mainBody = $container.children('.fixed-table-body');
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    if ($mainBody.length && $mainBody[0] && $mainHeader.length) {
+		        var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
+		        $mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
+		    }
 		}
 
-		var tpColCss = {
-			padding: '8px 14px',
-			whiteSpace: 'nowrap',
-			overflow: 'hidden',
-			textOverflow: 'ellipsis',
-			boxSizing: 'border-box'
-		};
-
-		function tpColStyleFor(field) {
-			return $.extend({}, tpColCss);
+		function bindOrderDetailTableScrollSync() {
+		    var $container = $('#' + tableId).closest('.bootstrap-table').find('.fixed-table-container').first();
+		    var $mainBody = $container.children('.fixed-table-body');
+		    var $mainHeader = $container.children('.fixed-table-header');
+		    $mainBody.off('scroll.orderDetailSync').on('scroll.orderDetailSync', function () {
+		        $mainHeader.scrollLeft($mainBody.scrollLeft());
+		    });
 		}
 
-		function tpHeaderStyleFor(field) {
-			return function () {
-				return { css: tpColStyleFor(field) };
-			};
+		function bindOrderDetailCellTitles() {
+		    $('.order-detail-table-wrap .fixed-table-body tbody td').each(function() {
+		        var $td = $(this);
+		        if ($td.find('a.btn, .btn').length) {
+		            $td.removeAttr('title');
+		            return;
+		        }
+		        var text = $.trim($td.text());
+		        if (!text) {
+		            $td.removeAttr('title');
+		            return;
+		        }
+		        if (this.scrollWidth > this.clientWidth + 1) {
+		            $td.attr('title', text);
+		        } else {
+		            $td.removeAttr('title');
+		        }
+		    });
 		}
 
-		function tpCellStyleFor(field) {
-			return function () {
-				return { css: tpColStyleFor(field) };
-			};
+		function refreshDetailTableLayout() {
+		    fixDetailTableHeaderAlign();
+		    bindOrderDetailTableScrollSync();
+		    bindOrderDetailCellTitles();
 		}
 
-		function applyTpColumnSpacing(columns) {
-			return $.map(columns, function (col) {
-				var c = $.extend(true, {}, col);
-				if (!c.checkbox && c.field) {
-					c.headerStyle = tpHeaderStyleFor(c.field);
-					c.cellStyle = tpCellStyleFor(c.field);
-				}
-				return c;
-			});
+		var refreshDetailTableLayoutTimer = null;
+		function refreshDetailTableLayoutDebounced() {
+		    if (refreshDetailTableLayoutTimer) {
+		        clearTimeout(refreshDetailTableLayoutTimer);
+		    }
+		    refreshDetailTableLayoutTimer = setTimeout(function () {
+		        refreshDetailTableLayoutTimer = null;
+		        refreshDetailTableLayout();
+		    }, 60);
 		}
 
-		function fixTpTableHeaderAlign() {
-			var $bt = $('#' + tableId).closest('.bootstrap-table');
-			var $container = $bt.find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			if ($mainBody.length && $mainBody[0] && $mainHeader.length) {
-				var scrollW = $mainBody[0].offsetWidth - $mainBody[0].clientWidth;
-				$mainHeader.css('margin-right', scrollW > 0 ? (scrollW + 'px') : '');
-			}
+		function relayoutOrderDetailTable() {
+		    layoutOrderDetailTableWrap();
+		    resetOrderDetailTableHeight();
+		    refreshDetailTableLayoutDebounced();
 		}
 
-		function bindTpMainHorizontalScroll() {
-			var $bt = $('#' + tableId).closest('.bootstrap-table');
-			var $container = $bt.find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			$mainBody.off('scroll.tpMainH').on('scroll.tpMainH', function () {
-				var sl = $mainBody.scrollLeft();
-				$mainHeader.scrollLeft(sl);
-				var $bar = $bt.children('.tp-detail-hscroll');
-				if ($bar.length && $bar.scrollLeft() !== sl) {
-					$bar.scrollLeft(sl);
-				}
-			});
+		function fmtQty(value) {
+		    if (value != null && value !== '') {
+		        return parseFloat(value).toFixed(2);
+		    }
+		    return '0.00';
 		}
 
-		function ensureTpDetailHScrollBar() {
-			var $bt = $('#' + tableId).closest('.bootstrap-table');
-			if ($bt.length === 0) {
-				return $();
-			}
-			var $bar = $bt.children('.tp-detail-hscroll');
-			if ($bar.length === 0) {
-				$bar = $('<div class="tp-detail-hscroll"><div class="tp-detail-hscroll-inner"></div></div>');
-				var $pag = $bt.children('.fixed-table-pagination');
-				if ($pag.length) {
-					$bar.insertBefore($pag);
-				} else {
-					$bt.append($bar);
-				}
-			}
-			return $bar;
+		function fmtCellText(value) {
+		    if (value == null || value === '') {
+		        return '-';
+		    }
+		    var s = String(value);
+		    return '<span class="order-detail-cell-text" title="' + $('<div/>').text(s).html() + '">' + $('<div/>').text(s).html() + '</span>';
 		}
 
-		function syncTpDetailHScrollSize() {
-			var $bt = $('#' + tableId).closest('.bootstrap-table');
-			var $bar = ensureTpDetailHScrollBar();
-			if ($bar.length === 0) {
-				return;
-			}
-			var $container = $bt.find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $table = $mainBody.find('table').first();
-			if ($table.length === 0 || !$mainBody[0]) {
-				$bar.hide();
-				return;
-			}
-			var scrollW = $table[0].scrollWidth;
-			var clientW = $mainBody[0].clientWidth;
-			$bar.find('.tp-detail-hscroll-inner').width(Math.max(scrollW, clientW + 1));
-			var $right = $bt.find('.fixed-columns-right');
-			var rightW = ($right.length && $right.is(':visible')) ? Math.ceil($right.outerWidth()) : 0;
-			$bar.css({ marginRight: rightW + 'px', display: 'block' });
-			if (scrollW <= clientW + 2) {
-				$bar.css('overflow-x', 'hidden');
-			} else {
-				$bar.css('overflow-x', 'auto');
-			}
-			$bar.scrollLeft($mainBody.scrollLeft());
+		function fmtAudit(v) {
+		    var m = { '0': '待审核', '1': '已审核', '2': '已拒绝' };
+		    return m[v] || (v == null ? '' : v);
 		}
-
-		function bindTpDetailHScroll() {
-			var $bt = $('#' + tableId).closest('.bootstrap-table');
-			var $bar = ensureTpDetailHScrollBar();
-			if ($bar.length === 0) {
-				return;
-			}
-			var $container = $bt.find('.fixed-table-container').first();
-			var $mainBody = $container.children('.fixed-table-body');
-			var $mainHeader = $container.children('.fixed-table-header');
-			$bar.off('scroll.tpDetailH').on('scroll.tpDetailH', function () {
-				var sl = this.scrollLeft;
-				$mainBody.scrollLeft(sl);
-				$mainHeader.scrollLeft(sl);
-			});
-		}
-
-		function applyTpFieldColumnWidth(field, widthPx) {
-			var w = widthPx + 'px';
-			var $container = $('#' + tableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			var $mainHeader = $container.children('.fixed-table-header');
-			var $mainBody = $container.children('.fixed-table-body');
-			var $th = $mainHeader.find('th[data-field="' + field + '"]');
-			if ($th.length === 0) {
-				return;
-			}
-			var colIdx = $th[0].cellIndex;
-			var setW = function (el) {
-				el.style.setProperty('width', w, 'important');
-				el.style.setProperty('min-width', w, 'important');
-				el.style.setProperty('max-width', w, 'important');
-			};
-			$th.each(function () { setW(this); });
-			$mainBody.find('table tbody tr').each(function () {
-				var cell = this.cells[colIdx];
-				if (cell) {
-					setW(cell);
-				}
-			});
-			$mainHeader.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
-			$mainBody.find('table colgroup col').eq(colIdx).each(function () { setW(this); });
-		}
-
-		var tpDetailRowHeight = 42;
-
-		function scheduleTpFixedColumnWidths() {
-			applyTpFieldColumnWidth('index', 72);
-			applyTpFieldColumnWidth('gg', 150);
-			applyTpFieldColumnWidth('code', 120);
-			applyTpFieldColumnWidth('name', 180);
-			applyTpFieldColumnWidth('zcz', 160);
-			applyTpFieldColumnWidth('sccj', 160);
-			requestAnimationFrame(function () {
-				applyTpFieldColumnWidth('index', 72);
-				applyTpFieldColumnWidth('gg', 150);
-				applyTpFieldColumnWidth('code', 120);
-				applyTpFieldColumnWidth('name', 180);
-			});
-		}
-
-		function applyTpMainTableMinWidth() {
-			var sum = 0;
-			var opt = $('#' + tableId).bootstrapTable('getOptions');
-			if (opt && opt.columns && opt.columns[0]) {
-				$.each(opt.columns[0], function (_, col) {
-					if (col && col.width) {
-						sum += parseInt(col.width, 10) || 0;
-					}
-				});
-			}
-			if (sum < 1400) {
-				sum = 1400;
-			}
-			var $container = $('#' + tableId).closest('.bootstrap-table').find('.fixed-table-container').first();
-			$container.children('.fixed-table-header').find('table').css('min-width', sum + 'px');
-			$container.children('.fixed-table-body').children('table').css('min-width', sum + 'px');
-		}
-
-		function syncTpOperateColumnScroll() {
-			var $bt = $('#' + tableId).closest('.bootstrap-table');
-			var $rightBody = $bt.find('.fixed-columns-right .fixed-table-body');
-			if ($rightBody.length === 0) {
-				return;
-			}
-			var $mainBody = $bt.find('.fixed-table-container').children('.fixed-table-body');
-			$mainBody.off('scroll.tpOperateSync').on('scroll.tpOperateSync', function () {
-				$rightBody.scrollTop($mainBody.scrollTop());
-			});
-		}
-
-		function applyTpDetailFixedRowHeight() {
-			var rh = tpDetailRowHeight + 'px';
-			var $bt = $('#' + tableId).closest('.bootstrap-table');
-			$bt.find('.fixed-table-container > .fixed-table-body tbody tr, .fixed-columns-right .fixed-table-body tbody tr').css({
-				height: rh,
-				minHeight: rh,
-				maxHeight: rh
-			});
-		}
-
-		function syncTpOperateRowHeights() {
-			applyTpDetailFixedRowHeight();
-		}
-
-		function scheduleTpOperateRowSync() {
-			applyTpDetailFixedRowHeight();
-			requestAnimationFrame(applyTpDetailFixedRowHeight);
-		}
-
-		function escapeHtmlAttr(s) {
-			return String(s)
-				.replace(/&/g, '&amp;')
-				.replace(/</g, '&lt;')
-				.replace(/>/g, '&gt;')
-				.replace(/"/g, '&quot;');
-		}
-
-		function fmtGgCell(value) {
-			var text = (value != null && value !== '') ? String(value) : '';
-			if (!text) {
-				return '';
-			}
-			var esc = escapeHtmlAttr(text);
-			return '<span class="tp-gg-tip" title="' + esc + '" data-toggle="tooltip" data-placement="top">' + esc + '</span>';
-		}
-
-		function initTpDetailTooltips() {
-			if (typeof $.fn.tooltip !== 'function') {
-				return;
-			}
-			var $bt = $('#' + tableId).closest('.bootstrap-table');
-			$bt.find('.tp-gg-tip').each(function () {
-				var $el = $(this);
-				if ($el.data('bs.tooltip')) {
-					$el.tooltip('destroy');
-				}
-			});
-			$bt.find('.tp-gg-tip').tooltip({ container: 'body', placement: 'top', trigger: 'hover' });
-		}
-
-		function refreshTpTableLayout() {
-			fixTpTableHeaderAlign();
-			bindTpMainHorizontalScroll();
-			applyTpMainTableMinWidth();
-			syncTpOperateColumnScroll();
-			scheduleTpFixedColumnWidths();
-			scheduleTpOperateRowSync();
-			syncTpDetailHScrollSize();
-			bindTpDetailHScroll();
-			initTpDetailTooltips();
-		}
-
-		function zstpDetailQueryParams(params) {
-			return {
-				zsOrderId: zsOrderId,
-				pageNum: Math.floor(params.offset / params.limit) + 1,
-				pageSize: params.limit,
-				orderByColumn: params.sort,
-				isAsc: params.order
-			};
+		function fmtDoc(v) {
+		    var m = { '0': '未审核', '1': '已审核', '2': '已配送', '3': '已入库' };
+		    return m[v] || (v == null ? '' : v);
 		}
 
 		$(function() {
-		    layoutTpDetailWrapHeight();
+		    layoutOrderDetailTableWrap();
 		    queryDetailList();
-		    $(window).on('resize', relayoutTpDetailTable);
-		    setTimeout(relayoutTpDetailTable, 300);
+		    $(window).on('resize', function() {
+		        relayoutOrderDetailTable();
+		    });
+		    setTimeout(relayoutOrderDetailTable, 0);
+		    setTimeout(relayoutOrderDetailTable, 200);
 		});
 
 		function queryDetailList() {
 		    var options = {
 		        id: tableId,
 		        url: prefix + "/detailList",
-		        queryParams: zstpDetailQueryParams,
+		        queryParams: { zsOrderId: zsOrderId },
 		        sortName: "id",
 		        sortOrder: "asc",
-		        modalName: "订单明细",
-		        uniqueId: "id",
+		        sidePagination: 'client',
+		        pagination: false,
 		        search: false,
 		        showSearch: false,
 		        showRefresh: false,
@@ -707,129 +517,49 @@
 		        fixedColumns: true,
 		        fixedNumber: 0,
 		        fixedRightNumber: 1,
-		        height: calculateTableHeight(),
-		        onLoadSuccess: function() {
-		            setTimeout(relayoutTpDetailTable, 0);
-		            setTimeout(function() {
-		                refreshTpTableLayout();
-		            }, 200);
-		            setTimeout(function () {
-		                scheduleTpFixedColumnWidths();
-		                scheduleTpOperateRowSync();
-		            }, 450);
-		        },
+		        height: calculateOrderDetailTableHeight(),
 		        onPostBody: function() {
-		            refreshTpTableLayout();
+		            bindOrderDetailTableScrollSync();
+		            refreshDetailTableLayoutDebounced();
 		        },
-		        columns: applyTpColumnSpacing([		        {
-		            field: 'index',
-		            title: '序号',
-		            align: 'center',
-		            width: 72,
-		            formatter: function(value, row, index) {
-		                var opt = $("#" + tableId).bootstrapTable("getOptions");
-		                var pn = opt.pageNumber || 1;
-		                var ps = opt.pageSize || 10;
-		                return (pn - 1) * ps + index + 1;
+		        onLoadSuccess: function () {
+		            bindOrderDetailTableScrollSync();
+		            refreshDetailTableLayoutDebounced();
+		            setTimeout(relayoutOrderDetailTable, 0);
+		        },
+		        columns: [
+		            {
+		                field: 'index',
+		                title: '序号',
+		                align: 'center',
+		                width: 76,
+		                formatter: function(value, row, index) {
+		                    return index + 1;
+		                }
+		            },
+		            { field: 'code', title: '产品编码', align: 'center', width: 120, formatter: fmtCellText },
+		            { field: 'name', title: '产品名称', align: 'center', width: 180, formatter: fmtCellText },
+		            { field: 'gg', title: '规格', align: 'center', width: 150, formatter: fmtCellText },
+		            { field: 'sl', title: '数量', align: 'center', width: 90, formatter: fmtQty },
+		            { field: 'dj', title: '单价', align: 'center', width: 100, formatter: fmtQty },
+		            { field: 'je', title: '金额', align: 'center', width: 110, formatter: fmtQty },
+		            { field: 'zcz', title: '注册证号', align: 'center', width: 160, formatter: fmtCellText },
+		            { field: 'sccj', title: '生产厂家', align: 'center', width: 160, formatter: fmtCellText },
+		            { field: 'deliveredAuditedQty', title: '已配送(已审核)', align: 'center', width: 130, formatter: fmtQty },
+		            { field: 'deliveredPendingAuditQty', title: '待审核配送', align: 'center', width: 110, formatter: fmtQty },
+		            { field: 'undeliveredQty', title: '未配送', align: 'center', width: 96, formatter: fmtQty },
+		            {
+		                field: 'tpOperate',
+		                title: '操作',
+		                align: 'center',
+		                width: 110,
+		                formatter: function(value, row) {
+		                    return '<a class="btn btn-primary btn-xs" href="javascript:void(0)" onclick="openLineTraces(\'' + row.id + '\')"><i class="fa fa-link"></i> 配送明细</a>';
+		                }
 		            }
-		        },
-		        {
-		            field: 'code',
-		            title: '产品编码',
-		            align: 'center',
-		            width: 120
-		        },
-		        {
-		            field: 'name',
-		            title: '产品名称',
-		            align: 'left',
-		            width: 180
-		        },
-		        {
-		            field: 'gg',
-		            title: '规格',
-		            align: 'center',
-		            width: 150,
-		            formatter: fmtGgCell
-		        },
-		        {
-		            field: 'sl',
-		            title: '数量',
-		            align: 'right',
-		            width: 90,
-		            formatter: fmtQty
-		        },
-		        {
-		            field: 'dj',
-		            title: '单价',
-		            align: 'right',
-		            width: 100,
-		            formatter: fmtQty
-		        },
-		        {
-		            field: 'je',
-		            title: '金额',
-		            align: 'right',
-		            width: 110,
-		            formatter: fmtQty
-		        },
-		        {
-		            field: 'zcz',
-		            title: '注册证号',
-		            align: 'center',
-		            width: 160,
-		            formatter: function(value) {
-		                return value != null && value !== '' ? value : '';
-		            }
-		        },
-		        {
-		            field: 'sccj',
-		            title: '生产厂家',
-		            align: 'left',
-		            width: 160,
-		            formatter: function(value) {
-		                return value != null && value !== '' ? value : '';
-		            }
-		        },
-		        {
-		            field: 'deliveredAuditedQty',
-		            title: '已配送(已审核)',
-		            align: 'right',
-		            width: 110,
-		            formatter: fmtQty
-		        },
-		        {
-		            field: 'deliveredPendingAuditQty',
-		            title: '待审核配送',
-		            align: 'right',
-		            width: 100,
-		            formatter: fmtQty
-		        },
-		        {
-		            field: 'undeliveredQty',
-		            title: '未配送',
-		            align: 'right',
-		            width: 90,
-		            formatter: fmtQty
-		        },
-		        {
-		            field: 'tpOperate',
-		            title: '操作',
-		            align: 'center',
-		            width: 120,
-		            formatter: function(value, row) {
-		                return '<a class="btn btn-primary btn-xs" href="javascript:void(0)" onclick="openLineTraces(\'' + row.id + '\')"><i class="fa fa-link"></i>配送明细</a>';
-		            }
-		        }])
+		        ]
 		    };
 		    $.table.init(options);
-		}
-
-		function fmtQty(value) {
-		    if (value != null && value !== '') {
-		        return parseFloat(value).toFixed(2);
-		    }
-		    return '0.00';
 		}
 
 		function openDeliveries() {
@@ -839,7 +569,7 @@
 		        area: ['900px', '420px'],
 		        title: '关联配送单',
 		        content: '<table id="' + delTableId + '"></table>',
-		        success: function(layero) {
+		        success: function() {
 		            $('#' + delTableId).bootstrapTable({
 		                url: prefix + '/deliveriesByZs/' + zsOrderId,
 		                method: 'post',
@@ -861,15 +591,6 @@
 		            });
 		        }
 		    });
-		}
-
-		function fmtAudit(v) {
-		    var m = { '0': '待审核', '1': '已审核', '2': '已拒绝' };
-		    return m[v] || (v == null ? '' : v);
-		}
-		function fmtDoc(v) {
-		    var m = { '0': '未审核', '1': '已审核', '2': '已配送', '3': '已入库' };
-		    return m[v] || (v == null ? '' : v);
 		}
 
 		function openDeliveryView(deliveryId) {

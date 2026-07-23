@@ -46,7 +46,6 @@ public class ZsTpOrderViewController extends BaseController
     public TableDataInfo detailList(String zsOrderId)
     {
         deliveryService.assertZsTpOrderViewScope(zsOrderId);
-        startPage();
         List<ZsTpOrderDetail> list = deliveryService.selectZsTpOrderDetailListForView(zsOrderId);
         return getDataTable(list);
     }

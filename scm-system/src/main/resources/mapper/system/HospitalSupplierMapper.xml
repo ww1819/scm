@@ -78,6 +78,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         where hs.supplier_id = #{supplierId} and hs.status = '0'
     </select>
 
+    <!-- 审核通过且绑定成功的医院名称（用户页展示） -->
+    <select id="selectApprovedHospitalNamesBySupplierId" parameterType="Long" resultType="string">
+        select distinct h.hospital_name
+        from scm_hospital_supplier hs
+        inner join scm_hospital h on hs.hospital_id = h.hospital_id
+        where hs.supplier_id = #{supplierId}
+          and (hs.del_flag is null or hs.del_flag = '' or hs.del_flag = '0')
+          and (hs.status is null or hs.status = '' or hs.status = '0')
+          and hs.bind_status = '1'
+          and hs.audit_status = '1'
+          and ifnull(trim(h.hospital_name), '') &lt;&gt; ''
+        order by h.hospital_name
+    </select>
+
     <select id="selectHospitalSupplierByHospitalAndSupplier" parameterType="HospitalSupplier" resultMap="HospitalSupplierResult">
         <include refid="selectHospitalSupplierVo"/>
         where hs.hospital_id = #{hospitalId} and hs.supplier_id = #{supplierId}

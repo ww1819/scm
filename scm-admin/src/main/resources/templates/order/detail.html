@@ -269,17 +269,17 @@
                 </div>
                 <div class="col-order-5">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">订单金额：</label>
+                        <label class="col-sm-5 control-label">供应商：</label>
                         <div class="col-sm-7">
-                            <input class="form-control" type="text" th:value="${order.orderAmount}" readonly>
+                            <input class="form-control" type="text" th:value="${order.supplierName}" readonly>
                         </div>
                     </div>
                 </div>
                 <div class="col-order-5">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">供应商：</label>
+                        <label class="col-sm-5 control-label">订单金额：</label>
                         <div class="col-sm-7">
-                            <input class="form-control" type="text" th:value="${order.supplierName}" readonly>
+                            <input class="form-control" type="text" th:value="${order.orderAmount}" readonly>
                         </div>
                     </div>
                 </div>
@@ -355,6 +355,11 @@
 		    purchasePrice: 110,
 		    amount: 120,
 		    remainingQuantity: 130,
+		    manufacturer: 160,
+		    registerNo: 160,
+		    registerExpireDate: 130,
+		    nationalInsuranceCode: 150,
+		    sunshineProcurementCode: 160,
 		    deliveredAuditedQty: 130,
 		    deliveredPendingAuditQty: 110,
 		    undeliveredQty: 96
@@ -809,6 +814,41 @@
 		            }
 		        },
 		        {
+		            field: 'manufacturer',
+		            title: '生产厂家',
+		            align: 'center',
+		            width: 160,
+		            formatter: fmtOrderDetailText
+		        },
+		        {
+		            field: 'registerNo',
+		            title: '注册证号',
+		            align: 'center',
+		            width: 160,
+		            formatter: fmtOrderDetailText
+		        },
+		        {
+		            field: 'registerExpireDate',
+		            title: '注册证有效期',
+		            align: 'center',
+		            width: 130,
+		            formatter: fmtOrderDetailDate
+		        },
+		        {
+		            field: 'nationalInsuranceCode',
+		            title: '国家医保编码',
+		            align: 'center',
+		            width: 150,
+		            formatter: fmtOrderDetailText
+		        },
+		        {
+		            field: 'sunshineProcurementCode',
+		            title: '阳光采购平台编码',
+		            align: 'center',
+		            width: 160,
+		            formatter: fmtOrderDetailText
+		        },
+		        {
 		            field: 'deliveredAuditedQty',
 		            title: '已配送(已审核)',
 		            align: 'center',
@@ -838,6 +878,17 @@
 		        return parseFloat(value).toFixed(2);
 		    }
 		    return '0.00';
+		}
+
+		function fmtOrderDetailDate(value) {
+		    if (value == null || value === '') {
+		        return '-';
+		    }
+		    var s = String(value);
+		    if (s.length >= 10) {
+		        s = s.substring(0, 10);
+		    }
+		    return fmtOrderDetailText(s);
 		}
 
 		function escOrderDetailAttr(s) {

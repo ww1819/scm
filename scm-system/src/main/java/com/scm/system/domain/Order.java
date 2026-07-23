@@ -82,6 +82,28 @@ public class Order extends BaseEntity
     @Excel(name = "申请科室")
     private String department;
 
+    /** 医院经办人 */
+    @Excel(name = "医院经办人")
+    private String hospitalHandler;
+
+    /** 计划号（从备注「从采购计划JH…生成」解析） */
+    @Excel(name = "计划号")
+    private String planNo;
+
+    /** 接收人登录名 */
+    private String receiveBy;
+
+    /** 接收人姓名快照 */
+    @Excel(name = "接收人")
+    private String receiveByNameSnapshot;
+
+    /** 列表展示用接收人（快照优先） */
+    private String receiveByDisplay;
+
+    /** 接收时间 */
+    @Excel(name = "接收日期", width = 30, dateFormat = "yyyy-MM-dd HH:mm:ss")
+    private Date receiveTime;
+
     /** 订单明细 */
     private List<OrderDetail> orderDetails;
 
@@ -248,6 +270,66 @@ public class Order extends BaseEntity
         this.department = department;
     }
 
+    public String getHospitalHandler()
+    {
+        return hospitalHandler;
+    }
+
+    public void setHospitalHandler(String hospitalHandler)
+    {
+        this.hospitalHandler = hospitalHandler;
+    }
+
+    public String getPlanNo()
+    {
+        return planNo;
+    }
+
+    public void setPlanNo(String planNo)
+    {
+        this.planNo = planNo;
+    }
+
+    public String getReceiveBy()
+    {
+        return receiveBy;
+    }
+
+    public void setReceiveBy(String receiveBy)
+    {
+        this.receiveBy = receiveBy;
+    }
+
+    public String getReceiveByNameSnapshot()
+    {
+        return receiveByNameSnapshot;
+    }
+
+    public void setReceiveByNameSnapshot(String receiveByNameSnapshot)
+    {
+        this.receiveByNameSnapshot = receiveByNameSnapshot;
+    }
+
+    public String getReceiveByDisplay()
+    {
+        return receiveByDisplay;
+    }
+
+    public void setReceiveByDisplay(String receiveByDisplay)
+    {
+        this.receiveByDisplay = receiveByDisplay;
+    }
+
+    public Date getReceiveTime()
+    {
+        return receiveTime;
+    }
+
+    public void setReceiveTime(Date receiveTime)
+    {
+        this.receiveTime = receiveTime;
+    }
+
     public Long getOrderId()
     {
         return orderId;
@@ -288,6 +370,12 @@ public class Order extends BaseEntity
             .append("orderDate", getOrderDate())
             .append("orderStatus", getOrderStatus())
             .append("department", getDepartment())
+            .append("hospitalHandler", getHospitalHandler())
+            .append("planNo", getPlanNo())
+            .append("receiveBy", getReceiveBy())
+            .append("receiveByNameSnapshot", getReceiveByNameSnapshot())
+            .append("receiveByDisplay", getReceiveByDisplay())
+            .append("receiveTime", getReceiveTime())
             .append("createBy", getCreateBy())
             .append("createTime", getCreateTime())
             .append("updateBy", getUpdateBy())

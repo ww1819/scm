@@ -4,7 +4,108 @@
 	<th:block th:include="include :: header('修改用户')" />
 	<th:block th:include="include :: select2-css" />
 	<style>
-		.maintain-supplier-wrap { position: relative; }
+		.form-header-row {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin: 8px 10px 12px;
+			padding-bottom: 5px;
+			border-bottom: 1px solid #ddd;
+		}
+		.form-header-row .form-header {
+			margin: 0;
+			padding-bottom: 0;
+			border-bottom: none;
+		}
+		.form-header-actions {
+			flex-shrink: 0;
+		}
+		.user-form-grid {
+			margin: 0 10px 8px;
+		}
+		.user-form-grid .user-inline-field {
+			display: flex;
+			align-items: center;
+			margin-bottom: 10px;
+		}
+		.user-form-grid .user-inline-field > label {
+			flex-shrink: 0;
+			width: 96px;
+			text-align: right;
+			margin: 0 8px 0 0;
+			font-size: 12px;
+			font-weight: normal;
+			color: #666;
+			white-space: nowrap;
+		}
+		.user-form-grid .user-inline-field > label.label-wide {
+			width: 112px;
+		}
+		.user-form-grid .user-inline-field > .form-control,
+		.user-form-grid .user-inline-field > select.form-control,
+		.user-form-grid .user-inline-field > .input-group,
+		.user-form-grid .user-inline-field > .select2-container,
+		.user-form-grid .user-inline-field > .toggle-switch,
+		.user-form-grid .user-inline-field > .user-static-text,
+		.user-form-grid .user-inline-field > textarea.form-control,
+		.user-other-section .user-inline-field > .form-control,
+		.user-other-section .user-inline-field > textarea.form-control {
+			flex: 1;
+			min-width: 0;
+		}
+		.user-form-grid .user-inline-field > .form-control,
+		.user-form-grid .user-inline-field > select.form-control {
+			height: 32px;
+			padding: 4px 8px;
+			font-size: 12px;
+		}
+		.user-form-grid .user-inline-field > .input-group .form-control {
+			height: 32px;
+			padding: 4px 8px;
+			font-size: 12px;
+		}
+		.user-form-grid .user-inline-field > .user-static-text {
+			margin: 0;
+			font-size: 12px;
+			line-height: 32px;
+			color: #666;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+		.user-form-grid .user-inline-field > .user-hospital-text {
+			margin: 0;
+			flex: 1;
+			min-width: 0;
+			height: 32px;
+			line-height: 32px;
+			padding: 0 8px;
+			font-size: 12px;
+			font-weight: normal;
+			color: #555;
+			background-color: #fff;
+			border: 1px solid #e5e6e7;
+			border-radius: 4px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			box-sizing: border-box;
+		}
+		.user-form-grid .user-inline-field > .help-block {
+			flex: 1;
+			min-width: 0;
+			margin: 0;
+			padding: 0;
+			font-size: 12px;
+			line-height: 1.4;
+		}
+		.user-form-grid .user-inline-field.user-role-field > label {
+			width: 96px;
+		}
+		.user-form-grid .select2-container .select2-selection--multiple {
+			min-height: 32px;
+		}
+		.maintain-supplier-wrap { position: relative; flex: 1; min-width: 0; }
 		#maintainSupplierSuggestPanel {
 			position: absolute; left: 0; right: 0; top: 100%; z-index: 2000;
 			max-height: 220px; overflow-y: auto; display: none;
@@ -16,6 +117,29 @@
 		.field-muted { background-color: #eee !important; cursor: not-allowed !important; color: #888 !important; }
 		#rolePickerModal .fixed-table-toolbar { display: none; }
 		#rolePickerModal .bootstrap-table .table { margin-bottom: 0; }
+		.user-other-section {
+			margin: 16px 10px 8px;
+		}
+		.user-other-section .form-header.h4 {
+			margin: 0 0 10px;
+			padding-bottom: 5px;
+			border-bottom: 1px solid #ddd;
+		}
+		.user-other-section .user-inline-field {
+			display: flex;
+			align-items: flex-start;
+			margin-bottom: 10px;
+		}
+		.user-other-section .user-inline-field > label {
+			flex-shrink: 0;
+			width: 96px;
+			text-align: right;
+			margin: 6px 8px 0 0;
+			font-size: 12px;
+			font-weight: normal;
+			color: #666;
+			white-space: nowrap;
+		}
 	</style>
 </head>
 <body>
@@ -23,99 +147,128 @@
         <form class="form-horizontal" id="form-user-edit" th:object="${user}">
             <input name="userId"  type="hidden"  th:field="*{userId}" />
 			<input name="deptId"  type="hidden"  th:field="*{deptId}" id="treeId"/>
-            <h4 class="form-header h4">基本信息</h4>
-            <div class="row">
-            	<div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label is-required">用户名称：</label>
-                        <div class="col-sm-8">
-                            <input name="userName" placeholder="请输入用户名称" class="form-control" type="text" maxlength="30" th:field="*{userName}" required>
+
+            <div class="form-header-row">
+                <h4 class="form-header h4">基本信息</h4>
+                <div class="form-header-actions">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
+                    <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
+                </div>
+            </div>
+
+            <div class="user-form-grid">
+                <input name="userName" type="hidden" th:field="*{userName}"/>
+                <div class="row">
+                    <div class="col-sm-3">
+                        <div class="user-inline-field">
+                            <label>医院</label>
+                            <input type="hidden" name="maintainHospitalId" id="maintainHospitalId" th:value="*{maintainHospitalId}"/>
+                            <p id="boundHospitalNames" class="user-hospital-text"
+                               th:title="${boundHospitalNames}"
+                               th:text="${#strings.isEmpty(boundHospitalNames) ? '—' : boundHospitalNames}">—</p>
                         </div>
                     </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">姓名：</label>
-                        <div class="col-sm-8">
+                    <div class="col-sm-3">
+                        <div class="user-inline-field">
+                            <label>供应商</label>
+                            <div class="maintain-supplier-wrap">
+                                <input type="hidden" name="maintainSupplierId" id="maintainSupplierId" th:value="*{maintainSupplierId}"/>
+                                <input type="text" class="form-control" id="maintainSupplierSearch" placeholder="输入公司名称关键字，点选候选项" autocomplete="off"/>
+                                <div id="maintainSupplierSuggestPanel" class="list-group"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="user-inline-field">
+                            <label class="is-required">登录账号</label>
+                            <input class="form-control" type="text" readonly="true" th:field="*{loginName}"/>
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="user-inline-field">
+                            <label>姓名</label>
                             <input name="realName" placeholder="票据、报表展示用，空则显示登录账号" class="form-control" type="text" maxlength="50" th:field="*{realName}">
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">归属部门：</label>
-                        <div class="col-sm-8">
-                            <div class="input-group">
-                                <input class="form-control" type="text" name="deptName" onclick="selectDeptTree()" id="treeName" th:field="*{dept.deptName}">
-                            	<span class="input-group-addon"><i class="fa fa-search"></i></span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">手机号码：</label>
-                        <div class="col-sm-8">
+                <div class="row">
+                    <div class="col-sm-3">
+                        <div class="user-inline-field">
+                            <label>手机号码</label>
                             <div class="input-group">
                                 <input name="phonenumber" placeholder="请输入手机号码" class="form-control" type="text" maxlength="11" th:field="*{phonenumber}">
                                 <span class="input-group-addon"><i class="fa fa-mobile"></i></span>
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">邮箱：</label>
-                        <div class="col-sm-8">
+                    <div class="col-sm-3">
+                        <div class="user-inline-field">
+                            <label>邮箱</label>
                             <div class="input-group">
                                 <input name="email" class="form-control email" type="text" maxlength="50" placeholder="请输入邮箱" th:field="*{email}">
                                 <span class="input-group-addon"><i class="fa fa-envelope"></i></span>
                             </div>
                         </div>
                     </div>
+                    <div class="col-sm-3">
+                        <div class="user-inline-field">
+                            <label>用户性别</label>
+                            <select name="sex" class="form-control m-b" th:with="type=${@dict.getType('sys_user_sex')}">
+				                <option th:each="dict : ${type}" th:text="${dict.dictLabel}" th:value="${dict.dictValue}" th:field="*{sex}"></option>
+				            </select>
+                        </div>
+                    </div>
+                    <div class="col-sm-3"></div>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label is-required">登录账号：</label>
-                        <div class="col-sm-8">
-                            <input class="form-control" type="text" readonly="true" th:field="*{loginName}"/>
+                <div class="row">
+                    <div class="col-sm-3">
+                        <div class="user-inline-field">
+                            <label>省份/直辖市</label>
+                            <select id="selProvince" class="form-control" title="数据来自部门管理">
+                                <option value="">请选择省份/直辖市</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="user-inline-field">
+                            <label>城市</label>
+                            <select id="selCity" class="form-control">
+                                <option value="">请选择城市</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="user-inline-field">
+                            <label>区县</label>
+                            <select id="selDistrict" class="form-control">
+                                <option value="">请选择区县</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-sm-3"></div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="user-inline-field">
+                            <label>详细地址</label>
+                            <textarea name="address" class="form-control" rows="2" maxlength="500"
+                                      placeholder="选填，500字以内" style="height:auto;min-height:48px;"
+                                      th:field="*{address}"></textarea>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">用户状态：</label>
-                        <div class="col-sm-8">
-                            <label class="toggle-switch switch-solid">
-	                            <input type="checkbox" id="status" th:checked="${user.status == '0' ? true : false}">
-	                            <span></span>
-	                        </label>
+                <div class="row">
+                    <div class="col-sm-3">
+                        <div class="user-inline-field">
+                            <label class="label-wide">登记明文密码</label>
+                            <p class="user-static-text"
+                               th:title="${#strings.isEmpty(user.pwdPlain) ? '（无记录：历史用户或未通过本系统登记/用户已自行修改密码）' : user.pwdPlain}"
+                               th:text="${#strings.isEmpty(user.pwdPlain) ? '（无记录）' : user.pwdPlain}"></p>
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">登记明文密码：</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-static" style="word-break:break-all;"
-                               th:text="${#strings.isEmpty(user.pwdPlain) ? '（无记录：历史用户或未通过本系统登记/用户已自行修改密码）' : user.pwdPlain}"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">用户类型：</label>
-                        <div class="col-sm-8">
+                    <div class="col-sm-3">
+                        <div class="user-inline-field">
+                            <label>用户类型</label>
                             <select name="userType" id="userType" class="form-control" th:field="*{userType}">
                                 <option value="">未设置（兼容历史）</option>
                                 <option value="platform">平台</option>
@@ -124,85 +277,53 @@
                             </select>
                         </div>
                     </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <span class="help-block m-b-none text-muted" style="padding-top:7px;">设为医院/供应商时须与所选角色类型一致。</span>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">岗位：</label>
-                        <div class="col-sm-8">
+                    <div class="col-sm-3">
+                        <div class="user-inline-field">
+                            <label>岗位</label>
                             <select id="post" class="form-control select2-multiple" multiple>
 								<option th:each="post:${posts}" th:value="${post.postId}" th:text="${post.postName}" th:selected="${post.flag}" th:disabled="${post.status == '1'}"></option>
 							</select>
                         </div>
                     </div>
+                    <div class="col-sm-3"></div>
                 </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">用户性别：</label>
-                        <div class="col-sm-8">
-                            <select name="sex" class="form-control m-b" th:with="type=${@dict.getType('sys_user_sex')}">
-				                <option th:each="dict : ${type}" th:text="${dict.dictLabel}" th:value="${dict.dictValue}" th:field="*{sex}"></option>
-				            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-            	<div class="col-sm-12">
-                    <div class="form-group">
-                        <label class="col-xs-2 control-label is-required">角色：</label>
-                        <div class="col-xs-10">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="pickedRoleDisplay" readonly placeholder="请点击右侧按钮，在弹窗中选择角色"/>
-                                <span class="input-group-btn">
-                                    <button type="button" class="btn btn-default" onclick="openRolePicker()"><i class="fa fa-search"></i> 选择角色</button>
-                                </span>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="user-inline-field user-role-field">
+                            <label class="is-required">用户角色</label>
+                            <div style="flex:1;min-width:0;">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="pickedRoleDisplay" readonly placeholder="请选择用户角色"/>
+                                    <span class="input-group-btn">
+                                        <button type="button" class="btn btn-default" onclick="openRolePicker()"><i class="fa fa-search"></i> 选择角色</button>
+                                    </span>
+                                </div>
+                                <input type="hidden" id="pickedRoleId"/>
+                                <input type="hidden" id="pickedRoleKey"/>
+                                <input type="hidden" id="pickedRoleName"/>
+                                <input type="hidden" id="pickedRoleType"/>
                             </div>
-                            <input type="hidden" id="pickedRoleId"/>
-                            <input type="hidden" id="pickedRoleKey"/>
-                            <input type="hidden" id="pickedRoleName"/>
-                            <input type="hidden" id="pickedRoleType"/>
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="user-inline-field">
+                            <label>用户状态</label>
+                            <label class="toggle-switch switch-solid">
+	                            <input type="checkbox" id="status" th:checked="${user.status == '0' ? true : false}">
+	                            <span></span>
+	                        </label>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">维护供应商：</label>
-                        <div class="col-sm-8 maintain-supplier-wrap">
-                            <input type="hidden" name="maintainSupplierId" id="maintainSupplierId" th:value="*{maintainSupplierId}"/>
-                            <input type="text" class="form-control" id="maintainSupplierSearch" placeholder="输入公司名称关键字，点选候选项" autocomplete="off"/>
-                            <div id="maintainSupplierSuggestPanel" class="list-group"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">维护医院：</label>
-                        <div class="col-sm-8">
-                            <select name="maintainHospitalId" id="maintainHospitalId" class="form-control">
-                                <option value="">请选择医院</option>
-                                <option th:each="h : ${hospitals}" th:value="${h.hospitalId}" th:text="${h.hospitalName}"
-                                        th:selected="${user.maintainHospitalId != null and user.maintainHospitalId == h.hospitalId}"></option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <h4 class="form-header h4">其他信息</h4>
-            <div class="row">
-                <div class="col-sm-12">
-                    <div class="form-group">
-                        <label class="col-xs-2 control-label">备注：</label>
-                        <div class="col-xs-10">
-                            <textarea name="remark" maxlength="500" class="form-control" rows="3">[[*{remark}]]</textarea>
+
+            <div class="user-other-section">
+                <h4 class="form-header h4">其他信息</h4>
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="user-inline-field">
+                            <label>备注</label>
+                            <textarea name="remark" maxlength="500" class="form-control" rows="3" style="height:auto;min-height:72px;">[[*{remark}]]</textarea>
                         </div>
                     </div>
                 </div>
@@ -243,17 +364,14 @@
             </div>
         </div>
     </div>
-    <div class="row">
-        <div class="col-sm-offset-5 col-sm-10">
-            <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
-            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭 </button>
-        </div>
-    </div>
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: select2-js" />
 	<script type="text/javascript" th:inline="javascript">
         var prefix = ctx + "system/user";
         var maintainSupplierLabel = /*[[${maintainSupplierLabel}]]*/ '';
+        var currentProvince = /*[[${regionProvince}]]*/ '';
+        var currentCity = /*[[${regionCity}]]*/ '';
+        var currentDistrict = /*[[${regionDistrict}]]*/ '';
 
         var rolePickerTableInited = false;
         var rolePickerRowCache = {};
@@ -399,11 +517,7 @@
             $('#pickedRoleKey').val(row.roleKey || '');
             $('#pickedRoleName').val(row.roleName || '');
             $('#pickedRoleType').val(category || row.roleType || '');
-            var hn = row.hospitalName || '—';
-            var sn = row.supplierCompanyName || '—';
-            var rt = pickerRoleTypeText(category || row.roleType);
-            var oa = (row.orgAdmin === '1' || row.orgAdmin === 1) ? '是' : '否';
-            $('#pickedRoleDisplay').val((row.roleName || '') + '（类型：' + rt + '，医院：' + hn + '，供应商：' + sn + '，机构管理员：' + oa + '）');
+            $('#pickedRoleDisplay').val(row.roleName || '');
             applyFieldsFromPickedRole(row, category);
             $('#rolePickerModal').modal('hide');
         }
@@ -422,25 +536,38 @@
             }
             return '';
         }
-        function findHospitalOptionValue(hospitalId, hospitalName) {
-            var $h = $('#maintainHospitalId');
-            if (hospitalId != null && hospitalId !== '') {
-                var idStr = String(hospitalId);
-                if ($h.find('option[value="' + idStr.replace(/"/g, '\\"') + '"]').length) {
-                    return idStr;
-                }
+        function setBoundHospitalNames(text) {
+            var s = $.common.trim(text || '');
+            if (!s) {
+                s = '—';
             }
-            if (hospitalName) {
-                var matched = '';
-                $h.find('option').each(function () {
-                    if ($.common.trim($(this).text()) === $.common.trim(hospitalName)) {
-                        matched = $(this).val();
-                        return false;
+            $('#boundHospitalNames').text(s).attr('title', s === '—' ? '' : s);
+        }
+        function refreshBoundHospitalNames(supplierId, hospitalId) {
+            var sid = supplierId != null && supplierId !== '' ? supplierId : $.common.trim($('#maintainSupplierId').val() || '');
+            var hid = hospitalId != null && hospitalId !== '' ? hospitalId : $.common.trim($('#maintainHospitalId').val() || '');
+            if (!sid && !hid) {
+                setBoundHospitalNames('');
+                return;
+            }
+            var params = {};
+            if (sid) {
+                params.supplierId = sid;
+            }
+            if (hid) {
+                params.hospitalId = hid;
+            }
+            $.get(prefix + '/boundHospitals', params, function (res) {
+                if (res.code === 0 || res.code === web_status.SUCCESS) {
+                    var text = res.data;
+                    if (text == null || text === '') {
+                        text = res.msg && res.msg !== '操作成功' ? res.msg : '';
                     }
-                });
-                return matched;
-            }
-            return '';
+                    if (text) {
+                        setBoundHospitalNames(text);
+                    }
+                }
+            });
         }
         function applyUserTypeByRoleType(roleType) {
             if (roleType === 'hospital' || roleType === 'supplier' || roleType === 'platform') {
@@ -477,38 +604,150 @@
             var $st = $('#maintainSupplierSearch');
             var $wrap = $('.maintain-supplier-wrap');
             if (category === 'hospital') {
-                $h.prop('disabled', false).removeClass('field-muted');
                 $sid.val('').prop('disabled', true);
                 $st.val('').prop('disabled', true).addClass('field-muted');
                 $wrap.addClass('field-muted');
                 $('#maintainSupplierSuggestPanel').hide().empty();
-                if (roleRow) {
-                    var hospitalVal = findHospitalOptionValue(roleRow.hospitalId, roleRow.hospitalName);
-                    if (hospitalVal) {
-                        $h.val(hospitalVal).trigger('change');
-                    }
+                if (roleRow && roleRow.hospitalId) {
+                    $h.val(String(roleRow.hospitalId));
+                    setBoundHospitalNames(roleRow.hospitalName || '');
+                } else if ($.common.trim($h.val())) {
+                    refreshBoundHospitalNames('', $h.val());
+                } else {
+                    setBoundHospitalNames('');
                 }
             } else if (category === 'supplier') {
-                $h.val('').prop('disabled', true).addClass('field-muted');
+                $h.val('');
                 $sid.prop('disabled', false);
                 $st.prop('disabled', false).removeClass('field-muted');
                 $wrap.removeClass('field-muted');
-                if (roleRow) {
-                    if (roleRow.supplierId) {
-                        $sid.val(String(roleRow.supplierId));
-                        $st.val(roleRow.supplierCompanyName || '');
-                    } else {
-                        $sid.val('');
-                        $st.val('');
-                    }
+                if (roleRow && roleRow.supplierId) {
+                    $sid.val(String(roleRow.supplierId));
+                    $st.val(roleRow.supplierCompanyName || '');
                 }
+                refreshBoundHospitalNames($sid.val(), '');
             } else {
-                $h.val('').prop('disabled', true).addClass('field-muted');
+                $h.val('');
                 $sid.val('').prop('disabled', true);
                 $st.val('').prop('disabled', true).addClass('field-muted');
                 $wrap.addClass('field-muted');
                 $('#maintainSupplierSuggestPanel').hide().empty();
+                setBoundHospitalNames('');
             }
+        }
+
+        function fillRegionSelect($sel, list, firstLabel) {
+            $sel.empty();
+            $sel.append($('<option></option>').attr('value', '').text(firstLabel));
+            $.each(list || [], function(_, o) {
+                var id = o.deptId != null ? o.deptId : o.dept_id;
+                var nm = o.deptName != null ? o.deptName : o.dept_name;
+                $sel.append($('<option></option>').attr('value', nm).text(nm).attr('data-dept-id', id));
+            });
+        }
+
+        function loadRegionChildren(parentId, $sel, firstLabel, callback) {
+            if (!parentId) {
+                fillRegionSelect($sel, [], firstLabel);
+                if (callback) {
+                    callback();
+                }
+                return;
+            }
+            $.get(prefix + '/deptRegionOptions', { parentId: parentId }, function(res) {
+                if (res && (res.code === 0 || res.code === web_status.SUCCESS)) {
+                    fillRegionSelect($sel, res.data, firstLabel);
+                } else {
+                    fillRegionSelect($sel, [], firstLabel);
+                }
+                if (callback) {
+                    callback();
+                }
+            });
+        }
+
+        function selectRegionByName($sel, name) {
+            if (!name) {
+                return null;
+            }
+            var deptId = null;
+            $sel.find('option').each(function() {
+                if ($(this).val() === name) {
+                    $sel.val(name);
+                    deptId = $(this).attr('data-dept-id');
+                    return false;
+                }
+            });
+            return deptId;
+        }
+
+        function loadRegionProvinces(callback) {
+            $.get(prefix + '/deptRegionOptions', function(res) {
+                if (res && (res.code === 0 || res.code === web_status.SUCCESS)) {
+                    fillRegionSelect($('#selProvince'), res.data, '请选择省份/直辖市');
+                }
+                if (callback) {
+                    callback();
+                }
+            });
+        }
+
+        function syncTreeIdFromRegion() {
+            var distId = $('#selDistrict option:selected').attr('data-dept-id');
+            var cityId = $('#selCity option:selected').attr('data-dept-id');
+            var provId = $('#selProvince option:selected').attr('data-dept-id');
+            var deepest = distId || cityId || provId || '';
+            $('#treeId').val(deepest);
+        }
+
+        function bindDeptRegionChangeHandlers() {
+            $('#selProvince').off('change.deptRegion').on('change.deptRegion', function() {
+                var pid = $(this).find('option:selected').attr('data-dept-id');
+                fillRegionSelect($('#selCity'), [], '请选择城市');
+                fillRegionSelect($('#selDistrict'), [], '请选择区县');
+                syncTreeIdFromRegion();
+                if (pid) {
+                    loadRegionChildren(Number(pid), $('#selCity'), '请选择城市');
+                }
+            });
+            $('#selCity').off('change.deptRegion').on('change.deptRegion', function() {
+                var pid = $(this).find('option:selected').attr('data-dept-id');
+                fillRegionSelect($('#selDistrict'), [], '请选择区县');
+                syncTreeIdFromRegion();
+                if (pid) {
+                    loadRegionChildren(Number(pid), $('#selDistrict'), '请选择区县');
+                }
+            });
+            $('#selDistrict').off('change.deptRegion').on('change.deptRegion', function() {
+                syncTreeIdFromRegion();
+            });
+        }
+
+        function restoreSavedRegion() {
+            loadRegionProvinces(function() {
+                var provId = selectRegionByName($('#selProvince'), currentProvince);
+                if (!provId) {
+                    syncTreeIdFromRegion();
+                    return;
+                }
+                loadRegionChildren(Number(provId), $('#selCity'), '请选择城市', function() {
+                    if (!currentCity) {
+                        syncTreeIdFromRegion();
+                        return;
+                    }
+                    var cityId = selectRegionByName($('#selCity'), currentCity);
+                    if (!cityId) {
+                        syncTreeIdFromRegion();
+                        return;
+                    }
+                    loadRegionChildren(Number(cityId), $('#selDistrict'), '请选择区县', function() {
+                        if (currentDistrict) {
+                            selectRegionByName($('#selDistrict'), currentDistrict);
+                        }
+                        syncTreeIdFromRegion();
+                    });
+                });
+            });
         }
         
         $("#form-user-edit").validate({
@@ -565,14 +804,15 @@
                 return;
             }
             if (isHospitalPrincipalRole() && !$.common.trim($("#maintainHospitalId").val())) {
-                $.modal.msgWarning("当前角色需要维护医院，请先选择“维护医院”");
+                $.modal.msgWarning("当前角色需要维护医院，请先选择带医院绑定的角色");
                 return;
             }
             if (isSupplierPrincipalRole() && !$.common.trim($("#maintainSupplierId").val())) {
-                $.modal.msgWarning("当前角色需要维护供应商，请先选择“维护供应商”");
+                $.modal.msgWarning("当前角色需要维护供应商，请先选择“供应商”");
                 return;
             }
 	        if ($.validate.form()) {
+	        	syncTreeIdFromRegion();
 	        	var data = $("#form-user-edit").serializeArray();
 	        	var status = $("input[id='status']").is(':checked') == true ? 0 : 1;
 	        	var postIds = $.form.selectSelects("post");
@@ -583,43 +823,39 @@
 	        }
 	    }
 
-        /* 用户管理-修改-选择部门树 */
-        function selectDeptTree() {
-        	var deptId = $.common.isEmpty($("#treeId").val()) ? "100" : $("#treeId").val();
-            var url = ctx + "system/user/selectDeptTree/" + deptId;
-		    var options = {
-				title: '选择部门',
-				width: "380",
-				url: url,
-				callBack: doSubmit
-			};
-			$.modal.openOptions(options);
-		}
-		
-		function doSubmit(index, layero){
-			var body = $.modal.getChildFrame(index);
-   			$("#treeId").val(body.find('#treeId').val());
-   			$("#treeName").val(body.find('#treeName').val());
-   			$.modal.close(index);
-		}
-
 		$(function() {
             $('#post').select2({
                 placeholder: "请选择岗位",
                 allowClear: true
             });
+            bindDeptRegionChangeHandlers();
+            if (currentProvince) {
+                restoreSavedRegion();
+            } else {
+                loadRegionProvinces();
+            }
             var initRid = /*[[${pickerInitialRoleId}]]*/ null;
             if (initRid != null && initRid !== '') {
                 $('#pickedRoleId').val(initRid);
                 $('#pickedRoleKey').val(/*[[${pickerInitialRoleKey}]]*/ '');
                 $('#pickedRoleName').val(/*[[${pickerInitialRoleName}]]*/ '');
                 $('#pickedRoleType').val(/*[[${pickerInitialRoleType}]]*/ '');
-                $('#pickedRoleDisplay').val(/*[[${pickerInitialDisplay}]]*/ '');
+                var initDisplay = /*[[${pickerInitialDisplay}]]*/ '';
+                var initRoleName = /*[[${pickerInitialRoleName}]]*/ '';
+                $('#pickedRoleDisplay').val(initDisplay || initRoleName || '');
             }
             if ($('#maintainSupplierId').val()) {
                 $('#maintainSupplierSearch').val(maintainSupplierLabel || '');
             }
+            // 先保留服务端渲染的医院名，再异步刷新（避免接口异常时被清空）
+            var serverHospitalNames = /*[[${boundHospitalNames}]]*/ '';
+            if (serverHospitalNames) {
+                setBoundHospitalNames(serverHospitalNames);
+            }
             applyMaintainFieldsByRole();
+            if ($.common.trim($('#maintainSupplierId').val()) || $.common.trim($('#maintainHospitalId').val())) {
+                refreshBoundHospitalNames();
+            }
             var supplierTimer;
             $('#maintainSupplierSearch').on('input', function () {
                 if ($('#maintainSupplierSearch').prop('disabled')) {
@@ -659,6 +895,8 @@
                 $('#maintainSupplierId').val($t.data('id'));
                 $('#maintainSupplierSearch').val($t.data('text'));
                 $('#maintainSupplierSuggestPanel').hide().empty();
+                $('#maintainHospitalId').val('');
+                refreshBoundHospitalNames($t.data('id'), '');
             });
             $(document).on('click', function (e) {
                 if (!$(e.target).closest('.maintain-supplier-wrap').length) {
@@ -669,6 +907,9 @@
                 setTimeout(function () {
                     if ($.common.trim($('#maintainSupplierSearch').val()) === '') {
                         $('#maintainSupplierId').val('');
+                        if (!isHospitalPrincipalRole()) {
+                            setBoundHospitalNames('');
+                        }
                     }
                 }, 250);
             });

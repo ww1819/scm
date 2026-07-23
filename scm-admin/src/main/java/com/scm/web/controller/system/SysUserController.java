@@ -42,6 +42,7 @@ import com.scm.system.domain.Supplier;
 import com.scm.system.domain.SupplierUser;
 import com.scm.system.mapper.HospitalUserMapper;
 import com.scm.system.service.IHospitalService;
+import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.ISupplierService;
 import com.scm.system.service.ISupplierUserService;
 import com.scm.system.service.ISysDeptService;
@@ -83,6 +84,9 @@ public class SysUserController extends BaseController
 
     @Autowired
     private IHospitalService hospitalService;
+
+    @Autowired
+    private IHospitalSupplierService hospitalSupplierService;
 
     @Autowired
     private HospitalUserMapper hospitalUserMapper;
@@ -271,9 +275,6 @@ public class SysUserController extends BaseController
             }
         }
         mmap.put("posts", postService.selectPostsByUserId(userId));
-        Hospital hospitalQuery = new Hospital();
-        hospitalQuery.setStatus("0");
-        mmap.put("hospitals", hospitalService.selectHospitalList(hospitalQuery));
         SupplierUser supplierUser = supplierUserService.selectSupplierUserByUserId(userId);
         if (supplierUser != null && supplierUser.getSupplierId() != null)
         {
@@ -289,7 +290,85 @@ public class SysUserController extends BaseController
         {
             user.setMaintainHospitalId(hospitalUser.getHospitalId());
         }
+        mmap.put("boundHospitalNames", resolveBoundHospitalNames(user.getMaintainSupplierId(), user.getMaintainHospitalId()));
+        putRegionNamesFromDeptId(user.getDeptId(), mmap);
         return prefix + "/edit";
+    }
+
+    /**
+     * 省/市/区县级联：数据与部门管理一致（医承云配 → 省 → 市 → 区县）
+     */
+    @RequiresPermissions("system:user:list")
+    @GetMapping("/deptRegionOptions")
+    @ResponseBody
+    public AjaxResult deptRegionOptions(@RequestParam(value = "parentId", required = false) Long parentId)
+    {
+        List<SysDept> list = deptService.listDeptChildrenForSupplierRegister(parentId);
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (SysDept d : list)
+        {
+            Map<String, Object> m = new HashMap<>();
+            m.put("deptId", d.getDeptId());
+            m.put("deptName", d.getDeptName());
+            rows.add(m);
+        }
+        return success(rows);
+    }
+
+    /**
+     * 由用户 deptId 向上回溯省/市/区县名称（跳过根节点「医承云配」）
+     */
+    private void putRegionNamesFromDeptId(Long deptId, ModelMap mmap)
+    {
+        String province = "";
+        String city = "";
+        String district = "";
+        if (deptId != null && deptId > 0)
+        {
+            List<SysDept> chain = new ArrayList<>();
+            SysDept cur = deptService.selectDeptById(deptId);
+            int guard = 0;
+            while (cur != null && guard++ < 16)
+            {
+                chain.add(0, cur);
+                Long parentId = cur.getParentId();
+                if (parentId == null || parentId == 0L)
+                {
+                    break;
+                }
+                cur = deptService.selectDeptById(parentId);
+            }
+            // 去掉根「医承云配」或 parent_id=0 的一级组织
+            while (!chain.isEmpty())
+            {
+                SysDept first = chain.get(0);
+                boolean isRoot = (first.getParentId() == null || first.getParentId() == 0L)
+                    || "医承云配".equals(StringUtils.trim(first.getDeptName()));
+                if (isRoot)
+                {
+                    chain.remove(0);
+                }
+                else
+                {
+                    break;
+                }
+            }
+            if (chain.size() >= 1)
+            {
+                province = StringUtils.nvl(chain.get(0).getDeptName(), "");
+            }
+            if (chain.size() >= 2)
+            {
+                city = StringUtils.nvl(chain.get(1).getDeptName(), "");
+            }
+            if (chain.size() >= 3)
+            {
+                district = StringUtils.nvl(chain.get(2).getDeptName(), "");
+            }
+        }
+        mmap.put("regionProvince", province);
+        mmap.put("regionCity", city);
+        mmap.put("regionDistrict", district);
     }
 
     /**
@@ -514,11 +593,7 @@ public class SysUserController extends BaseController
         {
             return "";
         }
-        String hn = StringUtils.isNotEmpty(r.getHospitalName()) ? r.getHospitalName() : "—";
-        String sn = StringUtils.isNotEmpty(r.getSupplierCompanyName()) ? r.getSupplierCompanyName() : "—";
-        String type = roleTypeDisplayLabel(r.getRoleType());
-        String oa = "1".equals(StringUtils.trimToEmpty(r.getOrgAdmin())) ? "是" : "否";
-        return r.getRoleName() + "（类型：" + type + "，医院：" + hn + "，供应商：" + sn + "，机构管理员：" + oa + "）";
+        return StringUtils.nvl(r.getRoleName(), "");
     }
 
     private static String roleTypeDisplayLabel(String roleType)
@@ -568,5 +643,42 @@ public class SysUserController extends BaseController
             options.add(row);
         }
         return AjaxResult.success(options);
+    }
+
+    /**
+     * 按供应商查询已绑定医院名称（用于用户页只读展示）
+     */
+    @RequiresPermissions(value = { "system:user:add", "system:user:edit" }, logical = Logical.OR)
+    @GetMapping("/boundHospitals")
+    @ResponseBody
+    public AjaxResult boundHospitals(@RequestParam(value = "supplierId", required = false) Long supplierId,
+        @RequestParam(value = "hospitalId", required = false) Long hospitalId)
+    {
+        return AjaxResult.success("操作成功", resolveBoundHospitalNames(supplierId, hospitalId));
+    }
+
+    private String resolveBoundHospitalNames(Long supplierId, Long hospitalId)
+    {
+        if (supplierId != null)
+        {
+            List<String> names = hospitalSupplierService.selectApprovedHospitalNamesBySupplierId(supplierId);
+            if (names == null || names.isEmpty())
+            {
+                return "";
+            }
+            return names.stream()
+                .filter(StringUtils::isNotEmpty)
+                .distinct()
+                .collect(Collectors.joining("、"));
+        }
+        if (hospitalId != null)
+        {
+            Hospital hospital = hospitalService.selectHospitalById(hospitalId);
+            if (hospital != null && StringUtils.isNotEmpty(hospital.getHospitalName()))
+            {
+                return hospital.getHospitalName();
+            }
+        }
+        return "";
     }
 }

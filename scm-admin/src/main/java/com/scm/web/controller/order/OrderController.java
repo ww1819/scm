@@ -192,7 +192,7 @@ public class OrderController extends BaseController
         int successCount = 0;
         for (String orderId : orderIds)
         {
-            if (orderService.receiveOrder(Long.parseLong(orderId)) > 0)
+            if (orderService.receiveOrder(Long.parseLong(orderId), getLoginName()) > 0)
             {
                 successCount++;
             }

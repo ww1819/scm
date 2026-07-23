@@ -501,6 +501,8 @@ CALL add_table_column('sys_user', 'real_name', 'varchar(50)', '姓名（票据�
 /
 CALL add_table_column('sys_user', 'pwd_plain', 'varchar(64)', '管理员登记的明文密码（用户自行改密后清空）', NULL);
 /
+CALL add_table_column('sys_user', 'address', 'varchar(500)', '详细地址', NULL);
+/
 -- sys_role：租户维度角色（医院管理员等）
 CALL add_table_column('sys_role', 'tenant_id', 'varchar(64)', '租户ID', NULL);
 /
@@ -948,4 +950,21 @@ ALTER TABLE scm_delivery
 ALTER TABLE scm_delivery_detail
   MODIFY COLUMN price decimal(18,6) DEFAULT 0.000000 COMMENT '单价',
   MODIFY COLUMN amount decimal(18,6) DEFAULT 0.000000 COMMENT '金额';
+/
+
+-- ========== 订单接收人 / 接收日期 ==========
+CALL add_table_column('scm_order', 'receive_by', 'varchar(64)', '接收人登录名', NULL);
+/
+CALL add_table_column('scm_order', 'receive_by_name_snapshot', 'varchar(64)', '接收人姓名快照（操作时落库，避免用户改名后不可追溯）', NULL);
+/
+CALL add_table_column('scm_order', 'receive_time', 'datetime', '接收时间', NULL);
+/
+-- 历史已接收订单回填（仅空值时）
+UPDATE scm_order
+SET receive_by = NULLIF(TRIM(update_by), ''),
+    receive_by_name_snapshot = NULLIF(TRIM(update_by), ''),
+    receive_time = update_time
+WHERE order_status IN ('1', '2', '3')
+  AND receive_time IS NULL
+  AND update_time IS NOT NULL;
 /

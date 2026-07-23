@@ -63,9 +63,10 @@ public interface IOrderService
      * 接收订单
      * 
      * @param orderId 订单ID
+     * @param receiveBy 接收人登录名
      * @return 结果
      */
-    public int receiveOrder(Long orderId);
+    public int receiveOrder(Long orderId, String receiveBy);
 
     /**
      * 配送单引用时自动接收：仅待接收(0)变为已接收(1)，接收人记为 updateBy

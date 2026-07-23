@@ -153,8 +153,10 @@
 		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"],
 		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="srcOrderSupplierName"],
 		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="expectedDeliveryDate"],
-		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="relatedOrder"] {
-			overflow: hidden;
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="relatedOrder"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="createByDisplay"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="auditByDisplay"] {
+			overflow: hidden !important;
 			text-overflow: ellipsis;
 		}
 		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"] {
@@ -177,6 +179,20 @@
 		}
 		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="relatedOrder"] {
 			max-width: 180px;
+		}
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="createByDisplay"],
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="auditByDisplay"] {
+			max-width: 90px;
+			width: 90px;
+		}
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="createByDisplay"] .delivery-cell-ellipsis,
+		.delivery-table-wrap.delivery-list-table .fixed-table-container > .fixed-table-body td[data-field="auditByDisplay"] .delivery-cell-ellipsis {
+			display: block;
+			width: 100%;
+			max-width: 100%;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
 		}
 		.delivery-table-wrap.delivery-list-table .delivery-cell-ellipsis {
 			display: block;
@@ -519,10 +535,15 @@
 				return;
 			}
 			var colIdx = $th[0].cellIndex;
+			var clipOverflow = (field === 'createByDisplay' || field === 'auditByDisplay'
+				|| field === 'supplierName' || field === 'srcOrderSupplierName');
 			var setW = function (el) {
 				el.style.setProperty('width', w, 'important');
 				el.style.setProperty('min-width', w, 'important');
 				el.style.setProperty('max-width', w, 'important');
+				if (clipOverflow) {
+					el.style.setProperty('overflow', 'hidden', 'important');
+				}
 			};
 			$th.each(function () { setW(this); });
 			$mainBody.find('table tbody tr').each(function () {
@@ -685,6 +706,32 @@
 			}
 			var esc = escDeliveryCellAttr(s);
 			return '<span class="delivery-cell-ellipsis" title="' + esc + '">' + esc + '</span>';
+		}
+
+		/** 制单人/审核人：固定宽度截断，避免长文本盖住相邻列 */
+		function deliveryPersonCellEllipsis(value) {
+			var s = (value == null || value === '') ? '-' : String(value).trim();
+			if (!s) {
+				s = '-';
+			}
+			var fullEsc = escDeliveryCellAttr(s);
+			var maxLen = 6;
+			var shown = (s !== '-' && s.length > maxLen) ? (s.substring(0, maxLen) + '…') : s;
+			return '<div class="delivery-person-ellipsis" style="display:block;box-sizing:border-box;width:78px;max-width:78px;margin:0 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'
+				+ fullEsc + '">' + escDeliveryCellAttr(shown) + '</div>';
+		}
+
+		function deliveryPersonCellStyle() {
+			return {
+				css: {
+					'max-width': '90px',
+					'width': '90px',
+					'min-width': '90px',
+					'overflow': 'hidden',
+					'text-overflow': 'ellipsis',
+					'white-space': 'nowrap'
+				}
+			};
 		}
 
 		function deliveryRelatedOrderCell(row) {
@@ -948,8 +995,9 @@
 		            align: 'center',
 		            width: 90,
 		            sortable: true,
+		            cellStyle: deliveryPersonCellStyle,
 		            formatter: function(value, row, index) {
-		                return value || row.createBy || '-';
+		                return deliveryPersonCellEllipsis(value || row.createBy);
 		            }
 		        },
 		        {
@@ -964,8 +1012,9 @@
 		            title: '审核人',
 		            align: 'center',
 		            width: 90,
+		            cellStyle: deliveryPersonCellStyle,
 		            formatter: function(value, row, index) {
-		                return value || row.auditBy || '-';
+		                return deliveryPersonCellEllipsis(value || row.auditBy);
 		            }
 		        },
 		        {

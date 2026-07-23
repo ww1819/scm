@@ -18,6 +18,7 @@ import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.Order;
 import com.scm.system.domain.OrderDetail;
 import com.scm.system.domain.HospitalSupplier;
+import com.scm.common.core.domain.entity.SysUser;
 import com.scm.common.core.domain.entity.SysRole;
 import com.scm.system.domain.vo.OrderLineDeliveryQtyVo;
 import com.scm.system.mapper.DeliveryMapper;
@@ -31,6 +32,7 @@ import com.scm.system.service.IScmHospitalContextService;
 import com.scm.system.service.IScmHospitalSupplierMenuScopeService;
 import com.scm.system.service.IScmHospitalSupplierPermissionService;
 import com.scm.system.service.IScmSupplierContextService;
+import com.scm.system.service.ISysUserService;
 
 /**
  * 订单 服务层实现
@@ -65,6 +67,11 @@ public class OrderServiceImpl implements IOrderService
     private HospitalSupplierMapper hospitalSupplierMapper;
     @Autowired
     private SysRoleMapper sysRoleMapper;
+
+    @Autowired
+    private ISysUserService userService;
+
+    private static final int RECEIVE_NAME_SNAPSHOT_MAX_LEN = 64;
 
     /**
      * 查询订单信息
@@ -282,17 +289,24 @@ public class OrderServiceImpl implements IOrderService
      * 接收订单
      * 
      * @param orderId 订单ID
+     * @param receiveBy 接收人登录名
      * @return 结果
      */
     @Override
-    public int receiveOrder(Long orderId)
+    public int receiveOrder(Long orderId, String receiveBy)
     {
         Order order = orderMapper.selectOrderById(orderId);
         if (order == null)
         {
             return 0;
         }
+        if (!"0".equals(StringUtils.trimToNull(order.getOrderStatus())))
+        {
+            return 0;
+        }
+        applyReceiveInfo(order, receiveBy);
         order.setOrderStatus("1"); // 已接收
+        order.setUpdateBy(StringUtils.trimToEmpty(receiveBy));
         order.setUpdateTime(DateUtils.getNowDate());
         return orderMapper.updateOrder(order);
     }
@@ -309,10 +323,74 @@ public class OrderServiceImpl implements IOrderService
         {
             return 0;
         }
+        applyReceiveInfo(order, receiverLoginName);
         order.setOrderStatus("1");
         order.setUpdateBy(StringUtils.trimToEmpty(receiverLoginName));
         order.setUpdateTime(DateUtils.getNowDate());
         return orderMapper.updateOrder(order);
+    }
+
+    private void applyReceiveInfo(Order order, String receiveBy)
+    {
+        String login = StringUtils.trimToEmpty(receiveBy);
+        if (StringUtils.isEmpty(login))
+        {
+            try
+            {
+                login = StringUtils.trimToEmpty(ShiroUtils.getLoginName());
+            }
+            catch (Exception ignored)
+            {
+                login = "";
+            }
+        }
+        order.setReceiveBy(login);
+        order.setReceiveByNameSnapshot(resolveReceiveNameSnapshot(login));
+        order.setReceiveTime(DateUtils.getNowDate());
+    }
+
+    private String resolveReceiveNameSnapshot(String operatorKey)
+    {
+        String login = StringUtils.trimToNull(operatorKey);
+        if (login == null)
+        {
+            return null;
+        }
+        try
+        {
+            SysUser u = userService.selectUserByLoginName(login);
+            if (u != null)
+            {
+                String rn = StringUtils.trimToNull(u.getRealName());
+                if (rn != null)
+                {
+                    return truncateReceiveName(rn);
+                }
+                String un = StringUtils.trimToNull(u.getUserName());
+                if (un != null)
+                {
+                    return truncateReceiveName(un);
+                }
+            }
+        }
+        catch (Exception ignored)
+        {
+            // ignore
+        }
+        return truncateReceiveName(login);
+    }
+
+    private static String truncateReceiveName(String s)
+    {
+        if (s == null)
+        {
+            return null;
+        }
+        if (s.length() <= RECEIVE_NAME_SNAPSHOT_MAX_LEN)
+        {
+            return s;
+        }
+        return s.substring(0, RECEIVE_NAME_SNAPSHOT_MAX_LEN);
     }
 
     /**

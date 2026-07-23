@@ -200,7 +200,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             or exists (
                 select 1 from zs_tp_order_detail_delivery_rel r
                 where r.order_id = #{zsOrderId}
-                  and r.delivery_id = cast(d.delivery_id as char)
+                  and r.delivery_id = cast(d.delivery_id as char) collate utf8mb4_0900_ai_ci
             )
           )
     </select>
@@ -219,8 +219,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             )
             or exists (
                 select 1 from scm_order_detail_delivery_rel r
-                where r.order_id = cast(#{orderId} as char)
-                  and r.delivery_id = cast(d.delivery_id as char)
+                where r.order_id = cast(#{orderId} as char) collate utf8mb4_0900_ai_ci
+                  and r.delivery_id = cast(d.delivery_id as char) collate utf8mb4_0900_ai_ci
             )
           )
     </select>

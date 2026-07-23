@@ -19,9 +19,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="warehouse"       column="warehouse_name"   />
         <result property="orderDate"      column="order_date"       />
         <result property="orderStatus"     column="order_status"     />
+        <result property="receiveBy"       column="receive_by"       />
+        <result property="receiveByNameSnapshot" column="receive_by_name_snapshot" />
+        <result property="receiveByDisplay" column="receive_by_display" />
+        <result property="receiveTime"     column="receive_time"     />
         <result property="orderDeptId"     column="order_dept_id"    />
         <result property="orderDeptName"   column="order_dept_name"  />
         <result property="department"     column="dept_display"      />
+        <result property="hospitalHandler" column="hospital_handler" />
+        <result property="planNo"         column="plan_no"           />
         <result property="tenantId"       column="tenant_id"         />
         <result property="createBy"       column="create_by"         />
         <result property="createTime"     column="create_time"        />
@@ -33,11 +39,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <sql id="selectOrderVo">
         select o.order_id, o.order_no, o.hospital_id, o.supplier_id, o.supplier_code, o.spd_supplier_id, o.order_supplier_name, o.warehouse_id,
                o.order_amount, o.warehouse_name, o.order_date, o.order_status,
+               o.receive_by, o.receive_by_name_snapshot, o.receive_time,
+               COALESCE(NULLIF(TRIM(o.receive_by_name_snapshot), ''), o.receive_by) as receive_by_display,
                o.order_dept_id, o.order_dept_name, o.apply_dept, o.tenant_id, o.remark,
                o.create_by, o.create_time, o.update_by, o.update_time,
                h.hospital_name,
                COALESCE(nullif(trim(o.order_supplier_name),''), s.company_name) as supplier_name,
-               COALESCE(nullif(trim(o.order_dept_name),''), o.apply_dept) as dept_display
+               COALESCE(nullif(trim(o.order_dept_name),''), o.apply_dept) as dept_display,
+               cast(null as char) as hospital_handler,
+               regexp_substr(o.remark, 'JH[0-9]+') as plan_no
         from scm_order o
         left join scm_hospital h on o.hospital_id = h.hospital_id
         left join scm_supplier s on o.supplier_id = s.supplier_id
@@ -59,8 +69,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                 )
                 OR EXISTS (
                     SELECT 1 FROM scm_order_detail_delivery_rel r
-                    WHERE r.order_id = CAST(o.order_id AS CHAR)
-                      AND r.delivery_id = CAST(d.delivery_id AS CHAR)
+                    WHERE r.order_id = CAST(o.order_id AS CHAR) COLLATE utf8mb4_0900_ai_ci
+                      AND r.delivery_id = CAST(d.delivery_id AS CHAR) COLLATE utf8mb4_0900_ai_ci
                 )
               )
         )
@@ -306,6 +316,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="warehouse != null and warehouse != ''">warehouse_name = #{warehouse},</if>
             <if test="orderDate != null">order_date = #{orderDate},</if>
             <if test="orderStatus != null and orderStatus != ''">order_status = #{orderStatus},</if>
+            <if test="receiveBy != null">receive_by = #{receiveBy},</if>
+            <if test="receiveByNameSnapshot != null">receive_by_name_snapshot = #{receiveByNameSnapshot},</if>
+            <if test="receiveTime != null">receive_time = #{receiveTime},</if>
             <if test="orderDeptId != null">order_dept_id = #{orderDeptId},</if>
             <if test="orderDeptName != null">order_dept_name = #{orderDeptName},</if>
             <if test="department != null and department != ''">apply_dept = #{department},</if>

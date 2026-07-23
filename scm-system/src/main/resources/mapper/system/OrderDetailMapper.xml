@@ -26,6 +26,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="packCoefficient" column="pack_coefficient"    />
         <result property="manufacturer"    column="manufacturer_name"  />
         <result property="registerNo"      column="register_no"        />
+        <result property="registerExpireDate" column="register_expire_date" />
+        <result property="nationalInsuranceCode" column="national_insurance_code" />
+        <result property="sunshineProcurementCode" column="sunshine_procurement_code" />
         <result property="remark"          column="remark"             />
     </resultMap>
     
@@ -34,7 +37,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                d.supplier_id, d.supplier_code, d.spd_entry_id,
                d.material_id, d.material_code, d.material_name,
                d.specification, d.model, d.unit, d.purchase_price, d.order_quantity,
-               d.remaining_quantity, d.amount, d.pack_coefficient, d.manufacturer_name, d.register_no, d.remark
+               d.remaining_quantity, d.amount, d.pack_coefficient, d.manufacturer_name, d.register_no, d.remark,
+               (
+                   select coalesce(pc.register_valid_date, pc.expire_date)
+                   from scm_product_certificate pc
+                   where pc.material_id = d.material_id
+                     and (pc.del_flag is null or pc.del_flag = '' or pc.del_flag = '0')
+                     and (ifnull(d.register_no, '') = '' or pc.register_no = d.register_no)
+                   order by
+                       case when ifnull(d.register_no, '') != '' and pc.register_no = d.register_no then 0 else 1 end,
+                       coalesce(pc.register_valid_date, pc.expire_date) desc
+                   limit 1
+               ) as register_expire_date,
+               cast(null as char) as national_insurance_code,
+               cast(null as char) as sunshine_procurement_code
         from scm_order_detail d
     </sql>
     

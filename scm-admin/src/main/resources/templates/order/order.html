@@ -160,7 +160,11 @@
 		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierName"],
 		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-body td[data-field="warehouse"],
 		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-body td[data-field="orderDate"],
-		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-body td[data-field="department"] {
+		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-body td[data-field="department"],
+		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-body td[data-field="hospitalHandler"],
+		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-body td[data-field="planNo"],
+		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-body td[data-field="receiveByDisplay"],
+		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-body td[data-field="receiveTime"] {
 			overflow: hidden;
 			text-overflow: ellipsis;
 		}
@@ -191,7 +195,15 @@
 		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-header th[data-field="orderStatus"],
 		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-body td[data-field="orderStatus"],
 		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-header th[data-field="department"],
-		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-body td[data-field="department"] {
+		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-body td[data-field="department"],
+		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-header th[data-field="hospitalHandler"],
+		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-body td[data-field="hospitalHandler"],
+		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-header th[data-field="planNo"],
+		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-body td[data-field="planNo"],
+		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-header th[data-field="receiveByDisplay"],
+		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-body td[data-field="receiveByDisplay"],
+		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-header th[data-field="receiveTime"],
+		.order-table-wrap.order-list-table .fixed-table-container > .fixed-table-body td[data-field="receiveTime"] {
 			padding-left: 4px !important;
 			padding-right: 4px !important;
 		}
@@ -350,6 +362,10 @@
 			orderDate: 108,
 			orderStatus: 96,
 			department: 100,
+			hospitalHandler: 110,
+			planNo: 140,
+			receiveByDisplay: 100,
+			receiveTime: 120,
 			orderOperate: 160
 		};
 
@@ -746,7 +762,14 @@
 		            sortable: true,
 		            width: 108,
 		            formatter: function (value) {
-		                return orderCellEllipsis(value);
+		                if (value == null || value === '') {
+		                    return '-';
+		                }
+		                if (typeof $.common !== 'undefined' && typeof $.common.dateFormat === 'function') {
+		                    return orderCellEllipsis($.common.dateFormat(value, 'yyyy-MM-dd') || '-');
+		                }
+		                var s = String(value).trim();
+		                return orderCellEllipsis(s.indexOf(' ') > -1 ? s.split(' ')[0] : s.substring(0, 10));
 		            }
 		        },
 		        {
@@ -771,6 +794,47 @@
 		            width: 100,
 		            formatter: function (value) {
 		                return orderCellEllipsis(value);
+		            }
+		        },
+		        {
+		            field: 'hospitalHandler',
+		            title: '医院经办人',
+		            width: 110,
+		            formatter: function (value) {
+		                return orderCellEllipsis(value);
+		            }
+		        },
+		        {
+		            field: 'planNo',
+		            title: '计划号',
+		            width: 140,
+		            formatter: function (value) {
+		                return orderCellEllipsis(value);
+		            }
+		        },
+		        {
+		            field: 'receiveByDisplay',
+		            title: '接收人',
+		            width: 100,
+		            formatter: function (value, row) {
+		                var v = value || row.receiveByNameSnapshot || row.receiveBy;
+		                return orderCellEllipsis(v);
+		            }
+		        },
+		        {
+		            field: 'receiveTime',
+		            title: '接收日期',
+		            width: 120,
+		            sortable: true,
+		            formatter: function (value) {
+		                if (value == null || value === '') {
+		                    return '-';
+		                }
+		                if (typeof $.common !== 'undefined' && typeof $.common.dateFormat === 'function') {
+		                    return orderCellEllipsis($.common.dateFormat(value, 'yyyy-MM-dd') || '-');
+		                }
+		                var s = String(value).trim();
+		                return orderCellEllipsis(s.indexOf(' ') > -1 ? s.split(' ')[0] : s.substring(0, 10));
 		            }
 		        },
 		        {

@@ -132,6 +132,17 @@ public class HospitalSupplierServiceImpl implements IHospitalSupplierService
     }
 
     @Override
+    public List<String> selectApprovedHospitalNamesBySupplierId(Long supplierId)
+    {
+        if (supplierId == null)
+        {
+            return java.util.Collections.emptyList();
+        }
+        List<String> names = hospitalSupplierMapper.selectApprovedHospitalNamesBySupplierId(supplierId);
+        return names == null ? java.util.Collections.emptyList() : names;
+    }
+
+    @Override
     public List<HospitalSupplier> selectSupplierLinkedHospitalsForProduct(Long supplierId)
     {
         /*

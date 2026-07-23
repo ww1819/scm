@@ -36,6 +36,14 @@ public interface HospitalSupplierMapper
     public List<HospitalSupplier> selectHospitalSupplierBySupplierId(Long supplierId);
 
     /**
+     * 查询供应商审核通过且绑定成功的医院名称
+     *
+     * @param supplierId 供应商ID
+     * @return 医院名称列表
+     */
+    public List<String> selectApprovedHospitalNamesBySupplierId(Long supplierId);
+
+    /**
      * 按医院+供应商查询关联
      */
     public HospitalSupplier selectHospitalSupplierByHospitalAndSupplier(HospitalSupplier hospitalSupplier);
