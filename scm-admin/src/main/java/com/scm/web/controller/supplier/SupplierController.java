@@ -32,6 +32,7 @@ import com.scm.system.domain.SupplierCertificate;
 import com.scm.system.domain.SupplierUser;
 import com.scm.system.service.IHospitalService;
 import com.scm.system.service.IHospitalSupplierService;
+import com.scm.system.service.IScmHospitalContextService;
 import com.scm.system.service.IScmScopeBootstrapService;
 import com.scm.system.service.ISupplierService;
 import com.scm.system.service.ISupplierCertificateService;
@@ -69,6 +70,9 @@ public class SupplierController extends BaseController
 
     @Autowired
     private IScmScopeBootstrapService scmScopeBootstrapService;
+
+    @Autowired
+    private IScmHospitalContextService scmHospitalContextService;
 
     /**
      * 省/市/区县级联：数据与部门管理一致（医承云配 → 省 → 市 → 区县）
@@ -180,6 +184,7 @@ public class SupplierController extends BaseController
 
     /**
      * 获取所有供应商列表（不分页，用于下拉选择等场景）
+     * 医院用户：仅返回与当前医院关联且审核通过（bind_status=1、audit_status=1）的供应商
      */
     @GetMapping("/all")
     @ResponseBody
@@ -189,6 +194,11 @@ public class SupplierController extends BaseController
         {
             Supplier supplier = new Supplier();
             applyCurrentUserSupplierScope(supplier);
+            Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(getUserId());
+            if (hospitalCtx != null)
+            {
+                return success(listApprovedSuppliersForHospital(hospitalCtx, supplier.getSupplierId()));
+            }
             // 不限制状态，获取所有供应商（包括正常和停用的）
             // 注意：这里不使用startPage()，直接获取所有数据
             List<Supplier> list = supplierService.selectSupplierList(supplier);
@@ -202,6 +212,50 @@ public class SupplierController extends BaseController
             logger.error("获取所有供应商列表失败", e);
             return error("获取供应商列表失败：" + e.getMessage());
         }
+    }
+
+    /**
+     * 医院侧：取与指定医院关联审核通过的供应商
+     */
+    private List<Supplier> listApprovedSuppliersForHospital(Long hospitalId, Long scopedSupplierId)
+    {
+        HospitalSupplier q = new HospitalSupplier();
+        q.setHospitalId(hospitalId);
+        q.setBindStatus("1");
+        q.setAuditStatus("1");
+        List<HospitalSupplier> relations = hospitalSupplierService.selectHospitalSupplierList(q);
+        if (relations == null || relations.isEmpty())
+        {
+            return new ArrayList<>();
+        }
+        java.util.LinkedHashSet<Long> supplierIds = new java.util.LinkedHashSet<>();
+        for (HospitalSupplier rel : relations)
+        {
+            if (rel == null || rel.getSupplierId() == null)
+            {
+                continue;
+            }
+            // 停用关联排除（兼容 status 为空的历史数据）
+            if ("1".equals(rel.getStatus()))
+            {
+                continue;
+            }
+            if (scopedSupplierId != null && !scopedSupplierId.equals(rel.getSupplierId()))
+            {
+                continue;
+            }
+            supplierIds.add(rel.getSupplierId());
+        }
+        List<Supplier> resultList = new ArrayList<>();
+        for (Long sid : supplierIds)
+        {
+            Supplier s = supplierService.selectSupplierById(sid);
+            if (s != null && !"2".equals(s.getDelFlag()))
+            {
+                resultList.add(s);
+            }
+        }
+        return resultList;
     }
 
     /**

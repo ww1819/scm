@@ -1,20 +1,20 @@
--- ¶©µ¥²éÑ¯£º½ÓÊÕÈË / ½ÓÊÕÈÕÆÚ
--- ÔÚÄ¿±ê¿âÖ´ĞĞ±¾½Å±¾ºóÖØÆôºó¶Ë
+-- è®¢å•æŸ¥è¯¢ï¼šæ¥æ”¶äºº / æ¥æ”¶æ—¥æœŸ
+-- åœ¨ç›®æ ‡åº“æ‰§è¡Œæœ¬è„šæœ¬åé‡å¯åç«¯
 
-CALL add_table_column('scm_order', 'receive_by', 'varchar(64)', '½ÓÊÕÈËµÇÂ¼Ãû', NULL);
+CALL add_table_column('scm_order', 'receive_by', 'varchar(64)', 'æ¥æ”¶äººç™»å½•å', NULL);
 /
-CALL add_table_column('scm_order', 'receive_by_name_snapshot', 'varchar(64)', '½ÓÊÕÈËĞÕÃû¿ìÕÕ£¨²Ù×÷Ê±Âä¿â£¬±ÜÃâÓÃ»§¸ÄÃûºó²»¿É×·Ëİ£©', NULL);
+CALL add_table_column('scm_order', 'receive_by_name_snapshot', 'varchar(64)', 'æ¥æ”¶äººå§“åå¿«ç…§ï¼ˆæ“ä½œæ—¶è½åº“ï¼Œé¿å…ç”¨æˆ·æ”¹ååä¸å¯è¿½æº¯ï¼‰', NULL);
 /
-CALL add_table_column('scm_order', 'receive_time', 'datetime', '½ÓÊÕÊ±¼ä', NULL);
+CALL add_table_column('scm_order', 'receive_time', 'datetime', 'æ¥æ”¶æ—¶é—´', NULL);
 /
 
--- Èô¿âÖĞÎŞ add_table_column ´æ´¢¹ı³Ì£¬¿É¸ÄÓÃ£º
+-- è‹¥åº“ä¸­æ—  add_table_column å­˜å‚¨è¿‡ç¨‹ï¼Œå¯æ”¹ç”¨ï¼š
 -- ALTER TABLE scm_order
---   ADD COLUMN receive_by varchar(64) DEFAULT NULL COMMENT '½ÓÊÕÈËµÇÂ¼Ãû' AFTER order_status,
---   ADD COLUMN receive_by_name_snapshot varchar(64) DEFAULT NULL COMMENT '½ÓÊÕÈËĞÕÃû¿ìÕÕ' AFTER receive_by,
---   ADD COLUMN receive_time datetime DEFAULT NULL COMMENT '½ÓÊÕÊ±¼ä' AFTER receive_by_name_snapshot;
+--   ADD COLUMN receive_by varchar(64) DEFAULT NULL COMMENT 'æ¥æ”¶äººç™»å½•å' AFTER order_status,
+--   ADD COLUMN receive_by_name_snapshot varchar(64) DEFAULT NULL COMMENT 'æ¥æ”¶äººå§“åå¿«ç…§' AFTER receive_by,
+--   ADD COLUMN receive_time datetime DEFAULT NULL COMMENT 'æ¥æ”¶æ—¶é—´' AFTER receive_by_name_snapshot;
 
--- ÀúÊ·ÒÑ½ÓÊÕ¶©µ¥»ØÌî£¨½ö¿ÕÖµ£©
+-- å†å²å·²æ¥æ”¶è®¢å•å›å¡«ï¼ˆä»…ç©ºå€¼ï¼‰
 UPDATE scm_order
 SET receive_by = NULLIF(TRIM(update_by), ''),
     receive_by_name_snapshot = NULLIF(TRIM(update_by), ''),

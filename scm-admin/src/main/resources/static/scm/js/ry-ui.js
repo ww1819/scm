@@ -1055,15 +1055,13 @@ var table = {
                 createMenuItem(url, title);
                 closeItem(dataId);
             },
-            // 右侧弹出窗口打开
+            // 右侧弹出窗口打开（在当前内容页内，不盖住顶部导航/状态栏）
             popupRight: function(title, url){
-                var width = 150;
-                if (top.location !== self.location) {
-                    if ($(top.window).outerWidth() < 400) {
-                        width = 50;
-                    }
-                }
-                top.layer.open({
+                var opener = (top.location !== self.location && typeof layer !== 'undefined') ? layer : top.layer;
+                var winW = $(window).outerWidth() || 800;
+                // 抽屉宽度适中，避免几乎铺满整页
+                var width = Math.min(640, Math.max(420, winW - 100));
+                opener.open({
                     type: 2,
                     offset: 'r',
                     anim: 'slideLeft',
@@ -1071,7 +1069,7 @@ var table = {
                     title: title,
                     shade: 0.3,
                     shadeClose: true,
-                    area: [($(window).outerWidth() - width) + 'px', '100%'],
+                    area: [width + 'px', '100%'],
                     content: url
                 });
             },

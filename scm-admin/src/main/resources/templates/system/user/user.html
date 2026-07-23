@@ -10,6 +10,20 @@
 		.ui-layout-west .box-main > .box-header {
 			display: none !important;
 		}
+		/* 左侧部门树：可滚动但不显示滚动条 */
+		.ui-layout-west,
+		.ui-layout-west .box-main,
+		.ui-layout-west .ui-layout-content {
+			scrollbar-width: none; /* Firefox */
+			-ms-overflow-style: none; /* IE/Edge */
+		}
+		.ui-layout-west::-webkit-scrollbar,
+		.ui-layout-west .box-main::-webkit-scrollbar,
+		.ui-layout-west .ui-layout-content::-webkit-scrollbar {
+			width: 0 !important;
+			height: 0 !important;
+			display: none !important;
+		}
 		/* 搜索区：上下内边距一致 */
 		.ui-layout-center .container-div > .row > .search-collapse {
 			padding-top: 10px;
@@ -27,18 +41,23 @@
 			margin-bottom: 4px;
 		}
 		/* 用户列表：横滚 + 不换行 + 仅冻结操作列（对齐 delivery.html） */
+		.ui-layout-center .select-table.user-table-wrap {
+			/* 顶部留白（与底部分页条 padding-bottom 同为 10px） */
+			padding-top: 10px !important;
+			padding-bottom: 0 !important;
+		}
 		.user-table-wrap {
 			min-height: 400px;
 			position: relative;
-			padding-bottom: 6px;
 			overflow: hidden;
 		}
 		.user-table-wrap .bootstrap-table {
 			height: 100%;
-			padding-bottom: 60px;
+			/* 预留：分页内容区 + 底部分页内边距留白 */
+			padding-bottom: 62px;
 		}
 		.user-table-wrap .fixed-table-container {
-			padding-bottom: 46px;
+			padding-bottom: 48px;
 		}
 		.user-table-wrap .fixed-table-body {
 			overflow-x: hidden !important;
@@ -49,7 +68,7 @@
 			position: absolute;
 			left: 10px;
 			right: 10px;
-			bottom: 46px;
+			bottom: 52px;
 			z-index: 4;
 			overflow-x: auto;
 			overflow-y: hidden;
@@ -79,15 +98,17 @@
 			position: absolute;
 			left: 10px;
 			right: 10px;
-			bottom: 0;
+			bottom: 0 !important;
 			background: #fff;
 			z-index: 3;
 			border-top: 1px solid #eee;
 			margin: 0 !important;
-			padding: 6px 0;
+			/* 上 6px 内容间距；下 10px 与明细框顶部留白一致 */
+			padding: 6px 0 10px 0 !important;
+			box-sizing: border-box;
 		}
 		.user-table-wrap.user-list-table .fixed-table-pagination .pagination {
-			margin-right: 272px;
+			margin-right: 242px;
 		}
 		.user-table-wrap.user-list-table .fixed-table-header {
 			position: relative;
@@ -100,20 +121,16 @@
 		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body > table {
 			table-layout: fixed;
 		}
+		/* 表头/单元格样式对齐订单查询（用全局 ry-ui 默认，不再额外加高） */
 		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-header th,
 		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body tbody td {
 			box-sizing: border-box;
-			padding: 8px 14px;
-			white-space: nowrap;
 			vertical-align: middle;
-			font-size: 14px;
-			line-height: 1.5;
 		}
-		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-header th {
-			font-size: 14px;
-			font-weight: 600;
-			background-color: #f5f5f5;
-			border-bottom: 2px solid #ddd;
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-header th .th-inner,
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-header th .sortable {
+			text-align: center !important;
+			justify-content: center;
 		}
 		/* 主表滚动区隐藏操作列内容，由右侧 fixed-columns-right 展示（保留列宽，避免冻结区 scroll 错位） */
 		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-header th[data-field="userOperate"],
@@ -139,16 +156,11 @@
 			background-color: #fff;
 			vertical-align: middle;
 			white-space: nowrap;
-			font-size: 14px;
-			line-height: 1.5;
-		}
-		.user-table-wrap.user-list-table .fixed-columns-right .fixed-table-header th {
-			font-weight: 600;
 		}
 		.user-table-wrap.user-list-table .fixed-columns-right .fixed-table-header th[data-field="userOperate"] {
-			background-color: #f5f5f5;
-			min-width: 260px;
-			width: 260px;
+			background-color: #eff3f8;
+			min-width: 230px;
+			width: 230px;
 			text-align: center;
 		}
 		.user-table-wrap.user-list-table .fixed-columns-right .fixed-table-header th[data-field="userOperate"] .th-inner {
@@ -156,8 +168,8 @@
 			justify-content: center;
 		}
 		.user-table-wrap.user-list-table .fixed-columns-right .fixed-table-body td[data-field="userOperate"] {
-			min-width: 260px;
-			width: 260px;
+			min-width: 230px;
+			width: 230px;
 			padding: 6px 8px;
 			text-align: center;
 			overflow: visible !important;
@@ -174,16 +186,29 @@
 			overflow-x: hidden !important;
 			overflow-y: hidden !important;
 		}
-		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body tbody td {
+		.user-table-wrap.user-list-table .fixed-table-body tbody td {
 			white-space: nowrap;
+			vertical-align: middle !important;
+		}
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body td[data-field="loginName"],
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body td[data-field="pwdPlain"],
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body td[data-field="userName"],
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body td[data-field="realName"],
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body td[data-field="supplierNames"],
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body td[data-field="hospitalNames"],
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body td[data-field="roleNames"],
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body td[data-field="dept.deptName"],
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body td[data-field="phonenumber"],
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body td[data-field="userType"],
+		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body td[data-field="createTime"] {
 			overflow: hidden;
 			text-overflow: ellipsis;
-			vertical-align: middle !important;
 		}
 		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-header th[data-field="userSeq"],
 		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body td[data-field="userSeq"],
 		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-header th[data-field="status"],
 		.user-table-wrap.user-list-table .fixed-table-container > .fixed-table-body td[data-field="status"] {
+			text-align: center !important;
 			overflow: visible;
 			text-overflow: clip;
 		}
@@ -193,7 +218,6 @@
 			min-width: 42px !important;
 			width: 42px !important;
 			max-width: 42px !important;
-			padding: 8px 4px !important;
 		}
 	</style>
 </head>
@@ -308,7 +332,8 @@
 			}
 			var top = $wrap[0].getBoundingClientRect().top;
 			var viewH = window.innerHeight || document.documentElement.clientHeight || 600;
-			return Math.max(Math.floor(viewH - top - 20), 320);
+			/* 略增高明细框，底部外留白与顶部区域更接近 */
+			return Math.max(Math.floor(viewH - top - 12), 320);
 		}
 
 		function adjustUserTableHeight() {
@@ -427,7 +452,7 @@
 			status: 100,
 			userType: 100,
 			createTime: 160,
-			userOperate: 260
+			userOperate: 230
 		};
 
 		function getUserTableTotalWidth() {
@@ -671,7 +696,9 @@
 			var $mainHead = $bt.find('.fixed-table-container > .fixed-table-header table thead tr');
 			var $rightHead = $right.find('.fixed-table-header table thead tr');
 			if ($mainHead.length && $rightHead.length) {
-				var hh = Math.max($mainHead[0].offsetHeight, $rightHead[0].offsetHeight);
+				/* 右侧冻结列表头高度跟主表对齐，避免「操作」列偏高 */
+				$mainHead.add($rightHead).css({ height: '', minHeight: '' });
+				var hh = $mainHead[0].offsetHeight;
 				if (hh > 0) {
 					var hhs = hh + 'px';
 					$mainHead.css({ height: hhs, minHeight: hhs });
@@ -870,7 +897,7 @@
 		            field: 'userOperate',
 		            title: '操作',
 		            align: 'center',
-		            width: 260,
+		            width: 230,
 		            formatter: function(value, row, index) {
 		                if (row.userId != 1) {
 		                	var actions = [];

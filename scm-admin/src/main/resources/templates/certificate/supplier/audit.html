@@ -881,6 +881,15 @@
 		            checkbox: true
 		        },
 		        {
+		            field: 'serialNumber',
+		            title: '序号',
+		            align: 'center',
+		            width: 60,
+		            formatter: function (value, row, index) {
+		                return $.table.serialNumber(index);
+		            }
+		        },
+		        {
 		            field: 'auditStatus',
 		            title: '审核',
 		            align: 'center',
@@ -908,15 +917,6 @@
 		                    return '<span class="label label-success">是</span>';
 		                }
 		                return '<span class="label label-default">否</span>';
-		            }
-		        },
-		        {
-		            field: 'serialNumber',
-		            title: '序号',
-		            align: 'center',
-		            width: 60,
-		            formatter: function (value, row, index) {
-		                return $.table.serialNumber(index);
 		            }
 		        },
 		        {

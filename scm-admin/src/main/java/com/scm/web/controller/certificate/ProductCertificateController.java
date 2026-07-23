@@ -842,8 +842,8 @@ public class ProductCertificateController extends BaseController
     /**
      * 产品证件关联的扩展证照（生产许可证、生产企业营业执照等）维护页
      */
-    @RequiresPermissions(value = { "certificate:product:edit", "certificate:product:view", "certificate:product:list" },
-        logical = Logical.OR)
+    @RequiresPermissions(value = { "certificate:product:view", "certificate:product:list", "certificate:product:edit",
+        "certificate:product:audit" }, logical = Logical.OR)
     @GetMapping("/licenseSnaps/{certificateId}")
     public String licenseSnapsPage(@PathVariable("certificateId") Long certificateId, ModelMap mmap)
     {
@@ -860,8 +860,8 @@ public class ProductCertificateController extends BaseController
         return prefix + "/licenseSnap";
     }
 
-    @RequiresPermissions(value = { "certificate:product:edit", "certificate:product:view", "certificate:product:list" },
-        logical = Logical.OR)
+    @RequiresPermissions(value = { "certificate:product:view", "certificate:product:list", "certificate:product:edit",
+        "certificate:product:audit" }, logical = Logical.OR)
     @PostMapping("/licenseSnap/list")
     @ResponseBody
     public TableDataInfo licenseSnapList(Long certificateId)
@@ -882,10 +882,10 @@ public class ProductCertificateController extends BaseController
     }
 
     /**
-     * 登记页下方区域：按证件类型配置合并后的扩展证照行（含自动补占位）
+     * 登记/审核页下方区域：按证件类型配置合并后的扩展证照行（含自动补占位）
      */
-    @RequiresPermissions(value = { "certificate:product:edit", "certificate:product:view", "certificate:product:list" },
-        logical = Logical.OR)
+    @RequiresPermissions(value = { "certificate:product:view", "certificate:product:list", "certificate:product:edit",
+        "certificate:product:audit" }, logical = Logical.OR)
     @PostMapping("/licenseSnap/mergedRows")
     @ResponseBody
     public AjaxResult licenseSnapMergedRows(Long certificateId)
