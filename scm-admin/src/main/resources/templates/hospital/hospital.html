@@ -175,7 +175,6 @@
 		}
 
 		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="hospitalName"],
-		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="hospitalShortName"],
 		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="pinyinCode"],
 		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="contactPerson"],
 		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="province"],
@@ -277,7 +276,6 @@
 			rowIndex: 60,
 			hospitalCode: 120,
 			hospitalName: 180,
-			hospitalShortName: 100,
 			pinyinCode: 90,
 			hospitalLevel: 90,
 			contactPerson: 90,
@@ -449,14 +447,6 @@
 		            formatter: function (value, row) {
 		                var displayValue = value || '-';
 		                return '<a href="javascript:void(0)" onclick="$.operate.view(\'' + row.hospitalId + '\')" title="' + escHospitalCellAttr(displayValue) + '">' + escHospitalCellAttr(displayValue) + '</a>';
-		            }
-		        },
-		        {
-		            field: 'hospitalShortName',
-		            title: '医院简称',
-		            width: 100,
-		            formatter: function (value) {
-		                return hospitalCellEllipsis(value);
 		            }
 		        },
 		        {

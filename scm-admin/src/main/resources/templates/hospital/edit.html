@@ -142,36 +142,24 @@
                     <div class="col-sm-3">
                         <div class="hospital-inline-field">
                             <label>省份/直辖市</label>
-                            <select name="province" class="province form-control" data-first-title="请选择省份">
-                                <option value="">请选择省份</option>
-                                <option th:if="${hospital.province != null and hospital.province != ''}"
-                                        th:value="${hospital.province}"
-                                        th:text="${hospital.province}"
-                                        selected></option>
+                            <select name="province" id="selProvince" class="form-control" title="数据来自部门管理">
+                                <option value="">请选择省份/直辖市</option>
                             </select>
                         </div>
                     </div>
                     <div class="col-sm-3">
                         <div class="hospital-inline-field">
                             <label>城市</label>
-                            <select name="city" class="city form-control" data-first-title="请选择城市">
+                            <select name="city" id="selCity" class="form-control">
                                 <option value="">请选择城市</option>
-                                <option th:if="${hospital.city != null and hospital.city != ''}"
-                                        th:value="${hospital.city}"
-                                        th:text="${hospital.city}"
-                                        selected></option>
                             </select>
                         </div>
                     </div>
                     <div class="col-sm-3">
                         <div class="hospital-inline-field">
                             <label>区县</label>
-                            <select name="district" class="area form-control" data-first-title="请选择区县">
+                            <select name="district" id="selDistrict" class="form-control">
                                 <option value="">请选择区县</option>
-                                <option th:if="${hospital.district != null and hospital.district != ''}"
-                                        th:value="${hospital.district}"
-                                        th:text="${hospital.district}"
-                                        selected></option>
                             </select>
                         </div>
                     </div>
@@ -213,34 +201,112 @@
     </div>
 
 	<th:block th:include="include :: footer" />
-	<th:block th:include="include :: jquery-cxselect-js" />
 	<script th:inline="javascript">
 	    var prefix = ctx + "hospital/hospital";
 	    var currentProvince = /*[[${hospital.province}]]*/ '';
 	    var currentCity = /*[[${hospital.city}]]*/ '';
 	    var currentDistrict = /*[[${hospital.district}]]*/ '';
 
-	    $(function() {
-	        var urlChina = ctx + 'demo/form/cityData';
-	        $.cxSelect.defaults.url = urlChina;
-	        $('#address-select').cxSelect({
-	            selects: ['province', 'city', 'area'],
-	            nodata: 'none'
+	    function fillRegionSelect($sel, list, firstLabel) {
+	        $sel.empty();
+	        $sel.append($('<option></option>').attr('value', '').text(firstLabel));
+	        $.each(list || [], function(_, o) {
+	            var id = o.deptId != null ? o.deptId : o.dept_id;
+	            var nm = o.deptName != null ? o.deptName : o.dept_name;
+	            $sel.append($('<option></option>').attr('value', nm).text(nm).attr('data-dept-id', id));
 	        });
+	    }
 
-	        if (currentProvince) {
-	            $('select.province').val(currentProvince).trigger('change');
-	            setTimeout(function() {
-	                if (currentCity) {
-	                    $('select.city').val(currentCity).trigger('change');
-	                    setTimeout(function() {
-	                        if (currentDistrict) {
-	                            $('select.area').val(currentDistrict);
-	                        }
-	                    }, 300);
-	                }
-	            }, 300);
+	    function loadRegionChildren(parentId, $sel, firstLabel, callback) {
+	        if (!parentId) {
+	            fillRegionSelect($sel, [], firstLabel);
+	            if (callback) {
+	                callback();
+	            }
+	            return;
 	        }
+	        $.get(prefix + '/deptRegionOptions', { parentId: parentId }, function(res) {
+	            if (res && (res.code === 0 || res.code === web_status.SUCCESS)) {
+	                fillRegionSelect($sel, res.data, firstLabel);
+	            } else {
+	                fillRegionSelect($sel, [], firstLabel);
+	            }
+	            if (callback) {
+	                callback();
+	            }
+	        });
+	    }
+
+	    function selectRegionByName($sel, name) {
+	        if (!name) {
+	            return null;
+	        }
+	        var deptId = null;
+	        $sel.find('option').each(function() {
+	            if ($(this).val() === name) {
+	                $sel.val(name);
+	                deptId = $(this).attr('data-dept-id');
+	                return false;
+	            }
+	        });
+	        return deptId;
+	    }
+
+	    function loadRegionProvinces(callback) {
+	        $.get(prefix + '/deptRegionOptions', function(res) {
+	            if (res && (res.code === 0 || res.code === web_status.SUCCESS)) {
+	                fillRegionSelect($('#selProvince'), res.data, '请选择省份/直辖市');
+	            }
+	            if (callback) {
+	                callback();
+	            }
+	        });
+	    }
+
+	    function bindDeptRegionChangeHandlers() {
+	        $('#selProvince').off('change.deptRegion').on('change.deptRegion', function() {
+	            var pid = $(this).find('option:selected').attr('data-dept-id');
+	            fillRegionSelect($('#selCity'), [], '请选择城市');
+	            fillRegionSelect($('#selDistrict'), [], '请选择区县');
+	            if (pid) {
+	                loadRegionChildren(Number(pid), $('#selCity'), '请选择城市');
+	            }
+	        });
+	        $('#selCity').off('change.deptRegion').on('change.deptRegion', function() {
+	            var pid = $(this).find('option:selected').attr('data-dept-id');
+	            fillRegionSelect($('#selDistrict'), [], '请选择区县');
+	            if (pid) {
+	                loadRegionChildren(Number(pid), $('#selDistrict'), '请选择区县');
+	            }
+	        });
+	    }
+
+	    function restoreSavedRegion() {
+	        loadRegionProvinces(function() {
+	            var provId = selectRegionByName($('#selProvince'), currentProvince);
+	            if (!provId) {
+	                return;
+	            }
+	            loadRegionChildren(Number(provId), $('#selCity'), '请选择城市', function() {
+	                if (!currentCity) {
+	                    return;
+	                }
+	                var cityId = selectRegionByName($('#selCity'), currentCity);
+	                if (!cityId) {
+	                    return;
+	                }
+	                loadRegionChildren(Number(cityId), $('#selDistrict'), '请选择区县', function() {
+	                    if (currentDistrict) {
+	                        selectRegionByName($('#selDistrict'), currentDistrict);
+	                    }
+	                });
+	            });
+	        });
+	    }
+
+	    $(function() {
+	        bindDeptRegionChangeHandlers();
+	        restoreSavedRegion();
 	    });
 
         $("#form-hospital-edit").validate({

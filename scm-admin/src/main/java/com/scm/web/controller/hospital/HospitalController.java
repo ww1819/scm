@@ -1,8 +1,10 @@
 package com.scm.web.controller.hospital;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
@@ -14,10 +16,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.scm.common.annotation.Log;
 import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
+import com.scm.common.core.domain.entity.SysDept;
 import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.enums.BusinessType;
 import com.scm.common.utils.poi.ExcelUtil;
@@ -27,6 +31,7 @@ import com.scm.system.domain.SupplierUser;
 import com.scm.system.service.IHospitalService;
 import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.ISupplierUserService;
+import com.scm.system.service.ISysDeptService;
 
 /**
  * 医院信息
@@ -47,6 +52,29 @@ public class HospitalController extends BaseController
 
     @Autowired
     private ISupplierUserService supplierUserService;
+
+    @Autowired
+    private ISysDeptService deptService;
+
+    /**
+     * 省/市/区县级联：数据与部门管理一致（医承云配 → 省 → 市 → 区县）
+     */
+    @RequiresPermissions("hospital:hospital:view")
+    @GetMapping("/deptRegionOptions")
+    @ResponseBody
+    public AjaxResult deptRegionOptions(@RequestParam(value = "parentId", required = false) Long parentId)
+    {
+        List<SysDept> list = deptService.listDeptChildrenForSupplierRegister(parentId);
+        List<Map<String, Object>> rows = new ArrayList<>();
+        for (SysDept d : list)
+        {
+            Map<String, Object> m = new HashMap<>();
+            m.put("deptId", d.getDeptId());
+            m.put("deptName", d.getDeptName());
+            rows.add(m);
+        }
+        return success(rows);
+    }
 
     @RequiresPermissions("hospital:hospital:view")
     @GetMapping()
