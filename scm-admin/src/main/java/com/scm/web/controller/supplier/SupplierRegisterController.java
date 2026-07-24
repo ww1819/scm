@@ -235,5 +235,32 @@ public class SupplierRegisterController extends BaseController {
             return error("注册失败：" + e.getMessage());
         }
     }
+
+    /**
+     * 忘记密码：校验统一社会信用代码、管理员手机号、用户名后重置密码
+     */
+    @PostMapping("/forgotPassword")
+    @ResponseBody
+    public AjaxResult forgotPassword(@RequestParam String taxNumber,
+                                     @RequestParam String adminPhone,
+                                     @RequestParam String loginName,
+                                     @RequestParam String password,
+                                     @RequestParam String confirmPassword) {
+        if (StringUtils.isEmpty(password) || StringUtils.isEmpty(confirmPassword)) {
+            return error("请填写新密码");
+        }
+        if (!password.equals(confirmPassword)) {
+            return error("两次输入的密码不一致");
+        }
+        try {
+            supplierRegisterService.resetPasswordBySupplierVerify(taxNumber, adminPhone, loginName, password);
+            return success("密码修改成功，请使用新密码登录");
+        } catch (IllegalArgumentException e) {
+            return error(e.getMessage());
+        } catch (Exception e) {
+            logger.error("忘记密码重置失败", e);
+            return error("修改失败，请稍后重试");
+        }
+    }
 }
 

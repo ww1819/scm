@@ -2,12 +2,35 @@
 <html lang="zh" xmlns:th="http://www.thymeleaf.org">
 <head>
 	<th:block th:include="include :: header('修改企业用户')" />
+	<style>
+		.form-header-row {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: 12px;
+			padding-bottom: 5px;
+			border-bottom: 1px solid #ddd;
+		}
+		.form-header-row .form-header {
+			margin: 0;
+			padding-bottom: 0;
+			border-bottom: none;
+		}
+		.form-header-actions {
+			flex-shrink: 0;
+		}
+	</style>
 </head>
 <body>
     <div class="main-content">
         <form id="form-supplier-user-edit" class="form-horizontal">
             <input type="hidden" name="supplierUserId" th:value="${supplierUser.supplierUserId}">
-            <h4 class="form-header h4">基本信息</h4>
+            <div class="form-header-row">
+                <h4 class="form-header h4">基本信息</h4>
+                <div class="form-header-actions">
+                    <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
+                </div>
+            </div>
             <div class="row">
             	<div class="col-sm-6">
                     <div class="form-group">
@@ -64,4 +87,3 @@
     <th:block th:include="include :: footer" />
 </body>
 </html>
-

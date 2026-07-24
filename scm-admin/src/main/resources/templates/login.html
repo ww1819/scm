@@ -39,7 +39,6 @@
         .signinpanel .signin-info,
         .signinpanel .signin-info h4,
         .signinpanel .signin-info ul li,
-        .signinpanel .signin-info a,
         .signinpanel .signin-info strong,
         .signinpanel .signup-footer {
             color: #333 !important;
@@ -47,8 +46,14 @@
         .signinpanel .signin-info a {
             text-decoration: none;
         }
-        .signinpanel .signin-info a:hover {
+        .signinpanel .signin-info a.register-inline,
+        .signinpanel .signin-info a.forgot-pwd-link {
             color: #0b83f0 !important;
+        }
+        .signinpanel .signin-info a.register-inline:hover,
+        .signinpanel .signin-info a.forgot-pwd-link:hover {
+            color: #0666c2 !important;
+            text-decoration: underline;
         }
         .signinpanel .signin-info h4 {
             font-size: 30px;
@@ -68,11 +73,17 @@
             align-items: center;
             justify-content: space-between;
         }
-        .remember-row-inline .register-inline {
+        .forgot-pwd-link {
+            color: #0b83f0 !important;
+            font-size: 14px;
+            cursor: pointer;
+            margin-left: auto;
+        }
+        .signinpanel .register-inline {
             color: #0b83f0 !important;
             text-decoration: none;
         }
-        .remember-row-inline .register-inline:hover {
+        .signinpanel .register-inline:hover {
             text-decoration: underline;
         }
         /* 验证码：与账号密码同一卡片内，输入框+图片同一行，无额外白框 */
@@ -182,6 +193,119 @@
             color: #fff;
             text-decoration: underline;
         }
+        /* 忘记密码弹窗 */
+        .forgot-modal-mask {
+            position: fixed;
+            inset: 0;
+            background: rgba(6, 23, 45, 0.5);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .forgot-modal-mask.active {
+            display: flex;
+        }
+        .forgot-modal {
+            width: 520px;
+            max-width: 96vw;
+            max-height: 92vh;
+            overflow-y: auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 18px 48px rgba(0, 0, 0, 0.25);
+            padding: 22px 28px 28px;
+        }
+        .forgot-modal-title {
+            margin: 0;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a5fb4;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #d0d7de;
+        }
+        .forgot-modal-body {
+            margin-top: 18px;
+            background: #f5f6f8;
+            border-radius: 8px;
+            padding: 18px 16px 8px;
+        }
+        .forgot-form-row {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 14px;
+        }
+        .forgot-form-row > label {
+            flex: 0 0 140px;
+            width: 140px;
+            padding-top: 10px;
+            text-align: right;
+            font-size: 14px;
+            color: #333;
+            font-weight: normal;
+        }
+        .forgot-form-row .req-star {
+            color: #c62828;
+            margin-right: 2px;
+        }
+        .forgot-form-row .field-wrap {
+            flex: 1 1 auto;
+            min-width: 0;
+            padding-left: 12px;
+        }
+        .forgot-form-row .form-control {
+            height: 38px;
+            margin-top: 0;
+            background: #fff;
+        }
+        .forgot-form-row .form-control.has-error {
+            border-color: #c62828;
+            box-shadow: 0 0 0 1px rgba(198, 40, 40, 0.2);
+        }
+        .forgot-form-row .field-error {
+            display: none;
+            color: #c62828;
+            font-size: 12px;
+            margin-top: 4px;
+            line-height: 1.3;
+        }
+        .forgot-form-row .field-error.show {
+            display: block;
+        }
+        .forgot-modal-actions {
+            text-align: center;
+            margin-top: 8px;
+            padding-top: 6px;
+        }
+        .forgot-modal-actions .btn-reset-pwd {
+            min-width: 160px;
+            height: 40px;
+            font-size: 15px;
+            background: #1ab394;
+            border-color: #1ab394;
+            color: #fff;
+        }
+        .forgot-modal-actions .btn-reset-pwd:hover {
+            background: #18a689;
+            border-color: #18a689;
+            color: #fff;
+        }
+        .forgot-modal-close {
+            float: right;
+            margin-top: -4px;
+            font-size: 22px;
+            line-height: 1;
+            color: #999;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            padding: 0 4px;
+        }
+        .forgot-modal-close:hover {
+            color: #333;
+        }
     </style>
     <script>
         if(window.top!==window.self){alert('未登录或登录超时。请重新登录');window.top.location=window.location};
@@ -218,13 +342,64 @@
                             <div class="checkbox-custom" th:if="${isRemembered}" th:classappend="${captchaEnabled==false} ? 'm-t'">
                                 <input type="checkbox" id="rememberme" name="rememberme"> <label for="rememberme">记住我</label>
                             </div>
-                            <a class="register-inline" th:href="@{/supplier/register}">还没有账号？供应商注册</a>
+                            <a href="javascript:void(0);" class="forgot-pwd-link" id="btnForgotPwd">忘记密码</a>
                         </div>
                         <button class="btn btn-success" id="btnSubmit" data-loading="正在验证登录，请稍候..." style="width: 260px; display: block; margin: 0 auto;">登录</button>
                     </form>
-                    <p class="m-b text-muted" style="font-size: 15px;">请使用账号登录系统</p>
+                    <p class="m-b" style="font-size: 15px; text-align: center;">
+                        <a class="register-inline" th:href="@{/supplier/register}">还没有账号？供应商注册</a>
+                    </p>
                 </div>
             </div>
+        </div>
+    </div>
+    <!-- 忘记密码弹窗 -->
+    <div class="forgot-modal-mask" id="forgotModalMask">
+        <div class="forgot-modal" role="dialog" aria-labelledby="forgotModalTitle">
+            <button type="button" class="forgot-modal-close" id="btnCloseForgot" title="关闭">&times;</button>
+            <h3 class="forgot-modal-title" id="forgotModalTitle">忘记密码</h3>
+            <form id="forgotPwdForm" autocomplete="off">
+                <div class="forgot-modal-body">
+                    <div class="forgot-form-row">
+                        <label for="forgotTaxNumber"><span class="req-star">*</span>统一社会信用代码</label>
+                        <div class="field-wrap">
+                            <input type="text" id="forgotTaxNumber" name="taxNumber" class="form-control" placeholder="统一社会信用代码" maxlength="50"/>
+                            <div class="field-error" id="err-forgotTaxNumber">请输入您的统一社会信用代码</div>
+                        </div>
+                    </div>
+                    <div class="forgot-form-row">
+                        <label for="forgotPhone"><span class="req-star">*</span>管理员手机号</label>
+                        <div class="field-wrap">
+                            <input type="text" id="forgotPhone" name="adminPhone" class="form-control" placeholder="管理员手机号" maxlength="20"/>
+                            <div class="field-error" id="err-forgotPhone">请输入您的管理员手机号</div>
+                        </div>
+                    </div>
+                    <div class="forgot-form-row">
+                        <label for="forgotLoginName"><span class="req-star">*</span>用户名</label>
+                        <div class="field-wrap">
+                            <input type="text" id="forgotLoginName" name="loginName" class="form-control uname" placeholder="账号" maxlength="30" autocomplete="username"/>
+                            <div class="field-error" id="err-forgotLoginName">请输入您的用户名</div>
+                        </div>
+                    </div>
+                    <div class="forgot-form-row">
+                        <label for="forgotPassword"><span class="req-star">*</span>新登录密码</label>
+                        <div class="field-wrap">
+                            <input type="password" id="forgotPassword" name="password" class="form-control pword" placeholder="新密码" maxlength="20" autocomplete="new-password"/>
+                            <div class="field-error" id="err-forgotPassword">新密码不能为空</div>
+                        </div>
+                    </div>
+                    <div class="forgot-form-row">
+                        <label for="forgotConfirmPassword"><span class="req-star">*</span>确认新密码</label>
+                        <div class="field-wrap">
+                            <input type="password" id="forgotConfirmPassword" name="confirmPassword" class="form-control pword" placeholder="确认密码" maxlength="20" autocomplete="new-password"/>
+                            <div class="field-error" id="err-forgotConfirmPassword">确认密码不能为空</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="forgot-modal-actions">
+                    <button type="button" class="btn btn-reset-pwd" id="btnSubmitForgot">修改密码</button>
+                </div>
+            </form>
         </div>
     </div>
     <div class="login-icp-footer">
@@ -240,32 +415,133 @@
 <script src="../static/scm/js/ry-ui.js" th:src="@{/scm/js/ry-ui.js?v=4.8.0}"></script>
 <script src="../static/scm/login.js" th:src="@{/scm/login.js}"></script>
 <script>
-// 登录入口按钮与遮罩/卡片动画
+// 登录入口按钮与遮罩/卡片动画 + 忘记密码弹窗
 $(function () {
     var $entryBar = $(".login-entry-bar");
     var $overlay = $("#loginOverlay");
     var $panel = $("#loginPanel");
+    var $forgotMask = $("#forgotModalMask");
 
     function openLogin() {
         $entryBar.fadeOut(200);
         $overlay.addClass("active");
-        // 使用小延时让遮罩先出现，再弹出卡片
         setTimeout(function () {
             $panel.removeClass("login-panel-hidden").addClass("login-panel-visible");
         }, 80);
-    }
-
-    function closeLogin() {
-        $panel.removeClass("login-panel-visible").addClass("login-panel-hidden");
-        $overlay.removeClass("active");
-        $entryBar.fadeIn(200);
     }
 
     $(".btn-open-login").on("click", function () {
         openLogin();
     });
 
-    // 如需点击遮罩关闭登录卡片，可在此处调用 closeLogin()
+    function clearForgotErrors() {
+        $("#forgotPwdForm .form-control").removeClass("has-error");
+        $("#forgotPwdForm .field-error").removeClass("show");
+    }
+
+    function showForgotError(fieldId, msg) {
+        var $input = $("#" + fieldId);
+        $input.addClass("has-error");
+        var $err = $("#err-" + fieldId);
+        if (msg) {
+            $err.text(msg);
+        }
+        $err.addClass("show");
+    }
+
+    function openForgotModal() {
+        clearForgotErrors();
+        $("#forgotPwdForm")[0].reset();
+        $forgotMask.addClass("active");
+    }
+
+    function closeForgotModal() {
+        $forgotMask.removeClass("active");
+        clearForgotErrors();
+    }
+
+    $("#btnForgotPwd").on("click", function (e) {
+        e.preventDefault();
+        openForgotModal();
+    });
+    $("#btnCloseForgot").on("click", closeForgotModal);
+    $forgotMask.on("click", function (e) {
+        if (e.target === this) {
+            closeForgotModal();
+        }
+    });
+
+    function validateForgotForm() {
+        clearForgotErrors();
+        var ok = true;
+        var taxNumber = $.trim($("#forgotTaxNumber").val());
+        var phone = $.trim($("#forgotPhone").val());
+        var loginName = $.trim($("#forgotLoginName").val());
+        var password = $("#forgotPassword").val();
+        var confirmPassword = $("#forgotConfirmPassword").val();
+
+        if (!taxNumber) {
+            showForgotError("forgotTaxNumber", "请输入您的统一社会信用代码");
+            ok = false;
+        }
+        if (!phone) {
+            showForgotError("forgotPhone", "请输入您的管理员手机号");
+            ok = false;
+        }
+        if (!loginName) {
+            showForgotError("forgotLoginName", "请输入您的用户名");
+            ok = false;
+        }
+        if (!password) {
+            showForgotError("forgotPassword", "新密码不能为空");
+            ok = false;
+        } else if (password.length < 6) {
+            showForgotError("forgotPassword", "新密码长度不能少于6位");
+            ok = false;
+        }
+        if (!confirmPassword) {
+            showForgotError("forgotConfirmPassword", "确认密码不能为空");
+            ok = false;
+        } else if (password && confirmPassword !== password) {
+            showForgotError("forgotConfirmPassword", "两次输入的密码不一致");
+            ok = false;
+        }
+        return ok;
+    }
+
+    $("#btnSubmitForgot").on("click", function () {
+        if (!validateForgotForm()) {
+            return;
+        }
+        var $btn = $(this);
+        $btn.prop("disabled", true);
+        $.ajax({
+            type: "post",
+            url: ctx + "supplier/register/forgotPassword",
+            dataType: "json",
+            data: {
+                taxNumber: $.trim($("#forgotTaxNumber").val()),
+                adminPhone: $.trim($("#forgotPhone").val()),
+                loginName: $.trim($("#forgotLoginName").val()),
+                password: $("#forgotPassword").val(),
+                confirmPassword: $("#forgotConfirmPassword").val()
+            },
+            success: function (r) {
+                if (r.code == web_status.SUCCESS) {
+                    $.modal.msgSuccess(r.msg || "密码修改成功，请使用新密码登录");
+                    closeForgotModal();
+                } else {
+                    $.modal.msg(r.msg || "修改失败");
+                }
+            },
+            error: function () {
+                $.modal.msg("系统异常，请稍后重试");
+            },
+            complete: function () {
+                $btn.prop("disabled", false);
+            }
+        });
+    });
 });
 </script>
 </body>

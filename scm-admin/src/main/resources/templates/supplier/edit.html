@@ -125,8 +125,8 @@
                     </div>
                     <div class="col-sm-3">
                         <div class="supplier-inline-field">
-                            <label>税号</label>
-                            <input name="taxNumber" placeholder="请输入税号" class="form-control" type="text" maxlength="50" th:value="${supplier.taxNumber}">
+                            <label>统一社会信用代码</label>
+                            <input name="taxNumber" placeholder="请输入统一社会信用代码" class="form-control" type="text" maxlength="50" th:value="${supplier.taxNumber}">
                         </div>
                     </div>
                 </div>
@@ -146,7 +146,7 @@
                     <div class="col-sm-3">
                         <div class="supplier-inline-field">
                             <label class="label-wide">注册资金(万元)</label>
-                            <input name="registeredCapital" placeholder="请输入注册资金" class="form-control" type="text" th:value="${supplier.registeredCapital}">
+                            <input name="registeredCapital" placeholder="请输入注册资金" class="form-control" type="text" th:value="${supplier.registeredCapital != null ? #numbers.formatDecimal(supplier.registeredCapital, 1, 0) : ''}">
                         </div>
                     </div>
                 </div>

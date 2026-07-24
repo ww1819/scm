@@ -82,8 +82,8 @@ public class Supplier extends BaseEntity
     @Excel(name = "联系电话")
     private String contactPhone;
 
-    /** 税号 */
-    @Excel(name = "税号")
+    /** 统一社会信用代码 */
+    @Excel(name = "统一社会信用代码")
     private String taxNumber;
 
     /** 资质有效期 */
@@ -286,7 +286,7 @@ public class Supplier extends BaseEntity
         this.contactPhone = contactPhone;
     }
 
-    @Size(min = 0, max = 50, message = "税号不能超过50个字符")
+    @Size(min = 0, max = 50, message = "统一社会信用代码不能超过50个字符")
     public String getTaxNumber()
     {
         return taxNumber;

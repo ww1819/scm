@@ -33,4 +33,9 @@ public interface ISupplierRegisterService {
      * 供应商管理员审核业务员申请：通过则绑定用户为供应商业务员
      */
     void approveApply(Long applyId, String approved, String auditRemark, String operBy);
+
+    /**
+     * 供应商忘记密码：校验统一社会信用代码、管理员手机号、登录账号后重置密码
+     */
+    void resetPasswordBySupplierVerify(String taxNumber, String adminPhone, String loginName, String newPassword);
 }

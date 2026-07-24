@@ -65,7 +65,7 @@
                 </div>
                 <div class="col-sm-6">
                     <div class="form-group">
-                        <label class="col-sm-4 control-label">税号：</label>
+                        <label class="col-sm-4 control-label">统一社会信用代码：</label>
                         <div class="col-sm-8">
                             <input type="text" class="form-control" th:value="${supplier.taxNumber}" readonly>
                         </div>
@@ -77,7 +77,7 @@
                     <div class="form-group">
                         <label class="col-sm-4 control-label">注册资金（万元）：</label>
                         <div class="col-sm-8">
-                            <input type="text" class="form-control" th:value="${supplier.registeredCapital}" readonly>
+                            <input type="text" class="form-control" th:value="${supplier.registeredCapital != null ? #numbers.formatDecimal(supplier.registeredCapital, 1, 0) : ''}" readonly>
                         </div>
                     </div>
                 </div>

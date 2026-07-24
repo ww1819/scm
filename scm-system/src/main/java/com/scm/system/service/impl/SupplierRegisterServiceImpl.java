@@ -258,4 +258,68 @@ public class SupplierRegisterServiceImpl implements ISupplierRegisterService {
             applyMapper.updateStatus(applyId, SupplierUserApply.STATUS_REJECTED, operBy, auditRemark);
         }
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void resetPasswordBySupplierVerify(String taxNumber, String adminPhone, String loginName, String newPassword) {
+        if (StringUtils.isEmpty(taxNumber) || StringUtils.isEmpty(adminPhone)
+            || StringUtils.isEmpty(loginName) || StringUtils.isEmpty(newPassword)) {
+            throw new IllegalArgumentException("请填写完整信息");
+        }
+        String login = loginName.trim();
+        String tax = taxNumber.trim();
+        String phone = adminPhone.trim();
+        if (newPassword.length() < 6 || newPassword.length() > 20) {
+            throw new IllegalArgumentException("新密码长度须为 6～20 位");
+        }
+        boolean hasDigit = false, hasLetter = false;
+        for (char c : newPassword.toCharArray()) {
+            if (Character.isDigit(c)) {
+                hasDigit = true;
+            }
+            if (Character.isLetter(c)) {
+                hasLetter = true;
+            }
+        }
+        if (!hasDigit || !hasLetter) {
+            throw new IllegalArgumentException("新密码必须包含数字和字母");
+        }
+
+        SysUser user = userMapper.selectUserByLoginName(login);
+        if (user == null || !"0".equals(user.getDelFlag())) {
+            throw new IllegalArgumentException("用户名、信用代码或手机号不正确");
+        }
+        if (!"0".equals(user.getStatus())) {
+            throw new IllegalArgumentException("该账号已停用，无法重置密码");
+        }
+        SupplierUser su = supplierUserMapper.selectSupplierUserByUserId(user.getUserId());
+        if (su == null || su.getSupplierId() == null) {
+            throw new IllegalArgumentException("该账号不是供应商账号，无法通过此方式重置");
+        }
+        Supplier supplier = supplierMapper.selectSupplierById(su.getSupplierId());
+        if (supplier == null) {
+            throw new IllegalArgumentException("关联供应商不存在");
+        }
+        if (StringUtils.isEmpty(supplier.getTaxNumber())
+            || !tax.equalsIgnoreCase(supplier.getTaxNumber().trim())) {
+            throw new IllegalArgumentException("用户名、信用代码或手机号不正确");
+        }
+        String userPhone = StringUtils.trim(user.getPhonenumber());
+        String contactPhone = StringUtils.trim(supplier.getContactPhone());
+        boolean phoneOk = phone.equals(userPhone) || phone.equals(contactPhone);
+        if (!phoneOk) {
+            throw new IllegalArgumentException("用户名、信用代码或手机号不正确");
+        }
+
+        String salt = user.getSalt();
+        if (StringUtils.isEmpty(salt)) {
+            salt = ShiroUtils.randomSalt();
+            user.setSalt(salt);
+        }
+        user.setPassword(Md5Utils.hash(user.getLoginName() + newPassword + salt));
+        user.setPwdPlain("");
+        user.setPwdUpdateDate(new Date());
+        user.setUpdateBy(login);
+        userMapper.updateUser(user);
+    }
 }
