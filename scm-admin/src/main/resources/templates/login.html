@@ -75,6 +75,31 @@
         .remember-row-inline .register-inline:hover {
             text-decoration: underline;
         }
+        /* 验证码：与账号密码同一卡片内，输入框+图片同一行，无额外白框 */
+        .captcha-inline {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .captcha-inline .code {
+            flex: 1 1 auto;
+            min-width: 0;
+            margin: 0 !important;
+            height: 42px;
+        }
+        .captcha-inline .captcha-img-link {
+            flex: 0 0 auto;
+            line-height: 0;
+        }
+        .captcha-inline .imgcode {
+            height: 42px;
+            width: auto;
+            max-width: 140px;
+            border-radius: 4px;
+            cursor: pointer;
+            vertical-align: middle;
+        }
         /* 底部唤起登录按钮 */
         .login-entry-bar {
             position: fixed;
@@ -183,15 +208,11 @@
                         <h3 class="no-margins" style="font-size: 24px; margin: 8px 0 15px; color: #000;">登录：</h3>
                         <input type="text"     name="username" class="form-control uname"     placeholder="用户名" autocomplete="username" />
                         <input type="password" name="password" class="form-control pword"     placeholder="密码"   autocomplete="current-password" />
-                        <div class="row m-t" th:if="${captchaEnabled==true}">
-                            <div class="col-xs-6">
-                                <input type="text" name="validateCode" class="form-control code" placeholder="验证码" maxlength="5" />
-                            </div>
-                            <div class="col-xs-6">
-                                <a href="javascript:void(0);" title="点击更换验证码">
-                                    <img th:src="@{/captcha/captchaImage(type=${captchaType})}" class="imgcode" width="85%"/>
-                                </a>
-                            </div>
+                        <div class="captcha-inline" th:if="${captchaEnabled==true}">
+                            <input type="text" name="validateCode" class="form-control code" placeholder="验证码" maxlength="5" />
+                            <a href="javascript:void(0);" class="captcha-img-link" title="点击更换验证码">
+                                <img th:src="@{/captcha/captchaImage(type=${captchaType})}" class="imgcode"/>
+                            </a>
                         </div>
                         <div class="remember-row-inline m-t">
                             <div class="checkbox-custom" th:if="${isRemembered}" th:classappend="${captchaEnabled==false} ? 'm-t'">
