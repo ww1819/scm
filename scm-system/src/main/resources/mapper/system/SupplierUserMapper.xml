@@ -20,13 +20,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="loginName"    column="login_name"    />
         <result property="phonenumber"    column="phonenumber"    />
         <result property="email"    column="email"    />
+        <result property="sex"    column="sex"    />
+        <result property="idCard"    column="id_card"    />
     </resultMap>
 
     <sql id="selectSupplierUserVo">
         select su.supplier_user_id, su.supplier_id, su.user_id, su.is_main, su.status, 
                su.create_by, su.create_time, su.update_by, su.update_time,
                s.company_name as supplier_name, s.supplier_code,
-               u.user_name, u.login_name, u.phonenumber, u.email
+               u.user_name, u.login_name, u.phonenumber, u.email, u.sex, u.id_card
         from scm_supplier_user su
         left join scm_supplier s on su.supplier_id = s.supplier_id
         left join sys_user u on su.user_id = u.user_id

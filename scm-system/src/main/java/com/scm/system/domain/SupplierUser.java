@@ -53,6 +53,12 @@ public class SupplierUser extends BaseEntity
     /** 邮箱（关联查询） */
     private String email;
 
+    /** 用户性别（关联查询，0男 1女 2未知） */
+    private String sex;
+
+    /** 身份证号（关联查询） */
+    private String idCard;
+
     public void setSupplierUserId(Long supplierUserId) 
     {
         this.supplierUserId = supplierUserId;
@@ -161,6 +167,26 @@ public class SupplierUser extends BaseEntity
     public void setEmail(String email) 
     {
         this.email = email;
+    }
+
+    public String getSex()
+    {
+        return sex;
+    }
+
+    public void setSex(String sex)
+    {
+        this.sex = sex;
+    }
+
+    public String getIdCard()
+    {
+        return idCard;
+    }
+
+    public void setIdCard(String idCard)
+    {
+        this.idCard = idCard;
     }
 
     @Override

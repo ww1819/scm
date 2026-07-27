@@ -111,7 +111,7 @@ public class SupplierController extends BaseController
     {
         applyCurrentUserSupplierScope(supplier);
         startPage();
-        List<Supplier> list = supplierService.selectSupplierList(supplier);
+        List<Supplier> list = supplierService.selectSupplierListByHospital(supplier);
         return getDataTable(list);
     }
 
@@ -124,7 +124,7 @@ public class SupplierController extends BaseController
     public void export(Supplier supplier, HttpServletResponse response)
     {
         applyCurrentUserSupplierScope(supplier);
-        List<Supplier> list = supplierService.selectSupplierList(supplier);
+        List<Supplier> list = supplierService.selectSupplierListByHospital(supplier);
         ExcelUtil<Supplier> util = new ExcelUtil<Supplier>(Supplier.class);
         util.exportExcel(response, list, "供应商数据");
     }

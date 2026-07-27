@@ -27,6 +27,11 @@ public interface ISupplierService
     public List<Supplier> selectSupplierList(Supplier supplier);
 
     /**
+     * 供应商维护列表：按配送医院展开（一家医院一行）
+     */
+    public List<Supplier> selectSupplierListByHospital(Supplier supplier);
+
+    /**
      * 新增供应商信息
      * 
      * @param supplier 供应商信息

@@ -28,6 +28,11 @@ public interface SupplierMapper
     public List<Supplier> selectSupplierList(Supplier supplier);
 
     /**
+     * 供应商维护列表：按配送医院展开（一家医院一行）
+     */
+    public List<Supplier> selectSupplierListByHospital(Supplier supplier);
+
+    /**
      * 根据供应商编码查询供应商
      */
     public Supplier checkSupplierCodeUnique(String supplierCode);

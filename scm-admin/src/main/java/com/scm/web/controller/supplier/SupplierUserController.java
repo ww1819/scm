@@ -163,15 +163,6 @@ public class SupplierUserController extends BaseController
             return prefix + "/user";
         }
         mmap.put("supplierUser", supplierUser);
-        // 供应商账号仅允许维护自身供应商用户
-        Supplier query = new Supplier();
-        Long currentSupplierId = getCurrentLoginSupplierId();
-        if (currentSupplierId != null)
-        {
-            query.setSupplierId(currentSupplierId);
-        }
-        List<Supplier> supplierList = supplierService.selectSupplierList(query);
-        mmap.put("supplierList", supplierList);
         return prefix + "/user/edit";
     }
 
@@ -189,11 +180,9 @@ public class SupplierUserController extends BaseController
         {
             return error("无权限操作该企业用户");
         }
-        Long currentSupplierId = getCurrentLoginSupplierId();
-        if (currentSupplierId != null)
-        {
-            supplierUser.setSupplierId(currentSupplierId);
-        }
+        // 供应商不可修改，始终以库中关联为准
+        supplierUser.setSupplierId(dbSupplierUser.getSupplierId());
+        supplierUser.setUserId(dbSupplierUser.getUserId());
 
         // 如果设置为主账号，需要检查该供应商是否已有其他主账号
         if ("1".equals(supplierUser.getIsMain()))
@@ -210,7 +199,19 @@ public class SupplierUserController extends BaseController
 
         supplierUser.setUpdateBy(getLoginName());
         supplierUser.setUpdateTime(DateUtils.getNowDate());
-        return toAjax(supplierUserService.updateSupplierUser(supplierUser));
+        int rows = supplierUserService.updateSupplierUser(supplierUser);
+        if (rows > 0 && dbSupplierUser.getUserId() != null)
+        {
+            SysUser sysUser = new SysUser();
+            sysUser.setUserId(dbSupplierUser.getUserId());
+            sysUser.setUserName(supplierUser.getUserName());
+            sysUser.setPhonenumber(supplierUser.getPhonenumber());
+            sysUser.setEmail(supplierUser.getEmail());
+            sysUser.setSex(supplierUser.getSex());
+            sysUser.setIdCard(supplierUser.getIdCard());
+            userService.updateUserInfo(sysUser);
+        }
+        return toAjax(rows);
     }
 
     /**

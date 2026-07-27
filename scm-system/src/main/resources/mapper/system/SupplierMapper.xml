@@ -93,7 +93,38 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         from scm_supplier s
     </sql>
     
-    <select id="selectSupplierList" parameterType="Supplier" resultMap="SupplierListResult">
+    <select id="selectSupplierList" parameterType="Supplier" resultMap="SupplierResult">
+        <include refid="selectSupplierVo"/>
+        <where>
+            s.del_flag = '0'
+            <if test="supplierId != null">
+                AND s.supplier_id = #{supplierId}
+            </if>
+            <if test="supplierCode != null and supplierCode != ''">
+                AND s.supplier_code like concat('%', #{supplierCode}, '%')
+            </if>
+            <if test="companyName != null and companyName != ''">
+                AND (s.company_name like concat('%', #{companyName}, '%')
+                    OR IFNULL(s.pinyin_code, '') like concat('%', #{companyName}, '%')
+                    OR IFNULL(s.company_short_name, '') like concat('%', #{companyName}, '%'))
+            </if>
+            <if test="status != null and status != ''">
+                AND s.status = #{status}
+            </if>
+            <if test="auditStatus != null and auditStatus != ''">
+                AND s.audit_status = #{auditStatus}
+            </if>
+            <if test="province != null and province != ''">
+                AND s.province = #{province}
+            </if>
+            <if test="city != null and city != ''">
+                AND s.city = #{city}
+            </if>
+        </where>
+        order by s.create_time desc
+    </select>
+
+    <select id="selectSupplierListByHospital" parameterType="Supplier" resultMap="SupplierListResult">
         select <include refid="selectSupplierBaseColumns"/>,
                h.hospital_name as delivery_hospitals,
                CONCAT(s.supplier_id, '_', IFNULL(h.hospital_id, 0)) as list_row_key

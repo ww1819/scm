@@ -57,6 +57,12 @@ public class SupplierServiceImpl implements ISupplierService
         return supplierMapper.selectSupplierList(supplier);
     }
 
+    @Override
+    public List<Supplier> selectSupplierListByHospital(Supplier supplier)
+    {
+        return supplierMapper.selectSupplierListByHospital(supplier);
+    }
+
     /**
      * 新增供应商信息
      * 

@@ -75,6 +75,10 @@ public class SysUser extends BaseEntity
     @Excel(name = "用户性别", readConverterExp = "0=男,1=女,2=未知")
     private String sex;
 
+    /** 身份证号 */
+    @Excel(name = "身份证号")
+    private String idCard;
+
     /** 详细地址 */
     private String address;
 
@@ -297,6 +301,17 @@ public class SysUser extends BaseEntity
     public void setSex(String sex)
     {
         this.sex = sex;
+    }
+
+    @Size(min = 0, max = 18, message = "身份证号长度不能超过18个字符")
+    public String getIdCard()
+    {
+        return idCard;
+    }
+
+    public void setIdCard(String idCard)
+    {
+        this.idCard = idCard;
     }
 
     @Size(min = 0, max = 500, message = "详细地址长度不能超过500个字符")

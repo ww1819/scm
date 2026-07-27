@@ -1,89 +1,130 @@
 <!DOCTYPE html>
-<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" >
 <head>
 	<th:block th:include="include :: header('修改企业用户')" />
-	<style>
-		.form-header-row {
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			margin-bottom: 12px;
-			padding-bottom: 5px;
-			border-bottom: 1px solid #ddd;
-		}
-		.form-header-row .form-header {
-			margin: 0;
-			padding-bottom: 0;
-			border-bottom: none;
-		}
-		.form-header-actions {
-			flex-shrink: 0;
-		}
-	</style>
 </head>
-<body>
-    <div class="main-content">
-        <form id="form-supplier-user-edit" class="form-horizontal">
-            <input type="hidden" name="supplierUserId" th:value="${supplierUser.supplierUserId}">
-            <div class="form-header-row">
-                <h4 class="form-header h4">基本信息</h4>
-                <div class="form-header-actions">
-                    <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
-                </div>
-            </div>
+<body class="white-bg">
+    <div class="wrapper wrapper-content animated fadeInRight ibox-content">
+        <form class="form-horizontal m" id="form-supplier-user-edit" th:object="${supplierUser}">
+            <input name="supplierUserId" th:field="*{supplierUserId}" type="hidden">
+            <input name="userId" th:field="*{userId}" type="hidden">
+            <input name="supplierId" th:field="*{supplierId}" type="hidden">
+            <h4 class="form-header h4">基本信息</h4>
             <div class="row">
-            	<div class="col-sm-6">
+            	<div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">供应商编码：</label>
+                        <div class="col-sm-8">
+                            <input class="form-control" type="text" th:value="*{supplierCode}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
                     <div class="form-group">
                         <label class="col-sm-4 control-label is-required">供应商：</label>
                         <div class="col-sm-8">
-                            <select name="supplierId" class="form-control" required>
-                                <option value="">请选择供应商</option>
-                                <option th:each="supplier : ${supplierList}" 
-                                        th:value="${supplier.supplierId}" 
-                                        th:selected="${supplier.supplierId == supplierUser.supplierId}"
-                                        th:text="${supplier.companyName}">
-                                </option>
+                            <input class="form-control" type="text" th:value="*{supplierName}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">登录名称：</label>
+                        <div class="col-sm-8">
+                            <input class="form-control" type="text" th:value="*{loginName}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label is-required">用户名称：</label>
+                        <div class="col-sm-8">
+                            <input name="userName" class="form-control" type="text" th:value="*{userName}" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">手机号码：</label>
+                        <div class="col-sm-8">
+                            <input name="phonenumber" class="form-control" type="text" th:value="*{phonenumber}" maxlength="11">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">邮箱：</label>
+                        <div class="col-sm-8">
+                            <input name="email" class="form-control" type="text" th:value="*{email}" maxlength="50">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-3">
+                    <div class="form-group">
+                        <label class="col-sm-4 control-label">性别：</label>
+                        <div class="col-sm-8">
+                            <select name="sex" class="form-control" th:with="type=${@dict.getType('sys_user_sex')}">
+                                <option th:each="dict : ${type}" th:text="${dict.dictLabel}" th:value="${dict.dictValue}" th:selected="${dict.dictValue == supplierUser.sex}"></option>
                             </select>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-6">
+                <div class="col-sm-3">
                     <div class="form-group">
-                        <label class="col-sm-4 control-label">用户：</label>
+                        <label class="col-sm-4 control-label">身份证号：</label>
                         <div class="col-sm-8">
-                            <input type="hidden" name="userId" th:value="${supplierUser.userId}">
-                            <input type="text" th:value="${supplierUser.userName}" class="form-control" readonly>
-                            <small class="help-block">用户信息不可修改</small>
+                            <input name="idCard" class="form-control" type="text" th:value="*{idCard}" maxlength="18">
                         </div>
                     </div>
                 </div>
             </div>
             <div class="row">
-                <div class="col-sm-6">
+                <div class="col-sm-3">
                     <div class="form-group">
-                        <label class="col-sm-4 control-label">是否主账号：</label>
+                        <label class="col-sm-4 control-label is-required">主账号：</label>
                         <div class="col-sm-8">
                             <select name="isMain" class="form-control">
                                 <option value="0" th:selected="${supplierUser.isMain == '0'}">否</option>
                                 <option value="1" th:selected="${supplierUser.isMain == '1'}">是</option>
-                            </select>
+				            </select>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-6">
+                <div class="col-sm-3">
                     <div class="form-group">
-                        <label class="col-sm-4 control-label">状态：</label>
+                        <label class="col-sm-4 control-label is-required">状态：</label>
                         <div class="col-sm-8">
                             <select name="status" class="form-control">
                                 <option value="0" th:selected="${supplierUser.status == '0'}">正常</option>
                                 <option value="1" th:selected="${supplierUser.status == '1'}">停用</option>
-                            </select>
+				            </select>
                         </div>
                     </div>
                 </div>
             </div>
-        </form>
+		</form>
+	</div>
+    <div class="row">
+        <div class="col-sm-offset-5 col-sm-10">
+            <button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
+            <button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
+        </div>
     </div>
     <th:block th:include="include :: footer" />
+    <script type="text/javascript">
+	    var prefix = ctx + "supplier/user";
+	    
+	    $("#form-supplier-user-edit").validate({
+	    	focusCleanup: true
+	    });
+	    
+	    function submitHandler() {
+	        if ($.validate.form()) {
+	        	$.operate.saveTab(prefix + "/edit", $('#form-supplier-user-edit').serialize());
+	        }
+	    }
+    </script>
 </body>
 </html>
