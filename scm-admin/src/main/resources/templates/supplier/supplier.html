@@ -269,13 +269,13 @@
 	            <a class="btn btn-default" onclick="$.modal.openTab('关联关系修改', ctx + 'supplier/associate/modify')" shiro:hasPermission="supplier:associateModify:view">
 	                <i class="fa fa-pencil-square-o"></i> 关联修改
 	            </a>
-	             <a class="btn btn-primary single disabled" onclick="$.operate.editTab()" shiro:hasPermission="supplier:supplier:edit">
+	             <a class="btn btn-primary single disabled" onclick="editSelectedSupplier()" shiro:hasPermission="supplier:supplier:edit">
 		            <i class="fa fa-edit"></i> 修改
 		        </a>
 	            <a class="btn btn-info single disabled" onclick="ensureBuiltinRoles()" shiro:hasPermission="supplier:supplier:edit" title="确保全局供应商管理员/业务员角色存在并重绑用户；不会按供应商新建 sys_role。补齐后请到用户授权查看，勿仅在角色管理按公司名找「本供应商角色行」">
 	                <i class="fa fa-wrench"></i> 补齐内置角色/权限
 	            </a>
-	            <a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="supplier:supplier:remove">
+	            <a class="btn btn-danger multiple disabled" onclick="removeSelectedSuppliers()" shiro:hasPermission="supplier:supplier:remove">
 	                <i class="fa fa-remove"></i> 删除
 	            </a>
 	            <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="supplier:supplier:export">
@@ -307,7 +307,7 @@
 
 		var supplierColWidths = {
 			rowIndex: 60,
-			supplierCode: 220,
+			supplierCode: 150,
 			companyName: 180,
 			pinyinCode: 90,
 			deliveryHospitals: 160,
@@ -430,7 +430,7 @@
 		        sortName: "createTime",
 		        sortOrder: "desc",
 		        modalName: "供应商",
-		        uniqueId: "supplierId",
+		        uniqueId: "listRowKey",
 		        rememberSelected: true,
 		        maintainSelected: true,
 		        mobileResponsive: false,
@@ -478,7 +478,7 @@
 		            field: 'supplierCode',
 		            title: '供应商编码',
 		            sortable: true,
-		            width: 220,
+		            width: 150,
 		            formatter: function (value) {
 		                return value || '-';
 		            }
@@ -501,7 +501,7 @@
 		        },
 		        {
 		            field: 'deliveryHospitals',
-		            title: '配送公司',
+		            title: '医院',
 		            width: 160,
 		            formatter: function (value) {
 		                return supplierCellEllipsis(value);
@@ -595,17 +595,47 @@
 		    });
 		}
 
+		function editSelectedSupplier() {
+			var ids = $.table.selectColumns("supplierId");
+			if (ids.length == 0) {
+				$.modal.alertWarning("请至少选择一条记录");
+				return;
+			}
+			if (ids.length > 1) {
+				$.modal.alertWarning("请仅选择一条供应商记录");
+				return;
+			}
+			$.operate.editTab(ids[0]);
+		}
+
+		function removeSelectedSuppliers() {
+			var ids = $.table.selectColumns("supplierId");
+			if (ids.length == 0) {
+				$.modal.alertWarning("请至少选择一条记录");
+				return;
+			}
+			$.modal.confirm("确认要删除选中的" + ids.length + "条供应商吗?", function() {
+				$.operate.submit(prefix + "/remove", "post", "json", { "ids": ids.join() });
+			});
+		}
+
 		function ensureBuiltinRoles() {
 			var rows = $.table.selectColumns("supplierId");
 			if (rows.length == 0) {
 				$.modal.alertWarning("请选择一条供应商记录");
 				return;
 			}
-			if (rows.length > 1) {
+			var uniq = [];
+			$.each(rows, function(_, id) {
+				if (id != null && id !== '' && $.inArray(id, uniq) < 0) {
+					uniq.push(id);
+				}
+			});
+			if (uniq.length > 1) {
 				$.modal.alertWarning("请仅选择一条供应商记录");
 				return;
 			}
-			var supplierId = rows[0];
+			var supplierId = uniq[0];
 			$.modal.confirm("将为该供应商补齐全局内置角色（缺则创建）、增量补菜单白名单，并重绑已有用户角色。是否继续？", function() {
 				$.post(prefix + "/ensureBuiltinRoles", { supplierId: supplierId }, function(data) {
 					$.operate.successCallback(data);

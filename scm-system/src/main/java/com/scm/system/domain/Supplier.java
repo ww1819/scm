@@ -108,8 +108,11 @@ public class Supplier extends BaseEntity
     /** 审核备注 */
     private String auditRemark;
 
-    /** 配送公司（多个公司名称用逗号分隔） */
+    /** 配送医院（列表按医院展开时为一行一家医院名称） */
     private String deliveryHospitals;
+
+    /** 列表行唯一键（供应商ID_医院ID），供表格勾选去重 */
+    private String listRowKey;
 
     public Long getSupplierId()
     {
@@ -365,6 +368,16 @@ public class Supplier extends BaseEntity
     public void setDeliveryHospitals(String deliveryHospitals)
     {
         this.deliveryHospitals = deliveryHospitals;
+    }
+
+    public String getListRowKey()
+    {
+        return listRowKey;
+    }
+
+    public void setListRowKey(String listRowKey)
+    {
+        this.listRowKey = listRowKey;
     }
 
     @Override

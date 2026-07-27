@@ -302,8 +302,8 @@
 
 		var supplierUserColWidths = {
 			rowIndex: 60,
+			supplierCode: 150,
 			supplierName: 180,
-			supplierCode: 130,
 			loginName: 120,
 			userName: 100,
 			phonenumber: 120,
@@ -520,18 +520,18 @@
 		            visible: false
 		        },
 		        {
+		            field: 'supplierCode',
+		            title: '供应商编码',
+		            width: 150,
+		            formatter: function (value) {
+		                return value || '-';
+		            }
+		        },
+		        {
 		            field: 'supplierName',
 		            title: '供应商名称',
 		            sortable: true,
 		            width: 180,
-		            formatter: function (value) {
-		                return supplierUserCellEllipsis(value);
-		            }
-		        },
-		        {
-		            field: 'supplierCode',
-		            title: '供应商编码',
-		            width: 130,
 		            formatter: function (value) {
 		                return supplierUserCellEllipsis(value);
 		            }
