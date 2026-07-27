@@ -90,15 +90,17 @@ public class SupplierUserController extends BaseController
     @GetMapping("/add")
     public String add(ModelMap mmap)
     {
-        // 供应商账号仅允许维护自身供应商用户
-        Supplier query = new Supplier();
         Long currentSupplierId = getCurrentLoginSupplierId();
         if (currentSupplierId != null)
         {
-            query.setSupplierId(currentSupplierId);
+            // 供应商账号：默认当前所属供应商，页面只读展示
+            mmap.put("currentSupplier", supplierService.selectSupplierById(currentSupplierId));
         }
-        List<Supplier> supplierList = supplierService.selectSupplierList(query);
-        mmap.put("supplierList", supplierList);
+        else
+        {
+            // 平台账号：可选供应商列表
+            mmap.put("supplierList", supplierService.selectSupplierList(new Supplier()));
+        }
         return prefix + "/user/add";
     }
 
@@ -128,6 +130,12 @@ public class SupplierUserController extends BaseController
             return error("该用户已经关联到其他供应商，无法重复关联");
         }
 
+        // 新增默认非主账号（主账号给其他账号授权）
+        if (StringUtils.isEmpty(supplierUser.getIsMain()))
+        {
+            supplierUser.setIsMain("0");
+        }
+
         // 如果设置为主账号，需要检查该供应商是否已有主账号
         if ("1".equals(supplierUser.getIsMain()))
         {
@@ -147,7 +155,19 @@ public class SupplierUserController extends BaseController
         {
             supplierUser.setStatus("0");
         }
-        return toAjax(supplierUserService.insertSupplierUser(supplierUser));
+        int rows = supplierUserService.insertSupplierUser(supplierUser);
+        if (rows > 0 && supplierUser.getUserId() != null)
+        {
+            SysUser sysUser = new SysUser();
+            sysUser.setUserId(supplierUser.getUserId());
+            sysUser.setUserName(supplierUser.getUserName());
+            sysUser.setPhonenumber(supplierUser.getPhonenumber());
+            sysUser.setEmail(supplierUser.getEmail());
+            sysUser.setSex(supplierUser.getSex());
+            sysUser.setIdCard(supplierUser.getIdCard());
+            userService.updateUserInfo(sysUser);
+        }
+        return toAjax(rows);
     }
 
     /**
