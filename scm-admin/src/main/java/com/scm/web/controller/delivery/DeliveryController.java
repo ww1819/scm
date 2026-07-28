@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -343,6 +345,9 @@ public class DeliveryController extends BaseController
         return toAjax(deliveryService.deleteDeliveryByIds(ids));
     }
 
+    /** 备注中「仓库:xxx；」片段，用于详情页拆出单独展示 */
+    private static final Pattern REMARK_WAREHOUSE_PATTERN = Pattern.compile("仓库[:：]\\s*([^;；]*)\\s*[;；]?");
+
     /**
      * 查看配送单详情
      */
@@ -351,7 +356,27 @@ public class DeliveryController extends BaseController
     public String detail(@PathVariable("deliveryId") Long deliveryId, ModelMap mmap)
     {
         Delivery delivery = deliveryService.selectDeliveryById(deliveryId);
+        String warehouse = StringUtils.trimToEmpty(delivery.getWarehouse());
+        if (StringUtils.isEmpty(warehouse))
+        {
+            warehouse = StringUtils.trimToEmpty(delivery.getSrcOrderWarehouseName());
+        }
+        String remark = StringUtils.trimToEmpty(delivery.getRemark());
+        if (StringUtils.isNotEmpty(remark))
+        {
+            Matcher matcher = REMARK_WAREHOUSE_PATTERN.matcher(remark);
+            if (matcher.find())
+            {
+                if (StringUtils.isEmpty(warehouse))
+                {
+                    warehouse = StringUtils.trimToEmpty(matcher.group(1));
+                }
+                remark = StringUtils.trimToEmpty(matcher.replaceAll(""));
+            }
+        }
         mmap.put("delivery", delivery);
+        mmap.put("displayWarehouse", warehouse);
+        mmap.put("displayRemark", remark);
         return prefix + "/detail";
     }
 

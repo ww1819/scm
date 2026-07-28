@@ -35,6 +35,53 @@
 			background-color: #fff;
 			border-color: #e5e6e7;
 		}
+		.delivery-info-box .col-fifth {
+			width: 20%;
+			float: left;
+			position: relative;
+			min-height: 1px;
+			padding-left: 8px;
+			padding-right: 8px;
+			box-sizing: border-box;
+		}
+		.delivery-info-box .col-fifth-3 {
+			width: 60%;
+			float: left;
+			position: relative;
+			min-height: 1px;
+			padding-left: 8px;
+			padding-right: 8px;
+			box-sizing: border-box;
+		}
+		.delivery-info-box .col-fifth .form-group,
+		.delivery-info-box .col-fifth-3 .form-group {
+			display: flex;
+			align-items: center;
+			margin-left: 0;
+			margin-right: 0;
+		}
+		.delivery-info-box .col-fifth .control-label,
+		.delivery-info-box .col-fifth-3 .control-label {
+			float: none;
+			width: auto;
+			min-width: 72px;
+			max-width: 48%;
+			padding-top: 0;
+			padding-left: 0;
+			padding-right: 6px;
+			margin-bottom: 0;
+			text-align: right;
+			flex: 0 0 auto;
+		}
+		.delivery-info-box .col-fifth .form-group > div,
+		.delivery-info-box .col-fifth-3 .form-group > div {
+			float: none;
+			width: auto;
+			padding-left: 0;
+			padding-right: 0;
+			flex: 1 1 auto;
+			min-width: 0;
+		}
 		.delivery-basic-header-row {
 			margin-bottom: 12px !important;
 		}
@@ -159,6 +206,27 @@
 		.delivery-detail-table-wrap .fixed-table-body .fixed-table-border {
 			display: none !important;
 		}
+		/* 数量、批号、生产日期、有效期：表头与单元格红色 */
+		.delivery-detail-table-wrap .fixed-table-header th[data-field="deliveryQuantity"] .th-inner,
+		.delivery-detail-table-wrap .fixed-table-header th[data-field="batchNo"] .th-inner,
+		.delivery-detail-table-wrap .fixed-table-header th[data-field="productionDate"] .th-inner,
+		.delivery-detail-table-wrap .fixed-table-header th[data-field="expireDate"] .th-inner,
+		#bootstrap-table thead th[data-field="deliveryQuantity"] .th-inner,
+		#bootstrap-table thead th[data-field="batchNo"] .th-inner,
+		#bootstrap-table thead th[data-field="productionDate"] .th-inner,
+		#bootstrap-table thead th[data-field="expireDate"] .th-inner {
+			color: #e74c3c !important;
+		}
+		.delivery-detail-table-wrap .fixed-table-body td[data-field="deliveryQuantity"],
+		.delivery-detail-table-wrap .fixed-table-body td[data-field="batchNo"],
+		.delivery-detail-table-wrap .fixed-table-body td[data-field="productionDate"],
+		.delivery-detail-table-wrap .fixed-table-body td[data-field="expireDate"],
+		#bootstrap-table tbody td[data-field="deliveryQuantity"],
+		#bootstrap-table tbody td[data-field="batchNo"],
+		#bootstrap-table tbody td[data-field="productionDate"],
+		#bootstrap-table tbody td[data-field="expireDate"] {
+			color: #e74c3c !important;
+		}
 	</style>
 </head>
 <body class="gray-bg delivery-detail-page">
@@ -180,55 +248,115 @@
             </div>
             <div class="search-collapse delivery-info-box">
             <div class="row">
-                <div class="col-sm-4">
+                <div class="col-fifth">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">配送单号：</label>
-                        <div class="col-sm-7">
+                        <label class="control-label">配送单号：</label>
+                        <div>
                             <input type="text" class="form-control" th:value="${delivery.deliveryNo}" readonly>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-4">
+                <div class="col-fifth">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">医院名称：</label>
-                        <div class="col-sm-7">
+                        <label class="control-label">医院名称：</label>
+                        <div>
                             <input type="text" class="form-control" th:value="${delivery.hospitalName}" readonly>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-4">
+                <div class="col-fifth">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">供应商名称：</label>
-                        <div class="col-sm-7">
+                        <label class="control-label">供应商名称：</label>
+                        <div>
                             <input type="text" class="form-control" th:value="${delivery.supplierName}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-fifth">
+                    <div class="form-group">
+                        <label class="control-label">配送金额：</label>
+                        <div>
+                            <input type="text" class="form-control" th:value="${delivery.deliveryAmount != null ? #numbers.formatDecimal(delivery.deliveryAmount, 1, 2) : ''}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-fifth">
+                    <div class="form-group">
+                        <label class="control-label">审核状态：</label>
+                        <div>
+                            <input type="text" class="form-control" readonly
+                                   th:value="${delivery.auditStatus == '0' ? '待审核' : (delivery.auditStatus == '1' ? '已审核' : (delivery.auditStatus == '2' ? '已拒绝' : ''))}">
                         </div>
                     </div>
                 </div>
             </div>
             <div class="row">
-                <div class="col-sm-4">
+                <div class="col-fifth">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">配送金额：</label>
-                        <div class="col-sm-7">
-                            <input type="text" class="form-control" th:value="${delivery.deliveryAmount}" readonly>
+                        <label class="control-label">订单号：</label>
+                        <div>
+                            <input type="text" class="form-control" th:value="${delivery.orderNo}" readonly>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-4">
+                <div class="col-fifth">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">审核状态：</label>
-                        <div class="col-sm-7">
-                            <input type="text" class="form-control" readonly
-                                   th:value="${delivery.auditStatus == '0' ? '待审核' : (delivery.auditStatus == '1' ? '已审核' : (delivery.auditStatus == '2' ? '已拒绝' : '-'))}">
+                        <label class="control-label">仓库：</label>
+                        <div>
+                            <input type="text" class="form-control" th:value="${displayWarehouse}" readonly>
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-4">
+                <div class="col-fifth">
                     <div class="form-group">
-                        <label class="col-sm-5 control-label">单据状态：</label>
-                        <div class="col-sm-7">
+                        <label class="control-label">发票号：</label>
+                        <div>
+                            <input type="text" class="form-control" th:value="${delivery.invoiceNo}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-fifth">
+                    <div class="form-group">
+                        <label class="control-label">发票日期：</label>
+                        <div>
                             <input type="text" class="form-control" readonly
-                                   th:value="${delivery.deliveryStatus == '0' ? '未审核' : (delivery.deliveryStatus == '1' ? '已审核' : (delivery.deliveryStatus == '2' ? '已配送' : (delivery.deliveryStatus == '3' ? '已入库' : '-')))}">
+                                   th:value="${delivery.invoiceDate != null ? #dates.format(delivery.invoiceDate, 'yyyy-MM-dd') : ''}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-fifth">
+                    <div class="form-group">
+                        <label class="control-label">预计配送日期：</label>
+                        <div>
+                            <input type="text" class="form-control" readonly
+                                   th:value="${delivery.expectedDeliveryDate != null ? #dates.format(delivery.expectedDeliveryDate, 'yyyy-MM-dd') : ''}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-fifth">
+                    <div class="form-group">
+                        <label class="control-label">配送员：</label>
+                        <div>
+                            <input type="text" class="form-control" readonly
+                                   th:value="${delivery.deliveryPersonDisplay != null and delivery.deliveryPersonDisplay != '' ? delivery.deliveryPersonDisplay : delivery.deliveryPerson}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-fifth">
+                    <div class="form-group">
+                        <label class="control-label">配送地址：</label>
+                        <div>
+                            <input type="text" class="form-control" th:value="${delivery.deliveryAddress}" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-fifth-3">
+                    <div class="form-group">
+                        <label class="control-label">备注：</label>
+                        <div>
+                            <input type="text" class="form-control" th:value="${displayRemark}" readonly>
                         </div>
                     </div>
                 </div>
@@ -628,12 +756,12 @@
 		            { field: 'specification', title: '规格', align: 'center', width: 120, sortable: true },
 		            { field: 'model', title: '型号', align: 'center', width: 100, sortable: true },
 		            { field: 'remainingQuantity', title: '可配送数量', align: 'center', width: 110, sortable: true, formatter: fmtDec },
-		            { field: 'deliveryQuantity', title: '数量', align: 'center', width: 96, sortable: true, formatter: fmtDec },
+		            { field: 'deliveryQuantity', title: '数量', align: 'center', width: 96, sortable: true, formatter: fmtDecRed, cellStyle: cellStyleRed },
 		            { field: 'price', title: '单价', align: 'center', width: 96, sortable: true, formatter: fmtDec },
 		            { field: 'amount', title: '金额', align: 'center', width: 108, sortable: true, formatter: fmtDec },
-		            { field: 'productionDate', title: '生产日期', align: 'center', width: 118, sortable: true, formatter: fmtDate },
-		            { field: 'expireDate', title: '有效期', align: 'center', width: 118, sortable: true, formatter: fmtDate },
-		            { field: 'batchNo', title: '批号', align: 'center', width: 130, sortable: true },
+		            { field: 'batchNo', title: '批号', align: 'center', width: 130, sortable: true, formatter: fmtTextRed, cellStyle: cellStyleRed },
+		            { field: 'productionDate', title: '生产日期', align: 'center', width: 118, sortable: true, formatter: fmtDateRed, cellStyle: cellStyleRed },
+		            { field: 'expireDate', title: '有效期', align: 'center', width: 118, sortable: true, formatter: fmtDateRed, cellStyle: cellStyleRed },
 		            { field: 'registerNo', title: '注册证号', align: 'center', width: 150, sortable: true },
 		            { field: 'deliveryAuditStatus', title: '配送单审核', align: 'center', width: 100, sortable: true, formatter: fmtAudit },
 		            { field: 'refOrderNo', title: '本系统订单号', align: 'center', width: 150, sortable: true, formatter: function(v, row) { return v || (row.refOrderId ? '#' + row.refOrderId : '-'); } },
@@ -659,9 +787,21 @@
 		    var m = { '0': '待审核', '1': '已审核', '2': '已拒绝' };
 		    return m[v] || (v == null ? '-' : v);
 		}
+		function cellStyleRed() {
+		    return { css: { color: '#e74c3c' } };
+		}
+		function wrapRed(text) {
+		    return '<span style="color:#e74c3c;">' + text + '</span>';
+		}
 		function fmtDec(v) {
 		    if (v != null && v !== '') return parseFloat(v).toFixed(2);
 		    return '-';
+		}
+		function fmtDecRed(v) {
+		    return wrapRed(fmtDec(v));
+		}
+		function fmtTextRed(v) {
+		    return wrapRed((v != null && v !== '') ? String(v) : '-');
 		}
 		function fmtDate(v) {
 		    if (!v) return '-';
@@ -681,6 +821,9 @@
 		    } catch (e) {
 		        return '-';
 		    }
+		}
+		function fmtDateRed(v) {
+		    return wrapRed(fmtDate(v));
 		}
 
 		function openOrderDetail(orderId) {

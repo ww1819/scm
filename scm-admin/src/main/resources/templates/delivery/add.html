@@ -85,20 +85,24 @@
 				width: 14%;
 			}
 			.delivery-doc-form .col-doc-order-no {
-				flex: 0 0 18%;
-				max-width: 18%;
-				width: 18%;
+				flex: 0 0 17%;
+				max-width: 17%;
+				width: 17%;
 			}
-			.delivery-doc-form .col-doc-date {
+			.delivery-doc-form .col-doc-warehouse {
 				flex: 0 0 16%;
 				max-width: 16%;
 				width: 16%;
 			}
+			.delivery-doc-form .col-doc-date {
+				flex: 0 0 22%;
+				max-width: 22%;
+				width: 22%;
+			}
 			.delivery-doc-form .col-doc-person {
-				flex: 0 0 12%;
-				max-width: 12%;
-				width: 12%;
-				padding-left: 12px !important;
+				flex: 0 0 15%;
+				max-width: 15%;
+				width: 15%;
 			}
 			.delivery-doc-form .col-doc-address {
 				flex: 0 0 30%;
@@ -152,11 +156,13 @@
 		}
 		.delivery-doc-form .control-label {
 			font-size: 14px;
-			flex: 0 0 auto;
+			flex: 0 0 auto !important;
+			flex-shrink: 0 !important;
 			padding-top: 0;
 			padding-right: 2px;
 			margin-bottom: 0;
 			white-space: nowrap;
+			overflow: visible;
 		}
 		.delivery-doc-form .form-group.doc-label-gap-4 .control-label {
 			padding-right: 4px !important;
@@ -169,19 +175,21 @@
 		}
 		.delivery-doc-form .col-doc-supplier .form-group.doc-label-gap-4 .control-label,
 		.delivery-doc-form .col-doc-invoice .form-group.doc-label-gap-4 .control-label {
-			padding-right: 20px !important;
+			padding-right: 8px !important;
+		}
+		.delivery-doc-form .col-doc-hospital .control-label,
+		.delivery-doc-form .col-doc-narrow .control-label,
+		.delivery-doc-form .col-doc-supplier .control-label {
+			color: #e74c3c !important;
 		}
 		.delivery-doc-form .col-doc-mid .form-group.doc-label-gap-4 .control-label {
-			padding-right: 30px !important;
+			padding-right: 8px !important;
 		}
-		.delivery-doc-form .col-doc-order-no .form-group.doc-label-gap-4 .control-label {
-			padding-right: 10px !important;
-		}
-		.delivery-doc-form .col-doc-date .form-group.doc-label-gap-4 .control-label {
-			padding-right: 20px !important;
-		}
+		.delivery-doc-form .col-doc-order-no .form-group.doc-label-gap-4 .control-label,
+		.delivery-doc-form .col-doc-warehouse .form-group.doc-label-gap-4 .control-label,
+		.delivery-doc-form .col-doc-date .form-group.doc-label-gap-4 .control-label,
 		.delivery-doc-form .col-doc-person .form-group.doc-label-gap-4 .control-label {
-			padding-right: 10image.pngpx !important;
+			padding-right: 4px !important;
 		}
 		.delivery-doc-form .col-doc-address .form-group.doc-label-gap-4 .control-label {
 			padding-right: 5px !important;
@@ -606,19 +614,27 @@
 		#detail-table tbody td[data-field="packCoefficient"],
 		#detail-table thead th[data-field="remainingQuantity"],
 		#detail-table tbody td[data-field="remainingQuantity"],
+		#detail-table thead th[data-field="price"],
+		#detail-table tbody td[data-field="price"],
+		#detail-table thead th[data-field="amount"],
+		#detail-table tbody td[data-field="amount"],
 		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="unit"],
 		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td[data-field="unit"],
 		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="packCoefficient"],
 		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td[data-field="packCoefficient"],
 		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="remainingQuantity"],
-		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td[data-field="remainingQuantity"] {
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td[data-field="remainingQuantity"],
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="price"],
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td[data-field="price"],
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="amount"],
+		#delivery-detail-list-section .fixed-table-container > .fixed-table-body td[data-field="amount"] {
 			text-align: center !important;
-			padding-left: 4px !important;
-			padding-right: 4px !important;
+			padding-left: 2px !important;
+			padding-right: 2px !important;
 		}
-		#detail-table thead th[data-field="index"],
+	        #detail-table thead th[data-field="index"],
 		#delivery-detail-list-section .fixed-table-container > .fixed-table-header th[data-field="index"] {
-			min-width: 58px !important;
+			min-width: 46px !important;
 			overflow: visible !important;
 			text-overflow: clip !important;
 		}
@@ -864,7 +880,6 @@
             <input type="hidden" name="srcOrderSupplierId" id="srcOrderSupplierId" value="">
             <input type="hidden" name="srcOrderSupplierName" id="srcOrderSupplierName" value="">
             <input type="hidden" name="srcOrderWarehouseId" id="srcOrderWarehouseId" value="">
-            <input type="hidden" name="srcOrderWarehouseName" id="srcOrderWarehouseName" value="">
             <input type="hidden" name="srcOrderDeptId" id="srcOrderDeptId" value="">
             <input type="hidden" name="srcOrderDeptName" id="srcOrderDeptName" value="">
             <input type="hidden" name="zsCustomerId" id="zsCustomerId" value="">
@@ -941,6 +956,14 @@
                         <label class="col-sm-5 control-label">订单号：</label>
                         <div class="col-sm-7">
                             <input name="orderNo" class="form-control" type="text" readonly>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-doc-5 col-doc-warehouse">
+                    <div class="form-group doc-label-gap-4">
+                        <label class="col-sm-5 control-label">要货仓库：</label>
+                        <div class="col-sm-7">
+                            <input name="srcOrderWarehouseName" id="srcOrderWarehouseName" class="form-control" type="text" readonly>
                         </div>
                     </div>
                 </div>
@@ -1075,20 +1098,20 @@
 	        $("input[name='deliveryAmount']").val(totalAmount.toFixed(2));
 	    }
 
-	    /** 默认列宽（序号刚好两字；可排序列略留排序图标空间） */
+	    /** 默认列宽（序号/单位/可配数量/单价/金额尽量贴表头；批号与效期同宽） */
 	    var DETAIL_DEFAULT_COL_WIDTHS = {
 	        btSelectItem: 42,
-	        index: 58,
+	        index: 46,
 	        materialCode: 128,
 	        materialName: 162,
 	        specification: 96,
-	        unit: 80,
-	        remainingQuantity: 122,
-	        deliveryQuantity: 96,
-	        price: 104,
-	        amount: 112,
+	        unit: 48,
+	        remainingQuantity: 72,
+	        deliveryQuantity: 72,
+	        price: 96,
+	        amount: 96,
 	        packCoefficient: 108,
-	        batchNo: 160,
+	        batchNo: 118,
 	        expireDate: 118,
 	        productionDate: 118,
 	        mainBarcode: 150,
@@ -1258,9 +1281,25 @@
 	        var safe = escapeAttrForInput(formatDetailDateValue(value));
 	        var titleAttr = safe ? (' title="' + safe + '"') : '';
 	        return '<input type="text" class="form-control input-sm detail-date-input date-input" value="' + safe + '"' + titleAttr + ' ' +
-	               'placeholder="yyyy-MM-dd" readonly data-field="' + field + '" data-index="' + index + '" ' +
+	               'data-field="' + field + '" data-index="' + index + '" maxlength="10" ' +
+	               'oninput="autoFormatDetailDateInput(this)" ' +
 	               'onblur="' + blurFn + '(this, ' + index + ')" ' +
 	               'onkeypress="if(event.keyCode==13){this.blur();return false;}" />';
+	    }
+
+	    /** 生产日期/有效期：输入 yyyyMMdd（如 20260123）自动转为 yyyy-MM-dd；仍可点选日期 */
+	    function autoFormatDetailDateInput(el) {
+	        if (!el) {
+	            return;
+	        }
+	        var raw = String(el.value || '');
+	        var digits = raw.replace(/[\s\u3000\-]/g, '');
+	        if (/^\d{8}$/.test(digits) && raw.indexOf('-') < 0) {
+	            var normalized = normalizeDetailDateString(digits);
+	            if (normalized && normalized !== raw) {
+	                el.value = normalized;
+	            }
+	        }
 	    }
 
 	    /** 明细单元格悬停显示完整内容（列宽不足被省略时） */
@@ -2242,7 +2281,7 @@
 	                field: 'index',
 	                title: '序号',
 	                align: 'center',
-	                width: 58,
+	                width: 46,
 	                formatter: function(value, row, index) {
 	                    return index + 1;
 	                }
@@ -2274,7 +2313,7 @@
 	                field: 'unit',
 	                title: '单位',
 	                align: 'center',
-	                width: 80,
+	                width: 48,
 	                sortable: true,
 	                sorter: detailSortText,
 	                formatter: function (value) { return detailCellTextHtml(value); }
@@ -2282,7 +2321,7 @@
 	                field: 'remainingQuantity',
 	                title: '可配数量',
 	                align: 'center',
-	                width: 122,
+	                width: 72,
 	                sortable: true,
 	                sorter: detailSortNumber,
 	                formatter: function (value) {
@@ -2292,7 +2331,7 @@
 	                field: 'deliveryQuantity',
 	                title: '数量',
 	                align: 'center',
-	                width: 96,
+	                width: 72,
 	                sortable: true,
 	                sorter: detailSortNumber,
 	                formatter: function(value, row, index) {
@@ -2309,7 +2348,7 @@
 	                field: 'price',
 	                title: '单价',
 	                align: 'center',
-	                width: 104,
+	                width: 96,
 	                sortable: true,
 	                sorter: detailSortNumber,
 	                formatter: function (value) {
@@ -2320,7 +2359,7 @@
 	                field: 'amount',
 	                title: '金额',
 	                align: 'center',
-	                width: 112,
+	                width: 96,
 	                sortable: true,
 	                sorter: detailSortAmount,
 	                formatter: function (value, row) {
@@ -2331,7 +2370,7 @@
 	                field: 'batchNo',
 	                title: '批号',
 	                align: 'center',
-	                width: 160,
+	                width: 118,
 	                formatter: function(value, row, index) {
 	                    return detailTextInputHtml(value, index, 50, 'updateBatchNo');
 	                }
@@ -3144,7 +3183,7 @@
 	                            $("#srcOrderSupplierId").val(data.srcOrderSupplierId || '');
 	                            $("#srcOrderSupplierName").val(data.srcOrderSupplierName || '');
 	                            $("#srcOrderWarehouseId").val(data.srcOrderWarehouseId || '');
-	                            $("#srcOrderWarehouseName").val(data.srcOrderWarehouseName || '');
+	                            $("#srcOrderWarehouseName").val(data.srcOrderWarehouseName || data.warehouse || '');
 	                            $("#srcOrderDeptId").val(data.srcOrderDeptId || '');
 	                            $("#srcOrderDeptName").val(data.srcOrderDeptName || '');
 	                            if (data.orderDate) {
@@ -3156,7 +3195,7 @@
 	                            } else {
 	                                $("#orderDateField").val('');
 	                            }
-	                            $("#warehouseField").val(data.warehouse || '');
+	                            $("#warehouseField").val(data.warehouse || data.srcOrderWarehouseName || '');
 	                            if (data.deliveryDetails && data.deliveryDetails.length > 0) {
 	                                var detailData = [];
 	                                for (var i = 0; i < data.deliveryDetails.length; i++) {

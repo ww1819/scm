@@ -106,12 +106,21 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                         AND d.delivery_no = #{deliveryNo}
                     </when>
                     <otherwise>
-                        AND d.delivery_no like concat('%', #{deliveryNo}, '%')
+                        AND LOWER(IFNULL(d.delivery_no, '')) like concat('%', LOWER(#{deliveryNo}), '%')
                     </otherwise>
                 </choose>
             </if>
             <if test="hospitalId != null">
                 AND d.hospital_id = #{hospitalId}
+            </if>
+            <if test="hospitalName != null and hospitalName != ''">
+                AND (
+                    IFNULL(h.hospital_name, '') like concat('%', #{hospitalName}, '%')
+                    OR IFNULL(h.hospital_short_name, '') like concat('%', #{hospitalName}, '%')
+                    OR IFNULL(h.hospital_code, '') like concat('%', #{hospitalName}, '%')
+                    OR LOWER(IFNULL(h.hospital_short_name, '')) like concat(LOWER(#{hospitalName}), '%')
+                    OR LOWER(IFNULL(h.pinyin_code, '')) like concat(LOWER(#{hospitalName}), '%')
+                )
             </if>
             <if test="supplierId != null">
                 AND d.supplier_id = #{supplierId}

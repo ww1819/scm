@@ -395,6 +395,7 @@
 
 		$(function() {
 		    initDefaultDeliveryDateRange();
+		    bindDeliverySearchHelpers();
 		    layoutDeliveryTableWrapHeight();
 		    queryDeliveryList();
 		    $(window).resize(function() {
@@ -1043,6 +1044,7 @@
 		        updateUrl: prefix + "/edit/{id}",
 		        removeUrl: prefix + "/remove",
 		        exportUrl: prefix + "/export",
+		        formId: "delivery-form",
 		        sortName: "createTime",
 		        sortOrder: "desc",
 		        modalName: "配送单",
@@ -1055,6 +1057,15 @@
 		        fixedRightNumber: 1,
 		        pageList: [10, 25, 50],
 		        height: calculateTableHeight(),
+		        queryParams: function(params) {
+		            sanitizeDeliverySearchInputs();
+		            autoFormatDeliveryDateInputs();
+		            var curParams = $.table.queryParams(params);
+		            // 显式带上检索条件，避免表单序列化遗漏
+		            curParams.deliveryNo = $.common.trim($('#delivery-form input[name="deliveryNo"]').val() || '');
+		            curParams.hospitalName = $.common.trim($('#delivery-form input[name="hospitalName"]').val() || '');
+		            return curParams;
+		        },
 		        onLoadSuccess: function () {
 		            layoutDeliveryTableWrapHeight();
 		            setTimeout(function () {
@@ -1262,6 +1273,104 @@
 			var m = String(date.getMonth() + 1).padStart(2, '0');
 			var d = String(date.getDate()).padStart(2, '0');
 			return y + '-' + m + '-' + d;
+		}
+
+		/** 配送单号/医院名称：输入时自动清除空格（含全角空格） */
+		function stripDeliverySearchSpaces($el) {
+			if (!$el || !$el.length) {
+				return;
+			}
+			var v = $el.val();
+			if (v == null || v === '') {
+				return;
+			}
+			var cleaned = String(v).replace(/[\s\u3000]+/g, '');
+			if (cleaned !== v) {
+				var el = $el[0];
+				var start = el.selectionStart;
+				var end = el.selectionEnd;
+				$el.val(cleaned);
+				if (typeof start === 'number' && typeof end === 'number' && el.setSelectionRange) {
+					var diff = v.length - cleaned.length;
+					var ns = Math.max(0, start - diff);
+					var ne = Math.max(0, end - diff);
+					try { el.setSelectionRange(ns, ne); } catch (e) {}
+				}
+			}
+		}
+
+		function sanitizeDeliverySearchInputs() {
+			$('#delivery-form').find('input[name="deliveryNo"], input[name="hospitalName"]').each(function () {
+				stripDeliverySearchSpaces($(this));
+			});
+		}
+
+		/**
+		 * 制单日期：支持手工输入 yyyyMMdd（如 20260123）自动转为 yyyy-MM-dd
+		 */
+		function normalizeYmdInputValue(raw) {
+			if (raw == null) {
+				return '';
+			}
+			var s = String(raw).replace(/[\s\u3000]/g, '');
+			if (!s) {
+				return '';
+			}
+			if (/^\d{8}$/.test(s)) {
+				var y = parseInt(s.substring(0, 4), 10);
+				var m = parseInt(s.substring(4, 6), 10);
+				var d = parseInt(s.substring(6, 8), 10);
+				var dt = new Date(y, m - 1, d);
+				if (dt.getFullYear() === y && (dt.getMonth() + 1) === m && dt.getDate() === d) {
+					return s.substring(0, 4) + '-' + s.substring(4, 6) + '-' + s.substring(6, 8);
+				}
+				return s;
+			}
+			if (/^\d{4}[\/.]\d{1,2}[\/.]\d{1,2}$/.test(s)) {
+				var p = s.split(/[\/.]/);
+				return p[0] + '-' + String(p[1]).padStart(2, '0') + '-' + String(p[2]).padStart(2, '0');
+			}
+			return s;
+		}
+
+		function autoFormatDeliveryDateInput($el) {
+			if (!$el || !$el.length) {
+				return;
+			}
+			var formatted = normalizeYmdInputValue($el.val());
+			if (formatted !== $el.val()) {
+				$el.val(formatted);
+			}
+		}
+
+		function autoFormatDeliveryDateInputs() {
+			autoFormatDeliveryDateInput($('#deliveryStartTime'));
+			autoFormatDeliveryDateInput($('#deliveryEndTime'));
+		}
+
+		function bindDeliverySearchHelpers() {
+			$('#delivery-form').on('input blur paste', 'input[name="deliveryNo"], input[name="hospitalName"]', function () {
+				var $input = $(this);
+				setTimeout(function () {
+					stripDeliverySearchSpaces($input);
+				}, 0);
+			});
+			$('#delivery-form').on('blur change', '#deliveryStartTime, #deliveryEndTime', function () {
+				autoFormatDeliveryDateInput($(this));
+			});
+			$('#delivery-form').on('input', '#deliveryStartTime, #deliveryEndTime', function () {
+				var $input = $(this);
+				var digits = String($input.val() || '').replace(/[\s\u3000\-]/g, '');
+				// 凑满 8 位数字时立即格式化
+				if (/^\d{8}$/.test(digits) && String($input.val()).indexOf('-') < 0) {
+					autoFormatDeliveryDateInput($input);
+				}
+			});
+			$('#delivery-form').on('keydown', '#deliveryStartTime, #deliveryEndTime', function (e) {
+				if (e.keyCode === 13) {
+					autoFormatDeliveryDateInput($(this));
+				}
+			});
 		}
 
 		/** 默认：结束日期为当天，开始日期为当天往前 7 天 */

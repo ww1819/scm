@@ -85,20 +85,24 @@
 				width: 14%;
 			}
 			.delivery-doc-form .col-doc-order-no {
-				flex: 0 0 18%;
-				max-width: 18%;
-				width: 18%;
+				flex: 0 0 17%;
+				max-width: 17%;
+				width: 17%;
 			}
-			.delivery-doc-form .col-doc-date {
+			.delivery-doc-form .col-doc-warehouse {
 				flex: 0 0 16%;
 				max-width: 16%;
 				width: 16%;
 			}
+			.delivery-doc-form .col-doc-date {
+				flex: 0 0 22%;
+				max-width: 22%;
+				width: 22%;
+			}
 			.delivery-doc-form .col-doc-person {
-				flex: 0 0 12%;
-				max-width: 12%;
-				width: 12%;
-				padding-left: 12px !important;
+				flex: 0 0 15%;
+				max-width: 15%;
+				width: 15%;
 			}
 			.delivery-doc-form .col-doc-address {
 				flex: 0 0 30%;
@@ -152,36 +156,40 @@
 		}
 		.delivery-doc-form .control-label {
 			font-size: 14px;
-			flex: 0 0 auto;
+			flex: 0 0 auto !important;
+			flex-shrink: 0 !important;
 			padding-top: 0;
 			padding-right: 2px;
 			margin-bottom: 0;
 			white-space: nowrap;
+			overflow: visible;
 		}
 		.delivery-doc-form .form-group.doc-label-gap-4 .control-label {
 			padding-right: 4px !important;
 		}
 		.delivery-doc-form .col-doc-hospital .form-group.doc-label-gap-4 .control-label {
-			padding-right: 15px !important;
+			padding-right: 8px !important;
 		}
 		.delivery-doc-form .col-doc-narrow .form-group.doc-label-gap-4 .control-label {
-			padding-right: 30px !important;
+			padding-right: 10px !important;
 		}
 		.delivery-doc-form .col-doc-supplier .form-group.doc-label-gap-4 .control-label,
 		.delivery-doc-form .col-doc-invoice .form-group.doc-label-gap-4 .control-label {
-			padding-right: 24px !important;
+			padding-right: 8px !important;
+		}
+		.delivery-doc-form .col-doc-hospital .control-label,
+		.delivery-doc-form .col-doc-narrow .control-label,
+		.delivery-doc-form .col-doc-supplier .control-label {
+			color: #e74c3c !important;
 		}
 		.delivery-doc-form .col-doc-mid .form-group.doc-label-gap-4 .control-label {
-			padding-right: 30px !important;
+			padding-right: 8px !important;
 		}
-		.delivery-doc-form .col-doc-order-no .form-group.doc-label-gap-4 .control-label {
-			padding-right: 10px !important;
-		}
-		.delivery-doc-form .col-doc-date .form-group.doc-label-gap-4 .control-label {
-			padding-right: 52px !important;
-		}
+		.delivery-doc-form .col-doc-order-no .form-group.doc-label-gap-4 .control-label,
+		.delivery-doc-form .col-doc-warehouse .form-group.doc-label-gap-4 .control-label,
+		.delivery-doc-form .col-doc-date .form-group.doc-label-gap-4 .control-label,
 		.delivery-doc-form .col-doc-person .form-group.doc-label-gap-4 .control-label {
-			padding-right: 25px !important;
+			padding-right: 4px !important;
 		}
 		.delivery-doc-form .col-doc-address .form-group.doc-label-gap-4 .control-label {
 			padding-right: 5px !important;
@@ -825,7 +833,6 @@
             <input type="hidden" name="srcOrderSupplierId" id="srcOrderSupplierId" th:value="${delivery.srcOrderSupplierId != null ? delivery.srcOrderSupplierId : ''}">
             <input type="hidden" name="srcOrderSupplierName" id="srcOrderSupplierName" th:value="${delivery.srcOrderSupplierName != null ? delivery.srcOrderSupplierName : ''}">
             <input type="hidden" name="srcOrderWarehouseId" id="srcOrderWarehouseId" th:value="${delivery.srcOrderWarehouseId != null ? delivery.srcOrderWarehouseId : ''}">
-            <input type="hidden" name="srcOrderWarehouseName" id="srcOrderWarehouseName" th:value="${delivery.srcOrderWarehouseName != null ? delivery.srcOrderWarehouseName : ''}">
             <input type="hidden" name="srcOrderDeptId" id="srcOrderDeptId" th:value="${delivery.srcOrderDeptId != null ? delivery.srcOrderDeptId : ''}">
             <input type="hidden" name="srcOrderDeptName" id="srcOrderDeptName" th:value="${delivery.srcOrderDeptName != null ? delivery.srcOrderDeptName : ''}">
             <input type="hidden" name="zsCustomerId" id="zsCustomerId" th:value="${delivery.zsCustomerId != null ? delivery.zsCustomerId : ''}">
@@ -861,7 +868,7 @@
                     <div class="form-group doc-label-gap-4">
                         <label class="col-sm-5 control-label">总金额：</label>
                         <div class="col-sm-7">
-                            <input name="deliveryAmount" class="form-control" type="text" readonly th:value="${delivery.deliveryAmount}">
+                            <input name="deliveryAmount" class="form-control" type="text" readonly th:value="${delivery.deliveryAmount != null ? #numbers.formatDecimal(delivery.deliveryAmount, 1, 2) : '0.00'}">
                         </div>
                     </div>
                 </div>
@@ -897,6 +904,15 @@
                         <label class="col-sm-5 control-label">订单号：</label>
                         <div class="col-sm-7">
                             <input name="orderNo" class="form-control" type="text" readonly th:value="${delivery.orderNo}">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-doc-5 col-doc-warehouse">
+                    <div class="form-group doc-label-gap-4">
+                        <label class="col-sm-5 control-label">要货仓库：</label>
+                        <div class="col-sm-7">
+                            <input name="srcOrderWarehouseName" id="srcOrderWarehouseName" class="form-control" type="text" readonly
+                                   th:value="${delivery.srcOrderWarehouseName != null and delivery.srcOrderWarehouseName != '' ? delivery.srcOrderWarehouseName : (delivery.warehouse != null ? delivery.warehouse : '')}">
                         </div>
                     </div>
                 </div>
@@ -969,21 +985,21 @@
 	    var detailColumnWidths = {};
 	    var DETAIL_COL_RESIZE_SKIP = { btSelectItem: 1, index: 1, operation: 1 };
 
-	    /** 默认列宽（保证表头完整显示；含排序图标预留） */
+	    /** 默认列宽（序号/单位/可配数量/单价/金额尽量贴表头；批号与效期同宽） */
 	    var DETAIL_DEFAULT_COL_WIDTHS = {
 	        btSelectItem: 42,
-	        index: 64,
+	        index: 46,
 	        materialCode: 108,
 	        materialName: 140,
 	        specification: 96,
-	        unit: 64,
-	        remainingQuantity: 88,
-	        deliveryQuantity: 88,
+	        unit: 48,
+	        remainingQuantity: 72,
+	        deliveryQuantity: 72,
 	        price: 96,
-	        amount: 106,
-	        batchNo: 160,
-	        expireDate: 140,
-	        productionDate: 140,
+	        amount: 96,
+	        batchNo: 118,
+	        expireDate: 118,
+	        productionDate: 118,
 	        mainBarcode: 180,
 	        auxBarcode: 180,
 	        manufacturer: 150,
@@ -1339,9 +1355,25 @@
 	    function detailDateInputHtml(value, index, field, blurFn) {
 	        var safe = escapeAttrForInput(formatDetailDateValue(value));
 	        return '<input type="text" class="form-control input-sm detail-date-input date-input" value="' + safe + '" ' +
-	               'placeholder="yyyy-MM-dd" readonly data-field="' + field + '" data-index="' + index + '" ' +
+	               'data-field="' + field + '" data-index="' + index + '" maxlength="10" ' +
+	               'oninput="autoFormatDetailDateInput(this)" ' +
 	               'onblur="' + blurFn + '(this, ' + index + ')" ' +
 	               'onkeypress="if(event.keyCode==13){this.blur();return false;}" />';
+	    }
+
+	    /** 生产日期/有效期：输入 yyyyMMdd（如 20260123）自动转为 yyyy-MM-dd；仍可点选日期 */
+	    function autoFormatDetailDateInput(el) {
+	        if (!el) {
+	            return;
+	        }
+	        var raw = String(el.value || '');
+	        var digits = raw.replace(/[\s\u3000\-]/g, '');
+	        if (/^\d{8}$/.test(digits) && raw.indexOf('-') < 0) {
+	            var normalized = normalizeDetailDateString(digits);
+	            if (normalized && normalized !== raw) {
+	                el.value = normalized;
+	            }
+	        }
 	    }
 
 	    function getDeliveryDetailTableMinWidth() {
@@ -2105,7 +2137,7 @@
 	                field: 'index',
 	                title: '序号',
 	                align: 'center',
-	                width: 64,
+	                width: 46,
 	                formatter: function(value, row, index) {
 	                    return index + 1;
 	                }
@@ -2137,13 +2169,13 @@
 	                field: 'unit',
 	                title: '单位',
 	                align: 'center',
-	                width: 64,
+	                width: 48,
 	                formatter: function (value) { return detailCellTextHtml(value); }
 	            }, {
 	                field: 'remainingQuantity',
 	                title: '可配数量',
 	                align: 'center',
-	                width: 78,
+	                width: 72,
 	                sortable: true,
 	                sorter: detailSortNumber,
 	                formatter: function(value, row, index) {
@@ -2153,7 +2185,7 @@
 	                field: 'deliveryQuantity',
 	                title: '数量',
 	                align: 'center',
-	                width: 78,
+	                width: 72,
 	                sortable: true,
 	                sorter: detailSortNumber,
 	                formatter: function(value, row, index) {
@@ -2169,7 +2201,7 @@
 	                field: 'price',
 	                title: '单价',
 	                align: 'center',
-	                width: 86,
+	                width: 96,
 	                sortable: true,
 	                sorter: detailSortNumber,
 	                formatter: function(value, row, index) {
@@ -2193,7 +2225,7 @@
 	                field: 'batchNo',
 	                title: '批号',
 	                align: 'center',
-	                width: 160,
+	                width: 118,
 	                formatter: function(value, row, index) {
 	                    return detailTextInputHtml(value, index, 50, 'updateBatchNo');
 	                }
@@ -2201,7 +2233,7 @@
 	                field: 'expireDate',
 	                title: '有效期',
 	                align: 'center',
-	                width: 140,
+	                width: 118,
 	                formatter: function(value, row, index) {
 	                    return detailDateInputHtml(value, index, 'expireDate', 'updateExpireDate');
 	                }
@@ -2209,7 +2241,7 @@
 	                field: 'productionDate',
 	                title: '生产日期',
 	                align: 'center',
-	                width: 140,
+	                width: 118,
 	                formatter: function(value, row, index) {
 	                    return detailDateInputHtml(value, index, 'productionDate', 'updateProductionDate');
 	                }

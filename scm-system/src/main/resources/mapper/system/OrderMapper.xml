@@ -156,7 +156,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                     IFNULL(h.hospital_name, '') like concat('%', #{hospitalName}, '%')
                     OR IFNULL(h.hospital_short_name, '') like concat('%', #{hospitalName}, '%')
                     OR IFNULL(h.hospital_code, '') like concat('%', #{hospitalName}, '%')
-                    OR LOWER(IFNULL(h.pinyin_code, '')) like concat('%', LOWER(#{hospitalName}), '%')
+                    OR LOWER(IFNULL(h.hospital_short_name, '')) like concat(LOWER(#{hospitalName}), '%')
+                    OR LOWER(IFNULL(h.pinyin_code, '')) like concat(LOWER(#{hospitalName}), '%')
                 )
             </if>
             <if test="supplierId != null">
