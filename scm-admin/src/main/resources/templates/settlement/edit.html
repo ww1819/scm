@@ -31,7 +31,7 @@
                     <div class="form-group">
                         <label class="col-sm-4 control-label">发票日期：</label>
                         <div class="col-sm-8">
-                            <input name="invoiceDate" placeholder="请输入发票日期" class="form-control" type="date" th:value="${#dates.format(settlement.invoiceDate, 'yyyy-MM-dd')}">
+                            <input name="invoiceDate" id="invoiceDate" placeholder="yyyy-MM-dd" class="form-control" type="text" readonly th:value="${#dates.format(settlement.invoiceDate, 'yyyy-MM-dd')}">
                         </div>
                     </div>
                 </div>
@@ -59,6 +59,15 @@
 	<th:block th:include="include :: footer" />
 	<script>
 	    var prefix = ctx + "settlement/settlement";
+
+	    layui.use('laydate', function() {
+	        layui.laydate.render({
+	            elem: '#invoiceDate',
+	            type: 'date',
+	            format: 'yyyy-MM-dd',
+	            trigger: 'click'
+	        });
+	    });
 	
         $("#form-settlement-edit").validate({
         	onkeyup: false,

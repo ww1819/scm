@@ -904,7 +904,7 @@
                     <div class="form-group doc-label-gap-4">
                         <label class="col-sm-5 control-label">预计配送日期：</label>
                         <div class="col-sm-7">
-                            <input name="expectedDeliveryDate" id="expectedDeliveryDate" placeholder="年/月/日" class="form-control" type="text" readonly value="">
+                            <input name="expectedDeliveryDate" id="expectedDeliveryDate" placeholder="yyyy-MM-dd" class="form-control" type="text" readonly value="">
                         </div>
                     </div>
                 </div>
@@ -1299,26 +1299,47 @@
 	               'onkeypress="if(event.keyCode==13){this.blur();return false;}" />';
 	    }
 
+	    /** 统一为 yyyy-MM-dd（兼容第三方/库内的 yyyyMMdd） */
+	    function normalizeDetailDateString(value) {
+	        if (value === null || value === undefined || value === '') {
+	            return '';
+	        }
+	        if (typeof value !== 'string') {
+	            var date = new Date(value);
+	            if (isNaN(date.getTime())) {
+	                return '';
+	            }
+	            return date.getFullYear() + '-' +
+	                String(date.getMonth() + 1).padStart(2, '0') + '-' +
+	                String(date.getDate()).padStart(2, '0');
+	        }
+	        var s = String(value).trim();
+	        if (!s) {
+	            return '';
+	        }
+	        if (/^\d{8}$/.test(s)) {
+	            return s.substring(0, 4) + '-' + s.substring(4, 6) + '-' + s.substring(6, 8);
+	        }
+	        if (/^\d{4}[\/.]\d{1,2}[\/.]\d{1,2}/.test(s)) {
+	            var p = s.split(/[\/.\s]/);
+	            if (p.length >= 3) {
+	                return p[0] + '-' + String(p[1]).padStart(2, '0') + '-' + String(p[2]).padStart(2, '0');
+	            }
+	        }
+	        if (s.length >= 10 && s.charAt(4) === '-') {
+	            return s.substring(0, 10);
+	        }
+	        return s.length >= 10 ? s.substring(0, 10) : s;
+	    }
+
 	    function formatDetailDateValue(value) {
-	        if (!value) {
-	            return '';
-	        }
-	        if (typeof value === 'string') {
-	            return value.length >= 10 ? value.substring(0, 10) : value;
-	        }
-	        var date = new Date(value);
-	        if (isNaN(date.getTime())) {
-	            return '';
-	        }
-	        return date.getFullYear() + '-' +
-	            String(date.getMonth() + 1).padStart(2, '0') + '-' +
-	            String(date.getDate()).padStart(2, '0');
+	        return normalizeDetailDateString(value);
 	    }
 
 	    function detailDateInputHtml(value, index, field, blurFn) {
 	        var safe = escapeAttrForInput(formatDetailDateValue(value));
 	        return '<input type="text" class="form-control input-sm detail-date-input date-input" value="' + safe + '" ' +
-	               'placeholder="年/月/日" data-field="' + field + '" data-index="' + index + '" ' +
+	               'placeholder="yyyy-MM-dd" readonly data-field="' + field + '" data-index="' + index + '" ' +
 	               'onblur="' + blurFn + '(this, ' + index + ')" ' +
 	               'onkeypress="if(event.keyCode==13){this.blur();return false;}" />';
 	    }
@@ -1891,6 +1912,8 @@
 	                if (strip[k] || /^\d+$/.test(k)) continue;
 	                clean[k] = row[k];
 	            }
+	            clean.productionDate = normalizeDetailDateString(clean.productionDate);
+	            clean.expireDate = normalizeDetailDateString(clean.expireDate);
 	            out.push(clean);
 	        }
 	        return out;
@@ -2001,10 +2024,12 @@
 	    layui.use('laydate', function(){
 	        laydate = layui.laydate;
 	        
-	        // 预计配送日期
+	        // 预计配送日期（显式固定格式，不随系统区域变化）
 	        laydate.render({
 	            elem: '#expectedDeliveryDate',
-	            type: 'date'
+	            type: 'date',
+	            format: 'yyyy-MM-dd',
+	            trigger: 'click'
 	        });
 	    });
 	    
@@ -2043,8 +2068,8 @@
 	                    batchNo: detail.batchNo || '',
 	                    mainBarcode: detail.mainBarcode || '',
 	                    auxBarcode: detail.auxBarcode || '',
-	                    productionDate: detail.productionDate || '',
-	                    expireDate: detail.expireDate || '',
+	                    productionDate: normalizeDetailDateString(detail.productionDate || ''),
+	                    expireDate: normalizeDetailDateString(detail.expireDate || ''),
 	                    manufacturer: detail.manufacturer || '',
 	                    registerNo: detail.registerNo || '',
 	                    nationalInsuranceCode: detail.nationalInsuranceCode || '',
@@ -2314,8 +2339,11 @@
 	                    laydate.render({
 	                        elem: this,
 	                        type: 'date',
+	                        format: 'yyyy-MM-dd',
+	                        trigger: 'click',
 	                        done: function(value, date) {
-	                            $this.val(value);
+	                            var normalized = normalizeDetailDateString(value);
+	                            $this.val(normalized);
 	                            $this.blur();
 	                            // 触发更新
 	                            var index = $this.data('index');
@@ -2491,7 +2519,7 @@
 	        if (!str || !String(str).trim()) {
 	            return null;
 	        }
-	        var s = String(str).trim().substring(0, 10);
+	        var s = normalizeDetailDateString(str);
 	        var parts = s.split('-');
 	        if (parts.length < 3) {
 	            return null;
@@ -2534,7 +2562,11 @@
 	                }
 	            }
 	        }
-	        data[rowIndex].productionDate = value ? String(value).trim().substring(0, 10) : '';
+	        var normalized = normalizeDetailDateString(value);
+	        data[rowIndex].productionDate = normalized;
+	        if (normalized && String($(input).val()).trim() !== normalized) {
+	            $(input).val(normalized);
+	        }
 	    }
 	    
 	    // 更新有效期
@@ -2557,7 +2589,11 @@
 	                }
 	            }
 	        }
-	        data[rowIndex].expireDate = value ? String(value).trim().substring(0, 10) : '';
+	        var normalized = normalizeDetailDateString(value);
+	        data[rowIndex].expireDate = normalized;
+	        if (normalized && String($(input).val()).trim() !== normalized) {
+	            $(input).val(normalized);
+	        }
 	    }
 	    
 	    // 删除明细行 - 定义为全局函数

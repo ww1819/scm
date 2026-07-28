@@ -7,9 +7,11 @@ import javax.validation.constraints.*;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.scm.common.annotation.Excel;
 import com.scm.common.annotation.Excel.ColumnType;
 import com.scm.common.core.domain.BaseEntity;
+import com.scm.common.utils.bean.FlexibleDateDeserializer;
 
 /**
  * 配送明细表 scm_delivery_detail
@@ -90,11 +92,13 @@ public class DeliveryDetail extends BaseEntity
     /** 生产日期 */
     @Excel(name = "生产日期", width = 30, dateFormat = "yyyy-MM-dd")
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    @JsonDeserialize(using = FlexibleDateDeserializer.class)
     private Date productionDate;
 
     /** 有效期 */
     @Excel(name = "有效期", width = 30, dateFormat = "yyyy-MM-dd")
     @JsonFormat(pattern = "yyyy-MM-dd", timezone = "GMT+8")
+    @JsonDeserialize(using = FlexibleDateDeserializer.class)
     private Date expireDate;
 
     /** 生产厂家 */

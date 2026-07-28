@@ -69,7 +69,7 @@
                     <div class="form-group">
                         <label class="col-sm-5 control-label">订单日期：</label>
                         <div class="col-sm-7">
-                            <input name="orderDate" id="orderDate" placeholder="年/月/日" class="form-control" type="text" readonly>
+                            <input name="orderDate" id="orderDate" placeholder="yyyy-MM-dd" class="form-control" type="text" readonly>
                         </div>
                     </div>
                 </div>
@@ -138,10 +138,12 @@
 	    layui.use('laydate', function(){
 	        laydate = layui.laydate;
 	        
-	        // 订单日期
+	        // 订单日期（固定 yyyy-MM-dd，不随系统区域变化）
 	        laydate.render({
 	            elem: '#orderDate',
 	            type: 'date',
+	            format: 'yyyy-MM-dd',
+	            trigger: 'click',
 	            value: [[${order.orderDate != null ? #dates.format(order.orderDate, 'yyyy-MM-dd') : ''}]]
 	        });
 	    });

@@ -312,9 +312,9 @@
 							</li>
 							<li class="select-time">
 								<label>日期：</label>
-								<input type="text" class="scm-push-datetime" id="zsPushBegin" placeholder="开始 年/月/日 时:分:秒" name="params[pushBegin]" autocomplete="off"/>
+								<input type="text" class="scm-push-datetime" id="zsPushBegin" placeholder="yyyy-MM-dd HH:mm:ss" name="params[pushBegin]" autocomplete="off" readonly/>
 								<span>-</span>
-								<input type="text" class="scm-push-datetime" id="zsPushEnd" placeholder="结束 年/月/日 时:分:秒" name="params[pushEnd]" autocomplete="off"/>
+								<input type="text" class="scm-push-datetime" id="zsPushEnd" placeholder="yyyy-MM-dd HH:mm:ss" name="params[pushEnd]" autocomplete="off" readonly/>
 							</li>
 							<li>
 								科室名称：<input type="text" name="ksmc"/>
@@ -400,13 +400,13 @@
 			$('#zsPushBegin').val(formatZsPushDisplayDate(start, false));
 		}
 
-		/** laydate 中文显示格式 */
+		/** laydate 显示/提交统一为 yyyy-MM-dd HH:mm:ss（兼容旧中文显示值） */
 		function formatZsPushDisplayDate(date, endOfDay) {
 			var y = date.getFullYear();
 			var m = padDatePart(date.getMonth() + 1);
 			var d = padDatePart(date.getDate());
 			var time = endOfDay ? '23:59:59' : '00:00:00';
-			return y + '年' + m + '月' + d + '日 ' + time;
+			return y + '-' + m + '-' + d + ' ' + time;
 		}
 
 		function normalizePushRangeParams(obj, beginSel, endSel) {
@@ -443,7 +443,7 @@
 				laydate.render({
 					elem: '#zsPushBegin',
 					type: 'datetime',
-					format: 'yyyy年MM月dd日 HH:mm:ss',
+					format: 'yyyy-MM-dd HH:mm:ss',
 					theme: 'molv',
 					trigger: 'click',
 					btns: ['clear', 'now', 'confirm']
@@ -451,7 +451,7 @@
 				laydate.render({
 					elem: '#zsPushEnd',
 					type: 'datetime',
-					format: 'yyyy年MM月dd日 HH:mm:ss',
+					format: 'yyyy-MM-dd HH:mm:ss',
 					theme: 'molv',
 					trigger: 'click',
 					btns: ['clear', 'now', 'confirm']
