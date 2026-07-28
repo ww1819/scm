@@ -398,6 +398,7 @@
 
 		$(function() {
 		    initDefaultOrderDateRange();
+		    bindOrderSearchSpaceClean();
 		    layoutOrderTableWrapHeight();
 		    queryOrderList();
 		    $(window).resize(function() {
@@ -406,6 +407,45 @@
 		    	setTimeout(refreshOrderTableLayout, 100);
 		    });
 		});
+
+		/** 订单编号/医院名称/供应商名称：输入时自动清除空格（含全角空格） */
+		function stripOrderSearchSpaces($el) {
+			if (!$el || !$el.length) {
+				return;
+			}
+			var v = $el.val();
+			if (v == null || v === '') {
+				return;
+			}
+			var cleaned = String(v).replace(/[\s\u3000]+/g, '');
+			if (cleaned !== v) {
+				var el = $el[0];
+				var start = el.selectionStart;
+				var end = el.selectionEnd;
+				$el.val(cleaned);
+				if (typeof start === 'number' && typeof end === 'number' && el.setSelectionRange) {
+					var diff = v.length - cleaned.length;
+					var ns = Math.max(0, start - diff);
+					var ne = Math.max(0, end - diff);
+					try { el.setSelectionRange(ns, ne); } catch (e) {}
+				}
+			}
+		}
+
+		function sanitizeOrderSearchInputs() {
+			$('#order-form').find('input[name="orderNo"], input[name="hospitalName"], input[name="supplierName"]').each(function () {
+				stripOrderSearchSpaces($(this));
+			});
+		}
+
+		function bindOrderSearchSpaceClean() {
+			$('#order-form').on('input blur paste', 'input[name="orderNo"], input[name="hospitalName"], input[name="supplierName"]', function () {
+				var $input = $(this);
+				setTimeout(function () {
+					stripOrderSearchSpaces($input);
+				}, 0);
+			});
+		}
 
 		function formatOrderDate(date) {
 			var y = date.getFullYear();
@@ -765,6 +805,7 @@
 		    var options = {
 		        url: prefix + "/list",
 		        exportUrl: prefix + "/export",
+		        formId: "order-form",
 		        sortName: "orderDate",
 		        sortOrder: "desc",
 		        modalName: "订单",
@@ -777,6 +818,10 @@
 		        fixedRightNumber: 1,
 		        pageList: [10, 25, 50],
 		        height: calculateTableHeight(),
+		        queryParams: function(params) {
+		            sanitizeOrderSearchInputs();
+		            return $.table.queryParams.call(this, params);
+		        },
 		        onLoadSuccess: function () {
 		            layoutOrderTableWrapHeight();
 		            setTimeout(function () {
