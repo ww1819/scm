@@ -1,6 +1,9 @@
 package com.scm.web.controller.supplier;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,21 +14,31 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.scm.common.annotation.Log;
+import com.scm.common.constant.ScmAuthConstants;
+import com.scm.common.constant.UserConstants;
 import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
+import com.scm.common.core.domain.entity.SysRole;
 import com.scm.common.core.domain.entity.SysUser;
 import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.core.text.Convert;
 import com.scm.common.enums.BusinessType;
 import com.scm.common.utils.DateUtils;
+import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.poi.ExcelUtil;
+import com.scm.common.utils.security.Md5Utils;
+import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.Supplier;
 import com.scm.system.domain.SupplierUser;
+import com.scm.system.mapper.SysRoleMapper;
+import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.ISupplierService;
 import com.scm.system.service.ISupplierUserService;
+import com.scm.system.service.ISysConfigService;
 import com.scm.system.service.ISysUserService;
 
 /**
@@ -47,6 +60,15 @@ public class SupplierUserController extends BaseController
 
     @Autowired
     private ISysUserService userService;
+
+    @Autowired
+    private IHospitalSupplierService hospitalSupplierService;
+
+    @Autowired
+    private ISysConfigService configService;
+
+    @Autowired
+    private SysRoleMapper roleMapper;
 
     @RequiresPermissions("supplier:user:view")
     @GetMapping()
@@ -111,7 +133,7 @@ public class SupplierUserController extends BaseController
     @Log(title = "企业用户管理", businessType = BusinessType.INSERT)
     @PostMapping("/add")
     @ResponseBody
-    public AjaxResult addSave(@Validated SupplierUser supplierUser)
+    public AjaxResult addSave(@Validated SupplierUser supplierUser, @RequestParam("hospitalIds") String hospitalIds)
     {
         Long currentSupplierId = getCurrentLoginSupplierId();
         if (currentSupplierId != null)
@@ -122,12 +144,24 @@ public class SupplierUserController extends BaseController
         {
             return error("未识别到供应商信息，无法新增企业用户");
         }
-
-        // 检查该用户是否已经关联到其他供应商
-        SupplierUser existUser = supplierUserService.selectSupplierUserByUserId(supplierUser.getUserId());
-        if (existUser != null)
+        if (StringUtils.isEmpty(supplierUser.getLoginName()))
         {
-            return error("该用户已经关联到其他供应商，无法重复关联");
+            return error("登录名称不能为空");
+        }
+        if (StringUtils.isEmpty(hospitalIds))
+        {
+            return error("请至少选择一家医院");
+        }
+
+        Long[] hospitalIdArr = Convert.toLongArray(hospitalIds);
+        if (hospitalIdArr == null || hospitalIdArr.length == 0)
+        {
+            return error("请至少选择一家医院");
+        }
+        String hospitalCheck = validateSupplierHospitals(supplierUser.getSupplierId(), hospitalIdArr);
+        if (hospitalCheck != null)
+        {
+            return error(hospitalCheck);
         }
 
         // 新增默认非主账号（主账号给其他账号授权）
@@ -149,6 +183,44 @@ public class SupplierUserController extends BaseController
             }
         }
 
+        SysUser checkUser = new SysUser();
+        checkUser.setLoginName(supplierUser.getLoginName().trim());
+        if (!userService.checkLoginNameUnique(checkUser))
+        {
+            return error("登录名称已存在");
+        }
+
+        String initPassword = configService.selectConfigByKey("sys.user.initPassword");
+        if (StringUtils.isEmpty(initPassword))
+        {
+            initPassword = "123456";
+        }
+        SysRole salesRole = roleMapper.selectGlobalScmRoleByKey(ScmAuthConstants.ROLE_KEY_SUPPLIER_SALES);
+        if (salesRole == null)
+        {
+            return error("全局供应商业务员角色未初始化");
+        }
+
+        SysUser newUser = new SysUser();
+        newUser.setLoginName(supplierUser.getLoginName().trim());
+        newUser.setUserName(StringUtils.isNotEmpty(supplierUser.getUserName()) ? supplierUser.getUserName().trim()
+            : newUser.getLoginName());
+        newUser.setPhonenumber(supplierUser.getPhonenumber());
+        newUser.setEmail(supplierUser.getEmail());
+        newUser.setSex(supplierUser.getSex());
+        newUser.setIdCard(supplierUser.getIdCard());
+        newUser.setUserType(UserConstants.REGISTER_USER_TYPE);
+        newUser.setStatus("0");
+        newUser.setSalt(ShiroUtils.randomSalt());
+        newUser.setPassword(Md5Utils.hash(newUser.getLoginName() + initPassword + newUser.getSalt()));
+        newUser.setPwdPlain(initPassword);
+        newUser.setCreateBy(getLoginName());
+        if (!userService.registerUser(newUser) || newUser.getUserId() == null)
+        {
+            return error("创建用户失败");
+        }
+
+        supplierUser.setUserId(newUser.getUserId());
         supplierUser.setCreateBy(getLoginName());
         supplierUser.setCreateTime(DateUtils.getNowDate());
         if (supplierUser.getStatus() == null)
@@ -156,16 +228,10 @@ public class SupplierUserController extends BaseController
             supplierUser.setStatus("0");
         }
         int rows = supplierUserService.insertSupplierUser(supplierUser);
-        if (rows > 0 && supplierUser.getUserId() != null)
+        if (rows > 0)
         {
-            SysUser sysUser = new SysUser();
-            sysUser.setUserId(supplierUser.getUserId());
-            sysUser.setUserName(supplierUser.getUserName());
-            sysUser.setPhonenumber(supplierUser.getPhonenumber());
-            sysUser.setEmail(supplierUser.getEmail());
-            sysUser.setSex(supplierUser.getSex());
-            sysUser.setIdCard(supplierUser.getIdCard());
-            userService.updateUserInfo(sysUser);
+            // 先绑定供应商，再授权业务员角色（insertUserAuth 会校验供应商绑定）
+            userService.insertUserAuth(newUser.getUserId(), new Long[] { salesRole.getRoleId() });
         }
         return toAjax(rows);
     }
@@ -260,33 +326,44 @@ public class SupplierUserController extends BaseController
     }
 
     /**
-     * 选择用户页面
+     * 选择医院页面（仅展示与供应商有配送关系的医院，支持多选）
      */
     @RequiresPermissions("supplier:user:add")
-    @GetMapping("/selectUser")
-    public String selectUser()
+    @GetMapping("/selectHospital")
+    public String selectHospital(@RequestParam("supplierId") Long supplierId, ModelMap mmap)
     {
-        return prefix + "/user/selectUser";
+        Long currentSupplierId = getCurrentLoginSupplierId();
+        if (currentSupplierId != null)
+        {
+            supplierId = currentSupplierId;
+        }
+        mmap.put("supplierId", supplierId);
+        return prefix + "/user/selectHospital";
     }
 
     /**
-     * 查询未关联的用户列表（用于选择用户）
+     * 查询供应商已有配送关系的医院列表
      */
     @RequiresPermissions("supplier:user:add")
-    @PostMapping("/selectUserList")
+    @PostMapping("/selectHospitalList")
     @ResponseBody
-    public TableDataInfo selectUserList(SysUser user)
+    public TableDataInfo selectHospitalList(HospitalSupplier query)
     {
-        startPage();
-        // 查询所有正常状态的用户
-        user.setStatus("0");
-        List<SysUser> list = userService.selectUserList(user);
-        // 过滤掉已经关联到供应商的用户
-        List<SupplierUser> supplierUsers = supplierUserService.selectSupplierUserList(new SupplierUser());
-        for (SupplierUser su : supplierUsers)
+        Long currentSupplierId = getCurrentLoginSupplierId();
+        if (currentSupplierId != null)
         {
-            list.removeIf(u -> u.getUserId().equals(su.getUserId()));
+            query.setSupplierId(currentSupplierId);
         }
+        if (query.getSupplierId() == null)
+        {
+            return getDataTable(Collections.emptyList());
+        }
+        // 已审核通过、启用中的配送/供货关联
+        query.setStatus("0");
+        query.setAuditStatus("1");
+        query.setDisableStatus("0");
+        startPage();
+        List<HospitalSupplier> list = hospitalSupplierService.selectHospitalSupplierList(query);
         return getDataTable(list);
     }
 
@@ -337,5 +414,36 @@ public class SupplierUserController extends BaseController
         }
         return currentSupplierId.equals(supplierUser.getSupplierId());
     }
-}
 
+    /**
+     * 校验所选医院是否均与供应商存在有效配送关系。
+     */
+    private String validateSupplierHospitals(Long supplierId, Long[] hospitalIds)
+    {
+        HospitalSupplier q = new HospitalSupplier();
+        q.setSupplierId(supplierId);
+        q.setStatus("0");
+        q.setAuditStatus("1");
+        q.setDisableStatus("0");
+        List<HospitalSupplier> linked = hospitalSupplierService.selectHospitalSupplierList(q);
+        Set<Long> allowed = new HashSet<>();
+        if (linked != null)
+        {
+            for (HospitalSupplier hs : linked)
+            {
+                if (hs.getHospitalId() != null)
+                {
+                    allowed.add(hs.getHospitalId());
+                }
+            }
+        }
+        for (Long hospitalId : hospitalIds)
+        {
+            if (hospitalId == null || !allowed.contains(hospitalId))
+            {
+                return "所选医院中存在与当前供应商无配送关系的医院";
+            }
+        }
+        return null;
+    }
+}

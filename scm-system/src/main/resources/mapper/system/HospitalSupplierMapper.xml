@@ -64,6 +64,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="disableStatus != null and disableStatus != ''">
                 AND hs.disable_status = #{disableStatus}
             </if>
+            <if test="hospitalName != null and hospitalName != ''">
+                AND h.hospital_name like concat('%', #{hospitalName}, '%')
+            </if>
+            <if test="hospitalCode != null and hospitalCode != ''">
+                AND h.hospital_code like concat('%', #{hospitalCode}, '%')
+            </if>
         </where>
         order by hs.create_time desc
     </select>

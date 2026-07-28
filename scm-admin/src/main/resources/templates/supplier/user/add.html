@@ -6,8 +6,8 @@
 <body class="white-bg">
     <div class="wrapper wrapper-content animated fadeInRight ibox-content">
         <form class="form-horizontal m" id="form-supplier-user-add">
-            <input type="hidden" name="userId" id="userId" required>
             <input type="hidden" name="supplierId" id="supplierId" th:value="${currentSupplier != null ? currentSupplier.supplierId : ''}" required>
+            <input type="hidden" name="hospitalIds" id="hospitalIds">
             <h4 class="form-header h4">基本信息</h4>
             <div class="row">
             	<div class="col-sm-3">
@@ -41,14 +41,7 @@
                     <div class="form-group">
                         <label class="col-sm-4 control-label is-required">登录名称：</label>
                         <div class="col-sm-8">
-                            <div class="input-group">
-                                <input id="loginName" class="form-control" type="text" placeholder="请选择用户" readonly required>
-                                <span class="input-group-btn">
-                                    <button type="button" class="btn btn-primary" onclick="selectUser()">
-                                        <i class="fa fa-search"></i>选择
-                                    </button>
-                                </span>
-                            </div>
+                            <input name="loginName" id="loginName" class="form-control" type="text" maxlength="30" required>
                         </div>
                     </div>
                 </div>
@@ -99,6 +92,21 @@
                 </div>
             </div>
             <div class="row">
+                <div class="col-sm-6">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label is-required">医院：</label>
+                        <div class="col-sm-10">
+                            <div class="input-group">
+                                <input id="hospitalNames" class="form-control" type="text" placeholder="请选择医院（可多选）" readonly required>
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-primary" onclick="selectHospital()">
+                                        <i class="fa fa-search"></i>选择
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="col-sm-3">
                     <div class="form-group">
                         <label class="col-sm-4 control-label is-required">主账号：</label>
@@ -139,7 +147,7 @@
             onkeyup: false,
             rules: {
                 supplierId: { required: true },
-                userId: { required: true },
+                loginName: { required: true },
                 userName: { required: true }
             },
             focusCleanup: true
@@ -149,15 +157,17 @@
             var $opt = $(this).find("option:selected");
             $("#supplierId").val($opt.val() || "");
             $("#supplierCode").val($opt.attr("data-code") || "");
+            $("#hospitalIds").val("");
+            $("#hospitalNames").val("");
         });
 
         function submitHandler() {
-            if (!$("#userId").val()) {
-                $.modal.alertWarning("请先选择用户");
-                return;
-            }
             if (!$("#supplierId").val()) {
                 $.modal.alertWarning("请选择供应商");
+                return;
+            }
+            if (!$("#hospitalIds").val()) {
+                $.modal.alertWarning("请至少选择一家医院");
                 return;
             }
             if ($.validate.form()) {
@@ -165,31 +175,34 @@
             }
         }
 
-        function selectUser() {
+        function selectHospital() {
+            var supplierId = $("#supplierId").val();
+            if (!supplierId) {
+                $.modal.alertWarning("请先选择供应商");
+                return;
+            }
             var options = {
-                title: '选择用户',
-                url: prefix + "/selectUser",
+                title: '选择医院',
+                url: prefix + "/selectHospital?supplierId=" + supplierId,
                 width: "800",
                 height: "500",
                 callBack: function(index, layero) {
                     var body = $.modal.getChildFrame(index);
                     var rows = body.find('#bootstrap-table').bootstrapTable('getSelections');
                     if (!rows || rows.length === 0) {
-                        $.modal.alertWarning("请至少选择一条记录");
+                        $.modal.alertWarning("请至少选择一家医院");
                         return false;
                     }
-                    if (rows.length > 1) {
-                        $.modal.alertWarning("只能选择一条记录");
-                        return false;
-                    }
-                    var row = rows[0];
-                    $("#userId").val(row.userId);
-                    $("#loginName").val(row.loginName || "");
-                    $("#userName").val(row.userName || "");
-                    $("#phonenumber").val(row.phonenumber || "");
-                    $("#email").val(row.email || "");
-                    $("#sex").val(row.sex || "");
-                    $("#idCard").val(row.idCard || "");
+                    var ids = [];
+                    var names = [];
+                    $.each(rows, function(i, row) {
+                        if (row.hospitalId) {
+                            ids.push(row.hospitalId);
+                            names.push(row.hospitalName || '');
+                        }
+                    });
+                    $("#hospitalIds").val(ids.join(','));
+                    $("#hospitalNames").val(names.join('、'));
                     $.modal.close(index);
                 }
             };
