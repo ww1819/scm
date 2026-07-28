@@ -77,7 +77,7 @@
                     <div class="form-group">
                         <label class="col-sm-4 control-label">鍙戣瘉鏃ユ湡锛?/label>
                         <div class="col-sm-8">
-                            <input name="issueDate" placeholder="璇疯緭鍏ュ彂璇佹棩鏈? class="form-control" type="date" th:value="${#dates.format(supplierCertificate.issueDate, 'yyyy-MM-dd')}">
+                            <input name="issueDate" id="issueDate" placeholder="yyyy-MM-dd" class="form-control" type="text" readonly th:value="${#dates.format(supplierCertificate.issueDate, 'yyyy-MM-dd')}">
                         </div>
                     </div>
                 </div>
@@ -85,7 +85,7 @@
                     <div class="form-group">
                         <label class="col-sm-4 control-label">鏈夋晥鏈熻嚦锛?/label>
                         <div class="col-sm-8">
-                            <input name="expireDate" placeholder="璇疯緭鍏ユ湁鏁堟湡鑷? class="form-control" type="date" th:value="${#dates.format(supplierCertificate.expireDate, 'yyyy-MM-dd')}">
+                            <input name="expireDate" id="expireDate" placeholder="yyyy-MM-dd" class="form-control" type="text" readonly th:value="${#dates.format(supplierCertificate.expireDate, 'yyyy-MM-dd')}">
                         </div>
                     </div>
                 </div>
@@ -140,6 +140,11 @@
 	    var certFileHelper;
 
 	    $(function() {
+	        layui.use('laydate', function() {
+	            var laydate = layui.laydate;
+	            laydate.render({ elem: '#issueDate', type: 'date', format: 'yyyy-MM-dd', trigger: 'click' });
+	            laydate.render({ elem: '#expireDate', type: 'date', format: 'yyyy-MM-dd', trigger: 'click' });
+	        });
 	        $("#certificateName").on('change', function() {
 	            var isLongTerm = $(this).val();
 	            var $expireDateInput = $("input[name='expireDate']");

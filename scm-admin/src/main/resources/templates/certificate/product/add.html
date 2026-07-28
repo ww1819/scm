@@ -194,19 +194,19 @@
                     <div class="col-sm-3">
                         <div class="cert-inline-field">
                             <label>注册有效期</label>
-                            <input name="registerValidDate" id="registerValidDate" placeholder="年/月/日" class="form-control" type="text">
+                            <input name="registerValidDate" id="registerValidDate" placeholder="yyyy-MM-dd" class="form-control" type="text" readonly>
                         </div>
                     </div>
                     <div class="col-sm-3">
                         <div class="cert-inline-field">
                             <label>有效期至</label>
-                            <input name="expireDate" id="expireDate" placeholder="年/月/日" class="form-control" type="text">
+                            <input name="expireDate" id="expireDate" placeholder="yyyy-MM-dd" class="form-control" type="text" readonly>
                         </div>
                     </div>
                     <div class="col-sm-3">
                         <div class="cert-inline-field">
                             <label>发证日期</label>
-                            <input name="registerIssueDate" id="registerIssueDate" placeholder="年/月/日" class="form-control" type="text">
+                            <input name="registerIssueDate" id="registerIssueDate" placeholder="yyyy-MM-dd" class="form-control" type="text" readonly>
                         </div>
                     </div>
                     <div class="col-sm-3">
@@ -400,9 +400,9 @@
 
 	    layui.use('laydate', function(){
 	        laydate = layui.laydate;
-	        laydate.render({ elem: '#registerIssueDate', type: 'date' });
-	        laydate.render({ elem: '#registerValidDate', type: 'date' });
-	        laydate.render({ elem: '#expireDate', type: 'date' });
+	        laydate.render({ elem: '#registerIssueDate', type: 'date', format: 'yyyy-MM-dd', trigger: 'click' });
+	        laydate.render({ elem: '#registerValidDate', type: 'date', format: 'yyyy-MM-dd', trigger: 'click' });
+	        laydate.render({ elem: '#expireDate', type: 'date', format: 'yyyy-MM-dd', trigger: 'click' });
 	    });
 
 	    function syncLinkedHospitalFromSelect() {

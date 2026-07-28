@@ -132,8 +132,8 @@
 		if (!hasError) {
 			layui.use('laydate', function () {
 				var laydate = layui.laydate;
-				laydate.render({ elem: '#licenseIssueDateEdit', type: 'date' });
-				laydate.render({ elem: '#licenseExpireDateEdit', type: 'date' });
+				laydate.render({ elem: '#licenseIssueDateEdit', type: 'date', format: 'yyyy-MM-dd', trigger: 'click' });
+				laydate.render({ elem: '#licenseExpireDateEdit', type: 'date', format: 'yyyy-MM-dd', trigger: 'click' });
 			});
 		}
 		function submitLicenseSnapEdit() {

@@ -232,11 +232,11 @@
 								</div>
 								<div class="associate-field">
 									<label>供货开始日期</label>
-									<input type="date" class="form-control" id="supplyStartDate" name="supplyStartDate" required />
+									<input type="text" class="form-control" id="supplyStartDate" name="supplyStartDate" placeholder="yyyy-MM-dd" readonly required />
 								</div>
 								<div class="associate-field">
 									<label>供货结束日期</label>
-									<input type="date" class="form-control" id="supplyEndDate" name="supplyEndDate" required />
+									<input type="text" class="form-control" id="supplyEndDate" name="supplyEndDate" placeholder="yyyy-MM-dd" readonly required />
 								</div>
 							</div>
 							<div class="associate-row">
@@ -302,6 +302,12 @@
 		var prefix = ctx + "supplier/associate";
 		var withdrawModifyFlag = [[${@permission.hasPermi('supplier:associateModify:withdraw')}]];
 		var modifyApplyTableId = "modify-apply-table";
+
+		layui.use('laydate', function() {
+			var laydate = layui.laydate;
+			laydate.render({ elem: '#supplyStartDate', type: 'date', format: 'yyyy-MM-dd', trigger: 'click' });
+			laydate.render({ elem: '#supplyEndDate', type: 'date', format: 'yyyy-MM-dd', trigger: 'click' });
+		});
 
 		var modifyColWidths = {
 			rowIndex: 60,

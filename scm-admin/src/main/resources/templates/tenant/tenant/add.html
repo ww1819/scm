@@ -53,7 +53,7 @@
                     <div class="form-group">
                         <label class="col-sm-4 control-label">计划停用时间：</label>
                         <div class="col-sm-8">
-                            <input name="plannedStopTime" id="plannedStopTime" placeholder="选填" class="form-control" type="text">
+                            <input name="plannedStopTime" id="plannedStopTime" placeholder="yyyy-MM-dd HH:mm:ss" class="form-control" type="text" readonly>
                         </div>
                     </div>
                 </div>
@@ -107,7 +107,8 @@
 	            laydate.render({
 	                elem: '#plannedStopTime',
 	                type: 'datetime',
-	                format: 'yyyy-MM-dd HH:mm:ss'
+	                format: 'yyyy-MM-dd HH:mm:ss',
+	                trigger: 'click'
 	            });
 	        });
 	        $('#tenantName').on('input', function() {

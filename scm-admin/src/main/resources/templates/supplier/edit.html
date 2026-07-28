@@ -140,7 +140,7 @@
                     <div class="col-sm-3">
                         <div class="supplier-inline-field">
                             <label>资质有效期</label>
-                            <input name="qualificationExpiryDate" placeholder="请选择资质有效期" class="form-control" type="text" id="qualificationExpiryDate" th:value="${supplier.qualificationExpiryDate != null ? #dates.format(supplier.qualificationExpiryDate, 'yyyy-MM-dd') : ''}">
+                            <input name="qualificationExpiryDate" placeholder="yyyy-MM-dd" class="form-control" type="text" id="qualificationExpiryDate" readonly th:value="${supplier.qualificationExpiryDate != null ? #dates.format(supplier.qualificationExpiryDate, 'yyyy-MM-dd') : ''}">
                         </div>
                     </div>
                     <div class="col-sm-3">
@@ -322,7 +322,8 @@
 	            layui.laydate.render({
 	                elem: '#qualificationExpiryDate',
 	                type: 'date',
-	                format: 'yyyy-MM-dd'
+	                format: 'yyyy-MM-dd',
+	                trigger: 'click'
 	            });
 	        });
 	    });

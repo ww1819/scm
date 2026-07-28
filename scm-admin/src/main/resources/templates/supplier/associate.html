@@ -230,11 +230,11 @@
 								</div>
 								<div class="associate-field">
 									<label>供货开始日期</label>
-									<input type="date" class="form-control" id="supplyStartDate" name="supplyStartDate" required />
+									<input type="text" class="form-control" id="supplyStartDate" name="supplyStartDate" placeholder="yyyy-MM-dd" readonly required />
 								</div>
 								<div class="associate-field">
 									<label>供货结束日期</label>
-									<input type="date" class="form-control" id="supplyEndDate" name="supplyEndDate" required />
+									<input type="text" class="form-control" id="supplyEndDate" name="supplyEndDate" placeholder="yyyy-MM-dd" readonly required />
 								</div>
 								<div class="associate-field">
 									<label>合同编号</label>
@@ -300,6 +300,12 @@
 		var prefix = ctx + "supplier/associate";
 		var withdrawFlag = [[${@permission.hasPermi('supplier:associate:withdraw')}]];
 		var associateApplyTableId = "apply-table";
+
+		layui.use('laydate', function() {
+			var laydate = layui.laydate;
+			laydate.render({ elem: '#supplyStartDate', type: 'date', format: 'yyyy-MM-dd', trigger: 'click' });
+			laydate.render({ elem: '#supplyEndDate', type: 'date', format: 'yyyy-MM-dd', trigger: 'click' });
+		});
 
 		var associateColWidths = {
 			rowIndex: 60,

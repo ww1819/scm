@@ -54,7 +54,7 @@
                     <div class="form-group">
                         <label class="col-sm-4 control-label">计划停用时间：</label>
                         <div class="col-sm-8">
-                            <input name="plannedStopTime" id="plannedStopTime" class="form-control" type="text" th:value="${tenant.plannedStopTime != null ? #dates.format(tenant.plannedStopTime, 'yyyy-MM-dd HH:mm:ss') : ''}">
+                            <input name="plannedStopTime" id="plannedStopTime" placeholder="yyyy-MM-dd HH:mm:ss" class="form-control" type="text" readonly th:value="${tenant.plannedStopTime != null ? #dates.format(tenant.plannedStopTime, 'yyyy-MM-dd HH:mm:ss') : ''}">
                         </div>
                     </div>
                 </div>
@@ -109,7 +109,8 @@
 	            laydate.render({
 	                elem: '#plannedStopTime',
 	                type: 'datetime',
-	                format: 'yyyy-MM-dd HH:mm:ss'
+	                format: 'yyyy-MM-dd HH:mm:ss',
+	                trigger: 'click'
 	            });
 	        });
 	    });

@@ -324,6 +324,7 @@ public class DeliveryController extends BaseController
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         objectMapper.configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true);
+        // productionDate/expireDate 使用 FlexibleDateDeserializer，兼容 yyyy-MM-dd / yyyyMMdd
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT+8"));
         objectMapper.setDateFormat(dateFormat);

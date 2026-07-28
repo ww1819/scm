@@ -252,16 +252,16 @@
                     <div class="col-sm-3">
                         <div class="cert-inline-field">
                             <label>成立日期</label>
-                            <input name="issueDate" type="date" class="form-control">
+                            <input name="issueDate" id="issueDate" type="text" class="form-control" placeholder="yyyy-MM-dd" readonly>
                         </div>
                     </div>
                     <div class="col-sm-6">
                         <div class="cert-inline-field cert-term-field">
                             <label>营业期限起止日期</label>
                             <div class="cert-term-range">
-                                <input name="registerDate" id="registerDate" type="date" class="form-control">
+                                <input name="registerDate" id="registerDate" type="text" class="form-control" placeholder="yyyy-MM-dd" readonly>
                                 <span class="cert-term-sep">至</span>
-                                <input name="expireDate" id="expireDate" type="date" class="form-control">
+                                <input name="expireDate" id="expireDate" type="text" class="form-control" placeholder="yyyy-MM-dd" readonly>
                             </div>
                         </div>
                     </div>
@@ -314,11 +314,11 @@
 	    function toggleBusinessTermInputs() {
 	        var isLongTerm = $("#certificateName").val();
 	        if (isLongTerm === '是') {
-	            $("#registerDate").val('').prop('readonly', true);
-	            $("#expireDate").val('').prop('readonly', true);
+	            $("#registerDate").val('').prop('disabled', true);
+	            $("#expireDate").val('').prop('disabled', true);
 	        } else {
-	            $("#registerDate").prop('readonly', false);
-	            $("#expireDate").prop('readonly', false);
+	            $("#registerDate").prop('disabled', false);
+	            $("#expireDate").prop('disabled', false);
 	        }
 	    }
 
@@ -326,6 +326,12 @@
 	        $("#certificateName").on('change', toggleBusinessTermInputs);
 	        toggleBusinessTermInputs();
 	        certFileHelper = initSupplierCertCosUpload({ certEditable: true });
+	        layui.use('laydate', function() {
+	            var laydate = layui.laydate;
+	            laydate.render({ elem: '#issueDate', type: 'date', format: 'yyyy-MM-dd', trigger: 'click' });
+	            laydate.render({ elem: '#registerDate', type: 'date', format: 'yyyy-MM-dd', trigger: 'click' });
+	            laydate.render({ elem: '#expireDate', type: 'date', format: 'yyyy-MM-dd', trigger: 'click' });
+	        });
 	    });
 
         $("#form-supplier-certificate-add").validate({
