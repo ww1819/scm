@@ -146,19 +146,31 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <include refid="selectOrderVo"/>
         <where>
             <if test="orderNo != null and orderNo != ''">
-                AND o.order_no like concat('%', #{orderNo}, '%')
+                AND LOWER(IFNULL(o.order_no, '')) like concat('%', LOWER(#{orderNo}), '%')
             </if>
             <if test="hospitalId != null">
                 AND o.hospital_id = #{hospitalId}
             </if>
             <if test="hospitalName != null and hospitalName != ''">
-                AND h.hospital_name like concat('%', #{hospitalName}, '%')
+                AND (
+                    IFNULL(h.hospital_name, '') like concat('%', #{hospitalName}, '%')
+                    OR IFNULL(h.hospital_short_name, '') like concat('%', #{hospitalName}, '%')
+                    OR IFNULL(h.hospital_code, '') like concat('%', #{hospitalName}, '%')
+                    OR LOWER(IFNULL(h.pinyin_code, '')) like concat('%', LOWER(#{hospitalName}), '%')
+                )
             </if>
             <if test="supplierId != null">
                 AND o.supplier_id = #{supplierId}
             </if>
             <if test="supplierName != null and supplierName != ''">
-                AND s.company_name like concat('%', #{supplierName}, '%')
+                AND (
+                    IFNULL(s.company_name, '') like concat('%', #{supplierName}, '%')
+                    OR IFNULL(o.order_supplier_name, '') like concat('%', #{supplierName}, '%')
+                    OR IFNULL(s.company_short_name, '') like concat('%', #{supplierName}, '%')
+                    OR IFNULL(s.supplier_code, '') like concat('%', #{supplierName}, '%')
+                    OR LOWER(IFNULL(s.pinyin_code, '')) like concat('%', LOWER(#{supplierName}), '%')
+                    OR LOWER(IFNULL(s.company_short_name, '')) like concat('%', LOWER(#{supplierName}), '%')
+                )
             </if>
             <if test="orderStatus != null and orderStatus != ''">
                 AND o.order_status = #{orderStatus}
