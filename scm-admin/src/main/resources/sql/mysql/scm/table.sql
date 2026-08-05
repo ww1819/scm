@@ -91,6 +91,8 @@ CREATE TABLE IF NOT EXISTS `scm_hospital` (
   `hospital_short_name` varchar(100) DEFAULT '' COMMENT '医院简称',
   `pinyin_code` varchar(64) DEFAULT '' COMMENT '首拼简码（医院名称拼音首字母，小写）',
   `unified_credit_code` varchar(18) DEFAULT '' COMMENT '社会统一信用代码',
+  `unit_nature` varchar(50) DEFAULT '' COMMENT '单位性质',
+  `legal_person` varchar(50) DEFAULT '' COMMENT '法人代表',
   `hospital_level` varchar(50) DEFAULT '' COMMENT '医院等级',
   `province` varchar(50) DEFAULT '' COMMENT '省份/直辖市',
   `city` varchar(50) DEFAULT '' COMMENT '城市',

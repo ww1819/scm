@@ -120,16 +120,15 @@
                             <label>医院等级</label>
                             <select name="hospitalLevel" class="form-control">
                                 <option value="">请选择医院等级</option>
-                                <option value="一级" th:selected="${hospital.hospitalLevel == '一级'}">一级</option>
-                                <option value="二级" th:selected="${hospital.hospitalLevel == '二级'}">二级</option>
-                                <option value="三级" th:selected="${hospital.hospitalLevel == '三级'}">三级</option>
-                                <option value="社区卫生中心" th:selected="${hospital.hospitalLevel == '社区卫生中心'}">社区卫生中心</option>
-                                <option value="分子公司" th:selected="${hospital.hospitalLevel == '分子公司'}">分子公司</option>
-                                <option value="小型厂矿医院" th:selected="${hospital.hospitalLevel == '小型厂矿医院'}">小型厂矿医院</option>
-                                <option value="门诊" th:selected="${hospital.hospitalLevel == '门诊'}">门诊</option>
-                                <option value="医药零售连锁" th:selected="${hospital.hospitalLevel == '医药零售连锁'}">医药零售连锁</option>
-                                <option value="单体零售药店" th:selected="${hospital.hospitalLevel == '单体零售药店'}">单体零售药店</option>
-                                <option value="乡镇卫生院" th:selected="${hospital.hospitalLevel == '乡镇卫生院'}">乡镇卫生院</option>
+                                <option value="三级甲等" th:selected="${hospital.hospitalLevel == '三级甲等'}">三级甲等</option>
+                                <option value="三级乙等" th:selected="${hospital.hospitalLevel == '三级乙等'}">三级乙等</option>
+                                <option value="三级丙等" th:selected="${hospital.hospitalLevel == '三级丙等'}">三级丙等</option>
+                                <option value="二级甲等" th:selected="${hospital.hospitalLevel == '二级甲等'}">二级甲等</option>
+                                <option value="二级乙等" th:selected="${hospital.hospitalLevel == '二级乙等'}">二级乙等</option>
+                                <option value="二级丙等" th:selected="${hospital.hospitalLevel == '二级丙等'}">二级丙等</option>
+                                <option value="一级甲等" th:selected="${hospital.hospitalLevel == '一级甲等'}">一级甲等</option>
+                                <option value="一级乙等" th:selected="${hospital.hospitalLevel == '一级乙等'}">一级乙等</option>
+                                <option value="一级丙等" th:selected="${hospital.hospitalLevel == '一级丙等'}">一级丙等</option>
                             </select>
                         </div>
                     </div>
@@ -193,6 +192,20 @@
                         <div class="hospital-inline-field">
                             <label>备注</label>
                             <textarea name="remark" maxlength="500" class="form-control" rows="2" placeholder="请输入备注" th:text="${hospital.remark}"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-3">
+                        <div class="hospital-inline-field">
+                            <label>单位性质</label>
+                            <input name="unitNature" placeholder="请输入单位性质" class="form-control" type="text" maxlength="50" th:value="${hospital.unitNature}">
+                        </div>
+                    </div>
+                    <div class="col-sm-3">
+                        <div class="hospital-inline-field">
+                            <label>法人代表</label>
+                            <input name="legalPerson" placeholder="请输入法人代表" class="form-control" type="text" maxlength="50" th:value="${hospital.legalPerson}">
                         </div>
                     </div>
                 </div>

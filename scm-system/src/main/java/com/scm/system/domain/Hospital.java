@@ -40,6 +40,14 @@ public class Hospital extends BaseEntity
     @Excel(name = "社会统一信用代码")
     private String unifiedCreditCode;
 
+    /** 单位性质 */
+    @Excel(name = "单位性质")
+    private String unitNature;
+
+    /** 法人代表 */
+    @Excel(name = "法人代表")
+    private String legalPerson;
+
     /** 医院等级 */
     @Excel(name = "医院等级")
     private String hospitalLevel;
@@ -139,6 +147,28 @@ public class Hospital extends BaseEntity
     public void setUnifiedCreditCode(String unifiedCreditCode)
     {
         this.unifiedCreditCode = unifiedCreditCode;
+    }
+
+    @Size(min = 0, max = 50, message = "单位性质不能超过50个字符")
+    public String getUnitNature()
+    {
+        return unitNature;
+    }
+
+    public void setUnitNature(String unitNature)
+    {
+        this.unitNature = unitNature;
+    }
+
+    @Size(min = 0, max = 50, message = "法人代表不能超过50个字符")
+    public String getLegalPerson()
+    {
+        return legalPerson;
+    }
+
+    public void setLegalPerson(String legalPerson)
+    {
+        this.legalPerson = legalPerson;
     }
 
     @Size(min = 0, max = 50, message = "医院等级不能超过50个字符")
@@ -249,6 +279,8 @@ public class Hospital extends BaseEntity
             .append("hospitalShortName", getHospitalShortName())
             .append("pinyinCode", getPinyinCode())
             .append("unifiedCreditCode", getUnifiedCreditCode())
+            .append("unitNature", getUnitNature())
+            .append("legalPerson", getLegalPerson())
             .append("hospitalLevel", getHospitalLevel())
             .append("province", getProvince())
             .append("city", getCity())

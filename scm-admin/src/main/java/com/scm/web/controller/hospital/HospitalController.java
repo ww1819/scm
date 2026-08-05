@@ -176,6 +176,8 @@ public class HospitalController extends BaseController
         {
             return error("新增医院'" + hospital.getHospitalName() + "'失败，医院编码已存在");
         }
+        // 社会统一信用代码仅允许修改时维护
+        hospital.setUnifiedCreditCode(null);
         hospital.setCreateBy(getLoginName());
         return toAjax(hospitalService.insertHospital(hospital));
     }

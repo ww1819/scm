@@ -929,6 +929,12 @@ CREATE TABLE IF NOT EXISTS `scm_reconciliation` (
 CALL add_table_column('scm_hospital', 'unified_credit_code', 'varchar(18)', '社会统一信用代码', NULL);
 /
 
+-- ========== scm_hospital：单位性质、法人代表 ==========
+CALL add_table_column('scm_hospital', 'unit_nature', 'varchar(50)', '单位性质', NULL);
+/
+CALL add_table_column('scm_hospital', 'legal_person', 'varchar(50)', '法人代表', NULL);
+/
+
 -- ========== scm_supplier_certificate：certificate_type 误存 type_id 时还原为类型名称 ==========
 UPDATE scm_supplier_certificate c
 INNER JOIN scm_certificate_type t ON t.type_id = CAST(c.certificate_type AS UNSIGNED)

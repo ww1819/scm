@@ -1,0 +1,1 @@
+ALTER TABLE scm_hospital ADD COLUMN unit_nature varchar(50) DEFAULT '' COMMENT '单位性质';
