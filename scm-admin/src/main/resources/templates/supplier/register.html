@@ -277,7 +277,8 @@
         }
         /* 账号信息 / 公司信息：三列网格，收紧列间距 */
         #registerFormSupplier .register-account-grid,
-        #registerFormSupplier .register-company-grid {
+        #registerFormSupplier .register-company-grid,
+        #registerFormSupplier .register-contact-grid {
             display: grid;
             grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
             column-gap: 4px;
@@ -288,7 +289,13 @@
             grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) minmax(0, 1fr);
         }
         #registerFormSupplier .register-account-grid > .register-field-inline,
-        #registerFormSupplier .register-company-grid > .register-field-inline {
+        #registerFormSupplier .register-company-grid > .register-field-inline,
+        #registerFormSupplier .register-contact-grid > .register-field-inline {
+            min-width: 0;
+            width: 100%;
+        }
+        #registerFormSupplier .register-contact-grid > .register-field-span {
+            grid-column: 1 / -1;
             min-width: 0;
             width: 100%;
         }
@@ -298,9 +305,17 @@
             width: 90px;
             max-width: 90px;
         }
+        #registerFormSupplier .register-contact-grid .register-field-label {
+            flex: 0 0 100px;
+            width: 100px;
+            max-width: 100px;
+        }
         #registerFormSupplier .register-account-grid .register-inline-err,
         #registerFormSupplier .register-company-grid .register-inline-err {
             left: 98px;
+        }
+        #registerFormSupplier .register-contact-grid .register-inline-err {
+            left: 108px;
         }
     </style>
 </head>
@@ -328,7 +343,7 @@
                         </div>
                         <div class="register-field-inline">
                             <label class="register-field-label" for="supplierRealName"><span class="req-star">*</span>用户姓名</label>
-                            <input type="text" name="realName" id="supplierRealName" class="form-control" placeholder="真实姓名，用于系统内展示" maxlength="50" autocomplete="name"/>
+                            <input type="text" name="realName" id="supplierRealName" class="form-control" placeholder="请输入姓名" maxlength="50" autocomplete="name"/>
                         </div>
                         <div class="register-field-inline">
                             <label class="register-field-label" for="supplierSex">性别</label>
@@ -346,7 +361,7 @@
                         </div>
                         <div class="register-field-inline">
                             <label class="register-field-label" for="companyShortName">公司简码</label>
-                            <input type="text" name="companyShortName" id="companyShortName" class="form-control" placeholder="拼音首字母，自动填充" maxlength="100" readonly/>
+                            <input type="text" name="companyShortName" id="companyShortName" class="form-control" placeholder="简码" maxlength="100" readonly/>
                         </div>
                         <div class="register-field-inline">
                             <label class="register-field-label" for="legalPerson">法人</label>
@@ -358,79 +373,53 @@
                         </div>
                         <div class="register-field-inline register-field-capital">
                             <label class="register-field-label" for="registeredCapital">注册资金</label>
-                            <input type="text" name="registeredCapital" id="registeredCapital" class="form-control" placeholder="请输入整数" maxlength="20" inputmode="numeric" autocomplete="off"/>
+                            <input type="text" name="registeredCapital" id="registeredCapital" class="form-control" placeholder="请输入" maxlength="20" inputmode="numeric" autocomplete="off"/>
                             <span class="register-unit-suffix">万元</span>
                         </div>
                     </div>
                     <h5>联系信息</h5>
-                    <div class="row form-tight-row">
-                        <div class="col-sm-4">
-                            <div class="register-field-inline">
-                                <label class="register-field-label" for="selProvince"><span class="req-star">*</span>省份/直辖市</label>
-                                <select name="province" id="selProvince" class="form-control" title="省份/直辖市（必填）">
-                                    <option value="">请选择省份/直辖市</option>
-                                </select>
-                            </div>
+                    <div class="register-contact-grid">
+                        <div class="register-field-inline">
+                            <label class="register-field-label" for="selProvince"><span class="req-star">*</span>省份/直辖市</label>
+                            <select name="province" id="selProvince" class="form-control" title="省份/直辖市（必填）">
+                                <option value="">请选择省份/直辖市</option>
+                            </select>
                         </div>
-                        <div class="col-sm-4">
-                            <div class="register-field-inline">
-                                <label class="register-field-label" for="selCity"><span class="req-star">*</span>城市</label>
-                                <select name="city" id="selCity" class="form-control" title="城市（必填）">
-                                    <option value="">请选择城市</option>
-                                </select>
-                            </div>
+                        <div class="register-field-inline">
+                            <label class="register-field-label" for="selCity"><span class="req-star">*</span>城市</label>
+                            <select name="city" id="selCity" class="form-control" title="城市（必填）">
+                                <option value="">请选择城市</option>
+                            </select>
                         </div>
-                        <div class="col-sm-4">
-                            <div class="register-field-inline">
-                                <label class="register-field-label" for="selDistrict"><span class="req-star">*</span>区县</label>
-                                <select name="district" id="selDistrict" class="form-control" title="区县（必填）">
-                                    <option value="">请选择区县</option>
-                                </select>
-                            </div>
+                        <div class="register-field-inline">
+                            <label class="register-field-label" for="selDistrict"><span class="req-star">*</span>区县</label>
+                            <select name="district" id="selDistrict" class="form-control" title="区县（必填）">
+                                <option value="">请选择区县</option>
+                            </select>
                         </div>
-                    </div>
-                    <div class="row form-tight-row">
-                        <div class="col-sm-12">
-                            <div class="register-field-inline">
-                                <label class="register-field-label" for="address"><span class="req-star">*</span>详细地址</label>
-                                <input type="text" name="address" id="address" class="form-control" placeholder="请输入详细地址" maxlength="500"/>
-                            </div>
+                        <div class="register-field-inline register-field-span">
+                            <label class="register-field-label" for="address"><span class="req-star">*</span>详细地址</label>
+                            <input type="text" name="address" id="address" class="form-control" placeholder="请输入详细地址" maxlength="500"/>
                         </div>
-                    </div>
-                    <div class="row form-tight-row">
-                        <div class="col-sm-4">
-                            <div class="register-field-inline">
-                                <label class="register-field-label" for="contactPerson">联系人</label>
-                                <input type="text" name="contactPerson" id="contactPerson" class="form-control" placeholder="选填" maxlength="50"/>
-                            </div>
+                        <div class="register-field-inline">
+                            <label class="register-field-label" for="contactPerson">联系人</label>
+                            <input type="text" name="contactPerson" id="contactPerson" class="form-control" placeholder="请输入" maxlength="50"/>
                         </div>
-                        <div class="col-sm-4">
-                            <div class="register-field-inline">
-                                <label class="register-field-label" for="contactPhone">联系电话</label>
-                                <input type="text" name="contactPhone" id="contactPhone" class="form-control" placeholder="选填，手机或座机" maxlength="20"/>
-                            </div>
+                        <div class="register-field-inline">
+                            <label class="register-field-label" for="contactPhone">联系电话</label>
+                            <input type="text" name="contactPhone" id="contactPhone" class="form-control" placeholder="请输入" maxlength="20"/>
                         </div>
-                        <div class="col-sm-4">
-                            <div class="register-field-inline">
-                                <label class="register-field-label" for="supplierEmail">邮箱</label>
-                                <input type="text" name="email" id="supplierEmail" class="form-control" placeholder="选填" maxlength="100" autocomplete="email"/>
-                            </div>
+                        <div class="register-field-inline">
+                            <label class="register-field-label" for="supplierEmail">邮箱</label>
+                            <input type="text" name="email" id="supplierEmail" class="form-control" placeholder="请输入" maxlength="100" autocomplete="email"/>
                         </div>
-                    </div>
-                    <div class="row form-tight-row">
-                        <div class="col-sm-4">
-                            <div class="register-field-inline">
-                                <label class="register-field-label" for="website">网址</label>
-                                <input type="text" name="website" id="website" class="form-control" placeholder="选填，http(s):// 或域名" maxlength="200"/>
-                            </div>
+                        <div class="register-field-inline">
+                            <label class="register-field-label" for="website">网址</label>
+                            <input type="text" name="website" id="website" class="form-control" placeholder="请输入" maxlength="200"/>
                         </div>
-                    </div>
-                    <div class="row form-tight-row">
-                        <div class="col-sm-12">
-                            <div class="register-field-inline register-field-inline-top">
-                                <label class="register-field-label" for="businessScope">经营范围</label>
-                                <textarea name="businessScope" id="businessScope" class="form-control" rows="2" placeholder="选填，1000字以内" maxlength="1000"></textarea>
-                            </div>
+                        <div class="register-field-inline register-field-span register-field-inline-top">
+                            <label class="register-field-label" for="businessScope">经营范围</label>
+                            <textarea name="businessScope" id="businessScope" class="form-control" rows="2" placeholder="请输入" maxlength="1000"></textarea>
                         </div>
                     </div>
                     <div class="register-footer-actions">
