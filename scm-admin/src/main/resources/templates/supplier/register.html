@@ -120,6 +120,16 @@
         .signinpanel form p {
             color: #333 !important;
         }
+        .signinpanel form h4.register-welcome-title .register-welcome-lead {
+            font-size: 22px;
+            font-weight: 600;
+            margin-right: 6px;
+            vertical-align: baseline;
+        }
+        .signinpanel form h4.register-welcome-title strong {
+            font-size: inherit;
+            font-weight: 700;
+        }
         .signinpanel .signin-info a {
             text-decoration: none;
         }
@@ -299,6 +309,11 @@
             min-width: 0;
             width: 100%;
         }
+        #registerFormSupplier .register-contact-grid > .register-field-span-2 {
+            grid-column: span 2;
+            min-width: 0;
+            width: 100%;
+        }
         #registerFormSupplier .register-account-grid .register-field-label,
         #registerFormSupplier .register-company-grid .register-field-label {
             flex: 0 0 90px;
@@ -326,7 +341,7 @@
                 <!-- 供应商注册表单 -->
                 <form id="registerFormSupplier" autocomplete="off" class="register-panel register-form-wide form-tight">
                     <div id="registerMessageSupplier" class="alert" role="alert" style="display:none;"></div>
-                    <h4 class="no-margins">欢迎注册 <strong>医承云配供应链云平台</strong></h4>
+                    <h4 class="no-margins register-welcome-title"><span class="register-welcome-lead">欢迎注册</span><strong>医承云配供应链云平台</strong></h4>
                     <h5>账号信息</h5>
                     <div class="register-account-grid">
                         <div class="register-field-inline">
@@ -417,9 +432,9 @@
                             <label class="register-field-label" for="website">网址</label>
                             <input type="text" name="website" id="website" class="form-control" placeholder="请输入" maxlength="200"/>
                         </div>
-                        <div class="register-field-inline register-field-span register-field-inline-top">
+                        <div class="register-field-inline register-field-span-2 register-field-inline-top">
                             <label class="register-field-label" for="businessScope">经营范围</label>
-                            <textarea name="businessScope" id="businessScope" class="form-control" rows="2" placeholder="请输入" maxlength="1000"></textarea>
+                            <textarea name="businessScope" id="businessScope" class="form-control" rows="1" placeholder="请输入" maxlength="1000"></textarea>
                         </div>
                     </div>
                     <div class="register-footer-actions">
