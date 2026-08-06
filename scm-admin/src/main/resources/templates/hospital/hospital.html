@@ -178,7 +178,8 @@
 		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="pinyinCode"],
 		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="contactPerson"],
 		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="province"],
-		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="city"] {
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="city"],
+		.hospital-table-wrap.hospital-list-table .fixed-table-container > .fixed-table-body td[data-field="district"] {
 			overflow: hidden;
 			text-overflow: ellipsis;
 		}
@@ -274,14 +275,15 @@
 
 		var hospitalColWidths = {
 			rowIndex: 60,
-			hospitalCode: 120,
+			hospitalCode: 175,
 			hospitalName: 180,
 			pinyinCode: 90,
 			hospitalLevel: 90,
+			province: 90,
+			city: 90,
+			district: 100,
 			contactPerson: 90,
 			contactPhone: 120,
-			province: 80,
-			city: 80,
 			status: 80,
 			createTime: 160,
 			hospitalOperate: 160
@@ -435,9 +437,9 @@
 		            field: 'hospitalCode',
 		            title: '医院编码',
 		            sortable: true,
-		            width: 120,
+		            width: 175,
 		            formatter: function (value) {
-		                return hospitalCellEllipsis(value);
+		                return value || '-';
 		            }
 		        },
 		        {
@@ -466,6 +468,30 @@
 		            }
 		        },
 		        {
+		            field: 'province',
+		            title: '省份',
+		            width: 90,
+		            formatter: function (value) {
+		                return hospitalCellEllipsis(value);
+		            }
+		        },
+		        {
+		            field: 'city',
+		            title: '城市',
+		            width: 90,
+		            formatter: function (value) {
+		                return hospitalCellEllipsis(value);
+		            }
+		        },
+		        {
+		            field: 'district',
+		            title: '县区',
+		            width: 100,
+		            formatter: function (value) {
+		                return hospitalCellEllipsis(value);
+		            }
+		        },
+		        {
 		            field: 'contactPerson',
 		            title: '联系人',
 		            width: 90,
@@ -480,22 +506,6 @@
 		            align: 'center',
 		            formatter: function (value) {
 		                return value || '-';
-		            }
-		        },
-		        {
-		            field: 'province',
-		            title: '省份',
-		            width: 80,
-		            formatter: function (value) {
-		                return hospitalCellEllipsis(value);
-		            }
-		        },
-		        {
-		            field: 'city',
-		            title: '城市',
-		            width: 80,
-		            formatter: function (value) {
-		                return hospitalCellEllipsis(value);
 		            }
 		        },
 		        {
