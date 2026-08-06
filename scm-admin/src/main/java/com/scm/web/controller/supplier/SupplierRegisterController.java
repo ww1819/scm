@@ -61,14 +61,14 @@ public class SupplierRegisterController extends BaseController {
                     return;
                 }
                 String s = text.trim().replace(",", "").replace("，", "");
+                if (!s.matches("^\\d+$")) {
+                    throw new IllegalArgumentException("注册资金须为非负整数（万元），不能含小数");
+                }
                 try {
                     BigDecimal bd = new BigDecimal(s);
-                    if (bd.compareTo(BigDecimal.ZERO) < 0) {
-                        throw new IllegalArgumentException("注册资金不能为负数");
-                    }
                     setValue(bd);
                 } catch (NumberFormatException ex) {
-                    throw new IllegalArgumentException("注册资金格式不正确，请填写数字（万元）");
+                    throw new IllegalArgumentException("注册资金格式不正确，请填写整数（万元）");
                 }
             }
         });

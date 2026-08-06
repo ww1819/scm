@@ -121,6 +121,7 @@ public class SupplierRegisterServiceImpl implements ISupplierRegisterService {
         user.setPwdPlain(adminUser.getPassword());
         if (StringUtils.isNotEmpty(adminUser.getPhonenumber())) user.setPhonenumber(adminUser.getPhonenumber());
         if (StringUtils.isNotEmpty(adminUser.getEmail())) user.setEmail(adminUser.getEmail());
+        if (StringUtils.isNotEmpty(adminUser.getSex())) user.setSex(adminUser.getSex());
         user.setCreateBy(operBy != null ? operBy : user.getLoginName());
         userMapper.insertUser(user);
         Long userId = user.getUserId();

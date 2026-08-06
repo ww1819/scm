@@ -13,8 +13,18 @@
     <meta name="renderer" content="webkit">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <style type="text/css">
-        /* 覆盖 ry-ui.css：错误提示放在控件下方，勿用 absolute 叠在输入框上 */
-        #registerFormSupplier label.error,
+        /* 供应商注册：校验文案进输入框 placeholder，隐藏下方 error 标签避免撑高页面 */
+        #registerFormSupplier label.error {
+            display: none !important;
+            height: 0 !important;
+            width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            border: 0 !important;
+            position: absolute !important;
+            left: -9999px !important;
+        }
         #registerFormSalesperson label.error {
             position: static !important;
             right: auto !important;
@@ -161,6 +171,28 @@
             border-color: #c62828 !important;
             box-shadow: 0 0 0 1px rgba(198, 40, 40, 0.25);
         }
+        /* 有内容时无法显示 placeholder，用叠层提示（不撑高布局） */
+        #registerFormSupplier .register-inline-err {
+            position: absolute;
+            left: 120px;
+            right: 0;
+            top: 0;
+            height: 34px;
+            line-height: 34px;
+            padding: 0 12px;
+            margin: 0;
+            color: #c62828;
+            font-size: 12px;
+            background: #fff;
+            border: 1px solid #c62828;
+            border-radius: 4px;
+            z-index: 3;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            pointer-events: none;
+            box-sizing: border-box;
+        }
         #registerFormSupplier .validator-sr-only {
             position: absolute;
             width: 1px;
@@ -183,6 +215,93 @@
             margin-bottom: 4px;
             font-weight: normal;
         }
+        /* 标签与控件同一行：固定标签宽，输入框等宽对齐 */
+        #registerFormSupplier .register-field-inline {
+            position: relative;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px 8px;
+            width: 100%;
+        }
+        #registerFormSupplier .register-field-inline.register-field-inline-top {
+            align-items: flex-start;
+        }
+        #registerFormSupplier .register-field-inline.register-field-inline-top .register-field-label {
+            padding-top: 8px;
+        }
+        #registerFormSupplier .register-field-inline .register-field-label {
+            display: inline-block;
+            flex: 0 0 108px;
+            width: 108px;
+            max-width: 108px;
+            margin-bottom: 0;
+            white-space: nowrap;
+            text-align: right;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-sizing: border-box;
+        }
+        #registerFormSupplier .register-field-inline .form-control {
+            flex: 1 1 0;
+            min-width: 0;
+            width: auto !important;
+            margin-top: 0 !important;
+        }
+        /* 公司简码只读灰底 */
+        #registerFormSupplier #companyShortName {
+            background-color: #eee !important;
+            color: #666 !important;
+            cursor: not-allowed;
+        }
+        /* 注册资金：一行显示（标签 + 短框 + 万元），禁止换行 */
+        #registerFormSupplier .register-field-capital {
+            flex-wrap: nowrap !important;
+        }
+        #registerFormSupplier .register-field-capital .form-control {
+            flex: 0 0 100px;
+            width: 100px !important;
+            max-width: 100px;
+            min-width: 88px;
+        }
+        #registerFormSupplier .register-unit-suffix {
+            flex: 0 0 auto;
+            color: #555;
+            font-size: 13px;
+            white-space: nowrap;
+            line-height: 34px;
+        }
+        /* 两列行统一半宽，三列行统一三分之一，避免长短不一 */
+        #registerFormSupplier .form-tight-row > [class*="col-"] {
+            box-sizing: border-box;
+        }
+        /* 账号信息 / 公司信息：三列网格，收紧列间距 */
+        #registerFormSupplier .register-account-grid,
+        #registerFormSupplier .register-company-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+            column-gap: 4px;
+            row-gap: 10px;
+            margin: 0 0 10px 0;
+        }
+        #registerFormSupplier .register-company-grid {
+            grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) minmax(0, 1fr);
+        }
+        #registerFormSupplier .register-account-grid > .register-field-inline,
+        #registerFormSupplier .register-company-grid > .register-field-inline {
+            min-width: 0;
+            width: 100%;
+        }
+        #registerFormSupplier .register-account-grid .register-field-label,
+        #registerFormSupplier .register-company-grid .register-field-label {
+            flex: 0 0 90px;
+            width: 90px;
+            max-width: 90px;
+        }
+        #registerFormSupplier .register-account-grid .register-inline-err,
+        #registerFormSupplier .register-company-grid .register-inline-err {
+            left: 98px;
+        }
     </style>
 </head>
 <body class="signin">
@@ -194,98 +313,124 @@
                     <div id="registerMessageSupplier" class="alert" role="alert" style="display:none;"></div>
                     <h4 class="no-margins">欢迎注册 <strong>医承云配供应链云平台</strong></h4>
                     <h5>账号信息</h5>
-                    <div class="row form-tight-row">
-                        <div class="col-sm-4">
+                    <div class="register-account-grid">
+                        <div class="register-field-inline">
                             <label class="register-field-label" for="supplierLoginName"><span class="req-star">*</span>登录账号</label>
                             <input type="text" name="loginName" id="supplierLoginName" class="form-control uname" placeholder="字母/数字/_/-，2～30 位" maxlength="30" autocomplete="username"/>
                         </div>
-                        <div class="col-sm-4">
+                        <div class="register-field-inline">
                             <label class="register-field-label" for="supplierPassword"><span class="req-star">*</span>密码</label>
                             <input type="password" name="password" id="supplierPassword" class="form-control pword" placeholder="数字+字母，至少 6 位" maxlength="20"/>
                         </div>
-                        <div class="col-sm-4">
+                        <div class="register-field-inline">
                             <label class="register-field-label" for="supplierConfirmPassword"><span class="req-star">*</span>确认密码</label>
                             <input type="password" name="confirmPassword" id="supplierConfirmPassword" class="form-control pword" placeholder="再次输入密码" maxlength="20"/>
                         </div>
-                    </div>
-                    <div class="row form-tight-row">
-                        <div class="col-sm-4">
+                        <div class="register-field-inline">
                             <label class="register-field-label" for="supplierRealName"><span class="req-star">*</span>用户姓名</label>
                             <input type="text" name="realName" id="supplierRealName" class="form-control" placeholder="真实姓名，用于系统内展示" maxlength="50" autocomplete="name"/>
                         </div>
+                        <div class="register-field-inline">
+                            <label class="register-field-label" for="supplierSex">性别</label>
+                            <select name="sex" id="supplierSex" class="form-control" th:with="type=${@dict.getType('sys_user_sex')}">
+                                <option value="">请选择</option>
+                                <option th:each="dict : ${type}" th:text="${dict.dictLabel}" th:value="${dict.dictValue}"></option>
+                            </select>
+                        </div>
                     </div>
                     <h5>公司基本信息</h5>
-                    <div class="row form-tight-row">
-                        <div class="col-sm-8">
+                    <div class="register-company-grid">
+                        <div class="register-field-inline">
                             <label class="register-field-label" for="companyName"><span class="req-star">*</span>供应商名称</label>
                             <input type="text" name="companyName" id="companyName" class="form-control" placeholder="请输入供应商全称" maxlength="200"/>
                         </div>
-                        <div class="col-sm-4">
+                        <div class="register-field-inline">
                             <label class="register-field-label" for="companyShortName">公司简码</label>
                             <input type="text" name="companyShortName" id="companyShortName" class="form-control" placeholder="拼音首字母，自动填充" maxlength="100" readonly/>
                         </div>
-                    </div>
-                    <div class="row form-tight-row">
-                        <div class="col-sm-6">
+                        <div class="register-field-inline">
                             <label class="register-field-label" for="legalPerson">法人</label>
-                            <input type="text" name="legalPerson" id="legalPerson" class="form-control" placeholder="选填，50字以内" maxlength="50"/>
+                            <input type="text" name="legalPerson" id="legalPerson" class="form-control" placeholder="法人姓名" maxlength="50"/>
                         </div>
-                        <div class="col-sm-6">
-                            <label class="register-field-label" for="registeredCapital">注册资金（万元）</label>
-                            <input type="text" name="registeredCapital" id="registeredCapital" class="form-control" placeholder="选填，非负数字，可含小数" maxlength="20" inputmode="decimal" autocomplete="off"/>
+                        <div class="register-field-inline">
+                            <label class="register-field-label" for="taxNumber">社会统一代码</label>
+                            <input type="text" name="taxNumber" id="taxNumber" class="form-control" placeholder="统一社会信用代码" maxlength="50" autocomplete="off"/>
+                        </div>
+                        <div class="register-field-inline register-field-capital">
+                            <label class="register-field-label" for="registeredCapital">注册资金</label>
+                            <input type="text" name="registeredCapital" id="registeredCapital" class="form-control" placeholder="请输入整数" maxlength="20" inputmode="numeric" autocomplete="off"/>
+                            <span class="register-unit-suffix">万元</span>
                         </div>
                     </div>
                     <h5>联系信息</h5>
                     <div class="row form-tight-row">
                         <div class="col-sm-4">
-                            <label class="register-field-label" for="selProvince">省份/直辖市</label>
-                            <select name="province" id="selProvince" class="form-control" title="省份/直辖市（选填，数据来自部门管理）">
-                                <option value="">请选择省份/直辖市</option>
-                            </select>
+                            <div class="register-field-inline">
+                                <label class="register-field-label" for="selProvince"><span class="req-star">*</span>省份/直辖市</label>
+                                <select name="province" id="selProvince" class="form-control" title="省份/直辖市（必填）">
+                                    <option value="">请选择省份/直辖市</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="col-sm-4">
-                            <label class="register-field-label" for="selCity">城市</label>
-                            <select name="city" id="selCity" class="form-control" title="城市（选填）">
-                                <option value="">请选择城市</option>
-                            </select>
+                            <div class="register-field-inline">
+                                <label class="register-field-label" for="selCity"><span class="req-star">*</span>城市</label>
+                                <select name="city" id="selCity" class="form-control" title="城市（必填）">
+                                    <option value="">请选择城市</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="col-sm-4">
-                            <label class="register-field-label" for="selDistrict">区县</label>
-                            <select name="district" id="selDistrict" class="form-control" title="区县（选填）">
-                                <option value="">请选择区县</option>
-                            </select>
+                            <div class="register-field-inline">
+                                <label class="register-field-label" for="selDistrict"><span class="req-star">*</span>区县</label>
+                                <select name="district" id="selDistrict" class="form-control" title="区县（必填）">
+                                    <option value="">请选择区县</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                     <div class="row form-tight-row">
-                        <div class="col-xs-12">
-                            <label class="register-field-label" for="address">详细地址</label>
-                            <input type="text" name="address" id="address" class="form-control" placeholder="选填，500字以内" maxlength="500"/>
+                        <div class="col-sm-12">
+                            <div class="register-field-inline">
+                                <label class="register-field-label" for="address"><span class="req-star">*</span>详细地址</label>
+                                <input type="text" name="address" id="address" class="form-control" placeholder="请输入详细地址" maxlength="500"/>
+                            </div>
                         </div>
                     </div>
                     <div class="row form-tight-row">
-                        <div class="col-sm-6">
-                            <label class="register-field-label" for="contactPerson">联系人</label>
-                            <input type="text" name="contactPerson" id="contactPerson" class="form-control" placeholder="选填" maxlength="50"/>
+                        <div class="col-sm-4">
+                            <div class="register-field-inline">
+                                <label class="register-field-label" for="contactPerson">联系人</label>
+                                <input type="text" name="contactPerson" id="contactPerson" class="form-control" placeholder="选填" maxlength="50"/>
+                            </div>
                         </div>
-                        <div class="col-sm-6">
-                            <label class="register-field-label" for="contactPhone">联系电话</label>
-                            <input type="text" name="contactPhone" id="contactPhone" class="form-control" placeholder="选填，手机或座机" maxlength="20"/>
+                        <div class="col-sm-4">
+                            <div class="register-field-inline">
+                                <label class="register-field-label" for="contactPhone">联系电话</label>
+                                <input type="text" name="contactPhone" id="contactPhone" class="form-control" placeholder="选填，手机或座机" maxlength="20"/>
+                            </div>
+                        </div>
+                        <div class="col-sm-4">
+                            <div class="register-field-inline">
+                                <label class="register-field-label" for="supplierEmail">邮箱</label>
+                                <input type="text" name="email" id="supplierEmail" class="form-control" placeholder="选填" maxlength="100" autocomplete="email"/>
+                            </div>
                         </div>
                     </div>
                     <div class="row form-tight-row">
-                        <div class="col-sm-6">
-                            <label class="register-field-label" for="supplierEmail">邮箱</label>
-                            <input type="text" name="email" id="supplierEmail" class="form-control" placeholder="选填" maxlength="100" autocomplete="email"/>
-                        </div>
-                        <div class="col-sm-6">
-                            <label class="register-field-label" for="website">网址</label>
-                            <input type="text" name="website" id="website" class="form-control" placeholder="选填，http(s):// 或域名" maxlength="200"/>
+                        <div class="col-sm-4">
+                            <div class="register-field-inline">
+                                <label class="register-field-label" for="website">网址</label>
+                                <input type="text" name="website" id="website" class="form-control" placeholder="选填，http(s):// 或域名" maxlength="200"/>
+                            </div>
                         </div>
                     </div>
                     <div class="row form-tight-row">
-                        <div class="col-xs-12">
-                            <label class="register-field-label" for="businessScope">经营范围</label>
-                            <textarea name="businessScope" id="businessScope" class="form-control" rows="2" placeholder="选填，1000字以内" maxlength="1000"></textarea>
+                        <div class="col-sm-12">
+                            <div class="register-field-inline register-field-inline-top">
+                                <label class="register-field-label" for="businessScope">经营范围</label>
+                                <textarea name="businessScope" id="businessScope" class="form-control" rows="2" placeholder="选填，1000字以内" maxlength="1000"></textarea>
+                            </div>
                         </div>
                     </div>
                     <div class="register-footer-actions">
@@ -380,16 +525,74 @@ function showFormMessage(formId, msg, isSuccess) {
     $box.removeClass("alert-danger alert-success").addClass(isSuccess ? "alert-success" : "alert-danger").text(msg).show();
     if (!isSuccess && $box.length && $box[0]) $box[0].scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
+function stripValidateMsg(text) {
+    return $("<div>").html(text || "").text().replace(/\s+/g, " ").trim();
+}
 function restoreSupplierFieldPlaceholder($inp) {
     if (!$inp || !$inp.length) return;
+    $inp.closest(".register-field-inline").find(".register-inline-err").remove();
     if ($inp.is("select")) {
-        $inp.removeClass("input-error-tip");
-        $inp.removeAttr("data-err-msg");
+        $inp.removeClass("input-error-tip error");
+        $inp.removeAttr("data-err-msg title");
+        var ot = $inp.data("origFirstText");
+        if (ot !== undefined) {
+            $inp.find("option").first().text(ot);
+        }
         return;
     }
     var o = $inp.data("origPh");
     if (o !== undefined) $inp.attr("placeholder", o);
-    $inp.removeClass("input-error-tip");
+    $inp.removeClass("input-error-tip error").removeAttr("title");
+}
+/** 校验提示写入输入框内（placeholder / 叠层），不插入下方文案、不撑高布局 */
+function applySupplierInlineError($el, msg) {
+    if (!$el || !$el.length) return;
+    msg = stripValidateMsg(msg);
+    if (!msg) return;
+    var $wrap = $el.closest(".register-field-inline");
+    $wrap.find(".register-inline-err").remove();
+    if ($el.is("select")) {
+        var $first = $el.find("option").first();
+        if ($el.data("origFirstText") === undefined) {
+            $el.data("origFirstText", $first.text());
+        }
+        if (!$el.val()) {
+            $first.text(msg);
+        } else if ($wrap.length) {
+            $("<div class=\"register-inline-err\"></div>").text(msg).appendTo($wrap);
+        }
+        $el.addClass("error input-error-tip").attr("title", msg).attr("data-err-msg", msg);
+        return;
+    }
+    if ($el.data("origPh") === undefined) {
+        $el.data("origPh", $el.attr("placeholder") || "");
+    }
+    $el.attr("placeholder", msg).attr("title", msg).addClass("error input-error-tip");
+    // 已有内容时 placeholder 不可见，叠一层提示（如密码 123456 缺字母）
+    if ($.trim($el.val() || "") !== "" && $wrap.length) {
+        $("<div class=\"register-inline-err\"></div>").text(msg).appendTo($wrap);
+    }
+}
+/** 小弹窗提示：3 秒自动关闭，可点右上角 X 关闭 */
+function showAutoCloseTip(msg, title) {
+    msg = stripValidateMsg(msg);
+    if (!msg) return;
+    title = title || "提示";
+    if (typeof layer === "undefined") {
+        alert(msg);
+        return;
+    }
+    layer.open({
+        type: 1,
+        title: title,
+        closeBtn: 1,
+        shadeClose: true,
+        shade: 0.25,
+        time: 3000,
+        area: ["380px", "auto"],
+        content: "<div style=\"padding:18px 20px;line-height:1.6;font-size:14px;color:#333;\">" +
+            $("<div>").text(msg).html().replace(/\n/g, "<br/>") + "</div>"
+    });
 }
 function clearFormErrors(formId) {
     if (formId === "registerFormSupplier") {
@@ -421,8 +624,7 @@ function showFieldError(formId, msg) {
         else if (/电话|手机|座机|contactPhone/i.test(msg)) $inp = $("#contactPhone");
         else if (/用户姓名|姓名|realName/i.test(msg)) $inp = $("#supplierRealName");
         if ($inp && $inp.length) {
-            if ($inp.data("origPh") === undefined) $inp.data("origPh", $inp.attr("placeholder") || "");
-            $inp.attr("placeholder", msg).addClass("input-error-tip");
+            applySupplierInlineError($inp, msg);
         }
         return;
     }
@@ -534,14 +736,14 @@ $(function() {
         if (/[\u4E00-\u9FFF\u3400-\u4DBF]/.test(t)) return false;
         return /^[a-zA-Z0-9_-]+$/.test(t);
     }, "不能含汉字，仅允许字母、数字、下划线（_）与连字符（-）");
-    /* 注册资金（万元）：选填；填写则须为非负数字，至多一个小数点、6位小数（与后端 BigDecimal 一致） */
+    /* 注册资金（万元）：选填；填写则须为非负整数（不含小数） */
     $.validator.addMethod("scmRegisteredCapital", function(value, element) {
         if (this.optional(element)) return true;
         var t = $.trim(String(value)).replace(/,/g, "").replace(/，/g, "");
         if (t === "") return true;
-        if (!/^\d+(\.\d{1,6})?$/.test(t)) return false;
+        if (!/^\d+$/.test(t)) return false;
         return t.length <= 20;
-    }, "请填写非负数字（万元），仅数字和一个小数点，最多6位小数");
+    }, "请填写非负整数（万元），不能含小数");
     /* 电话：选填；手机 11 位或常见座机，或仅含数字与横线、空格、括号 */
     $.validator.addMethod("scmOptionalPhone", function(value, element) {
         if (this.optional(element)) return true;
@@ -558,10 +760,10 @@ $(function() {
         return /^[a-zA-Z0-9]([a-zA-Z0-9\-._]*[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+(\/\S*)?$/.test(t);
     }, "网址请以 http:// 或 https:// 开头，或填写有效域名（如 example.com）");
 
-    // 用户重新输入时清除该表单的提示与字段错误（下拉框 change 仅清自身，避免级联时误清其它项）
-    $("#registerFormSupplier input, #registerFormSupplier textarea").on("input focus", function() {
+    // 点击/输入时清掉当前框内红色提示，便于正常录入（勿边输边重新校验盖住内容）
+    $("#registerFormSupplier input, #registerFormSupplier textarea").on("focus input", function() {
         $("#registerMessageSupplier").hide();
-        clearFormErrors("registerFormSupplier");
+        restoreSupplierFieldPlaceholder($(this));
     });
     $("#registerFormSupplier select").on("change", function () {
         $("#registerMessageSupplier").hide();
@@ -575,23 +777,25 @@ $(function() {
         clearFormErrors("registerFormSalesperson");
     });
 
-    function stripValidateMsg(text) {
-        return $("<div>").html(text).text().replace(/\s+/g, " ").trim();
-    }
     function alertValidationErrors(title, validator) {
         if (!validator || !validator.errorList || !validator.errorList.length) return;
-        var lines = $.map(validator.errorList, function (e) {
-            return stripValidateMsg(e.message);
+        var lines = [];
+        var seen = {};
+        $.each(validator.errorList, function (_, e) {
+            var m = stripValidateMsg(e.message);
+            if (!m || seen[m]) return;
+            seen[m] = 1;
+            lines.push(m);
         });
-        if (typeof layer !== "undefined") {
-            layer.alert(lines.join("<br/>"), { title: title, icon: 0, shadeClose: true });
-        } else {
-            alert(lines.join("\n"));
-        }
+        if (!lines.length) return;
+        showAutoCloseTip(lines.join("\n"), title || "请修正以下填写");
     }
 
-    // 初始化校验规则（不接管 submit，由按钮 click 主动触发）
+    // 初始化校验规则（仅点注册时校验；关闭按键即时校验，避免输入时提示盖住内容）
     $("#registerFormSupplier").validate({
+        onkeyup: false,
+        onfocusout: false,
+        onclick: false,
         rules: {
             loginName: { required: true, minlength: 2, maxlength: 30, loginNameScm: true },
             password: { required: true, minlength: 6, maxlength: 20, checkPassword: true },
@@ -599,8 +803,12 @@ $(function() {
             realName: { required: true, maxlength: 50, specialSign: true },
             companyName: { required: true, maxlength: 200, specialSign: true },
             legalPerson: { maxlength: 50, specialSign: true },
+            taxNumber: { maxlength: 50 },
             registeredCapital: { scmRegisteredCapital: true },
-            address: { maxlength: 500, specialSign: true },
+            province: { required: true },
+            city: { required: true },
+            district: { required: true },
+            address: { required: true, maxlength: 500, specialSign: true },
             contactPerson: { maxlength: 50, specialSign: true },
             contactPhone: { maxlength: 20, scmOptionalPhone: true },
             email: { maxlength: 100, email: true },
@@ -614,8 +822,12 @@ $(function() {
             realName: { required: "请输入用户姓名", maxlength: "最多50个字符", specialSign: "不能含 < > \" ' \\ | 等字符" },
             companyName: { required: "请输入供应商名称", maxlength: "名称过长", specialSign: "不能含 < > \" ' \\ | 等字符" },
             legalPerson: { maxlength: "最多50个字符", specialSign: "不能含 < > \" ' \\ | 等字符" },
-            registeredCapital: { scmRegisteredCapital: "请填写非负数字（万元），仅数字和一个小数点" },
-            address: { maxlength: "最多500个字符", specialSign: "不能含 < > \" ' \\ | 等字符" },
+            taxNumber: { maxlength: "最多50个字符" },
+            registeredCapital: { scmRegisteredCapital: "请填写非负整数，不能含小数" },
+            province: { required: "请选择省份/直辖市" },
+            city: { required: "请选择城市" },
+            district: { required: "请选择区县" },
+            address: { required: "请输入详细地址", maxlength: "最多500个字符", specialSign: "不能含 < > \" ' \\ | 等字符" },
             contactPerson: { maxlength: "最多50个字符", specialSign: "不能含 < > \" ' \\ | 等字符" },
             contactPhone: { maxlength: "最多20个字符", scmOptionalPhone: "电话格式不正确" },
             email: { maxlength: "邮箱过长", email: "邮箱格式不正确" },
@@ -626,18 +838,20 @@ $(function() {
         errorClass: "error",
         errorPlacement: function (error, element) {
             if (!$(element).closest("#registerFormSupplier").length) return;
-            error.insertAfter(element);
+            applySupplierInlineError($(element), error.text());
+            // 不插入可见 DOM，避免把整页撑高
+            error.hide().addClass("validator-sr-only");
         },
         highlight: function (element) {
             $(element).addClass("error");
         },
         unhighlight: function (element) {
-            $(element).removeClass("error");
+            restoreSupplierFieldPlaceholder($(element));
         },
         success: function (label, element) {
             var $el = $(element);
             if (!$el.closest("#registerFormSupplier").length) return;
-            $el.removeClass("input-error-tip");
+            restoreSupplierFieldPlaceholder($el);
             $(label).remove();
         }
     });
@@ -687,22 +901,22 @@ $(function() {
         if (!$f.valid()) {
             var v = $f.data("validator");
             alertValidationErrors("请修正以下填写", v);
+            var $firstErr = $f.find(".input-error-tip, .form-control.error").filter(":visible").first();
+            if ($firstErr.length && $firstErr[0].scrollIntoView) {
+                $firstErr[0].scrollIntoView({ behavior: "smooth", block: "center" });
+            }
             return;
         }
         if (!$("#acceptTerm1").is(":checked")) {
-            showFormMessage("registerFormSupplier", "请先同意使用条款", false);
-            if (typeof layer !== "undefined") {
-                layer.alert("请先阅读并勾选同意使用条款", { title: "提示", icon: 0, shadeClose: true });
-            }
+            $("#registerMessageSupplier").hide();
+            showAutoCloseTip("请先阅读并勾选同意使用条款");
             return;
         }
         var pwd = $("#registerFormSupplier input[name='password']").val();
         if (!/\d/.test(pwd) || !/[a-zA-Z]/.test(pwd)) {
-            showFormMessage("registerFormSupplier", "密码必须包含数字和字母", false);
+            $("#registerMessageSupplier").hide();
             showFieldError("registerFormSupplier", "密码必须包含数字和字母");
-            if (typeof layer !== "undefined") {
-                layer.alert("密码必须同时包含数字和字母", { title: "提示", icon: 0, shadeClose: true });
-            }
+            showAutoCloseTip("密码必须同时包含数字和字母");
             return;
         }
         clearFormErrors("registerFormSupplier");
