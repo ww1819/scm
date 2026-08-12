@@ -33,7 +33,7 @@ import com.scm.system.service.ISysConfigService;
  * 启动时按配置执行 SCM SQL 脚本。
  * <p>
  * 默认 {@code upgrade-only=true}：仅在 {@code scm.version} 相对库中记录发生变更时，
- * 自动执行 {@code procedure.sql} + {@code column.sql}（增量结构变更，可重复执行）。
+ * 自动执行 {@code procedure.sql} + {@code column.sql} + {@code menu.sql}（增量结构/菜单，可重复执行）。
  * 首次安装（无 SCM 业务表）时执行全量脚本链。
  *
  * @author scm
@@ -274,7 +274,7 @@ public class SqlInitRunner implements ApplicationRunner
             row.setConfigValue(value);
             row.setConfigType("N");
             row.setCreateBy("system_upgrade");
-            row.setRemark("系统自动写入：启动时 SQL 增量脚本（procedure/column）");
+            row.setRemark("系统自动写入：启动时 SQL 增量脚本（procedure/column/menu）");
             configService.insertConfig(row);
         }
     }

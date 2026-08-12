@@ -21,9 +21,11 @@ import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.MoneyPrecisionUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.uuid.IdUtils;
+import com.scm.system.domain.CombinedDeliveryDetail;
 import com.scm.system.domain.Delivery;
 import com.scm.system.domain.DeliveryDownloadLog;
 import com.scm.system.domain.DeliveryDetail;
+import com.scm.system.domain.DeliveryLineOpLog;
 import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.MaterialDict;
 import com.scm.system.domain.Order;
@@ -37,6 +39,7 @@ import com.scm.system.domain.ZsTpOrderDetailDeliveryRel;
 import com.scm.system.domain.vo.OrderDetailDeliveryTraceVo;
 import com.scm.system.domain.vo.OrderLineDeliveryQtyVo;
 import com.scm.system.domain.vo.ZsTpOrderForDeliveryVo;
+import com.scm.system.mapper.CombinedDeliveryMapper;
 import com.scm.system.mapper.DeliveryDetailMapper;
 import com.scm.system.mapper.DeliveryDownloadLogMapper;
 import com.scm.system.mapper.DeliveryMapper;
@@ -48,6 +51,7 @@ import com.scm.system.mapper.ScmOrderDetailDeliveryRelMapper;
 import com.scm.system.mapper.SysRoleMapper;
 import com.scm.system.mapper.ZsTpOrderDetailDeliveryRelMapper;
 import com.scm.system.mapper.ZsTpOrderMapper;
+import com.scm.system.service.IDeliveryLineOpLogService;
 import com.scm.system.service.IDeliveryService;
 import com.scm.system.service.IMaterialDictService;
 import com.scm.system.service.IOrderService;
@@ -118,6 +122,12 @@ public class DeliveryServiceImpl implements IDeliveryService
 
     @Autowired
     private ISysUserService userService;
+
+    @Autowired
+    private IDeliveryLineOpLogService deliveryLineOpLogService;
+
+    @Autowired
+    private CombinedDeliveryMapper combinedDeliveryMapper;
 
     private static final int OPERATOR_NAME_SNAPSHOT_MAX_LEN = 64;
 
@@ -352,6 +362,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         validateDeliveryDetailQuantityNotZero(delivery.getDeliveryDetails(), "保存");
         validateDeliveryDetailPackQuantities(delivery.getDeliveryDetails());
         validateDeliveryRefLineQuantities(delivery, null);
+        assertNotCombinedOccupied(delivery);
         if (StringUtils.isEmpty(delivery.getDeliveryStatus()))
         {
             delivery.setDeliveryStatus("0"); // 默认未审核
@@ -398,6 +409,7 @@ public class DeliveryServiceImpl implements IDeliveryService
             {
                 detail.setDeliveryId(delivery.getDeliveryId());
                 detail.setDeliveryNo(StringUtils.trimToEmpty(delivery.getDeliveryNo()));
+                enrichDetailCombinedRef(delivery, detail);
             }
             deliveryDetailMapper.batchInsertDeliveryDetail(delivery.getDeliveryDetails());
 
@@ -408,6 +420,15 @@ public class DeliveryServiceImpl implements IDeliveryService
             }
             insertOrderDeliveryDetailRelations(delivery);
             List<DeliveryDetail> savedForBarcode = deliveryDetailMapper.selectDeliveryDetailListByDeliveryId(delivery.getDeliveryId());
+            if (savedForBarcode != null && !savedForBarcode.isEmpty())
+            {
+                delivery.setDeliveryDetails(savedForBarcode);
+                String oper = resolveDeliveryDocumentCreator(delivery);
+                for (DeliveryDetail d : savedForBarcode)
+                {
+                    deliveryLineOpLogService.logDeliveryLine(DeliveryLineOpLog.ACTION_INSERT, delivery, null, d, oper);
+                }
+            }
             scmBarcodeSeedService.createZsDeliveryDetailBarcodesIfNeeded(delivery, savedForBarcode);
         }
 
@@ -511,6 +532,12 @@ public class DeliveryServiceImpl implements IDeliveryService
     public int updateDelivery(Delivery delivery)
     {
         assertDeliveryEditable(delivery.getDeliveryId());
+        Delivery existingHead = deliveryMapper.selectDeliveryById(delivery.getDeliveryId());
+        if (existingHead != null && existingHead.getCombinedId() != null)
+        {
+            delivery.setCombinedId(existingHead.getCombinedId());
+            delivery.setCombinedNo(existingHead.getCombinedNo());
+        }
 
         delivery.setUpdateTime(DateUtils.getNowDate());
         enrichDeliverySnapshot(delivery);
@@ -520,6 +547,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         validateDeliveryDetailQuantityNotZero(delivery.getDeliveryDetails(), "保存");
         validateDeliveryDetailPackQuantities(delivery.getDeliveryDetails());
         validateDeliveryRefLineQuantities(delivery, delivery.getDeliveryId());
+        assertNotCombinedOccupied(delivery);
 
         // 如果修改了明细，重新计算配送金额
         if (delivery.getDeliveryDetails() != null && !delivery.getDeliveryDetails().isEmpty())
@@ -579,6 +607,11 @@ public class DeliveryServiceImpl implements IDeliveryService
         {
             delivery.setTenantId(persisted.getTenantId());
         }
+        if (delivery.getCombinedId() == null && persisted.getCombinedId() != null)
+        {
+            delivery.setCombinedId(persisted.getCombinedId());
+            delivery.setCombinedNo(persisted.getCombinedNo());
+        }
         List<DeliveryDetail> oldLines = deliveryDetailMapper.selectDeliveryDetailListByDeliveryId(deliveryId);
         Map<Long, DeliveryDetail> oldById = new HashMap<>();
         if (oldLines != null)
@@ -606,6 +639,9 @@ public class DeliveryServiceImpl implements IDeliveryService
             {
                 if (old != null && old.getDetailId() != null && !keptDetailIds.contains(old.getDetailId()))
                 {
+                    deliveryLineOpLogService.logDeliveryLine(DeliveryLineOpLog.ACTION_DELETE, delivery, old, null,
+                        detailDelBy);
+                    syncCombinedDetailDelete(delivery, old, detailDelBy);
                     removeDeliveryDetailAndSideEffects(persisted, old, detailDelBy);
                 }
             }
@@ -633,14 +669,20 @@ public class DeliveryServiceImpl implements IDeliveryService
             }
             cur.setDeliveryId(deliveryId);
             cur.setDeliveryNo(detailDeliveryNo);
+            enrichDetailCombinedRef(delivery, cur);
             Long cid = cur.getDetailId();
             DeliveryDetail old = cid != null ? oldById.get(cid) : null;
             if (old == null)
             {
+                if (delivery.getCombinedId() != null)
+                {
+                    throw new ServiceException("合单拆出的配送单不允许新增明细");
+                }
                 cur.setDetailId(null);
                 deliveryDetailMapper.insertDeliveryDetail(cur);
                 subtractOrderLineRemaining(delivery.getOrderId(), cur);
                 insertOneOrderDeliveryDetailRel(delivery, cur, createBy, timeStr);
+                deliveryLineOpLogService.logDeliveryLine(DeliveryLineOpLog.ACTION_INSERT, delivery, null, cur, createBy);
                 continue;
             }
             if (!deliveryId.equals(old.getDeliveryId()))
@@ -657,11 +699,15 @@ public class DeliveryServiceImpl implements IDeliveryService
                 deliveryDetailMapper.updateDeliveryDetail(cur);
                 subtractOrderLineRemaining(delivery.getOrderId(), cur);
                 insertOneOrderDeliveryDetailRel(delivery, cur, createBy, timeStr);
+                deliveryLineOpLogService.logDeliveryLine(DeliveryLineOpLog.ACTION_UPDATE, delivery, old, cur, createBy);
+                syncCombinedDetailFromDeliveryLine(delivery, cur, createBy);
             }
             else
             {
                 applyOrderRemainingOnDetailQtyOrOrderLineChange(persisted.getOrderId(), delivery.getOrderId(), old, cur);
                 deliveryDetailMapper.updateDeliveryDetail(cur);
+                deliveryLineOpLogService.logDeliveryLine(DeliveryLineOpLog.ACTION_UPDATE, delivery, old, cur, createBy);
+                syncCombinedDetailFromDeliveryLine(delivery, cur, createBy);
             }
         }
 
@@ -905,6 +951,7 @@ public class DeliveryServiceImpl implements IDeliveryService
             restoreScmOrderRemainingBeforeDeliveryDelete(d);
             String delBy = StringUtils.trimToEmpty(d != null && StringUtils.isNotEmpty(d.getUpdateBy()) ? d.getUpdateBy()
                 : ShiroUtils.getLoginName());
+            logDeliveryDeleteLinesAndCombined(d, delBy);
             scmOrderDetailDeliveryRelMapper.deleteByDeliveryId(deliveryId);
             zsTpOrderDetailDeliveryRelMapper.deleteByDeliveryId(deliveryId);
             scmBarcodeSeedService.deleteBarcodesByDeliveryId(Long.parseLong(deliveryId));
@@ -928,11 +975,12 @@ public class DeliveryServiceImpl implements IDeliveryService
         assertDeliveryDeletable(d);
         restoreScmOrderRemainingBeforeDeliveryDelete(d);
         String did = String.valueOf(deliveryId);
+        String delBy = StringUtils.trimToEmpty(d != null && StringUtils.isNotEmpty(d.getUpdateBy()) ? d.getUpdateBy()
+            : ShiroUtils.getLoginName());
+        logDeliveryDeleteLinesAndCombined(d, delBy);
         scmOrderDetailDeliveryRelMapper.deleteByDeliveryId(did);
         zsTpOrderDetailDeliveryRelMapper.deleteByDeliveryId(did);
         scmBarcodeSeedService.deleteBarcodesByDeliveryId(deliveryId);
-        String delBy = StringUtils.trimToEmpty(d != null && StringUtils.isNotEmpty(d.getUpdateBy()) ? d.getUpdateBy()
-            : ShiroUtils.getLoginName());
         deliveryDetailMapper.deleteDeliveryDetailByDeliveryId(deliveryId, delBy);
         return deliveryMapper.deleteDeliveryById(deliveryId, delBy);
     }
@@ -940,6 +988,142 @@ public class DeliveryServiceImpl implements IDeliveryService
     private void assertDeliveryDeletable(Delivery d)
     {
         assertDeliveryNotAudited(d, "删除");
+    }
+
+    /** 普通配送不得占用已进入合单的订单；合单拆出的子单跳过。 */
+    private void assertNotCombinedOccupied(Delivery delivery)
+    {
+        if (delivery == null || delivery.getCombinedId() != null)
+        {
+            return;
+        }
+        if (StringUtils.isNotEmpty(delivery.getZsOrderId()))
+        {
+            return;
+        }
+        Set<Long> orderIds = new HashSet<>();
+        if (delivery.getOrderId() != null)
+        {
+            orderIds.add(delivery.getOrderId());
+        }
+        if (delivery.getDeliveryDetails() != null)
+        {
+            for (DeliveryDetail dd : delivery.getDeliveryDetails())
+            {
+                if (dd == null || dd.getOrderDetailId() == null)
+                {
+                    continue;
+                }
+                OrderDetail od = orderDetailMapper.selectOrderDetailById(dd.getOrderDetailId());
+                if (od != null && od.getOrderId() != null)
+                {
+                    orderIds.add(od.getOrderId());
+                }
+            }
+        }
+        for (Long orderId : orderIds)
+        {
+            if (combinedDeliveryMapper.countCombinedDetailByOrderId(orderId, null) > 0)
+            {
+                throw new ServiceException("订单已走合单配送，不能再做普通配送");
+            }
+        }
+    }
+
+    private void logDeliveryDeleteLinesAndCombined(Delivery bill, String delBy)
+    {
+        if (bill == null || bill.getDeliveryId() == null)
+        {
+            return;
+        }
+        List<DeliveryDetail> details = deliveryDetailMapper.selectDeliveryDetailListByDeliveryId(bill.getDeliveryId());
+        if (details != null)
+        {
+            for (DeliveryDetail dd : details)
+            {
+                deliveryLineOpLogService.logDeliveryLine(DeliveryLineOpLog.ACTION_DELETE, bill, dd, null, delBy);
+                if (bill.getCombinedId() != null)
+                {
+                    CombinedDeliveryDetail cd = combinedDeliveryMapper.selectDetailByDeliveryDetailId(dd.getDetailId());
+                    if (cd != null)
+                    {
+                        deliveryLineOpLogService.logCombinedLine(DeliveryLineOpLog.ACTION_DELETE, bill.getCombinedId(),
+                            bill.getCombinedNo(), cd, null, bill.getDeliveryId(), bill.getDeliveryNo(), delBy);
+                    }
+                }
+            }
+        }
+        if (bill.getCombinedId() != null)
+        {
+            combinedDeliveryMapper.deleteDetailsByDeliveryId(bill.getDeliveryId(), delBy);
+        }
+    }
+
+    private void syncCombinedDetailFromDeliveryLine(Delivery bill, DeliveryDetail after, String oper)
+    {
+        if (bill == null || bill.getCombinedId() == null || after == null || after.getDetailId() == null)
+        {
+            return;
+        }
+        CombinedDeliveryDetail before = combinedDeliveryMapper.selectDetailByDeliveryDetailId(after.getDetailId());
+        if (before == null && after.getCombinedDetailId() != null)
+        {
+            before = combinedDeliveryMapper.selectDetailById(after.getCombinedDetailId());
+        }
+        if (before == null)
+        {
+            return;
+        }
+        CombinedDeliveryDetail upd = new CombinedDeliveryDetail();
+        upd.setDetailId(before.getDetailId());
+        upd.setDeliveryQuantity(after.getDeliveryQuantity());
+        upd.setPrice(after.getPrice());
+        upd.setAmount(after.getAmount());
+        upd.setBatchNo(after.getBatchNo());
+        upd.setProductionDate(after.getProductionDate());
+        upd.setExpireDate(after.getExpireDate());
+        upd.setUpdateBy(oper);
+        combinedDeliveryMapper.updateCombinedDeliveryDetail(upd);
+        CombinedDeliveryDetail afterCd = combinedDeliveryMapper.selectDetailById(before.getDetailId());
+        deliveryLineOpLogService.logCombinedLine(DeliveryLineOpLog.ACTION_UPDATE, bill.getCombinedId(),
+            bill.getCombinedNo(), before, afterCd, bill.getDeliveryId(), bill.getDeliveryNo(), oper);
+    }
+
+    private void syncCombinedDetailDelete(Delivery bill, DeliveryDetail old, String oper)
+    {
+        if (bill == null || bill.getCombinedId() == null || old == null || old.getDetailId() == null)
+        {
+            return;
+        }
+        CombinedDeliveryDetail before = combinedDeliveryMapper.selectDetailByDeliveryDetailId(old.getDetailId());
+        if (before == null && old.getCombinedDetailId() != null)
+        {
+            before = combinedDeliveryMapper.selectDetailById(old.getCombinedDetailId());
+        }
+        if (before == null)
+        {
+            return;
+        }
+        combinedDeliveryMapper.deleteDetailById(before.getDetailId(), oper);
+        deliveryLineOpLogService.logCombinedLine(DeliveryLineOpLog.ACTION_DELETE, bill.getCombinedId(),
+            bill.getCombinedNo(), before, null, bill.getDeliveryId(), bill.getDeliveryNo(), oper);
+    }
+
+    /** 合单拆出的子配送单：明细冗余写入合单主键/单号，便于按明细直查 */
+    private static void enrichDetailCombinedRef(Delivery delivery, DeliveryDetail detail)
+    {
+        if (delivery == null || detail == null || StringUtils.isEmpty(delivery.getCombinedId()))
+        {
+            return;
+        }
+        if (StringUtils.isEmpty(detail.getCombinedId()))
+        {
+            detail.setCombinedId(delivery.getCombinedId());
+        }
+        if (StringUtils.isEmpty(detail.getCombinedNo()))
+        {
+            detail.setCombinedNo(delivery.getCombinedNo());
+        }
     }
 
     /**
@@ -1759,6 +1943,18 @@ public class DeliveryServiceImpl implements IDeliveryService
                 : BigDecimal.valueOf(od.getOrderQuantity().longValue());
             OrderLineDeliveryQtyVo q = aggMap.get(String.valueOf(odId));
             BigDecimal cap = lineRemainingApplyCap(oq, q);
+            if (delivery.getCombinedId() == null)
+            {
+                BigDecimal combinedPending = combinedDeliveryMapper.selectCombinedPendingQtyByOrderDetailId(odId, null);
+                if (combinedPending != null)
+                {
+                    cap = cap.subtract(combinedPending);
+                    if (cap.compareTo(BigDecimal.ZERO) < 0)
+                    {
+                        cap = BigDecimal.ZERO;
+                    }
+                }
+            }
             if (sumQ.compareTo(cap) > 0)
             {
                 throw new ServiceException(String.format("订单可配送数量超限【%s %s】：本单合计 %s，当前最多可配送 %s",

@@ -29,7 +29,7 @@ public class SqlInitProperties
      * 版本升级时执行的增量脚本（须含 procedure.sql，再执行 column.sql）。
      * 逗号分隔，相对 sql/mysql/scm/ 目录。
      */
-    private String upgradeScripts = "procedure.sql,column.sql";
+    private String upgradeScripts = "procedure.sql,column.sql,menu.sql";
 
     /**
      * 首次安装（库中无 SCM 业务表）时执行的全量脚本顺序。

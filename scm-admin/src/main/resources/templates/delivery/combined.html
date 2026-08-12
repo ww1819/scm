@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org" xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+<head>
+	<th:block th:include="include :: header('合单配送')" />
+</head>
+<body class="gray-bg">
+	<div class="container-div">
+		<div class="row">
+			<ul class="nav nav-tabs">
+				<li class="active"><a data-toggle="tab" href="#tab-combined">合单列表</a></li>
+				<li><a data-toggle="tab" href="#tab-orders">合单订单</a></li>
+			</ul>
+			<div class="tab-content">
+				<div id="tab-combined" class="tab-pane fade in active">
+					<form id="combined-form">
+						<div class="select-list">
+							<ul>
+								<li>合单号：<input type="text" name="combinedNo"/></li>
+								<li>审核状态：
+									<select name="auditStatus">
+										<option value="">所有</option>
+										<option value="0">待审核</option>
+										<option value="1">已审核</option>
+									</select>
+								</li>
+							</ul>
+						</div>
+					</form>
+					<div class="btn-group-sm" id="toolbar" role="group">
+						<a class="btn btn-success" onclick="$.operate.addTab()" shiro:hasPermission="delivery:combined:add">
+							<i class="fa fa-plus"></i> 新增
+						</a>
+						<a class="btn btn-info multiple disabled" onclick="auditCombined()" shiro:hasPermission="delivery:combined:audit">
+							<i class="fa fa-check"></i> 审核
+						</a>
+						<a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="delivery:combined:remove">
+							<i class="fa fa-remove"></i> 删除
+						</a>
+						<a class="btn btn-primary" onclick="$.table.search()"><i class="fa fa-search"></i> 搜索</a>
+						<a class="btn btn-warning" onclick="$.form.reset()"><i class="fa fa-refresh"></i> 重置</a>
+					</div>
+					<div class="col-sm-12 select-table table-striped">
+						<table id="bootstrap-table"></table>
+					</div>
+				</div>
+				<div id="tab-orders" class="tab-pane fade">
+					<div class="btn-group-sm" id="toolbar-order" role="group">
+						<a class="btn btn-primary" onclick="$.table.search('order-form', 'order-table')"><i class="fa fa-search"></i> 刷新</a>
+					</div>
+					<div class="col-sm-12 select-table table-striped">
+						<table id="order-table"></table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer" />
+	<script th:inline="javascript">
+		var editFlag = [[${@permission.hasPermi('delivery:combined:edit')}]];
+		var removeFlag = [[${@permission.hasPermi('delivery:combined:remove')}]];
+		var prefix = ctx + "delivery/combined";
+
+		$(function() {
+			$.table.init({
+				url: prefix + "/list",
+				createUrl: prefix + "/add",
+				updateUrl: prefix + "/edit/{id}",
+				removeUrl: prefix + "/remove",
+				formId: "combined-form",
+				uniqueId: "combinedId",
+				modalName: "合单配送",
+				columns: [
+					{ checkbox: true },
+					{ field: 'combinedId', title: 'ID', visible: false },
+					{ field: 'combinedNo', title: '合单号' },
+					{ field: 'hospitalName', title: '医院' },
+					{ field: 'warehouse', title: '仓库' },
+					{ field: 'deliveryAddress', title: '收货地址' },
+					{ field: 'deliveryAmount', title: '金额' },
+					{ field: 'auditStatus', title: '审核状态', formatter: function(v) {
+						return v === '1' ? '<span class="label label-success">已审核</span>' : '<span class="label label-warning">待审核</span>';
+					}},
+					{ field: 'createByDisplay', title: '制单人' },
+					{ field: 'createTime', title: '制单时间' },
+					{ title: '操作', align: 'center', formatter: function(v, row) {
+						var html = '<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="$.modal.openTab(\'合单详情\',\'' + prefix + '/view/' + row.combinedId + '\')"><i class="fa fa-eye"></i>详情</a> ';
+						html += '<a class="btn btn-default btn-xs" href="javascript:void(0)" onclick="$.modal.open(\'变更记录\',\'' + prefix + '/lineOpLog/' + row.combinedId + '\', \'960\', \'560\')"><i class="fa fa-list"></i>记录</a> ';
+						if (row.auditStatus !== '1') {
+							html += '<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.operate.editTab(\'' + row.combinedId + '\')"><i class="fa fa-edit"></i>编辑</a> ';
+							html += '<a class="btn btn-danger btn-xs ' + removeFlag + '" href="javascript:void(0)" onclick="$.operate.remove(\'' + row.combinedId + '\')"><i class="fa fa-remove"></i>删除</a>';
+						}
+						return html;
+					}}
+				]
+			});
+			$('#order-table').bootstrapTable({
+				url: prefix + "/orderProgress",
+				method: 'post',
+				contentType: 'application/x-www-form-urlencoded',
+				sidePagination: 'server',
+				pagination: true,
+				pageSize: 10,
+				uniqueId: 'orderId',
+				queryParams: function(params) {
+					return { pageSize: params.limit, pageNum: params.offset / params.limit + 1 };
+				},
+				columns: [
+					{ field: 'orderNo', title: '订单号' },
+					{ field: 'hospitalName', title: '医院' },
+					{ field: 'warehouse', title: '仓库' },
+					{ field: 'orderQty', title: '订货数量' },
+					{ field: 'deliveredQty', title: '已配送数量' },
+					{ field: 'progressStatus', title: '配送进度' }
+				]
+			});
+			$('a[data-toggle="tab"][href="#tab-orders"]').on('shown.bs.tab', function() {
+				$('#order-table').bootstrapTable('refresh');
+			});
+		});
+
+		function auditCombined() {
+			var rows = $('#bootstrap-table').bootstrapTable('getSelections');
+			if (!rows || rows.length === 0) {
+				$.modal.msgWarning('请选择要审核的合单');
+				return;
+			}
+			var ids = [];
+			for (var i = 0; i < rows.length; i++) {
+				if (rows[i].auditStatus === '1') {
+					$.modal.msgWarning('请勿选择已审核合单');
+					return;
+				}
+				ids.push(rows[i].combinedId);
+			}
+			$.modal.confirm('审核后将按订单拆成标准配送单，且合单不可反审。确定审核 ' + ids.length + ' 张合单？', function() {
+				$.operate.post(prefix + '/audit', { ids: ids.join(',') });
+			});
+		}
+	</script>
+</body>
+</html>

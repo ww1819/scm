@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.CombinedDeliveryMapper">
+
+    <sql id="combinedNotDeleted">
+        (c.del_flag IS NULL OR c.del_flag = '' OR c.del_flag = '0')
+    </sql>
+    <sql id="combinedDetailNotDeleted">
+        (d.del_flag IS NULL OR d.del_flag = '' OR d.del_flag = '0')
+    </sql>
+    <sql id="regularDeliveryNotDeleted">
+        (d.del_flag IS NULL OR d.del_flag = '' OR d.del_flag = '0')
+    </sql>
+
+    <resultMap id="CombinedResult" type="com.scm.system.domain.CombinedDelivery">
+        <id property="combinedId" column="combined_id"/>
+        <result property="combinedNo" column="combined_no"/>
+        <result property="hospitalId" column="hospital_id"/>
+        <result property="hospitalName" column="hospital_name"/>
+        <result property="warehouse" column="warehouse_name"/>
+        <result property="deliveryAddress" column="delivery_address"/>
+        <result property="supplierId" column="supplier_id"/>
+        <result property="spdSupplierId" column="spd_supplier_id"/>
+        <result property="spdTenantId" column="spd_tenant_id"/>
+        <result property="supplierName" column="supplier_name"/>
+        <result property="deliveryAmount" column="delivery_amount"/>
+        <result property="deliveryStatus" column="delivery_status"/>
+        <result property="deliveryPerson" column="delivery_person"/>
+        <result property="expectedDeliveryDate" column="expected_delivery_date"/>
+        <result property="auditStatus" column="audit_status"/>
+        <result property="auditBy" column="audit_by"/>
+        <result property="auditByNameSnapshot" column="audit_by_name_snapshot"/>
+        <result property="auditTime" column="audit_time"/>
+        <result property="auditRemark" column="audit_remark"/>
+        <result property="createBy" column="create_by"/>
+        <result property="createByNameSnapshot" column="create_by_name_snapshot"/>
+        <result property="createByDisplay" column="create_by_display"/>
+        <result property="auditByDisplay" column="audit_by_display"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateBy" column="update_by"/>
+        <result property="updateTime" column="update_time"/>
+        <result property="remark" column="remark"/>
+        <result property="delFlag" column="del_flag"/>
+        <result property="tenantId" column="tenant_id"/>
+    </resultMap>
+
+    <resultMap id="CombinedDetailResult" type="com.scm.system.domain.CombinedDeliveryDetail">
+        <id property="detailId" column="detail_id"/>
+        <result property="combinedId" column="combined_id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="orderDetailId" column="order_detail_id"/>
+        <result property="deliveryId" column="delivery_id"/>
+        <result property="deliveryNo" column="delivery_no"/>
+        <result property="deliveryDetailId" column="delivery_detail_id"/>
+        <result property="materialId" column="material_id"/>
+        <result property="materialCode" column="material_code"/>
+        <result property="materialName" column="material_name"/>
+        <result property="specification" column="specification"/>
+        <result property="model" column="model"/>
+        <result property="unit" column="unit"/>
+        <result property="deliveryQuantity" column="delivery_quantity"/>
+        <result property="price" column="price"/>
+        <result property="amount" column="amount"/>
+        <result property="packCoefficient" column="pack_coefficient"/>
+        <result property="batchNo" column="batch_no"/>
+        <result property="productionDate" column="production_date"/>
+        <result property="expireDate" column="expire_date"/>
+        <result property="manufacturer" column="manufacturer"/>
+        <result property="registerNo" column="register_no"/>
+        <result property="undeliveredQty" column="undelivered_qty"/>
+        <result property="hospitalId" column="hospital_id"/>
+        <result property="hospitalName" column="hospital_name"/>
+        <result property="warehouse" column="warehouse"/>
+        <result property="deliveryAddress" column="delivery_address"/>
+    </resultMap>
+
+    <sql id="selectCombinedVo">
+        select c.combined_id, c.combined_no, c.hospital_id, c.warehouse_name, c.delivery_address,
+               c.supplier_id, c.spd_supplier_id, c.spd_tenant_id, c.delivery_amount, c.delivery_status,
+               c.delivery_person, c.expected_delivery_date, c.audit_status, c.audit_by, c.audit_by_name_snapshot,
+               c.audit_time, c.audit_remark, c.create_by, c.create_by_name_snapshot, c.create_time,
+               c.update_by, c.update_time, c.remark, c.del_flag, c.tenant_id,
+               h.hospital_name, s.company_name as supplier_name,
+               COALESCE(NULLIF(TRIM(c.create_by_name_snapshot), ''), c.create_by) as create_by_display,
+               COALESCE(NULLIF(TRIM(c.audit_by_name_snapshot), ''), c.audit_by) as audit_by_display
+        from scm_combined_delivery c
+        left join scm_hospital h on c.hospital_id = h.hospital_id
+        left join scm_supplier s on c.supplier_id = s.supplier_id
+    </sql>
+
+    <select id="selectCombinedDeliveryById" resultMap="CombinedResult">
+        <include refid="selectCombinedVo"/>
+        where c.combined_id = #{combinedId}
+          and <include refid="combinedNotDeleted"/>
+    </select>
+
+    <select id="selectCombinedDeliveryByNo" resultMap="CombinedResult">
+        <include refid="selectCombinedVo"/>
+        where c.combined_no = #{combinedNo}
+          and <include refid="combinedNotDeleted"/>
+        limit 1
+    </select>
+
+    <select id="selectCombinedDeliveryList" resultMap="CombinedResult">
+        <include refid="selectCombinedVo"/>
+        <where>
+            <include refid="combinedNotDeleted"/>
+            <if test="combinedNo != null and combinedNo != ''">AND LOWER(IFNULL(c.combined_no,'')) like concat('%', LOWER(#{combinedNo}), '%')</if>
+            <if test="hospitalId != null">AND c.hospital_id = #{hospitalId}</if>
+            <if test="supplierId != null">AND c.supplier_id = #{supplierId}</if>
+            <if test="auditStatus != null and auditStatus != ''">AND c.audit_status = #{auditStatus}</if>
+            <if test="warehouse != null and warehouse != ''">AND c.warehouse_name = #{warehouse}</if>
+        </where>
+        order by c.combined_id desc
+    </select>
+
+    <insert id="insertCombinedDelivery" parameterType="com.scm.system.domain.CombinedDelivery">
+        insert into scm_combined_delivery (
+            combined_id, combined_no, hospital_id, warehouse_name, delivery_address, supplier_id, spd_supplier_id, spd_tenant_id,
+            delivery_amount, delivery_status, delivery_person, expected_delivery_date, audit_status,
+            create_by, create_by_name_snapshot, remark, del_flag, tenant_id, create_time
+        ) values (
+            #{combinedId}, #{combinedNo}, #{hospitalId}, #{warehouse}, #{deliveryAddress}, #{supplierId}, #{spdSupplierId}, #{spdTenantId},
+            #{deliveryAmount}, IFNULL(#{deliveryStatus}, '0'), #{deliveryPerson}, #{expectedDeliveryDate}, IFNULL(#{auditStatus}, '0'),
+            #{createBy}, #{createByNameSnapshot}, #{remark}, '0', #{tenantId}, sysdate()
+        )
+    </insert>
+
+    <update id="updateCombinedDelivery" parameterType="com.scm.system.domain.CombinedDelivery">
+        update scm_combined_delivery
+        <set>
+            <if test="hospitalId != null">hospital_id = #{hospitalId},</if>
+            <if test="warehouse != null">warehouse_name = #{warehouse},</if>
+            <if test="deliveryAddress != null">delivery_address = #{deliveryAddress},</if>
+            <if test="deliveryAmount != null">delivery_amount = #{deliveryAmount},</if>
+            <if test="deliveryStatus != null">delivery_status = #{deliveryStatus},</if>
+            <if test="deliveryPerson != null">delivery_person = #{deliveryPerson},</if>
+            <if test="expectedDeliveryDate != null">expected_delivery_date = #{expectedDeliveryDate},</if>
+            <if test="auditStatus != null">audit_status = #{auditStatus},</if>
+            <if test="auditBy != null">audit_by = #{auditBy},</if>
+            <if test="auditByNameSnapshot != null">audit_by_name_snapshot = #{auditByNameSnapshot},</if>
+            <if test="auditTime != null">audit_time = #{auditTime},</if>
+            <if test="auditRemark != null">audit_remark = #{auditRemark},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where combined_id = #{combinedId}
+          and (del_flag is null or del_flag = '' or del_flag = '0')
+    </update>
+
+    <update id="deleteCombinedDeliveryById">
+        update scm_combined_delivery
+        set del_flag = '2', del_by = #{delBy}, del_time = sysdate(), update_by = #{delBy}, update_time = sysdate()
+        where combined_id = #{combinedId}
+    </update>
+
+    <update id="deleteCombinedDeliveryByIds">
+        update scm_combined_delivery
+        set del_flag = '2', del_by = #{delBy}, del_time = sysdate(), update_by = #{delBy}, update_time = sysdate()
+        where combined_id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
+    </update>
+
+    <select id="selectDetailById" resultMap="CombinedDetailResult">
+        select d.* from scm_combined_delivery_detail d
+        where d.detail_id = #{detailId} and <include refid="combinedDetailNotDeleted"/>
+    </select>
+
+    <select id="selectDetailsByCombinedId" resultMap="CombinedDetailResult">
+        select d.* from scm_combined_delivery_detail d
+        where d.combined_id = #{combinedId} and <include refid="combinedDetailNotDeleted"/>
+        order by d.detail_id
+    </select>
+
+    <select id="selectDetailByDeliveryDetailId" resultMap="CombinedDetailResult">
+        select d.* from scm_combined_delivery_detail d
+        where d.delivery_detail_id = #{deliveryDetailId} and <include refid="combinedDetailNotDeleted"/>
+        limit 1
+    </select>
+
+    <insert id="insertCombinedDeliveryDetail" parameterType="com.scm.system.domain.CombinedDeliveryDetail">
+        insert into scm_combined_delivery_detail (
+            detail_id, combined_id, order_id, order_no, order_detail_id, delivery_id, delivery_no, delivery_detail_id,
+            material_id, material_code, material_name, specification, model, unit,
+            delivery_quantity, price, amount, pack_coefficient, batch_no, production_date, expire_date,
+            manufacturer, register_no, del_flag, tenant_id, create_by, create_time, remark
+        ) values (
+            #{detailId}, #{combinedId}, #{orderId}, #{orderNo}, #{orderDetailId}, #{deliveryId}, #{deliveryNo}, #{deliveryDetailId},
+            #{materialId}, #{materialCode}, #{materialName}, #{specification}, #{model}, #{unit},
+            #{deliveryQuantity}, #{price}, #{amount}, #{packCoefficient}, #{batchNo}, #{productionDate}, #{expireDate},
+            #{manufacturer}, #{registerNo}, '0', #{tenantId}, #{createBy}, sysdate(), #{remark}
+        )
+    </insert>
+
+    <insert id="batchInsertCombinedDeliveryDetail">
+        insert into scm_combined_delivery_detail (
+            detail_id, combined_id, order_id, order_no, order_detail_id,
+            material_id, material_code, material_name, specification, model, unit,
+            delivery_quantity, price, amount, pack_coefficient, batch_no, production_date, expire_date,
+            manufacturer, register_no, del_flag, tenant_id, create_by, create_time
+        ) values
+        <foreach collection="list" item="item" separator=",">
+        (
+            #{item.detailId}, #{item.combinedId}, #{item.orderId}, #{item.orderNo}, #{item.orderDetailId},
+            #{item.materialId}, #{item.materialCode}, #{item.materialName}, #{item.specification}, #{item.model}, #{item.unit},
+            #{item.deliveryQuantity}, #{item.price}, #{item.amount}, #{item.packCoefficient}, #{item.batchNo}, #{item.productionDate}, #{item.expireDate},
+            #{item.manufacturer}, #{item.registerNo}, '0', #{item.tenantId}, #{item.createBy}, sysdate()
+        )
+        </foreach>
+    </insert>
+
+    <update id="updateCombinedDeliveryDetail" parameterType="com.scm.system.domain.CombinedDeliveryDetail">
+        update scm_combined_delivery_detail
+        <set>
+            <if test="deliveryId != null">delivery_id = #{deliveryId},</if>
+            <if test="deliveryNo != null">delivery_no = #{deliveryNo},</if>
+            <if test="deliveryDetailId != null">delivery_detail_id = #{deliveryDetailId},</if>
+            <if test="deliveryQuantity != null">delivery_quantity = #{deliveryQuantity},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="amount != null">amount = #{amount},</if>
+            <if test="batchNo != null">batch_no = #{batchNo},</if>
+            <if test="productionDate != null">production_date = #{productionDate},</if>
+            <if test="expireDate != null">expire_date = #{expireDate},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </set>
+        where detail_id = #{detailId}
+    </update>
+
+    <update id="deleteDetailById">
+        update scm_combined_delivery_detail
+        set del_flag = '2', del_by = #{delBy}, del_time = sysdate(), update_by = #{delBy}, update_time = sysdate()
+        where detail_id = #{detailId}
+    </update>
+
+    <update id="deleteDetailsByCombinedId">
+        update scm_combined_delivery_detail
+        set del_flag = '2', del_by = #{delBy}, del_time = sysdate(), update_by = #{delBy}, update_time = sysdate()
+        where combined_id = #{combinedId} and (del_flag is null or del_flag = '' or del_flag = '0')
+    </update>
+
+    <update id="deleteDetailsByDeliveryId">
+        update scm_combined_delivery_detail
+        set del_flag = '2', del_by = #{delBy}, del_time = sysdate(), update_by = #{delBy}, update_time = sysdate()
+        where delivery_id = #{deliveryId} and (del_flag is null or del_flag = '' or del_flag = '0')
+    </update>
+
+    <select id="countCombinedDetailByOrderId" resultType="int">
+        select count(1)
+        from scm_combined_delivery_detail d
+        inner join scm_combined_delivery c on c.combined_id = d.combined_id
+        where <include refid="combinedDetailNotDeleted"/>
+          and <include refid="combinedNotDeleted"/>
+          and d.order_id = #{orderId}
+          <if test="excludeCombinedId != null">and d.combined_id != #{excludeCombinedId}</if>
+    </select>
+
+    <select id="selectCombinedPendingQtyByOrderId" resultType="com.scm.system.domain.vo.OrderLineDeliveryQtyVo">
+        select cast(d.order_detail_id as char) as lineKey,
+               0 as auditedQty,
+               coalesce(sum(d.delivery_quantity), 0) as pendingQty,
+               0 as rejectedQty
+        from scm_combined_delivery_detail d
+        inner join scm_combined_delivery c on c.combined_id = d.combined_id
+        where <include refid="combinedDetailNotDeleted"/>
+          and <include refid="combinedNotDeleted"/>
+          and d.order_id = #{orderId}
+          and d.delivery_detail_id is null
+          <if test="excludeCombinedId != null">and d.combined_id != #{excludeCombinedId}</if>
+        group by d.order_detail_id
+    </select>
+
+    <select id="selectCombinedPendingQtyByOrderDetailId" resultType="java.math.BigDecimal">
+        select coalesce(sum(d.delivery_quantity), 0)
+        from scm_combined_delivery_detail d
+        inner join scm_combined_delivery c on c.combined_id = d.combined_id
+        where <include refid="combinedDetailNotDeleted"/>
+          and <include refid="combinedNotDeleted"/>
+          and d.order_detail_id = #{orderDetailId}
+          and d.delivery_detail_id is null
+          <if test="excludeCombinedId != null">and d.combined_id != #{excludeCombinedId}</if>
+    </select>
+
+    <select id="selectCombinedOrderProgress" resultType="com.scm.system.domain.vo.CombinedOrderProgressVo">
+        select o.order_id as orderId, o.order_no as orderNo, o.hospital_id as hospitalId,
+               h.hospital_name as hospitalName, o.warehouse_name as warehouse,
+               max(c.delivery_address) as deliveryAddress,
+               coalesce(sum(od.order_quantity), 0) as orderQty,
+               coalesce((
+                   select sum(dd.delivery_quantity)
+                   from scm_delivery_detail dd
+                   inner join scm_delivery del on del.delivery_id = dd.delivery_id
+                   where (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
+                     and (del.del_flag is null or del.del_flag = '' or del.del_flag = '0')
+                     and del.combined_id is not null
+                     and dd.order_detail_id in (select od2.detail_id from scm_order_detail od2 where od2.order_id = o.order_id)
+               ), 0) as deliveredQty
+        from scm_order o
+        inner join scm_combined_delivery_detail d on d.order_id = o.order_id
+            and (d.del_flag is null or d.del_flag = '' or d.del_flag = '0')
+        inner join scm_combined_delivery c on c.combined_id = d.combined_id
+            and (c.del_flag is null or c.del_flag = '' or c.del_flag = '0')
+        left join scm_order_detail od on od.order_id = o.order_id
+        left join scm_hospital h on o.hospital_id = h.hospital_id
+        <where>
+            <if test="supplierId != null">and o.supplier_id = #{supplierId}</if>
+            <if test="hospitalId != null">and o.hospital_id = #{hospitalId}</if>
+        </where>
+        group by o.order_id, o.order_no, o.hospital_id, h.hospital_name, o.warehouse_name
+        order by o.order_id desc
+    </select>
+
+    <!-- 未配/部分配的第一方订单明细；排除已走普通配送的整单 -->
+    <select id="selectCandidateOrderLines" resultMap="CombinedDetailResult">
+        select
+            od.detail_id as order_detail_id,
+            o.order_id as order_id,
+            o.order_no as order_no,
+            od.material_id as material_id,
+            od.material_code as material_code,
+            od.material_name as material_name,
+            od.specification as specification,
+            od.model as model,
+            od.unit as unit,
+            od.purchase_price as price,
+            od.pack_coefficient as pack_coefficient,
+            od.manufacturer_name as manufacturer,
+            od.register_no as register_no,
+            o.hospital_id as hospital_id,
+            h.hospital_name as hospital_name,
+            o.warehouse_name as warehouse,
+            h.address as delivery_address,
+            greatest(
+                ifnull(od.order_quantity, 0)
+                - ifnull((
+                    select sum(dd.delivery_quantity)
+                    from scm_delivery_detail dd
+                    inner join scm_delivery del on del.delivery_id = dd.delivery_id
+                    where (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
+                      and (del.del_flag is null or del.del_flag = '' or del.del_flag = '0')
+                      and dd.order_detail_id = od.detail_id
+                ), 0)
+                - ifnull((
+                    select sum(cd.delivery_quantity)
+                    from scm_combined_delivery_detail cd
+                    inner join scm_combined_delivery cb on cb.combined_id = cd.combined_id
+                    where (cd.del_flag is null or cd.del_flag = '' or cd.del_flag = '0')
+                      and (cb.del_flag is null or cb.del_flag = '' or cb.del_flag = '0')
+                      and cd.order_detail_id = od.detail_id
+                      and cd.delivery_detail_id is null
+                      <if test="combinedId != null">and cd.combined_id != #{combinedId}</if>
+                ), 0)
+            , 0) as undelivered_qty
+        from scm_order_detail od
+        inner join scm_order o on o.order_id = od.order_id
+        left join scm_hospital h on o.hospital_id = h.hospital_id
+        where (o.del_flag is null or o.del_flag = '' or o.del_flag = '0')
+          and (od.del_flag is null or od.del_flag = '' or od.del_flag = '0')
+          <if test="supplierId != null">and o.supplier_id = #{supplierId}</if>
+          <if test="hospitalId != null">and o.hospital_id = #{hospitalId}</if>
+          <if test="warehouse != null and warehouse != ''">and o.warehouse_name = #{warehouse}</if>
+          and not exists (
+              select 1 from scm_delivery d
+              where <include refid="regularDeliveryNotDeleted"/>
+                and d.combined_id is null
+                and (
+                    d.order_id = o.order_id
+                    or exists (
+                        select 1 from scm_delivery_detail dd
+                        where dd.delivery_id = d.delivery_id
+                          and (dd.del_flag is null or dd.del_flag = '' or dd.del_flag = '0')
+                          and dd.order_detail_id in (select odx.detail_id from scm_order_detail odx where odx.order_id = o.order_id)
+                    )
+                )
+          )
+        having undelivered_qty &gt; 0
+        order by o.order_id desc, od.detail_id
+    </select>
+</mapper>

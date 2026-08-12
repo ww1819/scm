@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('合单详情')" />
+</head>
+<body class="white-bg">
+	<div class="wrapper wrapper-content">
+		<form class="form-horizontal m">
+			<div class="form-group">
+				<label class="col-sm-2 control-label">合单号：</label>
+				<div class="col-sm-4"><p class="form-control-static" th:text="${combined.combinedNo}"></p></div>
+				<label class="col-sm-2 control-label">审核状态：</label>
+				<div class="col-sm-4"><p class="form-control-static" th:text="${combined.auditStatus == '1'} ? '已审核' : '待审核'"></p></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-2 control-label">医院：</label>
+				<div class="col-sm-4"><p class="form-control-static" th:text="${combined.hospitalName}"></p></div>
+				<label class="col-sm-2 control-label">仓库：</label>
+				<div class="col-sm-4"><p class="form-control-static" th:text="${combined.warehouse}"></p></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-2 control-label">收货地址：</label>
+				<div class="col-sm-10"><p class="form-control-static" th:text="${combined.deliveryAddress}"></p></div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-2 control-label">金额：</label>
+				<div class="col-sm-4"><p class="form-control-static" th:text="${combined.deliveryAmount}"></p></div>
+				<label class="col-sm-2 control-label">配送员：</label>
+				<div class="col-sm-4"><p class="form-control-static" th:text="${combined.deliveryPerson}"></p></div>
+			</div>
+		</form>
+		<table class="table table-bordered">
+			<thead>
+				<tr>
+					<th>订单号</th><th>编码</th><th>名称</th><th>规格</th><th>数量</th><th>批号</th><th>效期</th><th>拆出配送单</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="d : ${combined.details}">
+					<td th:text="${d.orderNo}"></td>
+					<td th:text="${d.materialCode}"></td>
+					<td th:text="${d.materialName}"></td>
+					<td th:text="${d.specification}"></td>
+					<td th:text="${d.deliveryQuantity}"></td>
+					<td th:text="${d.batchNo}"></td>
+					<td th:text="${d.expireDate != null} ? ${#dates.format(d.expireDate, 'yyyy-MM-dd')} : ''"></td>
+					<td th:text="${d.deliveryNo}"></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<th:block th:include="include :: footer" />
+</body>
+</html>

@@ -32,6 +32,15 @@ public class DeliveryDetail extends BaseEntity
     /** 订单明细ID */
     private Long orderDetailId;
 
+    /** 来源合单ID（UUID7） */
+    private String combinedId;
+
+    /** 来源合单号 */
+    private String combinedNo;
+
+    /** 来源合单明细ID（UUID7） */
+    private String combinedDetailId;
+
     /** 第三方明细主键 zs_tp_order_detail.id */
     private String zsOrderDetailId;
 
@@ -195,6 +204,36 @@ public class DeliveryDetail extends BaseEntity
     public void setOrderDetailId(Long orderDetailId)
     {
         this.orderDetailId = orderDetailId;
+    }
+
+    public String getCombinedId()
+    {
+        return combinedId;
+    }
+
+    public void setCombinedId(String combinedId)
+    {
+        this.combinedId = combinedId;
+    }
+
+    public String getCombinedNo()
+    {
+        return combinedNo;
+    }
+
+    public void setCombinedNo(String combinedNo)
+    {
+        this.combinedNo = combinedNo;
+    }
+
+    public String getCombinedDetailId()
+    {
+        return combinedDetailId;
+    }
+
+    public void setCombinedDetailId(String combinedDetailId)
+    {
+        this.combinedDetailId = combinedDetailId;
     }
 
     public String getZsOrderDetailId()

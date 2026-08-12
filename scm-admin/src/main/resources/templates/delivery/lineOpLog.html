@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('变更记录')" />
+</head>
+<body class="white-bg">
+	<div class="container-div" style="padding:12px;">
+		<table id="log-table"></table>
+	</div>
+	<th:block th:include="include :: footer" />
+	<script th:inline="javascript">
+		var listUrl = ctx + [[${listUrl}]];
+		var billId = [[${billId}]];
+		$(function() {
+			$('#log-table').bootstrapTable({
+				url: listUrl,
+				method: 'post',
+				contentType: 'application/x-www-form-urlencoded',
+				pagination: false,
+				sidePagination: 'client',
+				queryParams: function() { return { billId: billId }; },
+				columns: [
+					{ field: 'operTime', title: '时间', width: 160 },
+					{ field: 'operName', title: '操作人', width: 90 },
+					{ field: 'action', title: '动作', width: 80, formatter: function(v) {
+						var m = { INSERT: '新增', UPDATE: '修改', DELETE: '删除', PRINT: '打印快照' };
+						return m[v] || v;
+					}},
+					{ field: 'orderNo', title: '订单号', width: 140 },
+					{ field: 'detailId', title: '明细ID', width: 80 },
+					{ field: 'beforeJson', title: '变更前', formatter: ellipsis },
+					{ field: 'afterJson', title: '变更后/快照', formatter: ellipsis },
+					{ field: 'relatedBillNo', title: '关联单号', width: 140 }
+				]
+			});
+		});
+		function ellipsis(v) {
+			if (!v) return '';
+			var s = String(v);
+			if (s.length <= 80) return $('<div/>').text(s).html();
+			return '<span title="' + $('<div/>').text(s).html().replace(/"/g, '&quot;') + '">' + $('<div/>').text(s.substring(0, 80)).html() + '...</span>';
+		}
+	</script>
+</body>
+</html>

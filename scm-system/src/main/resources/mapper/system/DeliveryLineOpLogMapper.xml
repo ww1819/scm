@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.DeliveryLineOpLogMapper">
+
+    <resultMap id="LogResult" type="com.scm.system.domain.DeliveryLineOpLog">
+        <id property="logId" column="log_id"/>
+        <result property="billKind" column="bill_kind"/>
+        <result property="billId" column="bill_id"/>
+        <result property="billNo" column="bill_no"/>
+        <result property="detailId" column="detail_id"/>
+        <result property="orderId" column="order_id"/>
+        <result property="orderNo" column="order_no"/>
+        <result property="orderDetailId" column="order_detail_id"/>
+        <result property="action" column="action"/>
+        <result property="beforeJson" column="before_json"/>
+        <result property="afterJson" column="after_json"/>
+        <result property="relatedBillId" column="related_bill_id"/>
+        <result property="relatedBillNo" column="related_bill_no"/>
+        <result property="operName" column="oper_name"/>
+        <result property="operTime" column="oper_time"/>
+    </resultMap>
+
+    <insert id="insertDeliveryLineOpLog" parameterType="com.scm.system.domain.DeliveryLineOpLog">
+        insert into scm_delivery_line_op_log (
+            log_id, bill_kind, bill_id, bill_no, detail_id, order_id, order_no, order_detail_id,
+            action, before_json, after_json, related_bill_id, related_bill_no, oper_name, oper_time
+        ) values (
+            #{logId}, #{billKind}, #{billId}, #{billNo}, #{detailId}, #{orderId}, #{orderNo}, #{orderDetailId},
+            #{action}, #{beforeJson}, #{afterJson}, #{relatedBillId}, #{relatedBillNo}, #{operName}, #{operTime}
+        )
+    </insert>
+
+    <select id="selectByBill" resultMap="LogResult">
+        select log_id, bill_kind, bill_id, bill_no, detail_id, order_id, order_no, order_detail_id,
+               action, before_json, after_json, related_bill_id, related_bill_no, oper_name, oper_time
+        from scm_delivery_line_op_log
+        where bill_kind = #{billKind} and bill_id = #{billId}
+        order by log_id desc
+    </select>
+</mapper>

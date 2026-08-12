@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('合单配送编辑')" />
+	<th:block th:include="include :: datetimepicker-css" />
+</head>
+<body class="white-bg">
+	<div class="wrapper wrapper-content animated fadeInRight ibox-content">
+		<form class="form-horizontal m" id="form-combined-edit">
+			<input type="hidden" name="combinedId" th:value="${combined.combinedId}"/>
+			<input type="hidden" name="hospitalId" id="hospitalId" th:value="${combined.hospitalId}"/>
+			<input type="hidden" name="warehouse" id="warehouse" th:value="${combined.warehouse}"/>
+			<input type="hidden" name="deliveryAddress" id="deliveryAddress" th:value="${combined.deliveryAddress}"/>
+			<input type="hidden" name="detailsJson" id="detailsJson"/>
+			<div class="form-group">
+				<label class="col-sm-2 control-label">医院：</label>
+				<div class="col-sm-4">
+					<p class="form-control-static" id="hospitalNameText" th:text="${combined.hospitalName} ?: '选择明细后自动带出并锁定'"></p>
+				</div>
+				<label class="col-sm-2 control-label">仓库：</label>
+				<div class="col-sm-4">
+					<p class="form-control-static" id="warehouseText" th:text="${combined.warehouse} ?: '选择明细后自动带出并锁定'"></p>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-2 control-label">收货地址：</label>
+				<div class="col-sm-10">
+					<p class="form-control-static" id="addressText" th:text="${combined.deliveryAddress} ?: '选择明细后自动带出并锁定'"></p>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-2 control-label">配送员：</label>
+				<div class="col-sm-4">
+					<input class="form-control" name="deliveryPerson" th:value="${combined.deliveryPerson}"/>
+				</div>
+				<label class="col-sm-2 control-label">预计配送：</label>
+				<div class="col-sm-4">
+					<input class="form-control time-input" name="expectedDeliveryDate" placeholder="yyyy-MM-dd"
+						th:value="${combined.expectedDeliveryDate != null} ? ${#dates.format(combined.expectedDeliveryDate, 'yyyy-MM-dd')} : ''"/>
+				</div>
+			</div>
+			<div class="form-group">
+				<label class="col-sm-2 control-label">备注：</label>
+				<div class="col-sm-10">
+					<input class="form-control" name="remark" th:value="${combined.remark}"/>
+				</div>
+			</div>
+			<div class="form-group">
+				<div class="col-sm-12">
+					<a class="btn btn-primary btn-sm" onclick="openCandidate()"><i class="fa fa-plus"></i> 选择订单明细</a>
+					<span class="text-muted" style="margin-left:8px;">从同一医院、同一仓库的未配/部分配订单明细勾选；有明细后表头锁定。</span>
+				</div>
+			</div>
+			<div class="col-sm-12 select-table table-striped">
+				<table id="detail-table"></table>
+			</div>
+		</form>
+	</div>
+	<div class="row">
+		<div class="col-sm-offset-5 col-sm-10">
+			<button type="button" class="btn btn-sm btn-primary" onclick="submitCombined()"><i class="fa fa-check"></i>保存</button>
+			<button type="button" class="btn btn-sm btn-danger" onclick="$.modal.closeTab()"><i class="fa fa-reply-all"></i>关闭</button>
+		</div>
+	</div>
+
+	<div id="candidate-modal" style="display:none;padding:12px;">
+		<div class="row" style="margin-bottom:8px;">
+			<div class="col-sm-4">
+				<select class="form-control" id="candHospital">
+					<option value="">全部医院</option>
+					<option th:each="h : ${hospitalList}" th:value="${h.hospitalId}" th:text="${h.hospitalName}"></option>
+				</select>
+			</div>
+			<div class="col-sm-4">
+				<input class="form-control" id="candWarehouse" placeholder="仓库（可空）"/>
+			</div>
+			<div class="col-sm-4">
+				<button type="button" class="btn btn-primary" onclick="loadCandidates()">查询</button>
+			</div>
+		</div>
+		<table id="candidate-table"></table>
+	</div>
+
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: datetimepicker-js" />
+	<script th:inline="javascript">
+		var prefix = ctx + "delivery/combined";
+		var existingDetails = [[${combined.details}]] || [];
+		var combinedId = [[${combined.combinedId}]];
+		var headerLocked = !!(existingDetails && existingDetails.length);
+
+		$(function() {
+			$('#detail-table').bootstrapTable({
+				data: existingDetails,
+				pagination: false,
+				uniqueId: '_rowKey',
+				columns: [
+					{ field: 'orderNo', title: '订单号' },
+					{ field: 'materialCode', title: '编码' },
+					{ field: 'materialName', title: '名称' },
+					{ field: 'specification', title: '规格' },
+					{ field: 'unit', title: '单位' },
+					{ field: 'undeliveredQty', title: '可配上限' },
+					{ field: 'deliveryQuantity', title: '配送数量', formatter: function(v, row, i) {
+						return '<input class="form-control input-sm qty-input" data-index="'+i+'" value="'+(v||'')+'"/>';
+					}},
+					{ field: 'batchNo', title: '批号', formatter: function(v, row, i) {
+						return '<input class="form-control input-sm batch-input" data-index="'+i+'" value="'+(v||'')+'"/>';
+					}},
+					{ field: 'productionDate', title: '生产日期', formatter: function(v, row, i) {
+						return '<input class="form-control input-sm date-input" data-index="'+i+'" data-field="productionDate" value="'+fmtDay(v)+'"/>';
+					}},
+					{ field: 'expireDate', title: '效期', formatter: function(v, row, i) {
+						return '<input class="form-control input-sm date-input" data-index="'+i+'" data-field="expireDate" value="'+fmtDay(v)+'"/>';
+					}},
+					{ field: 'price', title: '单价' },
+					{ title: '操作', formatter: function(v, row, i) {
+						return '<a class="btn btn-danger btn-xs" onclick="removeDetail('+i+')">删除</a>';
+					}}
+				]
+			});
+			bindDetailInputs();
+		});
+
+		function fmtDay(v) {
+			if (v == null || v === '') return '';
+			if (typeof v === 'number') {
+				var d = new Date(v);
+				if (isNaN(d.getTime())) return '';
+				var m = String(d.getMonth() + 1).padStart(2, '0');
+				var day = String(d.getDate()).padStart(2, '0');
+				return d.getFullYear() + '-' + m + '-' + day;
+			}
+			if (typeof v === 'string') return v.substring(0, 10);
+			return '';
+		}
+
+		function currentDetails() {
+			return $('#detail-table').bootstrapTable('getData') || [];
+		}
+
+		function bindDetailInputs() {
+			$('#detail-table').off('change', '.qty-input,.batch-input,.date-input').on('change', '.qty-input,.batch-input,.date-input', function() {
+				var i = parseInt($(this).data('index'), 10);
+				var data = currentDetails();
+				if (!data[i]) return;
+				if ($(this).hasClass('qty-input')) data[i].deliveryQuantity = $(this).val();
+				else if ($(this).hasClass('batch-input')) data[i].batchNo = $(this).val();
+				else data[i][$(this).data('field')] = $(this).val();
+			});
+		}
+
+		function refreshDetails(data) {
+			$('#detail-table').bootstrapTable('load', data || []);
+			bindDetailInputs();
+			headerLocked = data && data.length > 0;
+		}
+
+		function removeDetail(i) {
+			var data = currentDetails();
+			data.splice(i, 1);
+			refreshDetails(data);
+			if (!data.length) {
+				headerLocked = false;
+			}
+		}
+
+		function openCandidate() {
+			layer.open({
+				type: 1,
+				title: '选择未配/部分配订单明细',
+				area: ['960px', '560px'],
+				btn: ['确定', '取消'],
+				content: $('#candidate-modal'),
+				success: function() {
+					if (!$('#candidate-table').data('bootstrap.table')) {
+						$('#candidate-table').bootstrapTable({
+							pagination: false,
+							clickToSelect: true,
+							columns: [
+								{ checkbox: true },
+								{ field: 'orderNo', title: '订单号' },
+								{ field: 'hospitalName', title: '医院' },
+								{ field: 'warehouse', title: '仓库' },
+								{ field: 'materialCode', title: '编码' },
+								{ field: 'materialName', title: '名称' },
+								{ field: 'specification', title: '规格' },
+								{ field: 'undeliveredQty', title: '可配数量' },
+								{ field: 'price', title: '单价' }
+							]
+						});
+					}
+					loadCandidates();
+				},
+				yes: function(index) {
+					var rows = $('#candidate-table').bootstrapTable('getSelections') || [];
+					if (!rows.length) {
+						$.modal.msgWarning('请勾选明细');
+						return;
+					}
+					if (!applySelectedLines(rows)) {
+						return;
+					}
+					layer.close(index);
+				}
+			});
+		}
+
+		function loadCandidates() {
+			$.post(prefix + '/candidateLines', {
+				hospitalId: $('#candHospital').val() || undefined,
+				warehouse: $('#candWarehouse').val(),
+				combinedId: combinedId || undefined
+			}, function(res) {
+				var rows = (res && res.rows) ? res.rows : (res || []);
+				$('#candidate-table').bootstrapTable('load', rows);
+			});
+		}
+
+		function applySelectedLines(rows) {
+			var data = currentDetails();
+			var hospitalId = $('#hospitalId').val();
+			var warehouse = $('#warehouse').val();
+			for (var i = 0; i < rows.length; i++) {
+				var r = rows[i];
+				if (headerLocked || data.length) {
+					if (String(hospitalId) !== String(r.hospitalId) || String(warehouse || '') !== String(r.warehouse || '')) {
+						$.modal.msgWarning('已有明细，只能继续选择同一医院、同一仓库的订单明细');
+						return false;
+					}
+				} else {
+					hospitalId = r.hospitalId;
+					warehouse = r.warehouse;
+					$('#hospitalId').val(r.hospitalId);
+					$('#warehouse').val(r.warehouse || '');
+					$('#deliveryAddress').val(r.deliveryAddress || '');
+					$('#hospitalNameText').text(r.hospitalName || '');
+					$('#warehouseText').text(r.warehouse || '');
+					$('#addressText').text(r.deliveryAddress || '');
+				}
+				var line = $.extend({}, r);
+				line.deliveryQuantity = r.undeliveredQty;
+				line.detailId = null;
+				data.push(line);
+			}
+			refreshDetails(data);
+			return true;
+		}
+
+		function submitCombined() {
+			$('#detail-table .qty-input,.batch-input,.date-input').trigger('change');
+			var data = currentDetails();
+			if (!data.length) {
+				$.modal.msgWarning('请选择订单明细');
+				return;
+			}
+			$('#detailsJson').val(JSON.stringify(data));
+			var url = combinedId ? prefix + '/edit' : prefix + '/add';
+			$.modal.loading("正在处理中，请稍候...");
+			$.ajax({
+				url: url,
+				type: "post",
+				dataType: "json",
+				data: $('#form-combined-edit').serialize(),
+				beforeSend: function (xhr, settings) {
+					var csrftoken = $('meta[name=csrf-token]').attr('content');
+					if (csrftoken) {
+						xhr.setRequestHeader("X-CSRF-Token", csrftoken);
+					}
+				},
+				success: function(result) {
+					$.modal.closeLoading();
+					if (result.code == web_status.SUCCESS) {
+						$.modal.msgSuccess(result.msg);
+						setTimeout(function() {
+							if (typeof closeItem === 'function') {
+								closeItem();
+							}
+							if (window.parent && window.parent.$.table) {
+								window.parent.$.table.refresh();
+							}
+						}, 800);
+					} else if (result.code == web_status.WARNING) {
+						$.modal.alertWarning(result.msg);
+					} else {
+						$.modal.alertError(result.msg);
+					}
+				},
+				error: function() {
+					$.modal.closeLoading();
+					$.modal.alertError("保存失败");
+				}
+			});
+		}
+	</script>
+</body>
+</html>

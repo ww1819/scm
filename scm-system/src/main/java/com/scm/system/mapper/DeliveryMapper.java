@@ -47,6 +47,9 @@ public interface DeliveryMapper
      */
     int countDeliveryByOrderId(@Param("orderId") Long orderId);
 
+    /** 普通配送占用（combined_id 为空） */
+    int countRegularDeliveryByOrderId(@Param("orderId") Long orderId);
+
     /**
      * 新增配送单信息
      *

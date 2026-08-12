@@ -153,6 +153,12 @@ public class Delivery extends BaseEntity
     /** 反审核人姓名快照（最近一次反审核操作时落库） */
     private String unauditByNameSnapshot;
 
+    /** 来源合单ID（UUID7，合单审核拆出的子配送单） */
+    private String combinedId;
+
+    /** 来源合单号 */
+    private String combinedNo;
+
     /** 接口下载次数（子查询，不入库） */
     private Integer downloadLogCount;
 
@@ -608,6 +614,26 @@ public class Delivery extends BaseEntity
     public void setUnauditByNameSnapshot(String unauditByNameSnapshot)
     {
         this.unauditByNameSnapshot = unauditByNameSnapshot;
+    }
+
+    public String getCombinedId()
+    {
+        return combinedId;
+    }
+
+    public void setCombinedId(String combinedId)
+    {
+        this.combinedId = combinedId;
+    }
+
+    public String getCombinedNo()
+    {
+        return combinedNo;
+    }
+
+    public void setCombinedNo(String combinedNo)
+    {
+        this.combinedNo = combinedNo;
     }
 
     public Integer getDownloadLogCount()

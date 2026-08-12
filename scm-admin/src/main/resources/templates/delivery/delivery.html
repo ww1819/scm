@@ -1248,10 +1248,11 @@
 		            field: 'deliveryOperate',
 		            title: '操作',
 		            align: 'center',
-		            width: 160,
+		            width: 210,
 		            formatter: function(value, row, index) {
 		            	var actions = [];
 		                actions.push('<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="$.modal.openTab(\'配送单详情\',\'' + prefix + '/detail/' + row.deliveryId + '\')"><i class="fa fa-eye"></i>详情</a> ');
+		                actions.push('<a class="btn btn-default btn-xs" href="javascript:void(0)" onclick="$.modal.open(\'变更记录\',\'' + prefix + '/lineOpLog/' + row.deliveryId + '\', \'960\', \'560\')"><i class="fa fa-list"></i>记录</a> ');
 		                var audited = (row.auditStatus === '1') || (row.auditStatus == null && row.deliveryStatus === '1');
 		                if (!audited) {
 		                    actions.push('<a class="btn btn-success btn-xs ' + editFlag + '" href="javascript:void(0)" onclick="$.operate.editTab(\'' + row.deliveryId + '\')"><i class="fa fa-edit"></i>编辑</a> ');

@@ -1,6 +1,7 @@
 -- ========== SCM 供应商管理平台 建表脚本 ==========
--- 执行顺序：1.table.sql 2.procedure.sql（增量列存储过程）3.column.sql 4.view.sql 5.trigger.sql 6.function.sql 7.menu.sql 8.data_integrity.sql
--- 按「/」分段，每段一条语句执行
+-- 执行顺序（SqlInitRunner）：1.table.sql 2.procedure.sql 3.column.sql 4.view.sql 5.trigger.sql 6.function.sql 7.menu.sql 8.data_integrity.sql
+-- 升级时：procedure.sql → column.sql → menu.sql（见 application.yml scm.sql.init.upgrade-scripts）
+-- 按「/」分段，每段一条语句执行；职责说明见同目录 README.md
 /
 CREATE TABLE IF NOT EXISTS `scm_supplier` (
   `supplier_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '供应商ID',
@@ -532,6 +533,8 @@ CREATE TABLE IF NOT EXISTS `scm_delivery` (
   `warehouse_name` varchar(200) DEFAULT '' COMMENT '仓库',
   `order_id` bigint(20) DEFAULT NULL COMMENT '订单ID',
   `order_no` varchar(50) DEFAULT '' COMMENT '订单号',
+  `combined_id` varchar(36) DEFAULT NULL COMMENT '来源合单ID（UUID7）',
+  `combined_no` varchar(50) DEFAULT NULL COMMENT '来源合单号',
   `supplier_id` bigint(20) DEFAULT NULL COMMENT '供应商ID',
   `delivery_amount` decimal(18,6) DEFAULT '0.000000' COMMENT '配送金额',
   `delivery_status` char(1) DEFAULT '0' COMMENT '单据状态（0未审核 1已审核 2已配送 3已入库）',
@@ -576,6 +579,7 @@ CREATE TABLE IF NOT EXISTS `scm_delivery` (
   KEY `idx_hospital_id` (`hospital_id`),
   KEY `idx_supplier_id` (`supplier_id`),
   KEY `idx_order_id` (`order_id`),
+  KEY `idx_combined_id` (`combined_id`),
   KEY `idx_zs_order_id` (`zs_order_id`),
   KEY `idx_ref_order_source` (`ref_order_source`),
   KEY `idx_scm_delivery_spd_tenant` (`spd_tenant_id`),
@@ -587,6 +591,9 @@ CREATE TABLE IF NOT EXISTS `scm_delivery_detail` (
   `delivery_id` bigint(20) NOT NULL COMMENT '配送单ID',
   `delivery_no` varchar(50) NOT NULL DEFAULT '' COMMENT '配送单号（冗余主表，便于按单号查明细）',
   `order_detail_id` bigint(20) DEFAULT NULL COMMENT '订单明细ID',
+  `combined_id` varchar(36) DEFAULT NULL COMMENT '来源合单ID（UUID7）',
+  `combined_no` varchar(50) DEFAULT NULL COMMENT '来源合单号',
+  `combined_detail_id` varchar(36) DEFAULT NULL COMMENT '来源合单明细ID（UUID7）',
   `material_id` bigint(20) NOT NULL COMMENT '物资ID',
   `material_code` varchar(50) DEFAULT '' COMMENT '产品编码',
   `material_name` varchar(200) DEFAULT '' COMMENT '产品名称',
@@ -627,6 +634,8 @@ CREATE TABLE IF NOT EXISTS `scm_delivery_detail` (
   KEY `idx_scm_delivery_detail_delivery_no` (`delivery_no`),
   KEY `idx_material_id` (`material_id`),
   KEY `idx_order_detail_id` (`order_detail_id`),
+  KEY `idx_combined_id` (`combined_id`),
+  KEY `idx_combined_detail_id` (`combined_detail_id`),
   KEY `idx_scm_delivery_detail_del` (`delivery_id`,`del_flag`),
   KEY `idx_scm_delivery_detail_spd_entry` (`spd_order_entry_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='配送明细表';
@@ -659,6 +668,103 @@ CREATE TABLE IF NOT EXISTS `scm_delivery_download_log` (
   PRIMARY KEY (`id`),
   KEY `idx_delivery_id` (`delivery_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='配送单接口下载记录';
+/
+-- ========== SCM-F-001 合单配送（UUID7 主键）==========
+CREATE TABLE IF NOT EXISTS `scm_combined_delivery` (
+  `combined_id` varchar(36) NOT NULL COMMENT '合单ID（UUID7）',
+  `combined_no` varchar(50) NOT NULL COMMENT '合单号',
+  `hospital_id` varchar(64) DEFAULT NULL COMMENT '医院ID（字符串外键）',
+  `warehouse_name` varchar(200) DEFAULT '' COMMENT '仓库',
+  `delivery_address` varchar(500) DEFAULT '' COMMENT '收货地址',
+  `supplier_id` varchar(64) DEFAULT NULL COMMENT '供应商ID（字符串外键）',
+  `spd_supplier_id` varchar(64) DEFAULT NULL COMMENT 'SPD供应商ID',
+  `spd_tenant_id` varchar(64) DEFAULT NULL COMMENT 'SPD租户ID',
+  `delivery_amount` decimal(18,4) DEFAULT 0 COMMENT '配送金额',
+  `delivery_status` char(1) DEFAULT '0' COMMENT '单据状态（0未审核 1已审核）',
+  `delivery_person` varchar(50) DEFAULT '' COMMENT '配送员',
+  `expected_delivery_date` date DEFAULT NULL COMMENT '预计配送时间',
+  `audit_status` char(1) DEFAULT '0' COMMENT '审核状态（0待审核 1已审核）',
+  `audit_by` varchar(64) DEFAULT '' COMMENT '审核人',
+  `audit_by_name_snapshot` varchar(64) DEFAULT NULL COMMENT '审核人姓名快照',
+  `audit_time` datetime DEFAULT NULL COMMENT '审核时间',
+  `audit_remark` varchar(500) DEFAULT NULL COMMENT '审核备注',
+  `create_by_name_snapshot` varchar(64) DEFAULT NULL COMMENT '制单人姓名快照',
+  `remark` varchar(500) DEFAULT '' COMMENT '备注',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0正常 2删除）',
+  `del_by` varchar(64) DEFAULT NULL COMMENT '删除人',
+  `del_time` datetime DEFAULT NULL COMMENT '删除时间',
+  `tenant_id` varchar(64) DEFAULT NULL COMMENT '租户',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`combined_id`),
+  UNIQUE KEY `uk_combined_no` (`combined_no`),
+  KEY `idx_cb_hospital` (`hospital_id`),
+  KEY `idx_cb_supplier` (`supplier_id`),
+  KEY `idx_cb_audit` (`audit_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='合单配送主表';
+/
+CREATE TABLE IF NOT EXISTS `scm_combined_delivery_detail` (
+  `detail_id` varchar(36) NOT NULL COMMENT '合单明细ID（UUID7）',
+  `combined_id` varchar(36) NOT NULL COMMENT '合单ID（UUID7）',
+  `order_id` varchar(64) NOT NULL COMMENT '订单ID（字符串外键）',
+  `order_no` varchar(50) DEFAULT '' COMMENT '订单号',
+  `order_detail_id` varchar(64) NOT NULL COMMENT '订单明细ID（字符串外键）',
+  `delivery_id` varchar(64) DEFAULT NULL COMMENT '拆出的配送单ID（字符串外键）',
+  `delivery_no` varchar(50) DEFAULT NULL COMMENT '拆出的配送单号',
+  `delivery_detail_id` varchar(64) DEFAULT NULL COMMENT '拆出的配送明细ID（字符串外键）',
+  `material_id` varchar(64) DEFAULT NULL COMMENT '物资ID（字符串外键）',
+  `material_code` varchar(50) DEFAULT '' COMMENT '产品编码',
+  `material_name` varchar(200) DEFAULT '' COMMENT '产品名称',
+  `specification` varchar(200) DEFAULT '' COMMENT '规格',
+  `model` varchar(200) DEFAULT '' COMMENT '型号',
+  `unit` varchar(20) DEFAULT '' COMMENT '单位',
+  `delivery_quantity` decimal(18,4) DEFAULT 0 COMMENT '配送数量',
+  `price` decimal(18,4) DEFAULT 0 COMMENT '单价',
+  `amount` decimal(18,4) DEFAULT 0 COMMENT '金额',
+  `pack_coefficient` decimal(18,4) DEFAULT NULL COMMENT '打包系数',
+  `batch_no` varchar(50) DEFAULT '' COMMENT '批号',
+  `production_date` date DEFAULT NULL COMMENT '生产日期',
+  `expire_date` date DEFAULT NULL COMMENT '有效期',
+  `manufacturer` varchar(200) DEFAULT '' COMMENT '生产厂家',
+  `register_no` varchar(100) DEFAULT '' COMMENT '注册证号',
+  `del_flag` char(1) DEFAULT '0' COMMENT '删除标志（0正常 2删除）',
+  `del_by` varchar(64) DEFAULT NULL COMMENT '删除人',
+  `del_time` datetime DEFAULT NULL COMMENT '删除时间',
+  `tenant_id` varchar(64) DEFAULT NULL COMMENT '租户',
+  `create_by` varchar(64) DEFAULT '' COMMENT '创建者',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`detail_id`),
+  KEY `idx_cbd_combined` (`combined_id`),
+  KEY `idx_cbd_order` (`order_id`),
+  KEY `idx_cbd_order_detail` (`order_detail_id`),
+  KEY `idx_cbd_delivery_detail` (`delivery_detail_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='合单配送明细';
+/
+CREATE TABLE IF NOT EXISTS `scm_delivery_line_op_log` (
+  `log_id` varchar(36) NOT NULL COMMENT '日志ID（UUID7）',
+  `bill_kind` varchar(20) NOT NULL COMMENT 'DELIVERY / COMBINED',
+  `bill_id` varchar(64) NOT NULL COMMENT '单据ID（字符串）',
+  `bill_no` varchar(50) DEFAULT NULL COMMENT '单据号',
+  `detail_id` varchar(64) DEFAULT NULL COMMENT '明细ID（PRINT 可空；字符串）',
+  `order_id` varchar(64) DEFAULT NULL COMMENT '订单ID（字符串）',
+  `order_no` varchar(50) DEFAULT NULL COMMENT '订单号',
+  `order_detail_id` varchar(64) DEFAULT NULL COMMENT '订单明细ID（字符串）',
+  `action` varchar(20) NOT NULL COMMENT 'INSERT/UPDATE/DELETE/PRINT',
+  `before_json` mediumtext COMMENT '变更前快照',
+  `after_json` mediumtext COMMENT '变更后快照（PRINT 为全单明细数组）',
+  `related_bill_id` varchar(64) DEFAULT NULL COMMENT '关联单据ID（合单↔子单，字符串）',
+  `related_bill_no` varchar(50) DEFAULT NULL COMMENT '关联单据号',
+  `oper_name` varchar(64) DEFAULT NULL COMMENT '操作人',
+  `oper_time` datetime DEFAULT NULL COMMENT '操作时间',
+  PRIMARY KEY (`log_id`),
+  KEY `idx_dll_bill` (`bill_kind`,`bill_id`,`oper_time`),
+  KEY `idx_dll_detail` (`detail_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='配送/合单明细操作日志';
 /
 CREATE TABLE IF NOT EXISTS `scm_settlement` (
   `settlement_id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '结算单ID',

@@ -1,7 +1,7 @@
 # ??????
 scm:
   name: Scm
-  version: 4.8.1
+  version: 4.8.3
   copyrightYear: 2025
   icpNo: 冀ICP备2026009090号-1
   icpLink: https://beian.miit.gov.cn/
@@ -27,7 +27,8 @@ scm:
       fail-on-error: false
       # true：仅当 scm.version 相对库中记录变更时执行增量脚本（推荐）
       upgrade-only: true
-      upgrade-scripts: procedure.sql,column.sql
+      # 版本升级时：过程 → 增量结构 → 菜单（menu 幂等 INSERT IGNORE，保证新菜单随版本到位）
+      upgrade-scripts: procedure.sql,column.sql,menu.sql
       # 首次安装空库时执行的全量脚本链
       full-scripts: table.sql,procedure.sql,column.sql,view.sql,trigger.sql,function.sql,menu.sql,data_integrity.sql
   cos:

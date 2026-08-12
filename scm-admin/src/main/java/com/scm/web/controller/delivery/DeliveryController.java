@@ -41,6 +41,7 @@ import com.scm.system.constants.ScmPrintPageType;
 import com.scm.system.domain.Delivery;
 import com.scm.system.domain.DeliveryDetail;
 import com.scm.system.domain.DeliveryDownloadLog;
+import com.scm.system.domain.DeliveryLineOpLog;
 import com.scm.system.domain.Hospital;
 import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.Order;
@@ -48,6 +49,7 @@ import com.scm.system.domain.Supplier;
 import com.scm.system.domain.ZsTpOrder;
 import com.scm.system.domain.vo.DeliveryPrintSheetVo;
 import com.scm.system.domain.vo.PrintStyleVO;
+import com.scm.system.service.IDeliveryLineOpLogService;
 import com.scm.system.service.IDeliveryService;
 import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.IHospitalService;
@@ -71,6 +73,9 @@ public class DeliveryController extends BaseController
 
     @Autowired
     private IDeliveryService deliveryService;
+
+    @Autowired
+    private IDeliveryLineOpLogService deliveryLineOpLogService;
 
     @Autowired
     private IScmUserPrintSettingService scmUserPrintSettingService;
@@ -446,6 +451,7 @@ public class DeliveryController extends BaseController
         List<DeliveryDetail> details = delivery.getDeliveryDetails();
         mmap.put("delivery", delivery);
         mmap.put("deliveryDetails", details);
+        logDeliveryPrintSnapshot(delivery, details);
 
         // 计算合计数量、明细金额汇总（打印页与表头金额一致）
         int totalQuantity = 0;
@@ -566,6 +572,7 @@ public class DeliveryController extends BaseController
         }
         mmap.put("delivery", delivery);
         mmap.put("deliveryDetails", details);
+        logDeliveryPrintSnapshot(delivery, details);
 
         BigDecimal printTotalAmount = BigDecimal.ZERO;
         if (details != null && !details.isEmpty())
@@ -761,6 +768,7 @@ public class DeliveryController extends BaseController
                 printInputCode = deliveryNo.length() > 4 ? deliveryNo.substring(deliveryNo.length() - 4) : deliveryNo;
             }
             vo.setPrintInputCode(printInputCode);
+            logDeliveryPrintSnapshot(delivery, details);
             return vo;
         }
         catch (ServiceException ex)
@@ -861,6 +869,44 @@ public class DeliveryController extends BaseController
         List<Delivery> list = deliveryService.selectDeliveryList(delivery);
         ExcelUtil<Delivery> util = new ExcelUtil<Delivery>(Delivery.class);
         util.exportExcel(response, list, "配送汇总表");
+    }
+
+    /**
+     * 配送单行级变更/打印快照
+     */
+    @RequiresPermissions("delivery:delivery:view")
+    @GetMapping("/lineOpLog/{deliveryId}")
+    public String lineOpLog(@PathVariable("deliveryId") Long deliveryId, ModelMap mmap)
+    {
+        mmap.put("billKind", DeliveryLineOpLog.KIND_DELIVERY);
+        mmap.put("billId", String.valueOf(deliveryId));
+        mmap.put("listUrl", "/delivery/delivery/lineOpLog/list");
+        return prefix + "/lineOpLog";
+    }
+
+    @RequiresPermissions("delivery:delivery:view")
+    @PostMapping("/lineOpLog/list")
+    @ResponseBody
+    public TableDataInfo lineOpLogList(@RequestParam("billId") String billId)
+    {
+        List<DeliveryLineOpLog> list = deliveryLineOpLogService.selectByBill(DeliveryLineOpLog.KIND_DELIVERY, billId);
+        return getDataTable(list);
+    }
+
+    private void logDeliveryPrintSnapshot(Delivery delivery, List<DeliveryDetail> details)
+    {
+        if (delivery == null || delivery.getDeliveryId() == null)
+        {
+            return;
+        }
+        try
+        {
+            deliveryLineOpLogService.logDeliveryPrint(delivery, details, getLoginName());
+        }
+        catch (Exception e)
+        {
+            logger.warn("写入配送单打印快照失败 deliveryId={}", delivery.getDeliveryId(), e);
+        }
     }
 }
 
