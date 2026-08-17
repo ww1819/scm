@@ -82,7 +82,16 @@ public class ScmLegacyScopeRepairRunner implements ApplicationRunner
         try
         {
             Map<String, Integer> stat = scmScopeBootstrapService.repairLegacyAdminScopes("system_upgrade");
-            AuthorizationUtils.clearAllCachedAuthorizationInfo();
+            // ApplicationRunner 阶段 Shiro SecurityManager 可能尚未绑定到当前线程，清缓存失败不影响补齐结果
+            try
+            {
+                AuthorizationUtils.clearAllCachedAuthorizationInfo();
+            }
+            catch (Exception clearEx)
+            {
+                log.warn("Skip clear authorization cache after legacy scope repair (Shiro not ready yet): {}",
+                    clearEx.getMessage());
+            }
             log.info("Legacy admin scope repair finished: {}", stat);
 
             String now = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date());

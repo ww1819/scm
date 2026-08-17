@@ -24,6 +24,8 @@ import com.scm.common.utils.DateUtils;
 import com.scm.common.utils.PinyinUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.uuid.IdUtils;
+import com.scm.system.domain.MenuGrantHospitalAuthPair;
+import com.scm.system.domain.MenuGrantSupplierAuthPair;
 import com.scm.system.domain.ScmHospitalMenuAuth;
 import com.scm.system.domain.ScmSupplierMenuAuth;
 import com.scm.system.domain.SupplierUser;
@@ -388,38 +390,120 @@ public class ScmScopeBootstrapServiceImpl implements IScmScopeBootstrapService
 
         Set<Long> hospitalSeedExpanded = collectScopeMenuIdsWithAncestors(ScmAuthConstants.AUTH_HOSPITAL);
         Set<Long> supplierSeedExpanded = collectScopeMenuIdsWithAncestors(ScmAuthConstants.AUTH_SUPPLIER);
+
+        // 医院：一次预加载白名单，内存差集后批量插入（避免按院 N 次慢查）
         List<Long> hospitalIds = hospitalMapper.selectActiveHospitalIds();
+        if (hospitalIds == null)
+        {
+            hospitalIds = new ArrayList<>();
+        }
+        Map<Long, Set<Long>> hospitalMenus = new HashMap<>();
+        List<MenuGrantHospitalAuthPair> hospitalPairs = hospitalMenuAuthMapper.selectAuthPairsForActiveHospitals();
+        if (hospitalPairs != null)
+        {
+            for (MenuGrantHospitalAuthPair p : hospitalPairs)
+            {
+                if (p.getHospitalId() == null || p.getMenuId() == null)
+                {
+                    continue;
+                }
+                hospitalMenus.computeIfAbsent(p.getHospitalId(), k -> new HashSet<>()).add(p.getMenuId());
+            }
+        }
+        Date now = DateUtils.getNowDate();
+        List<ScmHospitalMenuAuth> hospitalAuthBuf = new ArrayList<>();
+        int addedHospital = 0;
         for (Long hospitalId : hospitalIds)
         {
             if (hospitalId == null)
             {
                 continue;
             }
-            Set<Long> existingAuth = new HashSet<>(hospitalMenuAuthMapper.selectMenuIdsByHospitalId(hospitalId));
-            Set<Long> needAuth = new HashSet<>(hospitalSeedExpanded);
-            needAuth.removeAll(existingAuth);
-            if (!needAuth.isEmpty())
+            Set<Long> existingAuth = hospitalMenus.computeIfAbsent(hospitalId, k -> new HashSet<>());
+            for (Long menuId : hospitalSeedExpanded)
             {
-                batchInsertHospitalAuth(hospitalId, needAuth, realOper);
-                stat.put("addedHospitalMenuAuth", stat.get("addedHospitalMenuAuth") + needAuth.size());
+                if (menuId == null || existingAuth.contains(menuId))
+                {
+                    continue;
+                }
+                ScmHospitalMenuAuth row = new ScmHospitalMenuAuth();
+                row.setId(IdUtils.simpleUuid7());
+                row.setHospitalId(hospitalId);
+                row.setMenuId(menuId);
+                row.setCreateBy(realOper);
+                row.setCreateTime(now);
+                hospitalAuthBuf.add(row);
+                existingAuth.add(menuId);
+                addedHospital++;
+                if (hospitalAuthBuf.size() >= BATCH)
+                {
+                    hospitalMenuAuthMapper.batchInsertIgnore(hospitalAuthBuf);
+                    hospitalAuthBuf.clear();
+                }
             }
         }
+        if (!hospitalAuthBuf.isEmpty())
+        {
+            hospitalMenuAuthMapper.batchInsertIgnore(hospitalAuthBuf);
+        }
+        stat.put("addedHospitalMenuAuth", addedHospital);
+
+        // 供应商：一次预加载全局白名单，内存差集后批量插入（避免按商 N 次 ~3s 慢查）
         List<Long> supplierIds = supplierMapper.selectActiveSupplierIds();
+        if (supplierIds == null)
+        {
+            supplierIds = new ArrayList<>();
+        }
+        Map<Long, Set<Long>> supplierMenus = new HashMap<>();
+        List<MenuGrantSupplierAuthPair> supplierPairs = supplierMenuAuthMapper.selectGlobalAuthPairsForActiveSuppliers();
+        if (supplierPairs != null)
+        {
+            for (MenuGrantSupplierAuthPair p : supplierPairs)
+            {
+                if (p.getSupplierId() == null || p.getMenuId() == null)
+                {
+                    continue;
+                }
+                supplierMenus.computeIfAbsent(p.getSupplierId(), k -> new HashSet<>()).add(p.getMenuId());
+            }
+        }
+        List<ScmSupplierMenuAuth> supplierAuthBuf = new ArrayList<>();
+        int addedSupplier = 0;
         for (Long supplierId : supplierIds)
         {
             if (supplierId == null)
             {
                 continue;
             }
-            Set<Long> existingAuth = new HashSet<>(supplierMenuAuthMapper.selectMenuIdsBySupplierId(supplierId));
-            Set<Long> needAuth = new HashSet<>(supplierSeedExpanded);
-            needAuth.removeAll(existingAuth);
-            if (!needAuth.isEmpty())
+            Set<Long> existingAuth = supplierMenus.computeIfAbsent(supplierId, k -> new HashSet<>());
+            for (Long menuId : supplierSeedExpanded)
             {
-                batchInsertSupplierAuth(supplierId, needAuth, realOper);
-                stat.put("addedSupplierMenuAuth", stat.get("addedSupplierMenuAuth") + needAuth.size());
+                if (menuId == null || existingAuth.contains(menuId))
+                {
+                    continue;
+                }
+                ScmSupplierMenuAuth row = new ScmSupplierMenuAuth();
+                row.setId(IdUtils.simpleUuid7());
+                row.setSupplierId(supplierId);
+                row.setHospitalId(null);
+                row.setMenuId(menuId);
+                row.setCreateBy(realOper);
+                row.setCreateTime(now);
+                supplierAuthBuf.add(row);
+                existingAuth.add(menuId);
+                addedSupplier++;
+                if (supplierAuthBuf.size() >= BATCH)
+                {
+                    supplierMenuAuthMapper.batchInsertIgnore(supplierAuthBuf);
+                    supplierAuthBuf.clear();
+                }
             }
         }
+        if (!supplierAuthBuf.isEmpty())
+        {
+            supplierMenuAuthMapper.batchInsertIgnore(supplierAuthBuf);
+        }
+        stat.put("addedSupplierMenuAuth", addedSupplier);
         return stat;
     }
 
