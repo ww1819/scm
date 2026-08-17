@@ -302,7 +302,8 @@ create table scm_order (
   update_by          varchar(64)     default ''                 comment '更新者',
   update_time        datetime                                   comment '更新时间',
   primary key (order_id),
-  unique key uk_order_no (order_no),
+  unique key uk_scm_order_tenant_order_no (spd_tenant_id, order_no),
+  key idx_order_no (order_no),
   key idx_hospital_id (hospital_id),
   key idx_supplier_id (supplier_id),
   key idx_order_date (order_date)

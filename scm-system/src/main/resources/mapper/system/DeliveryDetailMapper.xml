@@ -35,6 +35,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="deliveryId"       column="delivery_id"         />
 
         <result property="orderDetailId"    column="order_detail_id"     />
+        <result property="orderId"          column="order_id"            />
+        <result property="orderNo"          column="order_no"            />
+        <result property="spdOrderEntryId"  column="spd_order_entry_id"  />
         <result property="combinedId"       column="combined_id"         />
         <result property="combinedNo"       column="combined_no"         />
         <result property="combinedDetailId" column="combined_detail_id"  />
@@ -117,7 +120,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <sql id="selectDeliveryDetailVo">
 
-        select d.detail_id, d.delivery_id, d.order_detail_id, d.combined_id, d.combined_no, d.combined_detail_id, d.zs_order_detail_id, d.material_id, d.material_code,
+        select d.detail_id, d.delivery_id, d.order_detail_id, d.order_id, d.order_no, d.spd_order_entry_id, d.combined_id, d.combined_no, d.combined_detail_id, d.zs_order_detail_id, d.material_id, d.material_code,
 
                d.material_name, d.specification, d.model, d.unit, d.remaining_quantity,
 
@@ -153,7 +156,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <sql id="selectDeliveryDetailVoEnriched">
 
-        select d.detail_id, d.delivery_id, d.order_detail_id, d.combined_id, d.combined_no, d.combined_detail_id, d.zs_order_detail_id, d.material_id, d.material_code,
+        select d.detail_id, d.delivery_id, d.order_detail_id, d.order_id, d.order_no, d.spd_order_entry_id, d.combined_id, d.combined_no, d.combined_detail_id, d.zs_order_detail_id, d.material_id, d.material_code,
 
                d.material_name, d.specification, d.model, d.unit, d.remaining_quantity,
 
@@ -356,6 +359,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="deliveryNo != null and deliveryNo != ''">delivery_no,</if>
 
             <if test="orderDetailId != null">order_detail_id,</if>
+            <if test="orderId != null and orderId != ''">order_id,</if>
+            <if test="orderNo != null and orderNo != ''">order_no,</if>
+            <if test="spdOrderEntryId != null">spd_order_entry_id,</if>
             <if test="combinedId != null and combinedId != ''">combined_id,</if>
             <if test="combinedNo != null and combinedNo != ''">combined_no,</if>
             <if test="combinedDetailId != null and combinedDetailId != ''">combined_detail_id,</if>
@@ -411,6 +417,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="deliveryNo != null and deliveryNo != ''">#{deliveryNo},</if>
 
             <if test="orderDetailId != null">#{orderDetailId},</if>
+            <if test="orderId != null and orderId != ''">#{orderId},</if>
+            <if test="orderNo != null and orderNo != ''">#{orderNo},</if>
+            <if test="spdOrderEntryId != null">#{spdOrderEntryId},</if>
             <if test="combinedId != null and combinedId != ''">#{combinedId},</if>
             <if test="combinedNo != null and combinedNo != ''">#{combinedNo},</if>
             <if test="combinedDetailId != null and combinedDetailId != ''">#{combinedDetailId},</if>
@@ -467,7 +476,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <insert id="batchInsertDeliveryDetail" parameterType="java.util.List">
 
-        insert into scm_delivery_detail(delivery_id, delivery_no, order_detail_id, combined_id, combined_no, combined_detail_id, material_id, zs_order_detail_id, material_code,
+        insert into scm_delivery_detail(delivery_id, delivery_no, order_detail_id, order_id, order_no, spd_order_entry_id, combined_id, combined_no, combined_detail_id, material_id, zs_order_detail_id, material_code,
 
                material_name, specification, model, unit, remaining_quantity, delivery_quantity,
 
@@ -477,7 +486,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
         <foreach collection="list" item="item" separator=",">
 
-            (#{item.deliveryId}, IFNULL(#{item.deliveryNo}, ''), #{item.orderDetailId}, #{item.combinedId}, #{item.combinedNo}, #{item.combinedDetailId}, IFNULL(#{item.materialId}, 0), #{item.zsOrderDetailId}, #{item.materialCode},
+            (#{item.deliveryId}, IFNULL(#{item.deliveryNo}, ''), #{item.orderDetailId}, #{item.orderId}, IFNULL(#{item.orderNo}, ''), #{item.spdOrderEntryId}, #{item.combinedId}, #{item.combinedNo}, #{item.combinedDetailId}, IFNULL(#{item.materialId}, 0), #{item.zsOrderDetailId}, #{item.materialCode},
 
              #{item.materialName}, #{item.specification}, #{item.model}, #{item.unit},
 
@@ -502,6 +511,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="deliveryNo != null">delivery_no = #{deliveryNo},</if>
 
             <if test="orderDetailId != null">order_detail_id = #{orderDetailId},</if>
+            <if test="orderId != null">order_id = #{orderId},</if>
+            <if test="orderNo != null">order_no = #{orderNo},</if>
+            <if test="spdOrderEntryId != null">spd_order_entry_id = #{spdOrderEntryId},</if>
             <if test="combinedId != null and combinedId != ''">combined_id = #{combinedId},</if>
             <if test="combinedNo != null and combinedNo != ''">combined_no = #{combinedNo},</if>
             <if test="combinedDetailId != null and combinedDetailId != ''">combined_detail_id = #{combinedDetailId},</if>

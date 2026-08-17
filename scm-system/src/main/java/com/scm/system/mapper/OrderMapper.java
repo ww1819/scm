@@ -1,6 +1,7 @@
 package com.scm.system.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.scm.system.domain.Order;
 
 /**
@@ -27,12 +28,19 @@ public interface OrderMapper
     public List<Order> selectOrderList(Order order);
 
     /**
-     * 根据订单编号查询订单
-     * 
+     * 根据订单编号查询订单（仅单号，多租户下同号可能不唯一；优先使用 {@link #selectOrderByTenantAndOrderNo}）
+     *
      * @param orderNo 订单编号
      * @return 订单信息
      */
     public Order selectOrderByOrderNo(String orderNo);
+
+    /**
+     * 按 SPD 租户 + 订单编号查询（第一方推送对账推荐）
+     */
+    public Order selectOrderByTenantAndOrderNo(
+        @Param("spdTenantId") String spdTenantId,
+        @Param("orderNo") String orderNo);
 
     /**
      * 新增订单信息

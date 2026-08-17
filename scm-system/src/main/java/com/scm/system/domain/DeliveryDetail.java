@@ -32,6 +32,15 @@ public class DeliveryDetail extends BaseEntity
     /** 订单明细ID */
     private Long orderDetailId;
 
+    /** 来源订单主键（冗余落库 scm_delivery_detail.order_id，字符串外键） */
+    private String orderId;
+
+    /** 来源订单号（冗余落库 scm_delivery_detail.order_no） */
+    private String orderNo;
+
+    /** SPD 采购订单明细 ID purchase_order_entry.id */
+    private Long spdOrderEntryId;
+
     /** 来源合单ID（UUID7） */
     private String combinedId;
 
@@ -204,6 +213,36 @@ public class DeliveryDetail extends BaseEntity
     public void setOrderDetailId(Long orderDetailId)
     {
         this.orderDetailId = orderDetailId;
+    }
+
+    public String getOrderId()
+    {
+        return orderId;
+    }
+
+    public void setOrderId(String orderId)
+    {
+        this.orderId = orderId;
+    }
+
+    public String getOrderNo()
+    {
+        return orderNo;
+    }
+
+    public void setOrderNo(String orderNo)
+    {
+        this.orderNo = orderNo;
+    }
+
+    public Long getSpdOrderEntryId()
+    {
+        return spdOrderEntryId;
+    }
+
+    public void setSpdOrderEntryId(Long spdOrderEntryId)
+    {
+        this.spdOrderEntryId = spdOrderEntryId;
     }
 
     public String getCombinedId()
@@ -630,6 +669,9 @@ public class DeliveryDetail extends BaseEntity
             .append("detailId", getDetailId())
             .append("deliveryId", getDeliveryId())
             .append("orderDetailId", getOrderDetailId())
+            .append("orderId", getOrderId())
+            .append("orderNo", getOrderNo())
+            .append("spdOrderEntryId", getSpdOrderEntryId())
             .append("materialId", getMaterialId())
             .append("materialCode", getMaterialCode())
             .append("materialName", getMaterialName())

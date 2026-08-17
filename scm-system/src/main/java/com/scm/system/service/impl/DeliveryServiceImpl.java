@@ -357,6 +357,7 @@ public class DeliveryServiceImpl implements IDeliveryService
     {
         enrichDeliverySnapshot(delivery);
         assertSupplierHospitalSubmit(delivery);
+        enrichDeliveryDetailOrderRefs(delivery);
         enrichDeliveryDetailPackCoefficients(delivery);
         enrichDeliveryDetailMaterialIds(delivery);
         validateDeliveryDetailQuantityNotZero(delivery.getDeliveryDetails(), "保存");
@@ -542,6 +543,7 @@ public class DeliveryServiceImpl implements IDeliveryService
         delivery.setUpdateTime(DateUtils.getNowDate());
         enrichDeliverySnapshot(delivery);
         assertSupplierHospitalSubmit(delivery);
+        enrichDeliveryDetailOrderRefs(delivery);
         enrichDeliveryDetailPackCoefficients(delivery);
         enrichDeliveryDetailMaterialIds(delivery);
         validateDeliveryDetailQuantityNotZero(delivery.getDeliveryDetails(), "保存");
@@ -1123,6 +1125,54 @@ public class DeliveryServiceImpl implements IDeliveryService
         if (StringUtils.isEmpty(detail.getCombinedNo()))
         {
             detail.setCombinedNo(delivery.getCombinedNo());
+        }
+    }
+
+    /**
+     * 引用订单明细制单时，明细冗余写入 order_id / order_no / spd_order_entry_id（约定包 §2.2，便于幂等与直查）。
+     */
+    private void enrichDeliveryDetailOrderRefs(Delivery delivery)
+    {
+        if (delivery == null || delivery.getDeliveryDetails() == null || delivery.getDeliveryDetails().isEmpty())
+        {
+            return;
+        }
+        Long headOrderId = delivery.getOrderId();
+        String headOrderNo = delivery.getOrderNo();
+        for (DeliveryDetail dd : delivery.getDeliveryDetails())
+        {
+            if (dd == null)
+            {
+                continue;
+            }
+            if (dd.getOrderDetailId() != null)
+            {
+                OrderDetail od = orderDetailMapper.selectOrderDetailById(dd.getOrderDetailId());
+                if (od != null)
+                {
+                    if (StringUtils.isEmpty(dd.getOrderId()) && od.getOrderId() != null)
+                    {
+                        dd.setOrderId(String.valueOf(od.getOrderId()));
+                    }
+                    if (StringUtils.isEmpty(dd.getOrderNo()))
+                    {
+                        dd.setOrderNo(StringUtils.trimToEmpty(
+                            StringUtils.isNotEmpty(od.getOrderNo()) ? od.getOrderNo() : headOrderNo));
+                    }
+                    if (dd.getSpdOrderEntryId() == null && od.getSpdEntryId() != null)
+                    {
+                        dd.setSpdOrderEntryId(od.getSpdEntryId());
+                    }
+                }
+            }
+            if (StringUtils.isEmpty(dd.getOrderId()) && headOrderId != null)
+            {
+                dd.setOrderId(String.valueOf(headOrderId));
+            }
+            if (StringUtils.isEmpty(dd.getOrderNo()) && StringUtils.isNotEmpty(headOrderNo))
+            {
+                dd.setOrderNo(headOrderNo);
+            }
         }
     }
 
