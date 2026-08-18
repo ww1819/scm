@@ -790,3 +790,23 @@ WHERE r.del_flag = '0' AND r.role_type = 'hospital' AND rm.menu_id = 25009;
 /
 DELETE FROM scm_hospital_menu_auth WHERE menu_id = 25009;
 /
+-- H) 配送单审核(25006)：全局供应商模板角色曾缺审核、仅有反审核；补齐模板角色 sys_role_menu
+INSERT IGNORE INTO sys_role_menu (id, role_id, menu_id, hospital_id, supplier_id)
+SELECT REPLACE(UUID(), '-', ''), r.role_id, 25006, '', ''
+FROM sys_role r
+WHERE r.del_flag = '0'
+  AND r.role_type = 'supplier'
+  AND r.role_key IN ('supplier_admin', 'supplier_sales', 'tp_supplier_admin', 'tp_supplier_sales')
+  AND (r.supplier_id IS NULL OR TRIM(CAST(r.supplier_id AS CHAR)) = '')
+  AND NOT EXISTS (
+    SELECT 1 FROM sys_role_menu rm WHERE rm.role_id = r.role_id AND rm.menu_id = 25006
+  );
+/
+INSERT IGNORE INTO sys_role_menu (id, role_id, menu_id, hospital_id, supplier_id)
+SELECT REPLACE(UUID(), '-', ''), r.role_id, 25006, '', CAST(r.supplier_id AS CHAR)
+FROM sys_role r
+INNER JOIN scm_supplier s ON s.supplier_id = r.supplier_id AND s.del_flag = '0' AND s.status = '0'
+WHERE r.del_flag = '0' AND r.role_type = 'supplier' AND r.supplier_id IS NOT NULL
+  AND EXISTS (SELECT 1 FROM sys_role_menu rm WHERE rm.role_id = r.role_id AND rm.menu_id IN (25002, 25009))
+  AND NOT EXISTS (SELECT 1 FROM sys_role_menu rm2 WHERE rm2.role_id = r.role_id AND rm2.menu_id = 25006);
+/
