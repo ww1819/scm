@@ -15,6 +15,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="supplierName"    column="supplier_name"    />
         <result property="orderSupplierName" column="order_supplier_name" />
         <result property="warehouseId"    column="warehouse_id"     />
+        <result property="warehouseCode"  column="warehouse_code"   />
         <result property="orderAmount"     column="order_amount"    />
         <result property="warehouse"       column="warehouse_name"   />
         <result property="orderDate"      column="order_date"       />
@@ -25,6 +26,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="receiveTime"     column="receive_time"     />
         <result property="orderDeptId"     column="order_dept_id"    />
         <result property="orderDeptName"   column="order_dept_name"  />
+        <result property="orderDeptCode"   column="order_dept_code"  />
         <result property="department"     column="dept_display"      />
         <result property="hospitalHandler" column="hospital_handler" />
         <result property="planNo"         column="plan_no"           />
@@ -38,6 +40,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     
     <sql id="selectOrderVo">
         select o.order_id, o.order_no, o.hospital_id, o.supplier_id, o.supplier_code, o.spd_supplier_id, o.order_supplier_name, o.warehouse_id,
+               o.warehouse_code, o.order_dept_code,
                o.order_amount, o.warehouse_name, o.order_date, o.order_status,
                o.receive_by, o.receive_by_name_snapshot, o.receive_time,
                COALESCE(NULLIF(TRIM(o.receive_by_name_snapshot), ''), o.receive_by) as receive_by_display,
@@ -171,6 +174,21 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                     OR IFNULL(s.supplier_code, '') like concat('%', #{supplierName}, '%')
                     OR LOWER(IFNULL(s.pinyin_code, '')) like concat('%', LOWER(#{supplierName}), '%')
                     OR LOWER(IFNULL(s.company_short_name, '')) like concat('%', LOWER(#{supplierName}), '%')
+                )
+            </if>
+            <if test="warehouse != null and warehouse != ''">
+                AND (
+                    IFNULL(o.warehouse_name, '') like concat('%', #{warehouse}, '%')
+                    OR IFNULL(o.warehouse_code, '') like concat('%', #{warehouse}, '%')
+                    OR CAST(o.warehouse_id AS CHAR) like concat('%', #{warehouse}, '%')
+                )
+            </if>
+            <if test="department != null and department != ''">
+                AND (
+                    IFNULL(o.order_dept_name, '') like concat('%', #{department}, '%')
+                    OR IFNULL(o.apply_dept, '') like concat('%', #{department}, '%')
+                    OR IFNULL(o.order_dept_code, '') like concat('%', #{department}, '%')
+                    OR CAST(o.order_dept_id AS CHAR) like concat('%', #{department}, '%')
                 )
             </if>
             <if test="orderStatus != null and orderStatus != ''">

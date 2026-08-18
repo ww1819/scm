@@ -330,9 +330,13 @@ CALL add_table_column('scm_order', 'warehouse_id', 'bigint(20)', '订单仓库ID
 /
 CALL add_table_column('scm_order', 'warehouse_name', 'varchar(200)', '订单仓库名称', NULL);
 /
+CALL add_table_column('scm_order', 'warehouse_code', 'varchar(64)', '订单仓库编码（SPD fd_warehouse.code 快照）', '');
+/
 CALL add_table_column('scm_order', 'order_dept_id', 'bigint(20)', '订单科室ID', NULL);
 /
 CALL add_table_column('scm_order', 'order_dept_name', 'varchar(200)', '订单科室名称', NULL);
+/
+CALL add_table_column('scm_order', 'order_dept_code', 'varchar(64)', '订单科室编码（SPD fd_department.code 快照）', '');
 /
 -- scm_order_detail
 CALL add_table_column('scm_order_detail', 'del_flag', 'char(1)', '删除标志（0存在 2删除）', '0');

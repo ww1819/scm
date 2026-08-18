@@ -128,11 +128,37 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="supplierId != null">
                 AND d.supplier_id = #{supplierId}
             </if>
+            <if test="supplierName != null and supplierName != ''">
+                AND (
+                    IFNULL(s.company_name, '') like concat('%', #{supplierName}, '%')
+                    OR IFNULL(s.company_short_name, '') like concat('%', #{supplierName}, '%')
+                    OR IFNULL(s.supplier_code, '') like concat('%', #{supplierName}, '%')
+                    OR LOWER(IFNULL(s.pinyin_code, '')) like concat('%', LOWER(#{supplierName}), '%')
+                    OR IFNULL(d.src_order_supplier_name, '') like concat('%', #{supplierName}, '%')
+                )
+            </if>
             <if test="orderId != null">
                 AND d.order_id = #{orderId}
             </if>
             <if test="orderNo != null and orderNo != ''">
-                AND d.order_no like concat('%', #{orderNo}, '%')
+                AND (
+                    IFNULL(d.order_no, '') like concat('%', #{orderNo}, '%')
+                    OR IFNULL(zto.dh, '') like concat('%', #{orderNo}, '%')
+                    OR IFNULL(o.order_no, '') like concat('%', #{orderNo}, '%')
+                )
+            </if>
+            <if test="warehouse != null and warehouse != ''">
+                AND (
+                    IFNULL(d.warehouse_name, '') like concat('%', #{warehouse}, '%')
+                    OR IFNULL(d.src_order_warehouse_name, '') like concat('%', #{warehouse}, '%')
+                    OR IFNULL(d.src_order_warehouse_id, '') like concat('%', #{warehouse}, '%')
+                )
+            </if>
+            <if test="srcOrderDeptName != null and srcOrderDeptName != ''">
+                AND (
+                    IFNULL(d.src_order_dept_name, '') like concat('%', #{srcOrderDeptName}, '%')
+                    OR IFNULL(d.src_order_dept_id, '') like concat('%', #{srcOrderDeptName}, '%')
+                )
             </if>
             <if test="zsOrderId != null and zsOrderId != ''">
                 AND d.zs_order_id = #{zsOrderId}

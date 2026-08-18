@@ -318,7 +318,19 @@
 								配送单号：<input type="text" name="deliveryNo"/>
 							</li>
 							<li class="delivery-filter-text">
+								订单号：<input type="text" name="orderNo" placeholder="订单号"/>
+							</li>
+							<li class="delivery-filter-text">
 								医院名称：<input type="text" name="hospitalName"/>
+							</li>
+							<li class="delivery-filter-text">
+								供应商：<input type="text" name="supplierName" placeholder="编码/名称/拼音"/>
+							</li>
+							<li class="delivery-filter-text">
+								仓库：<input type="text" name="warehouse" placeholder="仓库"/>
+							</li>
+							<li class="delivery-filter-text">
+								申请科室：<input type="text" name="srcOrderDeptName" placeholder="申请科室"/>
 							</li>
 							<li class="delivery-filter-short">
 								单据状态：<select name="deliveryStatus">
@@ -1063,7 +1075,11 @@
 		            var curParams = $.table.queryParams(params);
 		            // 显式带上检索条件，避免表单序列化遗漏
 		            curParams.deliveryNo = $.common.trim($('#delivery-form input[name="deliveryNo"]').val() || '');
+		            curParams.orderNo = $.common.trim($('#delivery-form input[name="orderNo"]').val() || '');
 		            curParams.hospitalName = $.common.trim($('#delivery-form input[name="hospitalName"]').val() || '');
+		            curParams.supplierName = $.common.trim($('#delivery-form input[name="supplierName"]').val() || '');
+		            curParams.warehouse = $.common.trim($('#delivery-form input[name="warehouse"]').val() || '');
+		            curParams.srcOrderDeptName = $.common.trim($('#delivery-form input[name="srcOrderDeptName"]').val() || '');
 		            return curParams;
 		        },
 		        onLoadSuccess: function () {
@@ -1301,7 +1317,7 @@
 		}
 
 		function sanitizeDeliverySearchInputs() {
-			$('#delivery-form').find('input[name="deliveryNo"], input[name="hospitalName"]').each(function () {
+			$('#delivery-form').find('input[name="deliveryNo"], input[name="orderNo"], input[name="hospitalName"], input[name="supplierName"], input[name="warehouse"], input[name="srcOrderDeptName"]').each(function () {
 				stripDeliverySearchSpaces($(this));
 			});
 		}
@@ -1350,7 +1366,7 @@
 		}
 
 		function bindDeliverySearchHelpers() {
-			$('#delivery-form').on('input blur paste', 'input[name="deliveryNo"], input[name="hospitalName"]', function () {
+			$('#delivery-form').on('input blur paste', 'input[name="deliveryNo"], input[name="orderNo"], input[name="hospitalName"], input[name="supplierName"], input[name="warehouse"], input[name="srcOrderDeptName"]', function () {
 				var $input = $(this);
 				setTimeout(function () {
 					stripDeliverySearchSpaces($input);

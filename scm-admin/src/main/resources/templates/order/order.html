@@ -315,6 +315,12 @@
 								供应商名称：<input type="text" name="supplierName"/>
 							</li>
 							<li>
+								仓库：<input type="text" name="warehouse" placeholder="名称/编码"/>
+							</li>
+							<li>
+								申请科室：<input type="text" name="department" placeholder="名称/编码"/>
+							</li>
+							<li>
 								订单状态：<select name="orderStatus">
 									<option value="">所有</option>
 									<option value="0">待接收</option>
@@ -433,13 +439,13 @@
 		}
 
 		function sanitizeOrderSearchInputs() {
-			$('#order-form').find('input[name="orderNo"], input[name="hospitalName"], input[name="supplierName"]').each(function () {
+			$('#order-form').find('input[name="orderNo"], input[name="hospitalName"], input[name="supplierName"], input[name="warehouse"], input[name="department"]').each(function () {
 				stripOrderSearchSpaces($(this));
 			});
 		}
 
 		function bindOrderSearchSpaceClean() {
-			$('#order-form').on('input blur paste', 'input[name="orderNo"], input[name="hospitalName"], input[name="supplierName"]', function () {
+			$('#order-form').on('input blur paste', 'input[name="orderNo"], input[name="hospitalName"], input[name="supplierName"], input[name="warehouse"], input[name="department"]', function () {
 				var $input = $(this);
 				setTimeout(function () {
 					stripOrderSearchSpaces($input);
@@ -820,7 +826,10 @@
 		        height: calculateTableHeight(),
 		        queryParams: function(params) {
 		            sanitizeOrderSearchInputs();
-		            return $.table.queryParams.call(this, params);
+		            var curParams = $.table.queryParams.call(this, params);
+		            curParams.warehouse = $.common.trim($('#order-form input[name="warehouse"]').val() || '');
+		            curParams.department = $.common.trim($('#order-form input[name="department"]').val() || '');
+		            return curParams;
 		        },
 		        onLoadSuccess: function () {
 		            layoutOrderTableWrapHeight();

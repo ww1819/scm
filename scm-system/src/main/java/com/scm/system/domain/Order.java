@@ -55,12 +55,18 @@ public class Order extends BaseEntity
     /** 订单仓库ID */
     private Long warehouseId;
 
+    /** 订单仓库编码（SPD fd_warehouse.code 快照） */
+    private String warehouseCode;
+
     /** 订单科室ID */
     private Long orderDeptId;
 
     /** 订单科室名称（与 apply_dept/科室展示一致时可与 department 同步） */
     @Excel(name = "订单科室名称")
     private String orderDeptName;
+
+    /** 订单科室编码（SPD fd_department.code 快照） */
+    private String orderDeptCode;
 
     /** 订单金额 */
     @Excel(name = "订单金额", cellType = ColumnType.NUMERIC)
@@ -198,6 +204,16 @@ public class Order extends BaseEntity
         this.warehouseId = warehouseId;
     }
 
+    public String getWarehouseCode()
+    {
+        return warehouseCode;
+    }
+
+    public void setWarehouseCode(String warehouseCode)
+    {
+        this.warehouseCode = warehouseCode;
+    }
+
     public Long getOrderDeptId()
     {
         return orderDeptId;
@@ -216,6 +232,16 @@ public class Order extends BaseEntity
     public void setOrderDeptName(String orderDeptName)
     {
         this.orderDeptName = orderDeptName;
+    }
+
+    public String getOrderDeptCode()
+    {
+        return orderDeptCode;
+    }
+
+    public void setOrderDeptCode(String orderDeptCode)
+    {
+        this.orderDeptCode = orderDeptCode;
     }
 
     public BigDecimal getOrderAmount()
