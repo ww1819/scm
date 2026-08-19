@@ -311,7 +311,7 @@
 								供应商：<input type="text" name="supplierKeyword" placeholder="编码/名称/首拼简码"/>
 							</li>
 							<li class="select-time">
-								<label>日期：</label>
+								<label title="默认近30天；填写单号后不限日期">日期：</label>
 								<input type="text" class="scm-push-datetime" id="zsPushBegin" placeholder="yyyy-MM-dd HH:mm:ss" name="params[pushBegin]" autocomplete="off" readonly/>
 								<span>-</span>
 								<input type="text" class="scm-push-datetime" id="zsPushEnd" placeholder="yyyy-MM-dd HH:mm:ss" name="params[pushEnd]" autocomplete="off" readonly/>
@@ -395,7 +395,7 @@
 		function initDefaultZsPushDateRange() {
 			var end = new Date();
 			var start = new Date();
-			start.setDate(end.getDate() - 5);
+			start.setDate(end.getDate() - 30);
 			$('#zsPushEnd').val(formatZsPushDisplayDate(end, true));
 			$('#zsPushBegin').val(formatZsPushDisplayDate(start, false));
 		}
@@ -790,11 +790,21 @@
 		}
 
 		function zsOrderConfirm() {
-			var rowIds = $('#rowIds').val();
+			var selections = $('#' + zsTableId).bootstrapTable('getSelections') || [];
+			var rowIds = '';
+			if (selections.length > 0) {
+				rowIds = $.map(selections, function (r) {
+					return r && r.id != null ? String(r.id) : '';
+				}).filter(function (id) { return id !== ''; }).join(',');
+			}
+			if (!rowIds) {
+				rowIds = $('#rowIds').val();
+			}
 			if (!rowIds || rowIds === '') {
 				$.modal.alertWarning("请至少选择一条第三方订单");
 				return;
 			}
+			$("#rowIds").val(rowIds);
 			var layerApi = (window.top && window.top.layer) ? window.top.layer : parent.layer;
 			var index = layerApi.getFrameIndex(window.name);
 			var layero = (window.top && window.top.$) ? window.top.$('#layui-layer' + index) : parent.$('#layui-layer' + index);

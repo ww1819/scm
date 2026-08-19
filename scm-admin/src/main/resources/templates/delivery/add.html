@@ -3239,9 +3239,12 @@
 	                                reloadDetailTableData(detailData);
 	                            } else {
 	                                reloadDetailTableData([]);
+	                                $.modal.msgWarning('该第三方订单无可配送明细（可配送数量均为0）');
 	                            }
 	                            closeLayer();
-	                            $.modal.msgSuccess("已引入第三方订单数据，请核对后保存");
+	                            if (data.deliveryDetails && data.deliveryDetails.length > 0) {
+	                                $.modal.msgSuccess("已引入第三方订单数据，请核对后保存");
+	                            }
 	                        } else {
 	                            $.modal.alertError(result.msg || "加载第三方订单失败");
 	                        }
@@ -3250,6 +3253,8 @@
 	                        $.modal.alertError("加载第三方订单失败");
 	                    }
 	                });
+	                // AJAX 完成前不关层，避免回调上下文丢失导致明细未写入
+	                return false;
 	            }
 	        };
 	        window.__deliveryZsOrderCallBack = options.callBack;

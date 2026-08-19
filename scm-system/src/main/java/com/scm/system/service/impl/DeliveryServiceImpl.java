@@ -1300,10 +1300,10 @@ public class DeliveryServiceImpl implements IDeliveryService
                 : BigDecimal.valueOf(od.getOrderQuantity().longValue());
             BigDecimal a = (q != null && q.getAuditedQty() != null) ? q.getAuditedQty() : BigDecimal.ZERO;
             BigDecimal p = (q != null && q.getPendingQty() != null) ? q.getPendingQty() : BigDecimal.ZERO;
-            BigDecimal rj = (q != null && q.getRejectedQty() != null) ? q.getRejectedQty() : BigDecimal.ZERO;
             od.setDeliveredAuditedQty(a);
             od.setDeliveredPendingAuditQty(p);
-            BigDecimal und = oq.subtract(a).subtract(p).subtract(rj);
+            // 未配送 = 申请数 − 已审 − 待审；已拒绝不占用
+            BigDecimal und = oq.subtract(a).subtract(p);
             if (und.compareTo(BigDecimal.ZERO) < 0)
             {
                 und = BigDecimal.ZERO;
@@ -1602,8 +1602,8 @@ public class DeliveryServiceImpl implements IDeliveryService
         vo.setSrcOrderWarehouseName(StringUtils.trimToEmpty(head.getCk()));
         vo.setSrcOrderDeptId(StringUtils.trimToEmpty(head.getKsbh()));
         vo.setSrcOrderDeptName(StringUtils.trimToEmpty(head.getKsmc()));
-        vo.setScmSupplierId(parseLongOrNull(head.getScmSupplierId()));
-        vo.setHospitalId(parseLongOrNull(head.getScmHospitalId()));
+        vo.setScmSupplierId(resolveZsTpOrderSupplierId(head));
+        vo.setHospitalId(resolveZsTpOrderHospitalId(head));
         vo.setSpdSupplierId(StringUtils.trimToEmpty(head.getSupno()));
 
         Map<String, OrderLineDeliveryQtyVo> zsLineAgg = new HashMap<>();
@@ -1659,8 +1659,8 @@ public class DeliveryServiceImpl implements IDeliveryService
         OrderLineDeliveryQtyVo q = line != null && StringUtils.isNotEmpty(line.getId()) ? zsLineAgg.get(line.getId()) : null;
         BigDecimal a = (q != null && q.getAuditedQty() != null) ? q.getAuditedQty() : BigDecimal.ZERO;
         BigDecimal p = (q != null && q.getPendingQty() != null) ? q.getPendingQty() : BigDecimal.ZERO;
-        BigDecimal rj = (q != null && q.getRejectedQty() != null) ? q.getRejectedQty() : BigDecimal.ZERO;
-        BigDecimal available = sl.subtract(a).subtract(p).subtract(rj);
+        // 可再配送 = 订单行数量 − 已审 − 待审；已拒绝不占用
+        BigDecimal available = sl.subtract(a).subtract(p);
         if (available.compareTo(BigDecimal.ZERO) < 0)
         {
             available = BigDecimal.ZERO;
@@ -1925,8 +1925,8 @@ public class DeliveryServiceImpl implements IDeliveryService
         BigDecimal oq = lineOrderQty != null ? lineOrderQty : BigDecimal.ZERO;
         BigDecimal a = (q != null && q.getAuditedQty() != null) ? q.getAuditedQty() : BigDecimal.ZERO;
         BigDecimal p = (q != null && q.getPendingQty() != null) ? q.getPendingQty() : BigDecimal.ZERO;
-        BigDecimal rj = (q != null && q.getRejectedQty() != null) ? q.getRejectedQty() : BigDecimal.ZERO;
-        BigDecimal und = oq.subtract(a).subtract(p).subtract(rj);
+        // 已拒绝不占用可配送额度
+        BigDecimal und = oq.subtract(a).subtract(p);
         if (und.compareTo(BigDecimal.ZERO) < 0)
         {
             return BigDecimal.ZERO;
@@ -2725,10 +2725,10 @@ public class DeliveryServiceImpl implements IDeliveryService
             BigDecimal oq = od.getSl() != null ? od.getSl() : BigDecimal.ZERO;
             BigDecimal a = (q != null && q.getAuditedQty() != null) ? q.getAuditedQty() : BigDecimal.ZERO;
             BigDecimal p = (q != null && q.getPendingQty() != null) ? q.getPendingQty() : BigDecimal.ZERO;
-            BigDecimal rj = (q != null && q.getRejectedQty() != null) ? q.getRejectedQty() : BigDecimal.ZERO;
             od.setDeliveredAuditedQty(a);
             od.setDeliveredPendingAuditQty(p);
-            BigDecimal und = oq.subtract(a).subtract(p).subtract(rj);
+            // 未配送 = 订单数 − 已审 − 待审；已拒绝不占用，可再配送
+            BigDecimal und = oq.subtract(a).subtract(p);
             if (und.compareTo(BigDecimal.ZERO) < 0)
             {
                 und = BigDecimal.ZERO;

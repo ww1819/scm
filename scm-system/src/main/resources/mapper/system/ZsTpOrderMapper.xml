@@ -91,12 +91,13 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         CAST(dd.detail_id AS CHAR) COLLATE utf8mb4_0900_ai_ci
     </sql>
 
-    <!-- 订单行已配送数量：配送明细直挂 + rel 关联表（与回查配送单逻辑一致） -->
+    <!-- 订单行已占用配送数量：直挂 + rel；仅计待审/已审（不含已拒绝） -->
     <sql id="zsTpLineDeliveredQtySubquery">
         (SELECT COALESCE(SUM(IFNULL(dd.delivery_quantity, 0)), 0)
          FROM scm_delivery_detail dd
          INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id AND (d.del_flag IS NULL OR d.del_flag = '0')
          WHERE (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
+         AND (d.audit_status IS NULL OR d.audit_status = '' OR d.audit_status = '0' OR d.audit_status = '1')
          AND (
              dd.zs_order_detail_id = l.id
              OR EXISTS (
@@ -117,6 +118,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                       SELECT 1 FROM scm_delivery_detail dd
                       INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id AND (d.del_flag IS NULL OR d.del_flag = '0')
                       WHERE (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
+                        AND (d.audit_status IS NULL OR d.audit_status = '' OR d.audit_status = '0' OR d.audit_status = '1')
                         AND dd.zs_order_detail_id = l.id
                   )
                   OR EXISTS (
@@ -125,39 +127,112 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                       INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id AND (d.del_flag IS NULL OR d.del_flag = '0')
                       WHERE r.order_detail_id = l.id
                         AND (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
+                        AND (d.audit_status IS NULL OR d.audit_status = '' OR d.audit_status = '0' OR d.audit_status = '1')
                   )
               )
         )
     </sql>
 
-    <!-- 按订单行汇总已配送数量：每条 scm_delivery_detail 只计一次（优先直挂 zs_order_detail_id，否则取 rel） -->
-    <sql id="zsTpLineDeliveredQtyByLine">
+    <!-- 候选第三方订单条件（写入进度聚合子查询，避免全表扫配送明细） -->
+    <sql id="zsTpOrderProgressCandidateFilters">
+            zo.del_flag = '0'
+            <if test="(dh == null or dh == '') and params != null and params.pushBegin != null and params.pushBegin != ''">
+                and zo.create_time &gt;= #{params.pushBegin}
+            </if>
+            <if test="(dh == null or dh == '') and params != null and params.pushEnd != null and params.pushEnd != ''">
+                and zo.create_time &lt;= #{params.pushEnd}
+            </if>
+            <if test="dh != null and dh != ''">
+                and zo.dh like concat('%', #{dh}, '%')
+            </if>
+            <if test="customer != null and customer != ''">
+                and zo.customer like concat('%', #{customer}, '%')
+            </if>
+            <if test="ksmc != null and ksmc != ''">
+                and zo.ksmc like concat('%', #{ksmc}, '%')
+            </if>
+            <if test="hospitalId != null">
+                and COALESCE(zo.hospital_id, CAST(NULLIF(TRIM(zo.scm_hospital_id), '') AS UNSIGNED)) = #{hospitalId}
+            </if>
+            <if test="supplierId != null">
+                and COALESCE(zo.supplier_id, CAST(NULLIF(TRIM(zo.scm_supplier_id), '') AS UNSIGNED)) = #{supplierId}
+            </if>
+            <if test="params != null and params.excludeHospitalIds != null and params.excludeHospitalIds.size() &gt; 0">
+                and COALESCE(zo.hospital_id, CAST(NULLIF(TRIM(zo.scm_hospital_id), '') AS UNSIGNED)) NOT IN
+                <foreach collection="params.excludeHospitalIds" item="hid" open="(" separator="," close=")">
+                    #{hid}
+                </foreach>
+            </if>
+            <if test="params != null and params.roleSupplierIds != null and params.roleSupplierIds.size() &gt; 0">
+                and COALESCE(zo.supplier_id, CAST(NULLIF(TRIM(zo.scm_supplier_id), '') AS UNSIGNED)) IN
+                <foreach collection="params.roleSupplierIds" item="sid" open="(" separator="," close=")">
+                    #{sid}
+                </foreach>
+            </if>
+            <if test="params != null and params.scopePairBlock != null and (params.scopePairBlock == true or params.scopePairBlock == 'true')">
+                and 1 = 0
+            </if>
+            <if test="params != null and params.scopePairs != null and params.scopePairs.size() &gt; 0">
+                and (
+                <foreach collection="params.scopePairs" item="sp" separator=" OR ">
+                    (COALESCE(zo.hospital_id, CAST(NULLIF(TRIM(zo.scm_hospital_id), '') AS UNSIGNED)) = #{sp.hospitalId}
+                     AND COALESCE(zo.supplier_id, CAST(NULLIF(TRIM(zo.scm_supplier_id), '') AS UNSIGNED)) = #{sp.supplierId})
+                </foreach>
+                )
+            </if>
+    </sql>
+
+    <!-- 仅针对候选订单行汇总已占用配送量（待审+已审；不含已拒绝） -->
+    <sql id="zsTpLineDeliveredQtyByLineScoped">
         SELECT t.line_id,
                COALESCE(SUM(t.qty), 0) AS delivered_qty
         FROM (
-            SELECT COALESCE(NULLIF(TRIM(dd.zs_order_detail_id), ''), r.order_detail_id) AS line_id,
+            SELECT l.id AS line_id,
                    IFNULL(dd.delivery_quantity, 0) AS qty
-            FROM scm_delivery_detail dd
+            FROM zs_tp_order zo
+            INNER JOIN zs_tp_order_detail l ON l.order_id = zo.id
+                AND (l.del_flag IS NULL OR l.del_flag = '' OR l.del_flag = '0')
+            INNER JOIN scm_delivery_detail dd ON dd.zs_order_detail_id = l.id
+                AND (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
             INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id AND (d.del_flag IS NULL OR d.del_flag = '0')
-            LEFT JOIN zs_tp_order_detail_delivery_rel r ON r.delivery_detail_id = <include refid="zsTpDeliveryDetailIdChar"/>
-            WHERE (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
+            WHERE <include refid="zsTpOrderProgressCandidateFilters"/>
+              AND (d.audit_status IS NULL OR d.audit_status = '' OR d.audit_status = '0' OR d.audit_status = '1')
+            UNION ALL
+            SELECT l.id AS line_id,
+                   IFNULL(dd.delivery_quantity, 0) AS qty
+            FROM zs_tp_order zo
+            INNER JOIN zs_tp_order_detail l ON l.order_id = zo.id
+                AND (l.del_flag IS NULL OR l.del_flag = '' OR l.del_flag = '0')
+            INNER JOIN zs_tp_order_detail_delivery_rel r ON r.order_detail_id = l.id
+            INNER JOIN scm_delivery_detail dd ON r.delivery_detail_id = <include refid="zsTpDeliveryDetailIdChar"/>
+                AND (dd.del_flag IS NULL OR dd.del_flag = '' OR dd.del_flag = '0')
+            INNER JOIN scm_delivery d ON d.delivery_id = dd.delivery_id AND (d.del_flag IS NULL OR d.del_flag = '0')
+            WHERE <include refid="zsTpOrderProgressCandidateFilters"/>
+              AND (d.audit_status IS NULL OR d.audit_status = '' OR d.audit_status = '0' OR d.audit_status = '1')
+              AND (dd.zs_order_detail_id IS NULL OR TRIM(dd.zs_order_detail_id) = '')
         ) t
-        WHERE t.line_id IS NOT NULL AND TRIM(t.line_id) &lt;&gt; ''
         GROUP BY t.line_id
     </sql>
 
-    <!-- 列表页配送进度：一次聚合后 JOIN，避免每行相关子查询（原实现 10 行可超 6s） -->
+    <!-- 兼容旧引用：全量按行汇总（详情单行相关子查询等仍可用） -->
+    <sql id="zsTpLineDeliveredQtyByLine">
+        <include refid="zsTpLineDeliveredQtyByLineScoped"/>
+    </sql>
+
+    <!-- 列表/筛选：仅对候选订单做一次进度聚合后 JOIN -->
     <sql id="zsTpOrderDeliveryProgressJoin">
         LEFT JOIN (
             SELECT l.order_id,
                 SUM(CASE WHEN IFNULL(l.sl, 0) &gt; 0 THEN 1 ELSE 0 END) AS cnt_lines,
                 SUM(CASE WHEN IFNULL(l.sl, 0) &gt; 0 AND IFNULL(ld.delivered_qty, 0) &gt;= IFNULL(l.sl, 0) THEN 1 ELSE 0 END) AS cnt_done,
                 MAX(CASE WHEN IFNULL(ld.delivered_qty, 0) &gt; 0 THEN 1 ELSE 0 END) AS has_del
-            FROM zs_tp_order_detail l
+            FROM zs_tp_order zo
+            INNER JOIN zs_tp_order_detail l ON l.order_id = zo.id
+                AND (l.del_flag IS NULL OR l.del_flag = '' OR l.del_flag = '0')
             LEFT JOIN (
-                <include refid="zsTpLineDeliveredQtyByLine"/>
+                <include refid="zsTpLineDeliveredQtyByLineScoped"/>
             ) ld ON ld.line_id = l.id
-            WHERE (l.del_flag IS NULL OR l.del_flag = '' OR l.del_flag = '0')
+            WHERE <include refid="zsTpOrderProgressCandidateFilters"/>
             GROUP BY l.order_id
         ) zprog ON zprog.order_id = z.id
     </sql>
@@ -286,12 +361,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </if>
     </sql>
 
-    <!-- 推送时间（含时分秒；仅日期时由服务层补全 00:00:00 / 23:59:59） -->
+    <!-- 推送时间（含时分秒）。填了单号则不限日期，避免按单号精确查找仍被默认近几日区间滤掉。 -->
     <sql id="zsTpOrderPushTimeFilters">
-            <if test="params != null and params.pushBegin != null and params.pushBegin != ''">
+            <if test="(dh == null or dh == '') and params != null and params.pushBegin != null and params.pushBegin != ''">
                 and z.create_time &gt;= #{params.pushBegin}
             </if>
-            <if test="params != null and params.pushEnd != null and params.pushEnd != ''">
+            <if test="(dh == null or dh == '') and params != null and params.pushEnd != null and params.pushEnd != ''">
                 and z.create_time &lt;= #{params.pushEnd}
             </if>
     </sql>
@@ -322,29 +397,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             </if>
     </sql>
 
-    <!-- 配送进度筛选：none=未配送 partial=部分配送 done=已配送（与列表 delivery_progress 语义一致） -->
+    <!-- 配送进度筛选：依赖 zprog（须同时 JOIN zsTpOrderDeliveryProgressJoin） -->
     <sql id="zsTpOrderDeliveryFilterBlock">
             <if test="params != null and params.deliveryFilter != null and params.deliveryFilter == 'none'">
-                and not <include refid="zsTpOrderHasAnyDeliveryDetail"/>
+                and <include refid="zsTpOrderDeliveryProgressFromJoin"/> = 'none'
             </if>
             <if test="params != null and params.deliveryFilter != null and params.deliveryFilter == 'partial'">
-                and <include refid="zsTpOrderHasAnyDeliveryDetail"/>
-                and exists (
-                    select 1 from zs_tp_order_detail l
-                    where l.order_id = z.id and (l.del_flag is null or l.del_flag = '' or l.del_flag = '0') and ifnull(l.sl, 0) &gt; 0
-                    and <include refid="zsTpLineDeliveredQtySubquery"/> &lt; ifnull(l.sl, 0)
-                )
+                and <include refid="zsTpOrderDeliveryProgressFromJoin"/> = 'partial'
             </if>
             <if test="params != null and params.deliveryFilter != null and params.deliveryFilter == 'done'">
-                and not exists (
-                    select 1 from zs_tp_order_detail l
-                    where l.order_id = z.id and (l.del_flag is null or l.del_flag = '' or l.del_flag = '0') and ifnull(l.sl, 0) &gt; 0
-                    and <include refid="zsTpLineDeliveredQtySubquery"/> &lt; ifnull(l.sl, 0)
-                )
-                and exists (
-                    select 1 from zs_tp_order_detail l2
-                    where l2.order_id = z.id and (l2.del_flag is null or l2.del_flag = '' or l2.del_flag = '0') and ifnull(l2.sl, 0) &gt; 0
-                )
+                and <include refid="zsTpOrderDeliveryProgressFromJoin"/> = 'done'
             </if>
     </sql>
 
@@ -353,41 +415,28 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <include refid="zsTpOrderHasAnyDeliveryDetail"/>
     </sql>
 
-    <!-- 选择第三方订单弹窗 sheet 页 -->
+    <!-- 选择第三方订单弹窗 sheet 页：用 zprog，禁止嵌套 EXISTS+SUM（否则 COUNT 易超 60s） -->
     <sql id="zsTpOrderSheetTabBlock">
         <choose>
             <when test="params.sheetTab == 'void'">
                 and IFNULL(NULLIF(TRIM(z.void_status), ''), '0') = '1'
-                and not <include refid="zsTpOrderHasDelivery"/>
+                and <include refid="zsTpOrderDeliveryProgressFromJoin"/> = 'none'
             </when>
             <when test="params.sheetTab == 'partialVoid'">
                 and IFNULL(NULLIF(TRIM(z.void_status), ''), '0') = '1'
-                and <include refid="zsTpOrderHasDelivery"/>
+                and <include refid="zsTpOrderDeliveryProgressFromJoin"/> != 'none'
             </when>
             <when test="params.sheetTab == 'partial'">
                 and IFNULL(NULLIF(TRIM(z.void_status), ''), '0') = '0'
-                and <include refid="zsTpOrderHasAnyDeliveryDetail"/>
-                and exists (
-                    select 1 from zs_tp_order_detail l
-                    where l.order_id = z.id and (l.del_flag is null or l.del_flag = '' or l.del_flag = '0') and ifnull(l.sl, 0) &gt; 0
-                    and <include refid="zsTpLineDeliveredQtySubquery"/> &lt; ifnull(l.sl, 0)
-                )
+                and <include refid="zsTpOrderDeliveryProgressFromJoin"/> = 'partial'
             </when>
             <when test="params.sheetTab == 'done'">
                 and IFNULL(NULLIF(TRIM(z.void_status), ''), '0') = '0'
-                and not exists (
-                    select 1 from zs_tp_order_detail l
-                    where l.order_id = z.id and (l.del_flag is null or l.del_flag = '' or l.del_flag = '0') and ifnull(l.sl, 0) &gt; 0
-                    and <include refid="zsTpLineDeliveredQtySubquery"/> &lt; ifnull(l.sl, 0)
-                )
-                and exists (
-                    select 1 from zs_tp_order_detail l2
-                    where l2.order_id = z.id and (l2.del_flag is null or l2.del_flag = '' or l2.del_flag = '0') and ifnull(l2.sl, 0) &gt; 0
-                )
+                and <include refid="zsTpOrderDeliveryProgressFromJoin"/> = 'done'
             </when>
             <otherwise>
                 and IFNULL(NULLIF(TRIM(z.void_status), ''), '0') = '0'
-                and not <include refid="zsTpOrderHasAnyDeliveryDetail"/>
+                and <include refid="zsTpOrderDeliveryProgressFromJoin"/> = 'none'
             </otherwise>
         </choose>
     </sql>
@@ -453,6 +502,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectZsTpOrderList_COUNT" parameterType="com.scm.system.domain.ZsTpOrder" resultType="Long">
         select count(0)
         <include refid="zsTpOrderJoinFromLite"/>
+        <include refid="zsTpOrderDeliveryProgressJoin"/>
         <where>
             <include refid="zsTpOrderSelectListWhere"/>
         </where>
@@ -483,6 +533,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     <select id="selectZsTpOrderQueryList_COUNT" parameterType="com.scm.system.domain.ZsTpOrder" resultType="Long">
         select count(0)
         <include refid="zsTpOrderJoinFromLite"/>
+        <include refid="zsTpOrderDeliveryProgressJoin"/>
         <where>
             <include refid="zsTpOrderQueryListWhere"/>
         </where>
