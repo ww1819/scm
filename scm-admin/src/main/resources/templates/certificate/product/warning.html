@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh" xmlns:th="http://www.thymeleaf.org">
 <head>
-	<th:block th:include="include :: header('äº§å“è¯ä»¶é¢„è­¦')" />
+	<th:block th:include="include :: header('²úÆ·Ö¤¼şÔ¤¾¯')" />
 	<th:block th:include="include :: layout-latest-css" />
 	<style>
 		.change-log-table-wrap { min-height: 0; position: relative; padding-bottom: 0; overflow: hidden; display: flex; flex-direction: column; }
@@ -41,27 +41,27 @@
 				<form id="product-warn-form">
 					<div class="select-list">
 						<ul>
-							<li class="change-log-filter-text">åŒ»é™¢åç§°ï¼š<input type="text" name="hospitalName"/></li>
-							<li class="change-log-filter-text">ä¾›åº”å•†åç§°ï¼š<input type="text" name="supplierName"/></li>
-							<li class="change-log-filter-text">è¯ç…§ç±»å‹ï¼š<input type="text" name="certificateType"/></li>
-							<li class="change-log-filter-text">å“åï¼š<input type="text" name="materialName"/></li>
+							<li class="change-log-filter-text">Ò½ÔºÃû³Æ£º<input type="text" name="hospitalName"/></li>
+							<li class="change-log-filter-text">¹©Ó¦ÉÌÃû³Æ£º<input type="text" name="supplierName"/></li>
+							<li class="change-log-filter-text">Ö¤ÕÕÀàĞÍ£º<input type="text" name="certificateType"/></li>
+							<li class="change-log-filter-text">Æ·Ãû£º<input type="text" name="materialName"/></li>
 							<li class="select-time">
-								<label>æœ‰æ•ˆæœŸï¼š</label>
-								<input type="text" class="time-input" id="startTime" placeholder="å¼€å§‹æ—¶é—´" name="params[beginTime]"/>
+								<label>ÓĞĞ§ÆÚ£º</label>
+								<input type="text" class="time-input" id="startTime" placeholder="¿ªÊ¼Ê±¼ä" name="params[beginTime]"/>
 								<span>-</span>
-								<input type="text" class="time-input" id="endTime" placeholder="ç»“æŸæ—¶é—´" name="params[endTime]"/>
+								<input type="text" class="time-input" id="endTime" placeholder="½áÊøÊ±¼ä" name="params[endTime]"/>
 							</li>
 							<li>
-								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()" style="display: none;"><i class="fa fa-search"></i>&nbsp;æœç´¢</a>
-								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()" style="display: none;"><i class="fa fa-refresh"></i>&nbsp;é‡ç½®</a>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()" style="display: none;"><i class="fa fa-search"></i>&nbsp;ËÑË÷</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()" style="display: none;"><i class="fa fa-refresh"></i>&nbsp;ÖØÖÃ</a>
 							</li>
 						</ul>
 					</div>
 				</form>
 			</div>
 			<div class="btn-group-sm" id="toolbar" role="group">
-				<a class="btn btn-primary" onclick="$.table.search()"><i class="fa fa-search"></i> æœç´¢</a>
-				<a class="btn btn-warning" onclick="resetPre()"><i class="fa fa-refresh"></i> é‡ç½®</a>
+				<a class="btn btn-primary" onclick="$.table.search()"><i class="fa fa-search"></i> ËÑË÷</a>
+				<a class="btn btn-warning" onclick="resetPre()"><i class="fa fa-refresh"></i> ÖØÖÃ</a>
 			</div>
 			<div class="col-sm-12 select-table table-striped change-log-table-wrap change-log-list-table">
 				<table id="bootstrap-table"></table>
@@ -75,7 +75,7 @@
 		var warnTableId = 'bootstrap-table';
 		var warnCheckboxColWidth = 42;
 		var EXPIRE_WARN_WITHIN_DAYS = 45;
-		var warnColWidths = { serialNumber: 60, hospitalName: 160, supplierName: 180, materialName: 160, specification: 100, model: 100, unit: 70, manufacturerName: 140, certificateType: 140, registerNo: 150, expireDate: 110, uploadedFlag: 90, createBy: 100, createTime: 160 };
+		var warnColWidths = { serialNumber: 60, hospitalName: 160, supplierName: 180, materialCode: 140, materialName: 160, specification: 100, model: 100, unit: 70, manufacturerName: 140, certificateType: 140, registerNo: 150, expireDate: 110, uploadedFlag: 90, createBy: 100, createTime: 160 };
 		function escCellAttr(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 		function cellEllipsis(value) { var s = (value == null || value === '') ? '-' : String(value); if (s === '-') return s; return '<span class="change-log-cell-ellipsis" title="' + escCellAttr(s) + '">' + escCellAttr(s) + '</span>'; }
 		function formatDateOnly(value) { if (!value) return '-'; if (typeof value === 'string' && value.indexOf('-') > -1) return value.split(' ')[0]; return $.common.dateFormat(value, 'yyyy-MM-dd'); }
@@ -90,7 +90,7 @@
 		$(function() { layoutWarnTableWrapHeight(); queryProductWarnList(); $(window).resize(function() { layoutWarnTableWrapHeight(); adjustTableHeight(); setTimeout(applyWarnColumnWidths, 100); }); });
 		function queryProductWarnList() {
 			var options = {
-				url: prefix + "/expiringList", formId: "product-warn-form", modalName: "äº§å“è¯ä»¶é¢„è­¦", uniqueId: "certificateId",
+				url: prefix + "/expiringList", formId: "product-warn-form", modalName: "²úÆ·Ö¤¼şÔ¤¾¯", uniqueId: "certificateId",
 				rememberSelected: true, maintainSelected: true, mobileResponsive: false, pageList: [10, 25, 50],
 				height: calculateTableHeight(), rowStyle: expireWarnRowStyle,
 				queryParams: function(params) { var curParams = $.table.queryParams.call(this, params); curParams['params[expireWithinDays]'] = EXPIRE_WARN_WITHIN_DAYS; return curParams; },
@@ -98,21 +98,21 @@
 				onPostBody: function() { applyWarnColumnWidths(); },
 				columns: [
 					{ checkbox: true },
-					{ field: 'certificateId', title: 'è¯ä»¶ID', visible: false },
-					{ field: 'serialNumber', title: 'åºå·', align: 'center', width: warnColWidths.serialNumber, formatter: function(v,r,i){ return $.table.serialNumber(i); } },
-					{ field: 'hospitalName', title: 'åŒ»é™¢åç§°', width: warnColWidths.hospitalName, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'supplierName', title: 'ä¾›åº”å•†åç§°', width: warnColWidths.supplierName, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'materialName', title: 'å“å', width: warnColWidths.materialName, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'specification', title: 'è§„æ ¼', width: warnColWidths.specification, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'model', title: 'å‹å·', width: warnColWidths.model, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'unit', title: 'å•ä½', align: 'center', width: warnColWidths.unit, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'manufacturerName', title: 'å‚å®¶', width: warnColWidths.manufacturerName, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'certificateType', title: 'è¯ç…§ç±»å‹', width: warnColWidths.certificateType, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'registerNo', title: 'è¯ç…§ç¼–å·', width: warnColWidths.registerNo, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'expireDate', title: 'æœ‰æ•ˆæœŸ', align: 'center', width: warnColWidths.expireDate, formatter: function(v){ return formatDateOnly(v); } },
-					{ field: 'uploadedFlag', title: 'æ˜¯å¦ä¸Šä¼ ', align: 'center', width: warnColWidths.uploadedFlag, formatter: function(v, row){ return (row.certificateFile && String(row.certificateFile).trim() !== '') ? '<span class="label label-success">æ˜¯</span>' : '<span class="label label-default">å¦</span>'; } },
-					{ field: 'createBy', title: 'åˆ›å»ºäºº', width: warnColWidths.createBy, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'createTime', title: 'åˆ›å»ºæ—¥æœŸ', align: 'center', width: warnColWidths.createTime, formatter: function(v){ return formatDateTime(v); } }
+					{ field: 'certificateId', title: 'Ö¤¼şID', visible: false },
+					{ field: 'serialNumber', title: 'ĞòºÅ', align: 'center', width: warnColWidths.serialNumber, formatter: function(v,r,i){ return $.table.serialNumber(i); } },
+					{ field: 'hospitalName', title: 'Ò½ÔºÃû³Æ', width: warnColWidths.hospitalName, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'supplierName', title: '¹©Ó¦ÉÌÃû³Æ', width: warnColWidths.supplierName, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'materialName', title: 'Æ·Ãû', width: warnColWidths.materialName, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'specification', title: '¹æ¸ñ', width: warnColWidths.specification, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'model', title: 'ĞÍºÅ', width: warnColWidths.model, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'unit', title: 'µ¥Î»', align: 'center', width: warnColWidths.unit, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'manufacturerName', title: '³§¼Ò', width: warnColWidths.manufacturerName, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'certificateType', title: 'Ö¤ÕÕÀàĞÍ', width: warnColWidths.certificateType, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'registerNo', title: 'Ö¤ÕÕ±àºÅ', width: warnColWidths.registerNo, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'expireDate', title: 'ÓĞĞ§ÆÚ', align: 'center', width: warnColWidths.expireDate, formatter: function(v){ return formatDateOnly(v); } },
+					{ field: 'uploadedFlag', title: 'ÊÇ·ñÉÏ´«', align: 'center', width: warnColWidths.uploadedFlag, formatter: function(v, row){ return (row.certificateFile && String(row.certificateFile).trim() !== '') ? '<span class="label label-success">ÊÇ</span>' : '<span class="label label-default">·ñ</span>'; } },
+					{ field: 'createBy', title: '´´½¨ÈË', width: warnColWidths.createBy, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'createTime', title: '´´½¨ÈÕÆÚ', align: 'center', width: warnColWidths.createTime, formatter: function(v){ return formatDateTime(v); } }
 				]
 			};
 			$.table.init(options);
