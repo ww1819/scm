@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh" xmlns:th="http://www.thymeleaf.org">
 <head>
-	<th:block th:include="include :: header('产品证件预�??')" />
+	<th:block th:include="include :: header('产品证件预警')" />
 	<th:block th:include="include :: layout-latest-css" />
 	<style>
 		.change-log-table-wrap { min-height: 0; position: relative; padding-bottom: 0; overflow: hidden; display: flex; flex-direction: column; }
@@ -45,13 +45,13 @@
 				<form id="product-warn-form">
 					<div class="select-list">
 						<ul>
-							<li class="change-log-filter-text">医院名称�?<input type="text" name="hospitalName"/></li>
+							<li class="change-log-filter-text">医院名称：<input type="text" name="hospitalName"/></li>
 							<li class="change-log-filter-text">供应商名称：<input type="text" name="supplierName"/></li>
-							<li class="change-log-filter-text">证照类型�?<input type="text" name="certificateType"/></li>
-							<li class="change-log-filter-text">品名�?<input type="text" name="materialName"/></li>
+							<li class="change-log-filter-text">证照类型：<input type="text" name="certificateType"/></li>
+							<li class="change-log-filter-text">品名：<input type="text" name="materialName"/></li>
 							<li class="select-time">
 								<label>有效期：</label>
-								<input type="text" class="time-input" id="startTime" placeholder="开始时�?" name="params[beginTime]"/>
+								<input type="text" class="time-input" id="startTime" placeholder="开始时间" name="params[beginTime]"/>
 								<span>-</span>
 								<input type="text" class="time-input" id="endTime" placeholder="结束时间" name="params[endTime]"/>
 							</li>
@@ -266,7 +266,7 @@
 					if (!field || $th.hasClass('bs-checkbox') || field === '0' || field === 'state') return;
 					if (warnColWidths[field] == null) return;
 					var left = $th.offset().left - containerLeft + $th.outerWidth();
-					$('<div class="rc-handle" title="\u62d6\u52a8\u8c03\u6574\u5217\u5bbd"></div>')
+					$('<div class="rc-handle" title="拖动调整列宽"></div>')
 						.css({ left: left + 'px', height: headerH + 'px' })
 						.attr('data-field', field)
 						.appendTo($handleContainer);
@@ -331,7 +331,7 @@
 			var options = {
 				url: prefix + "/expiringList",
 				formId: "product-warn-form",
-				modalName: "产品证件预�??",
+				modalName: "产品证件预警",
 				uniqueId: "certificateId",
 				rememberSelected: true,
 				maintainSelected: true,
@@ -356,18 +356,18 @@
 					{ field: 'certificateId', title: '证件ID', visible: false },
 					{ field: 'serialNumber', title: '序号', align: 'center', width: warnColWidths.serialNumber, formatter: function(v,r,i){ return $.table.serialNumber(i); } },
 					{ field: 'hospitalName', title: '医院名称', width: warnColWidths.hospitalName, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'supplierName', title: '供应商名�?', width: warnColWidths.supplierName, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'supplierName', title: '供应商名称', width: warnColWidths.supplierName, formatter: function(v){ return cellEllipsis(v); } },
 					{ field: 'materialCode', title: '产品编码', width: warnColWidths.materialCode, sortable: true, formatter: function(v){ return cellEllipsis(v); } },
 					{ field: 'materialName', title: '品名', width: warnColWidths.materialName, sortable: true, formatter: function(v){ return cellEllipsis(v); } },
 					{ field: 'specification', title: '规格', width: warnColWidths.specification, sortable: true, formatter: function(v){ return cellEllipsis(v); } },
 					{ field: 'model', title: '型号', width: warnColWidths.model, sortable: true, formatter: function(v){ return cellEllipsis(v); } },
 					{ field: 'unit', title: '单位', align: 'center', width: warnColWidths.unit, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'manufacturerName', title: '厂�??', width: warnColWidths.manufacturerName, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'manufacturerName', title: '厂家', width: warnColWidths.manufacturerName, formatter: function(v){ return cellEllipsis(v); } },
 					{ field: 'certificateType', title: '证照类型', width: warnColWidths.certificateType, formatter: function(v){ return cellEllipsis(v); } },
 					{ field: 'registerNo', title: '证照编号', width: warnColWidths.registerNo, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'expireDate', title: '有效�?', align: 'center', width: warnColWidths.expireDate, formatter: function(v){ return formatDateOnly(v); } },
-					{ field: 'uploadedFlag', title: '�?否上�?', align: 'center', width: warnColWidths.uploadedFlag, formatter: function(v, row){ return (row.certificateFile && String(row.certificateFile).trim() !== '') ? '<span class="label label-success">�?</span>' : '<span class="label label-default">�?</span>'; } },
-					{ field: 'createBy', title: '创建�?', width: warnColWidths.createBy, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'expireDate', title: '有效期', align: 'center', width: warnColWidths.expireDate, formatter: function(v){ return formatDateOnly(v); } },
+					{ field: 'uploadedFlag', title: '是否上传', align: 'center', width: warnColWidths.uploadedFlag, formatter: function(v, row){ return (row.certificateFile && String(row.certificateFile).trim() !== '') ? '<span class="label label-success">是</span>' : '<span class="label label-default">否</span>'; } },
+					{ field: 'createBy', title: '创建人', width: warnColWidths.createBy, formatter: function(v){ return cellEllipsis(v); } },
 					{ field: 'createTime', title: '创建日期', align: 'center', width: warnColWidths.createTime, formatter: function(v){ return formatDateTime(v); } }
 				]
 			};
