@@ -101,7 +101,7 @@ public class SysLoginController extends BaseController
         }
         catch (AuthenticationException e)
         {
-            String msg = "用户或密码错误";
+            String msg = "输入密码错误请核对！";
             if (StringUtils.isNotEmpty(e.getMessage()))
             {
                 msg = e.getMessage();
