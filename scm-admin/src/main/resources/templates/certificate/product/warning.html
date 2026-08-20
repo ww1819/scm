@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh" xmlns:th="http://www.thymeleaf.org">
 <head>
-	<th:block th:include="include :: header('²úÆ·Ö¤¼şÔ¤¾¯')" />
+	<th:block th:include="include :: header('ï¿½ï¿½Æ·Ö¤ï¿½ï¿½Ô¤ï¿½ï¿½')" />
 	<th:block th:include="include :: layout-latest-css" />
 	<style>
 		.change-log-table-wrap { min-height: 0; position: relative; padding-bottom: 0; overflow: hidden; display: flex; flex-direction: column; }
@@ -41,27 +41,27 @@
 				<form id="product-warn-form">
 					<div class="select-list">
 						<ul>
-							<li class="change-log-filter-text">Ò½ÔºÃû³Æ£º<input type="text" name="hospitalName"/></li>
-							<li class="change-log-filter-text">¹©Ó¦ÉÌÃû³Æ£º<input type="text" name="supplierName"/></li>
-							<li class="change-log-filter-text">Ö¤ÕÕÀàĞÍ£º<input type="text" name="certificateType"/></li>
-							<li class="change-log-filter-text">Æ·Ãû£º<input type="text" name="materialName"/></li>
+							<li class="change-log-filter-text">Ò½Ôºï¿½ï¿½ï¿½Æ£ï¿½<input type="text" name="hospitalName"/></li>
+							<li class="change-log-filter-text">ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½ï¿½Æ£ï¿½<input type="text" name="supplierName"/></li>
+							<li class="change-log-filter-text">Ö¤ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½<input type="text" name="certificateType"/></li>
+							<li class="change-log-filter-text">Æ·ï¿½ï¿½ï¿½ï¿½<input type="text" name="materialName"/></li>
 							<li class="select-time">
-								<label>ÓĞĞ§ÆÚ£º</label>
-								<input type="text" class="time-input" id="startTime" placeholder="¿ªÊ¼Ê±¼ä" name="params[beginTime]"/>
+								<label>ï¿½ï¿½Ğ§ï¿½Ú£ï¿½</label>
+								<input type="text" class="time-input" id="startTime" placeholder="ï¿½ï¿½Ê¼Ê±ï¿½ï¿½" name="params[beginTime]"/>
 								<span>-</span>
-								<input type="text" class="time-input" id="endTime" placeholder="½áÊøÊ±¼ä" name="params[endTime]"/>
+								<input type="text" class="time-input" id="endTime" placeholder="ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½" name="params[endTime]"/>
 							</li>
 							<li>
-								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()" style="display: none;"><i class="fa fa-search"></i>&nbsp;ËÑË÷</a>
-								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()" style="display: none;"><i class="fa fa-refresh"></i>&nbsp;ÖØÖÃ</a>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()" style="display: none;"><i class="fa fa-search"></i>&nbsp;ï¿½ï¿½ï¿½ï¿½</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()" style="display: none;"><i class="fa fa-refresh"></i>&nbsp;ï¿½ï¿½ï¿½ï¿½</a>
 							</li>
 						</ul>
 					</div>
 				</form>
 			</div>
 			<div class="btn-group-sm" id="toolbar" role="group">
-				<a class="btn btn-primary" onclick="$.table.search()"><i class="fa fa-search"></i> ËÑË÷</a>
-				<a class="btn btn-warning" onclick="resetPre()"><i class="fa fa-refresh"></i> ÖØÖÃ</a>
+				<a class="btn btn-primary" onclick="$.table.search()"><i class="fa fa-search"></i> ï¿½ï¿½ï¿½ï¿½</a>
+				<a class="btn btn-warning" onclick="resetPre()"><i class="fa fa-refresh"></i> ï¿½ï¿½ï¿½ï¿½</a>
 			</div>
 			<div class="col-sm-12 select-table table-striped change-log-table-wrap change-log-list-table">
 				<table id="bootstrap-table"></table>
@@ -90,7 +90,7 @@
 		$(function() { layoutWarnTableWrapHeight(); queryProductWarnList(); $(window).resize(function() { layoutWarnTableWrapHeight(); adjustTableHeight(); setTimeout(applyWarnColumnWidths, 100); }); });
 		function queryProductWarnList() {
 			var options = {
-				url: prefix + "/expiringList", formId: "product-warn-form", modalName: "²úÆ·Ö¤¼şÔ¤¾¯", uniqueId: "certificateId",
+				url: prefix + "/expiringList", formId: "product-warn-form", modalName: "ï¿½ï¿½Æ·Ö¤ï¿½ï¿½Ô¤ï¿½ï¿½", uniqueId: "certificateId",
 				rememberSelected: true, maintainSelected: true, mobileResponsive: false, pageList: [10, 25, 50],
 				height: calculateTableHeight(), rowStyle: expireWarnRowStyle,
 				queryParams: function(params) { var curParams = $.table.queryParams.call(this, params); curParams['params[expireWithinDays]'] = EXPIRE_WARN_WITHIN_DAYS; return curParams; },
@@ -98,21 +98,22 @@
 				onPostBody: function() { applyWarnColumnWidths(); },
 				columns: [
 					{ checkbox: true },
-					{ field: 'certificateId', title: 'Ö¤¼şID', visible: false },
-					{ field: 'serialNumber', title: 'ĞòºÅ', align: 'center', width: warnColWidths.serialNumber, formatter: function(v,r,i){ return $.table.serialNumber(i); } },
-					{ field: 'hospitalName', title: 'Ò½ÔºÃû³Æ', width: warnColWidths.hospitalName, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'supplierName', title: '¹©Ó¦ÉÌÃû³Æ', width: warnColWidths.supplierName, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'materialName', title: 'Æ·Ãû', width: warnColWidths.materialName, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'specification', title: '¹æ¸ñ', width: warnColWidths.specification, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'model', title: 'ĞÍºÅ', width: warnColWidths.model, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'unit', title: 'µ¥Î»', align: 'center', width: warnColWidths.unit, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'manufacturerName', title: '³§¼Ò', width: warnColWidths.manufacturerName, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'certificateType', title: 'Ö¤ÕÕÀàĞÍ', width: warnColWidths.certificateType, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'registerNo', title: 'Ö¤ÕÕ±àºÅ', width: warnColWidths.registerNo, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'expireDate', title: 'ÓĞĞ§ÆÚ', align: 'center', width: warnColWidths.expireDate, formatter: function(v){ return formatDateOnly(v); } },
-					{ field: 'uploadedFlag', title: 'ÊÇ·ñÉÏ´«', align: 'center', width: warnColWidths.uploadedFlag, formatter: function(v, row){ return (row.certificateFile && String(row.certificateFile).trim() !== '') ? '<span class="label label-success">ÊÇ</span>' : '<span class="label label-default">·ñ</span>'; } },
-					{ field: 'createBy', title: '´´½¨ÈË', width: warnColWidths.createBy, formatter: function(v){ return cellEllipsis(v); } },
-					{ field: 'createTime', title: '´´½¨ÈÕÆÚ', align: 'center', width: warnColWidths.createTime, formatter: function(v){ return formatDateTime(v); } }
+					{ field: 'certificateId', title: 'Ö¤ï¿½ï¿½ID', visible: false },
+					{ field: 'serialNumber', title: 'ï¿½ï¿½ï¿½', align: 'center', width: warnColWidths.serialNumber, formatter: function(v,r,i){ return $.table.serialNumber(i); } },
+					{ field: 'hospitalName', title: 'Ò½Ôºï¿½ï¿½ï¿½ï¿½', width: warnColWidths.hospitalName, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'supplierName', title: 'ä¾›åº”å•†åç§°', width: warnColWidths.supplierName, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'materialCode', title: 'äº§å“ç¼–ç ', width: warnColWidths.materialCode, sortable: true, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'materialName', title: 'å“å', width: warnColWidths.materialName, sortable: true, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'specification', title: 'è§„æ ¼', width: warnColWidths.specification, sortable: true, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'model', title: 'å‹å·', width: warnColWidths.model, sortable: true, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'unit', title: 'ï¿½ï¿½Î»', align: 'center', width: warnColWidths.unit, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'manufacturerName', title: 'ï¿½ï¿½ï¿½ï¿½', width: warnColWidths.manufacturerName, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'certificateType', title: 'Ö¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½', width: warnColWidths.certificateType, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'registerNo', title: 'Ö¤ï¿½Õ±ï¿½ï¿½', width: warnColWidths.registerNo, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'expireDate', title: 'ï¿½ï¿½Ğ§ï¿½ï¿½', align: 'center', width: warnColWidths.expireDate, formatter: function(v){ return formatDateOnly(v); } },
+					{ field: 'uploadedFlag', title: 'ï¿½Ç·ï¿½ï¿½Ï´ï¿½', align: 'center', width: warnColWidths.uploadedFlag, formatter: function(v, row){ return (row.certificateFile && String(row.certificateFile).trim() !== '') ? '<span class="label label-success">ï¿½ï¿½</span>' : '<span class="label label-default">ï¿½ï¿½</span>'; } },
+					{ field: 'createBy', title: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½', width: warnColWidths.createBy, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'createTime', title: 'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½', align: 'center', width: warnColWidths.createTime, formatter: function(v){ return formatDateTime(v); } }
 				]
 			};
 			$.table.init(options);
