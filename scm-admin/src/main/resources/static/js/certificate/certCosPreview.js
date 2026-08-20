@@ -122,6 +122,236 @@
 
         var titleToolbarBtnStyle = 'display:inline-block;background:#3c8dbc;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:13px;line-height:1.4;margin-left:6px;vertical-align:middle;';
 
+        function strToPdfBytes(s) {
+            var a = new Uint8Array(s.length);
+            for (var i = 0; i < s.length; i++) {
+                a[i] = s.charCodeAt(i) & 0xff;
+            }
+            return a;
+        }
+
+        function dataUrlToUint8Array(dataUrl) {
+            var base64 = String(dataUrl || '').split(',')[1] || '';
+            var binary = atob(base64);
+            var bytes = new Uint8Array(binary.length);
+            for (var i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes;
+        }
+
+        /** 将 JPEG 字节嵌入为单页 PDF（按图片比例适配 A4） */
+        function buildJpegPdf(jpegBytes, imgW, imgH) {
+            var landscape = imgW >= imgH;
+            var pageW = landscape ? 841.89 : 595.28;
+            var pageH = landscape ? 595.28 : 841.89;
+            var margin = 24;
+            var scale = Math.min((pageW - 2 * margin) / imgW, (pageH - 2 * margin) / imgH);
+            var drawW = +(imgW * scale).toFixed(2);
+            var drawH = +(imgH * scale).toFixed(2);
+            var x = +((pageW - drawW) / 2).toFixed(2);
+            var y = +((pageH - drawH) / 2).toFixed(2);
+            var content = 'q\n' + drawW + ' 0 0 ' + drawH + ' ' + x + ' ' + y + ' cm\n/Im0 Do\nQ\n';
+
+            var chunks = [];
+            var offset = 0;
+            var xref = [0];
+
+            function pushBytes(u8) {
+                chunks.push(u8);
+                offset += u8.length;
+            }
+
+            function pushStr(s) {
+                pushBytes(strToPdfBytes(s));
+            }
+
+            function beginObj() {
+                xref.push(offset);
+            }
+
+            pushStr('%PDF-1.4\n');
+            beginObj();
+            pushStr('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+            beginObj();
+            pushStr('2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n');
+            beginObj();
+            pushStr('3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + pageW + ' ' + pageH + '] /Contents 4 0 R /Resources << /XObject << /Im0 5 0 R >> >> >>\nendobj\n');
+            beginObj();
+            pushStr('4 0 obj\n<< /Length ' + content.length + ' >>\nstream\n' + content + 'endstream\nendobj\n');
+            beginObj();
+            pushStr('5 0 obj\n<< /Type /XObject /Subtype /Image /Width ' + imgW + ' /Height ' + imgH
+                + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + jpegBytes.length
+                + ' >>\nstream\n');
+            pushBytes(jpegBytes);
+            pushStr('\nendstream\nendobj\n');
+
+            var xrefStart = offset;
+            pushStr('xref\n0 ' + xref.length + '\n');
+            pushStr('0000000000 65535 f \n');
+            for (var i = 1; i < xref.length; i++) {
+                var off = String(xref[i]);
+                while (off.length < 10) {
+                    off = '0' + off;
+                }
+                pushStr(off + ' 00000 n \n');
+            }
+            pushStr('trailer\n<< /Size ' + xref.length + ' /Root 1 0 R >>\nstartxref\n' + xrefStart + '\n%%EOF\n');
+
+            var total = 0;
+            for (var c = 0; c < chunks.length; c++) {
+                total += chunks[c].length;
+            }
+            var out = new Uint8Array(total);
+            var pos = 0;
+            for (var j = 0; j < chunks.length; j++) {
+                out.set(chunks[j], pos);
+                pos += chunks[j].length;
+            }
+            return out;
+        }
+
+        function triggerBlobDownload(blob, fileName) {
+            var objUrl = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = objUrl;
+            a.download = fileName;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(function () {
+                URL.revokeObjectURL(objUrl);
+            }, 2000);
+        }
+
+        function exportImageToPdf(img, done) {
+            try {
+                var deg = ((rotateDeg % 360) + 360) % 360;
+                var sw = img.naturalWidth || img.width;
+                var sh = img.naturalHeight || img.height;
+                if (!sw || !sh) {
+                    done(new Error('图片尚未加载完成'));
+                    return;
+                }
+                var canvas = document.createElement('canvas');
+                var ctx2d = canvas.getContext('2d');
+                if (deg === 90 || deg === 270) {
+                    canvas.width = sh;
+                    canvas.height = sw;
+                } else {
+                    canvas.width = sw;
+                    canvas.height = sh;
+                }
+                ctx2d.fillStyle = '#ffffff';
+                ctx2d.fillRect(0, 0, canvas.width, canvas.height);
+                ctx2d.translate(canvas.width / 2, canvas.height / 2);
+                ctx2d.rotate(deg * Math.PI / 180);
+                ctx2d.drawImage(img, -sw / 2, -sh / 2);
+                var dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+                var jpegBytes = dataUrlToUint8Array(dataUrl);
+                var pdfBytes = buildJpegPdf(jpegBytes, canvas.width, canvas.height);
+                var blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                triggerBlobDownload(blob, '证件图片_' + (currentIndex + 1) + '.pdf');
+                done(null);
+            } catch (e) {
+                done(e || new Error('生成PDF失败'));
+            }
+        }
+
+        function loadImageForPdf(url, done) {
+            function fromBlob(blob) {
+                var objUrl = URL.createObjectURL(blob);
+                var img = new Image();
+                img.onload = function () {
+                    done(null, img);
+                    URL.revokeObjectURL(objUrl);
+                };
+                img.onerror = function () {
+                    URL.revokeObjectURL(objUrl);
+                    done(new Error('图片加载失败'));
+                };
+                img.src = objUrl;
+            }
+
+            if (window.fetch) {
+                fetch(url, { mode: 'cors', credentials: 'omit' }).then(function (res) {
+                    if (!res.ok) {
+                        throw new Error('图片加载失败');
+                    }
+                    return res.blob();
+                }).then(function (blob) {
+                    fromBlob(blob);
+                }).catch(function () {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', url, true);
+                    xhr.responseType = 'blob';
+                    xhr.onload = function () {
+                        if (xhr.status >= 200 && xhr.status < 300 && xhr.response) {
+                            fromBlob(xhr.response);
+                        } else {
+                            done(new Error('图片加载失败，请检查网络或跨域配置'));
+                        }
+                    };
+                    xhr.onerror = function () {
+                        done(new Error('图片加载失败，请检查网络或跨域配置'));
+                    };
+                    xhr.send();
+                });
+                return;
+            }
+
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.responseType = 'blob';
+            xhr.onload = function () {
+                if (xhr.status >= 200 && xhr.status < 300 && xhr.response) {
+                    fromBlob(xhr.response);
+                } else {
+                    done(new Error('图片加载失败'));
+                }
+            };
+            xhr.onerror = function () {
+                done(new Error('图片加载失败，请检查网络或跨域配置'));
+            };
+            xhr.send();
+        }
+
+        function downloadPreviewAsPdf() {
+            var url = urlArray[currentIndex];
+            if (!url) {
+                if ($ && $.modal) {
+                    $.modal.alertWarning('没有可下载的图片');
+                }
+                return;
+            }
+            var $btn = $('#cert-preview-download-btn-title');
+            if ($btn.length) {
+                $btn.prop('disabled', true);
+            }
+            if ($ && $.modal && $.modal.loading) {
+                $.modal.loading('正在生成PDF...');
+            }
+            function finish(err) {
+                if ($btn.length) {
+                    $btn.prop('disabled', false);
+                }
+                if ($ && $.modal && $.modal.closeLoading) {
+                    $.modal.closeLoading();
+                }
+                if (err && $ && $.modal) {
+                    $.modal.alertError(err.message || '下载失败');
+                }
+            }
+            loadImageForPdf(url, function (err, img) {
+                if (err || !img) {
+                    finish(err || new Error('图片加载失败'));
+                    return;
+                }
+                exportImageToPdf(img, finish);
+            });
+        }
+
         function ensureTitleToolbarDom(layero) {
             if (!layero || !layero.length || layero.find('#cert-preview-toolbar-title').length) {
                 return;
@@ -130,9 +360,10 @@
             if (!$title.length) {
                 return;
             }
-            $title.css({ position: 'relative', paddingRight: '260px', overflow: 'visible' });
+            $title.css({ position: 'relative', paddingRight: '340px', overflow: 'visible' });
             $title.append(
                 '<div id="cert-preview-toolbar-title" class="cert-preview-toolbar-title" style="position:absolute;right:36px;top:0;height:100%;display:flex;align-items:center;gap:4px;z-index:10;pointer-events:auto;">'
+                + '<button type="button" id="cert-preview-download-btn-title" title="下载为PDF" style="' + titleToolbarBtnStyle + '"><i class="fa fa-download"></i> 下载</button>'
                 + '<button type="button" id="cert-preview-zoom-out-btn-title" title="缩小" style="' + titleToolbarBtnStyle + '"><i class="fa fa-search-minus"></i> 缩小</button>'
                 + '<button type="button" id="cert-preview-zoom-in-btn-title" title="放大" style="' + titleToolbarBtnStyle + '"><i class="fa fa-search-plus"></i> 放大</button>'
                 + '<button type="button" id="cert-preview-rotate-btn-title" title="顺时针旋转90°" style="' + titleToolbarBtnStyle + '"><i class="fa fa-rotate-right"></i> 旋转</button>'
@@ -152,6 +383,13 @@
             $toolbar.find('button').off('.certPreviewTitle');
             $toolbar.on('mousedown.certPreviewTitle', function (e) {
                 e.stopPropagation();
+            });
+            $toolbar.find('#cert-preview-download-btn-title').on('mousedown.certPreviewTitle', function (e) {
+                e.stopPropagation();
+            }).on('click.certPreviewTitle', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                downloadPreviewAsPdf();
             });
             $toolbar.find('#cert-preview-zoom-out-btn-title').on('mousedown.certPreviewTitle', function (e) {
                 e.stopPropagation();
