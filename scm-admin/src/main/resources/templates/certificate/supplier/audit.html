@@ -329,7 +329,9 @@
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="expireDate"],
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="expireDate"],
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="auditTime"],
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="auditTime"] {
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="auditTime"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="certUpdateQuery"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certUpdateQuery"] {
 			text-align: center !important;
 		}
 
@@ -338,7 +340,8 @@
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="serialNumber"] .th-inner,
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="auditStatus"] .th-inner,
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="expireDate"] .th-inner,
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="auditTime"] .th-inner {
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="auditTime"] .th-inner,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="certUpdateQuery"] .th-inner {
 			text-align: center !important;
 			justify-content: center !important;
 		}
@@ -571,6 +574,33 @@
 			</div>
 		</div>
 	</div>
+
+	<!-- 证照更新查询弹窗 -->
+	<div id="cert-update-query-layer" style="display:none; padding: 12px 15px 8px;">
+		<form id="cert-update-query-form" class="form-horizontal">
+			<input type="hidden" name="certificateId" id="certUpdateCertificateId"/>
+			<div class="row" style="margin-bottom: 10px;">
+				<div class="col-sm-5">
+					<label style="margin-right: 6px;">日期：</label>
+					<input type="text" id="certUpdateDateRange" class="form-control" style="display: inline-block; width: 220px;" placeholder="开始日期 - 结束日期" readonly/>
+					<input type="hidden" name="params[beginTime]" id="certUpdateBeginTime"/>
+					<input type="hidden" name="params[endTime]" id="certUpdateEndTime"/>
+				</div>
+				<div class="col-sm-4">
+					<label style="margin-right: 6px;">证件类型：</label>
+					<input type="text" name="certificateType" id="certUpdateCertificateType" class="form-control" style="display: inline-block; width: 180px;" placeholder="证件类型"/>
+				</div>
+				<div class="col-sm-3" style="padding-top: 2px;">
+					<a class="btn btn-primary btn-sm" href="javascript:void(0)" onclick="searchCertUpdateQuery()"><i class="fa fa-search"></i> 搜索</a>
+					<a class="btn btn-warning btn-sm" href="javascript:void(0)" onclick="resetCertUpdateQuery()"><i class="fa fa-refresh"></i> 重置</a>
+				</div>
+			</div>
+		</form>
+		<div id="cert-update-query-toolbar" class="hidden"></div>
+		<div class="select-table table-striped">
+			<table id="cert-update-query-table"></table>
+		</div>
+	</div>
 	
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: layout-latest-js" />
@@ -579,10 +609,15 @@
 	<script th:src="@{/js/certificate/certCosPreview.js}"></script>
 	<script th:inline="javascript">
 		var prefix = ctx + "certificate/supplier";
+		var changeLogPrefix = ctx + "certificate/supplier/changeLog";
 		var supplierPrefix = ctx + "supplier/supplier";
 		var selectedSupplierId = null; // 当前选中的供应商ID
 		var allSuppliers = []; // 左侧供应商全量数据（用于搜索过滤）
 		var auditTableId = 'bootstrap-table';
+		var certUpdateQueryInited = false;
+		var certUpdateQueryLayerIndex = null;
+		var certUpdateDefaultType = '';
+		var certUpdateCurrentCertificateId = null;
 
 		var auditColWidths = {
 			auditStatus: 80,
@@ -595,6 +630,7 @@
 			expireDate: 110,
 			auditBy: 100,
 			auditTime: 160,
+			certUpdateQuery: 120,
 			contactPerson: 120,
 			address: 260,
 			auditOperate: 160
@@ -1006,6 +1042,228 @@
 		    $.modal.openTab('供应商证件审核', prefix + '/audit/' + certificateId);
 		}
 
+		function formatCertUpdateDate(value) {
+		    if (!value) {
+		        return '-';
+		    }
+		    if (typeof value === 'string' && value.indexOf('-') > -1) {
+		        return value.split(' ')[0];
+		    }
+		    return $.common.dateFormat(value, 'yyyy-MM-dd');
+		}
+
+		function formatCertUpdateDateTime(value) {
+		    if (!value) {
+		        return '-';
+		    }
+		    if (typeof value === 'string' && value.indexOf('-') > -1) {
+		        return value.length > 19 ? value.substring(0, 19) : value;
+		    }
+		    return $.common.dateFormat(value, 'yyyy-MM-dd HH:mm:ss');
+		}
+
+		function previewCertUpdateImageByKey(cacheKey) {
+		    var urls = (window.__certUpdateImgCache || {})[cacheKey];
+		    if (!urls) {
+		        $.modal.alertWarning('没有可预览的图片');
+		        return;
+		    }
+		    previewCertificateImage(urls);
+		}
+
+		function openCertUpdateQuery(certificateId) {
+		    if (certificateId == null || certificateId === '') {
+		        $.modal.alertWarning('无法查询：缺少证件ID');
+		        return;
+		    }
+		    certUpdateCurrentCertificateId = certificateId;
+		    certUpdateDefaultType = '';
+		    $('#certUpdateCertificateId').val(certificateId);
+		    // 证件类型仅作可选筛选，打开时不预填，避免按类型查出其它证件
+		    $('#certUpdateCertificateType').val('');
+		    $('#certUpdateDateRange').val('');
+		    $('#certUpdateBeginTime').val('');
+		    $('#certUpdateEndTime').val('');
+
+		    certUpdateQueryLayerIndex = layer.open({
+		        type: 1,
+		        title: '证照更新查询',
+		        area: ['90%', '90%'],
+		        shadeClose: true,
+		        content: $('#cert-update-query-layer'),
+		        success: function () {
+		            initCertUpdateDatePicker();
+		            initCertUpdateQueryTable();
+		            searchCertUpdateQuery();
+		        },
+		        end: function () {
+		            certUpdateQueryLayerIndex = null;
+		            certUpdateCurrentCertificateId = null;
+		            if (typeof table !== 'undefined' && table.config && table.config[auditTableId]) {
+		                table.options = table.config[auditTableId];
+		            }
+		        }
+		    });
+		}
+
+		function initCertUpdateDatePicker() {
+		    if ($('#certUpdateDateRange').data('laydate-inited')) {
+		        return;
+		    }
+		    layui.use('laydate', function () {
+		        var laydate = layui.laydate;
+		        laydate.render({
+		            elem: '#certUpdateDateRange',
+		            type: 'date',
+		            range: true,
+		            format: 'yyyy-MM-dd',
+		            trigger: 'click',
+		            done: function (value) {
+		                if (!value) {
+		                    $('#certUpdateBeginTime').val('');
+		                    $('#certUpdateEndTime').val('');
+		                    return;
+		                }
+		                var parts = value.split(' - ');
+		                $('#certUpdateBeginTime').val(parts[0] || '');
+		                $('#certUpdateEndTime').val(parts[1] || parts[0] || '');
+		            }
+		        });
+		        $('#certUpdateDateRange').data('laydate-inited', true);
+		    });
+		}
+
+		function initCertUpdateQueryTable() {
+		    if (certUpdateQueryInited) {
+		        return;
+		    }
+		    var options = {
+		        id: 'cert-update-query-table',
+		        url: changeLogPrefix + '/list',
+		        formId: 'cert-update-query-form',
+		        toolbar: 'cert-update-query-toolbar',
+		        modalName: '证照更新',
+		        pagination: true,
+		        pageSize: 10,
+		        pageList: [10, 25, 50],
+		        showSearch: false,
+		        showRefresh: false,
+		        showColumns: false,
+		        showToggle: false,
+		        mobileResponsive: false,
+		        sidePagination: 'server',
+		        firstLoad: false,
+		        height: Math.max($(window).height() * 0.9 - 160, 320),
+		        queryParams: function(params) {
+		            var curParams = {
+		                pageSize: params.limit,
+		                pageNum: params.offset / params.limit + 1,
+		                searchValue: params.search,
+		                orderByColumn: params.sort,
+		                isAsc: params.order
+		            };
+		            var formParams = $.common.formToJSON('cert-update-query-form') || {};
+		            // 强制锁定当前行证件，避免多表 queryParams 串到主表条件而查出其它证件
+		            formParams.certificateId = certUpdateCurrentCertificateId || $('#certUpdateCertificateId').val() || formParams.certificateId;
+		            return $.extend(curParams, formParams);
+		        },
+		        columns: [{
+		            field: 'supplierName',
+		            title: '供应商名称',
+		            width: 160,
+		            formatter: function (v) { return ellipsisText(v); }
+		        }, {
+		            field: 'hospitalName',
+		            title: '医院名称',
+		            width: 140,
+		            formatter: function (v) { return ellipsisText(v); }
+		        }, {
+		            field: 'certificateType',
+		            title: '证照类型',
+		            width: 140,
+		            formatter: function (v) { return ellipsisText(v); }
+		        }, {
+		            field: 'oldCertificateNo',
+		            title: '原证照号',
+		            width: 120,
+		            formatter: function (v) { return ellipsisText(v); }
+		        }, {
+		            field: 'oldExpireDate',
+		            title: '原效期',
+		            align: 'center',
+		            width: 110,
+		            formatter: function (v) { return formatCertUpdateDate(v); }
+		        }, {
+		            field: 'certificateFile',
+		            title: '图片',
+		            align: 'center',
+		            width: 80,
+		            formatter: function (value, row) {
+		                if (!value) {
+		                    return '-';
+		                }
+		                window.__certUpdateImgCache = window.__certUpdateImgCache || {};
+		                var key = row.logId || ('img_' + Math.random().toString(36).slice(2));
+		                window.__certUpdateImgCache[key] = value;
+		                return '<a class="btn btn-info btn-xs" href="javascript:void(0)" onclick="previewCertUpdateImageByKey(\'' + key + '\')"><i class="fa fa-eye"></i> 预览</a>';
+		            }
+		        }, {
+		            field: 'newCertificateNo',
+		            title: '修改后证照号',
+		            width: 120,
+		            formatter: function (v) { return ellipsisText(v); }
+		        }, {
+		            field: 'newExpireDate',
+		            title: '修改后效期',
+		            align: 'center',
+		            width: 110,
+		            formatter: function (v) { return formatCertUpdateDate(v); }
+		        }, {
+		            field: 'createBy',
+		            title: '修改人',
+		            width: 90,
+		            formatter: function (v) { return v || '-'; }
+		        }, {
+		            field: 'createTime',
+		            title: '修改日期',
+		            align: 'center',
+		            width: 150,
+		            formatter: function (v) { return formatCertUpdateDateTime(v); }
+		        }, {
+		            field: 'auditBy',
+		            title: '审核人',
+		            width: 90,
+		            formatter: function (v) { return v || '-'; }
+		        }, {
+		            field: 'auditTime',
+		            title: '审核日期',
+		            align: 'center',
+		            width: 150,
+		            formatter: function (v) { return formatCertUpdateDateTime(v); }
+		        }]
+		    };
+		    $.table.init(options);
+		    certUpdateQueryInited = true;
+		}
+
+		function searchCertUpdateQuery() {
+		    if (!certUpdateQueryInited) {
+		        initCertUpdateQueryTable();
+		    }
+		    $.table.search('cert-update-query-form', 'cert-update-query-table');
+		}
+
+		function resetCertUpdateQuery() {
+		    $('#certUpdateDateRange').val('');
+		    $('#certUpdateBeginTime').val('');
+		    $('#certUpdateEndTime').val('');
+		    $('#certUpdateCertificateType').val('');
+		    if (certUpdateCurrentCertificateId != null) {
+		        $('#certUpdateCertificateId').val(certUpdateCurrentCertificateId);
+		    }
+		    searchCertUpdateQuery();
+		}
+
 		function querySupplierCertificateAuditList() {
 		    var calculateTableHeight = function() {
 		        return calculateAuditTableHeight();
@@ -1204,6 +1462,19 @@
 		                    return value.length > 19 ? value.substring(0, 19) : value;
 		                }
 		                return $.common.dateFormat(value, 'yyyy-MM-dd HH:mm:ss');
+		            }
+		        },
+		        {
+		            field: 'certUpdateQuery',
+		            title: '证照更新查询',
+		            align: 'center',
+		            width: 120,
+		            formatter: function (value, row, index) {
+		                var cid = row.certificateId;
+		                if (cid == null || cid === '') {
+		                    return '-';
+		                }
+		                return '<a class="btn btn-primary btn-xs" href="javascript:void(0)" onclick="openCertUpdateQuery(' + cid + ')" title="证照更新查询"><i class="fa fa-search"></i> 查询</a>';
 		            }
 		        },
 		        {

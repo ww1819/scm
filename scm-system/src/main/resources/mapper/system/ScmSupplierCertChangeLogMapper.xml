@@ -12,6 +12,11 @@
         <result property="afterJson" column="after_json"/>
         <result property="createBy" column="create_by"/>
         <result property="createTime" column="create_time"/>
+        <result property="supplierName" column="supplier_name"/>
+        <result property="supplierCode" column="supplier_code"/>
+        <result property="hospitalName" column="hospital_name"/>
+        <result property="hospitalCode" column="hospital_code"/>
+        <result property="expireDate" column="expire_date"/>
     </resultMap>
 
     <insert id="insertChangeLog">
@@ -20,22 +25,54 @@
     </insert>
 
     <select id="selectChangeLogList" resultMap="CertChangeLogResult">
-        select log_id, supplier_id, hospital_id, certificate_id, change_type, before_json, after_json, create_by, create_time
-        from scm_supplier_cert_change_log
+        select l.log_id, l.supplier_id, l.hospital_id, l.certificate_id, l.change_type, l.before_json, l.after_json,
+               l.create_by, l.create_time,
+               s.company_name as supplier_name,
+               s.supplier_code as supplier_code,
+               h.hospital_name as hospital_name,
+               h.hospital_code as hospital_code,
+               c.expire_date as expire_date
+        from scm_supplier_cert_change_log l
+        left join scm_supplier s on l.supplier_id = s.supplier_id
+        left join scm_hospital h on l.hospital_id = h.hospital_id
+        left join scm_supplier_certificate c on l.certificate_id = c.certificate_id
         <where>
             <if test="supplierId != null">
-                and supplier_id = #{supplierId}
+                and l.supplier_id = #{supplierId}
             </if>
             <if test="hospitalId != null">
-                and hospital_id = #{hospitalId}
+                and l.hospital_id = #{hospitalId}
             </if>
             <if test="certificateId != null">
-                and certificate_id = #{certificateId}
+                and l.certificate_id = #{certificateId}
             </if>
             <if test="changeType != null and changeType != ''">
-                and change_type = #{changeType}
+                and l.change_type = #{changeType}
+            </if>
+            <if test="hospitalName != null and hospitalName != ''">
+                and h.hospital_name like concat('%', #{hospitalName}, '%')
+            </if>
+            <if test="supplierName != null and supplierName != ''">
+                and s.company_name like concat('%', #{supplierName}, '%')
+            </if>
+            <if test="certificateType != null and certificateType != ''">
+                and (
+                    ifnull(l.after_json, '') like concat('%', #{certificateType}, '%')
+                    or ifnull(l.before_json, '') like concat('%', #{certificateType}, '%')
+                )
+            </if>
+            <if test="params != null and params.beginTime != null and params.beginTime != ''">
+                and date(l.create_time) &gt;= date(#{params.beginTime})
+            </if>
+            <if test="params != null and params.endTime != null and params.endTime != ''">
+                and date(l.create_time) &lt;= date(#{params.endTime})
+            </if>
+            <!-- 证件预警：仅保留有效期已过或距到期不超过 N 天的记录 -->
+            <if test="params != null and params.expireWithinDays != null and params.expireWithinDays != ''">
+                and c.expire_date is not null
+                and date(c.expire_date) &lt;= date_add(curdate(), interval #{params.expireWithinDays} day)
             </if>
         </where>
-        order by create_time desc
+        order by c.expire_date asc, l.create_time desc
     </select>
 </mapper>

@@ -1,6 +1,7 @@
 package com.scm.web.controller.certificate;
 
 import java.util.List;
+import org.apache.shiro.authz.annotation.Logical;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -32,7 +33,7 @@ public class SupplierCertChangeLogController extends BaseController
         return prefix + "/changeLog";
     }
 
-    @RequiresPermissions("certificate:supplierChange:list")
+    @RequiresPermissions(value = { "certificate:supplierChange:list", "certificate:supplier:audit" }, logical = Logical.OR)
     @PostMapping("/list")
     @ResponseBody
     public TableDataInfo list(ScmSupplierCertChangeLog query)

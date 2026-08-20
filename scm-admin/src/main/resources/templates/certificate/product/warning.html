@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+	<th:block th:include="include :: header('产品证件预警')" />
+	<th:block th:include="include :: layout-latest-css" />
+	<style>
+		.change-log-table-wrap { min-height: 0; position: relative; padding-bottom: 0; overflow: hidden; display: flex; flex-direction: column; }
+		.change-log-table-wrap > .bootstrap-table { flex: 1 1 auto; min-height: 0; }
+		.change-log-table-wrap .bootstrap-table { display: flex; flex-direction: column; height: 100%; padding-bottom: 0; }
+		.change-log-table-wrap .fixed-table-container { flex: 1 1 auto; min-height: 0; padding-bottom: 0; }
+		.change-log-table-wrap .fixed-table-body { overflow-x: auto !important; overflow-y: auto !important; }
+		.change-log-table-wrap .fixed-table-body .fixed-table-border { display: none !important; height: 0 !important; }
+		.change-log-table-wrap .fixed-table-pagination { position: relative; flex-shrink: 0; left: auto; right: auto; bottom: auto; background: #fff; z-index: 3; border-top: 1px solid #eee; margin: 0 !important; padding: 4px 10px 2px; }
+		.change-log-table-wrap.change-log-list-table .fixed-table-header { position: relative; top: auto; z-index: 2; background: #fff; overflow: hidden; }
+		.change-log-table-wrap.change-log-list-table .fixed-table-container > .fixed-table-header table,
+		.change-log-table-wrap.change-log-list-table .fixed-table-container > .fixed-table-body > table { table-layout: fixed; }
+		.change-log-table-wrap.change-log-list-table .fixed-table-container > .fixed-table-header th,
+		.change-log-table-wrap.change-log-list-table .fixed-table-container > .fixed-table-body tbody td { box-sizing: border-box; vertical-align: middle; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		.change-log-table-wrap.change-log-list-table .fixed-table-container > .fixed-table-header th .th-inner,
+		.change-log-table-wrap.change-log-list-table .fixed-table-container > .fixed-table-header th .sortable { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+		.change-log-table-wrap.change-log-list-table .change-log-cell-ellipsis { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+		.container-div > .row > .search-collapse { padding-top: 10px !important; padding-bottom: 10px !important; }
+		.container-div .search-collapse .select-list ul { margin-bottom: 0; overflow: hidden; }
+		.container-div .search-collapse .select-list li { margin: 4px 15px 4px 0; }
+		.container-div .search-collapse .select-list li.select-time label { margin-top: 4px; margin-bottom: 4px; }
+		#product-warn-form .select-list li.change-log-filter-text input { width: 160px; }
+		.container-div.change-log-page > .row { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+		.container-div.change-log-page .change-log-table-wrap { flex: 1 1 auto; min-height: 260px; }
+		.change-log-table-wrap.change-log-list-table tr.expire-warn-15 > td { background-color: #f8d7da !important; color: #721c24; }
+		.change-log-table-wrap.change-log-list-table tr.expire-warn-30 > td { background-color: #fce4e6 !important; color: #a94442; }
+		.change-log-table-wrap.change-log-list-table tr.expire-warn-45 > td { background-color: #fff1f2 !important; color: #c06060; }
+		.change-log-table-wrap.change-log-list-table tr.expire-warn-15:hover > td,
+		.change-log-table-wrap.change-log-list-table tr.expire-warn-30:hover > td,
+		.change-log-table-wrap.change-log-list-table tr.expire-warn-45:hover > td { filter: brightness(0.97); }
+	</style>
+</head>
+<body class="gray-bg">
+	<div class="container-div change-log-page">
+		<div class="row">
+			<div class="col-sm-12 search-collapse">
+				<form id="product-warn-form">
+					<div class="select-list">
+						<ul>
+							<li class="change-log-filter-text">医院名称：<input type="text" name="hospitalName"/></li>
+							<li class="change-log-filter-text">供应商名称：<input type="text" name="supplierName"/></li>
+							<li class="change-log-filter-text">证照类型：<input type="text" name="certificateType"/></li>
+							<li class="change-log-filter-text">品名：<input type="text" name="materialName"/></li>
+							<li class="select-time">
+								<label>有效期：</label>
+								<input type="text" class="time-input" id="startTime" placeholder="开始时间" name="params[beginTime]"/>
+								<span>-</span>
+								<input type="text" class="time-input" id="endTime" placeholder="结束时间" name="params[endTime]"/>
+							</li>
+							<li>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()" style="display: none;"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()" style="display: none;"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+							</li>
+						</ul>
+					</div>
+				</form>
+			</div>
+			<div class="btn-group-sm" id="toolbar" role="group">
+				<a class="btn btn-primary" onclick="$.table.search()"><i class="fa fa-search"></i> 搜索</a>
+				<a class="btn btn-warning" onclick="resetPre()"><i class="fa fa-refresh"></i> 重置</a>
+			</div>
+			<div class="col-sm-12 select-table table-striped change-log-table-wrap change-log-list-table">
+				<table id="bootstrap-table"></table>
+			</div>
+		</div>
+	</div>
+	<th:block th:include="include :: footer" />
+	<th:block th:include="include :: layout-latest-js" />
+	<script th:inline="javascript">
+		var prefix = ctx + "certificate/product";
+		var warnTableId = 'bootstrap-table';
+		var warnCheckboxColWidth = 42;
+		var EXPIRE_WARN_WITHIN_DAYS = 45;
+		var warnColWidths = { serialNumber: 60, hospitalName: 160, supplierName: 180, materialName: 160, specification: 100, model: 100, unit: 70, manufacturerName: 140, certificateType: 140, registerNo: 150, expireDate: 110, uploadedFlag: 90, createBy: 100, createTime: 160 };
+		function escCellAttr(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+		function cellEllipsis(value) { var s = (value == null || value === '') ? '-' : String(value); if (s === '-') return s; return '<span class="change-log-cell-ellipsis" title="' + escCellAttr(s) + '">' + escCellAttr(s) + '</span>'; }
+		function formatDateOnly(value) { if (!value) return '-'; if (typeof value === 'string' && value.indexOf('-') > -1) return value.split(' ')[0]; return $.common.dateFormat(value, 'yyyy-MM-dd'); }
+		function formatDateTime(value) { if (!value) return '-'; if (typeof value === 'string' && value.indexOf('-') > -1) return value.length > 19 ? value.substring(0, 19) : value; return $.common.dateFormat(value, 'yyyy-MM-dd HH:mm:ss'); }
+		function calcExpireRemainDays(expireDate) { if (!expireDate) return null; var d = (typeof expireDate === 'string') ? new Date(expireDate.split(' ')[0].replace(/-/g, '/')) : new Date(expireDate); if (isNaN(d.getTime())) return null; var today = new Date(); today.setHours(0,0,0,0); d.setHours(0,0,0,0); return Math.floor((d.getTime() - today.getTime()) / 86400000); }
+		function expireWarnRowStyle(row) { var days = calcExpireRemainDays(row.expireDate); if (days === null) return {}; if (days < 15) return { classes: 'expire-warn-15' }; if (days < 30) return { classes: 'expire-warn-30' }; if (days < 45) return { classes: 'expire-warn-45' }; return {}; }
+		function layoutWarnTableWrapHeight() { var $wrap = $('.change-log-table-wrap'); if (!$wrap.length) return; var top = $wrap[0].getBoundingClientRect().top; var h = Math.max(Math.floor(window.innerHeight - top - 10), 260); $wrap[0].style.height = h + 'px'; $wrap[0].style.minHeight = h + 'px'; $wrap[0].style.maxHeight = h + 'px'; }
+		function calculateTableHeight() { layoutWarnTableWrapHeight(); var $wrap = $('.change-log-table-wrap'); if (!$wrap.length) return 440; var $bt = $wrap.find('.bootstrap-table'); var wrapH = $wrap[0].clientHeight || $wrap.innerHeight() || 0; var toolbarH = $bt.find('.fixed-table-toolbar').outerHeight(true) || 0; var pagH = $bt.find('.fixed-table-pagination').outerHeight(true) || 46; return Math.max(Math.floor(wrapH - toolbarH - pagH - 2), 240); }
+		function adjustTableHeight() { var $table = $('#' + warnTableId); if ($table.length > 0 && $table.bootstrapTable('getOptions')) { $table.bootstrapTable('resetView', { height: calculateTableHeight() }); } }
+		function applyWarnColumnWidths() { var $table = $('#' + warnTableId); if (!$table.length || !$table.data('bootstrap.table')) return; var $wrap = $('.change-log-table-wrap'); var $header = $wrap.find('.fixed-table-header table'); var $body = $wrap.find('.fixed-table-body table'); var setW = function($el, w) { if (!$el || !$el.length) return; $el.each(function() { this.style.setProperty('width', w + 'px', 'important'); this.style.setProperty('min-width', w + 'px', 'important'); this.style.setProperty('max-width', w + 'px', 'important'); }); }; $.each(warnColWidths, function(field, w) { setW($header.find('th[data-field="' + field + '"]'), w); setW($body.find('td[data-field="' + field + '"]'), w); setW($body.find('thead th[data-field="' + field + '"]'), w); }); var total = warnCheckboxColWidth; $.each(warnColWidths, function(_, w) { total += w; }); $header.css({ width: total + 'px', 'min-width': total + 'px' }); $body.css({ width: total + 'px', 'min-width': total + 'px' }); $wrap.find('th.bs-checkbox, td.bs-checkbox').each(function() { this.style.setProperty('width', warnCheckboxColWidth + 'px', 'important'); this.style.setProperty('min-width', warnCheckboxColWidth + 'px', 'important'); this.style.setProperty('max-width', warnCheckboxColWidth + 'px', 'important'); }); }
+		function resetPre() { $('#product-warn-form')[0].reset(); $('#startTime').val(''); $('#endTime').val(''); $.table.search('product-warn-form', warnTableId); }
+		$(function() { layoutWarnTableWrapHeight(); queryProductWarnList(); $(window).resize(function() { layoutWarnTableWrapHeight(); adjustTableHeight(); setTimeout(applyWarnColumnWidths, 100); }); });
+		function queryProductWarnList() {
+			var options = {
+				url: prefix + "/expiringList", formId: "product-warn-form", modalName: "产品证件预警", uniqueId: "certificateId",
+				rememberSelected: true, maintainSelected: true, mobileResponsive: false, pageList: [10, 25, 50],
+				height: calculateTableHeight(), rowStyle: expireWarnRowStyle,
+				queryParams: function(params) { var curParams = $.table.queryParams.call(this, params); curParams['params[expireWithinDays]'] = EXPIRE_WARN_WITHIN_DAYS; return curParams; },
+				onLoadSuccess: function() { layoutWarnTableWrapHeight(); setTimeout(function() { adjustTableHeight(); applyWarnColumnWidths(); }, 50); setTimeout(function() { adjustTableHeight(); applyWarnColumnWidths(); }, 200); },
+				onPostBody: function() { applyWarnColumnWidths(); },
+				columns: [
+					{ checkbox: true },
+					{ field: 'certificateId', title: '证件ID', visible: false },
+					{ field: 'serialNumber', title: '序号', align: 'center', width: warnColWidths.serialNumber, formatter: function(v,r,i){ return $.table.serialNumber(i); } },
+					{ field: 'hospitalName', title: '医院名称', width: warnColWidths.hospitalName, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'supplierName', title: '供应商名称', width: warnColWidths.supplierName, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'materialName', title: '品名', width: warnColWidths.materialName, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'specification', title: '规格', width: warnColWidths.specification, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'model', title: '型号', width: warnColWidths.model, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'unit', title: '单位', align: 'center', width: warnColWidths.unit, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'manufacturerName', title: '厂家', width: warnColWidths.manufacturerName, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'certificateType', title: '证照类型', width: warnColWidths.certificateType, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'registerNo', title: '证照编号', width: warnColWidths.registerNo, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'expireDate', title: '有效期', align: 'center', width: warnColWidths.expireDate, formatter: function(v){ return formatDateOnly(v); } },
+					{ field: 'uploadedFlag', title: '是否上传', align: 'center', width: warnColWidths.uploadedFlag, formatter: function(v, row){ return (row.certificateFile && String(row.certificateFile).trim() !== '') ? '<span class="label label-success">是</span>' : '<span class="label label-default">否</span>'; } },
+					{ field: 'createBy', title: '创建人', width: warnColWidths.createBy, formatter: function(v){ return cellEllipsis(v); } },
+					{ field: 'createTime', title: '创建日期', align: 'center', width: warnColWidths.createTime, formatter: function(v){ return formatDateTime(v); } }
+				]
+			};
+			$.table.init(options);
+			setTimeout(function(){ layoutWarnTableWrapHeight(); adjustTableHeight(); applyWarnColumnWidths(); }, 300);
+		}
+	</script>
+</body>
+</html>

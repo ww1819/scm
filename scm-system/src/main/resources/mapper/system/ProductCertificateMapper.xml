@@ -29,6 +29,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="salePrice"         column="sale_price"          />
         <result property="hospitalCode"      column="hospital_code"       />
         <result property="hospitalId"        column="hospital_id"         />
+        <result property="hospitalName"      column="hospital_name"       />
         <result property="saleCustomer"      column="sale_customer"       />
         <result property="productCategory"   column="product_category"    />
         <result property="certificateFile"   column="certificate_file"     />
@@ -56,11 +57,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                m.material_name, m.material_code, m.specification, m.model, m.unit, 
                m.purchase_price, m.status as material_status,
                man.manufacturer_name,
-               s.company_name as supplier_name
+               s.company_name as supplier_name,
+               h.hospital_name as hospital_name
         from scm_product_certificate c
         left join scm_material_dict m on c.material_id = m.material_id and m.del_flag = '0'
         left join scm_manufacturer man on m.manufacturer_id = man.manufacturer_id and man.del_flag = '0'
         left join scm_supplier s on c.supplier_id = s.supplier_id
+        left join scm_hospital h on (
+            (c.hospital_id is not null and c.hospital_id &lt;&gt; '' and cast(h.hospital_id as char) = c.hospital_id)
+            or (ifnull(c.hospital_id, '') = '' and c.hospital_code is not null and c.hospital_code &lt;&gt; '' and h.hospital_code = c.hospital_code)
+        )
     </sql>
     
     <select id="selectProductCertificateList" parameterType="ProductCertificate" resultMap="ProductCertificateResult">
@@ -110,7 +116,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <include refid="selectProductCertificateVo"/>
         <where>
             c.status != '1'
-            AND c.is_warning = '1'
+            and c.expire_date is not null
+            <choose>
+                <when test="params != null and params.expireWithinDays != null and params.expireWithinDays != ''">
+                    and date(c.expire_date) &lt;= date_add(curdate(), interval #{params.expireWithinDays} day)
+                </when>
+                <otherwise>
+                    and c.is_warning = '1'
+                </otherwise>
+            </choose>
             <if test="materialId != null">
                 AND c.material_id = #{materialId}
             </if>
@@ -123,6 +137,15 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="hospitalId != null and hospitalId != ''">
                 AND c.hospital_id = #{hospitalId}
             </if>
+            <if test="hospitalName != null and hospitalName != ''">
+                AND h.hospital_name like concat('%', #{hospitalName}, '%')
+            </if>
+            <if test="supplierName != null and supplierName != ''">
+                AND s.company_name like concat('%', #{supplierName}, '%')
+            </if>
+            <if test="certificateType != null and certificateType != ''">
+                AND c.certificate_type like concat('%', #{certificateType}, '%')
+            </if>
             <if test="materialName != null and materialName != ''">
                 AND (
                     IFNULL(m.material_name, '') like concat('%', #{materialName}, '%')
@@ -130,6 +153,12 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
                     OR IFNULL(c.register_no, '') like concat('%', #{materialName}, '%')
                     OR lower(IFNULL(c.pinyin_code, '')) like lower(concat('%', #{materialName}, '%'))
                 )
+            </if>
+            <if test="params != null and params.beginTime != null and params.beginTime != ''">
+                and date(c.expire_date) &gt;= date(#{params.beginTime})
+            </if>
+            <if test="params != null and params.endTime != null and params.endTime != ''">
+                and date(c.expire_date) &lt;= date(#{params.endTime})
             </if>
         </where>
         order by c.expire_date asc

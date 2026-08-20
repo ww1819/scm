@@ -3,109 +3,185 @@
 <head>
 	<th:block th:include="include :: header('修改角色')" />
 	<th:block th:include="include :: ztree-css" />
+	<style>
+		.role-form-page .ibox-content {
+			position: relative;
+			padding-top: 12px;
+		}
+		.role-form-page .role-form-actions {
+			position: absolute;
+			top: 10px;
+			right: 16px;
+			z-index: 2;
+			margin: 0;
+			white-space: nowrap;
+		}
+		.role-form-page .role-form-grid.basic {
+			display: flex;
+			flex-wrap: nowrap;
+			align-items: flex-end;
+			margin: 0 0 10px;
+			padding-right: 140px;
+			gap: 8px;
+		}
+		.role-form-page .role-form-grid.basic .role-field {
+			flex: 1 1 0;
+			min-width: 0;
+			padding: 0;
+			width: auto;
+		}
+		.role-form-page .role-form-grid.basic .role-field.field-sort {
+			flex: 0 0 88px;
+		}
+		.role-form-page .role-form-grid.basic .role-field.field-status {
+			flex: 0 0 64px;
+		}
+		.role-form-page .role-form-grid.extra {
+			display: flex;
+			flex-wrap: nowrap;
+			align-items: flex-end;
+			margin: 0 0 10px;
+			gap: 8px;
+		}
+		.role-form-page .role-form-grid.extra .role-field {
+			flex: 1 1 0;
+			min-width: 0;
+			padding: 0;
+			width: auto;
+		}
+		.role-form-page .role-form-grid.extra .role-field.half {
+			flex: 1.4 1 0;
+		}
+		.role-form-page .role-field > .control-label {
+			display: block;
+			float: none;
+			width: auto;
+			text-align: left;
+			padding: 0 0 4px;
+			margin: 0;
+			line-height: 1.4;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+		.role-form-page .role-field > .field-body {
+			width: 100%;
+		}
+		.role-form-page .role-menu-block {
+			margin-top: 4px;
+		}
+		.role-form-page .role-menu-block > .control-label {
+			display: block;
+			float: none;
+			width: auto;
+			text-align: left;
+			padding: 0 0 6px;
+			margin: 0;
+		}
+	</style>
 </head>
-<body class="white-bg">
+<body class="white-bg role-form-page">
 	<div class="wrapper wrapper-content animated fadeInRight ibox-content">
-		<form class="form-horizontal m" id="form-role-edit" th:object="${role}">
-			<input id="roleId" name="roleId" type="hidden" th:field="*{roleId}"/>
-			<div class="form-group">
-				<label class="col-sm-3 control-label is-required">角色名称：</label>
-				<div class="col-sm-8">
-					<input class="form-control" type="text" name="roleName" id="roleName" th:field="*{roleName}" required>
-				</div>
-			</div>
-			<div class="form-group">
-				<label class="col-sm-3 control-label">首拼简码：</label>
-				<div class="col-sm-8">
-					<input class="form-control" type="text" th:value="${role.pinyinCode}" readonly placeholder="保存时按角色名称自动生成">
-				</div>
-			</div>
-			<div class="form-group">
-				<label class="col-sm-3 control-label is-required">权限字符：</label>
-				<div class="col-sm-8">
-					<input class="form-control" type="text" name="roleKey" id="roleKey" th:field="*{roleKey}" required>
-					<span class="help-block m-b-none"><i class="fa fa-info-circle"></i> 控制器中定义的权限字符，如：@RequiresRoles("")</span>
-				</div>
-			</div>
-			<div class="form-group">
-				<label class="col-sm-3 control-label is-required">显示顺序：</label>
-				<div class="col-sm-8">
-					<input class="form-control" type="text" name="roleSort" id="roleSort" th:field="*{roleSort}" required>
-				</div>
-			</div>
-			<div class="form-group">
-				<label class="col-sm-3 control-label">状态：</label>
-				<div class="col-sm-8">
-					<label class="toggle-switch switch-solid">
-                        <input type="checkbox" id="status" th:checked="${role.status == '0' ? true : false}">
-                        <span></span>
-                    </label>
-				</div>
-			</div>
-			<div class="form-group">
-				<label class="col-sm-3 control-label">备注：</label>
-				<div class="col-sm-8">
-					<input id="remark" name="remark" class="form-control" type="text" th:field="*{remark}">
-				</div>
-			</div>
-			<div class="form-group">
-				<label class="col-sm-3 control-label">角色类型：</label>
-				<div class="col-sm-8">
-					<select name="roleType" id="roleType" class="form-control" th:field="*{roleType}">
-						<option value="platform">平台</option>
-						<option value="hospital">医院</option>
-						<option value="supplier">供应商</option>
-					</select>
-				</div>
-			</div>
-			<div class="form-group" id="grpBindHospital" style="display:none;">
-				<label class="col-sm-3 control-label">绑定医院：</label>
-				<div class="col-sm-8">
-					<select name="hospitalId" id="hospitalId" class="form-control" th:field="*{hospitalId}">
-						<option value="">请选择</option>
-						<option th:each="h : ${hospitals}" th:value="${h.hospitalId}" th:text="${h.hospitalName}"></option>
-					</select>
-				</div>
-			</div>
-			<div class="form-group" id="grpBindSupplier" style="display:none;">
-				<label class="col-sm-3 control-label">绑定供应商：</label>
-				<div class="col-sm-8">
-					<select name="supplierId" id="supplierId" class="form-control" th:field="*{supplierId}">
-						<option value="">请选择</option>
-						<option th:each="s : ${suppliers}" th:value="${s.supplierId}" th:text="${s.companyName}"></option>
-					</select>
-				</div>
-			</div>
-			<div class="form-group" id="grpOrgAdmin">
-				<label class="col-sm-3 control-label">机构管理员角色：</label>
-				<div class="col-sm-8">
-					<select name="orgAdmin" id="orgAdmin" class="form-control" th:field="*{orgAdmin}">
-						<option value="0">否</option>
-						<option value="1">是（同类型全局模板角色仅建议保留一个）</option>
-					</select>
-					<span class="help-block m-b-none text-muted">为「是」时，新建/刷新机构仅向该角色自动下发「仅管理员开放」的菜单。</span>
-				</div>
-			</div>
-			<div class="form-group">
-				<label class="col-sm-3 control-label">菜单权限：</label>
-				<div class="col-sm-8">
-					<div id="menuDataHealthWarn" class="alert alert-warning" style="display:none; margin-bottom: 10px;"></div>
-				    <label class="check-box">
-				        <input type="checkbox" value="1">展开/折叠</label>
-				    <label class="check-box">
-				        <input type="checkbox" value="2">全选/全不选</label>
-				    <label class="check-box">
-				        <input type="checkbox" value="3" checked>父子联动</label>
-				    <div id="menuTrees" class="ztree ztree-border"></div>
-				</div>
-			</div>
-		</form>
-	</div>
-	<div class="row">
-		<div class="col-sm-offset-3 col-sm-8 m-b-md">
+		<div class="role-form-actions">
 			<button type="button" class="btn btn-sm btn-primary" onclick="submitHandler()"><i class="fa fa-check"></i>保 存</button>&nbsp;
 			<button type="button" class="btn btn-sm btn-danger" onclick="closeItem()"><i class="fa fa-reply-all"></i>关 闭</button>
 		</div>
+		<form class="form-horizontal m" id="form-role-edit" th:object="${role}">
+			<input id="roleId" name="roleId" type="hidden" th:field="*{roleId}"/>
+			<div class="role-form-grid basic">
+				<div class="role-field">
+					<label class="control-label is-required">角色名称：</label>
+					<div class="field-body">
+						<input class="form-control" type="text" name="roleName" id="roleName" th:field="*{roleName}" required>
+					</div>
+				</div>
+				<div class="role-field">
+					<label class="control-label">首拼简码：</label>
+					<div class="field-body">
+						<input class="form-control" type="text" th:value="${role.pinyinCode}" readonly placeholder="自动生成">
+					</div>
+				</div>
+				<div class="role-field">
+					<label class="control-label is-required">权限字符：</label>
+					<div class="field-body">
+						<input class="form-control" type="text" name="roleKey" id="roleKey" th:field="*{roleKey}" required title="控制器中定义的权限字符，如：@RequiresRoles(&quot;&quot;)">
+					</div>
+				</div>
+				<div class="role-field field-sort">
+					<label class="control-label is-required">显示顺序：</label>
+					<div class="field-body">
+						<input class="form-control" type="text" name="roleSort" id="roleSort" th:field="*{roleSort}" required>
+					</div>
+				</div>
+				<div class="role-field field-status">
+					<label class="control-label">状态：</label>
+					<div class="field-body">
+						<label class="toggle-switch switch-solid">
+							<input type="checkbox" id="status" th:checked="${role.status == '0' ? true : false}">
+							<span></span>
+						</label>
+					</div>
+				</div>
+				<div class="role-field">
+					<label class="control-label">备注：</label>
+					<div class="field-body">
+						<input id="remark" name="remark" class="form-control" type="text" th:field="*{remark}">
+					</div>
+				</div>
+				<div class="role-field">
+					<label class="control-label">角色类型：</label>
+					<div class="field-body">
+						<select name="roleType" id="roleType" class="form-control" th:field="*{roleType}">
+							<option value="platform">平台</option>
+							<option value="hospital">医院</option>
+							<option value="supplier">供应商</option>
+						</select>
+					</div>
+				</div>
+			</div>
+			<div class="role-form-grid extra">
+				<div class="role-field" id="grpBindHospital" style="display:none;">
+					<label class="control-label">绑定医院：</label>
+					<div class="field-body">
+						<select name="hospitalId" id="hospitalId" class="form-control" th:field="*{hospitalId}">
+							<option value="">请选择</option>
+							<option th:each="h : ${hospitals}" th:value="${h.hospitalId}" th:text="${h.hospitalName}"></option>
+						</select>
+					</div>
+				</div>
+				<div class="role-field" id="grpBindSupplier" style="display:none;">
+					<label class="control-label">绑定供应商：</label>
+					<div class="field-body">
+						<select name="supplierId" id="supplierId" class="form-control" th:field="*{supplierId}">
+							<option value="">请选择</option>
+							<option th:each="s : ${suppliers}" th:value="${s.supplierId}" th:text="${s.companyName}"></option>
+						</select>
+					</div>
+				</div>
+				<div class="role-field half" id="grpOrgAdmin">
+					<label class="control-label">机构管理员角色：</label>
+					<div class="field-body">
+						<select name="orgAdmin" id="orgAdmin" class="form-control" th:field="*{orgAdmin}">
+							<option value="0">否</option>
+							<option value="1">是（同类型全局模板角色仅建议保留一个）</option>
+						</select>
+					</div>
+				</div>
+			</div>
+			<div class="role-menu-block">
+				<label class="control-label">菜单权限：</label>
+				<div>
+					<div id="menuDataHealthWarn" class="alert alert-warning" style="display:none; margin-bottom: 10px;"></div>
+					<label class="check-box">
+						<input type="checkbox" value="1">展开/折叠</label>
+					<label class="check-box">
+						<input type="checkbox" value="2">全选/全不选</label>
+					<label class="check-box">
+						<input type="checkbox" value="3" checked>父子联动</label>
+					<div id="menuTrees" class="ztree ztree-border"></div>
+				</div>
+			</div>
+		</form>
 	</div>
 	<th:block th:include="include :: footer" />
 	<th:block th:include="include :: ztree-js" />

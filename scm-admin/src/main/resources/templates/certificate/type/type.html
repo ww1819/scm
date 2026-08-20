@@ -188,12 +188,9 @@
 		        	<a class="btn btn-success" onclick="handleAdd()" shiro:hasPermission="certificate:type:add">
 		                <i class="fa fa-plus"></i> 新增
 		            </a>
-		             <a class="btn btn-primary single disabled" onclick="$.operate.editTab()" shiro:hasPermission="certificate:type:edit">
+		            <a class="btn btn-primary single disabled" onclick="$.operate.editTab()" shiro:hasPermission="certificate:type:edit">
 			            <i class="fa fa-edit"></i> 修改
 			        </a>
-		            <a class="btn btn-danger multiple disabled" onclick="$.operate.removeAll()" shiro:hasPermission="certificate:type:remove">
-		                <i class="fa fa-remove"></i> 删除
-		            </a>
 		            <a class="btn btn-warning" onclick="$.table.exportExcel()" shiro:hasPermission="certificate:type:export">
 			            <i class="fa fa-download"></i> 导出
 			        </a>
@@ -213,7 +210,6 @@
 	<th:block th:include="include :: layout-latest-js" />
 	<script th:inline="javascript">
 		var editFlag = [[${@permission.hasPermi('certificate:type:edit')}]];
-		var removeFlag = [[${@permission.hasPermi('certificate:type:remove')}]];
 		var prefix = ctx + "certificate/type";
 		var selectedCategory = null; // 当前选中的证件类型分类
 		var adjustingTableHeight = false;

@@ -3,18 +3,171 @@
 <head>
 	<th:block th:include="include :: header('供应商资质变更记录')" />
 	<th:block th:include="include :: layout-latest-css" />
+	<style>
+		.change-log-table-wrap {
+			min-height: 0;
+			position: relative;
+			padding-bottom: 0;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.change-log-table-wrap > .bootstrap-table {
+			flex: 1 1 auto;
+			min-height: 0;
+		}
+
+		.change-log-table-wrap .bootstrap-table {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			padding-bottom: 0;
+		}
+
+		.change-log-table-wrap .fixed-table-container {
+			flex: 1 1 auto;
+			min-height: 0;
+			padding-bottom: 0;
+		}
+
+		.change-log-table-wrap .fixed-table-body {
+			overflow-x: auto !important;
+			overflow-y: auto !important;
+		}
+
+		.change-log-table-wrap .fixed-table-body .fixed-table-border {
+			display: none !important;
+			height: 0 !important;
+		}
+
+		.change-log-table-wrap .fixed-table-pagination {
+			position: relative;
+			flex-shrink: 0;
+			left: auto;
+			right: auto;
+			bottom: auto;
+			background: #fff;
+			z-index: 3;
+			border-top: 1px solid #eee;
+			margin: 0 !important;
+			padding: 4px 10px 2px;
+		}
+
+		.change-log-table-wrap.change-log-list-table .fixed-table-header {
+			position: relative;
+			top: auto;
+			z-index: 2;
+			background: #fff;
+			overflow: hidden;
+		}
+
+		.change-log-table-wrap.change-log-list-table .fixed-table-container > .fixed-table-header table,
+		.change-log-table-wrap.change-log-list-table .fixed-table-container > .fixed-table-body > table {
+			table-layout: fixed;
+		}
+
+		.change-log-table-wrap.change-log-list-table .fixed-table-container > .fixed-table-header th,
+		.change-log-table-wrap.change-log-list-table .fixed-table-container > .fixed-table-body tbody td {
+			box-sizing: border-box;
+			vertical-align: middle;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.change-log-table-wrap.change-log-list-table .fixed-table-container > .fixed-table-header th .th-inner,
+		.change-log-table-wrap.change-log-list-table .fixed-table-container > .fixed-table-header th .sortable {
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.change-log-table-wrap.change-log-list-table .change-log-cell-ellipsis {
+			display: block;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			max-width: 100%;
+		}
+
+		/* 搜索区：与订单查询一致 */
+		.container-div > .row > .search-collapse {
+			padding-top: 10px !important;
+			padding-bottom: 10px !important;
+		}
+
+		.container-div .search-collapse .select-list ul {
+			margin-bottom: 0;
+			overflow: hidden;
+		}
+
+		.container-div .search-collapse .select-list li {
+			margin: 4px 15px 4px 0;
+		}
+
+		.container-div .search-collapse .select-list li.select-time label {
+			margin-top: 4px;
+			margin-bottom: 4px;
+		}
+
+		#change-log-form .select-list li.change-log-filter-text input {
+			width: 160px;
+		}
+
+		#change-log-form .select-list li.change-log-filter-short select {
+			width: 100px;
+		}
+
+		.container-div.change-log-page > .row {
+			display: flex;
+			flex-direction: column;
+			height: 100%;
+			min-height: 0;
+		}
+
+		.container-div.change-log-page .change-log-table-wrap {
+			flex: 1 1 auto;
+			min-height: 260px;
+		}
+
+		/* 有效期预警行色：&lt;15 红 / &lt;30 淡红 / &lt;45 更淡红 */
+		.change-log-table-wrap.change-log-list-table tr.expire-warn-15 > td {
+			background-color: #f8d7da !important;
+			color: #721c24;
+		}
+		.change-log-table-wrap.change-log-list-table tr.expire-warn-30 > td {
+			background-color: #fce4e6 !important;
+			color: #a94442;
+		}
+		.change-log-table-wrap.change-log-list-table tr.expire-warn-45 > td {
+			background-color: #fff1f2 !important;
+			color: #c06060;
+		}
+		.change-log-table-wrap.change-log-list-table tr.expire-warn-15:hover > td,
+		.change-log-table-wrap.change-log-list-table tr.expire-warn-30:hover > td,
+		.change-log-table-wrap.change-log-list-table tr.expire-warn-45:hover > td {
+			filter: brightness(0.97);
+		}
+	</style>
 </head>
 <body class="gray-bg">
-	<div class="container-div">
+	<div class="container-div change-log-page">
 		<div class="row">
 			<div class="col-sm-12 search-collapse">
-				<form id="formId">
+				<form id="change-log-form">
 					<div class="select-list">
 						<ul>
-							<li>
-								证件ID：<input type="text" name="certificateId" placeholder="可选"/>
+							<li class="change-log-filter-text">
+								医院名称：<input type="text" name="hospitalName"/>
 							</li>
-							<li>
+							<li class="change-log-filter-text">
+								供应商名称：<input type="text" name="supplierName"/>
+							</li>
+							<li class="change-log-filter-text">
+								证照类型：<input type="text" name="certificateType"/>
+							</li>
+							<li class="change-log-filter-short">
 								变更类型：
 								<select name="changeType">
 									<option value="">全部</option>
@@ -24,15 +177,31 @@
 									<option value="AUDIT">审核</option>
 								</select>
 							</li>
+							<li class="select-time">
+								<label>变更日期：</label>
+								<input type="text" class="time-input" id="startTime" placeholder="开始时间" name="params[beginTime]"/>
+								<span>-</span>
+								<input type="text" class="time-input" id="endTime" placeholder="结束时间" name="params[endTime]"/>
+							</li>
 							<li>
-								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()"><i class="fa fa-search"></i>&nbsp;搜索</a>
-								<a class="btn btn-warning btn-rounded btn-sm" onclick="$.form.reset()"><i class="fa fa-refresh"></i>&nbsp;重置</a>
+								<a class="btn btn-primary btn-rounded btn-sm" onclick="$.table.search()" style="display: none;"><i class="fa fa-search"></i>&nbsp;搜索</a>
+								<a class="btn btn-warning btn-rounded btn-sm" onclick="resetPre()" style="display: none;"><i class="fa fa-refresh"></i>&nbsp;重置</a>
 							</li>
 						</ul>
 					</div>
 				</form>
 			</div>
-			<div class="col-sm-12 select-table table-striped">
+
+			<div class="btn-group-sm" id="toolbar" role="group">
+				<a class="btn btn-primary" onclick="$.table.search()">
+					<i class="fa fa-search"></i> 搜索
+				</a>
+				<a class="btn btn-warning" onclick="resetPre()">
+					<i class="fa fa-refresh"></i> 重置
+				</a>
+			</div>
+
+			<div class="col-sm-12 select-table table-striped change-log-table-wrap change-log-list-table">
 				<table id="bootstrap-table"></table>
 			</div>
 		</div>
@@ -41,59 +210,321 @@
 	<th:block th:include="include :: layout-latest-js" />
 	<script th:inline="javascript">
 		var prefix = ctx + "certificate/supplier/changeLog";
+		var changeLogTableId = 'bootstrap-table';
+		var changeLogCheckboxColWidth = 42;
+		var EXPIRE_WARN_WITHIN_DAYS = 45;
+
+		var changeLogColWidths = {
+			hospitalCode: 150,
+			hospitalName: 160,
+			supplierCode: 150,
+			supplierName: 180,
+			certificateType: 140,
+			certificateNo: 160,
+			issueDate: 110,
+			expireDate: 110,
+			uploadedFlag: 90,
+			certCreateTime: 160,
+			certCreateBy: 100
+		};
+
+		function escCellAttr(s) {
+			return String(s == null ? '' : s)
+				.replace(/&/g, '&amp;')
+				.replace(/"/g, '&quot;')
+				.replace(/'/g, '&#39;')
+				.replace(/</g, '&lt;')
+				.replace(/>/g, '&gt;');
+		}
+
+		function cellEllipsis(value) {
+			var s = (value == null || value === '') ? '-' : String(value);
+			if (s === '-') {
+				return s;
+			}
+			return '<span class="change-log-cell-ellipsis" title="' + escCellAttr(s) + '">' + escCellAttr(s) + '</span>';
+		}
+
+		function formatDateOnly(value) {
+			if (!value) {
+				return '-';
+			}
+			if (typeof value === 'string' && value.indexOf('-') > -1) {
+				return value.split(' ')[0];
+			}
+			return $.common.dateFormat(value, 'yyyy-MM-dd');
+		}
+
+		function formatDateTime(value) {
+			if (!value) {
+				return '-';
+			}
+			if (typeof value === 'string' && value.indexOf('-') > -1) {
+				return value.length > 19 ? value.substring(0, 19) : value;
+			}
+			return $.common.dateFormat(value, 'yyyy-MM-dd HH:mm:ss');
+		}
+
+		/** 距有效期剩余天数（已过期为负数）；无法解析时返回 null */
+		function calcExpireRemainDays(expireDate) {
+			if (!expireDate) {
+				return null;
+			}
+			var d;
+			if (typeof expireDate === 'string') {
+				var s = expireDate.split(' ')[0];
+				d = new Date(s.replace(/-/g, '/'));
+			} else {
+				d = new Date(expireDate);
+			}
+			if (isNaN(d.getTime())) {
+				return null;
+			}
+			var today = new Date();
+			today.setHours(0, 0, 0, 0);
+			d.setHours(0, 0, 0, 0);
+			return Math.floor((d.getTime() - today.getTime()) / 86400000);
+		}
+
+		function expireWarnRowStyle(row) {
+			var days = calcExpireRemainDays(row.expireDate);
+			if (days === null) {
+				return {};
+			}
+			if (days < 15) {
+				return { classes: 'expire-warn-15' };
+			}
+			if (days < 30) {
+				return { classes: 'expire-warn-30' };
+			}
+			if (days < 45) {
+				return { classes: 'expire-warn-45' };
+			}
+			return {};
+		}
+
+		function layoutChangeLogTableWrapHeight() {
+			var $wrap = $('.change-log-table-wrap');
+			if (!$wrap.length) {
+				return;
+			}
+			var top = $wrap[0].getBoundingClientRect().top;
+			var bottomGap = 10;
+			var h = Math.floor(window.innerHeight - top - bottomGap);
+			h = Math.max(h, 260);
+			$wrap[0].style.height = h + 'px';
+			$wrap[0].style.minHeight = h + 'px';
+			$wrap[0].style.maxHeight = h + 'px';
+		}
+
+		function calculateTableHeight() {
+			layoutChangeLogTableWrapHeight();
+			var $wrap = $('.change-log-table-wrap');
+			if (!$wrap.length) {
+				return 440;
+			}
+			var $bt = $wrap.find('.bootstrap-table');
+			var wrapH = $wrap[0].clientHeight || $wrap.innerHeight() || 0;
+			var toolbarH = $bt.find('.fixed-table-toolbar').outerHeight(true) || 0;
+			var pagH = $bt.find('.fixed-table-pagination').outerHeight(true) || 46;
+			var containerH = Math.floor(wrapH - toolbarH - pagH - 2);
+			return Math.max(containerH, 240);
+		}
+
+		function adjustTableHeight() {
+			var $table = $('#' + changeLogTableId);
+			if ($table.length > 0 && $table.bootstrapTable('getOptions')) {
+				$table.bootstrapTable('resetView', { height: calculateTableHeight() });
+			}
+		}
+
+		function applyChangeLogColumnWidths() {
+			var $table = $('#' + changeLogTableId);
+			if (!$table.length || !$table.data('bootstrap.table')) {
+				return;
+			}
+			var $wrap = $('.change-log-table-wrap');
+			var $header = $wrap.find('.fixed-table-header table');
+			var $body = $wrap.find('.fixed-table-body table');
+			var setW = function($el, w) {
+				if (!$el || !$el.length) {
+					return;
+				}
+				$el.each(function() {
+					this.style.setProperty('width', w + 'px', 'important');
+					this.style.setProperty('min-width', w + 'px', 'important');
+					this.style.setProperty('max-width', w + 'px', 'important');
+				});
+			};
+			$.each(changeLogColWidths, function(field, w) {
+				setW($header.find('th[data-field="' + field + '"]'), w);
+				setW($header.find('colgroup col').eq($header.find('th[data-field="' + field + '"]').index()), w);
+				setW($body.find('td[data-field="' + field + '"]'), w);
+				setW($body.find('thead th[data-field="' + field + '"]'), w);
+			});
+			var total = changeLogCheckboxColWidth;
+			$.each(changeLogColWidths, function(_, w) {
+				total += w;
+			});
+			$header.css({ width: total + 'px', 'min-width': total + 'px' });
+			$body.css({ width: total + 'px', 'min-width': total + 'px' });
+			var $checkTh = $header.find('th.bs-checkbox');
+			var $checkTd = $body.find('td.bs-checkbox');
+			if ($checkTh.length) {
+				$checkTh.each(function() {
+					this.style.setProperty('width', changeLogCheckboxColWidth + 'px', 'important');
+					this.style.setProperty('min-width', changeLogCheckboxColWidth + 'px', 'important');
+					this.style.setProperty('max-width', changeLogCheckboxColWidth + 'px', 'important');
+				});
+			}
+			if ($checkTd.length) {
+				$checkTd.each(function() {
+					this.style.setProperty('width', changeLogCheckboxColWidth + 'px', 'important');
+					this.style.setProperty('min-width', changeLogCheckboxColWidth + 'px', 'important');
+					this.style.setProperty('max-width', changeLogCheckboxColWidth + 'px', 'important');
+				});
+			}
+		}
+
+		function resetPre() {
+			$('#change-log-form')[0].reset();
+			$('#startTime').val('');
+			$('#endTime').val('');
+			$.table.search('change-log-form', changeLogTableId);
+		}
+
 		$(function() {
+			layoutChangeLogTableWrapHeight();
+			queryChangeLogList();
+			$(window).resize(function() {
+				layoutChangeLogTableWrapHeight();
+				adjustTableHeight();
+				setTimeout(applyChangeLogColumnWidths, 100);
+			});
+		});
+
+		function queryChangeLogList() {
 			var options = {
 				url: prefix + "/list",
-				formId: "formId",
+				formId: "change-log-form",
 				modalName: "资质变更记录",
+				uniqueId: "logId",
+				rememberSelected: true,
+				maintainSelected: true,
+				mobileResponsive: false,
+				pageList: [10, 25, 50],
+				height: calculateTableHeight(),
+				rowStyle: expireWarnRowStyle,
+				queryParams: function(params) {
+					var curParams = $.table.queryParams.call(this, params);
+					curParams['params[expireWithinDays]'] = EXPIRE_WARN_WITHIN_DAYS;
+					return curParams;
+				},
+				onLoadSuccess: function() {
+					layoutChangeLogTableWrapHeight();
+					setTimeout(function() {
+						adjustTableHeight();
+						applyChangeLogColumnWidths();
+					}, 50);
+					setTimeout(function() {
+						adjustTableHeight();
+						applyChangeLogColumnWidths();
+					}, 200);
+				},
+				onPostBody: function() {
+					applyChangeLogColumnWidths();
+				},
 				columns: [{
+					checkbox: true
+				},
+				{
 					field: 'logId',
 					title: '日志ID',
 					visible: false
 				},
 				{
-					field: 'supplierId',
-					title: '供应商ID'
+					field: 'hospitalCode',
+					title: '医院编码',
+					width: changeLogColWidths.hospitalCode,
+					formatter: function(v) { return cellEllipsis(v); }
 				},
 				{
-					field: 'hospitalId',
-					title: '医院ID'
+					field: 'hospitalName',
+					title: '医院名称',
+					width: changeLogColWidths.hospitalName,
+					formatter: function(v) { return cellEllipsis(v); }
 				},
 				{
-					field: 'certificateId',
-					title: '证件ID'
+					field: 'supplierCode',
+					title: '供应商编码',
+					width: changeLogColWidths.supplierCode,
+					formatter: function(v) { return cellEllipsis(v); }
 				},
 				{
-					field: 'changeType',
-					title: '变更类型'
+					field: 'supplierName',
+					title: '供应商名称',
+					width: changeLogColWidths.supplierName,
+					formatter: function(v) { return cellEllipsis(v); }
 				},
 				{
-					field: 'createBy',
-					title: '操作人'
+					field: 'certificateType',
+					title: '证照类型',
+					width: changeLogColWidths.certificateType,
+					formatter: function(v) { return cellEllipsis(v); }
 				},
 				{
-					field: 'createTime',
-					title: '时间'
+					field: 'certificateNo',
+					title: '证照编码',
+					width: changeLogColWidths.certificateNo,
+					formatter: function(v) { return cellEllipsis(v); }
 				},
 				{
-					field: 'beforeJson',
-					title: '变更前摘要',
+					field: 'issueDate',
+					title: '授权日期',
+					align: 'center',
+					width: changeLogColWidths.issueDate,
+					formatter: function(v) { return formatDateOnly(v); }
+				},
+				{
+					field: 'expireDate',
+					title: '有效期',
+					align: 'center',
+					width: changeLogColWidths.expireDate,
+					formatter: function(v) { return formatDateOnly(v); }
+				},
+				{
+					field: 'uploadedFlag',
+					title: '是否上传',
+					align: 'center',
+					width: changeLogColWidths.uploadedFlag,
 					formatter: function(v) {
-						if (!v) return '-';
-						return v.length > 80 ? v.substring(0, 80) + '…' : v;
+						if (v === '1') {
+							return '<span class="label label-success">是</span>';
+						}
+						return '<span class="label label-default">否</span>';
 					}
 				},
 				{
-					field: 'afterJson',
-					title: '变更后摘要',
-					formatter: function(v) {
-						if (!v) return '-';
-						return v.length > 80 ? v.substring(0, 80) + '…' : v;
-					}
+					field: 'certCreateTime',
+					title: '创建日期',
+					align: 'center',
+					width: changeLogColWidths.certCreateTime,
+					formatter: function(v) { return formatDateTime(v); }
+				},
+				{
+					field: 'certCreateBy',
+					title: '创建人',
+					width: changeLogColWidths.certCreateBy,
+					formatter: function(v) { return cellEllipsis(v); }
 				}]
 			};
 			$.table.init(options);
-		});
+			setTimeout(function() {
+				layoutChangeLogTableWrapHeight();
+				adjustTableHeight();
+				applyChangeLogColumnWidths();
+			}, 300);
+		}
 	</script>
 </body>
 </html>

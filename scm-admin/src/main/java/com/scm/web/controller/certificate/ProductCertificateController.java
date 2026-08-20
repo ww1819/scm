@@ -299,9 +299,21 @@ public class ProductCertificateController extends BaseController
     }
 
     /**
+     * 产品证件预警页面
+     */
+    @RequiresPermissions(value = { "certificate:product:view", "certificate:product:list", "certificate:product:audit" },
+        logical = Logical.OR)
+    @GetMapping("/warning")
+    public String productCertificateWarning()
+    {
+        return prefix + "/warning";
+    }
+
+    /**
      * 查询过期预警的产品证件列表（与列表接口一致：view 或 list）
      */
-    @RequiresPermissions(value = { "certificate:product:view", "certificate:product:list" }, logical = Logical.OR)
+    @RequiresPermissions(value = { "certificate:product:view", "certificate:product:list", "certificate:product:audit" },
+        logical = Logical.OR)
     @PostMapping("/expiringList")
     @ResponseBody
     public TableDataInfo expiringList(ProductCertificate productCertificate)

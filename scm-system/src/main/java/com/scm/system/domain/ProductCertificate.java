@@ -104,6 +104,9 @@ public class ProductCertificate extends BaseEntity
     /** 医院主键ID（字符串，对应 scm_hospital.hospital_id） */
     private String hospitalId;
 
+    /** 医院名称（关联查询） */
+    private String hospitalName;
+
     /** 销售客户 */
     @Excel(name = "销售客户")
     private String saleCustomer;
@@ -493,6 +496,16 @@ public class ProductCertificate extends BaseEntity
     public void setHospitalId(String hospitalId)
     {
         this.hospitalId = hospitalId;
+    }
+
+    public String getHospitalName()
+    {
+        return hospitalName;
+    }
+
+    public void setHospitalName(String hospitalName)
+    {
+        this.hospitalName = hospitalName;
     }
 
     public String getSaleCustomer()

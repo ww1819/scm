@@ -69,6 +69,16 @@ INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, targ
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2307', '医院产品档案', '2300', '7', '/certificate/product/supplierHospital', '', 'C', '0', '1', 'certificate:product:view', 'fa fa-hospital-o', 'admin', sysdate(), '', null, '按关联医院查看产品档案与证件', '0');
 /
+INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('2308', '产品证件预警', '2300', '8', '/certificate/product/warning', '', 'C', '0', '1', 'certificate:product:list', 'fa fa-exclamation-triangle', 'admin', sysdate(), '', null, '产品证件有效期预警（45天内）', '0');
+/
+-- 已存在「产品证件预警」菜单时，统一指向预警页（避免仍打开审核左右分栏页）
+UPDATE sys_menu
+SET url = '/certificate/product/warning',
+    perms = IFNULL(NULLIF(perms, ''), 'certificate:product:list'),
+    menu_name = '产品证件预警'
+WHERE menu_name = '产品证件预警'
+   OR (menu_type = 'C' AND url = '/certificate/product/warning');
+/
 -- 医院产品档案页内按钮（权限标识与「产品证件登记」一致，便于供应商角色单独授权本页的新增/维护）
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('23071', '档案内-证件查询', '2307', '1', '#', '', 'F', '0', '1', 'certificate:product:list', '#', 'admin', sysdate(), '', null, '', '0');
 /
