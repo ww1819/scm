@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.scm.common.exception.ServiceException;
 import com.scm.common.profiler.OperationProfiler;
+import com.scm.common.utils.ShiroUtils;
 import com.scm.common.utils.StringUtils;
 import com.scm.common.utils.uuid.IdUtils;
 import com.scm.system.domain.CertificateType;
@@ -25,6 +26,7 @@ import com.scm.system.mapper.ProductCertLicenseSnapMapper;
 import com.scm.system.service.ICertificateTypeService;
 import com.scm.system.service.IProductCertificateService;
 import com.scm.system.service.IProductCertLicenseSnapService;
+import com.scm.system.service.IScmSupplierContextService;
 
 @Service
 public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSnapService
@@ -80,18 +82,45 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
     @Autowired
     private ProductCertificateMapper productCertificateMapper;
 
+    @Autowired
+    private IScmSupplierContextService scmSupplierContextService;
+
+    /** 扩展证件类型缓存，避免切换产品时反复查配置 */
+    private volatile List<CertificateType> cachedProductExtensionTypes;
+    private volatile long cachedProductExtensionTypesAt;
+
     private ProductCertificate assertCertificateScope(Long certificateId)
     {
         if (certificateId == null)
         {
             throw new ServiceException("证件ID不能为空");
         }
-        ProductCertificate c = productCertificateService.selectProductCertificateById(certificateId);
+        // 直接查主表，禁止走 selectProductCertificateById（会额外查文件拖慢切换）
+        ProductCertificate c = productCertificateMapper.selectProductCertificateById(certificateId);
         if (c == null)
         {
             throw new ServiceException("证件不存在或无权查看");
         }
+        Long sid = scmSupplierContextService.resolveSupplierIdForUser(ShiroUtils.getUserId());
+        if (sid != null && c.getSupplierId() != null && !sid.equals(c.getSupplierId()))
+        {
+            throw new ServiceException("无权查看其他供应商的产品证件");
+        }
         return c;
+    }
+
+    private List<CertificateType> getProductExtensionTypesCached()
+    {
+        long now = System.currentTimeMillis();
+        List<CertificateType> local = cachedProductExtensionTypes;
+        if (local != null && (now - cachedProductExtensionTypesAt) < 60000L)
+        {
+            return local;
+        }
+        local = certificateTypeService.selectProductExtensionTypesForSnap();
+        cachedProductExtensionTypes = local;
+        cachedProductExtensionTypesAt = now;
+        return local;
     }
 
     private void assertCertificateEditable(ProductCertificate c)
@@ -205,6 +234,11 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
         for (ProductCertLicenseSnap s : ordered)
         {
             if (!canShareLicenseSnapFiles(s, c))
+            {
+                continue;
+            }
+            // 已有图片则跳过共享解析，避免切换产品时按行 N+1 查库
+            if (StringUtils.isNotEmpty(StringUtils.trimToNull(s.getCertificateFile())))
             {
                 continue;
             }
@@ -336,17 +370,31 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
             return;
         }
         String certKey = String.valueOf(c.getCertificateId());
+        List<ProductCertLicenseSnap> existing = productCertLicenseSnapMapper.selectListByCertificateId(certKey);
+        Set<String> existingCodes = new LinkedHashSet<>();
+        if (existing != null)
+        {
+            for (ProductCertLicenseSnap s : existing)
+            {
+                if (s != null && StringUtils.isNotEmpty(s.getLicenseKindCode()))
+                {
+                    existingCodes.add(s.getLicenseKindCode().trim());
+                }
+            }
+        }
         for (CertificateType t : types)
         {
             if (t == null || StringUtils.isEmpty(t.getTypeCode()))
             {
                 continue;
             }
-            ProductCertLicenseSnap exist = productCertLicenseSnapMapper.selectByCertIdAndKind(certKey, t.getTypeCode().trim());
-            if (exist == null)
+            String kindCode = t.getTypeCode().trim();
+            if (existingCodes.contains(kindCode))
             {
-                insertStubRow(c, t, loginName);
+                continue;
             }
+            insertStubRow(c, t, loginName);
+            existingCodes.add(kindCode);
         }
     }
 
@@ -385,6 +433,18 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
                     continue;
                 }
                 String certKey = String.valueOf(certificateId);
+                List<ProductCertLicenseSnap> existing = productCertLicenseSnapMapper.selectListByCertificateId(certKey);
+                Set<String> existingCodes = new LinkedHashSet<>();
+                if (existing != null)
+                {
+                    for (ProductCertLicenseSnap s : existing)
+                    {
+                        if (s != null && StringUtils.isNotEmpty(s.getLicenseKindCode()))
+                        {
+                            existingCodes.add(s.getLicenseKindCode().trim());
+                        }
+                    }
+                }
                 for (CertificateType t : types)
                 {
                     if (t == null || StringUtils.isEmpty(t.getTypeCode()))
@@ -392,11 +452,12 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
                         continue;
                     }
                     String kindCode = t.getTypeCode().trim();
-                    ProductCertLicenseSnap exist = productCertLicenseSnapMapper.selectByCertIdAndKind(certKey, kindCode);
-                    if (exist == null)
+                    if (existingCodes.contains(kindCode))
                     {
-                        insertStubRow(c, t, oper);
+                        continue;
                     }
+                    insertStubRow(c, t, oper);
+                    existingCodes.add(kindCode);
                 }
             }
             catch (Exception ignored)
@@ -435,20 +496,71 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
     {
         OperationProfiler perf = OperationProfiler.start(log, "product-cert-license-merged",
             "certificateId=" + certificateId);
-        ensureProductSnapStubsForCertificate(certificateId, loginName);
-        perf.mark("ensureSnapStubs");
-        List<CertificateType> types = certificateTypeService.selectProductExtensionTypesForSnap();
+        ProductCertificate c = assertCertificateScope(certificateId);
+        perf.mark("assertScope");
+        List<CertificateType> types = getProductExtensionTypesCached();
         perf.mark("selectExtensionTypes");
-        List<ProductCertLicenseSnap> dbSnaps = productCertLicenseSnapMapper.selectListByCertificateId(String.valueOf(certificateId));
-        perf.mark("selectSnapsByCertificateId");
+        String certKey = String.valueOf(certificateId);
+        List<ProductCertLicenseSnap> dbSnaps = productCertLicenseSnapMapper.selectListByCertificateId(certKey);
+        Set<String> existingCodes = new LinkedHashSet<>();
         Map<String, ProductCertLicenseSnap> byCode = new LinkedHashMap<>();
         if (dbSnaps != null)
         {
             for (ProductCertLicenseSnap s : dbSnaps)
             {
-                if (s != null && StringUtils.isNotEmpty(s.getLicenseKindCode()))
+                if (s == null || StringUtils.isEmpty(s.getLicenseKindCode()))
                 {
-                    byCode.putIfAbsent(s.getLicenseKindCode(), s);
+                    continue;
+                }
+                String code = s.getLicenseKindCode().trim();
+                existingCodes.add(code);
+                byCode.putIfAbsent(code, s);
+            }
+        }
+        int expected = 0;
+        if (types != null)
+        {
+            for (CertificateType t : types)
+            {
+                if (t != null && StringUtils.isNotEmpty(t.getTypeCode()))
+                {
+                    expected++;
+                }
+            }
+        }
+        boolean inserted = false;
+        // 数量已齐时跳过逐条补占位，切换产品只读库
+        if (expected > 0 && existingCodes.size() < expected && types != null)
+        {
+            for (CertificateType t : types)
+            {
+                if (t == null || StringUtils.isEmpty(t.getTypeCode()))
+                {
+                    continue;
+                }
+                String kindCode = t.getTypeCode().trim();
+                if (existingCodes.contains(kindCode))
+                {
+                    continue;
+                }
+                insertStubRow(c, t, loginName);
+                existingCodes.add(kindCode);
+                inserted = true;
+            }
+        }
+        perf.mark("ensureSnapStubs");
+        if (inserted)
+        {
+            dbSnaps = productCertLicenseSnapMapper.selectListByCertificateId(certKey);
+            byCode.clear();
+            if (dbSnaps != null)
+            {
+                for (ProductCertLicenseSnap s : dbSnaps)
+                {
+                    if (s != null && StringUtils.isNotEmpty(s.getLicenseKindCode()))
+                    {
+                        byCode.putIfAbsent(s.getLicenseKindCode().trim(), s);
+                    }
                 }
             }
         }
@@ -472,10 +584,9 @@ public class ProductCertLicenseSnapServiceImpl implements IProductCertLicenseSna
         {
             ordered.add(orphan);
         }
-        ProductCertificate c = assertCertificateScope(certificateId);
-        applySharedSnapFiles(ordered, c);
+        // 列表切换场景不做共享图片回填（会 N+1），预览时再按需处理
         perf.mark("mergeOrderInMemory");
-        perf.finish(350);
+        perf.finish(200);
         return ordered;
     }
 

@@ -346,14 +346,21 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
           </if>
           and c.certificate_id not in (
               select keep_id from (
-                  select min(c2.certificate_id) as keep_id
+                  select cast(substring_index(group_concat(
+                      c2.certificate_id
+                      order by
+                        case when c2.certificate_file is not null and trim(c2.certificate_file) != '' then 0 else 1 end,
+                        case when c2.certificate_no is not null and trim(c2.certificate_no) != '' then 0 else 1 end,
+                        c2.certificate_id desc
+                      separator ','
+                  ), ',', 1) as unsigned) as keep_id
                   from scm_supplier_certificate c2
                   where c2.supplier_id = #{supplierId}
                     and (c2.status is null or c2.status != '1')
                     <if test="hospitalId != null">
                         and c2.hospital_id = #{hospitalId}
                     </if>
-                  group by trim(c2.certificate_type), c2.hospital_id
+                  group by trim(c2.certificate_type), ifnull(c2.hospital_id, 0)
               ) t
           )
     </update>

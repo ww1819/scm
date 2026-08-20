@@ -640,7 +640,7 @@
 				height: calculateCertDetailTableHeight(),
 				data: [],
 				onPostBody: function() {
-					refreshCertDetailTableLayout();
+					// 避免每次 load 底部证件都重算列宽，降低切换卡顿
 				},
 				columns: [{
 					field: 'serialNumber',
@@ -775,29 +775,189 @@
 		}
 		window.openCertDetailUploadTab = openCertDetailUploadTab;
 
-		function loadCertDetailRows(certificateId) {
-			selectedCertificateId = certificateId || null;
-			var $detail = $('#' + certDetailTableId);
-			if (!$detail.bootstrapTable('getOptions')) {
+		var certDetailLoadXhr = null;
+		var certDetailLoadSeq = 0;
+		var lastCertDetailPickId = null;
+		var lastCertDetailPickAt = 0;
+
+		function highlightProductRowById(certificateId) {
+			var $table = $('#' + productTableId);
+			if (!$table.length) {
 				return;
 			}
+			var $tbody = $table.find('tbody');
+			$tbody.find('tr').removeClass('info');
 			if (!certificateId) {
-				$detail.bootstrapTable('load', []);
 				return;
 			}
-			$.post(prefix + '/licenseSnap/mergedRows', { certificateId: certificateId }, function(res) {
-				if (res.code === 0) {
-					$detail.bootstrapTable('load', res.data || []);
-					$detail.bootstrapTable('sort', 'licenseNo', 'asc');
-				} else {
-					$detail.bootstrapTable('load', []);
-					if (res.msg) {
-						$.modal.msgWarning(res.msg);
+			var data = [];
+			try {
+				data = $table.bootstrapTable('getData') || [];
+			} catch (e) {
+				return;
+			}
+			for (var i = 0; i < data.length; i++) {
+				if (String(data[i].certificateId) === String(certificateId)) {
+					$tbody.find('tr').eq(i).addClass('info');
+					break;
+				}
+			}
+		}
+
+		function findProductInCurrentPage(certificateId) {
+			if (!certificateId) {
+				return null;
+			}
+			var data = [];
+			try {
+				data = $('#' + productTableId).bootstrapTable('getData') || [];
+			} catch (e) {
+				return null;
+			}
+			for (var i = 0; i < data.length; i++) {
+				if (String(data[i].certificateId) === String(certificateId)) {
+					return data[i];
+				}
+			}
+			return null;
+		}
+
+		function selectProductForCertDetail(row, $element, opts) {
+			if (!(row && row.certificateId)) {
+				return;
+			}
+			opts = opts || {};
+			var nextId = row.certificateId;
+			selectedProductRow = row;
+			highlightProductRowById(nextId);
+			if ($element && $element.length) {
+				var $tbody = $('#' + productTableId).find('tbody');
+				$tbody.find('tr').removeClass('info');
+				$element.addClass('info');
+			}
+			var now = Date.now();
+			// 同一字典短时间内被 click/check/委托重复触发时，只拉一次底部
+			if (!opts.force && String(nextId) === String(lastCertDetailPickId) && (now - lastCertDetailPickAt) < 350) {
+				return;
+			}
+			lastCertDetailPickId = nextId;
+			lastCertDetailPickAt = now;
+			loadCertDetailRows(nextId, true);
+		}
+
+		function syncCertDetailAfterProductPageLoad() {
+			var rows = [];
+			try {
+				rows = $('#' + productTableId).bootstrapTable('getData') || [];
+			} catch (e) {
+				rows = [];
+			}
+			// 优先用当前页勾选行；否则用已点选的字典；再否则默认第一条
+			var checked = [];
+			try {
+				checked = $('#' + productTableId).bootstrapTable('getSelections') || [];
+			} catch (e) {
+				checked = [];
+			}
+			var pick = null;
+			if (checked.length) {
+				for (var i = checked.length - 1; i >= 0; i--) {
+					if (checked[i] && findProductInCurrentPage(checked[i].certificateId)) {
+						pick = checked[i];
+						break;
 					}
 				}
-				setTimeout(adjustCertDetailTableHeight, 0);
-				setTimeout(refreshCertDetailTableLayout, 50);
-			});
+			}
+			if (!pick) {
+				pick = findProductInCurrentPage(selectedCertificateId);
+			}
+			if (!pick && rows.length > 0) {
+				pick = rows[0];
+			}
+			if (pick && pick.certificateId) {
+				selectProductForCertDetail(pick, null, { force: true });
+				return;
+			}
+			selectedProductRow = null;
+			loadCertDetailRows(null, true);
+		}
+
+		function loadCertDetailRows(certificateId, force) {
+			if (!force && certificateId != null
+				&& String(selectedCertificateId) === String(certificateId)
+				&& certDetailLoadXhr && certDetailLoadXhr.readyState !== 4) {
+				return;
+			}
+			selectedCertificateId = certificateId || null;
+			var $detail = $('#' + certDetailTableId);
+			if (!$detail.length) {
+				return;
+			}
+			try {
+				if (!$detail.bootstrapTable('getOptions')) {
+					return;
+				}
+			} catch (e) {
+				return;
+			}
+			if (certDetailLoadXhr && typeof certDetailLoadXhr.abort === 'function') {
+				try {
+					certDetailLoadXhr.abort();
+				} catch (e) {}
+				certDetailLoadXhr = null;
+			}
+			// 先清空底部，让用户立刻看到“切换中”
+			try {
+				$detail.bootstrapTable('load', []);
+			} catch (e) {}
+			if (!certificateId) {
+				lastCertDetailPickId = null;
+				lastCertDetailPickAt = 0;
+				return;
+			}
+			var seq = ++certDetailLoadSeq;
+			var reqId = certificateId;
+			// 推迟发起请求，保证清空先上屏，避免主线程卡死时“毫无反馈”
+			setTimeout(function() {
+				if (seq !== certDetailLoadSeq) {
+					return;
+				}
+				if (String(selectedCertificateId) !== String(reqId)) {
+					return;
+				}
+				certDetailLoadXhr = $.ajax({
+					url: prefix + '/licenseSnap/mergedRows',
+					type: 'POST',
+					data: { certificateId: reqId },
+					dataType: 'json',
+					timeout: 12000,
+					cache: false
+				}).done(function(res) {
+					if (seq !== certDetailLoadSeq) {
+						return;
+					}
+					if (String(selectedCertificateId) !== String(reqId)) {
+						return;
+					}
+					try {
+						if (res && (res.code === 0 || res.code === '0')) {
+							$detail.bootstrapTable('load', res.data || []);
+						} else {
+							$detail.bootstrapTable('load', []);
+							if (res && res.msg) {
+								$.modal.msgWarning(res.msg);
+							}
+						}
+					} catch (e) {}
+				}).fail(function(xhr, textStatus) {
+					if (textStatus === 'abort' || seq !== certDetailLoadSeq) {
+						return;
+					}
+					try {
+						$detail.bootstrapTable('load', []);
+					} catch (e) {}
+				});
+			}, 0);
 		}
 
 		function calculateProductTableHeight() {
@@ -1242,8 +1402,7 @@
 						formatter: function(value, row, index) {
 							if (!value) return '-';
 							var name = value.length > 15 ? value.substring(0, 15) + '...' : value;
-							var hospitalId = row.hospitalId || '';
-							return '<a href="javascript:void(0)" onclick="selectHospital(\'' + hospitalId + '\')" title="' + value + '" style="font-size: 12px; cursor: pointer;">' + name + '</a>';
+							return '<a href="javascript:void(0)" title="' + value + '" style="font-size: 12px; cursor: pointer;">' + name + '</a>';
 						}
 					}],
 					onClickRow: function(row, $element) {
@@ -1252,7 +1411,7 @@
 						}
 					},
 					rowStyle: function(row, index) {
-						if (selectedHospitalId && row.hospitalId == selectedHospitalId) {
+						if (selectedHospitalId && String(row.hospitalId) === String(selectedHospitalId)) {
 							return {classes: 'info'};
 						}
 						return {};
@@ -1318,23 +1477,49 @@
 			}
 		}
 
+		function highlightSelectedHospital() {
+			var $table = $('#bootstrap-table-hospital');
+			if (!$table.length || !$table.bootstrapTable('getOptions')) {
+				return;
+			}
+			$table.find('tbody tr').removeClass('info');
+			if (!selectedHospitalId) {
+				return;
+			}
+			var data = $table.bootstrapTable('getData') || [];
+			for (var i = 0; i < data.length; i++) {
+				if (String(data[i].hospitalId) === String(selectedHospitalId)) {
+					$table.find('tbody tr').eq(i).addClass('info');
+					break;
+				}
+			}
+		}
+
 		function selectHospital(hospitalId) {
 			if (!hospitalId) {
 				selectedHospitalId = null;
 				applyHospitalFilterToForm(null);
-				updateHospitalTable(allHospitals);
+				highlightSelectedHospital();
 				loadCertDetailRows(null);
 				$('#' + productTableId).bootstrapTable('refresh');
 				return;
 			}
-			if (selectedHospitalId == hospitalId) {
+			if (String(selectedHospitalId) === String(hospitalId)) {
 				return;
 			}
 			selectedHospitalId = hospitalId;
 			applyHospitalFilterToForm(hospitalId);
-			updateHospitalTable(allHospitals);
+			highlightSelectedHospital();
 			loadCertDetailRows(null);
-			$('#' + productTableId).bootstrapTable('refresh');
+			var $product = $('#' + productTableId);
+			if ($product.length && $product.bootstrapTable('getOptions')) {
+				var pageNumber = $product.bootstrapTable('getOptions').pageNumber || 1;
+				if (pageNumber !== 1) {
+					$product.bootstrapTable('selectPage', 1);
+				} else {
+					$product.bootstrapTable('refresh');
+				}
+			}
 		}
 
 		function viewProductDetail(certificateId) {
@@ -1435,23 +1620,13 @@
 				},
 				onLoadSuccess: function() {
 					$.modal.closeLoading();
-					setTimeout(function() {
-						adjustProductTableHeight();
-						adjustCertDetailTableHeight();
-						refreshProductTableLayout();
-						refreshCertDetailTableLayout();
-						if (selectedCertificateId) {
-							loadCertDetailRows(selectedCertificateId);
-						}
-						updateProductEditButtonState();
-					}, 50);
-					setTimeout(function() {
-						refreshProductTableLayout();
-						refreshCertDetailTableLayout();
-					}, 200);
-				},
-				onCheck: function() {
 					updateProductEditButtonState();
+					syncCertDetailAfterProductPageLoad();
+				},
+				onCheck: function(row) {
+					updateProductEditButtonState();
+					// 勾选字典也要同步底部（页面上多数是点复选框，不只点行）
+					selectProductForCertDetail(row, null);
 				},
 				onUncheck: function() {
 					updateProductEditButtonState();
@@ -1463,13 +1638,10 @@
 					updateProductEditButtonState();
 				},
 				onPostBody: function() {
-					refreshProductTableLayout();
+					// 列宽同步放到首次布局，减少翻页时重复重排
 				},
-				onClickRow: function(row) {
-					if (row && row.certificateId) {
-						selectedProductRow = row;
-						loadCertDetailRows(row.certificateId);
-					}
+				onClickRow: function(row, $element) {
+					selectProductForCertDetail(row, $element);
 				},
 				onDblClickCell: function(field, value, row) {
 					if (field === 'materialName' && row && row.certificateId) {
@@ -1690,6 +1862,38 @@
 				}]
 			};
 			$.table.init(options);
+			// 不依赖 onClickRow 选项：ry-ui 的 off("click") 可能拆掉行点击；用 bs 事件 + 委托兜底
+			var $productTable = $('#' + productTableId);
+			$productTable
+				.off('click-row.bs.table.certDetailSync check.bs.table.certDetailSync')
+				.on('click-row.bs.table.certDetailSync', function(e, row, $element) {
+					selectProductForCertDetail(row, $element);
+				})
+				.on('check.bs.table.certDetailSync', function(e, row) {
+					selectProductForCertDetail(row, null);
+				});
+			$(document)
+				.off('click.certDetailRowPick')
+				.on('click.certDetailRowPick', '#' + productTableId + ' tbody tr', function(e) {
+					if ($(e.target).closest('a.btn,button,.cert-detail-upload-btn').length) {
+						return;
+					}
+					var $tr = $(this);
+					var index = $tr.data('index');
+					if (index === undefined || index === null) {
+						index = $tr.index();
+					}
+					var data = [];
+					try {
+						data = $productTable.bootstrapTable('getData') || [];
+					} catch (err) {
+						return;
+					}
+					var row = data[index];
+					if (row && row.certificateId) {
+						selectProductForCertDetail(row, $tr);
+					}
+				});
 			setTimeout(function() {
 				adjustProductTableHeight();
 				adjustCertDetailTableHeight();

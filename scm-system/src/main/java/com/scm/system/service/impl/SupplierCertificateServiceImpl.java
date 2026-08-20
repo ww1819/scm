@@ -7,7 +7,9 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.alibaba.fastjson.JSON;
@@ -52,6 +54,9 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
 
     @Autowired
     private ICertificateTypeService certificateTypeService;
+
+    /** 证件类型展示名缓存，避免列表每行重复查库 */
+    private final Map<String, String> certificateTypeNameCache = new ConcurrentHashMap<>();
 
     @Autowired
     private IScmSupplierCertificateFileService scmSupplierCertificateFileService;
@@ -166,7 +171,7 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         for (SupplierCertificate certificate : list)
         {
             enrichCertificateTypeDisplay(certificate);
-            enrichCertificateFiles(certificate);
+            // 列表页仅依赖主表 certificate_file 判断是否已上传，避免按行 N+1 查文件拖慢切换
         }
     }
 
@@ -189,6 +194,12 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
             return raw;
         }
         String value = raw.trim();
+        String cached = certificateTypeNameCache.get(value);
+        if (cached != null)
+        {
+            return cached;
+        }
+        String resolved = value;
         if (value.matches("^\\d+$"))
         {
             try
@@ -196,22 +207,23 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
                 CertificateType type = certificateTypeService.selectCertificateTypeById(Long.parseLong(value));
                 if (type != null && StringUtils.isNotEmpty(type.getTypeName()))
                 {
-                    return type.getTypeName().trim();
+                    resolved = type.getTypeName().trim();
                 }
             }
             catch (NumberFormatException ignored)
             {
             }
         }
-        if (value.matches("^[A-Za-z]+_\\d+$"))
+        else if (value.matches("^[A-Za-z]+_\\d+$"))
         {
             CertificateType type = certificateTypeService.selectByTypeCode(value);
             if (type != null && StringUtils.isNotEmpty(type.getTypeName()))
             {
-                return type.getTypeName().trim();
+                resolved = type.getTypeName().trim();
             }
         }
-        return value;
+        certificateTypeNameCache.put(value, resolved);
+        return resolved;
     }
 
     private void normalizeCertificateTypeOnSave(SupplierCertificate certificate)
@@ -704,31 +716,47 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         {
             return;
         }
-        try
-        {
-            supplierCertificateMapper.repairStoredCertificateTypeValues();
-        }
-        catch (Exception ignored)
-        {
-        }
         int existingCount = supplierCertificateMapper.countBySupplierAndHospital(supplierId, hospitalId);
-        if (existingCount >= expectedCount)
+        // 数量已达标：直接返回，避免每次切换医院都做全表修复/去重
+        if (existingCount == expectedCount)
         {
             return;
+        }
+        // 数量偏多：先去重再判断；数量为 0：尝试挂靠历史空医院数据
+        if (existingCount > expectedCount)
+        {
+            try
+            {
+                supplierCertificateMapper.deleteDuplicateCertificatesBySupplierId(supplierId, hospitalId);
+            }
+            catch (Exception ignored)
+            {
+            }
+            existingCount = supplierCertificateMapper.countBySupplierAndHospital(supplierId, hospitalId);
+            if (existingCount >= expectedCount)
+            {
+                return;
+            }
         }
         if (existingCount == 0)
         {
             supplierCertificateMapper.assignNullHospitalCertificates(supplierId, hospitalId);
             existingCount = supplierCertificateMapper.countBySupplierAndHospital(supplierId, hospitalId);
-        }
-        if (existingCount > expectedCount)
-        {
-            supplierCertificateMapper.deleteDuplicateCertificatesBySupplierId(supplierId, hospitalId);
-            existingCount = supplierCertificateMapper.countBySupplierAndHospital(supplierId, hospitalId);
-        }
-        if (existingCount >= expectedCount)
-        {
-            return;
+            if (existingCount > expectedCount)
+            {
+                try
+                {
+                    supplierCertificateMapper.deleteDuplicateCertificatesBySupplierId(supplierId, hospitalId);
+                }
+                catch (Exception ignored)
+                {
+                }
+                existingCount = supplierCertificateMapper.countBySupplierAndHospital(supplierId, hospitalId);
+            }
+            if (existingCount >= expectedCount)
+            {
+                return;
+            }
         }
         Set<String> existingTypes = normalizeExistingCertificateTypeKeys(new HashSet<>(
             supplierCertificateMapper.selectCertificateTypeNamesBySupplierAndHospital(supplierId, hospitalId)));
@@ -842,6 +870,18 @@ public class SupplierCertificateServiceImpl implements ISupplierCertificateServi
         }
         List<CertificateType> types = certificateTypeService.selectSupplierExtensionTypesForSnap();
         int expectedCount = (types == null || types.isEmpty()) ? 0 : countUniqueSupplierTypeNames(types);
+        if (expectedCount <= 0 || targetIds.isEmpty())
+        {
+            return;
+        }
+        // 全表类型值修复只做一次，避免每个供应商循环都扫表
+        try
+        {
+            supplierCertificateMapper.repairStoredCertificateTypeValues();
+        }
+        catch (Exception ignored)
+        {
+        }
         for (Long supplierId : targetIds)
         {
             ensureMissingCertificatesForSupplierAtHospital(supplierId, hospitalId, createBy, types, expectedCount);

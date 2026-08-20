@@ -256,16 +256,6 @@
 			overflow: hidden;
 		}
 
-		.container-div .search-collapse .order-search-rows > ul {
-			display: block;
-			width: 100%;
-			overflow: hidden;
-		}
-
-		.container-div .search-collapse .order-search-rows > ul + ul {
-			margin-top: 2px;
-		}
-
 		.container-div .search-collapse .select-list li {
 			margin: 4px 15px 4px 0;
 		}
@@ -273,6 +263,14 @@
 		.container-div .search-collapse .select-list li.select-time label {
 			margin-top: 4px;
 			margin-bottom: 4px;
+		}
+
+		#order-form .select-list li.order-filter-text input {
+			width: 160px;
+		}
+
+		#order-form .select-list li.order-filter-short select {
+			width: 100px;
 		}
 
 		#toolbar .order-receive-multiple.disabled {
@@ -303,24 +301,24 @@
 		<div class="row">
 			<div class="col-sm-12 search-collapse">
 				<form id="order-form">
-					<div class="select-list order-search-rows">
+					<div class="select-list">
 						<ul>
-							<li>
+							<li class="order-filter-text">
 								订单编号：<input type="text" name="orderNo"/>
 							</li>
-							<li>
+							<li class="order-filter-text">
 								医院名称：<input type="text" name="hospitalName"/>
 							</li>
-							<li>
+							<li class="order-filter-text">
 								供应商名称：<input type="text" name="supplierName"/>
 							</li>
-							<li>
+							<li class="order-filter-text">
 								仓库：<input type="text" name="warehouse" placeholder="名称/编码"/>
 							</li>
-							<li>
+							<li class="order-filter-text">
 								申请科室：<input type="text" name="department" placeholder="名称/编码"/>
 							</li>
-							<li>
+							<li class="order-filter-short">
 								订单状态：<select name="orderStatus">
 									<option value="">所有</option>
 									<option value="0">待接收</option>
@@ -330,8 +328,6 @@
 									<option value="4">已作废</option>
 								</select>
 							</li>
-						</ul>
-						<ul>
 							<li class="select-time">
 								<label>订单日期：</label>
 								<input type="text" class="time-input" id="startTime" placeholder="开始时间" name="params[beginTime]"/>

@@ -1068,31 +1068,23 @@
 					if (supplierSelfService && bindSupplierId != null) {
 						curParams.supplierIds = String(bindSupplierId);
 					}
-					var supplierName = $.common.trim(curParams.supplierName || '');
 					if (selectedHospitalId) {
 						curParams.hospitalId = selectedHospitalId;
-						if (!supplierName && !ensuredHospitalMap[selectedHospitalId]) {
-							curParams.ensureMissing = '1';
-						}
 					}
+					// 列表请求不再同步 ensureMissing，避免切换医院被补齐逻辑卡住
 					return curParams;
 				},
 				onLoadSuccess: function() {
 					if (selectedHospitalId) {
-						ensuredHospitalMap[selectedHospitalId] = true;
+						scheduleEnsureMissingForHospital(selectedHospitalId);
 					}
 					setTimeout(function() {
 						adjustCertTableHeight();
 						refreshCertTableLayout();
-					}, 50);
-					setTimeout(function() {
-						adjustCertTableHeight();
-						refreshCertTableLayout();
-					}, 200);
-					setTimeout(refreshCertTableLayout, 450);
+					}, 30);
 				},
 				onPostBody: function() {
-					refreshCertTableLayout();
+					// 固定列布局在 onLoadSuccess 统一处理，避免切换时重复重排
 				},
 				onLoadError: function() {
 				},
@@ -1326,8 +1318,7 @@
 						formatter: function(value, row, index) {
 							if (!value) return '-';
 							var name = value.length > 15 ? value.substring(0, 15) + '...' : value;
-							var hospitalId = row.hospitalId || '';
-							return '<a href="javascript:void(0)" onclick="selectHospital(\'' + hospitalId + '\')" title="' + value + '" style="font-size: 12px; cursor: pointer;">' + name + '</a>';
+							return '<a href="javascript:void(0)" title="' + value + '" style="font-size: 12px; cursor: pointer;">' + name + '</a>';
 						}
 					}],
 					onClickRow: function(row, $element) {
@@ -1336,7 +1327,7 @@
 						}
 					},
 					rowStyle: function(row, index) {
-						if (selectedHospitalId && row.hospitalId == selectedHospitalId) {
+						if (selectedHospitalId && String(row.hospitalId) === String(selectedHospitalId)) {
 							return {classes: 'info'};
 						}
 						return {};
@@ -1414,21 +1405,66 @@
 			}
 		}
 
+		function highlightSelectedHospital() {
+			var $table = $('#bootstrap-table-hospital');
+			if (!$table.length || !$table.bootstrapTable('getOptions')) {
+				return;
+			}
+			$table.find('tbody tr').removeClass('info');
+			if (!selectedHospitalId) {
+				return;
+			}
+			var data = $table.bootstrapTable('getData') || [];
+			for (var i = 0; i < data.length; i++) {
+				if (String(data[i].hospitalId) === String(selectedHospitalId)) {
+					$table.find('tbody tr').eq(i).addClass('info');
+					break;
+				}
+			}
+		}
+
 		function selectHospital(hospitalId) {
 			if (!hospitalId) {
 				selectedHospitalId = null;
-				updateHospitalTable(allHospitals);
+				highlightSelectedHospital();
 				$('#' + certTableId).bootstrapTable('removeAll');
 				updateAddButtonState();
 				return;
 			}
-			if (selectedHospitalId == hospitalId) {
+			if (String(selectedHospitalId) === String(hospitalId)) {
 				return;
 			}
 			selectedHospitalId = hospitalId;
-			updateHospitalTable(allHospitals);
 			updateAddButtonState();
-			$('#' + certTableId).bootstrapTable('refresh');
+			highlightSelectedHospital();
+			// 立刻刷新右侧证件列表，不再整表重载左侧医院
+			var $cert = $('#' + certTableId);
+			if ($cert.length && $cert.bootstrapTable('getOptions')) {
+				var pageNumber = $cert.bootstrapTable('getOptions').pageNumber || 1;
+				if (pageNumber !== 1) {
+					$cert.bootstrapTable('selectPage', 1);
+				} else {
+					$cert.bootstrapTable('refresh');
+				}
+			}
+		}
+
+		/** 后台异步补齐占位证件；不二次刷新列表，避免右侧“晚一步”才变 */
+		function scheduleEnsureMissingForHospital(hospitalId) {
+			if (!hospitalId || ensuredHospitalMap[hospitalId]) {
+				return;
+			}
+			ensuredHospitalMap[hospitalId] = true;
+			var data = {
+				hospitalId: hospitalId,
+				ensureMissing: '1',
+				pageNum: 1,
+				pageSize: 1
+			};
+			if (supplierSelfService && bindSupplierId != null) {
+				data.supplierIds = String(bindSupplierId);
+			}
+			$.post(prefix + '/list', data);
 		}
 
 		function checkExpired() {

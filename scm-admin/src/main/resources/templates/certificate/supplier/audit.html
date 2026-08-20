@@ -327,7 +327,9 @@
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="auditStatus"],
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="auditStatus"],
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="expireDate"],
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="expireDate"] {
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="expireDate"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="auditTime"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="auditTime"] {
 			text-align: center !important;
 		}
 
@@ -335,7 +337,8 @@
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="uploadedFlag"] .th-inner,
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="serialNumber"] .th-inner,
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="auditStatus"] .th-inner,
-		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="expireDate"] .th-inner {
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="expireDate"] .th-inner,
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-header th[data-field="auditTime"] .th-inner {
 			text-align: center !important;
 			justify-content: center !important;
 		}
@@ -427,6 +430,8 @@
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateType"],
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="certificateNo"],
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="expireDate"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="auditBy"],
+		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="auditTime"],
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="contactPerson"],
 		.audit-right-area .audit-table-wrap.audit-list-table .fixed-table-container > .fixed-table-body td[data-field="address"] {
 			overflow: hidden;
@@ -588,6 +593,8 @@
 			certificateType: 160,
 			certificateNo: 140,
 			expireDate: 110,
+			auditBy: 100,
+			auditTime: 160,
 			contactPerson: 120,
 			address: 260,
 			auditOperate: 160
@@ -1171,6 +1178,32 @@
 		                    return value.split(' ')[0];
 		                }
 		                return $.common.dateFormat(value, 'yyyy-MM-dd');
+		            }
+		        },
+		        {
+		            field: 'auditBy',
+		            title: '审核人',
+		            align: 'left',
+		            width: 100,
+		            sortable: true,
+		            formatter: function (value, row, index) {
+		                return value || '-';
+		            }
+		        },
+		        {
+		            field: 'auditTime',
+		            title: '审核日期',
+		            align: 'center',
+		            width: 160,
+		            sortable: true,
+		            formatter: function (value, row, index) {
+		                if (!value) {
+		                    return '-';
+		                }
+		                if (typeof value === 'string' && value.indexOf('-') > -1) {
+		                    return value.length > 19 ? value.substring(0, 19) : value;
+		                }
+		                return $.common.dateFormat(value, 'yyyy-MM-dd HH:mm:ss');
 		            }
 		        },
 		        {

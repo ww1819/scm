@@ -2,188 +2,134 @@
 <html lang="zh" xmlns:th="http://www.thymeleaf.org" >
 <head>
     <th:block th:include="include :: header('用户详细')" />
+    <style>
+        .user-view-page .user-view-grid {
+            margin: 0 -6px 8px;
+            overflow: hidden;
+        }
+        .user-view-page .user-view-field {
+            float: left;
+            width: 20%;
+            padding: 4px 8px 10px;
+            box-sizing: border-box;
+            min-height: 52px;
+        }
+        .user-view-page .user-view-field.wide {
+            width: 100%;
+        }
+        .user-view-page .user-view-field .field-label {
+            display: block;
+            color: #666;
+            font-size: 12px;
+            line-height: 1.4;
+            margin-bottom: 2px;
+            font-weight: normal;
+        }
+        .user-view-page .user-view-field .field-value {
+            margin: 0;
+            color: #333;
+            font-size: 13px;
+            line-height: 1.4;
+            word-break: break-all;
+            min-height: 18px;
+        }
+        @media (max-width: 900px) {
+            .user-view-page .user-view-field {
+                width: 33.333%;
+            }
+        }
+        @media (max-width: 560px) {
+            .user-view-page .user-view-field {
+                width: 50%;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="main-content">
+    <div class="main-content user-view-page">
         <form class="form-horizontal" th:object="${user}">
             <h4 class="form-header h4">基本信息</h4>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">用户名称：</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext" th:text="*{userName}"></p>
-                        </div>
-                    </div>
+            <div class="user-view-grid">
+                <div class="user-view-field">
+                    <span class="field-label">用户名称：</span>
+                    <p class="field-value" th:text="*{userName}"></p>
                 </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">姓名：</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext" th:text="${#strings.isEmpty(user.realName) ? '-' : user.realName}"></p>
-                        </div>
-                    </div>
+                <div class="user-view-field">
+                    <span class="field-label">姓名：</span>
+                    <p class="field-value" th:text="${#strings.isEmpty(user.realName) ? '-' : user.realName}"></p>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">归属部门：</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext" th:text="*{dept.deptName}"></p>
-                        </div>
-                    </div>
+                <div class="user-view-field">
+                    <span class="field-label">归属部门：</span>
+                    <p class="field-value" th:text="*{dept.deptName}"></p>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">手机号码：</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext" th:text="*{phonenumber}"></p>
-                        </div>
-                    </div>
+                <div class="user-view-field">
+                    <span class="field-label">手机号码：</span>
+                    <p class="field-value" th:text="*{phonenumber}"></p>
                 </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">邮箱：</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext" th:text="*{email}"></p>
-                        </div>
-                    </div>
+                <div class="user-view-field">
+                    <span class="field-label">邮箱：</span>
+                    <p class="field-value" th:text="*{email}"></p>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">登录账号：</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext" th:text="*{loginName}"></p>
-                        </div>
-                    </div>
+                <div class="user-view-field">
+                    <span class="field-label">登录账号：</span>
+                    <p class="field-value" th:text="*{loginName}"></p>
                 </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">用户状态：</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext" th:text="*{status == '0' ? '正常' : '停用'}"></p>
-                        </div>
-                    </div>
+                <div class="user-view-field">
+                    <span class="field-label">用户状态：</span>
+                    <p class="field-value" th:text="*{status == '0' ? '正常' : '停用'}"></p>
+                </div>
+                <div class="user-view-field">
+                    <span class="field-label">登记明文密码：</span>
+                    <p class="field-value" th:text="${#strings.isEmpty(user.pwdPlain) ? '-' : user.pwdPlain}"></p>
+                </div>
+                <div class="user-view-field">
+                    <span class="field-label">用户类型：</span>
+                    <p class="field-value" th:with="ut=*{userType}"
+                       th:text="${#strings.isEmpty(ut) ? '未设置' : (ut == 'platform' ? '平台' : (ut == 'hospital' ? '医院' : (ut == 'supplier' ? '供应商' : ut)))}"></p>
+                </div>
+                <div class="user-view-field">
+                    <span class="field-label">岗位：</span>
+                    <p class="field-value">[[${#strings.defaultString(postGroup, '无岗位')}]]</p>
+                </div>
+                <div class="user-view-field">
+                    <span class="field-label">用户性别：</span>
+                    <p class="field-value" th:text="*{@dict.getLabel('sys_user_sex', sex)}"></p>
+                </div>
+                <div class="user-view-field wide">
+                    <span class="field-label">角色：</span>
+                    <p class="field-value">[[${#strings.defaultString(roleGroup, '无角色')}]]</p>
                 </div>
             </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">登记明文密码：</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext" style="word-break:break-all;"
-                               th:text="${#strings.isEmpty(user.pwdPlain) ? '-' : user.pwdPlain}"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">用户类型：</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext" th:with="ut=*{userType}"
-                               th:text="${#strings.isEmpty(ut) ? '未设置' : (ut == 'platform' ? '平台' : (ut == 'hospital' ? '医院' : (ut == 'supplier' ? '供应商' : ut)))}"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">岗位：</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext">[[${#strings.defaultString(postGroup, '无岗位')}]]</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">用户性别：</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext" th:text="*{@dict.getLabel('sys_user_sex', sex)}"></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-            	<div class="col-sm-12">
-                    <div class="form-group">
-                        <label class="col-xs-2 control-label">角色：</label>
-                        <div class="col-xs-10">
-                            <p class="form-control-plaintext">[[${#strings.defaultString(roleGroup, '无角色')}]]</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
             <h4 class="form-header h4">其他信息</h4>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">创建者：</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext" th:text="*{createBy}"></p>
-                        </div>
-                    </div>
+            <div class="user-view-grid">
+                <div class="user-view-field">
+                    <span class="field-label">创建者：</span>
+                    <p class="field-value" th:text="*{createBy}"></p>
                 </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">创建时间：</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext" th:text="*{#dates.format(createTime, 'yyyy-MM-dd HH:mm:ss')}"></p>
-                        </div>
-                    </div>
+                <div class="user-view-field">
+                    <span class="field-label">创建时间：</span>
+                    <p class="field-value" th:text="*{#dates.format(createTime, 'yyyy-MM-dd HH:mm:ss')}"></p>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">更新者：</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext" th:text="*{updateBy}"></p>
-                        </div>
-                    </div>
+                <div class="user-view-field">
+                    <span class="field-label">更新者：</span>
+                    <p class="field-value" th:text="*{updateBy}"></p>
                 </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">更新时间：</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext" th:text="*{#dates.format(updateTime, 'yyyy-MM-dd HH:mm:ss')}"></p>
-                        </div>
-                    </div>
+                <div class="user-view-field">
+                    <span class="field-label">更新时间：</span>
+                    <p class="field-value" th:text="*{#dates.format(updateTime, 'yyyy-MM-dd HH:mm:ss')}"></p>
                 </div>
-            </div>
-            <div class="row">
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">最后登录IP：</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext" th:text="*{loginIp}"></p>
-                        </div>
-                    </div>
+                <div class="user-view-field">
+                    <span class="field-label">最后登录IP：</span>
+                    <p class="field-value" th:text="*{loginIp}"></p>
                 </div>
-                <div class="col-sm-6">
-                    <div class="form-group">
-                        <label class="col-sm-4 control-label">最后登录时间：</label>
-                        <div class="col-sm-8">
-                            <p class="form-control-plaintext" th:text="*{#dates.format(loginDate, 'yyyy-MM-dd HH:mm:ss')}"></p>
-                        </div>
-                    </div>
+                <div class="user-view-field">
+                    <span class="field-label">最后登录时间：</span>
+                    <p class="field-value" th:text="*{#dates.format(loginDate, 'yyyy-MM-dd HH:mm:ss')}"></p>
                 </div>
-            </div>
-	        <div class="row">
-                <div class="col-sm-12">
-                    <div class="form-group">
-                        <label class="col-xs-2 control-label">备注：</label>
-                        <div class="col-xs-10">
-                            <p class="form-control-plaintext" th:text="*{remark}"></p>
-                        </div>
-                    </div>
+                <div class="user-view-field wide">
+                    <span class="field-label">备注：</span>
+                    <p class="field-value" th:text="*{remark}"></p>
                 </div>
             </div>
         </form>

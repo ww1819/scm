@@ -933,8 +933,17 @@ table.rc-table-resizing thead > th > a {
   overflow-x: hidden !important;
 }
 
-.bootstrap-table .table-hover > tbody > tr.hover > td {
-    background-color: #f5f5f5;
+.bootstrap-table .table-hover > tbody > tr.hover > td,
+.bootstrap-table .table-hover > tbody > tr:hover > td {
+    background-color: #d6ebf8;
+}
+
+/* 冻结列与主表悬停同步（配合 tableFixedHoverSync.js 的 .hover 类） */
+.bootstrap-table .fixed-columns .fixed-table-body tbody tr.hover > td,
+.bootstrap-table .fixed-columns .fixed-table-body tbody tr:hover > td,
+.bootstrap-table .fixed-columns-right .fixed-table-body tbody tr.hover > td,
+.bootstrap-table .fixed-columns-right .fixed-table-body tbody tr:hover > td {
+    background-color: #d6ebf8 !important;
 }
 
 /** 表格树样式 **/
