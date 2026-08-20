@@ -87,29 +87,46 @@
         var currentIndex = 0;
         var rotateDeg = 0;
         var zoomScale = 1;
+        var panX = 0;
+        var panY = 0;
+        var isDragging = false;
+        var dragStartX = 0;
+        var dragStartY = 0;
+        var panStartX = 0;
+        var panStartY = 0;
         var ZOOM_MIN = 0.5;
-        var ZOOM_MAX = 4;
+        var ZOOM_MAX = 5;
         var ZOOM_STEP = 0.25;
+        var ZOOM_WHEEL_STEP = 0.1;
 
         function resetPreviewTransform() {
             rotateDeg = 0;
             zoomScale = 1;
+            panX = 0;
+            panY = 0;
+            isDragging = false;
         }
 
-        function applyPreviewImageTransform() {
+        function applyPreviewImageTransform(options) {
             var $img = $('#preview-image');
             if (!$img.length) {
                 return;
             }
+            var animate = !options || options.animate !== false;
             var deg = rotateDeg % 360;
+            var cursor = 'default';
+            if (zoomScale > 1) {
+                cursor = isDragging ? 'grabbing' : 'grab';
+            }
             $img.css({
-                transform: 'rotate(' + deg + 'deg) scale(' + zoomScale + ')',
-                '-webkit-transform': 'rotate(' + deg + 'deg) scale(' + zoomScale + ')',
-                transition: 'transform 0.2s ease'
+                transform: 'translate(' + panX + 'px, ' + panY + 'px) rotate(' + deg + 'deg) scale(' + zoomScale + ')',
+                '-webkit-transform': 'translate(' + panX + 'px, ' + panY + 'px) rotate(' + deg + 'deg) scale(' + zoomScale + ')',
+                transition: animate ? 'transform 0.2s ease' : 'none',
+                cursor: cursor
             });
         }
 
-        function changePreviewZoom(delta) {
+        function changePreviewZoom(delta, options) {
             zoomScale = Math.round((zoomScale + delta) * 100) / 100;
             if (zoomScale < ZOOM_MIN) {
                 zoomScale = ZOOM_MIN;
@@ -117,7 +134,68 @@
             if (zoomScale > ZOOM_MAX) {
                 zoomScale = ZOOM_MAX;
             }
-            applyPreviewImageTransform();
+            if (zoomScale <= 1) {
+                panX = 0;
+                panY = 0;
+            }
+            applyPreviewImageTransform(options);
+        }
+
+        function stopImageDrag() {
+            if (!isDragging) {
+                return;
+            }
+            isDragging = false;
+            $(document).off('mousemove.certPreviewZoomPan mouseup.certPreviewZoomPan');
+            applyPreviewImageTransform({ animate: false });
+        }
+
+        function bindImageInteractions() {
+            var $body = $('.cert-preview-body');
+            var $img = $('#preview-image');
+            if (!$body.length || !$img.length) {
+                return;
+            }
+            stopImageDrag();
+            $body.off('.certPreviewZoomPan');
+            $img.off('.certPreviewZoomPan');
+            $(document).off('.certPreviewZoomPan');
+
+            $body.on('wheel.certPreviewZoomPan', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                var oe = e.originalEvent || e;
+                var deltaY = oe.deltaY != null ? oe.deltaY : (-oe.wheelDelta || 0);
+                changePreviewZoom(deltaY > 0 ? -ZOOM_WHEEL_STEP : ZOOM_WHEEL_STEP, { animate: false });
+            });
+
+            $img.on('mousedown.certPreviewZoomPan', function (e) {
+                if (e.which !== 1 || zoomScale <= 1) {
+                    return;
+                }
+                e.preventDefault();
+                e.stopPropagation();
+                isDragging = true;
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+                panStartX = panX;
+                panStartY = panY;
+                applyPreviewImageTransform({ animate: false });
+                $(document).on('mousemove.certPreviewZoomPan', function (ev) {
+                    if (!isDragging) {
+                        return;
+                    }
+                    panX = panStartX + (ev.clientX - dragStartX);
+                    panY = panStartY + (ev.clientY - dragStartY);
+                    applyPreviewImageTransform({ animate: false });
+                }).on('mouseup.certPreviewZoomPan', function () {
+                    stopImageDrag();
+                });
+            });
+
+            $img.on('dragstart.certPreviewZoomPan', function (e) {
+                e.preventDefault();
+            });
         }
 
         var titleToolbarBtnStyle = 'display:inline-block;background:#3c8dbc;color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:13px;line-height:1.4;margin-left:6px;vertical-align:middle;';
@@ -437,9 +515,9 @@
 
         function buildContent() {
             var currentUrl = escapeHtml(urlArray[currentIndex]);
-            var html = '<div class="cert-preview-body" style="text-align:center;padding:20px;overflow:auto;height:100%;position:relative;">';
+            var html = '<div class="cert-preview-body" style="text-align:center;padding:20px;overflow:hidden;height:100%;position:relative;user-select:none;-webkit-user-select:none;">';
             if (urlArray.length > 1) {
-                html += '<div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#fff;padding:5px 15px;border-radius:15px;z-index:1000;font-size:14px;">';
+                html += '<div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);color:#fff;padding:5px 15px;border-radius:15px;z-index:1000;font-size:14px;pointer-events:none;">';
                 html += '第 ' + (currentIndex + 1) + ' 张 / 共 ' + urlArray.length + ' 张';
                 html += '</div>';
                 if (currentIndex > 0) {
@@ -449,7 +527,7 @@
                     html += '<button id="next-image-btn" type="button" style="position:absolute;right:20px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,0.7);color:#fff;border:none;padding:15px 20px;border-radius:5px;cursor:pointer;font-size:18px;z-index:1000;">›</button>';
                 }
             }
-            html += '<img id="preview-image" src="' + currentUrl + '" style="max-width:100%;max-height:calc(100% - 40px);margin-top:30px;transform-origin:center center;" onerror="this.onerror=null;this.src=\'' + ctx + 'img/error.png\';" />';
+            html += '<img id="preview-image" src="' + currentUrl + '" draggable="false" style="max-width:100%;max-height:calc(100% - 40px);margin-top:30px;transform-origin:center center;-webkit-user-drag:none;" onerror="this.onerror=null;this.src=\'' + ctx + 'img/error.png\';" />';
             html += '</div>';
             return html;
         }
@@ -464,6 +542,7 @@
             $layer.find('.layui-layer-content').html(buildContent());
             bindNav();
             bindTitleToolbarEvents($layer);
+            bindImageInteractions();
             applyPreviewImageTransform();
         }
 
@@ -481,6 +560,11 @@
                 var $layer = $('#layui-layer' + index);
                 injectTitleToolbar($layer);
                 bindNav();
+                bindImageInteractions();
+            },
+            end: function () {
+                stopImageDrag();
+                $(document).off('.certPreviewZoomPan');
             }
         });
     };
