@@ -1,7 +1,10 @@
 package com.scm.web.controller.settlement;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,11 +24,14 @@ import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.enums.BusinessType;
 import com.scm.common.utils.poi.ExcelUtil;
 import com.scm.system.domain.Hospital;
+import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.ReconciliationYearMonthRow;
 import com.scm.system.domain.Settlement;
 import com.scm.system.domain.SettlementDetail;
 import com.scm.system.service.IHospitalService;
+import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.ISettlementService;
+import com.scm.system.service.IScmHospitalContextService;
 import com.scm.system.service.IScmReconciliationService;
 import com.scm.system.service.IScmSupplierContextService;
 
@@ -52,6 +58,12 @@ public class SettlementController extends BaseController
     @Autowired
     private IScmSupplierContextService scmSupplierContextService;
 
+    @Autowired
+    private IScmHospitalContextService scmHospitalContextService;
+
+    @Autowired
+    private IHospitalSupplierService hospitalSupplierService;
+
     @RequiresPermissions("settlement:settlement:view")
     @GetMapping()
     public String settlement()
@@ -76,10 +88,29 @@ public class SettlementController extends BaseController
     @GetMapping("/reconciliation")
     public String reconciliation(ModelMap mmap)
     {
-        Hospital query = new Hospital();
-        query.setStatus("0");
-        mmap.put("hospitals", hospitalService.selectHospitalList(query));
-        mmap.put("bindSupplierId", scmSupplierContextService.resolveSupplierIdForUser(getUserId()));
+        Long userId = getUserId();
+        Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(userId);
+        Long bindSupplierId = scmSupplierContextService.resolveSupplierIdForUser(userId);
+        List<Hospital> hospitals = listHospitalsForReconciliation(hospitalCtx, bindSupplierId);
+        mmap.put("hospitals", hospitals);
+        mmap.put("bindSupplierId", bindSupplierId);
+        mmap.put("bindHospitalId", hospitalCtx);
+
+        Long preloadHospitalId = hospitalCtx;
+        if (preloadHospitalId == null && hospitals != null && hospitals.size() == 1 && hospitals.get(0) != null)
+        {
+            preloadHospitalId = hospitals.get(0).getHospitalId();
+        }
+        List<Map<String, Object>> initialSuppliers = new ArrayList<>();
+        if (preloadHospitalId != null)
+        {
+            initialSuppliers = scmReconciliationService.selectSupplierOptions(preloadHospitalId, bindSupplierId);
+            if (hospitalCtx == null)
+            {
+                mmap.put("bindHospitalId", preloadHospitalId);
+            }
+        }
+        mmap.put("initialSuppliers", initialSuppliers != null ? initialSuppliers : new ArrayList<>());
         return prefix + "/reconciliation";
     }
 
@@ -91,6 +122,7 @@ public class SettlementController extends BaseController
     @ResponseBody
     public AjaxResult reconciliationSuppliers(Long hospitalId)
     {
+        hospitalId = resolveReconciliationHospitalId(hospitalId);
         Long bindSupplierId = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
         List<Map<String, Object>> list = scmReconciliationService.selectSupplierOptions(hospitalId, bindSupplierId);
         return success(list);
@@ -104,6 +136,7 @@ public class SettlementController extends BaseController
     @ResponseBody
     public AjaxResult reconciliationYearSummary(Long hospitalId, Integer year, Long supplierId)
     {
+        hospitalId = resolveReconciliationHospitalId(hospitalId);
         if (hospitalId == null)
         {
             return error("请选择医院");
@@ -119,6 +152,75 @@ public class SettlementController extends BaseController
         }
         List<ReconciliationYearMonthRow> list = scmReconciliationService.selectYearSummary(hospitalId, year, supplierId);
         return success(list);
+    }
+
+    /**
+     * 医院账号仅本院；供应商账号仅关联医院；平台账号看全部正常医院。
+     */
+    private List<Hospital> listHospitalsForReconciliation(Long hospitalCtx, Long bindSupplierId)
+    {
+        Hospital query = new Hospital();
+        query.setStatus("0");
+        if (hospitalCtx != null)
+        {
+            query.setHospitalId(hospitalCtx);
+            return hospitalService.selectHospitalList(query);
+        }
+        if (bindSupplierId != null)
+        {
+            HospitalSupplier relQ = new HospitalSupplier();
+            relQ.setSupplierId(bindSupplierId);
+            List<HospitalSupplier> rels = hospitalSupplierService.selectHospitalSupplierList(relQ);
+            List<Hospital> hospitals = new ArrayList<>();
+            Set<Long> seen = new HashSet<>();
+            if (rels != null)
+            {
+                for (HospitalSupplier rel : rels)
+                {
+                    if (rel == null || rel.getHospitalId() == null || !seen.add(rel.getHospitalId()))
+                    {
+                        continue;
+                    }
+                    Hospital h = hospitalService.selectHospitalById(rel.getHospitalId());
+                    if (h != null && "0".equals(h.getStatus()))
+                    {
+                        hospitals.add(h);
+                    }
+                }
+            }
+            return hospitals;
+        }
+        return hospitalService.selectHospitalList(query);
+    }
+
+    /**
+     * 院端强制本院；商端校验所选医院是否在关联范围内。
+     */
+    private Long resolveReconciliationHospitalId(Long hospitalId)
+    {
+        Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(getUserId());
+        if (hospitalCtx != null)
+        {
+            return hospitalCtx;
+        }
+        Long bindSupplierId = scmSupplierContextService.resolveSupplierIdForUser(getUserId());
+        if (bindSupplierId != null)
+        {
+            if (hospitalId == null)
+            {
+                return null;
+            }
+            HospitalSupplier relQ = new HospitalSupplier();
+            relQ.setSupplierId(bindSupplierId);
+            relQ.setHospitalId(hospitalId);
+            List<HospitalSupplier> rels = hospitalSupplierService.selectHospitalSupplierList(relQ);
+            if (rels == null || rels.isEmpty())
+            {
+                return null;
+            }
+            return hospitalId;
+        }
+        return hospitalId;
     }
 
     /**

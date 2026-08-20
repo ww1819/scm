@@ -333,7 +333,11 @@ function resetPwd() {
 
 /* 版本信息（原底部版权移至此处） */
 function showAppVersionInfo() {
-	layer.alert(appVersionLine, { title: '版本信息', btn: ['确定'] });
+	layer.alert(appVersionLine, {
+		title: '版本信息',
+		btn: ['确定'],
+		area: ['520px', 'auto']
+	});
 }
 
 /* 切换主题 */

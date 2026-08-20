@@ -518,6 +518,9 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             from scm_hospital_supplier hs
             where hs.hospital_id = #{hospitalId}
               and hs.supplier_id is not null
+              and hs.bind_status = '1'
+              and (hs.audit_status = '1' or hs.audit_status is null)
+              and (hs.disable_status = '0' or hs.disable_status is null)
               and (hs.status is null or hs.status = '' or hs.status = '0')
             union
             select d.supplier_id
@@ -533,7 +536,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
               and (st.status is null or st.status = '' or st.status = '0')
         ) x
         inner join scm_supplier s on s.supplier_id = x.supplier_id
-        where (s.del_flag is null or s.del_flag = '' or s.del_flag = '0')
+        where (s.del_flag is null or s.del_flag = '' or s.del_flag != '2')
         order by s.company_name
     </select>
 </mapper>

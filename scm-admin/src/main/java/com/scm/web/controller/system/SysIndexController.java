@@ -297,12 +297,18 @@ public class SysIndexController extends BaseController
 
     private static String buildAppVersionLine()
     {
-        String line = "©医承云配供应链云平台 V-3.21";
+        StringBuilder sb = new StringBuilder();
+        sb.append("<div style=\"text-align:center;line-height:1.7;padding:4px 8px;\">");
+        sb.append("<div style=\"font-size:15px;font-weight:600;margin-bottom:12px;\">©医承云配供应链云平台 V-3.21</div>");
+        sb.append("<div style=\"text-align:left;font-size:13px;color:#555;margin-bottom:14px;\">");
+        sb.append("深耕医疗耗材供应链领域。赋能医院及 SPD 服务方，实现医疗耗材从准入备案、申领申请、采购执行、临床消耗到财务结算的全流程闭环管控；院外采用 SaaS 云服务模式，面向供应商开放接入能力，完成资质管理、订单流转、财务对账等上下游协同业务。");
+        sb.append("</div>");
         if (StringUtils.isNotEmpty(ScmConfig.getIcpNo()))
         {
-            line = line + "<br/>" + ScmConfig.getIcpNo();
+            sb.append("<div style=\"font-size:12px;color:#888;\">").append(ScmConfig.getIcpNo()).append("</div>");
         }
-        return line;
+        sb.append("</div>");
+        return sb.toString();
     }
 
     // content-main class

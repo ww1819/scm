@@ -2,7 +2,7 @@
 <html lang="zh" xmlns:th="http://www.thymeleaf.org" class="reconciliation-root">
 <head>
 	<th:block th:include="include :: header('对账表')" />
-	<link rel="stylesheet" href="../../../static/layui/css/layui.css">
+	<link rel="stylesheet" th:href="@{/ajax/libs/layui/css/modules/laydate.css}">
 	<style>
 		html.reconciliation-root,
 		html.reconciliation-root body.reconciliation-body {
@@ -252,6 +252,7 @@
 						<option value="">请选择医院</option>
 						<option th:each="h : ${hospitals}"
 						        th:value="${h.hospitalId}"
+						        th:selected="${bindHospitalId != null and bindHospitalId == h.hospitalId}"
 						        th:text="${h.hospitalName}">医院</option>
 					</select>
 				</div>
@@ -283,27 +284,70 @@
 	</div>
 
 	<th:block th:include="include :: footer" />
-	<script src="../../../static/layui/layui.js"></script>
 	<script th:inline="javascript">
 		var prefix = ctx + "settlement/settlement/reconciliation";
 		var currentYear = null;
 		var bindSupplierId = /*[[${bindSupplierId}]]*/ null;
+		var bindHospitalId = /*[[${bindHospitalId}]]*/ null;
+		var initialSuppliers = /*[[${initialSuppliers}]]*/ [];
 		var syncingSupplier = false;
+		var supplierLoadSeq = 0;
 
 		$(function() {
 			currentYear = new Date().getFullYear();
 			updateGridTitle();
 			initYearPicker();
+			ensureHospitalSelection();
 			bindHospitalChange();
-			initSupplierSelect([]);
-			// 等 common.js 初始化医院 select2 后再绑定并加载供应商
+			initSupplierSelect($.isArray(initialSuppliers) ? initialSuppliers : []);
+			// 打开菜单即按「当前医院 + 今年」出数，不依赖再点「今年」
+			loadYearSummary();
+			refreshSuppliersAndSummary();
 			setTimeout(function() {
-				bindHospitalChange();
-				if ($('#hospitalId').val()) {
-					loadSuppliers(loadYearSummary);
-				}
-			}, 0);
+				ensureHospitalSelection();
+				loadYearSummary();
+				loadSuppliers();
+			}, 300);
 		});
+
+		function refreshSuppliersAndSummary() {
+			ensureHospitalSelection();
+			bindHospitalChange();
+			loadYearSummary();
+			var hospitalId = resolveHospitalId();
+			if (hospitalId || bindSupplierId) {
+				loadSuppliers();
+			}
+		}
+
+		function resolveHospitalId() {
+			var hospitalId = $('#hospitalId').val();
+			if (hospitalId) {
+				return hospitalId;
+			}
+			if (bindHospitalId != null && String(bindHospitalId) !== '') {
+				return String(bindHospitalId);
+			}
+			return '';
+		}
+
+		function ensureHospitalSelection() {
+			var $sel = $('#hospitalId');
+			if (!$sel.length) {
+				return;
+			}
+			if (bindHospitalId != null && String(bindHospitalId) !== '') {
+				$sel.val(String(bindHospitalId));
+			} else if (!$sel.val()) {
+				var $opts = $sel.find('option[value!=""]');
+				if ($opts.length === 1) {
+					$sel.val($opts.first().val());
+				}
+			}
+			if ($sel.data('select2') && $sel.val()) {
+				$sel.trigger('change.select2');
+			}
+		}
 
 		function bindHospitalChange() {
 			$('#hospitalId').off('change.reconciliation select2:select.reconciliation')
@@ -345,33 +389,43 @@
 
 		function initSupplierSelect(list, selectedValue) {
 			var $sel = $('#supplierId');
-			if ($sel.data('select2')) {
-				$sel.select2('destroy');
+			if (!$sel.length) {
+				return;
 			}
-			$sel.empty();
+			if ($sel.data('select2')) {
+				try {
+					$sel.select2('destroy');
+				} catch (e) {}
+			}
+			$sel.empty().prop('disabled', false);
 			if (!bindSupplierId) {
 				$sel.append('<option value="">全部供应商</option>');
 			}
-			(list || []).forEach(function(item) {
+			var rows = list;
+			if (!$.isArray(rows)) {
+				rows = [];
+			}
+			for (var i = 0; i < rows.length; i++) {
+				var item = rows[i];
 				var sid = readSupplierField(item, 'supplierId', 'supplier_id');
 				if (sid == null) {
-					return;
+					continue;
 				}
 				var name = readSupplierField(item, 'supplierName', 'supplier_name') || '-';
 				var pinyin = readSupplierField(item, 'pinyinCode', 'pinyin_code') || '';
 				var code = readSupplierField(item, 'supplierCode', 'supplier_code') || '';
 				$('<option></option>')
 					.val(String(sid))
-					.text(name)
+					.text(String(name))
 					.attr('data-pinyin', pinyin)
 					.attr('data-code', code)
 					.appendTo($sel);
-			});
+			}
 			$sel.select2({
 				allowClear: !bindSupplierId,
 				width: '100%',
 				minimumResultsForSearch: 0,
-				dropdownParent: $('.reconciliation-filter'),
+				dropdownParent: $(document.body),
 				matcher: supplierSelect2Matcher
 			}).off('change.reconciliation').on('change.reconciliation', function() {
 				if (syncingSupplier) {
@@ -396,7 +450,7 @@
 		}
 
 		function loadSuppliers(callback) {
-			var hospitalId = $('#hospitalId').val();
+			var hospitalId = resolveHospitalId();
 			if (!hospitalId && !bindSupplierId) {
 				initSupplierSelect([]);
 				if (callback) {
@@ -405,22 +459,32 @@
 				return;
 			}
 			var currentSupplierId = $('#supplierId').val();
+			var seq = ++supplierLoadSeq;
 			$.ajax({
 				url: prefix + '/suppliers',
-				type: 'GET',
+				type: 'POST',
 				data: { hospitalId: hospitalId },
+				cache: false,
+				dataType: 'json',
 				success: function(res) {
-					if (res.code === web_status.SUCCESS || res.code === 0) {
-						initSupplierSelect(res.data || [], currentSupplierId);
-					} else {
-						initSupplierSelect([]);
+					if (seq !== supplierLoadSeq) {
+						return;
 					}
+					var ok = res && (res.code === 0 || res.code === '0'
+						|| (typeof web_status !== 'undefined' && res.code === web_status.SUCCESS));
+					var data = ok ? (res.data || []) : [];
+					if (!$.isArray(data)) {
+						data = [];
+					}
+					initSupplierSelect(data, currentSupplierId);
 					if (callback) {
 						callback();
 					}
 				},
 				error: function() {
-					initSupplierSelect([]);
+					if (seq !== supplierLoadSeq) {
+						return;
+					}
 					if (callback) {
 						callback();
 					}
@@ -429,6 +493,10 @@
 		}
 
 		function initYearPicker() {
+			if (typeof layui === 'undefined') {
+				$('#reconcileYear').val(String(currentYear));
+				return;
+			}
 			layui.use('laydate', function() {
 				var laydate = layui.laydate;
 				laydate.render({
@@ -468,20 +536,36 @@
 		}
 
 		function loadYearSummary() {
-			var hospitalId = $('#hospitalId').val();
+			var hospitalId = resolveHospitalId();
 			if (!hospitalId) {
 				$('#gridBody').html('<div class="reconciliation-empty-tip">请选择医院</div>');
 				return;
 			}
-			$.post(prefix + '/yearSummary', {
-				hospitalId: hospitalId,
-				year: currentYear,
-				supplierId: $('#supplierId').val() || ''
-			}, function(res) {
-				if (res.code === web_status.SUCCESS || res.code === 0) {
-					renderMonthGrid(res.data || []);
-				} else {
-					$('#gridBody').html('<div class="reconciliation-empty-tip">' + (res.msg || '加载失败') + '</div>');
+			if (!currentYear) {
+				currentYear = new Date().getFullYear();
+				updateGridTitle();
+			}
+			$.ajax({
+				url: prefix + '/yearSummary',
+				type: 'POST',
+				data: {
+					hospitalId: hospitalId,
+					year: currentYear,
+					supplierId: $('#supplierId').val() || ''
+				},
+				cache: false,
+				dataType: 'json',
+				success: function(res) {
+					var ok = res && (res.code === 0 || res.code === '0'
+						|| (typeof web_status !== 'undefined' && res.code === web_status.SUCCESS));
+					if (ok) {
+						renderMonthGrid(res.data || []);
+					} else {
+						$('#gridBody').html('<div class="reconciliation-empty-tip">' + ((res && res.msg) || '加载失败') + '</div>');
+					}
+				},
+				error: function() {
+					$('#gridBody').html('<div class="reconciliation-empty-tip">加载失败</div>');
 				}
 			});
 		}

@@ -8,12 +8,15 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.scm.common.utils.PageUtils;
 import com.scm.common.utils.StringUtils;
+import com.scm.system.domain.HospitalSupplier;
 import com.scm.system.domain.ReconciliationSupplierOption;
 import com.scm.system.domain.ReconciliationYearMonthRow;
 import com.scm.system.domain.Supplier;
 import com.scm.system.mapper.DeliveryMapper;
 import com.scm.system.mapper.SettlementMapper;
+import com.scm.system.service.IHospitalSupplierService;
 import com.scm.system.service.IScmReconciliationService;
 import com.scm.system.service.ISupplierService;
 /**
@@ -35,6 +38,9 @@ public class ScmReconciliationServiceImpl implements IScmReconciliationService
 
     @Autowired
     private ISupplierService supplierService;
+
+    @Autowired
+    private IHospitalSupplierService hospitalSupplierService;
 
     @Override
     public List<ReconciliationYearMonthRow> selectYearSummary(Long hospitalId, int year, Long supplierId)
@@ -66,6 +72,11 @@ public class ScmReconciliationServiceImpl implements IScmReconciliationService
     @Override
     public List<Map<String, Object>> selectSupplierOptions(Long hospitalId, Long bindSupplierId)
     {
+        return PageUtils.callWithoutPaging(() -> buildSupplierOptions(hospitalId, bindSupplierId));
+    }
+
+    private List<Map<String, Object>> buildSupplierOptions(Long hospitalId, Long bindSupplierId)
+    {
         if (bindSupplierId != null)
         {
             Supplier bound = supplierService.selectSupplierById(bindSupplierId);
@@ -90,26 +101,61 @@ public class ScmReconciliationServiceImpl implements IScmReconciliationService
             }
             return options;
         }
-        List<ReconciliationSupplierOption> rows = deliveryMapper.selectReconciliationSuppliersByHospital(hospitalId);
-        if (rows == null || rows.isEmpty())
+
+        LinkedHashMap<Long, Map<String, Object>> byId = new LinkedHashMap<>();
+
+        // 1) 医院已审核通过的关联供应商（与其它院端下拉一致）
+        HospitalSupplier q = new HospitalSupplier();
+        q.setHospitalId(hospitalId);
+        q.setBindStatus("1");
+        q.setAuditStatus("1");
+        List<HospitalSupplier> relations = hospitalSupplierService.selectHospitalSupplierList(q);
+        if (relations != null)
         {
-            return new ArrayList<>();
-        }
-        List<Map<String, Object>> options = new ArrayList<>();
-        for (ReconciliationSupplierOption row : rows)
-        {
-            if (row == null || row.getSupplierId() == null)
+            for (HospitalSupplier rel : relations)
             {
-                continue;
+                if (rel == null || rel.getSupplierId() == null || "1".equals(rel.getStatus())
+                    || "1".equals(rel.getDisableStatus()))
+                {
+                    continue;
+                }
+                putSupplierOption(byId, rel.getSupplierId());
             }
-            Map<String, Object> item = new LinkedHashMap<>();
-            item.put("supplierId", row.getSupplierId());
-            item.put("supplierName", StringUtils.isNotEmpty(row.getSupplierName()) ? row.getSupplierName() : "-");
-            item.put("supplierCode", row.getSupplierCode());
-            item.put("pinyinCode", row.getPinyinCode());
-            options.add(item);
         }
-        return options;
+
+        // 2) 兜底：配送/结算中出现过的供应商（避免仅有业务无绑定记录时下拉为空）
+        List<ReconciliationSupplierOption> rows = deliveryMapper.selectReconciliationSuppliersByHospital(hospitalId);
+        if (rows != null)
+        {
+            for (ReconciliationSupplierOption row : rows)
+            {
+                if (row == null || row.getSupplierId() == null || byId.containsKey(row.getSupplierId()))
+                {
+                    continue;
+                }
+                Map<String, Object> item = new LinkedHashMap<>();
+                item.put("supplierId", row.getSupplierId());
+                item.put("supplierName", StringUtils.isNotEmpty(row.getSupplierName()) ? row.getSupplierName() : "-");
+                item.put("supplierCode", row.getSupplierCode());
+                item.put("pinyinCode", row.getPinyinCode());
+                byId.put(row.getSupplierId(), item);
+            }
+        }
+        return new ArrayList<>(byId.values());
+    }
+
+    private void putSupplierOption(LinkedHashMap<Long, Map<String, Object>> byId, Long supplierId)
+    {
+        if (supplierId == null || byId.containsKey(supplierId))
+        {
+            return;
+        }
+        Supplier s = supplierService.selectSupplierById(supplierId);
+        if (s == null || "2".equals(s.getDelFlag()))
+        {
+            return;
+        }
+        byId.put(supplierId, toSupplierOption(s));
     }
 
     private static Map<String, Object> toSupplierOption(Supplier s)
