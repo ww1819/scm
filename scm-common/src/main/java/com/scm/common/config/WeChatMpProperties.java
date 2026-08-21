@@ -15,7 +15,7 @@ public class WeChatMpProperties
     /** 是否启用网页授权绑定 */
     private boolean enabled = false;
 
-    /** 服务号 AppID */
+    /** 服务号 AppID（支持 ENC(...) 密文） */
     private String appId;
 
     /** 服务号 AppSecret（支持 ENC(...) 密文） */
@@ -36,7 +36,7 @@ public class WeChatMpProperties
 
     public String getAppId()
     {
-        return appId;
+        return decrypt(appId);
     }
 
     public void setAppId(String appId)
@@ -56,7 +56,7 @@ public class WeChatMpProperties
 
     public boolean isConfigured()
     {
-        return enabled && StringUtils.isNotEmpty(appId) && StringUtils.isNotEmpty(getAppSecret());
+        return enabled && StringUtils.isNotEmpty(getAppId()) && StringUtils.isNotEmpty(getAppSecret());
     }
 
     private String decrypt(String value)
