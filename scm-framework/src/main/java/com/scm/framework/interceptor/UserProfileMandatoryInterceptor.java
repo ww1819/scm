@@ -117,6 +117,10 @@ public class UserProfileMandatoryInterceptor implements HandlerInterceptor
         {
             return true;
         }
+        if (path.startsWith("/wx/bind"))
+        {
+            return true;
+        }
         return false;
     }
 }

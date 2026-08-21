@@ -1,7 +1,7 @@
 # ??????
 scm:
   name: Scm
-  version: 4.8.5
+  version: 4.8.6
   copyrightYear: 2025
   icpNo: 冀ICP备2026009090号-1
   icpLink: https://beian.miit.gov.cn/
@@ -40,6 +40,12 @@ scm:
     base-path: scm-test/
     domain: https://cos.sjzaspt.top
     public-read: true
+  wechat:
+    mp:
+      enabled: true
+      app-id: wx0e424e737a259a4e
+      # 服务号 AppSecret，支持 ENC(...)；生产建议环境变量 SCM_CONFIG_CIPHER_KEY
+      app-secret: ENC(eW1ff0WMiHPUmrmzZM+TRO6ynkBZgW4S0fNyH+/3nOfWvbaAAi1UjZjCIaHuJfBEuwIpOcpMmO3i1orIQOG5Sw==)
 
 # ??????
 server:

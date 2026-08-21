@@ -1480,7 +1480,9 @@ CREATE TABLE IF NOT EXISTS `sys_user` (
   `update_by` varchar(64) DEFAULT '' COMMENT '更新者',
   `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
-  PRIMARY KEY (`user_id`)
+  `wx_openid` varchar(64) DEFAULT NULL COMMENT '微信服务号openid（用于模板消息）',
+  PRIMARY KEY (`user_id`),
+  KEY `idx_sys_user_wx_openid` (`wx_openid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户信息表';
 /
 CREATE TABLE IF NOT EXISTS `sys_user_online` (

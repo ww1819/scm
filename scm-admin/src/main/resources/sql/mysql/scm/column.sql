@@ -507,6 +507,10 @@ CALL add_table_column('sys_user', 'pwd_plain', 'varchar(64)', '管理员登记�
 /
 CALL add_table_column('sys_user', 'id_card', 'varchar(18)', '身份证号', NULL);
 /
+CALL add_table_column('sys_user', 'wx_openid', 'varchar(64)', '微信服务号openid（用于模板消息）', NULL);
+/
+CALL add_table_index('sys_user', 'idx_sys_user_wx_openid', 'wx_openid');
+/
 -- sys_role：租户维度角色（医院管理员等）
 CALL add_table_column('sys_role', 'tenant_id', 'varchar(64)', '租户ID', NULL);
 /

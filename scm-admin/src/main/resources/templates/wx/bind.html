@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>微信绑定</title>
+    <style>
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; height: 100%; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+            background: #f5f6f8;
+            color: #1f2329;
+        }
+        .page {
+            min-height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 28px 20px 40px;
+        }
+        .brand {
+            text-align: center;
+            margin: 12px 0 28px;
+        }
+        .brand h1 {
+            margin: 0 0 8px;
+            font-size: 22px;
+            font-weight: 600;
+        }
+        .brand p {
+            margin: 0;
+            font-size: 14px;
+            color: #646a73;
+        }
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px 18px;
+            box-shadow: 0 8px 24px rgba(31, 35, 41, 0.06);
+        }
+        .error-box {
+            text-align: center;
+            padding: 24px 8px;
+            color: #d93026;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+        label {
+            display: block;
+            font-size: 13px;
+            color: #646a73;
+            margin-bottom: 6px;
+        }
+        input {
+            width: 100%;
+            height: 44px;
+            border: 1px solid #e5e6eb;
+            border-radius: 8px;
+            padding: 0 12px;
+            font-size: 16px;
+            margin-bottom: 16px;
+            outline: none;
+            background: #fff;
+        }
+        input:focus { border-color: #07c160; }
+        button {
+            width: 100%;
+            height: 46px;
+            border: 0;
+            border-radius: 8px;
+            background: #07c160;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        button:disabled { opacity: 0.6; }
+        .tip {
+            margin-top: 16px;
+            text-align: center;
+            font-size: 12px;
+            color: #8f959e;
+        }
+        .toast {
+            display: none;
+            position: fixed;
+            left: 50%;
+            top: 46%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 9;
+            max-width: 80%;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <div class="brand">
+        <h1>绑定系统账号</h1>
+        <p>登录后将当前微信与账号关联，用于后续消息通知</p>
+    </div>
+    <div class="card">
+        <div class="error-box" th:if="${!ready}" th:text="${errorMsg}">请从微信服务号菜单进入</div>
+        <form id="bindForm" th:if="${ready}" onsubmit="return false;">
+            <label for="username">账号</label>
+            <input id="username" name="username" type="text" autocomplete="username" placeholder="请输入系统账号">
+            <label for="password">密码</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="请输入密码">
+            <button type="button" id="btnBind">登录并绑定</button>
+        </form>
+    </div>
+    <div class="tip">请使用微信内打开本页</div>
+</div>
+<div class="toast" id="toast"></div>
+<script th:inline="javascript"> var ctx = [[@{/}]]; </script>
+<script src="../static/js/jquery.min.js" th:src="@{/js/jquery.min.js}"></script>
+<script>
+function toast(msg) {
+    var $t = $("#toast");
+    $t.text(msg).fadeIn(120);
+    setTimeout(function () { $t.fadeOut(180); }, 2200);
+}
+$(function () {
+    $("#btnBind").on("click", function () {
+        var username = $.trim($("#username").val());
+        var password = $("#password").val();
+        if (!username) { toast("请输入账号"); return; }
+        if (!password) { toast("请输入密码"); return; }
+        var $btn = $(this);
+        $btn.prop("disabled", true).text("绑定中...");
+        $.ajax({
+            type: "post",
+            url: ctx + "wx/bind/login",
+            dataType: "json",
+            data: { username: username, password: password },
+            success: function (r) {
+                if (r && r.code === 0) {
+                    location.href = ctx + "wx/bind/success";
+                } else {
+                    toast((r && r.msg) || "登录失败");
+                    $btn.prop("disabled", false).text("登录并绑定");
+                }
+            },
+            error: function () {
+                toast("网络异常，请稍后重试");
+                $btn.prop("disabled", false).text("登录并绑定");
+            }
+        });
+    });
+});
+</script>
+</body>
+</html>

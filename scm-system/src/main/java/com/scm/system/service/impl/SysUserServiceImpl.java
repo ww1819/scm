@@ -850,4 +850,24 @@ public class SysUserServiceImpl implements ISysUserService
         }
         return userMapper.backfillHistoryPwdPlain(initPassword);
     }
+
+    @Override
+    @Transactional
+    public void bindWxOpenid(Long userId, String wxOpenid)
+    {
+        if (userId == null)
+        {
+            throw new ServiceException("用户不存在");
+        }
+        if (StringUtils.isEmpty(wxOpenid))
+        {
+            throw new ServiceException("微信授权已失效，请从服务号菜单重新进入");
+        }
+        SysUser occupied = userMapper.selectUserByWxOpenid(wxOpenid);
+        if (occupied != null && occupied.getUserId() != null && !userId.equals(occupied.getUserId()))
+        {
+            userMapper.updateWxOpenid(occupied.getUserId(), null);
+        }
+        userMapper.updateWxOpenid(userId, wxOpenid);
+    }
 }
