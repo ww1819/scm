@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import com.scm.common.config.ScmConfig;
 import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.domain.entity.SysUser;
@@ -50,20 +51,14 @@ public class WxBindController extends BaseController
             }
             catch (ServiceException e)
             {
-                mmap.put("ready", false);
-                mmap.put("errorMsg", e.getMessage());
-                return "wx/bind";
+                return bindView(mmap, false, e.getMessage());
             }
         }
         if (StringUtils.isEmpty(openid))
         {
-            mmap.put("ready", false);
-            mmap.put("errorMsg", "请从微信服务号菜单进入");
-            return "wx/bind";
+            return bindView(mmap, false, "请从微信服务号菜单进入");
         }
-        mmap.put("ready", true);
-        mmap.put("errorMsg", "");
-        return "wx/bind";
+        return bindView(mmap, true, "");
     }
 
     @GetMapping("/success")
@@ -75,7 +70,28 @@ public class WxBindController extends BaseController
             return "redirect:/wx/bind";
         }
         mmap.put("loginName", loginName);
+        putIcpModel(mmap);
         return "wx/bindSuccess";
+    }
+
+    private String bindView(ModelMap mmap, boolean ready, String errorMsg)
+    {
+        mmap.put("ready", ready);
+        mmap.put("errorMsg", errorMsg);
+        putIcpModel(mmap);
+        return "wx/bind";
+    }
+
+    private static void putIcpModel(ModelMap mmap)
+    {
+        String icpNo = ScmConfig.getIcpNo();
+        if (StringUtils.isEmpty(icpNo))
+        {
+            icpNo = "冀ICP备2026009090号-1";
+        }
+        mmap.put("icpNo", icpNo);
+        String icpLink = ScmConfig.getIcpLink();
+        mmap.put("icpLink", StringUtils.isNotEmpty(icpLink) ? icpLink : "https://beian.miit.gov.cn/");
     }
 
     @PostMapping("/login")
