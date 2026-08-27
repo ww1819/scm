@@ -46,6 +46,12 @@ scm:
       # AppID / AppSecret 均支持 ENC(...)，启动时解密；生产建议环境变量 SCM_CONFIG_CIPHER_KEY
       app-id: ENC(ngBS1cRajqwzRzjpSpUZnZ6KpwpZXRkPDsQb7oBelq8zqAou7lPuIfNv7/itDLL1)
       app-secret: ENC(eW1ff0WMiHPUmrmzZM+TRO6ynkBZgW4S0fNyH+/3nOfWvbaAAi1UjZjCIaHuJfBEuwIpOcpMmO3i1orIQOG5Sw==)
+      # 订单提交成功通知（仓储服务 / 订单发布）
+      template-id: "llwphBv20jYlAJxGVwCUA5oIhj6-HxyNVHqDjt78PEw"
+      # 服务号网页授权域名对应的对外根地址，无尾斜杠；模板跳转与 oauth 都用它
+      oauth-base-url: ${SCM_WECHAT_OAUTH_BASE_URL:https://aisipu.asia}
+      # scminterface 回调 /api/internal/order/wxNotify 的密钥
+      internal-api-key: ${SCM_INTERNAL_API_KEY:scm-internal-wx-notify}
 
 # ??????
 server:
@@ -140,7 +146,7 @@ xss:
 # CSRF??
 csrf:
   enabled: false
-  whites: /druid
+  whites: /druid,/api/internal/**
 
 # Swagger??
 swagger:

@@ -1,10 +1,5 @@
 package com.scm.system.service;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import org.slf4j.Logger;
@@ -26,10 +21,13 @@ public class WeChatMpOauthService
     private static final Logger log = LoggerFactory.getLogger(WeChatMpOauthService.class);
 
     private static final String OAUTH_TOKEN_URL = "https://api.weixin.qq.com/sns/oauth2/access_token";
-    private static final int TIMEOUT_MS = 8000;
+    private static final String AUTHORIZE_URL = "https://open.weixin.qq.com/connect/oauth2/authorize";
 
     @Autowired
     private WeChatMpProperties weChatMpProperties;
+
+    @Autowired
+    private WeChatMpHttpClient weChatMpHttpClient;
 
     public String exchangeCodeForOpenid(String code)
     {
@@ -41,7 +39,7 @@ public class WeChatMpOauthService
         {
             throw new ServiceException("请从微信服务号菜单进入");
         }
-        String body = httpGet(buildOauthUrl(code));
+        String body = weChatMpHttpClient.get(buildOauthUrl(code));
         JSONObject json = JSON.parseObject(body);
         if (json == null)
         {
@@ -65,6 +63,32 @@ public class WeChatMpOauthService
         return openid;
     }
 
+    /**
+     * 静默授权跳转地址（snsapi_base）。
+     */
+    public String buildSnsapiBaseAuthorizeUrl(String redirectUri)
+    {
+        if (!weChatMpProperties.isConfigured())
+        {
+            throw new ServiceException("未配置微信服务号参数");
+        }
+        if (StringUtils.isEmpty(redirectUri))
+        {
+            throw new ServiceException("授权回调地址不能为空");
+        }
+        try
+        {
+            return AUTHORIZE_URL
+                + "?appid=" + URLEncoder.encode(weChatMpProperties.getAppId(), StandardCharsets.UTF_8.name())
+                + "&redirect_uri=" + URLEncoder.encode(redirectUri, StandardCharsets.UTF_8.name())
+                + "&response_type=code&scope=snsapi_base&state=wxorder#wechat_redirect";
+        }
+        catch (Exception e)
+        {
+            throw new ServiceException("微信授权失败，请稍后重试");
+        }
+    }
+
     private String buildOauthUrl(String code)
     {
         try
@@ -78,60 +102,6 @@ public class WeChatMpOauthService
         catch (Exception e)
         {
             throw new ServiceException("微信授权失败，请稍后重试");
-        }
-    }
-
-    private String httpGet(String url)
-    {
-        HttpURLConnection conn = null;
-        BufferedReader reader = null;
-        try
-        {
-            conn = (HttpURLConnection) new URL(url).openConnection();
-            conn.setRequestMethod("GET");
-            conn.setConnectTimeout(TIMEOUT_MS);
-            conn.setReadTimeout(TIMEOUT_MS);
-            conn.setRequestProperty("Accept", "application/json");
-            int status = conn.getResponseCode();
-            InputStream in = status >= 400 ? conn.getErrorStream() : conn.getInputStream();
-            if (in == null)
-            {
-                throw new ServiceException("微信授权失败，请稍后重试");
-            }
-            reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
-            StringBuilder result = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null)
-            {
-                result.append(line);
-            }
-            return result.toString();
-        }
-        catch (ServiceException e)
-        {
-            throw e;
-        }
-        catch (Exception e)
-        {
-            log.error("wechat oauth http error", e);
-            throw new ServiceException("微信授权失败，请稍后重试");
-        }
-        finally
-        {
-            if (reader != null)
-            {
-                try
-                {
-                    reader.close();
-                }
-                catch (Exception ignored)
-                {
-                }
-            }
-            if (conn != null)
-            {
-                conn.disconnect();
-            }
         }
     }
 }

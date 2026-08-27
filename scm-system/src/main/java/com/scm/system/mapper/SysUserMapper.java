@@ -145,4 +145,9 @@ public interface SysUserMapper
      * 更新用户微信 openid（openid 为 null 表示解绑）
      */
     public int updateWxOpenid(@Param("userId") Long userId, @Param("wxOpenid") String wxOpenid);
+
+    /**
+     * 供应商下已绑定微信、状态正常的用户
+     */
+    public List<SysUser> selectWxBoundUsersBySupplierId(@Param("supplierId") Long supplierId);
 }

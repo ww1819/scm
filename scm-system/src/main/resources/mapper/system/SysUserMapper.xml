@@ -306,6 +306,19 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 		limit 1
 	</select>
 
+	<select id="selectWxBoundUsersBySupplierId" resultMap="SysUserResult">
+		select distinct u.user_id, u.login_name, u.user_name, u.wx_openid, u.status, u.del_flag
+		from scm_supplier_user su
+		inner join sys_user u on u.user_id = su.user_id
+		where su.supplier_id = #{supplierId}
+		  and (su.status = '0' or su.status is null)
+		  and (su.del_flag = '0' or su.del_flag is null)
+		  and u.del_flag = '0'
+		  and u.status = '0'
+		  and u.wx_openid is not null
+		  and u.wx_openid &lt;&gt; ''
+	</select>
+
 	<update id="updateWxOpenid">
 		update sys_user
 		set wx_openid = #{wxOpenid, jdbcType=VARCHAR},

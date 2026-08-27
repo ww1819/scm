@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import com.scm.common.config.ScmConfig;
+import com.scm.common.constant.WeChatMpConstants;
 import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.domain.entity.SysUser;
@@ -26,7 +27,6 @@ import com.scm.system.service.WeChatMpOauthService;
 @RequestMapping("/wx/bind")
 public class WxBindController extends BaseController
 {
-    private static final String SESSION_OPENID = "WX_MP_OPENID";
     private static final String SESSION_BIND_NAME = "WX_MP_BIND_LOGIN_NAME";
 
     @Autowired
@@ -41,13 +41,13 @@ public class WxBindController extends BaseController
     @GetMapping
     public String bind(String code, HttpSession session, ModelMap mmap)
     {
-        String openid = (String) session.getAttribute(SESSION_OPENID);
+        String openid = (String) session.getAttribute(WeChatMpConstants.SESSION_OPENID);
         if (StringUtils.isEmpty(openid) && StringUtils.isNotEmpty(code))
         {
             try
             {
                 openid = weChatMpOauthService.exchangeCodeForOpenid(code);
-                session.setAttribute(SESSION_OPENID, openid);
+                session.setAttribute(WeChatMpConstants.SESSION_OPENID, openid);
             }
             catch (ServiceException e)
             {
@@ -98,7 +98,7 @@ public class WxBindController extends BaseController
     @ResponseBody
     public AjaxResult login(String username, String password, HttpSession session)
     {
-        String openid = (String) session.getAttribute(SESSION_OPENID);
+        String openid = (String) session.getAttribute(WeChatMpConstants.SESSION_OPENID);
         if (StringUtils.isEmpty(openid))
         {
             return error("微信授权已失效，请从服务号菜单重新进入");

@@ -334,6 +334,9 @@ public class ShiroConfig
         // 微信服务号绑定页（匿名，无验证码）
         filterChainDefinitionMap.put("/wx/bind", "anon");
         filterChainDefinitionMap.put("/wx/bind/**", "anon");
+        filterChainDefinitionMap.put("/wx/order", "anon");
+        filterChainDefinitionMap.put("/wx/order/**", "anon");
+        filterChainDefinitionMap.put("/api/internal/**", "anon");
         // 系统权限列表
         // filterChainDefinitionMap.putAll(SpringUtils.getBean(IMenuService.class).selectPermsAll());
 

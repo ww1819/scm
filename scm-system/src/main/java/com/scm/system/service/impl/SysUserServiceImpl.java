@@ -870,4 +870,14 @@ public class SysUserServiceImpl implements ISysUserService
         }
         userMapper.updateWxOpenid(userId, wxOpenid);
     }
+
+    @Override
+    public SysUser selectUserByWxOpenid(String wxOpenid)
+    {
+        if (StringUtils.isEmpty(wxOpenid))
+        {
+            return null;
+        }
+        return userMapper.selectUserByWxOpenid(wxOpenid);
+    }
 }
