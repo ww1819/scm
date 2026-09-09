@@ -226,4 +226,14 @@ public interface ISysUserService
      * @return 更新行数
      */
     public int backfillHistoryPwdPlain();
+
+    /**
+     * 将微信服务号 openid 绑定到指定用户。同一 openid 只保留一个账号。
+     */
+    public void bindWxOpenid(Long userId, String wxOpenid);
+
+    /**
+     * 按微信 openid 查询未删除用户
+     */
+    public SysUser selectUserByWxOpenid(String wxOpenid);
 }

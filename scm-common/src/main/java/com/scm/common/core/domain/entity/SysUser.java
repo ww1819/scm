@@ -71,6 +71,9 @@ public class SysUser extends BaseEntity
     @Excel(name = "手机号码", cellType = ColumnType.TEXT)
     private String phonenumber;
 
+    /** 微信服务号 openid（用于模板消息） */
+    private String wxOpenid;
+
     /** 用户性别 */
     @Excel(name = "用户性别", readConverterExp = "0=男,1=女,2=未知")
     private String sex;
@@ -293,6 +296,16 @@ public class SysUser extends BaseEntity
         this.phonenumber = phonenumber;
     }
 
+    public String getWxOpenid()
+    {
+        return wxOpenid;
+    }
+
+    public void setWxOpenid(String wxOpenid)
+    {
+        this.wxOpenid = wxOpenid;
+    }
+
     public String getSex()
     {
         return sex;
@@ -495,6 +508,7 @@ public class SysUser extends BaseEntity
             .append("userType", getUserType())
             .append("email", getEmail())
             .append("phonenumber", getPhonenumber())
+            .append("wxOpenid", getWxOpenid())
             .append("sex", getSex())
             .append("address", getAddress())
             .append("avatar", getAvatar())

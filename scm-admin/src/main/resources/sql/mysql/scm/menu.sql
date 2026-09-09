@@ -357,6 +357,15 @@ INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, targ
 /
 INSERT IGNORE INTO sys_menu (menu_id, menu_name, parent_id, order_num, url, target, menu_type, visible, is_refresh, perms, icon, create_by, create_time, update_by, update_time, remark, status) VALUES('24008', '订单作废', '2401', '7', '#', '', 'F', '0', '1', 'order:order:void', '#', 'admin', sysdate(), '', null, '作废后不可再引用生成配送单', '0');
 /
+-- 订单微信改为 SPD 首次入库自动推送，下线「推送消息」按钮权限
+DELETE FROM sys_role_menu WHERE menu_id = 24009;
+/
+DELETE FROM scm_hospital_menu_auth WHERE menu_id IN ('24009', 24009);
+/
+DELETE FROM scm_supplier_menu_auth WHERE menu_id IN ('24009', 24009);
+/
+DELETE FROM sys_menu WHERE menu_id = 24009;
+/
 -- 订单仅接收/作废：隐藏新增、修改、删除按钮权限（visible=1 不显示）
 UPDATE sys_menu SET visible = '1', remark = '已停用：订单不支持新增' WHERE menu_id = '24002';
 /
@@ -819,4 +828,13 @@ INNER JOIN scm_supplier s ON s.supplier_id = r.supplier_id AND s.del_flag = '0' 
 WHERE r.del_flag = '0' AND r.role_type = 'supplier' AND r.supplier_id IS NOT NULL
   AND EXISTS (SELECT 1 FROM sys_role_menu rm WHERE rm.role_id = r.role_id AND rm.menu_id IN (25002, 25009))
   AND NOT EXISTS (SELECT 1 FROM sys_role_menu rm2 WHERE rm2.role_id = r.role_id AND rm2.menu_id = 25006);
+/
+-- I) 已下线：订单推送消息(24009) 改为新订单自动推送，不再授权按钮
+DELETE FROM sys_role_menu WHERE menu_id = 24009;
+/
+DELETE FROM scm_hospital_menu_auth WHERE menu_id IN ('24009', 24009);
+/
+DELETE FROM scm_supplier_menu_auth WHERE menu_id IN ('24009', 24009);
+/
+DELETE FROM sys_menu WHERE menu_id = 24009;
 /

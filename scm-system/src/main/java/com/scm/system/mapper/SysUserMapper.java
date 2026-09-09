@@ -1,6 +1,7 @@
 package com.scm.system.mapper;
 
 import java.util.List;
+import org.apache.ibatis.annotations.Param;
 import com.scm.common.core.domain.entity.SysUser;
 
 /**
@@ -134,4 +135,19 @@ public interface SysUserMapper
      * @return 更新行数
      */
     public int backfillHistoryPwdPlain(String initPassword);
+
+    /**
+     * 按微信 openid 查询未删除用户
+     */
+    public SysUser selectUserByWxOpenid(@Param("wxOpenid") String wxOpenid);
+
+    /**
+     * 更新用户微信 openid（openid 为 null 表示解绑）
+     */
+    public int updateWxOpenid(@Param("userId") Long userId, @Param("wxOpenid") String wxOpenid);
+
+    /**
+     * 供应商下已绑定微信、状态正常的用户
+     */
+    public List<SysUser> selectWxBoundUsersBySupplierId(@Param("supplierId") Long supplierId);
 }
