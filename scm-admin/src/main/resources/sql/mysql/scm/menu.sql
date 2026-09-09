@@ -838,3 +838,6 @@ DELETE FROM scm_supplier_menu_auth WHERE menu_id IN ('24009', 24009);
 /
 DELETE FROM sys_menu WHERE menu_id = 24009;
 /
+-- MAT-F-001 医院侧「产品档案修改申请审核」：scm-admin 当前无 Thymeleaf 页，暂不 INSERT sys_menu。
+-- 审核 REST：/api/scm/hospitalMaterialArchive/applies*（scminterface）。有页面后再按 2307 医院产品档案同级补菜单。
+/
