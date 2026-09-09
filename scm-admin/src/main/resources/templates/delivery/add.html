@@ -2423,8 +2423,8 @@
 	                title: '注册证号',
 	                align: 'center',
 	                width: 200,
-	                formatter: function (value) {
-	                    return detailCellTextHtml(value || '-');
+	                formatter: function(value, row, index) {
+	                    return detailTextInputHtml(value, index, 100, 'updateRegisterNo');
 	                }
 	            },
 	            {
@@ -2678,6 +2678,21 @@
 	        }
 	    }
 
+	    function updateRegisterNo(input, index) {
+	        var value = $(input).val();
+	        if (value && value.length > 100) {
+	            $.modal.alertWarning('注册证号不能超过100个字符');
+	            $(input).focus();
+	            return;
+	        }
+	        var $tr = $(input).closest('tr');
+	        var data = $('#detail-table').bootstrapTable('getData');
+	        var rowIndex = $tr.data('index') !== undefined ? $tr.data('index') : index;
+	        if (data[rowIndex]) {
+	            data[rowIndex].registerNo = value || '';
+	        }
+	    }
+
 	    function updateNationalInsuranceCode(input, index) {
 	        var value = $(input).val();
 	        if (value && value.length > 128) {
@@ -2903,6 +2918,14 @@
                 var auxIn = $tr.find('td[data-field="auxBarcode"] input');
                 if (auxIn.length) {
                     row.auxBarcode = auxIn.val() || '';
+                }
+                var registerIn = $tr.find('td[data-field="registerNo"] input');
+                if (registerIn.length) {
+                    row.registerNo = registerIn.val() || '';
+                }
+                var nicIn = $tr.find('td[data-field="nationalInsuranceCode"] input');
+                if (nicIn.length) {
+                    row.nationalInsuranceCode = nicIn.val() || '';
                 }
             });
             return data;
