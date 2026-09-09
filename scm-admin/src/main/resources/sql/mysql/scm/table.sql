@@ -1704,6 +1704,22 @@ CREATE TABLE IF NOT EXISTS `scm_supplier_export_log` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医院侧经前置机拉取平台供应商信息审计日志';
 /
 
+CREATE TABLE IF NOT EXISTS `scm_bridge_inbox` (
+  `id`             varchar(36)  NOT NULL COMMENT '主键UUID7',
+  `hospital_code`  varchar(64)  NOT NULL COMMENT '平台医院编码',
+  `tenant_id`      varchar(64)  DEFAULT NULL COMMENT 'SPD租户ID（可选）',
+  `msg_type`       varchar(64)  NOT NULL COMMENT '消息类型',
+  `payload_json`   mediumtext   COMMENT '消息体JSON',
+  `status`         char(1)      NOT NULL DEFAULT '0' COMMENT '0待消费 1已确认',
+  `create_by`      varchar(64)  DEFAULT NULL COMMENT '创建者',
+  `create_time`    datetime     DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `ack_time`       datetime     DEFAULT NULL COMMENT '确认时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_bridge_inbox_pull` (`hospital_code`, `status`, `create_time`),
+  KEY `idx_bridge_inbox_tenant` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='云端到院内稳态桥收件箱（院内pull/ack）';
+/
+
 -- 产品证件扩展行：主键 UUID7（36 位，应用侧 IdUtils.dashedUuid7）；关联列一律 varchar，存数字字符串或编码，与现有 bigint 主键表逻辑关联、不设 InnoDB 物理外键，便于多源 ID 兼容
 CREATE TABLE IF NOT EXISTS `scm_product_certificate_aux` (
   `aux_id` varchar(36) NOT NULL COMMENT '主键 UUID7（36位带横线）',

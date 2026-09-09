@@ -1115,3 +1115,20 @@ CREATE TABLE IF NOT EXISTS `scm_delivery_line_op_log` (
   KEY `idx_dll_detail` (`detail_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='配送/合单明细操作日志';
 /
+
+-- SCM-F-bridge-inbox：云端→院内稳态桥收件箱（升级随 scm.version 自动执行）
+CREATE TABLE IF NOT EXISTS `scm_bridge_inbox` (
+  `id`             varchar(36)  NOT NULL COMMENT '主键UUID7',
+  `hospital_code`  varchar(64)  NOT NULL COMMENT '平台医院编码',
+  `tenant_id`      varchar(64)  DEFAULT NULL COMMENT 'SPD租户ID（可选）',
+  `msg_type`       varchar(64)  NOT NULL COMMENT '消息类型',
+  `payload_json`   mediumtext   COMMENT '消息体JSON',
+  `status`         char(1)      NOT NULL DEFAULT '0' COMMENT '0待消费 1已确认',
+  `create_by`      varchar(64)  DEFAULT NULL COMMENT '创建者',
+  `create_time`    datetime     DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `ack_time`       datetime     DEFAULT NULL COMMENT '确认时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_bridge_inbox_pull` (`hospital_code`, `status`, `create_time`),
+  KEY `idx_bridge_inbox_tenant` (`tenant_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='云端到院内稳态桥收件箱（院内pull/ack）';
+/
