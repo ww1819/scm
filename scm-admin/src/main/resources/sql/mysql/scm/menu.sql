@@ -809,7 +809,8 @@ WHERE r.del_flag = '0' AND r.role_type = 'hospital' AND rm.menu_id = 25009;
 /
 DELETE FROM scm_hospital_menu_auth WHERE menu_id = 25009;
 /
--- H) 配送单审核(25006)：全局供应商模板角色曾缺审核、仅有反审核；补齐模板角色 sys_role_menu
+-- H) 配送单审核(25006)：补齐全局模板(supplier_admin/sales、tp_supplier_admin/sales)及已有25002/25009的供应商实例角色。
+-- 注意：角色编辑(ROLE_EDIT)会先删后插 sys_role_menu，若提交菜单未含25006会被抹掉；版本升级执行 menu.sql 时本段幂等再愈合。
 INSERT IGNORE INTO sys_role_menu (id, role_id, menu_id, hospital_id, supplier_id)
 SELECT REPLACE(UUID(), '-', ''), r.role_id, 25006, '', ''
 FROM sys_role r

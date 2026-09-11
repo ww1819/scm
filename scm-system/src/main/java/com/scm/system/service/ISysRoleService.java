@@ -3,6 +3,7 @@ package com.scm.system.service;
 import java.util.List;
 import java.util.Set;
 import com.scm.common.core.domain.entity.SysRole;
+import com.scm.common.core.domain.entity.SysRoleMenuChangeLog;
 import com.scm.system.domain.SysUserRole;
 
 /**
@@ -163,4 +164,12 @@ public interface ISysRoleService
      * @return 结果
      */
     public int insertAuthUsers(Long roleId, String userIds);
+
+    /**
+     * 查询角色菜单权限变更留痕
+     *
+     * @param roleId 角色ID
+     * @return 变更记录（按时间倒序）
+     */
+    List<SysRoleMenuChangeLog> selectRoleMenuChangeLogList(Long roleId);
 }

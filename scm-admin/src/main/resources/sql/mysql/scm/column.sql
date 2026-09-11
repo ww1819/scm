@@ -1267,3 +1267,18 @@ CREATE TABLE IF NOT EXISTS `scm_hospital_material_modify_apply` (
   KEY `idx_hmma_hospital` (`hospital_code`, `apply_status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='医院产品档案供应商修改申请';
 /
+CREATE TABLE IF NOT EXISTS `sys_role_menu_change_log` (
+  `log_id` varchar(36) NOT NULL COMMENT '主键UUID7',
+  `role_id` bigint(20) NOT NULL COMMENT '角色ID',
+  `change_source` varchar(32) NOT NULL COMMENT 'ROLE_ADD/ROLE_EDIT/ROLE_DELETE/BOOTSTRAP/LEGACY_REPAIR/OTHER',
+  `oper_by` varchar(64) DEFAULT '' COMMENT '操作人',
+  `oper_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+  `before_menu_ids` mediumtext COMMENT '变更前菜单ID列表JSON数组',
+  `after_menu_ids` mediumtext COMMENT '变更后菜单ID列表JSON数组',
+  `added_menu_ids` mediumtext COMMENT '新增菜单ID列表JSON',
+  `removed_menu_ids` mediumtext COMMENT '移除菜单ID列表JSON',
+  `remark` varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (`log_id`),
+  KEY `idx_rmcl_role_time` (`role_id`, `oper_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='角色菜单权限变更留痕';
+/

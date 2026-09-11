@@ -2,16 +2,20 @@ package com.scm.system.service.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.alibaba.fastjson.JSON;
 import com.scm.common.annotation.DataScope;
 import com.scm.common.constant.ScmAuthConstants;
 import com.scm.common.constant.UserConstants;
 import com.scm.common.core.domain.entity.SysRole;
+import com.scm.common.core.domain.entity.SysRoleMenuChangeLog;
 import com.scm.common.core.domain.entity.SysUser;
 import com.scm.common.core.text.Convert;
 import com.scm.common.exception.ServiceException;
@@ -25,6 +29,7 @@ import com.scm.system.domain.SysRoleMenu;
 import com.scm.system.domain.SysUserRole;
 import com.scm.system.mapper.SysRoleDeptMapper;
 import com.scm.system.mapper.SysRoleMapper;
+import com.scm.system.mapper.SysRoleMenuChangeLogMapper;
 import com.scm.system.mapper.SysRoleMenuMapper;
 import com.scm.system.mapper.SysUserRoleMapper;
 import com.scm.system.service.ISysRoleService;
@@ -42,6 +47,9 @@ public class SysRoleServiceImpl implements ISysRoleService
 
     @Autowired
     private SysRoleMenuMapper roleMenuMapper;
+
+    @Autowired
+    private SysRoleMenuChangeLogMapper roleMenuChangeLogMapper;
 
     @Autowired
     private SysUserRoleMapper userRoleMapper;
@@ -141,11 +149,17 @@ public class SysRoleServiceImpl implements ISysRoleService
     @Transactional
     public boolean deleteRoleById(Long roleId)
     {
+        List<Long> beforeIds = safeMenuIds(roleMenuMapper.selectMenuIdsByRoleId(roleId));
         // 删除角色与菜单关联
         roleMenuMapper.deleteRoleMenuByRoleId(roleId);
         // 删除角色与部门关联
         roleDeptMapper.deleteRoleDeptByRoleId(roleId);
-        return roleMapper.deleteRoleById(roleId) > 0 ? true : false;
+        boolean ok = roleMapper.deleteRoleById(roleId) > 0 ? true : false;
+        if (ok)
+        {
+            insertRoleMenuChangeLog(roleId, "ROLE_DELETE", currentOperBy(), beforeIds, Collections.<Long>emptyList(), null);
+        }
+        return ok;
     }
 
     /**
@@ -168,6 +182,8 @@ public class SysRoleServiceImpl implements ISysRoleService
             {
                 throw new ServiceException(String.format("%1$s已分配,不能删除", role.getRoleName()));
             }
+            List<Long> beforeIds = safeMenuIds(roleMenuMapper.selectMenuIdsByRoleId(roleId));
+            insertRoleMenuChangeLog(roleId, "ROLE_DELETE", currentOperBy(), beforeIds, Collections.<Long>emptyList(), null);
         }
         // 删除角色与菜单关联
         roleMenuMapper.deleteRoleMenu(roleIds);
@@ -193,7 +209,12 @@ public class SysRoleServiceImpl implements ISysRoleService
         validateOrgAdminUniqueness(role, null);
         // 新增角色信息
         roleMapper.insertRole(role);
-        return insertRoleMenu(role);
+        int rows = insertRoleMenu(role);
+        List<Long> afterIds = menuIdsFromRole(role);
+        insertRoleMenuChangeLog(role.getRoleId(), "ROLE_ADD",
+            StringUtils.isNotEmpty(role.getCreateBy()) ? role.getCreateBy() : currentOperBy(),
+            Collections.<Long>emptyList(), afterIds, null);
+        return rows;
     }
 
     /**
@@ -210,11 +231,17 @@ public class SysRoleServiceImpl implements ISysRoleService
         normalizeRoleTenantForSave(role);
         validateRoleTenantConsistency(role);
         validateOrgAdminUniqueness(role, role.getRoleId());
+        List<Long> beforeIds = safeMenuIds(roleMenuMapper.selectMenuIdsByRoleId(role.getRoleId()));
         // 修改角色信息
         roleMapper.updateRole(role);
         // 删除角色与菜单关联
         roleMenuMapper.deleteRoleMenuByRoleId(role.getRoleId());
-        return insertRoleMenu(role);
+        int rows = insertRoleMenu(role);
+        List<Long> afterIds = menuIdsFromRole(role);
+        insertRoleMenuChangeLog(role.getRoleId(), "ROLE_EDIT",
+            StringUtils.isNotEmpty(role.getUpdateBy()) ? role.getUpdateBy() : currentOperBy(),
+            beforeIds, afterIds, null);
+        return rows;
     }
 
     /**
@@ -617,6 +644,73 @@ public class SysRoleServiceImpl implements ISysRoleService
         if ((sid != null && sid > 0) || (hid != null && hid > 0))
         {
             throw new ServiceException("内置角色「" + key + "」已改为全局模板，禁止按机构创建");
+        }
+    }
+
+    @Override
+    public List<SysRoleMenuChangeLog> selectRoleMenuChangeLogList(Long roleId)
+    {
+        if (roleId == null)
+        {
+            return new ArrayList<SysRoleMenuChangeLog>();
+        }
+        return roleMenuChangeLogMapper.selectByRoleIdOrderDesc(roleId);
+    }
+
+    private void insertRoleMenuChangeLog(Long roleId, String changeSource, String operBy,
+        List<Long> beforeIds, List<Long> afterIds, String remark)
+    {
+        if (roleId == null || StringUtils.isEmpty(changeSource))
+        {
+            return;
+        }
+        List<Long> before = safeMenuIds(beforeIds);
+        List<Long> after = safeMenuIds(afterIds);
+        Set<Long> beforeSet = new HashSet<Long>(before);
+        Set<Long> afterSet = new HashSet<Long>(after);
+        List<Long> added = after.stream().filter(id -> !beforeSet.contains(id)).collect(Collectors.toList());
+        List<Long> removed = before.stream().filter(id -> !afterSet.contains(id)).collect(Collectors.toList());
+        SysRoleMenuChangeLog row = new SysRoleMenuChangeLog();
+        row.setLogId(IdUtils.simpleUuid7());
+        row.setRoleId(roleId);
+        row.setChangeSource(changeSource);
+        row.setOperBy(operBy != null ? operBy : "");
+        row.setBeforeMenuIds(JSON.toJSONString(before));
+        row.setAfterMenuIds(JSON.toJSONString(after));
+        row.setAddedMenuIds(JSON.toJSONString(added));
+        row.setRemovedMenuIds(JSON.toJSONString(removed));
+        row.setRemark(remark);
+        roleMenuChangeLogMapper.insertSysRoleMenuChangeLog(row);
+    }
+
+    private static List<Long> menuIdsFromRole(SysRole role)
+    {
+        if (role == null || role.getMenuIds() == null)
+        {
+            return Collections.emptyList();
+        }
+        return Arrays.stream(role.getMenuIds()).filter(id -> id != null).sorted().collect(Collectors.toList());
+    }
+
+    private static List<Long> safeMenuIds(List<Long> ids)
+    {
+        if (ids == null || ids.isEmpty())
+        {
+            return Collections.emptyList();
+        }
+        return ids.stream().filter(id -> id != null).sorted().collect(Collectors.toList());
+    }
+
+    private static String currentOperBy()
+    {
+        try
+        {
+            String name = ShiroUtils.getLoginName();
+            return name != null ? name : "";
+        }
+        catch (Exception e)
+        {
+            return "";
         }
     }
 }

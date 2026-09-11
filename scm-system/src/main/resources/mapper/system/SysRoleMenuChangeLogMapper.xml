@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.scm.system.mapper.SysRoleMenuChangeLogMapper">
+
+	<resultMap type="com.scm.common.core.domain.entity.SysRoleMenuChangeLog" id="SysRoleMenuChangeLogResult">
+		<id property="logId" column="log_id"/>
+		<result property="roleId" column="role_id"/>
+		<result property="changeSource" column="change_source"/>
+		<result property="operBy" column="oper_by"/>
+		<result property="operTime" column="oper_time"/>
+		<result property="beforeMenuIds" column="before_menu_ids"/>
+		<result property="afterMenuIds" column="after_menu_ids"/>
+		<result property="addedMenuIds" column="added_menu_ids"/>
+		<result property="removedMenuIds" column="removed_menu_ids"/>
+		<result property="remark" column="remark"/>
+	</resultMap>
+
+	<insert id="insertSysRoleMenuChangeLog" parameterType="com.scm.common.core.domain.entity.SysRoleMenuChangeLog">
+		insert into sys_role_menu_change_log (
+			log_id, role_id, change_source, oper_by, oper_time,
+			before_menu_ids, after_menu_ids, added_menu_ids, removed_menu_ids, remark
+		) values (
+			#{logId}, #{roleId}, #{changeSource}, #{operBy}, sysdate(),
+			#{beforeMenuIds}, #{afterMenuIds}, #{addedMenuIds}, #{removedMenuIds}, #{remark}
+		)
+	</insert>
+
+	<select id="selectByRoleIdOrderDesc" resultMap="SysRoleMenuChangeLogResult">
+		select log_id, role_id, change_source, oper_by, oper_time,
+			before_menu_ids, after_menu_ids, added_menu_ids, removed_menu_ids, remark
+		from sys_role_menu_change_log
+		where role_id = #{roleId}
+		order by oper_time desc, log_id desc
+	</select>
+
+	<select id="selectByLogId" resultMap="SysRoleMenuChangeLogResult">
+		select log_id, role_id, change_source, oper_by, oper_time,
+			before_menu_ids, after_menu_ids, added_menu_ids, removed_menu_ids, remark
+		from sys_role_menu_change_log
+		where log_id = #{logId}
+		limit 1
+	</select>
+</mapper>

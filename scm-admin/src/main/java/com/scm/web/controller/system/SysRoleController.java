@@ -18,6 +18,7 @@ import com.scm.common.core.controller.BaseController;
 import com.scm.common.core.domain.AjaxResult;
 import com.scm.common.core.domain.Ztree;
 import com.scm.common.core.domain.entity.SysRole;
+import com.scm.common.core.domain.entity.SysRoleMenuChangeLog;
 import com.scm.common.core.domain.entity.SysUser;
 import com.scm.common.core.page.TableDataInfo;
 import com.scm.common.enums.BusinessType;
@@ -163,6 +164,19 @@ public class SysRoleController extends BaseController
         role.setUpdateBy(getLoginName());
         AuthorizationUtils.clearAllCachedAuthorizationInfo();
         return toAjax(roleService.updateRole(role));
+    }
+
+    /**
+     * 角色菜单权限变更留痕
+     */
+    @RequiresPermissions("system:role:list")
+    @GetMapping("/menuChangeLog/{roleId}")
+    @ResponseBody
+    public AjaxResult menuChangeLog(@PathVariable("roleId") Long roleId)
+    {
+        roleService.checkRoleDataScope(roleId);
+        List<SysRoleMenuChangeLog> list = roleService.selectRoleMenuChangeLogList(roleId);
+        return AjaxResult.success(list);
     }
 
     /**

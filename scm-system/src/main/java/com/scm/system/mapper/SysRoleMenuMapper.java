@@ -53,6 +53,11 @@ public interface SysRoleMenuMapper
     int batchRoleMenuIgnore(List<SysRoleMenu> roleMenuList);
 
     /**
+     * 查询角色已授权菜单ID（全维度去重）
+     */
+    List<Long> selectMenuIdsByRoleId(@Param("roleId") Long roleId);
+
+    /**
      * 查询某角色在指定医院/供应商维度下已授权菜单ID（空串表示不限制该维）
      */
     public List<Long> selectMenuIdsByRoleAndScope(@Param("roleId") Long roleId, @Param("hospitalId") String hospitalId,
