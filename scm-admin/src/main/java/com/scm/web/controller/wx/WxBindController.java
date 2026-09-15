@@ -1,5 +1,7 @@
 package com.scm.web.controller.wx;
 
+import java.util.Collections;
+import java.util.List;
 import javax.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -17,6 +19,7 @@ import com.scm.common.exception.ServiceException;
 import com.scm.common.exception.user.UserException;
 import com.scm.common.utils.StringUtils;
 import com.scm.framework.shiro.service.SysLoginService;
+import com.scm.system.domain.WxBoundAccount;
 import com.scm.system.service.ISysUserService;
 import com.scm.system.service.WeChatMpOauthService;
 
@@ -27,7 +30,7 @@ import com.scm.system.service.WeChatMpOauthService;
 @RequestMapping("/wx/bind")
 public class WxBindController extends BaseController
 {
-    private static final String SESSION_BIND_NAME = "WX_MP_BIND_LOGIN_NAME";
+    private static final String SESSION_TOAST = "WX_MP_BIND_TOAST";
 
     @Autowired
     private WeChatMpOauthService weChatMpOauthService;
@@ -51,33 +54,37 @@ public class WxBindController extends BaseController
             }
             catch (ServiceException e)
             {
-                return bindView(mmap, false, e.getMessage());
+                return bindView(mmap, session, false, e.getMessage());
             }
         }
         if (StringUtils.isEmpty(openid))
         {
-            return bindView(mmap, false, "请从微信服务号菜单进入");
+            return bindView(mmap, session, false, "请从微信服务号菜单进入");
         }
-        return bindView(mmap, true, "");
+        return bindView(mmap, session, true, "");
     }
 
     @GetMapping("/success")
-    public String success(HttpSession session, ModelMap mmap)
+    public String bindSuccessRedirect()
     {
-        String loginName = (String) session.getAttribute(SESSION_BIND_NAME);
-        if (StringUtils.isEmpty(loginName))
-        {
-            return "redirect:/wx/bind";
-        }
-        mmap.put("loginName", loginName);
-        putIcpModel(mmap);
-        return "wx/bindSuccess";
+        return "redirect:/wx/bind";
     }
 
-    private String bindView(ModelMap mmap, boolean ready, String errorMsg)
+    private String bindView(ModelMap mmap, HttpSession session, boolean ready, String errorMsg)
     {
         mmap.put("ready", ready);
         mmap.put("errorMsg", errorMsg);
+        List<WxBoundAccount> accounts = ready
+            ? userService.selectWxBoundSupplierAccounts((String) session.getAttribute(WeChatMpConstants.SESSION_OPENID))
+            : Collections.<WxBoundAccount>emptyList();
+        mmap.put("accounts", accounts);
+        mmap.put("hasAccounts", accounts != null && !accounts.isEmpty());
+        String toast = (String) session.getAttribute(SESSION_TOAST);
+        if (StringUtils.isNotEmpty(toast))
+        {
+            mmap.put("toastMsg", toast);
+            session.removeAttribute(SESSION_TOAST);
+        }
         putIcpModel(mmap);
         return "wx/bind";
     }
@@ -107,7 +114,7 @@ public class WxBindController extends BaseController
         {
             SysUser user = loginService.login(username, password);
             userService.bindWxOpenid(user.getUserId(), openid);
-            session.setAttribute(SESSION_BIND_NAME, user.getLoginName());
+            session.setAttribute(SESSION_TOAST, "绑定成功");
             return success("绑定成功");
         }
         catch (UserException e)
@@ -123,6 +130,32 @@ public class WxBindController extends BaseController
         {
             logger.error("微信绑定登录失败", e);
             return error("登录失败，请稍后重试");
+        }
+    }
+
+    @PostMapping("/unbind")
+    @ResponseBody
+    public AjaxResult unbind(Long userId, HttpSession session)
+    {
+        String openid = (String) session.getAttribute(WeChatMpConstants.SESSION_OPENID);
+        if (StringUtils.isEmpty(openid))
+        {
+            return error("微信授权已失效，请从服务号菜单重新进入");
+        }
+        try
+        {
+            userService.unbindWxOpenid(userId, openid);
+            session.setAttribute(SESSION_TOAST, "已解除绑定");
+            return success("已解除绑定");
+        }
+        catch (ServiceException e)
+        {
+            return error(e.getMessage());
+        }
+        catch (Exception e)
+        {
+            logger.error("微信解绑失败", e);
+            return error("解绑失败，请稍后重试");
         }
     }
 }

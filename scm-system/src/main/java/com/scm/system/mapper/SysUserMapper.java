@@ -3,6 +3,7 @@ package com.scm.system.mapper;
 import java.util.List;
 import org.apache.ibatis.annotations.Param;
 import com.scm.common.core.domain.entity.SysUser;
+import com.scm.system.domain.WxBoundAccount;
 
 /**
  * 用户表 数据层
@@ -137,9 +138,19 @@ public interface SysUserMapper
     public int backfillHistoryPwdPlain(String initPassword);
 
     /**
-     * 按微信 openid 查询未删除用户
+     * 按微信 openid 查询未删除用户（多账号时只取一条）
      */
     public SysUser selectUserByWxOpenid(@Param("wxOpenid") String wxOpenid);
+
+    /**
+     * 按微信 openid 查询全部未删除用户
+     */
+    public List<SysUser> selectUsersByWxOpenid(@Param("wxOpenid") String wxOpenid);
+
+    /**
+     * 当前微信已绑定、状态正常的供应商账号（含关联供应商名称）
+     */
+    public List<WxBoundAccount> selectWxBoundSupplierAccountsByOpenid(@Param("wxOpenid") String wxOpenid);
 
     /**
      * 更新用户微信 openid（openid 为 null 表示解绑）

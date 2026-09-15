@@ -20,8 +20,20 @@ public interface IOrderService
     public Order selectOrderById(Long orderId);
 
     /**
+     * 系统内部按 ID 查订单（无登录会话、不做医院/供应商数据范围校验）。
+     * 仅用于接口回调、微信模板等后台任务。
+     */
+    public Order selectOrderByIdForSystem(Long orderId);
+
+    /**
+     * 系统内部按供应商 ID 列表查订单（无登录会话、不做数据范围校验）。
+     * 仅用于微信端历史订单。
+     */
+    public List<Order> selectOrderListBySupplierIdsForWx(List<Long> supplierIds, int limit);
+
+    /**
      * 查询订单列表
-     * 
+     *
      * @param order 订单信息
      * @return 订单集合
      */

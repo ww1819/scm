@@ -21,6 +21,97 @@
             justify-content: center;
             padding: 24px 16px 56px;
         }
+        body.signin.has-accounts {
+            justify-content: flex-start;
+            padding-top: 28px;
+        }
+        .account-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .account-head h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #000;
+        }
+        .btn-add {
+            flex: 0 0 auto;
+            height: 32px;
+            padding: 0 12px;
+            border: none;
+            border-radius: 16px;
+            background: #1c84c6;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .account-card {
+            display: flex;
+            align-items: stretch;
+            gap: 8px;
+            margin-top: 10px;
+            background: #f7f9fc;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .account-main {
+            flex: 1;
+            min-width: 0;
+            padding: 12px 12px 12px 14px;
+            color: #222;
+            text-decoration: none;
+        }
+        .account-main:hover,
+        .account-main:focus {
+            color: #222;
+            text-decoration: none;
+        }
+        .account-title {
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 1.4;
+        }
+        .account-login {
+            margin-top: 2px;
+            color: #1c84c6;
+            font-size: 13px;
+        }
+        .account-sup {
+            margin-top: 6px;
+            color: #667788;
+            font-size: 12px;
+            line-height: 1.45;
+        }
+        .account-go {
+            margin-top: 8px;
+            color: #1ab394;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .btn-unbind {
+            flex: 0 0 72px;
+            border: none;
+            border-left: 1px solid rgba(0, 0, 0, 0.06);
+            background: #fff;
+            color: #c62828;
+            font-size: 13px;
+        }
+        .form-cancel {
+            display: block;
+            width: 100%;
+            height: 40px;
+            margin-top: 10px;
+            border: 1px solid #d9e2ec;
+            border-radius: 6px;
+            background: #fff;
+            color: #667788;
+            font-size: 14px;
+        }
         .signinpanel {
             width: 100% !important;
             max-width: 420px !important;
@@ -61,6 +152,9 @@
             box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
             padding: 18px 16px 20px !important;
             margin: 0;
+        }
+        .has-accounts .signinpanel form {
+            margin-top: 16px !important;
         }
         .form-heading {
             margin: 0 0 14px;
@@ -184,7 +278,7 @@
         }
     </style>
 </head>
-<body class="signin">
+<body class="signin" th:classappend="${hasAccounts} ? ' has-accounts' : ''">
 <div class="signinpanel">
     <div class="row">
         <div class="col-sm-12">
@@ -195,8 +289,23 @@
                     <div class="error-icon"><i class="fa fa-exclamation"></i></div>
                     <p th:text="${errorMsg}">请从微信服务号菜单进入</p>
                 </div>
-                <form id="bindForm" th:if="${ready}" autocomplete="off" onsubmit="return false;">
-                    <h3 class="form-heading">登录并绑定</h3>
+                <div th:if="${ready and hasAccounts}">
+                    <div class="account-head">
+                        <h3>已绑定账号</h3>
+                        <button type="button" class="btn-add" id="btnShowAdd">添加绑定</button>
+                    </div>
+                    <div class="account-card" th:each="a : ${accounts}">
+                        <a class="account-main" th:href="@{/wx/order/list(userId=${a.userId})}">
+                            <div class="account-title" th:text="${a.userName != null and a.userName != '' ? a.userName : a.loginName}">账号</div>
+                            <div class="account-login" th:text="${a.loginName}">login</div>
+                            <div class="account-sup" th:text="${a.supplierNames != null and a.supplierNames != '' ? a.supplierNames : '未关联供应商'}">供应商</div>
+                            <div class="account-go">查看历史订单 &gt;</div>
+                        </a>
+                        <button type="button" class="btn-unbind" th:attr="data-userid=${a.userId},data-name=${a.loginName}">解除绑定</button>
+                    </div>
+                </div>
+                <form id="bindForm" th:if="${ready}" th:style="${hasAccounts} ? 'display:none' : null" autocomplete="off" onsubmit="return false;">
+                    <h3 class="form-heading" th:text="${hasAccounts} ? '添加绑定账号' : '登录并绑定'">登录并绑定</h3>
                     <span class="auth-pill"><i class="fa fa-weixin"></i> 已获取微信授权</span>
                     <div class="input-icon">
                         <i class="fa fa-user"></i>
@@ -207,8 +316,9 @@
                         <input type="password" id="password" name="password" class="form-control" placeholder="密码" autocomplete="current-password"/>
                     </div>
                     <button type="button" class="btn btn-bind" id="btnBind">登录并绑定</button>
+                    <button type="button" class="form-cancel" id="btnCancelAdd" th:if="${hasAccounts}">取消</button>
                 </form>
-                <p class="hint">请在微信内打开本页，使用系统账号完成绑定</p>
+                <p class="hint">仅支持绑定供应商账号，同一微信可绑定多个账号</p>
             </div>
         </div>
     </div>
@@ -217,7 +327,10 @@
     <a th:href="${icpLink}" target="_blank" rel="noopener noreferrer" th:text="${icpNo}">冀ICP备2026009090号-1</a>
 </div>
 <div class="toast" id="toast"></div>
-<script th:inline="javascript"> var ctx = [[@{/}]]; </script>
+<script th:inline="javascript">
+var ctx = [[@{/}]];
+var toastMsg = [[${toastMsg}]] || "";
+</script>
 <script src="../static/js/jquery.min.js" th:src="@{/js/jquery.min.js}"></script>
 <script>
 function toast(msg) {
@@ -225,7 +338,18 @@ function toast(msg) {
     $t.text(msg).stop(true, true).fadeIn(120);
     setTimeout(function () { $t.fadeOut(180); }, 2200);
 }
+function showAddForm() {
+    $("#bindForm").show();
+    $("#btnShowAdd").hide();
+}
+function hideAddForm() {
+    $("#bindForm").hide();
+    $("#btnShowAdd").show();
+}
 $(function () {
+    if (toastMsg) { toast(toastMsg); }
+    $("#btnShowAdd").on("click", showAddForm);
+    $("#btnCancelAdd").on("click", hideAddForm);
     function submitBind() {
         var username = $.trim($("#username").val());
         var password = $("#password").val();
@@ -240,7 +364,7 @@ $(function () {
             data: { username: username, password: password },
             success: function (r) {
                 if (r && r.code === 0) {
-                    location.href = ctx + "wx/bind/success";
+                    location.href = ctx + "wx/bind";
                 } else {
                     toast((r && r.msg) || "登录失败");
                     $btn.prop("disabled", false).text("登录并绑定");
@@ -257,6 +381,33 @@ $(function () {
         if (e.keyCode === 13) {
             submitBind();
         }
+    });
+    $(".btn-unbind").on("click", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var userId = $(this).attr("data-userid");
+        var name = $(this).attr("data-name") || "";
+        if (!userId) { return; }
+        if (!window.confirm("确定解除绑定账号 " + name + " 吗？")) { return; }
+        var $btn = $(this).prop("disabled", true);
+        $.ajax({
+            type: "post",
+            url: ctx + "wx/bind/unbind",
+            dataType: "json",
+            data: { userId: userId },
+            success: function (r) {
+                if (r && r.code === 0) {
+                    location.href = ctx + "wx/bind";
+                } else {
+                    toast((r && r.msg) || "解绑失败");
+                    $btn.prop("disabled", false);
+                }
+            },
+            error: function () {
+                toast("网络异常，请稍后重试");
+                $btn.prop("disabled", false);
+            }
+        });
     });
 });
 </script>

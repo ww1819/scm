@@ -24,12 +24,14 @@ import com.scm.system.service.OrderWxNotifyService;
 import com.scm.system.service.WeChatMpOauthService;
 
 /**
- * 微信内手机订单详情（模板消息跳转）。
+ * 微信内手机订单列表/详情（模板消息跳转、绑定账号进入）。
  */
 @Controller
 @RequestMapping("/wx/order")
 public class WxOrderController extends BaseController
 {
+    private static final int HISTORY_LIMIT = 100;
+
     @Autowired
     private WeChatMpOauthService weChatMpOauthService;
 
@@ -45,12 +47,48 @@ public class WxOrderController extends BaseController
     @Autowired
     private OrderWxNotifyService orderWxNotifyService;
 
+    @GetMapping("/list")
+    public String list(Long userId, String code, HttpServletRequest request, HttpSession session, ModelMap mmap)
+    {
+        putIcpModel(mmap);
+        mmap.put("listUserId", userId);
+        mmap.put("bindUrl", request.getContextPath() + "/wx/bind");
+        if (userId == null)
+        {
+            return listError(mmap, "请选择要查看的账号");
+        }
+        if (!weChatMpProperties.isConfigured())
+        {
+            return listError(mmap, "未配置微信服务号参数");
+        }
+        String openid = resolveOpenidOrRedirect(code, request, session, mmap,
+            orderWxNotifyService.buildOrderListJumpUrl(userId), "/wx/order/list?userId=" + userId);
+        if (openid == null)
+        {
+            return mmap.get("viewName") != null ? mmap.get("viewName").toString() : "wx/orderList";
+        }
+
+        if (!userService.isWxBoundSupplierUser(openid, userId))
+        {
+            mmap.put("needBind", Boolean.TRUE);
+            return listError(mmap, "当前微信未绑定该供应商账号");
+        }
+        List<Long> supplierIds = userService.selectActiveSupplierIdsByUserId(userId);
+        List<Order> orders = orderService.selectOrderListBySupplierIdsForWx(supplierIds, HISTORY_LIMIT);
+        mmap.put("ready", Boolean.TRUE);
+        mmap.put("orders", orders);
+        mmap.put("accountName", displayName(userId));
+        return "wx/orderList";
+    }
+
     @GetMapping("/{orderId}")
-    public String view(@PathVariable("orderId") Long orderId, String code, HttpServletRequest request,
+    public String view(@PathVariable("orderId") Long orderId, Long userId, String code, HttpServletRequest request,
         HttpSession session, ModelMap mmap)
     {
         putIcpModel(mmap);
         mmap.put("orderId", orderId);
+        mmap.put("listUserId", userId);
+        mmap.put("bindUrl", request.getContextPath() + "/wx/bind");
         if (orderId == null)
         {
             return errorView(mmap, "订单不存在");
@@ -60,52 +98,26 @@ public class WxOrderController extends BaseController
             return errorView(mmap, "未配置微信服务号参数");
         }
 
-        String openid = (String) session.getAttribute(WeChatMpConstants.SESSION_OPENID);
-        if (StringUtils.isEmpty(openid) && StringUtils.isNotEmpty(code))
+        String redirectAfterCode = "/wx/order/" + orderId + (userId != null ? "?userId=" + userId : "");
+        String oauthUri = orderWxNotifyService.buildOauthRedirectUri(orderId);
+        String openid = resolveOpenidOrRedirect(code, request, session, mmap, oauthUri, redirectAfterCode);
+        if (openid == null)
         {
-            try
-            {
-                openid = weChatMpOauthService.exchangeCodeForOpenid(code);
-                session.setAttribute(WeChatMpConstants.SESSION_OPENID, openid);
-                return "redirect:/wx/order/" + orderId;
-            }
-            catch (ServiceException e)
-            {
-                return errorView(mmap, e.getMessage());
-            }
-        }
-        if (StringUtils.isEmpty(openid))
-        {
-            if (!isMicroMessenger(request))
-            {
-                return errorView(mmap, "请在微信中打开本页查看订单");
-            }
-            String redirectUri = orderWxNotifyService.buildOauthRedirectUri(orderId);
-            if (StringUtils.isEmpty(redirectUri))
-            {
-                return errorView(mmap, "未配置网页授权域名（scm.wechat.mp.oauth-base-url）");
-            }
-            return "redirect:" + weChatMpOauthService.buildSnsapiBaseAuthorizeUrl(redirectUri);
+            return mmap.get("viewName") != null ? mmap.get("viewName").toString() : "wx/order";
         }
 
-        SysUser user = userService.selectUserByWxOpenid(openid);
-        if (user == null)
+        if (!orderWxNotifyService.hasSupplierBinding(openid))
         {
             mmap.put("needBind", Boolean.TRUE);
-            mmap.put("bindUrl", request.getContextPath() + "/wx/bind");
-            return errorView(mmap, "当前微信尚未绑定系统账号，请先完成绑定后再查看订单");
-        }
-        if (!"0".equals(user.getStatus()))
-        {
-            return errorView(mmap, "账号已停用，无法查看订单");
+            return errorView(mmap, "当前微信尚未绑定供应商账号，请先完成绑定后再查看订单");
         }
 
-        Order order = orderService.selectOrderById(orderId);
+        Order order = orderService.selectOrderByIdForSystem(orderId);
         if (order == null)
         {
             return errorView(mmap, "订单不存在");
         }
-        if (!orderWxNotifyService.canSupplierUserViewOrder(user.getUserId(), order))
+        if (!orderWxNotifyService.canOpenidViewOrder(openid, order))
         {
             return errorView(mmap, "无权查看该订单");
         }
@@ -115,6 +127,80 @@ public class WxOrderController extends BaseController
         mmap.put("details", details);
         mmap.put("statusText", statusText(order.getOrderStatus()));
         return "wx/order";
+    }
+
+    /**
+     * 解析 openid。需要跳转时返回 null，并在 mmap.viewName 中放入已选视图。
+     */
+    private String resolveOpenidOrRedirect(String code, HttpServletRequest request, HttpSession session,
+        ModelMap mmap, String oauthRedirectUri, String localRedirect)
+    {
+        String openid = (String) session.getAttribute(WeChatMpConstants.SESSION_OPENID);
+        if (StringUtils.isEmpty(openid) && StringUtils.isNotEmpty(code))
+        {
+            try
+            {
+                openid = weChatMpOauthService.exchangeCodeForOpenid(code);
+                session.setAttribute(WeChatMpConstants.SESSION_OPENID, openid);
+                mmap.put("viewName", "redirect:" + localRedirect);
+                return null;
+            }
+            catch (ServiceException e)
+            {
+                mmap.put("viewName", listOrDetailError(mmap, localRedirect, e.getMessage()));
+                return null;
+            }
+        }
+        if (StringUtils.isEmpty(openid))
+        {
+            if (!isMicroMessenger(request))
+            {
+                mmap.put("viewName", listOrDetailError(mmap, localRedirect, "请在微信中打开本页查看订单"));
+                return null;
+            }
+            if (StringUtils.isEmpty(oauthRedirectUri))
+            {
+                mmap.put("viewName", listOrDetailError(mmap, localRedirect, "未配置网页授权域名（scm.wechat.mp.oauth-base-url）"));
+                return null;
+            }
+            mmap.put("viewName", "redirect:" + weChatMpOauthService.buildSnsapiBaseAuthorizeUrl(oauthRedirectUri));
+            return null;
+        }
+        return openid;
+    }
+
+    private String listOrDetailError(ModelMap mmap, String localRedirect, String message)
+    {
+        if (localRedirect != null && localRedirect.contains("/list"))
+        {
+            return listError(mmap, message);
+        }
+        return errorView(mmap, message);
+    }
+
+    private String displayName(Long userId)
+    {
+        SysUser user = userService.selectUserById(userId);
+        if (user == null)
+        {
+            return "";
+        }
+        if (StringUtils.isNotEmpty(user.getUserName()))
+        {
+            return user.getUserName();
+        }
+        return user.getLoginName();
+    }
+
+    private String listError(ModelMap mmap, String message)
+    {
+        mmap.put("ready", Boolean.FALSE);
+        mmap.put("errorMsg", message);
+        if (mmap.get("needBind") == null)
+        {
+            mmap.put("needBind", Boolean.FALSE);
+        }
+        return "wx/orderList";
     }
 
     private String errorView(ModelMap mmap, String message)
@@ -134,7 +220,7 @@ public class WxOrderController extends BaseController
         return ua != null && ua.toLowerCase().contains("micromessenger");
     }
 
-    private static String statusText(String status)
+    static String statusText(String status)
     {
         if ("0".equals(status))
         {

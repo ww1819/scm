@@ -18,10 +18,18 @@
         }
         body {
             min-height: 100vh;
-            padding: 12px 12px 56px;
+            padding: 12px 12px 20px;
         }
-        .page-head {
-            padding: 8px 4px 14px;
+        .page-head { padding: 8px 4px 14px; }
+        .nav-row {
+            display: flex;
+            gap: 16px;
+            margin-top: 10px;
+        }
+        .nav-row a {
+            color: #1c84c6;
+            font-size: 13px;
+            text-decoration: none;
         }
         .brand {
             margin: 0;
@@ -64,30 +72,98 @@
             font-weight: 600;
         }
         .sec-title {
-            margin: 0 0 10px;
+            margin: 0 0 12px;
             font-size: 15px;
             font-weight: 700;
         }
         .item {
-            padding: 10px 0;
-            border-top: 1px solid #f0f2f5;
+            background: #f7f9fc;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 8px;
         }
-        .item:first-of-type { border-top: none; }
+        .item:last-child { margin-bottom: 0; }
+        .item-head {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .item-idx {
+            flex: 0 0 auto;
+            min-width: 22px;
+            height: 22px;
+            padding: 0 5px;
+            border-radius: 6px;
+            background: #e8f6f3;
+            color: #1ab394;
+            font-size: 12px;
+            font-weight: 700;
+            text-align: center;
+            line-height: 22px;
+        }
+        .item-head-main { flex: 1; min-width: 0; }
         .item-name {
             font-size: 15px;
             font-weight: 650;
-            margin-bottom: 4px;
+            line-height: 1.4;
+            word-break: break-word;
         }
         .item-meta {
-            font-size: 12px;
-            color: #8899aa;
-            margin-bottom: 6px;
-        }
-        .item-row {
             display: flex;
-            justify-content: space-between;
-            font-size: 13px;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
         }
+        .tag {
+            max-width: 100%;
+            padding: 1px 6px;
+            border: 1px solid #e8edf2;
+            border-radius: 4px;
+            background: #fff;
+            color: #6b7c8d;
+            font-size: 11px;
+            line-height: 1.5;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .item-spec {
+            margin-top: 4px;
+            color: #6b7c8d;
+            font-size: 12px;
+            line-height: 1.45;
+            word-break: break-word;
+        }
+        .item-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #e8edf2;
+        }
+        .metric {
+            min-width: 0;
+            text-align: center;
+        }
+        .metric-label {
+            display: block;
+            margin-bottom: 4px;
+            color: #8899aa;
+            font-size: 11px;
+        }
+        .metric-value {
+            display: block;
+            color: #1f2d3d;
+            font-size: 13px;
+            font-weight: 650;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.02em;
+            line-height: 1.35;
+            word-break: break-all;
+        }
+        .metric-amount .metric-value { color: #e6a23c; }
         .error-box {
             text-align: center;
             padding: 36px 12px;
@@ -108,10 +184,8 @@
             font-size: 14px;
         }
         .footer {
-            position: fixed;
-            left: 0;
-            right: 0;
-            bottom: 8px;
+            margin-top: 8px;
+            padding: 8px 0 4px;
             text-align: center;
             font-size: 12px;
         }
@@ -123,6 +197,10 @@
 <div class="page-head">
     <p class="brand">医承云配供应链云平台</p>
     <h1 class="title">订单详情</h1>
+    <div class="nav-row">
+        <a th:if="${listUserId != null}" th:href="@{/wx/order/list(userId=${listUserId})}">返回订单列表</a>
+        <a th:href="@{/wx/bind}">账号管理</a>
+    </div>
 </div>
 
 <div class="card error-box" th:if="${ready == false}">
@@ -137,7 +215,7 @@
         <div class="kv"><span class="k">医院</span><span class="v" th:text="${order.hospitalName}">-</span></div>
         <div class="kv"><span class="k">供应商</span><span class="v" th:text="${order.supplierName}">-</span></div>
         <div class="kv"><span class="k">下单时间</span><span class="v" th:text="${order.orderDate != null ? #dates.format(order.orderDate, 'yyyy-MM-dd HH:mm') : '-'}">-</span></div>
-        <div class="kv"><span class="k">订单金额</span><span class="v amount" th:text="${order.orderAmount != null ? order.orderAmount + ' 元' : '-'}">-</span></div>
+        <div class="kv"><span class="k">订单金额</span><span class="v amount" th:text="${order.orderAmount != null ? #numbers.formatDecimal(order.orderAmount, 1, 4) + ' 元' : '-'}">-</span></div>
         <div class="kv"><span class="k">要货仓库</span><span class="v" th:text="${(order.warehouse != null and order.warehouse != '') ? order.warehouse : '-'}">-</span></div>
         <div class="kv"><span class="k">申请科室</span><span class="v" th:text="${(order.department != null and order.department != '') ? order.department : ((order.orderDeptName != null and order.orderDeptName != '') ? order.orderDeptName : '-')}">-</span></div>
         <div class="kv" th:if="${order.remark != null and order.remark != ''}"><span class="k">备注</span><span class="v" th:text="${order.remark}">-</span></div>
@@ -146,17 +224,31 @@
     <div class="card">
         <h2 class="sec-title">明细</h2>
         <div th:if="${details == null or #lists.isEmpty(details)}" class="empty">暂无明细</div>
-        <div class="item" th:each="d : ${details}">
-            <div class="item-name" th:text="${d.materialName}">物资</div>
-            <div class="item-meta">
-                <span th:text="${d.materialCode}">编码</span>
-                <span th:if="${d.specification != null and d.specification != ''}" th:text="' · ' + ${d.specification}"></span>
-                <span th:if="${d.unit != null and d.unit != ''}" th:text="' · ' + ${d.unit}"></span>
+        <div class="item" th:each="d,stat : ${details}">
+            <div class="item-head">
+                <span class="item-idx" th:text="${stat.count}">1</span>
+                <div class="item-head-main">
+                    <div class="item-name" th:text="${d.materialName}">物资</div>
+                    <div class="item-meta">
+                        <span class="tag" th:if="${d.materialCode != null and d.materialCode != ''}" th:text="${d.materialCode}">编码</span>
+                        <span class="tag" th:if="${d.unit != null and d.unit != ''}" th:text="${d.unit}">单位</span>
+                    </div>
+                    <div class="item-spec" th:if="${d.specification != null and d.specification != ''}" th:text="${d.specification}">规格</div>
+                </div>
             </div>
-            <div class="item-row">
-                <span th:text="'数量 ' + ${d.orderQuantity != null ? d.orderQuantity : '-'}">数量</span>
-                <span th:text="'单价 ' + ${d.purchasePrice != null ? d.purchasePrice : '-'}">单价</span>
-                <span th:text="'金额 ' + ${d.amount != null ? d.amount : '-'}">金额</span>
+            <div class="item-metrics">
+                <div class="metric">
+                    <span class="metric-label">数量</span>
+                    <span class="metric-value" th:text="${d.orderQuantity != null ? #numbers.formatDecimal(d.orderQuantity, 1, 4) : '-'}">10.0000</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">单价</span>
+                    <span class="metric-value" th:text="${d.purchasePrice != null ? #numbers.formatDecimal(d.purchasePrice, 1, 4) : '-'}">12.3456</span>
+                </div>
+                <div class="metric metric-amount">
+                    <span class="metric-label">金额</span>
+                    <span class="metric-value" th:text="${d.amount != null ? #numbers.formatDecimal(d.amount, 1, 4) : '-'}">123.4567</span>
+                </div>
             </div>
         </div>
     </div>

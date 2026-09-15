@@ -277,6 +277,16 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </where>
         order by o.order_date desc, o.create_time desc
     </select>
+
+    <select id="selectOrderListBySupplierIds" resultMap="OrderResult">
+        <include refid="selectOrderVo"/>
+        where o.supplier_id in
+        <foreach collection="supplierIds" item="sid" open="(" separator="," close=")">
+            #{sid}
+        </foreach>
+        order by o.order_date desc, o.order_id desc
+        limit #{limit}
+    </select>
     
     <select id="selectOrderById" parameterType="Long" resultMap="OrderResult">
         <include refid="selectOrderVo"/>

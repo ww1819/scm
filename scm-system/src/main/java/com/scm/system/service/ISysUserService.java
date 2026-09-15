@@ -3,6 +3,7 @@ package com.scm.system.service;
 import java.util.List;
 import com.scm.common.core.domain.entity.SysUser;
 import com.scm.system.domain.SysUserRole;
+import com.scm.system.domain.WxBoundAccount;
 
 /**
  * 用户 业务层
@@ -228,12 +229,32 @@ public interface ISysUserService
     public int backfillHistoryPwdPlain();
 
     /**
-     * 将微信服务号 openid 绑定到指定用户。同一 openid 只保留一个账号。
+     * 将微信服务号 openid 绑定到指定供应商账号。同一微信可同时绑定多个账号，互不踢掉。
      */
     public void bindWxOpenid(Long userId, String wxOpenid);
+
+    /**
+     * 解除当前微信与指定账号的绑定
+     */
+    public void unbindWxOpenid(Long userId, String wxOpenid);
 
     /**
      * 按微信 openid 查询未删除用户
      */
     public SysUser selectUserByWxOpenid(String wxOpenid);
+
+    /**
+     * 当前微信已绑定的供应商账号列表
+     */
+    public List<WxBoundAccount> selectWxBoundSupplierAccounts(String wxOpenid);
+
+    /**
+     * 当前微信是否已绑定该供应商账号
+     */
+    public boolean isWxBoundSupplierUser(String wxOpenid, Long userId);
+
+    /**
+     * 用户有效供应商 ID 列表
+     */
+    public List<Long> selectActiveSupplierIdsByUserId(Long userId);
 }

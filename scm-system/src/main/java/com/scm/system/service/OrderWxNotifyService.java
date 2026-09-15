@@ -1,6 +1,7 @@
 package com.scm.system.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -20,6 +21,7 @@ import com.scm.common.utils.StringUtils;
 import com.scm.system.domain.Order;
 import com.scm.system.domain.OrderWxNotifyResult;
 import com.scm.system.domain.SupplierUser;
+import com.scm.system.domain.WxBoundAccount;
 import com.scm.system.mapper.SupplierUserMapper;
 import com.scm.system.mapper.SysUserMapper;
 
@@ -65,7 +67,7 @@ public class OrderWxNotifyService
         {
             return fail(result, "未配置微信模板消息，请检查 scm.wechat.mp");
         }
-        Order order = orderService.selectOrderById(orderId);
+        Order order = orderService.selectOrderByIdForSystem(orderId);
         if (order == null)
         {
             return fail(result, "订单不存在");
@@ -79,11 +81,27 @@ public class OrderWxNotifyService
         {
             return fail(result, "该供应商没有已绑定微信的用户");
         }
+        Map<String, SysUser> uniqueByOpenid = new LinkedHashMap<String, SysUser>();
+        for (SysUser user : users)
+        {
+            if (user == null || StringUtils.isEmpty(user.getWxOpenid()))
+            {
+                continue;
+            }
+            if (!uniqueByOpenid.containsKey(user.getWxOpenid()))
+            {
+                uniqueByOpenid.put(user.getWxOpenid(), user);
+            }
+        }
+        if (uniqueByOpenid.isEmpty())
+        {
+            return fail(result, "该供应商没有已绑定微信的用户");
+        }
         String jumpUrl = buildOrderJumpUrl(orderId);
         Map<String, String> data = buildTemplateData(order);
         int success = 0;
         int fail = 0;
-        for (SysUser user : users)
+        for (SysUser user : uniqueByOpenid.values())
         {
             String err = weChatMpTemplateService.sendTemplate(user.getWxOpenid(), jumpUrl, data);
             if (err == null)
@@ -96,16 +114,16 @@ public class OrderWxNotifyService
                 log.warn("订单模板消息失败 orderId={} loginName={} reason={}", orderId, user.getLoginName(), err);
             }
         }
-        result.setRecipientCount(users.size());
+        result.setRecipientCount(uniqueByOpenid.size());
         result.setSuccessCount(success);
         result.setFailCount(fail);
         if (success == 0)
         {
-            result.setMessage("已尝试向 " + users.size() + " 人发送，全部失败");
+            result.setMessage("已尝试向 " + uniqueByOpenid.size() + " 人发送，全部失败");
             log.warn("订单微信通知: {}", result.getMessage());
             return result;
         }
-        result.setMessage("已向 " + users.size() + " 人发送，成功 " + success + "，失败 " + fail);
+        result.setMessage("已向 " + uniqueByOpenid.size() + " 人发送，成功 " + success + "，失败 " + fail);
         log.info("订单微信通知完成 orderId={} supplierId={} {}", orderId, order.getSupplierId(), result.getMessage());
         return result;
     }
@@ -132,28 +150,80 @@ public class OrderWxNotifyService
         return rel.getStatus() == null || "0".equals(rel.getStatus());
     }
 
+    public boolean hasSupplierBinding(String openid)
+    {
+        if (StringUtils.isEmpty(openid))
+        {
+            return false;
+        }
+        List<WxBoundAccount> accounts = sysUserMapper.selectWxBoundSupplierAccountsByOpenid(openid);
+        return accounts != null && !accounts.isEmpty();
+    }
+
+    public boolean canOpenidViewOrder(String openid, Order order)
+    {
+        if (StringUtils.isEmpty(openid) || order == null)
+        {
+            return false;
+        }
+        List<WxBoundAccount> accounts = sysUserMapper.selectWxBoundSupplierAccountsByOpenid(openid);
+        if (accounts == null || accounts.isEmpty())
+        {
+            return false;
+        }
+        for (WxBoundAccount account : accounts)
+        {
+            if (canSupplierUserViewOrder(account.getUserId(), order))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public String buildOrderJumpUrl(Long orderId)
+    {
+        String base = resolveOauthBaseUrl();
+        if (StringUtils.isEmpty(base) || orderId == null)
+        {
+            log.warn("未配置 scm.wechat.mp.oauth-base-url，模板消息将不带跳转链接");
+            return null;
+        }
+        return base + "/wx/order/" + orderId;
+    }
+
+    public String buildOrderListJumpUrl(Long userId)
+    {
+        String base = resolveOauthBaseUrl();
+        if (StringUtils.isEmpty(base) || userId == null)
+        {
+            log.warn("未配置 scm.wechat.mp.oauth-base-url，无法生成订单列表授权地址");
+            return null;
+        }
+        return base + "/wx/order/list?userId=" + userId;
+    }
+
+    public String buildOauthRedirectUri(Long orderId)
+    {
+        return buildOrderJumpUrl(orderId);
+    }
+
+    private String resolveOauthBaseUrl()
     {
         String base = weChatMpProperties.getOauthBaseUrl();
         if (StringUtils.isEmpty(base))
         {
             base = currentRequestDomain();
         }
-        if (StringUtils.isEmpty(base) || orderId == null)
+        if (StringUtils.isEmpty(base))
         {
-            log.warn("未配置 scm.wechat.mp.oauth-base-url，模板消息将不带跳转链接");
             return null;
         }
         while (base.endsWith("/"))
         {
             base = base.substring(0, base.length() - 1);
         }
-        return base + "/wx/order/" + orderId;
-    }
-
-    public String buildOauthRedirectUri(Long orderId)
-    {
-        return buildOrderJumpUrl(orderId);
+        return base;
     }
 
     private Map<String, String> buildTemplateData(Order order)
@@ -187,9 +257,9 @@ public class OrderWxNotifyService
     {
         if (amount == null)
         {
-            return "0.00元";
+            return "0.0000元";
         }
-        return amount.stripTrailingZeros().toPlainString() + "元";
+        return amount.setScale(4, RoundingMode.HALF_UP).toPlainString() + "元";
     }
 
     private static String firstNonBlank(String a, String b)

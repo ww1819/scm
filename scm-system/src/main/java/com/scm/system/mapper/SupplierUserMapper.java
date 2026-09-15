@@ -49,6 +49,16 @@ public interface SupplierUserMapper
     public SupplierUser selectSupplierUserByUserIdAndSupplierId(@Param("userId") Long userId, @Param("supplierId") Long supplierId);
 
     /**
+     * 用户有效供应商关联数量（未停用、未删除）
+     */
+    public int countActiveByUserId(@Param("userId") Long userId);
+
+    /**
+     * 用户有效供应商 ID 列表
+     */
+    public List<Long> selectActiveSupplierIdsByUserId(@Param("userId") Long userId);
+
+    /**
      * 新增供应商用户
      * 
      * @param supplierUser 供应商用户信息

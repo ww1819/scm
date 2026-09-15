@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>历史订单 - 医承云配供应链云平台</title>
+    <meta name="description" content="医承云配供应链云平台">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <style>
+        * { box-sizing: border-box; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            background: #f4f6f9;
+            color: #1f2d3d;
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        }
+        body {
+            min-height: 100vh;
+            padding: 12px 12px 20px;
+        }
+        .page-head { padding: 8px 4px 14px; }
+        .brand { margin: 0; font-size: 13px; color: #1ab394; font-weight: 600; }
+        .title { margin: 4px 0 0; font-size: 20px; font-weight: 700; }
+        .sub {
+            margin: 6px 0 0;
+            color: #667788;
+            font-size: 13px;
+        }
+        .nav-row {
+            display: flex;
+            gap: 16px;
+            margin-top: 10px;
+        }
+        .nav-row a {
+            color: #1c84c6;
+            font-size: 13px;
+            text-decoration: none;
+        }
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(31, 45, 61, 0.06);
+            padding: 14px 16px;
+            margin-bottom: 12px;
+        }
+        .order-card {
+            display: block;
+            color: inherit;
+            text-decoration: none;
+        }
+        .order-card:hover,
+        .order-card:focus { color: inherit; text-decoration: none; }
+        .order-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .order-no {
+            font-size: 15px;
+            font-weight: 700;
+            word-break: break-all;
+        }
+        .badge {
+            flex: 0 0 auto;
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            background: #e8f6f3;
+            color: #1ab394;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .order-meta {
+            margin-top: 8px;
+            color: #667788;
+            font-size: 13px;
+            line-height: 1.55;
+        }
+        .order-amt {
+            margin-top: 8px;
+            color: #e6a23c;
+            font-size: 15px;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+        .error-box { text-align: center; padding: 36px 12px; }
+        .error-box p { margin: 0 0 16px; font-size: 15px; color: #606266; line-height: 1.6; }
+        .btn-bind {
+            display: inline-block;
+            background: #1ab394;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 22px;
+            padding: 10px 22px;
+            font-size: 14px;
+        }
+        .footer { margin-top: 8px; padding: 8px 0 4px; text-align: center; font-size: 12px; }
+        .footer a { color: #99a9bf; text-decoration: none; }
+        .empty { color: #99a9bf; text-align: center; padding: 20px 0; font-size: 13px; }
+    </style>
+</head>
+<body>
+<div class="page-head">
+    <p class="brand">医承云配供应链云平台</p>
+    <h1 class="title">历史订单</h1>
+    <p class="sub" th:if="${accountName != null and accountName != ''}" th:text="${'账号：' + accountName}">账号</p>
+    <div class="nav-row">
+        <a th:href="@{/wx/bind}">返回账号</a>
+    </div>
+</div>
+
+<div class="card error-box" th:if="${ready == false}">
+    <p th:text="${errorMsg}">无法查看订单</p>
+    <a class="btn-bind" th:if="${needBind}" th:href="${bindUrl}">去绑定账号</a>
+</div>
+
+<div th:if="${ready}">
+    <div th:if="${orders == null or #lists.isEmpty(orders)}" class="card empty">暂无订单</div>
+    <a class="card order-card" th:each="o : ${orders}" th:href="@{/wx/order/{id}(id=${o.orderId}, userId=${listUserId})}">
+        <div class="order-top">
+            <span class="order-no" th:text="${o.orderNo}">订单号</span>
+            <span class="badge" th:switch="${o.orderStatus}">
+                <span th:case="'0'">待接收</span>
+                <span th:case="'1'">已接收</span>
+                <span th:case="'2'">配送中</span>
+                <span th:case="'3'">已完成</span>
+                <span th:case="'4'">已取消</span>
+                <span th:case="*">-</span>
+            </span>
+        </div>
+        <div class="order-meta">
+            <div th:text="${o.hospitalName != null ? o.hospitalName : '-'}">医院</div>
+            <div th:text="${o.orderDate != null ? #dates.format(o.orderDate, 'yyyy-MM-dd HH:mm') : '-'}">时间</div>
+        </div>
+        <div class="order-amt" th:text="${o.orderAmount != null ? #numbers.formatDecimal(o.orderAmount, 1, 4) + ' 元' : '-'}">金额</div>
+    </a>
+</div>
+
+<div class="footer">
+    <a th:href="${icpLink}" target="_blank" rel="noopener noreferrer" th:text="${icpNo}">冀ICP备2026009090号-1</a>
+</div>
+</body>
+</html>

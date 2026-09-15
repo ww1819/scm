@@ -91,6 +91,26 @@ public class OrderServiceImpl implements IOrderService
         return order;
     }
 
+    @Override
+    public Order selectOrderByIdForSystem(Long orderId)
+    {
+        if (orderId == null)
+        {
+            return null;
+        }
+        return orderMapper.selectOrderById(orderId);
+    }
+
+    @Override
+    public List<Order> selectOrderListBySupplierIdsForWx(List<Long> supplierIds, int limit)
+    {
+        if (supplierIds == null || supplierIds.isEmpty() || limit <= 0)
+        {
+            return new ArrayList<Order>();
+        }
+        return orderMapper.selectOrderListBySupplierIds(supplierIds, limit);
+    }
+
     private void assertOrderViewScope(Order order)
     {
         Long hospitalCtx = scmHospitalContextService.resolveHospitalIdForUser(ShiroUtils.getUserId());

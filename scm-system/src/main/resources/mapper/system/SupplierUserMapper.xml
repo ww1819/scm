@@ -87,6 +87,23 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             limit 1
         ) su_row
     </select>
+
+    <select id="countActiveByUserId" resultType="int">
+        select count(1)
+        from scm_supplier_user su
+        where su.user_id = #{userId}
+          and (su.status = '0' or su.status is null)
+          and (su.del_flag = '0' or su.del_flag is null)
+    </select>
+
+    <select id="selectActiveSupplierIdsByUserId" resultType="long">
+        select distinct su.supplier_id
+        from scm_supplier_user su
+        where su.user_id = #{userId}
+          and su.supplier_id is not null
+          and (su.status = '0' or su.status is null)
+          and (su.del_flag = '0' or su.del_flag is null)
+    </select>
         
     <insert id="insertSupplierUser" parameterType="SupplierUser" useGeneratedKeys="true" keyProperty="supplierUserId">
         insert into scm_supplier_user

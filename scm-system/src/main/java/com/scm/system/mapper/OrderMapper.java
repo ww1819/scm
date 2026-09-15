@@ -21,11 +21,16 @@ public interface OrderMapper
 
     /**
      * 查询订单列表
-     * 
+     *
      * @param order 订单信息
      * @return 订单集合
      */
     public List<Order> selectOrderList(Order order);
+
+    /**
+     * 按供应商 ID 列表查询最近订单（微信端，无数据范围）
+     */
+    public List<Order> selectOrderListBySupplierIds(@Param("supplierIds") List<Long> supplierIds, @Param("limit") int limit);
 
     /**
      * 根据订单编号查询订单（仅单号，多租户下同号可能不唯一；优先使用 {@link #selectOrderByTenantAndOrderNo}）

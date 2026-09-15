@@ -32,6 +32,7 @@ import com.scm.system.domain.SupplierUser;
 import com.scm.system.domain.SysPost;
 import com.scm.system.domain.SysUserPost;
 import com.scm.system.domain.SysUserRole;
+import com.scm.system.domain.WxBoundAccount;
 import com.scm.system.mapper.HospitalUserMapper;
 import com.scm.system.mapper.SupplierUserMapper;
 import com.scm.system.mapper.SysPostMapper;
@@ -863,12 +864,44 @@ public class SysUserServiceImpl implements ISysUserService
         {
             throw new ServiceException("微信授权已失效，请从服务号菜单重新进入");
         }
-        SysUser occupied = userMapper.selectUserByWxOpenid(wxOpenid);
-        if (occupied != null && occupied.getUserId() != null && !userId.equals(occupied.getUserId()))
+        SysUser user = userMapper.selectUserById(userId);
+        if (user == null || "2".equals(user.getDelFlag()))
         {
-            userMapper.updateWxOpenid(occupied.getUserId(), null);
+            throw new ServiceException("用户不存在");
+        }
+        if (!"0".equals(user.getStatus()))
+        {
+            throw new ServiceException("账号已停用，无法绑定");
+        }
+        if (supplierUserMapper.countActiveByUserId(userId) <= 0)
+        {
+            throw new ServiceException("仅支持绑定供应商账号");
+        }
+        if (StringUtils.isNotEmpty(user.getWxOpenid()) && !wxOpenid.equals(user.getWxOpenid()))
+        {
+            throw new ServiceException("该账号已绑定其他微信，请先解绑后再绑定");
+        }
+        if (wxOpenid.equals(user.getWxOpenid()))
+        {
+            return;
         }
         userMapper.updateWxOpenid(userId, wxOpenid);
+    }
+
+    @Override
+    @Transactional
+    public void unbindWxOpenid(Long userId, String wxOpenid)
+    {
+        if (userId == null || StringUtils.isEmpty(wxOpenid))
+        {
+            throw new ServiceException("解绑失败，请从服务号菜单重新进入");
+        }
+        SysUser user = userMapper.selectUserById(userId);
+        if (user == null || StringUtils.isEmpty(user.getWxOpenid()) || !wxOpenid.equals(user.getWxOpenid()))
+        {
+            throw new ServiceException("当前微信未绑定该账号");
+        }
+        userMapper.updateWxOpenid(userId, null);
     }
 
     @Override
@@ -879,5 +912,46 @@ public class SysUserServiceImpl implements ISysUserService
             return null;
         }
         return userMapper.selectUserByWxOpenid(wxOpenid);
+    }
+
+    @Override
+    public List<WxBoundAccount> selectWxBoundSupplierAccounts(String wxOpenid)
+    {
+        if (StringUtils.isEmpty(wxOpenid))
+        {
+            return new ArrayList<WxBoundAccount>();
+        }
+        List<WxBoundAccount> list = userMapper.selectWxBoundSupplierAccountsByOpenid(wxOpenid);
+        return list == null ? new ArrayList<WxBoundAccount>() : list;
+    }
+
+    @Override
+    public boolean isWxBoundSupplierUser(String wxOpenid, Long userId)
+    {
+        if (userId == null || StringUtils.isEmpty(wxOpenid))
+        {
+            return false;
+        }
+        SysUser user = userMapper.selectUserById(userId);
+        if (user == null || !"0".equals(user.getStatus()) || "2".equals(user.getDelFlag()))
+        {
+            return false;
+        }
+        if (!wxOpenid.equals(user.getWxOpenid()))
+        {
+            return false;
+        }
+        return supplierUserMapper.countActiveByUserId(userId) > 0;
+    }
+
+    @Override
+    public List<Long> selectActiveSupplierIdsByUserId(Long userId)
+    {
+        if (userId == null)
+        {
+            return new ArrayList<Long>();
+        }
+        List<Long> ids = supplierUserMapper.selectActiveSupplierIdsByUserId(userId);
+        return ids == null ? new ArrayList<Long>() : ids;
     }
 }
